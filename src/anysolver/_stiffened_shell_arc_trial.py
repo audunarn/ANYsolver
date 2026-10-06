@@ -8,7 +8,8 @@ import numpy as np
 from .control import cancellation_safe_point
 from ._ge_beam3_pose_joint import _exp_terms
 from ._stiffened_shell_rotation_charts import physical_frames
-from ._stiffened_shell_arc_metric import PhysicalChordMetric, ChordDomainError, _owned
+from ._stiffened_shell_arc_metric import (PhysicalChordMetric, NativeDirectorChordMetric,
+    ChordDomainError, _owned, require_metric_owner, require_director_chart)
 from ._stiffened_shell_displacement_corrector import (
     bordered_correction, bordered_path_correction, DisplacementCorrectorFailure)
 
@@ -32,7 +33,7 @@ class ArcTrial:
     load_direction: np.ndarray
     normal_translations: np.ndarray
     normal_spins: np.ndarray
-    metric: PhysicalChordMetric
+    metric: PhysicalChordMetric | NativeDirectorChordMetric
     predictor_dof: int
     orientation: int
     amplitude_origin: float
@@ -128,6 +129,9 @@ def path_row(driver,state,parent,metric,normal=None):
     """Squared physical chord and row in the driver's actual update columns."""
     owner=driver.owner
     nodal=owner._shell_count+6*len(owner._beam_ids)
+    if type(metric) is NativeDirectorChordMetric:
+        require_director_chart(parent.q[:owner._shell_count])
+        require_director_chart(state.q[:owner._shell_count])
     reference=np.concatenate((physical_frames(parent.q[:owner._shell_count],parent.shell_anchors),parent.frames))
     frames=np.concatenate((physical_frames(state.q[:owner._shell_count],state.shell_anchors),state.frames))
     displacement=(state.q[:nodal]-parent.q[:nodal]).reshape(-1,6)[:,:3]
@@ -153,11 +157,14 @@ def correct(driver, *, load_direction, metric, radius, predictor_dof,
     n=owner._K.shape[0]; nodal=owner._shell_count+6*len(owner._beam_ids)
     from ._stiffened_shell_affine_endpoint import is_native_point_material,is_native_material_bl5_arc
     native=is_native_point_material(owner) or is_native_material_bl5_arc(owner)
+    require_metric_owner(owner,metric)
+    if type(metric) is NativeDirectorChordMetric:
+        require_director_chart(driver._state.q[:owner._shell_count])
     if native:
         from ._stiffened_shell_arc_checkpoint import require_native_seed
         require_native_seed(owner,driver)
     size=n+len(driver._state.multipliers)
-    if (type(metric) is not PhysicalChordMetric or len(metric.weights)!=nodal//6
+    if (len(metric.weights)!=nodal//6
             or not (owner._bl5_shell_material or getattr(owner,"_curved_reference",False) or native) or driver._accepted is None
             or driver._external is not None):
         raise ValueError("accepted admitted arc owner with fixed physical metric required")
@@ -227,8 +234,12 @@ def correct(driver, *, load_direction, metric, radius, predictor_dof,
     spins=step[:nodal].reshape(-1,6)[:,3:].copy()
     for i,chart in enumerate(state.q[:owner._shell_count].reshape(-1,6)):
         spins[i]=_exp_terms(chart[3:])[1]@spins[i]
-    norm=float(np.sqrt(np.sum(metric.weights*(np.sum((translations/metric.length)**2,axis=1)
-        +np.sum(spins*spins,axis=1)))))
+    if type(metric) is NativeDirectorChordMetric:
+        reference=np.concatenate((physical_frames(parent.q[:owner._shell_count],parent.shell_anchors),parent.frames))
+        norm=float(np.sqrt(metric.tangent_norm_squared(reference,translations,spins)))
+    else:
+        norm=float(np.sqrt(np.sum(metric.weights*(np.sum((translations/metric.length)**2,axis=1)
+            +np.sum(spins*spins,axis=1)))))
     if not np.isfinite(norm) or norm<=0.:
         raise DisplacementCorrectorFailure("unmeasured physical continuation tangent")
     normal=(translations/norm,spins/norm)
@@ -236,14 +247,26 @@ def correct(driver, *, load_direction, metric, radius, predictor_dof,
     if (not np.isfinite(normal[0]).all() or not np.isfinite(normal[1]).all()
             or not np.isfinite(step).all() or not np.isfinite(delta)):
         raise DisplacementCorrectorFailure("continuation tangent normalization not representable")
-    state=driver._advance(state,step,1.);amplitude+=delta
-    evaluation=evaluate(state,amplitude)
     def trial_snapshot():
         gap,_=path(state)
         return ArcTrial(state,amplitude,evaluation,generation,parent,shell,beam,
             float(radius),float(gap/radius),evaluations,solves,rejected,
             sum(row['cell_evaluations'] for row in events),_owned(base),_owned(pattern),
             _owned(normal[0]),_owned(normal[1]),metric,predictor_dof,orientation,float(amplitude_origin))
+    if type(metric) is NativeDirectorChordMetric:
+        # Refuse an invalid accepted chart before assembly above. A predictor
+        # leaving this metric's local domain is instead a recoverable cutback,
+        # with the unchanged origin as its failure snapshot and work inventory.
+        try:
+            candidate=driver._advance(state,step,1.)
+            path_row(driver,candidate,parent,metric,normal)
+        except (_RotationStepTooLarge,ChordDomainError) as error:
+            rejected+=1
+            raise ArcTrialFailure(str(error),trial_snapshot()) from error
+        state=candidate;amplitude+=delta
+    else:
+        state=driver._advance(state,step,1.);amplitude+=delta
+    evaluation=evaluate(state,amplitude)
     for iteration in range(max_iterations+1):
         gap,gradient=path(state)
         if iteration_records is not None:
@@ -273,6 +296,8 @@ def correct(driver, *, load_direction, metric, radius, predictor_dof,
             amount=initial*.5**backtrack
             try:
                 candidate=driver._advance(state,step,amount)
+                if type(metric) is NativeDirectorChordMetric:
+                    path_row(driver,candidate,parent,metric,normal)
                 value=amplitude+amount*delta
                 changed=evaluate(candidate,value)
                 improved=merit(candidate,changed)<old

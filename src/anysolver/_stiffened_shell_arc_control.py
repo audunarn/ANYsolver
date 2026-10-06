@@ -9,7 +9,8 @@ from dataclasses import dataclass,replace
 from hashlib import sha256
 import numpy as np
 from .control import cancellation_safe_point
-from ._stiffened_shell_arc_metric import PhysicalChordMetric
+from ._stiffened_shell_arc_metric import (PhysicalChordMetric, NativeDirectorChordMetric,
+    require_metric_owner, DIRECTOR_METRIC_ID)
 from ._stiffened_shell_arc_trial import select_trial
 from ._stiffened_shell_arc_checkpoint import from_selection
 from ._stiffened_shell_arc_publication import publish
@@ -27,7 +28,7 @@ class ArcLengthControl:
     domain: str
     node: int
     component: int
-    metric: PhysicalChordMetric
+    metric: PhysicalChordMetric | NativeDirectorChordMetric
     radius: float
     orientation: int = 1
     max_cutbacks: int = 4
@@ -36,7 +37,7 @@ class ArcLengthControl:
     max_backtracks: int = 12
 
     def __post_init__(self):
-        if type(self.metric) is not PhysicalChordMetric:
+        if type(self.metric) not in (PhysicalChordMetric, NativeDirectorChordMetric):
             raise ValueError('explicit physical arc metric required')
         if (type(self.radius) not in (int,float) or not np.isfinite(self.radius)
                 or self.radius<=0. or type(self.orientation) is not int or self.orientation not in (-1,1)):
@@ -52,6 +53,7 @@ def solve(owner,actions,control,*,steps=1,cancellation_token=None,on_accepted=No
         raise ValueError('arc control and bounded accepted-step count required')
     if on_accepted is not None and not callable(on_accepted):raise ValueError('accepted observer must be callable')
     driver=owner._finite_driver
+    require_metric_owner(owner,control.metric)
     from ._stiffened_shell_affine_endpoint import is_native_point_material,is_native_material_bl5_arc
     native=is_native_point_material(owner) or is_native_material_bl5_arc(owner)
     if not (owner._bl5_shell_material or getattr(owner,"_curved_reference",False) or native) or driver is None or driver._accepted is None:
@@ -74,6 +76,10 @@ def solve(owner,actions,control,*,steps=1,cancellation_token=None,on_accepted=No
         base=None;amplitude=0.;history=();attempt_history=()
     else:
         _,m,a=saved
+        director=type(control.metric) is NativeDirectorChordMetric
+        if (m.get('metric_kind')!=(DIRECTOR_METRIC_ID if director else None)
+                or m.get('metric_shell_nodes')!=(control.metric.shell_nodes if director else None)):
+            raise ValueError('arc metric identity differs from accepted history')
         if (m['predictor_dof']!=dof or m['orientation']!=control.orientation
                 or m['requested_radius']!=control.radius or m['metric_length']!=control.metric.length
                 or not np.array_equal(a['metric_weights'],control.metric.weights)

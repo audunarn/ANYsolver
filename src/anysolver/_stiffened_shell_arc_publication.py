@@ -96,6 +96,11 @@ def _bind_predecessor(owner,m,a,live,expected_generation):
     if (live is None or m['generation']!=expected_generation+1
             or m['predecessor_sha256']!=sha256(owner.checkpoint()).hexdigest()):
         raise ValueError('arc endpoint has a different accepted predecessor')
+    saved=getattr(owner,'_arc_snapshot',None)
+    if saved is not None:
+        previous=saved[1]
+        if any(m.get(key)!=previous.get(key) for key in ('policy','metric_kind','metric_shell_nodes')):
+            raise ValueError('arc publication cannot cross metric history identities')
     nodes=len(owner._shell_ids)+len(owner._beam_ids)
     native=uses_native_material_history(owner);s3=has_native_s3_material(owner)
     count=len(owner._definition.shell.q4_elements)

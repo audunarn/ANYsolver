@@ -8,7 +8,8 @@ from hashlib import sha256
 from dataclasses import asdict
 import numpy as np
 from ._stiffened_shell_ge_checkpoint_binary import encode,decode,encode_s3,decode_s3,MAX_CHECKPOINT_BYTES
-from ._stiffened_shell_arc_metric import PhysicalChordMetric
+from ._stiffened_shell_arc_metric import (PhysicalChordMetric, NativeDirectorChordMetric,
+    DIRECTOR_METRIC_ID, require_metric_owner, require_director_chart)
 from ._stiffened_shell_rotation_charts import physical_frames
 
 MAGIC=b'ANYSSARC1'
@@ -95,14 +96,40 @@ def identities(owner, *, native_version=2):
     raise ValueError('admitted material or curved elastic point arc owner required')
 
 
-def active_policy(owner):
+def director_policy(owner):
+    """Distinct outer controller/layout identity; no legacy policy upgrade."""
+    from ._stiffened_shell_affine_endpoint import is_native_material_bl5_arc
+    if not is_native_material_bl5_arc(owner):
+        raise ValueError('director metric requires native material BL5')
+    return identities(owner)[1].replace('TANGENT_PLANE_', 'POSITION_DIRECTOR_TANGENT_PLANE_')
+
+
+def active_policy(owner,metric=None):
     """Fresh POINT seeds select V2; historical POINT prefixes keep their policy."""
     saved=getattr(owner,'_arc_snapshot',None)
-    return identities(owner)[1] if saved is None else saved[1]['policy']
+    if saved is not None:return saved[1]['policy']
+    return director_policy(owner) if type(metric) is NativeDirectorChordMetric else identities(owner)[1]
 
 
 def requires_coordinate_progress(owner):
-    return _native_owner(owner) and active_policy(owner)==identities(owner)[1]
+    if not _native_owner(owner):return False
+    from ._stiffened_shell_affine_endpoint import is_native_material_bl5_arc
+    policies=(identities(owner)[1],)
+    if is_native_material_bl5_arc(owner):policies+=(director_policy(owner),)
+    return active_policy(owner) in policies
+
+
+def metric_from_snapshot(owner,metadata,arrays):
+    """Reconstruct exactly the declared metric; never infer from normal data."""
+    if metadata.get('metric_kind')==DIRECTOR_METRIC_ID:
+        metric=NativeDirectorChordMetric(arrays['metric_weights'],metadata['metric_length'],
+                                        metadata['metric_shell_nodes'])
+        if metadata['policy']!=director_policy(owner):
+            raise ValueError('arc director metric policy mismatch')
+    else:
+        metric=PhysicalChordMetric(arrays['metric_weights'],metadata['metric_length'])
+    require_metric_owner(owner,metric)
+    return metric
 
 
 CONTROL_LIMITS=(('max_cutbacks',0,8),('max_attempts',1,64),
@@ -205,11 +232,20 @@ def decode_snapshot(owner,raw):
           'max_cutbacks','max_attempts','max_iterations','max_backtracks',
           'amplitude_origin','attempt_history','predecessor_sha256'}
     if native:keys.add('native_chart_policy')
+    from ._stiffened_shell_affine_endpoint import is_native_material_bl5_arc
+    director=(type(m) is dict and is_native_material_bl5_arc(owner)
+              and m.get('policy')==director_policy(owner))
+    if director:keys.update(('metric_kind','metric_shell_nodes'))
+    policies=((identities(owner,native_version=1)[1],identities(owner)[1])
+              if point else (identities(owner)[1],))
+    if is_native_material_bl5_arc(owner):policies+=(director_policy(owner),)
     if (type(m) is not dict or set(m)!=keys or canonical(m)!=header
-            or m['policy'] not in ((identities(owner,native_version=1)[1],identities(owner)[1])
-                if point else (identities(owner)[1],)) or m['model']!=owner._identity
+            or m['policy'] not in policies or m['model']!=owner._identity
             or (native and m['native_chart_policy']!=_chart_policy(owner))):
         raise ValueError('incompatible arc metadata')
+    if director and (m['metric_kind']!=DIRECTOR_METRIC_ID
+            or type(m['metric_shell_nodes']) is not int or m['metric_shell_nodes']!=len(owner._shell_ids)):
+        raise ValueError('incompatible arc director metric layout')
     if (any(type(m[k]) is not int for k in ('generation','seed_generation','steps','predictor_dof','orientation'))
             or not 1<=m['steps']<=1024 or not 1<=m['seed_generation']<m['generation']
             or m['generation']-m['seed_generation']!=m['steps'] or m['orientation'] not in (-1,1)):
@@ -245,7 +281,7 @@ def decode_snapshot(owner,raw):
                              native_material=True,displacement=True)
         a['s3_states']=states
     else:_,_,a=decode(raw[start+length:-32],owner._identity,shapes)
-    metric=PhysicalChordMetric(a['metric_weights'],m['metric_length'])
+    metric=metric_from_snapshot(owner,m,a)
     groups=m['attempt_history']
     if type(groups) is not list or len(groups)!=m['steps']:
         raise ValueError('complete arc attempt history required')
@@ -268,11 +304,16 @@ def decode_snapshot(owner,raw):
     if not np.array_equal(a['base_load']+amplitude*a['load_direction'],a['applied_load']):
         raise ValueError('arc affine load mismatch')
     translations=a['normal_translations'];spins=a['normal_spins']
-    norm=np.sum(metric.weights*(np.sum((translations/metric.length)**2,axis=1)+np.sum(spins*spins,axis=1)))
-    if abs(norm-1.)>1e-10:raise ValueError('arc physical normal is not unit')
+    if director:
+        require_director_chart(a['q'][:owner._shell_count])
+        if 'shell_origin_q' in a:require_director_chart(a['shell_origin_q'])
+        norm=metric.tangent_norm_squared(a['origin_frames'],translations,spins)
+    else:
+        norm=np.sum(metric.weights*(np.sum((translations/metric.length)**2,axis=1)+np.sum(spins*spins,axis=1)))
+    if not np.isfinite(norm) or abs(norm-1.)>1e-10:raise ValueError('arc physical normal is not unit')
     frames=np.concatenate((physical_frames(a['q'][:owner._shell_count],a['shell_anchors']),a['frames']))
     delta=a['q'][:nodes*6].reshape(-1,6)[:,:3]-a['origin_translations']
-    if native and m['policy']==identities(owner)[1]:
+    if native and (m['policy']==identities(owner)[1] or director):
         progress=m['orientation']*delta[dof//6,dof%6]
         if not progress>0.:raise ValueError('native arc selected coordinate made no oriented progress')
     distance,_,_=metric.plane(delta,frames,a['origin_frames'],translations,spins)
@@ -284,6 +325,7 @@ def from_selection(owner,selection,*,seed_generation,seed_sha256,history=(),atte
     from ._stiffened_shell_ge_finite_experimental import _material_arrays,_shell_material_arrays
     from ._stiffened_shell_affine_endpoint import has_shell_material,is_native_point_material,has_native_s3_material
     trial=selection.trial;state=trial.state;parent=trial.predecessor_state
+    require_metric_owner(owner,trial.metric)
     with owner._commit_lock:
         driver=owner._finite_driver
         if (driver is None or owner._generation!=trial.accepted_generation
@@ -327,12 +369,14 @@ def from_selection(owner,selection,*,seed_generation,seed_sha256,history=(),atte
         attempts=[asdict(row) for row in selection.attempts],
         max_cutbacks=selection.max_cutbacks,max_attempts=selection.max_attempts,
         max_iterations=selection.max_iterations,max_backtracks=selection.max_backtracks)
-    m=dict(policy=active_policy(owner),model=owner._identity,generation=trial.accepted_generation+1,
+    m=dict(policy=active_policy(owner,trial.metric),model=owner._identity,generation=trial.accepted_generation+1,
         seed_generation=seed_generation,seed_sha256=seed_sha256,steps=len(history)+1,
         metric_length=trial.metric.length,predictor_dof=trial.predictor_dof,orientation=trial.orientation,
         predecessor_sha256=predecessor_sha256,
         attempt_history=list(attempt_history)+[group],**group)
     if native:m['native_chart_policy']=_chart_policy(owner)
+    if type(trial.metric) is NativeDirectorChordMetric:
+        m.update(metric_kind=DIRECTOR_METRIC_ID,metric_shell_nodes=trial.metric.shell_nodes)
     return encode_snapshot(owner,m,arrays)
 
 

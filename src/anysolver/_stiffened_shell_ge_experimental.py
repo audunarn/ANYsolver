@@ -1248,6 +1248,11 @@ class ExperimentalGEAnalysis:
                 capabilities["arc_metric"] = (
                     "full-frame PhysicalChordMetric; shell normal spin contributes 2*w*(1-cos(theta)); "
                     "not a position/director quotient metric; retained variables and multipliers excluded from metric only")
+                capabilities["arc_metric_opt_in"] = (
+                    "NativeDirectorChordMetric: explicit flat native material BL5 shell position/director "
+                    "and beam full-frame metric; SOURCE CANDIDATE UNVERIFIED; fixed shell-then-beam ownership; "
+                    "shell normal spin excluded from metric only; open director hemisphere and nonsingular "
+                    "unrebased shell chart; distinct metric history/restart identity; no capacity qualification")
                 capabilities["arc_length_limits"] = (
                     "source candidate; fixed unrebased ordinary/fixed-translation seed; affine nodal dead translations; "
                     "fixed physical metric and free translation orientation; accepted-prefix restart; "

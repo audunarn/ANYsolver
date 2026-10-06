@@ -345,10 +345,10 @@ from ._stiffened_shell_generalized_recovery import GeneralizedBeamElementRecover
 __all__ += ["GeneralizedBeamElementRecovery", "GeneralizedBeamStationRecovery"]
 
 from ._stiffened_shell_arc_control import ArcLengthControl
-from ._stiffened_shell_arc_metric import PhysicalChordMetric
+from ._stiffened_shell_arc_metric import PhysicalChordMetric, NativeDirectorChordMetric
 from ._stiffened_shell_arc_publication import ArcResult
 from ._stiffened_shell_arc_trial import ArcSelectionFailure, ArcAttempt
-__all__ += ["ArcLengthControl", "PhysicalChordMetric", "ArcResult", "ArcSelectionFailure", "ArcAttempt"]
+__all__ += ["ArcLengthControl", "PhysicalChordMetric", "NativeDirectorChordMetric", "ArcResult", "ArcSelectionFailure", "ArcAttempt"]
 
 from ._stiffened_shell_ge_experimental import CURVED_Q4_POINT_REFERENCE_V1, CURVED_Q4_POINT_MATERIAL_REFERENCE_V1
 __all__ += ["CURVED_Q4_POINT_REFERENCE_V1", "CURVED_Q4_POINT_MATERIAL_REFERENCE_V1"]
