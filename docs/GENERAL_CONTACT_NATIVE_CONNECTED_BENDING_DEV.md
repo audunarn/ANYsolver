@@ -1,6 +1,7 @@
 # Connected native transverse bending development reference
 
-**Disposition: source prepared; all new numerical tests and the CLI are UNEXECUTED.**
+**Disposition: V4 successor source prepared; its numerical checks and CLI are UNEXECUTED.**
+Historical V3 work/phase2PASS and response1FAIL evidence is retained below.
 No production file, existing authority or accepted profile is changed. This is a
 new independent check of the existing connected contact-free native route. It
 confers no C7 acceptance, general section admission or contact capability.
@@ -209,3 +210,57 @@ all revised numerical checks are still UNEXECUTED. Production formulas and
 scientific thresholds are unchanged. Prospective V2 gates actual saved analytic
 response, retains the conditional bound separately, and includes the exact
 rational binary-eigenpair forcing residual; no executed gate is being regraded.
+
+## V4 explicit arithmetic successor after failed response
+
+The original V3 four-step response was executed and FAILED the1e-6 full acceleration
+comparison. The trajectory completed; analytical q/v, support, impulse and energy
+metrics were retained. Its raw failed evidence/source snapshots are immutable.
+A saved-state-only independent diagnostic attributed initial axial acceleration
+error almost wholly to tiny SO3 diagonal coefficient loss; subsequent stiff axial
+pose amplification accumulated. The independent oracle, physical inputs, mode,
+time/loads/scales and all scientific criteria are unchanged.
+
+The V4 fixture explicitly selects
+GE_BEAM3_CENTERED_STABLE_SO3_AND_PRECISE_WORK_DEV_V1 through the existing
+arithmetic_policy definition keyword. New STABLE_SO3_V3 definition schema binds
+that policy/operator identity in capture/restore and all native/trajectory restart
+contracts. Old None and DECIMAL80 precise policies/defaults keep their exact paths.
+This new artifact must be verified; the previous installed payload is not the new
+implementation. No frozen P5 copied mechanics are edited.
+
+For SO3 U, S=(U-U.T)/2 and c=(trU-1)/2 give the exact identity
+D=U-I=S+S^2/(1+c). The near branch c>.5 has denominator>1.5 and a64eps
+machine-roundoff orthogonality/determinant certificate with8eps arithmetic margin.
+Otherwise use the originalU-I expression, where near-identity diagonal cancellation
+is absent. A distorted matrix is not silently projected or normalized. This is an
+explicit effective SO3 arithmetic interpretation, not literal rounded-matrix
+bit-equivalence. Existing proper rotation and increment/relative log guards remain.
+
+Compose E=exp(eta)-I directly with existing Jet2 Rodrigues coefficients/skew:
+Dmade=Dbase+E+E*Dbase. Full frame work uses I+Dmade; strain is
+change+Dmade.T*reference_chord+Dmade.T*change, retaining coordinate high/low parts.
+The same expressions supply complete value/gradient/Hessian/mixed crossblocks.
+Decimal80 scalar work receives the same captured Dbase and addsI only AFTER high
+precision conversion; material work and all mechanics/inertia/state transactions
+remain unchanged. A scalar-only correction would be inconsistent and is not used.
+
+Additional prepared controls cover zero/arbitrary axes, both sides of the near/far
+branch, distorted-base refusal, first/second Jet2 derivatives across usefulh,
+definition capture/restore, old-policy byte comparison when an authentic baseline
+is supplied, and explicit old/new arithmetic checkpoint incompatibility. These
+controls and the V4 frozen response/work/restart require the lead's scoped260s
+process-wall ledger; the author has run only stdlib source checks. No claimed
+numeric PASS for V4, acceptance or resource renewal is implied by this repair.
+
+## Executed V4/V4a development disposition
+
+Five repaired-package focused checks and actualCLI4 now PASS. The independent
+modal-phase check is reused unchanged. Full-state error3.745762628620354e-10 and
+exact fresh4=2+2 restart meet the original gates. Authentic legacy definitions
+match; policy mismatch refuses without mutation. V3 response and V4 test-only
+authentication failure remain retained. 550 payloads/six hashed metadata and
+runtime provenance verified. Total charged124.15613109998988/260s, including
+conservative5.4186997s prelaunch refusal with missing exact helper-wall evidence.
+This is tested development only; no broader C7/C8 acceptance or release.
+[Exact evidence](d1_review_support/contact_native_connected_bending_20261006/bending_development.md).

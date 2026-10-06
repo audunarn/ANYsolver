@@ -2957,3 +2957,18 @@ eigen-residual bound, actual0.1% response gate and failure-metric preservation.
 Numerical tests/CLI UNEXECUTED. Proposed separate260s not yet granted. No acceptance
 or release. Finite-angle/nonprincipal/curved/spatial/sections/fullC7/C8 remain open.
 Guide: GENERAL_CONTACT_NATIVE_CONNECTED_BENDING_DEV.md.
+
+
+## 2026-10-06 connected native bending arithmetic successor
+
+Status: TESTED DEVELOPMENT; not independently accepted or released. Explicit
+GE_BEAM3_CENTERED_STABLE_SO3_AND_PRECISE_WORK_DEV_V1 with distinct definition
+STABLE_SO3_V3; legacy None/precise defaults/bytes intact. Five repaired installed
+checks+actualCLI4 PASS, unchanged modal-phase evidence reused. Full27 physical
+mass/work/tangent, small-amplitude transverse response/support, exact4=2+2 restart
+and authenticated mutation-free policy refusal. Retain V3 acceleration NONPASS,
+V4 test-only authentication failure and baseline prelaunch guard refusal.
+550 payloads/six hashed metadata verified. 124.15613109998988/260s charged,
+135.84386890001014s remains in this scope only; includes conservative5.4186997s
+prelaunch charge with exact helper-wall uncertainty. Full C7/C8 and C0-C9 open.
+[Evidence](d1_review_support/contact_native_connected_bending_20261006/bending_development.md).

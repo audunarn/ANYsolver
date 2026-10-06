@@ -6,6 +6,7 @@ from anysolver.dynamics import TransientConfig
 from anysolver.ge_beam3_native import define_beam,SELECTOR as BEAM,EllipsoidalGeneralizedSection
 from anysolver.ge_beam3_native_connected_dynamics import create_analysis,solve_transient,SELECTOR
 from anysolver.boundary import BoundaryCondition
+from anysolver._ge_beam3_centered_so3_strain import POLICY as STABLE_SO3_POLICY
 from examples import native_connected_bending_reference as reference
 
 
@@ -14,7 +15,7 @@ def build():
     inertia=np.diag((reference.RHO_A,reference.RHO_A,reference.RHO_A,reference.JX,reference.JY,reference.JZ))
     coordinates=reference.ORIGIN+np.arange(5)[:,None]*reference.ELL*np.array((1.,0.,0.))
     definitions=tuple(define_beam(BEAM,number,nodes,coordinates[list(indices)],
-        np.tile(np.eye(3),(3,1,1)),section,inertia,quadrature=4)
+        np.tile(np.eye(3),(3,1,1)),section,inertia,quadrature=4,arithmetic_policy=STABLE_SO3_POLICY)
         for number,nodes,indices in ((1,(10,20,30),(0,1,2)),(2,(30,40,50),(2,3,4))))
     root=BoundaryCondition('root',[10],dict.fromkeys(('ux','uy','uz','rx','ry','rz'),0.))
     return create_analysis(SELECTOR,definitions,(root,))

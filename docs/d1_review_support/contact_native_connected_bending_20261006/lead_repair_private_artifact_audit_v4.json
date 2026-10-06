@@ -1,0 +1,13 @@
+{
+  "status": "PASS_SOURCE_WHEEL_PRIVATE_RECORD_AUDIT",
+  "wheel": "C:\\ANYworkspaceWork\\contact_native_connected_bending_20261006\\bending_repair_dist_v4\\anysolver-0.4.7-py3-none-any.whl",
+  "wheel_sha256": "6074e261ba7287b244b7b6f1cc15e81fe909a49702d128d0160847a58ed212cc",
+  "product_payloads": 550,
+  "matching_hashed_metadata": 6,
+  "wheel_RECORD_checked": true,
+  "installed_RECORD_rewritten_by_pip_not_byte_claimed": true,
+  "private_target": "C:\\ANYworkspaceWork\\contact_native_connected_bending_20261006\\bending_repair_installed_v4",
+  "original_package_preserved": true,
+  "source_reference_unchanged": true,
+  "original_authority_unchanged": true
+}

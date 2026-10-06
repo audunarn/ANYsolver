@@ -1,0 +1,68 @@
+{
+  "status": "HELD_V4_SOURCE_REVIEW_COMPLETE_SUPPORTING_ONLY",
+  "files": [
+    {
+      "path": "src/anysolver/_ge_beam3_centered_so3_strain.py",
+      "sha256": "6010260998c8f1198dc76bc5d4174f11ca4c44e7db071c4a3f275378c04be0c3",
+      "held_v4_sha256": "6010260998c8f1198dc76bc5d4174f11ca4c44e7db071c4a3f275378c04be0c3",
+      "matches": true
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_retained_generalized.py",
+      "sha256": "9381626639faa6d1eb2878a05687d63e815ef88d6b91e5207f8a0e6337c71b5a",
+      "held_v4_sha256": "9381626639faa6d1eb2878a05687d63e815ef88d6b91e5207f8a0e6337c71b5a",
+      "matches": true
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_native_definition.py",
+      "sha256": "92d9c989703b9249fd006024ae6dd90697d3a144b78cf37e12732e3ae0cb46fe",
+      "held_v4_sha256": "92d9c989703b9249fd006024ae6dd90697d3a144b78cf37e12732e3ae0cb46fe",
+      "matches": true
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_precise_geometric_work.py",
+      "sha256": "410414cd1c7cc9ad7a10f48e9b051ff1d765ec9892b5ad82d7f58f067e782c1d",
+      "held_v4_sha256": "410414cd1c7cc9ad7a10f48e9b051ff1d765ec9892b5ad82d7f58f067e782c1d",
+      "matches": true
+    },
+    {
+      "path": "examples/native_connected_bending_reference.py",
+      "sha256": "28242c6a93e5e039ce6950e08a34df3e7840e7bfb2f117e641deca1dadcb71a5",
+      "held_v4_sha256": "28242c6a93e5e039ce6950e08a34df3e7840e7bfb2f117e641deca1dadcb71a5",
+      "matches": true
+    },
+    {
+      "path": "examples/native_connected_bending_dev.py",
+      "sha256": "4fc05a1f871a5c29abb00b6d83118b281b834849114eea973523bd267b4e4021",
+      "held_v4_sha256": "4fc05a1f871a5c29abb00b6d83118b281b834849114eea973523bd267b4e4021",
+      "matches": true
+    },
+    {
+      "path": "tests/test_ge_beam3_native_connected_bending.py",
+      "sha256": "56572f4d14c319c602e0d2e4fd84d9eb1273002af177ca8618ca537f1f0a0ac6",
+      "held_v4_sha256": "56572f4d14c319c602e0d2e4fd84d9eb1273002af177ca8618ca537f1f0a0ac6",
+      "matches": true
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_NATIVE_CONNECTED_BENDING_DEV.md",
+      "sha256": "430b5fb4fbafee6ebeec4a28ed8d683adbc13115c373a6dba6b400ee21f8303c",
+      "held_v4_sha256": "430b5fb4fbafee6ebeec4a28ed8d683adbc13115c373a6dba6b400ee21f8303c",
+      "matches": true
+    }
+  ],
+  "numerical_jobs": 0,
+  "solver_imports": 0,
+  "product_edits": 0,
+  "engineering_acceptance": false,
+  "remaining_source_blockers": [],
+  "conditions": [
+    "Supply authentic NATIVE_BENDING_LEGACY_DEFINITIONS baseline in claim-bearing control run.",
+    "Verify actual matched artifact and all unchanged scientific gates under separate root execution authority."
+  ],
+  "source_checks": [
+    "Read actual helper/caller/precise/schema delta.",
+    "Read both new repair controls and guide/examples policy claims.",
+    "All8 direct source hashes match heldV4manifest."
+  ],
+  "history": "Earlier review artifacts and failedV3 diagnostic are preserved."
+}

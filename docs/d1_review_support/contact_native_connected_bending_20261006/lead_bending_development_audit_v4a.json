@@ -1,0 +1,299 @@
+{
+  "status": "TESTED_DEVELOPMENT_BOUNDED_BENDING_ARITHMETIC_SUCCESSOR",
+  "engineering_acceptance": false,
+  "jobs": [
+    {
+      "job": "bending_legacy_capture1",
+      "mode": "SAVED_DIAGNOSTIC",
+      "resource": {
+        "status": "completed",
+        "exit_code": 0,
+        "elapsed_s": 2.594619999988936,
+        "peak_tree_bytes": 145211392,
+        "cap_s": 10.0,
+        "spent_before_s": 27.86311620004592,
+        "total_spent_s": 30.457736200034855
+      },
+      "private_import_count": 189,
+      "runtime_errors": [],
+      "calls": [],
+      "manifest_sha256": null,
+      "capsule_paths": []
+    },
+    {
+      "job": "bending_repair_build1",
+      "mode": "BUILD",
+      "resource": {
+        "status": "completed",
+        "exit_code": 0,
+        "elapsed_s": 8.191129099926911,
+        "peak_tree_bytes": 49811456,
+        "cap_s": 20.0,
+        "spent_before_s": 30.457736200034855,
+        "total_spent_s": 38.64886529996177
+      },
+      "private_import_count": 0,
+      "runtime_errors": [],
+      "calls": [],
+      "manifest_sha256": "c42ee690d7f6c98799afc37b31b4770902ed91a3cfef9c193497e4f10070b2d1",
+      "capsule_paths": []
+    },
+    {
+      "job": "bending_repair_controls1",
+      "mode": "TEST",
+      "resource": {
+        "status": "completed",
+        "exit_code": 1,
+        "elapsed_s": 7.41095069993753,
+        "peak_tree_bytes": 169598976,
+        "cap_s": 35.0,
+        "spent_before_s": 39.90672129994375,
+        "total_spent_s": 47.31767199988128
+      },
+      "private_import_count": 197,
+      "runtime_errors": [],
+      "calls": [
+        [
+          "tests/test_ge_beam3_native_connected_bending.py::test_stable_so3_successor_zero_arbitrary_axis_branches_and_jets",
+          "passed"
+        ],
+        [
+          "tests/test_ge_beam3_native_connected_bending.py::test_independent_bending_mass_complete_virtual_work_and_tangent_interval",
+          "passed"
+        ],
+        [
+          "tests/test_ge_beam3_native_connected_bending.py::test_stable_so3_definition_identity_restore_and_legacy_policy_isolation",
+          "failed"
+        ]
+      ],
+      "manifest_sha256": "c42ee690d7f6c98799afc37b31b4770902ed91a3cfef9c193497e4f10070b2d1",
+      "capsule_paths": [
+        "C:\\ANYworkspaceWork\\contact_native_connected_bending_20261006\\bending_repair_controls1\\actual_results_work.checkpoint"
+      ]
+    },
+    {
+      "job": "bending_repair_example1",
+      "mode": "EXAMPLE",
+      "resource": {
+        "status": "completed",
+        "exit_code": 0,
+        "elapsed_s": 21.24264559999574,
+        "peak_tree_bytes": 148336640,
+        "cap_s": 35.0,
+        "spent_before_s": 102.91348549999414,
+        "total_spent_s": 124.15613109998988
+      },
+      "private_import_count": 197,
+      "runtime_errors": [],
+      "calls": [],
+      "manifest_sha256": "b101fdc7d07707bb6d42d21ee689c1374628fd9406e8675626be5c4514599e4e",
+      "capsule_paths": []
+    },
+    {
+      "job": "bending_repair_install1",
+      "mode": "INSTALL",
+      "resource": {
+        "status": "completed",
+        "exit_code": 0,
+        "elapsed_s": 1.2578559999819845,
+        "peak_tree_bytes": 61423616,
+        "cap_s": 12.0,
+        "spent_before_s": 38.64886529996176,
+        "total_spent_s": 39.90672129994375
+      },
+      "private_import_count": 0,
+      "runtime_errors": [],
+      "calls": [],
+      "manifest_sha256": "c42ee690d7f6c98799afc37b31b4770902ed91a3cfef9c193497e4f10070b2d1",
+      "capsule_paths": []
+    },
+    {
+      "job": "bending_repair_response1",
+      "mode": "TEST",
+      "resource": {
+        "status": "completed",
+        "exit_code": 0,
+        "elapsed_s": 16.90091470000334,
+        "peak_tree_bytes": 168136704,
+        "cap_s": 45.0,
+        "spent_before_s": 47.31767199988128,
+        "total_spent_s": 64.21858669988461
+      },
+      "private_import_count": 197,
+      "runtime_errors": [],
+      "calls": [
+        [
+          "tests/test_ge_beam3_native_connected_bending.py::test_public_bending_stage_support_response_and_semidiscrete_bound",
+          "passed"
+        ]
+      ],
+      "manifest_sha256": "c42ee690d7f6c98799afc37b31b4770902ed91a3cfef9c193497e4f10070b2d1",
+      "capsule_paths": [
+        "C:\\ANYworkspaceWork\\contact_native_connected_bending_20261006\\bending_repair_response1\\actual_results_response.checkpoint"
+      ]
+    },
+    {
+      "job": "bending_repair_restart1",
+      "mode": "TEST",
+      "resource": {
+        "status": "completed",
+        "exit_code": 0,
+        "elapsed_s": 34.00634050008375,
+        "peak_tree_bytes": 167940096,
+        "cap_s": 60.0,
+        "spent_before_s": 68.90714499991039,
+        "total_spent_s": 102.91348549999414
+      },
+      "private_import_count": 197,
+      "runtime_errors": [],
+      "calls": [
+        [
+          "tests/test_ge_beam3_native_connected_bending.py::test_fresh_bending_four_equals_two_plus_two_complete_restart",
+          "passed"
+        ]
+      ],
+      "manifest_sha256": "b101fdc7d07707bb6d42d21ee689c1374628fd9406e8675626be5c4514599e4e",
+      "capsule_paths": [
+        "C:\\ANYworkspaceWork\\contact_native_connected_bending_20261006\\bending_repair_restart1\\actual_results_split_full.checkpoint",
+        "C:\\ANYworkspaceWork\\contact_native_connected_bending_20261006\\bending_repair_restart1\\actual_results_split_prefix.checkpoint",
+        "C:\\ANYworkspaceWork\\contact_native_connected_bending_20261006\\bending_repair_restart1\\actual_results_split_resumed.checkpoint"
+      ]
+    },
+    {
+      "job": "bending_repair_schema2",
+      "mode": "TEST",
+      "resource": {
+        "status": "completed",
+        "exit_code": 0,
+        "elapsed_s": 4.688558300025761,
+        "peak_tree_bytes": 167055360,
+        "cap_s": 25.0,
+        "spent_before_s": 64.21858669988463,
+        "total_spent_s": 68.90714499991039
+      },
+      "private_import_count": 197,
+      "runtime_errors": [],
+      "calls": [
+        [
+          "tests/test_ge_beam3_native_connected_bending.py::test_stable_so3_definition_identity_restore_and_legacy_policy_isolation",
+          "passed"
+        ]
+      ],
+      "manifest_sha256": "b101fdc7d07707bb6d42d21ee689c1374628fd9406e8675626be5c4514599e4e",
+      "capsule_paths": []
+    },
+    {
+      "job": "bending_response1",
+      "mode": "TEST",
+      "resource": {
+        "status": "completed",
+        "exit_code": 1,
+        "elapsed_s": 16.4091215999797,
+        "peak_tree_bytes": 166416384,
+        "cap_s": 60.0,
+        "spent_before_s": 5.711652799975127,
+        "total_spent_s": 22.120774399954826
+      },
+      "private_import_count": 196,
+      "runtime_errors": [],
+      "calls": [
+        [
+          "tests/test_ge_beam3_native_connected_bending.py::test_public_bending_stage_support_response_and_semidiscrete_bound",
+          "failed"
+        ]
+      ],
+      "manifest_sha256": "9b072d95fafb677f75e8e4f86a9b762b3d1a4150dca5c72b3fe9077292aa57c3",
+      "capsule_paths": [
+        "C:\\ANYworkspaceWork\\contact_native_connected_bending_20261006\\bending_response1\\actual_results_response.checkpoint"
+      ]
+    },
+    {
+      "job": "bending_saved_diagnostic1",
+      "mode": "SAVED_DIAGNOSTIC",
+      "resource": {
+        "status": "completed",
+        "exit_code": 0,
+        "elapsed_s": 0.3236421000910923,
+        "peak_tree_bytes": 30994432,
+        "cap_s": 10.0,
+        "spent_before_s": 22.120774399954826,
+        "total_spent_s": 22.444416500045918
+      },
+      "private_import_count": 0,
+      "runtime_errors": [],
+      "calls": [],
+      "manifest_sha256": null,
+      "capsule_paths": []
+    },
+    {
+      "job": "bending_work1",
+      "mode": "TEST",
+      "resource": {
+        "status": "completed",
+        "exit_code": 0,
+        "elapsed_s": 5.711652799975127,
+        "peak_tree_bytes": 166264832,
+        "cap_s": 60.0,
+        "spent_before_s": 0,
+        "total_spent_s": 5.711652799975127
+      },
+      "private_import_count": 196,
+      "runtime_errors": [],
+      "calls": [
+        [
+          "tests/test_ge_beam3_native_connected_bending.py::test_linear_midpoint_modal_phase_refinement",
+          "passed"
+        ],
+        [
+          "tests/test_ge_beam3_native_connected_bending.py::test_independent_bending_mass_complete_virtual_work_and_tangent_interval",
+          "passed"
+        ]
+      ],
+      "manifest_sha256": "9b072d95fafb677f75e8e4f86a9b762b3d1a4150dca5c72b3fe9077292aa57c3",
+      "capsule_paths": [
+        "C:\\ANYworkspaceWork\\contact_native_connected_bending_20261006\\bending_work1\\actual_results_work.checkpoint"
+      ]
+    }
+  ],
+  "exact_resource_sum_s": 118.73743139998987,
+  "conservative_extra_charge_s": 5.4186997,
+  "charged_s": 124.15613109998988,
+  "remaining_s": 135.84386890001014,
+  "accounting_uncertainty": [
+    {
+      "scope": "C7_CONNECTED_BENDING_DEV",
+      "elapsed_s": 5.4186997,
+      "evidence": "legacy_capture_guard_refusal_v4.json",
+      "uncertainty": "Exact helper-wall unavailable: conservatively charge entire observed command wall including preceding stdlib wrapper guard edit. No solver child launched. Source literal SHA differed from saved file due Windows newline conversion."
+    }
+  ],
+  "current_successor_pass_selectors": [
+    "tests/test_ge_beam3_native_connected_bending.py::test_fresh_bending_four_equals_two_plus_two_complete_restart",
+    "tests/test_ge_beam3_native_connected_bending.py::test_independent_bending_mass_complete_virtual_work_and_tangent_interval",
+    "tests/test_ge_beam3_native_connected_bending.py::test_public_bending_stage_support_response_and_semidiscrete_bound",
+    "tests/test_ge_beam3_native_connected_bending.py::test_stable_so3_definition_identity_restore_and_legacy_policy_isolation",
+    "tests/test_ge_beam3_native_connected_bending.py::test_stable_so3_successor_zero_arbitrary_axis_branches_and_jets"
+  ],
+  "unchanged_modal_phase_evidence": "bending_work1; independent reference unchanged; not repeated",
+  "public_cli_pass": true,
+  "exact_split_result": true,
+  "exact_split_checkpoint": true,
+  "checkpoint_sha256": "d2dd53d3c3c461e420d4026fb3caf2a66f724b18c1e52b6ddaf57c40a8e7559c",
+  "response": {
+    "maximum_full_state_error": 3.745762628620354e-10,
+    "analytic_response": 4.0820989258888435e-05,
+    "energy_defect": 1.1204823342714582e-14,
+    "support_error": 5.65621623612363e-17,
+    "impulse_error": 3.6079776274993e-19,
+    "modal_phase": 0.19999999021183285,
+    "maximum_cell_angle": 6.559863181097815e-07
+  },
+  "private_artifact_audit": "lead_repair_private_artifact_audit_v4.json",
+  "failures_preserved": [
+    "bending_response1",
+    "bending_repair_controls1",
+    "legacy_capture_guard_refusal_v4.json"
+  ],
+  "no_live_numerical_jobs": true,
+  "open": "Full C7 finite-angle/nonprincipal/curved/sections/spatial admission; C8 common-stage impact; remaining C0-C9. Same-family source review is supporting only."
+}

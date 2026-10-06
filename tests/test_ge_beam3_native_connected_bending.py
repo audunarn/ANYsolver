@@ -210,3 +210,85 @@ def test_linear_midpoint_modal_phase_refinement():
     scale=mode['coordinate_scale'];omega=mode['omega']
     error=lambda value:max(float(np.max(np.abs(value[0]-exact[0])/scale)),float(np.max(np.abs(value[1]-exact[1])/(omega*scale))))
     assert error(fine)<error(coarse)<=.001
+
+def test_stable_so3_successor_zero_arbitrary_axis_branches_and_jets():
+    from anysolver._ge_beam3_centered_so3_strain import base_delta,rotation_jets
+    from anysolver._ge_beam3_mixed_ad import Jet2
+    import pytest
+    axis=np.array((1.,2.,-3.));axis/=np.linalg.norm(axis)
+    cross=np.array(((0.,-axis[2],axis[1]),(axis[2],0.,-axis[0]),(-axis[1],axis[0],0.)))
+    square=cross@cross;weights=np.array(((.2,-.3,.1),(.4,.1,-.2),(-.1,.3,.5)))
+    generators=[]
+    for i in range(3):
+        basis=np.zeros(3);basis[i]=1.
+        generators.append(np.array(((0.,-basis[2],basis[1]),(basis[2],0.,-basis[0]),(-basis[1],basis[0],0.))))
+    for angle in (0.,2.**-20,.3,math.pi/3-2.**-20,math.pi/3+2.**-20,1.2):
+        expected_d=math.sin(angle)*cross+2*math.sin(angle/2)**2*square
+        rotation=np.eye(3)+expected_d;delta=base_delta(rotation)
+        if angle==0.:assert not np.any(delta)
+        else:
+            diagonal_scale=max(abs(np.diag(expected_d)))
+            assert np.max(np.abs(np.diag(delta-expected_d)))/diagonal_scale<=128*np.finfo(float).eps
+            assert np.linalg.norm(delta-expected_d)/np.linalg.norm(expected_d)<=128*np.finfo(float).eps
+        made,made_d,_=rotation_jets(rotation,[Jet2.variable(0.,i,3) for i in range(3)])
+        value=sum(weights[i,j]*made_d[i][j] for i in range(3) for j in range(3))
+        base=np.eye(3)+delta
+        expected_g=np.array([np.sum(weights*(a@base)) for a in generators])
+        expected_h=np.array([[np.sum(weights*((a@b+b@a)/2@base)) for b in generators] for a in generators])
+        assert np.max(np.abs(value.gradient-expected_g))<=1.e-5
+        assert np.max(np.abs(value.hessian-expected_h))<=1.e-5
+        direction=np.array((.2,-.3,.4))
+        def evaluate(eta):
+            _,d,_=rotation_jets(rotation,[Jet2.variable(float(x),i,3) for i,x in enumerate(eta)])
+            return sum(weights[i,j]*d[i][j] for i in range(3) for j in range(3))
+        point=np.array((.1,-.2,.15));at=evaluate(point)
+        for h in (1.e-3,1.e-4,1.e-5):
+            plus=evaluate(point+h*direction);minus=evaluate(point-h*direction)
+            assert abs((plus.value-minus.value)/(2*h)-at.gradient@direction)<=1.e-5
+            assert np.max(np.abs((plus.gradient-minus.gradient)/(2*h)-at.hessian@direction))<=1.e-5
+    distorted=np.eye(3);distorted[0,0]+=1.e-12
+    with pytest.raises(ValueError,match='machine-roundoff'):base_delta(distorted)
+
+
+def test_stable_so3_definition_identity_restore_and_legacy_policy_isolation():
+    from anysolver._ge_beam3_native_definition import (NativeBeamDefinition,SCHEMA,PRECISE_SCHEMA,STABLE_SO3_SCHEMA)
+    from anysolver._ge_beam3_precise_geometric_work import POLICY as OLD_PRECISE
+    from anysolver._ge_beam3_centered_so3_strain import POLICY as STABLE
+    from anysolver.ge_beam3_native import define_beam,SELECTOR as BEAM
+    from examples.native_connected_bending_dev import build,config
+    from anysolver.ge_beam3_native_connected_dynamics import solve_transient
+    import pytest
+    owner=build();element=owner.elements[0];inertia=owner.analysis._inertias[element.element_id]
+    definitions={}
+    for policy,schema in ((None,SCHEMA),(OLD_PRECISE,PRECISE_SCHEMA),(STABLE,STABLE_SO3_SCHEMA)):
+        refgeom=element.operator.reference
+        captured=define_beam(BEAM,element.element_id,element.node_ids,refgeom.coordinates,refgeom.nodal_triads,
+            element.section,inertia,quadrature=4,arithmetic_policy=policy)
+        data=json.loads(captured.raw);assert data['schema']==schema
+        restored=NativeBeamDefinition.from_bytes(captured.raw,expected_sha256=captured.sha256)
+        fresh,fresh_inertia=restored.instantiate()
+        assert NativeBeamDefinition.capture(fresh,fresh_inertia).raw==captured.raw
+        definitions[str(policy)]=captured.raw
+    assert len(set(definitions.values()))==3
+    # Bind old capture-byte comparisons to a separately produced old-artifact input
+    # when supplied by the claim-bearing lead harness; normal CI remains portable.
+    baseline=os.environ.get('NATIVE_BENDING_LEGACY_DEFINITIONS')
+    if baseline:
+        expected=json.loads(Path(baseline).read_text(encoding='utf-8'))
+        for policy in (None,OLD_PRECISE):assert definitions[str(policy)].decode('ascii')==expected[str(policy)]
+    _,prefix,mode=run(0)
+    # Same physical geometry/settings with the old default work interpretation
+    # must refuse the new explicitly bound arithmetic checkpoint.
+    from anysolver.ge_beam3_native_connected_dynamics import create_analysis,SELECTOR
+    old_definitions=[]
+    for held in owner.elements:
+        r=held.operator.reference
+        old_definitions.append(define_beam(BEAM,held.element_id,held.node_ids,r.coordinates,r.nodal_triads,
+            held.section,owner.analysis._inertias[held.element_id],quadrature=4))
+    old_owner=create_analysis(SELECTOR,tuple(old_definitions),tuple(owner.analysis.model.boundary_conditions))
+    before_state=old_owner.current
+    assert before_state is None
+    with pytest.raises(ValueError,match='contract|identity|analysis|configuration'):
+        solve_transient(old_owner,config(old_owner,mode,0),checkpoint=prefix.checkpoint,
+            expected_sha256=sha256(prefix.checkpoint).hexdigest())
+    assert old_owner.current is before_state

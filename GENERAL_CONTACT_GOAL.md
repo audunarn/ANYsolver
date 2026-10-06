@@ -95,24 +95,24 @@ all failures, commands and raw results are retained.
 [Evidence](docs/d1_review_support/contact_native_connected_deformation_20261006/deformation_development.md).
 [Derivation and usage](docs/GENERAL_CONTACT_NATIVE_CONNECTED_DEFORMATION_DEV.md).
 
-Connected transverse bending source candidate is now implemented, numerical
-UNEXECUTED: independent actual affine-half-cell nonlinear plane work, all27
-physical mass coordinates, global algebraic frame elimination and a lowest
-bending mode over about0.2rad phase. Public ordinary retained midpoint fixture,
-full initial/stage/endpoint response/support/impulses, complete4=2+2 restart and
-modal phase controls are prepared. No product or existing installed payload change.
-Review repairs retain original source drafts: stable axial arithmetic, correct
-per-element force/moment grouping, separate physical units, descriptor zero rates,
-exact-rational eigen-residual in conditional bounds, actual0.1% analytical-response
-gate and saved diagnostics before assertions. Scientific targets unchanged.
-[Derivation and usage](docs/GENERAL_CONTACT_NATIVE_CONNECTED_BENDING_DEV.md).
-Raw contact_native_connected_bending_20261006 holds V1/V2/V3 source and reviews.
+Connected transverse bending: TESTED DEVELOPMENT. Five repaired-package checks
+and actualCLI4 PASS; independent modal-phase evidence reused unchanged. Complete
+initial/stage/endpoint mass/work/tangent, support/impulse/energy and exact fresh
+full4=2+2 restart pass. Worst full-state error3.745762628620354e-10 against1e-6.
+The V3 acceleration NONPASS led to one saved-state discriminator and an explicitly
+selected stable-SO3 arithmetic successor, with coherent Jet2/precise scalar work
+and distinct definition/restart identity. Physical fixture/reference/gates and
+historical defaults unchanged; old definition bytes verified. Retain original
+response failure, negative-test authentication repair and prelaunch guard refusal.
 
-Next obtain sufficient separate260s numerical scope for this concrete candidate:
-four focused tests in three groups and actualCLI4, each<=60s/953MiB, one job,
-JITdisabled/Numba1/pools1,20s final reserve; reuse exact549-payload private wheel.
-This is proposed authority, not runtime evidence or approval. Current axial
-residue cannot cover the new fixture. No unaffected-test replay/new driver stack.
+550 source/wheel/private payloads and six hashed metadata match; runtime private
+imports,JITdisabled/Numba1/pools1 verified. Source V4/V4a and old package retained.
+Charged124.15613109998988/260s (118.73743139998987s measured jobs plus conservative
+5.4186997s prelaunch-refusal charge with exact helper-wall uncertainty);
+135.84386890001014s remains only in this bending scope. No optional repeats.
+[Evidence](docs/d1_review_support/contact_native_connected_bending_20261006/bending_development.md).
+[Derivation and usage](docs/GENERAL_CONTACT_NATIVE_CONNECTED_BENDING_DEV.md).
+
 Finite-angle/nonprincipal dynamics, curved/section/spatial admission, fullC7 and
 C8 common-stage native/shell impact remain open; fullC0-C9 remains incomplete.
 
