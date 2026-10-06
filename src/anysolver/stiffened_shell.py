@@ -9,6 +9,12 @@ from __future__ import annotations
 from ._stiffened_shell_b2_reference_buckling import (
     B2ReferenceBucklingRequest, B2ReferenceBucklingResult,
     B2ReferenceBucklingCapabilities, B2SectionTractionQuadrature,
+    B2PhysicalFootprintBucklingRequest, B2PhysicalFootprintBucklingResult,
+)
+
+from ._stiffened_shell_b2_physical_rigid_footprint import (
+    B2PhysicalRigidFootprint, B2PhysicalRigidFootprintSelection,
+    B2PhysicalRigidFootprintWrench, LAW_ID as B2_PHYSICAL_RIGID_FOOTPRINT_DIRECTOR_REFERENCE_V1_EXPERIMENTAL,
 )
 
 from dataclasses import dataclass
@@ -155,6 +161,18 @@ class B2Q4PanelDefinition:
 
 
 @dataclass(frozen=True)
+class B2PhysicalRigidFootprintDefinition:
+    """Separate five-row physical director footprint reference-linear Q4 owner."""
+    profile: str
+    shell_nodes_m: object
+    shells: tuple
+    members: tuple
+    physical_footprints: tuple
+    transformation: object
+    prescribed_offset: object
+
+
+@dataclass(frozen=True)
 class B2MixedPanelDefinition:
     """Opt-in elastic Q4/native S3 V2D/B2 finite-vertex point panel.
 
@@ -236,6 +254,12 @@ def create_analysis(*, definition, resources=None):
             transformation=definition.transformation,
             prescribed_offset=definition.prescribed_offset,
             footprints=definition.footprints)
+    if type(definition) is B2PhysicalRigidFootprintDefinition:
+        if definition.profile != B2_E4_PL_FAST_LINEAR_V1 or resources is not None or not definition.physical_footprints:
+            raise ValueError("explicit physical rigid footprint Q4 definition required")
+        return ExperimentalB2Q4PanelAnalysis(definition.shell_nodes_m, definition.shells,
+            definition.members, (), transformation=definition.transformation,
+            prescribed_offset=definition.prescribed_offset, physical_footprints=definition.physical_footprints)
     if type(definition) is B2MixedReferenceModalDefinition:
         if definition.profile != B2_E4_PL_FAST_LINEAR_V1 or resources is not None:
             raise ValueError("explicit experimental B2 mixed reference-modal definition required")
@@ -254,6 +278,9 @@ def create_analysis(*, definition, resources=None):
 
 
 __all__ = [
+    "B2PhysicalRigidFootprintDefinition", "B2PhysicalRigidFootprint", "B2PhysicalRigidFootprintSelection",
+    "B2PhysicalRigidFootprintWrench", "B2PhysicalFootprintBucklingRequest", "B2PhysicalFootprintBucklingResult",
+    "B2_PHYSICAL_RIGID_FOOTPRINT_DIRECTOR_REFERENCE_V1_EXPERIMENTAL",
     "AdaptiveIncrementControl", "IncrementAttempt", "FiniteIncrementFailure",
     "AdaptiveIncrementExhausted",
     "Q4_ALGORITHMIC_PULLBACK_V1", "BL5_GENERALIZED_MATERIAL_V1", "BL5_COUPLED_J2_MATERIAL_V1",

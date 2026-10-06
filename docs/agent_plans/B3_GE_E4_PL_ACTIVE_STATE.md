@@ -31,59 +31,30 @@ Final positive-congruence guard source/syntax only, numerically unexecuted.
 Raw r8-bl5-body-port-twofold-dev-20261006-v1/:55-path manifest77370006,
 handoff8332a747, non-author review995fe368. Original body V1/V2 remain failed.
 
-## Current body-workflow outcome and restart boundary
+## Body retry remains barred pending explicit approval
 
-NEW script/test/doc r8_bl5_body_port_twofold_workflow is PARTIAL_IMPLEMENTATION;
-experimental represented body work only, not a new solver/public policy.
-Original immutable operator wheelb3d5f572/site424 modules and all242 actual imports
-verified; exact CI/affinity[0]/pools1/JIT-off/unforced backend. Saved continuum and
-prepared load/density/common-wrench preflight match original V2 exactly.
-Five consumer tests PASS0.32s, including complete mocked run-to-material receiver.
-CORRECTION: the earlier reviewer/root slot diagnosis was WRONG and withdrawn.
-Authoritative current/immutable owner source stores BEAM-LOCAL slots; the original
-probe consumer was correct. The recommended global-only gather introduced wrong
-reads. No beam/material evaluation reached that path. Historical review preserved.
-Source-only repair now adds shell_count to local slots for BOTH parts; actual
-material-gather/cell API regression added with distinct shell/beam values. Two AST
-parses PASS; tests UNEXECUTED, no numerical job. Final script a0dfea5e/tests bb5c3d5d/
-doc3e72e9fb; independent withdrawal/repaired-source review5eb225b6. New slot-repair
-raw:6-file manifest d0cade4f/handoff fb5b0e52, all41 earlier raw bytes unchanged.
-Runtime approval remains pending; source review is not numerical acceptance.
-
-Attempt V1 FAILED at core fixed-index type admission (numpy.int64 vs Python int),
-BEFORE factorization/linear solve. One solver INVOCATION, zero body linear solves;
-no shell/beam response, material evaluation or compliance result. Runtime label
-BODY_RHS_STARTED is preserved as invocation intent; traceback proves actual stop.
-Supervisor3.104208s/180613120B sampled tree/pools1. PID124584 verified absent.
-Caller fix tuple(int(i)...) and improved mocked native-int admission assertion are
-saved; superseded by the unexecuted slot repair above. No core/physical change.
-
-Raw r8-bl5-body-port-twofold-specimen-dev-20261006-v1/:41-file manifest
-raw-artifact-sha256.json SHAa9bc308a31b8d3d120c651a4c57f448f4d59a84e91fd40f4e7797145ddc9ec5e;
-handoff SHA f194319901654b9e918d63f2b81006525f0e57b6e194df58ef0eb62038ce8506.
-Root verifies41 raw, three final source snapshots, seven executed source/two tools,
-424 operator bytes and immutable wheel. Non-author source reviewf2e741ef remains
-exact-version scoped; no scientific or different-family acceptance follows.
-
-Automatic approval review REJECTED a second job under no-rerun-after-first-body-
-invocation restriction. Rejection record retained; no second command/job executed.
-Root requested explicit user approval for ONE corrected conditional job; answer
-PENDING is not authority. NO numerical launch until explicit approval arrives.
-On approval, retain V1 bytes and use new versioned outputs/tooling. Same shell
-K/load/clamps/scales/gates FIRST; STOP on any failure. Beam only after all shell
-gates pass; max3corrections per body, one conditional job, no further retry.
-Question: does the represented solution remove the quiet-row obstruction? If both
-bodies pass, compare effective same-density work within common-trace limitations;
-no sole-cause allocation, connection selection or accuracy claim from this alone.
-
-Material consumer is strictly virgin ELASTIC quadratic superposition ONLY:
-same-origin pHi/pLo responses, both returned gradient halves, zero reference
-energy/gradient, unchanged history/dissipation, actual individual/combined elastic
-guards, original reference J acting on both pose parts. Energy includes EHi+ELo+
-pHi dot gradPsi(pLo); no negative mixed-block energy or collapsed input. Failed
-computed material fields are recorded CALCULATED_NOT_VALIDATED. Material stage
-not reached. No coupled calibration/refinement/external/F03 job permitted here.
-Same author owns NEW workflow/test/doc/raw; root owns note/matrix/Git/contracts.
+Twofold body workflow is PARTIAL_IMPLEMENTATION, not a solver/public policy.
+V1 FAILED at numpy.int64 fixed-index admission BEFORE factorization/linear solve;
+one invocation, zero body responses/material/compliance. PID124584 terminal;
+3.104208s/180613120B sampled tree. Caller int conversion saved, unexecuted.
+Earlier root/reviewer beam-slot diagnosis was WRONG and withdrawn: owner slots
+are BEAM-LOCAL; gather adds shell_count for BOTH parts. No material evaluation
+used the wrong recommendation. Source-only slot repair a0dfea5e/testbb5c3d5d/
+doc3e72e9fb, two AST checks, new regression numerically UNEXECUTED.
+Raw r8-bl5-body-port-twofold-slot-repair-dev-20261006-v1/: manifestd0cade4f/
+handofffb5b0e52/review5eb225b6; all41 prior raw bytes unchanged. Original wheel
+b3d5f572/site424/242imports and prior five mocked consumer tests remain scoped.
+Raw r8-bl5-body-port-twofold-specimen-dev-20261006-v1/ retains41-file manifest
+SHAa9bc308a/handofff1943199/withdrawn source-reviewf2e741ef. Full prior restart
+contract is preserved at Git c15fee:docs/agent_plans/B3_GE_E4_PL_ACTIVE_STATE.md.
+Automatic approval review REJECTED second job; explicit user answer PENDING.
+NO launch/repeated question/workaround. If approved: one versioned conditional
+job, unchanged shell FIRST/STOP on failure, beam only after shell passes,
+max3corrections/body/no retry; no sole-cause/law-selection/accuracy claim.
+Material consumer is virgin ELASTIC quadratic superposition only: two response
+parts and returned gradient halves, original J, EHi+ELo+crosswork, zero reference,
+unchanged history/dissipation and individual/combined elastic guards. Actual
+material stage never reached. No calibration/refinement/external/F03 authority.
 
 ## Delivered mixed reference modes and current B2 buckling slice
 
@@ -123,17 +94,33 @@ V1 extra sibling-origin guard FAILED BEFOREtests,0tests; V2 samewheel/site passe
 PinnedCI/affinity0/pools1/Numba1/JIToff/unforced before/after;37.6709s222101504B
 sampled process-tree RSS, terminal. ANYmesher module0.5.1/distribution0.5.0 both
 recorded; sibling origins/init bytes match previous installed development.
-Raw r8-b2-reference-buckling-installed-dev-20261006-v1/: finalmanifest/handoff
-and root-installed-verification-v1.json. No full package-graph/qualification claim.
-NEXT: B2 physical covariance/remaining prestress and attachment obligations;
-use current complete programme, reuse passed scopes. Body approval PENDING;
-no body/F03/closedcampaign restart. No live owned job. Same sustained author,
-non-author review and root integration; Mistral/local cached unavailable.
+Raw r8-b2-reference-buckling-installed-dev-20261006-v1/ retains finalmanifest,
+handoff/root verification; no full package-graph/qualification claim.
+NEW physical rigid-pad B2 family is SOURCE DEVELOPMENT VERIFIED, not qualified.
+Separate five-row position/director law transfers normal torque through arms;
+complete Q4 patch required. Old six-row nodal-spin/POINT identities unchanged.
+Native physical bending chart term excludes PL/drilling; nodal Exp precedes
+interpolation. Stress tensor/frame/polarity conversion corrected both B2 spectral
+families under explicit V2 kernel identity; element equations unchanged.
+20unique PASS by impact reuse, not a full20 campaign. Independent scalar work,
+actual-C.T wrench/rigid-path/covariance, combined director reaction, full-pencilQZ,
+public static/buckling and refusal/cancellation controls pass. Original square
+POINT factor24.60872920125391 retained; new pad factor0.16324601652203263.
+V1 sevenFAIL/V2 threeFAIL preserved; affected/new V5eightPASS11.648s.
+Source873f5281/panel137bcc6e/buckling133b7b2d/facaded34b1ae2/test837f1be4.
+Raw r8-b2-physical-rigid-footprint-dev-20261006-v1/: manifestV2 SHA2df35ccb,
+root-source-verification-v1.json and non-author code-review-closure-v5.md.
+Root verifies89evidence/7source/42snapshot bindings/246actualimports; all serial
+jobs terminal/within resource controls. Different-family acceptance remainsOPEN.
+NEXT installed exact-source verification, then public full-model units/member-
+reversal and physical/external/drilling/refinement obligations. New mixed POINT/
+pad, batches/modes/S3/lines/distributing breadth and completeF04/F12/B10/B14 OPEN.
+Body approval PENDING; no body/F03/closedcampaign restart. No live owned job.
 
 ## Preserved restrictions and history
 
 Max3 workers/ONE numerical job. DEV600s/2GiB,affinity[0],pools1,JIT-off, exact CI
-site-network-v2/trusted Python314 WMI, unforced backend. Owned work terminal.
+site-network-v2/trusted Python314 WMI, unforced backend. No concurrent benchmarks.
 FormalF03 UNCONSUMED: never execute/copy/substitute its prepared driver. NEVER
 inspect/traverse/copy/archive us3-modal-canary; no Get-CimInstance. FrozenG3c,
 closedFy/pressure/native80/material/turning/adaptive1.01 authorities binding.
@@ -143,6 +130,5 @@ PR62 NONPASS/local02ca395e unpushed. No push/main merge/publication authority.
 
 V6 material event targets FAILED; V7 full post-switch compound merit worsened,
 no commit/new product. Preserve4219ad1f/ec9e78b5 and original strict test/example.
-All prior GE/B2/POINT/footprint and source-bound installed scopes remain distinct.
-Full history, raw identities, failures and acceptance dispositions are in Git and
-the append-only matrix; no earlier evidence is reinterpreted or overwritten.
+Prior scopes remain distinct; Git and append-only matrix retain all historical
+identities/failures/dispositions. Mistral/local cached unavailable; no reprobes.

@@ -11,7 +11,7 @@ from scipy.sparse.linalg import LinearOperator, eigs, ArpackError
 
 POLICY = "B2_PHYSICAL_REFERENCE_GREEN_POINT_BUCKLING_V1_DEV"
 PORT_POLICY = "B2_GEODESIC_MIDFRAME_PROPER_POLAR_SECOND_VARIATION_V1_DEV"
-Q4_KERNEL_POLICY = "Q4_QUALIFIED_REFERENCE_RECOVERED_N_M_HOMOGENEOUS_SECOND_MOMENT"
+Q4_KERNEL_POLICY = "Q4_QUALIFIED_REFERENCE_RECOVERED_N_M_HOMOGENEOUS_SECOND_MOMENT_PHYSICAL_TO_GP_FRAME_V2_DEV"
 S3_KERNEL_POLICY = "S3_V2D_FROZEN_THIN_UNIFORM_MEMBRANE_OMITS_PHYSICAL_SECOND_MOMENT"
 
 class _BucklingNumericalFailure(RuntimeError):
@@ -229,6 +229,25 @@ def point_green_hessian(law, vertices, member, station, offset, multiplier):
     response=joint.evaluate(np.stack((law.shell_reference_m,law.beam_reference_m)),law.reference_frames,np.asarray(multiplier))
     return port.T@response.chart_hessian[:12,:12]@port+np.einsum('i,iab->ab',response.residual[:12],curvature)
 
+@dataclass(frozen=True)
+class B2PhysicalFootprintBucklingRequest(B2ReferenceBucklingRequest):
+    """Opt-in five-row Q4 physical rigid-footprint spectral operation."""
+
+@dataclass(frozen=True)
+class B2PhysicalFootprintBucklingResult(B2ReferenceBucklingResult):
+    policy: str = "B2_PHYSICAL_RIGID_FOOTPRINT_GREEN_BUCKLING_V1_DEV"
+
+def physical_footprint_capabilities(owner):
+    from ._stiffened_shell_b2_physical_rigid_footprint import BUCKLING_POLICY
+    reasons=[]
+    if not getattr(owner,"_physical_footprint_law",False): reasons.append("physical footprint family required")
+    if owner._closed: reasons.append("owner closed")
+    if owner.point_ids: reasons.append("mixed POINT / physical footprint spectral operation unavailable")
+    if np.any(owner._u0 != 0.): reasons.append("prescribed prestress split unavailable")
+    if any(len(shell.node_ids)!=4 for shell,*_ in owner._buckling_shells): reasons.append("physical footprint buckling requires Q4")
+    return B2ReferenceBucklingCapabilities(not reasons,tuple(reasons),policy=BUCKLING_POLICY,
+        scope="zero-prescription Cartesian dead-force Q4 endpoint complete physical rigid footprints",shell_kernel_policies=(Q4_KERNEL_POLICY+":NATIVE_PHYSICAL_EXP_DIRECTOR_FIRST_WORK_PULLBACK",))
+
 def capabilities(owner):
     reasons=[]
     if owner._closed: reasons.append("owner closed")
@@ -276,18 +295,32 @@ def compile_geometric(owner, request, preload, safe_point=lambda stage: None):
             state={"membrane_compression":-recovered[0,:3]}
             kernel_policy=S3_KERNEL_POLICY
         else:
-            state={"membrane_compression_at_gauss":-recovered[:,:3],
-                   "bending_compression_at_gauss":-recovered[:,3:6],
-                   "stress_second_moment_at_gauss":-recovered[:,:3]*shell.thickness_m**2/12.}
+            from ._stiffened_shell_b2_physical_rigid_footprint import q4_kernel_frame_resultants
+            kernel_resultants=q4_kernel_frame_resultants(element,owner._buckling_model.mesh,material,local_u,recovered)
+            state={"membrane_compression_at_gauss":-kernel_resultants[:,:3],
+                   "bending_compression_at_gauss":-kernel_resultants[:,3:6],
+                   "stress_second_moment_at_gauss":-kernel_resultants[:,:3]*shell.thickness_m**2/12.}
             kernel_policy=Q4_KERNEL_POLICY
         # Existing shell KG uses compression positive; convert exactly once.
         local=-element.compute_geometric_stiffness_matrix(owner._buckling_model.mesh,material,state)
+        if getattr(owner,"_physical_footprint_law",False):
+            from ._stiffened_shell_b2_physical_rigid_footprint import q4_exp_director_chart_correction
+            local=local+q4_exp_director_chart_correction(element,owner._buckling_model.mesh,material,local_u)
+            kernel_policy += ":NATIVE_PHYSICAL_EXP_DIRECTOR_FIRST_WORK_PULLBACK"
         _scatter(rows,cols,values,slots,local)
         provenance.append((shell.shell_id,kernel_policy,hashlib.sha256(recovered.tobytes()).hexdigest()))
     for point,law,vertices,member,slots in owner._buckling_points:
         safe_point("buckling point multiplier curvature")
         local=point_green_hessian(law,vertices,member,point.station,point.offset_local_m,multipliers[point.point_id])
         _scatter(rows,cols,values,slots,local)
+    if getattr(owner,"_physical_footprint_law",False):
+        all_lambda=np.asarray(preload.constraint_multipliers)
+        for item in owner._footprint_incidence:
+            safe_point("buckling physical footprint multiplier curvature")
+            slots=tuple(item.shell_slots)+tuple(item.beam_slots)
+            local=item.multiplier_hessian(all_lambda[item.row_start:item.row_start+5])
+            _scatter(rows,cols,values,slots,local)
+            provenance.append((item.footprint_id,item.shell_node,"physical_director_five_row",hashlib.sha256(item.constraint_hessians.tobytes()).hexdigest()))
     g=sparse.coo_matrix((values,(rows,cols)),shape=owner._K.shape).tocsr()
     if not np.isfinite(g.data).all(): raise ValueError("initial-stress assembly not representable")
     digest=hashlib.sha256((POLICY+PORT_POLICY+repr(provenance)).encode())
@@ -301,8 +334,10 @@ def solve(owner, request, *, cancellation=None):
     from .control import CancellationToken,SolveCancelled
     from .linalg import factorize_cached,MatrixClass
     from ._stiffened_shell_b2_q4_panel_experimental import _scaled_point_kkt,_modal_scaled_residual
-    if type(request) is not B2ReferenceBucklingRequest: raise ValueError("typed physical B2 reference-buckling request required")
-    admission=capabilities(owner)
+    physical=type(request) is B2PhysicalFootprintBucklingRequest
+    if type(request) not in (B2ReferenceBucklingRequest,B2PhysicalFootprintBucklingRequest): raise ValueError("typed physical B2 reference-buckling request required")
+    result_type=B2PhysicalFootprintBucklingResult if physical else B2ReferenceBucklingResult
+    admission=physical_footprint_capabilities(owner) if physical else capabilities(owner)
     if not admission.eligible: raise ValueError("; ".join(admission.reasons))
     load=np.asarray(request.preload)
     if load.shape != owner._u0.shape or np.any(load.reshape(-1,6)[:,3:] != 0.): raise ValueError("Cartesian dead nodal forces only; rotational couples unsupported")
@@ -318,7 +353,7 @@ def solve(owner, request, *, cancellation=None):
         preload=owner.solve_linear(load)
         safe("buckling after reference preload")
         if preload.status != "completed":
-            return B2ReferenceBucklingResult("failed",preload_result=preload,
+            return result_type("failed",preload_result=preload,
                 failure_reason="reference preload status "+str(preload.status)+": "+str(preload.failure_reason))
         g,identity=compile_geometric(owner,request,preload,safe)
         k=(owner._T.T@owner._K@owner._T).tocsc(); c=(owner._C@owner._T).tocsc()
@@ -371,8 +406,8 @@ def solve(owner, request, *, cancellation=None):
             if equation>1e-8 or constraint>1e-9: raise _BucklingNumericalFailure("buckling physical equation or constraint residual failed")
             modes.append((float(lam),tuple(physical),tuple(x[n:]),equation,constraint))
         modes.sort(key=lambda item:item[0]);safe("buckling before publication")
-        return B2ReferenceBucklingResult("ok",*(tuple(m[i] for m in modes) for i in range(5)),preload,identity)
+        return result_type("ok",*(tuple(m[i] for m in modes) for i in range(5)),preload,identity)
     except SolveCancelled as exc:
-        return B2ReferenceBucklingResult("cancelled",preload_result=preload,identity=identity,failure_reason=str(exc))
+        return result_type("cancelled",preload_result=preload,identity=identity,failure_reason=str(exc))
     except (ArpackError,_BucklingNumericalFailure) as exc:
-        return B2ReferenceBucklingResult("failed",preload_result=preload,identity=identity,failure_reason=str(exc))
+        return result_type("failed",preload_result=preload,identity=identity,failure_reason=str(exc))

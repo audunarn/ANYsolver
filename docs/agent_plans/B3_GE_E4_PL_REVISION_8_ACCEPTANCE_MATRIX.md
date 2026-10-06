@@ -3494,3 +3494,69 @@ refinement/different-family, scale/platform/consumer and release duties remain.
 Evidence .qualification/b3-ge-e4-pl/r8-b2-reference-buckling-installed-dev-20261006-v1/,
 worker-installed-manifest-v1.json and root-installed-verification-v1.json.
 No body retry/formalF03/closedcampaign/sibling edits/main push/publication authority.
+
+
+## 2026-10-06 physical B2 rigid-footprint mathematical contract
+
+Implementation IN_PROGRESS; F04/F12/B10/B14 and aggregate acceptance remainOPEN.
+Root adopts the independently reviewed NEW five-row rigid-position/director law,
+separate from all existing six-row nodal-spin/POINT identities. Complete selected
+Q4 patch mandatory; physical normal torque uses translation arms. Exact reference
+work derivatives and hemisphere domain retain physical director spin freedom.
+Review exposed existing linear-director Q4 G versus Exp-director attachment chart
+mismatch. Adopted correction uses native physical bending firstwork, excludes
+PL/drilling, and enters once under NEW footprint policy only. Directors rotate
+nodally before interpolation; exponential of interpolated rotations is different.
+Independent fixed N/M scalar stress-work Hessian and native firstwork identity,
+nonzero director reaction, physical wrench/covariance/refusal/cancellation and
+actual public static/full-pencil buckling checks remain required and unexecuted.
+Review: .qualification/b3-ge-e4-pl/r8-b2-physical-rigid-footprint-dev-20261006-v1/
+independent-contract-review-v1.md. This is supporting distinct-author OpenAI review;
+different-family scientific acceptance remains unmet. Prior sourcec15fee unchanged
+at adoption; source candidate owned by sustained implementation author.
+Ordinary focused developer check/repair loop permitted: ONE numerical job,600s/
+2GiB, affinity0/pools1/Numba1/JIToff/exactCI/unforced. Frozen source/input snapshots,
+actual imports, failed versions and resource receipts retained. No installed
+campaign, body retry, formalF03, closedcampaign, sibling, main/push/release grant.
+
+
+## 2026-10-06 physical B2 rigid-footprint source development verified
+
+Implementation IMPLEMENTED_NOT_QUALIFIED; completeF04/F12/B10/B14/G4B OPEN.
+NEW five-row complete-Q4-patch rigid-position/physical-director family provides
+reference-linear static, selected compensated actual-C.T wrenches and separately
+selected conservative reference buckling. Existing six-row nodal-spin/POINT
+identities preserved. New POINT coexistence, batches and modes explicitly refuse.
+Root adopted chart-completion and actual stress-frame representation repairs.
+Native physical firstwork, excluding PL/drilling, supplies nodal-Exp-before-
+interpolation chart term ONCE; pad curvature enters ONCE. Q4 native physical
+N/M re-expressed in each inherited GP frame with bending director polarity,
+under explicit V2 kernel identity in BOTH experimental B2 spectral routes.
+No element equation, physical tolerance, default selector or packageversion change.
+Final source module873f5281/panel137bcc6e/buckling133b7b2d/facaded34b1ae2,
+test837f1be4/example084dec85. Full hashes bound by worker-manifest-v2.json
+SHA2df35ccbdf1a98749d9a80b5c01f232049e7ef2033829975d398d0b62274c609.
+20 unique PASS by impact reuse, not a clean20case campaign. V1 sevenFAIL and
+V2 threeFAIL preserved; repaired affected cases V3threePASS/V4fourPASS; changed
+frame/chart/public route V5eightPASS0fail/error/skip11.648s. Legacy two static
+full-KKT/dense-oracle controls and old square POINTfactor24.60872920125391 pass.
+New public two-shell/two-member workflow static completed/bucklingok, factor
+0.16324601652203263, production_qualified=False. Independent complete frozen
+N/M thickness Green scalar controls cover square/distorted globally rotated
+Q4 and both director polarities. Combined nonzero director reaction distinguishes
+omitted/doubled chart contributions; it is a local physical balance construction,
+not a full new public bending-preload solve. Wrench/actual-update/rigid-path work,
+normal-spin release, covariance, ownership/refusal and cancellation controls pass.
+Root independently verified89bounded evidence files,7final source bindings,
+42runtime source snapshots,246actual sourceimports and exact latest20case
+inventory. Unchanged reused test ASTs and physical attachment bodies inspected.
+Pinned numerical CI/affinity0/allpools1/Numba1/JIToff/unforced before/after;
+all five serial processes terminal, below600s/2GiB sampled RSS. V5PID121388
+15.2830162s221806592B; sampling is not peak-memory qualification.
+Supporting distinct-author OpenAI reviews resolve returned code findings, not
+different-family scientific acceptance. Raw r8-b2-physical-rigid-footprint-dev-
+20261006-v1/ retains contractreview/codeV1/closureV5/root-source-verification.
+Installed verification, severe cancellation/reference-datum controls, complete
+public units/member-reversal covariance, external transfer, thickness/refinement/
+drilling sensitivity, mixed/broader attachments and fullF12/B14 remain unfinished.
+No bodyretry/formalF03/closedcampaign/sibling/contact/main/push/release authority.

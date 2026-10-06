@@ -26,6 +26,12 @@ from ._stiffened_shell_b2_nodal_footprint import (
     B2NodalRigidFootprintSelection, B2NodalRigidFootprintWrench,
     compile_footprints, checked_selection, selected_wrenches,
 )
+from ._stiffened_shell_b2_physical_rigid_footprint import (
+    LAW_ID as PHYSICAL_FOOTPRINT_LAW_ID, B2PhysicalRigidFootprint,
+    B2PhysicalRigidFootprintSelection, B2PhysicalRigidFootprintWrench,
+    compile_physical_footprints, checked_selection as checked_physical_selection,
+    selected_wrenches as physical_selected_wrenches,
+)
 from ._b2_physical_linear_definition import (
     PROFILE_ID, CompiledPhysicalB2Member, PhysicalB2Member,
     PhysicalB2OperatorCache,
@@ -290,6 +296,12 @@ class ExperimentalB2Q4FootprintCapabilities(ExperimentalB2Q4PanelCapabilities):
     footprint_law_id: str = FOOTPRINT_LAW_ID
     footprints: tuple[B2NodalRigidFootprint, ...] = ()
 
+@dataclass(frozen=True)
+class B2PhysicalRigidFootprintCapabilities(ExperimentalB2Q4PanelCapabilities):
+    footprint_law_id: str = PHYSICAL_FOOTPRINT_LAW_ID
+    footprints: tuple[B2PhysicalRigidFootprint, ...] = ()
+    normal_spin: str = "independent; normal torque through noncollinear translation arms"
+
 
 @dataclass(frozen=True)
 class ExperimentalB2MixedPanelCapabilities(ExperimentalB2Q4PanelCapabilities):
@@ -466,6 +478,15 @@ class ExperimentalB2Q4FootprintResult(ExperimentalB2Q4PanelResult):
     footprint_ids: tuple[str, ...] = ()
     footprint_wrenches: tuple[B2NodalRigidFootprintWrench, ...] = ()
     footprint_law_id: str = FOOTPRINT_LAW_ID
+
+@dataclass(frozen=True)
+class B2PhysicalRigidFootprintResult(ExperimentalB2Q4PanelResult):
+    footprint_ids: tuple[str, ...] = ()
+    footprint_wrenches: tuple[B2PhysicalRigidFootprintWrench, ...] = ()
+    constraint_multipliers: tuple = ()
+    constraint_gaps: tuple = ()
+    constraint_rows: tuple = ()
+    footprint_law_id: str = PHYSICAL_FOOTPRINT_LAW_ID
 
 
 @dataclass(frozen=True)
@@ -683,11 +704,18 @@ class ExperimentalB2Q4PanelAnalysis:
                  footprints: Sequence[B2NodalRigidFootprint] = (),
                  reference_inertia_policy: str | None = None,
                  reference_boundary_policy: str | None = None,
-                 point_trace_policy: str | None = None):
+                 point_trace_policy: str | None = None,
+                 physical_footprints: Sequence[B2PhysicalRigidFootprint] = ()):
         shells = tuple(shells)
         supplied_members = tuple(members)
         points = tuple(points)
         footprints = tuple(footprints)
+        physical_footprints = tuple(physical_footprints)
+        self._physical_footprint_law = bool(physical_footprints)
+        if physical_footprints:
+            if points or footprints or reference_inertia_policy is not None or reference_boundary_policy is not None or point_trace_policy is not None or self._mixed_shells:
+                raise ValueError("separate Q4 physical footprint static/buckling family required")
+            footprints = physical_footprints
         modal_mass = reference_inertia_policy is not None
         if reference_boundary_policy is not None and (
                 type(reference_boundary_policy) is not str or
@@ -712,7 +740,8 @@ class ExperimentalB2Q4PanelAnalysis:
             raise ValueError("S3 mixed-panel nodal footprints are unsupported")
         admitted_shells = ((Q4PanelShell, S3V2DPanelShell) if self._mixed_shells
                            else (Q4PanelShell,))
-        if any(type(g) is not B2NodalRigidFootprint for g in footprints):
+        footprint_type = B2PhysicalRigidFootprint if self._physical_footprint_law else B2NodalRigidFootprint
+        if any(type(g) is not footprint_type for g in footprints):
             raise ValueError("typed experimental B2 nodal footprints required")
         if (len(shells) < 2 or len(supplied_members) < 2 or not (points or footprints) or
                 any((type(shell) not in admitted_shells if self._mixed_shells else
@@ -774,7 +803,8 @@ class ExperimentalB2Q4PanelAnalysis:
         beam_ids = tuple(sorted(beam_positions))
         beam_index = {node_id: i+len(shell_ids)
                       for i, node_id in enumerate(beam_ids)}
-        footprints, footprint_incidence = compile_footprints(
+        footprint_compiler = compile_physical_footprints if self._physical_footprint_law else compile_footprints
+        footprints, footprint_incidence = footprint_compiler(
             footprints, positions, shells, beam_positions,
             shell_index, beam_index, points)
         total = 6*(len(shell_ids)+len(beam_ids))
@@ -940,15 +970,16 @@ class ExperimentalB2Q4PanelAnalysis:
                     constraint_values.append(law.constraint[local_row, local_col])
         for item in footprint_incidence:
             slots = item.shell_slots+item.beam_slots
-            local = np.column_stack((item.shell_matrix, np.eye(6)))
-            for local_row in range(6):
+            width = getattr(item, "row_count", 6)
+            local = np.column_stack((item.shell_matrix, getattr(item, "beam_matrix", np.eye(6))))
+            for local_row in range(width):
                 for local_col, slot in enumerate(slots):
                     constraint_rows.append(item.row_start+local_row)
                     constraint_cols.append(slot)
                     constraint_values.append(local[local_row, local_col])
         C = sparse.coo_matrix(
             (constraint_values, (constraint_rows, constraint_cols)),
-            shape=(6*(len(points)+len(footprint_incidence)), total)).tocsr()
+            shape=(6*len(points)+sum(getattr(item,"row_count",6) for item in footprint_incidence), total)).tocsr()
         loaded_members = {}
         H = None
         if point_trace_policy is not None:
@@ -1187,13 +1218,20 @@ class ExperimentalB2Q4PanelAnalysis:
         if not np.isfinite(allowance).all():
             raise _NumericalFailure("footprint compatibility allowance is not representable")
         for item in self._footprint_incidence:
-            rows = slice(item.row_start, item.row_start+6)
-            cap = 1e-9*np.array((self._compatibility_length,)*3+(1.,)*3)
+            width = getattr(item,"row_count",6)
+            rows = slice(item.row_start, item.row_start+width)
+            cap = 1e-9*np.array((self._compatibility_length,)*3+(1.,)*(width-3))
             tolerance[rows] = np.minimum(tolerance[rows]+allowance[rows], cap)
         return tolerance
 
     @property
     def capabilities(self) -> ExperimentalB2Q4PanelCapabilities:
+        if self._physical_footprint_law:
+            return B2PhysicalRigidFootprintCapabilities(
+                attachment="physical rigid-region translations and director tangents; five rows per selected node",
+                operations=("solve_linear","buckling","close"),
+                spectral_domain="explicit physical-footprint conservative reference buckling request; modes unavailable without mass contract",
+                footprints=self.footprints)
         if self._modal_only:
             return ExperimentalB2Q4PanelCapabilities(
                 operations=("modes", "close"),
@@ -1328,6 +1366,11 @@ class ExperimentalB2Q4PanelAnalysis:
             constraint_multiplier_modes=multipliers, constraint_rows=tuple(provenance))
 
     @property
+    def physical_footprint_buckling_capabilities(self):
+        from ._stiffened_shell_b2_reference_buckling import physical_footprint_capabilities
+        return physical_footprint_capabilities(self)
+
+    @property
     def reference_buckling_capabilities(self):
         from ._stiffened_shell_b2_reference_buckling import capabilities
         return capabilities(self)
@@ -1347,6 +1390,8 @@ class ExperimentalB2Q4PanelAnalysis:
         eigs rather than eigsh. Explicit free-free owners project verified rigid
         fields in the physical mass metric; loaded/prestressed modes remain out.
         """
+        if self._physical_footprint_law:
+            raise ValueError("physical footprint reference modes require a separately adopted mass contract")
         if self._closed:
             raise ExperimentalB2Q4PanelError("experimental panel is closed")
         if self._point_trace_policy is not None:
@@ -1521,6 +1566,8 @@ class ExperimentalB2Q4PanelAnalysis:
             handle = None
 
     def _panel_result(self, *args, **kwargs):
+        if self._physical_footprint_law:
+            return B2PhysicalRigidFootprintResult(*args,footprint_ids=self.footprint_ids,**kwargs)
         if self._point_trace_policy is not None:
             return B2LoadedPointPanelResult(*args, **kwargs)
         if "body_model_identity" in kwargs:
@@ -1540,7 +1587,10 @@ class ExperimentalB2Q4PanelAnalysis:
             raise ExperimentalB2Q4PanelError("experimental panel is closed")
         if self._modal_only:
             raise ValueError("free-free modal-only policy does not admit static solves")
-        chosen_footprints = checked_selection(selected_footprints, self.footprints)
+        selector = checked_physical_selection if self._physical_footprint_law else checked_selection
+        chosen_footprints = selector(selected_footprints, self.footprints)
+        if self._physical_footprint_law and isinstance(load,B2ReferenceBodyLoad):
+            raise ValueError("physical footprint body-load driver not admitted")
         recovery = _checked_recovery(
             recover_members, {member_id for member_id, _ in self._members})
         try:
@@ -1647,8 +1697,9 @@ class ExperimentalB2Q4PanelAnalysis:
                     (certified or self._explicit_load_resolved(answer, rhs, explicit_rhs))):
                 gap_tolerance = self._footprint_gap_tolerance(u, gap_scale, roundoff_fraction)
             for item in self._footprint_incidence:
-                rows = slice(item.row_start, item.row_start+6)
-                cap = 1e-9*np.array((self._compatibility_length,)*3+(1.,)*3)
+                width=getattr(item,"row_count",6)
+                rows = slice(item.row_start, item.row_start+width)
+                cap = 1e-9*np.array((self._compatibility_length,)*3+(1.,)*(width-3))
                 gap_tolerance[rows] = np.minimum(gap_tolerance[rows], cap)
             if (not np.isfinite(reaction).all() or
                     not np.isfinite(gap).all() or not np.isfinite(projected).all() or
@@ -1728,6 +1779,10 @@ class ExperimentalB2Q4PanelAnalysis:
                 solve_count=self._handle.solve_count,
                 failure_reason="finite panel strain energy required")
         extra = {}
+        if self._physical_footprint_law:
+            extra.update(constraint_multipliers=tuple(map(float,lam)),constraint_gaps=tuple(map(float,gap)),
+                constraint_rows=tuple((item.row_start+j,item.footprint_id,item.shell_node,item.beam_node,component)
+                    for item in self._footprint_incidence for j,component in enumerate(("translation_x","translation_y","translation_z","director_1","director_2"))))
         if isinstance(load, B2ReferenceBodyLoad):
             extra.update(body_model_identity=load.model_identity,
                          body_acceleration_m_s2=load.acceleration_m_s2,
@@ -1744,7 +1799,8 @@ class ExperimentalB2Q4PanelAnalysis:
                          loaded_strain_energy=loaded_energy)
         if chosen_footprints:
             try:
-                extra["footprint_wrenches"] = selected_wrenches(
+                wrench_recovery = physical_selected_wrenches if self._physical_footprint_law else selected_wrenches
+                extra["footprint_wrenches"] = wrench_recovery(
                     self._footprint_incidence, chosen_footprints, lam, gap)
             except (ValueError, OverflowError) as exc:
                 return self._panel_result(
@@ -1784,6 +1840,8 @@ class ExperimentalB2Q4PanelAnalysis:
             raise ExperimentalB2Q4PanelError("experimental panel is closed")
         if self._modal_only:
             raise ValueError("free-free modal-only policy does not admit static solves")
+        if self._physical_footprint_law:
+            raise ValueError("physical rigid footprint batched recovery not implemented")
         chosen_footprints = checked_selection(selected_footprints, self.footprints)
         try:
             chosen = tuple(selected_dofs)
