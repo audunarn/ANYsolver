@@ -10,8 +10,10 @@ documentation checkpointbbe2ae65 precedes this verification checkpoint.
 No protected-original access, sibling edits, other-chat communication,
 publication, merge/release or historical default changes. Local checkpoints
 authorized. Ledger append only; preserve historical bytes. Mistral/local cached
-unavailable; sustained OpenAI authorpair_geometry_swept and supporting reviewer
-curved_switch_review are terminal. Same-family review is not scientific acceptance.
+unavailable; sustained OpenAI authorpair_geometry_swept owns the connected
+deformation/support-reference slice. Author and reviewercurved_switch_review
+are terminal with source handoff; no live numerical job.
+Same-family review is not scientific acceptance.
 
 ## Latest delivery and next action
 
@@ -32,6 +34,22 @@ source reviews/equivalence proofs and final disposition/tooling-revision hashes.
 Next close independent connected deforming/finite-angle and physical support
 work/impulse evidence using the existing owner/controller, one coherent owner
 and independent reference. Review current admission and saved checks before edits.
+New four-file source candidate is implemented and supporting source-reviewed:
+independent four-P1-half-cell axial reference, offset clamped public fixture,
+initial/endpoint/stage full acceleration/work/support/impulse checks and fresh
+4=2+2 restart. Generic Q2 premise rejected against actual affine native fields.
+Product bytes unchanged; all new numerical checks UNEXECUTED. Reuse exact549-
+payload private wheel. New180s request covers independent mass/work/tangent,
+full4-step response, fresh4=2+2 and CLI4; prospective caps30/50/60/20s,
+20s reserve, same953MiB/JITdisabled/Numba1/pools1/one-job limits. Approval absent.
+Source/check decision and raw evidence:
+C:/ANYworkspaceWork/contact_native_connected_deformation_20261006/lead_slice_contract.md.
+Read worker_handoff.md, source_preparation.json and independent_source_review.md;
+frozen manifest/guarded harness follow. No extra2-step response screen or redundant
+build; no4-step claims from2-step execution. Reference is semidiscrete, not spatial
+continuum/finite-angle or fullC7 qualification. Missing initial/full acceleration
+assertions were repaired before source hold. No approval or numerical pass follows
+from source review. Old9.1s remains unavailable to this new scope.
 No additional time-driver stack or repeated completed coverage. Retained internal
 coordinates/inertia, section/spatial qualification and C8 common-stage native/
 shell contact obligations remain. Further numerical scope needs sufficient

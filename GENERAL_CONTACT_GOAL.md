@@ -82,6 +82,17 @@ inertial work, state safety and current admission limits. No new time-driver
 stack, unaffected-test replay or automatic budget renewal. New numerical scope
 requires its own sufficient authority; the9.1s balance is not a completion estimate.
 
+Prepared connected deformation/support slice (all numerical checks UNEXECUTED):
+[derivation and usage](docs/GENERAL_CONTACT_NATIVE_CONNECTED_DEFORMATION_DEV.md).
+The actual native fields give four affine P1 half-cells, not a generic Q2 bar.
+Offset clamped initial strain, independent response/mass/work/support impulse and
+full4=2+2 tests are implemented; direct initial/full acceleration review gap is
+repaired. Product bytes unchanged; reuse verified549-payload wheel. A separate
+180s request covers mass/work, full4-step response,4=2+2 and actualCLI4, with no
+extra2-step screen or weakened gates. Source review is supporting only; approval
+and numerical results remain absent. Raw contact_native_connected_deformation_20261006
+binds exact hashes, reference limits and prospective caps/reserve.
+
 ### Independent represented-path gap: development verified
 
 All 80 coarse and 160 fine loaded-impact Hermite segments now pass a separate

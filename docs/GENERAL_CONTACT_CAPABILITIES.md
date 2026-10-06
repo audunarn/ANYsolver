@@ -2919,3 +2919,13 @@ Separate disposition preserves aggregate history non-success.12jobs used
 peak169820160 bytes. Implemented/tested development, NOT independently accepted,
 NOT released; independent deforming/finite-angle/support and broader C7/C8 open.
 Evidence: d1_review_support/contact_native_connected_transient_20261006/connected_shared_development.md.
+
+
+### 6 October 2026 - connected axial deformation reference source candidate
+
+Four affine P1 half-cells/offset clamped public fixture, initial/full acceleration,
+independent mass/work/support impulse and4=2+2 prepared; source-reviewed only.
+All numerical checks UNEXECUTED, new180s approval absent. Product unchanged,
+verified549-payload artifact reusable. No continuum, finite-angle or fullC7 claim.
+See GENERAL_CONTACT_NATIVE_CONNECTED_DEFORMATION_DEV.md and raw
+contact_native_connected_deformation_20261006; old authorities unchanged.
