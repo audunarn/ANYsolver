@@ -3148,3 +3148,22 @@ versions, failed harnesses and current review: material-dev-20261006-v1 /
 boundary-candidate-v5. No scientific cohort repeated; no fixture/tolerance change,
 new authority, qualification, main/push/release or measured speedup. G3 and full
 G0-G6/F01-F13/V01-V28/B01-B18 completion remain OPEN.
+
+## 6 October 2026 - native material Q4 event candidate v6
+
+Prospective development disposition only; earlier matrix/evidence bytes remain unchanged.
+Candidate source is based on1bc4dd4f; exact six-file hashes are handoff-v6.json.
+Evidence root: .qualification/b3-ge-e4-pl/r8-native-fibre-bl5-material-dev-20261006-v1/j2-unblock-dev-v6/.
+
+| Obligation | Implementation | Qualification/disposition | Exact evidence and limits |
+|---|---|---|---|
+| Original elastic-shell/fibre fixed-predecessor rich-direction check | Existing operator | PASSED scoped two-fine-stencil smooth-branch criterion | Paired-v1 keeps original field/all146 rows/W/floor/K0/h. Actual signed branches and affine fixed-origin material path certify finer1e-5/1e-6 errors4.79547e-10/2.23278e-9 against1e-5; independent-paired-review-v1.md SHA539662f29ff08fdaa1aba3f01084e0b8c15b824fde9828b83c7514ccf18ba98a. Coarse +1e-4 crosses one fibre; historical strict pytest remainsFAIL and source/test unchanged. No whole-matrix/J2/global claim. |
+| Q4/fibre event trial proposal | IMPLEMENTED_NOT_QUALIFIED | FAILED full original remaining target | New-policy-only Q4 predictor uses unchanged actual layer map, fixed origins, J2 cutoff and owned cache. Helper-v1's4FAIL/20PASS preserved; repaired helpers-v2 25PASS. Independent source review closes offset-cache finding, establishes no route pass. Candidate-screen-v1 rejects1/.9375/.90625 at originalNewton24; no commit, .875/gen3 checkpoint byte-equal.68.556622s/177401856B/sampledpools1, explicit failed exit1. No wheel, acceptance or speedup claim. |
+| Numerical-switch obstruction | Saved-data diagnosis | Decision changed; no semismoothness/sole-cause claim | Actual Q4 switch correlates with merit increase3.47e-12; smaller elastic trial gives only2.78e-17 reduction before budget exhaustion. candidate-obstruction-v1.json/source retain all final groups, including terminal-parent duplicate classification. Stop further rounding-only/event-root iterations; A directional errors remain unadjudicated. |
+| Compound scratch candidate | NOT_STARTED | Prospective route adopted; benefit UNPROVEN | independent-transition-decision-v1.md SHA358aec32afb0c1ff10867e5fbbc64b52bded50857dabc50a02de1418be7971c8. Actual post-switch R/K correction remains uncommitted and must strictly reduce ORIGINAL parent merit. Charge both trial assemblies to existing13 slots and every extra solve to original24 correction cap. Same charts/origins/cancellation/refusal/atomic physical gates; no slack/tolerance/physics/default change. Separate bounded implementation/execution brief required. |
+
+Handoff SHAaa251fbf32e80d20e754017092bd456653a573c9364694d006541302ed9c8d0f;
+293-file manifest SHAb5c53d48edad809b30fbb003f16f4c1e577ae715f8dfa079db2cb5dd8300b1a9.
+Exact response/global-solve counts retained; discarded internal constitutive iteration totals are missing.
+Old760/779/16read/33local/184v5 and424 older installed sources preserved. Numerical leaseRELEASED;
+owned processes0. No new installed artifact, family/external acceptance, G0-G6 closure or release.

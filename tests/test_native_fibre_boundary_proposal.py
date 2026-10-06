@@ -98,6 +98,8 @@ def test_driver_cache_state_origin_generation_and_legacy_dispatch():
     driver.owner=owner; driver._beam_nodal=0; driver._beam_origins=(origin,)
     state=SimpleNamespace(resultants=np.array([payload.resultants]))
     driver._native_boundary_trial=(state, driver._beam_origins, 5, ((0,payload),))
+    driver._shell_origins=()
+    driver._q4_boundary_trial=(state, driver._shell_origins, 5, ())
     full=np.r_[np.zeros(6), dp]
     amount=driver._native_boundary_amount(state, full)
     assert amount is not None

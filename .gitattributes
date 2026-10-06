@@ -382,3 +382,6 @@ tests/data/native_s3_fibre_history/** -text
 /src/anysolver/_ge_beam3_fibre_cell.py -text whitespace=cr-at-eol
 /src/anysolver/_ge_beam3_retained_fibre.py -text whitespace=cr-at-eol
 /tests/test_native_fibre_boundary_proposal.py -text whitespace=cr-at-eol
+/docs/agent_plans/history/PRE_J2_UNBLOCK_SHORTENING_20261006.md -text
+/src/anysolver/_stiffened_shell_q4_material_event.py -text whitespace=cr-at-eol
+/tests/test_q4_native_material_event.py -text whitespace=cr-at-eol

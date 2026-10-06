@@ -19,8 +19,10 @@ def local_coordinates(model, element, displacement, *, rotation_anchors=None):
 
 
 def response(model, element, displacement, origin, layers, *, rotation_anchors=None,
-             prepared_correction=None, stable_rotation=False):
+             prepared_correction=None, stable_rotation=False, capture_material_trial=False):
     """Differentiate the unchanged local update from one accepted predecessor."""
+    if type(capture_material_trial) is not bool:
+        raise ValueError("explicit Q4 material trial capture policy required")
     material = model.get_material(element.material_name)
     curve = material.hardening_curve
     if (getattr(element, "formulation_id", None) != FORMULATION_ID or
@@ -47,6 +49,10 @@ def response(model, element, displacement, origin, layers, *, rotation_anchors=N
         raise ValueError("finite Q4 algorithmic trial required")
     residual, spatial_tangent = spatial_response(u, force, tangent, differential, second,
                                                  stable_rotation=stable_rotation)
+    if capture_material_trial:
+        from ._stiffened_shell_q4_material_event import capture
+        payload = capture(model, element, u, local, differential, origin, candidate, layers)
+        return residual, spatial_tangent, candidate, payload
     return residual, spatial_tangent, candidate
 
 

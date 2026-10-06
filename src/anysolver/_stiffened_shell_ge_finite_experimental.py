@@ -560,6 +560,7 @@ class FinitePointDriver:
         self._distributing_trial_recovery = None
         self._generalized_trial_recovery = None
         self._native_boundary_trial = None
+        self._q4_boundary_trial = None
 
     def _load(self, actions):
         return _nodal_translation_pattern(self.owner, actions)
@@ -663,8 +664,10 @@ class FinitePointDriver:
         beam_candidates = []
         generalized_material = []
         native_boundary_material = []
+        q4_boundary_material = []
         if owner._bl5_native_material:
             self._native_boundary_trial = None
+            self._q4_boundary_trial = None
         beam_displacement = state.q[
             owner._shell_count:owner._shell_count+self._beam_nodal
         ].reshape(-1, 6)[:, :3]
@@ -706,11 +709,15 @@ class FinitePointDriver:
                     owner._shell_model, element, state.q[slots], origin, 3,
                     rotation_anchors=anchors)
             elif owner._definition.q4_pullback_policy == Q4_ALGORITHMIC_PULLBACK_POLICY:
-                force, tangent, candidate = q4_algorithmic_response(
+                q4_response = q4_algorithmic_response(
                     owner._shell_model, element, state.q[slots], origin, 3,
                     rotation_anchors=anchors,
                     prepared_correction=self._q4_corrections.get(eid),
-                    stable_rotation=owner._distributing_material)
+                    stable_rotation=owner._distributing_material,
+                    **({"capture_material_trial": True} if owner._bl5_native_material else {}))
+                force, tangent, candidate = q4_response[:3]
+                if owner._bl5_native_material and q4_response[3] is not None:
+                    q4_boundary_material.append((tuple(map(int, slots)), q4_response[3]))
             else:
                 total, chart_map = (state.q[slots], None) if anchors is None else total_coordinates(state.q[slots], anchors)
                 force, tangent, candidate = corotational_element_response(
@@ -857,6 +864,7 @@ class FinitePointDriver:
         if owner._bl5_native_material:
             self._native_boundary_trial = (state, beam_origins, owner._generation,
                                            tuple(native_boundary_material))
+            self._q4_boundary_trial = (state, shell_origins, owner._generation, tuple(q4_boundary_material))
         return residual, matrix, relative, constraint, tuple(shell_candidates), tuple(beam_candidates)
 
     def _native_boundary_amount(self, state, increment):
@@ -867,6 +875,16 @@ class FinitePointDriver:
                 cached[2] != self.owner._generation):
             raise ValueError('stale native material boundary trial')
         amounts = []
+        shell_cached = self._q4_boundary_trial
+        if (shell_cached is None or shell_cached[0] is not state or
+                shell_cached[1] is not self._shell_origins or shell_cached[2] != self.owner._generation):
+            raise ValueError("stale Q4 material boundary trial")
+        from ._stiffened_shell_q4_material_event import boundary_amount as q4_boundary_amount
+        for slots, material in shell_cached[3]:
+            if material.displacement != tuple(state.q[list(slots)]):
+                raise ValueError("changed Q4 material boundary coordinates")
+            amount = q4_boundary_amount(material, increment[list(slots)], origin=material.origin)
+            if amount is not None: amounts.append(amount)
         retained = self.owner._shell_count+self._beam_nodal
         for i, material in cached[3]:
             operator = self.owner._beam_parts[i][0].operator

@@ -137,3 +137,40 @@ accepted checkpoints, test/resource/import records, failed harness attempts and
 preservation hashes are under the raw root's `boundary-candidate-v5/` directory.
 The candidate remains partial and unqualified; aggregate material/connection,
 chart, scientific and programme authorities remain open.
+
+The subsequent bounded `j2-unblock-dev-v6` capture restored the exact J2 `.875`,
+generation 3, checkpoint and its pending `(.5,1)` controller. The unchanged
+source again rejected `1`, `.9375`, and `.90625`, preserving checkpoint bytes.
+Its final original dyadic group crosses a Q4 layer switch before every available
+cutback: the fixed-origin numerical switch is
+`phi2(C*(strain-ep0)) - sy(alpha0)^2/3 > tolerance*max(sy(alpha0)^2,1)`.
+The saved strain-direction predictor places that switch near `8.63568e-5`,
+below the smallest dyadic `1/4096`. Saved smaller probes decrease actual merit.
+The fine-stencil directional miss is dominated by tiny retained-resultant
+channels; it does not establish a shell tangent defect or a global linear solve
+failure. Independently reviewed elastic-shell fine stencils retain the original
+direction, origins, all-row work weights, norm floor, and `1e-5` criterion;
+errors are `4.79547e-10` and `2.23278e-9`. Its coarse crossing remains preserved.
+
+A new-policy-only candidate now combines the Q4 numerical-switch proposal with
+the physical-fibre proposal. It reuses the current deformation differential and
+admitted `B_eff + z*B_b` layer map, accepted plastic origins, actual return-map
+default tolerance and existing flow lookup. Owned immutable trial metadata binds
+coordinates, history and initial strain/stress offsets; no transient proposal is
+checkpointed. Stable quadratic roots and propagated representation margins are
+local predictors. They do not certify the finite-geometry event or acceptance.
+Full-first trials, 13 candidate evaluations, original solver controls, actual
+strict merit and physical equilibrium/gap checks remain unchanged. Legacy
+adapter responses retain their original three fields when capture is unused.
+
+The authorized changed-source continuation FAILED all three remaining factors
+at the 24-iteration limit. It accepted no state and left `.875`, generation 3,
+checkpoint bytes unchanged. At the final `.90625` trial, proposals near
+`2.495e-14` actually switch the Q4 return map and advance alpha about `6.393e-16`,
+but increase the merit ratio about `3.467e-12`. A smaller elastic trial changes
+merit only `-2.776e-17`; the iteration budget then expires. Thus the proposed
+crossing is real, but does not deliver the original target. Twenty-five focused
+mapping, ownership, schema and refusal tests pass; an earlier helper run's four
+failures and all scientific failures are preserved. No full cohort or new wheel
+was run. The candidate remains experimental, partial and unqualified; original
+strict lifecycle tests, fixtures and criteria are unchanged.
