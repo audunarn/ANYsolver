@@ -409,3 +409,4 @@ tests/data/native_s3_fibre_history/** -text
 /docs/reference_cases/stiffened_shell_ge_mixed_reference_modal.md -text whitespace=cr-at-eol,-blank-at-eof
 /.qualification/b3-ge-e4-pl/r8-ge-mixed-reference-modal-dev-20261006-v1/** -text -whitespace
 /.qualification/b3-ge-e4-pl/r8-ge-mixed-reference-modal-installed-dev-20261006-v1/** -text -whitespace
+.qualification/b3-ge-e4-pl/r8-b2-reference-buckling-dev-20261006-v1/** -text -whitespace

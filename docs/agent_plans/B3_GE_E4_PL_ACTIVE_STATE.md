@@ -97,8 +97,7 @@ algebraic inertia or static mass reduction. Reject unsupported family histories.
 If coordinate/mass compatibility fails, report the specific law/lift obstruction
 rather than inserting a floor. Body retry remains independently blocked.
 OpenAI author/reviewer fallback: Mistral/local cached unavailable, no new probe.
-Author owns modal/owner-dispatch/facade + new mass/tests/example/docs/raw; root
-owns contracts/adoption/note/matrix/Git. Non-author mechanics reviewer separate.
+Modal author/reviewer separate; root owns contracts/note/matrix/Git.
 New raw r8-ge-mixed-reference-modal-dev-20261006-v1/. Root adopts experimental
 V2D linear nodal mid-surface/director kinetics only: triangleG=A/12(ones+I),
 rhoh translation and rho*h**3/12 tangential rotation. This is a declared approximation,
@@ -123,13 +122,15 @@ Wheel5639b79b superseded/unexecuted; installedV2/V3 access guards FAILED BEFORE
 tests. Samewheelhost-install recovery preserved, no ACL/source changes. Raw
 r8-ge-mixed-reference-modal-installed-dev-20261006-v1/: finalhandoff/manifest-v2
 and root-integrated-verification-v1.json. Scientific2% convergence/external/
-different-family and aggregateF07/G4B remainOPEN. Independent B2F12/B14 Read
-identifies centerline axial law, missing general bendingWagner data and physical
-port curvature beyond affinejoint Hessian. NEXT: sustained OpenAI fallback owner
-unblocks/delivers existing B2 point reference-buckling route; early completework
-contract goes to root before numerical execution/physical adoption. Full broader
-F12/B14 remains mandatory. No inventeddata/affine-Hessian accuracy/legacyfloor.
-Body retry needs explicit approval; no F03/closedcampaign restart. Modal terminal.
+different-family and aggregateF07/G4B remainOPEN. NEXT B2point reference-buckling:
+root adopts objective beam midframe/shell polar-fit port curvatures and fullGreen
+section work from EXPLICIT source-bound traction quadrature, no inferredWagner.
+Independent firstwork review agrees, requiring factor2shear/chartHessian once.
+Initial zero-u0/deadtranslation/endpoint-only domain. NativeQ4stress kernel; S3
+frozen uniformmembrane approximation openly omits directorsecondmoment; broader
+shell/attachment/prestress F12/B14 remainsMANDATORY OPEN. Sustained OpenAI author,
+no numerics until actual kernel-state/check contract inspected. Body approval
+pending; no F03/closedcampaign restart. Modal jobs terminal.
 
 ## Preserved restrictions and history
 

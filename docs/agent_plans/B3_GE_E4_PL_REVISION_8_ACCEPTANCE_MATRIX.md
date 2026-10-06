@@ -3402,3 +3402,41 @@ S3 kinetics remains declared linear nodal director approximation, not fullMIN3
 velocity enrichment. Final2% spectral convergence/external/different-family and
 aggregateF07/G4B/M4/M5/platform/consumer/release acceptance stay OPEN. No formal
 F03/bodyretry/closedcampaign/push/main/sibling/contact authority consumed.
+
+
+## 6 October 2026 - B2 reference-buckling contract and connected implementation
+
+IMPLEMENTATION_IN_PROGRESS, no numerical test/acceptance claim. Distinct-author
+Read identifies missing physical port second derivatives and general stress-
+weighted Wagner data. Root adopts NEW spectral-only objective geodesic-midframe
+beam trace continuation + equal-weight proper-polar shell fit, with EXACT old
+reference first differential/static K/C retained. Full objective attachment work
+uses chartHessian pullback plus BOTH port Hessian contractions exactly once.
+Member initial-stress law: Green sectional second variation of chi=r+R*rho,
+physical S11/S12/S13, transverse stresszero DECLARED; engineering shear factors2
+required. EXPLICIT owned source-bound sectional (y,z,positiveweights,3x6 traction
+reconstruction) normalized to all6 section resultants supplies higher stress
+moments; no stiffness/mass-derived geometry or hidden self-equilibrated stress.
+Same-resultant different-Wagner counterexample required. Canonical section datum
+and actual reference trace must satisfy firstwork, finite objectivity, derivative
+and frame/reversal checks. Constitutive stiffness and each curvature added once.
+Initial existing B2 point owner: actual proportional reference-linear preload,
+zero prescribedu0, Cartesian dead FORCES/rotationalRHS0, endpointpoints only.
+Nonzero prescribed/fixed preload requires future fixed+proportional split; fixed
+spatial couples need a declared conservative rotational potential, not -m.theta.
+Q4 existing qualified geometric kernel consumes actual native recovered N/M and
+homogeneous stress secondmoment N*h*h/12; unsupported shearprestress refused.
+S3 native guard unchanged: explicit frozen UNIFORM-MEMBRANE approximation only,
+no M/Q; physical director stress secondmoment is OMITTED, not assumed zero.
+Arithmetic admission allowances must have predeclared recovery-operation/work
+bounds, never values tuned to observed specimens. Full S3 bending/secondmoment,
+Q4 shear, interior loaded ports, weak lines/footprints and completeF12/B14 remain
+mandatory OPEN. No full-sectional-shell accuracy or spectral acceptance follows.
+Same implementation owner carries the actual _stiffened_shell_b2_q4_panel_
+experimental owner/operator/data/port/public/test/example/doc slice. Root inspects
+actual kernel-state provenance/frozen checks before a numerical grant; default/
+legacy identities and guards stay intact. Mistral/local cached unavailable;
+OpenAI distinct-author supporting review cannot satisfy different-family gate.
+Single slice doc docs/reference_cases/stiffened_shell_b2_reference_buckling.md;
+raw r8-b2-reference-buckling-dev-20261006-v1/, independent-contract-review-v1.md.
+FormalF03/bodyretry/closed campaigns/release/main/sibling/contact unchanged.
