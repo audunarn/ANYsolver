@@ -3560,3 +3560,33 @@ Installed verification, severe cancellation/reference-datum controls, complete
 public units/member-reversal covariance, external transfer, thickness/refinement/
 drilling sensitivity, mixed/broader attachments and fullF12/B14 remain unfinished.
 No bodyretry/formalF03/closedcampaign/sibling/contact/main/push/release authority.
+
+
+## 2026-10-06 physical B2 footprint installed development verification
+
+Installed DEVELOPMENT verified; completeF04/F12/B10/B14/G4B/G6 remainOPEN.
+Sourced748ed0ce7630b730844e9611ae28cf540d5512a; unchangedversion0.4.7. Wheel
+SHAeeeecbe38a832d8a85c2a02e049230e0364499cdb5ec928faa282afd2cb0e802.
+Fresh36PASS0fail/error/skip:17newphysicalfootprint,17existingreferencebuckling,
+two legacy static full-KKT/dense-oracle cases; all20 source-pass IDs covered.
+Root verifies429source/stage/wheel/hostsite payloads,434source/buildmetadata
+bindings,10explicit inputs,246actualwheel-onlyimports and117readonlydependency
+modules pre/post; source fallback guarded, no product drift/rebuild. Numerical
+CIpins/affinity0/allpools1/Numba1/JIToff/unforced before/after. Actual imported
+sibling origins/init bytes match prior B2installed evidence. ANYmesher module
+0.5.1/distribution0.5.0 bothrecorded; no fullsibling artifactgraph qualification.
+Installed PID117840/session26186 terminalexit0,42.6932988s220889088B sampled
+process-tree RSS; buildPID126516 terminal5.75764s129253376B. Allwithin600s/2GiB,
+serial; sampling is not peak-memory qualification. Both public examples match
+source: newpad staticcompleted/bucklingok/factor0.16324601652203263, oldPOINT
+24.60872920125391/statusok; bothproduction_qualified=False.
+Raw r8-b2-physical-rigid-footprint-installed-dev-20261006-v1/: manifestSHA
+bf7f3b9967144fbd06421e6e0afa010872ee94405d5d1347226407cb081f9c84,
+workerhandoff/root-installed-verification-v1.json. First rootmetadata verification
+wrongly expected429total sourcebindings; actual434 includes five buildmetadata
+files. Failedpremise preserved, corrected without any numerical rerun.
+Supporting non-author sourceclosure/source-wheel equality do not establish
+differentfamily/platform/external/refinement or completeprogramme acceptance.
+Next public units/member-reversal/datum/cancellation/bending-preload controls;
+physical external/drilling/thickness/refinement and broaderattachments stayOPEN.
+No bodyretry/formalF03/closedcampaign/sibling/contact/main/push/release authority.

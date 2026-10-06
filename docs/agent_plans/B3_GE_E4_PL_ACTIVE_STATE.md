@@ -96,7 +96,7 @@ sampled process-tree RSS, terminal. ANYmesher module0.5.1/distribution0.5.0 both
 recorded; sibling origins/init bytes match previous installed development.
 Raw r8-b2-reference-buckling-installed-dev-20261006-v1/ retains finalmanifest,
 handoff/root verification; no full package-graph/qualification claim.
-NEW physical rigid-pad B2 family is SOURCE DEVELOPMENT VERIFIED, not qualified.
+NEW physical rigid-pad B2 family atd748ed0c is SOURCE DEVELOPMENT VERIFIED.
 Separate five-row position/director law transfers normal torque through arms;
 complete Q4 patch required. Old six-row nodal-spin/POINT identities unchanged.
 Native physical bending chart term excludes PL/drilling; nodal Exp precedes
@@ -112,7 +112,14 @@ Raw r8-b2-physical-rigid-footprint-dev-20261006-v1/: manifestV2 SHA2df35ccb,
 root-source-verification-v1.json and non-author code-review-closure-v5.md.
 Root verifies89evidence/7source/42snapshot bindings/246actualimports; all serial
 jobs terminal/within resource controls. Different-family acceptance remainsOPEN.
-NEXT installed exact-source verification, then public full-model units/member-
+Installed DEVELOPMENT now verified: sourced748ed0c/wheeleeeecbe3/version0.4.7;
+36freshPASS cover all20source cases. Root verifies429source/stage/wheel/site
+payloads,434source+build-metadata bindings,10inputs,246actualwheelimports and
+117readonlydependency files. New/old public factors match source exactly.
+Raw r8-b2-physical-rigid-footprint-installed-dev-20261006-v1/: manifestSHA
+bf7f3b99/handoff/root-installed-verification-v1.json. No product drift/rebuild.
+Installed child117840 terminal42.6933s220889088B sampled RSS. No qualification.
+NEXT public full-model units/member-
 reversal and physical/external/drilling/refinement obligations. New mixed POINT/
 pad, batches/modes/S3/lines/distributing breadth and completeF04/F12/B10/B14 OPEN.
 Body approval PENDING; no body/F03/closedcampaign restart. No live owned job.
