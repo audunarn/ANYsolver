@@ -131,8 +131,8 @@ Case/Project/static1/10/100/buckling, fullmapping/refusal/cancel; root99modules,
 65fem+246solver/742deps/reviewc02d0091. RawANYfem/r8-b2-physical-footprint-consumer-20261006-v1/.
 V1/V2 defects repaired; V3wrongstatus/eagerfactor assertions:1PASS2FAIL retained.
 Supervised589.865712700s/conservative601.903202000s inclUNKNOWN ASTbound;
-600s complianceUNPROVEN; zero assumed checks/no livejobs. NEXTsource-first native
-materialBL5 arc via existingservices; no closed targets; checks need fresh authority.
+600s complianceUNPROVEN; zero assumed checks/no numericaljobs. ACTIVEsource-only native
+materialBL5 arc owner native_bl5_material_consumer; no closed targets; checks need fresh authority.
 Body approvalPENDING; fullprogramme/scientific/G3/G6/scale/external remainOPEN.
 ## Preserved restrictions and history
 
