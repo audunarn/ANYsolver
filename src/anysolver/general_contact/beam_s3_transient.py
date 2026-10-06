@@ -108,7 +108,7 @@ def hermite_gap_bounds(manager,start,end,vstart,vend,dt,*,maximum_intervals=512,
     if not np.isfinite(dt) or dt<=0:raise ValueError('positive path duration required')
     vectors=[np.asarray(x,float).reshape(-1) for x in (start,end,vstart,vend)]
     if any(x.shape!=(manager.work_map.shape[1],) or not np.isfinite(x).all() for x in vectors):raise ValueError('invalid complete path vector')
-    if any(np.any(x[manager.shell_dofs[:,3:]]) for x in vectors):raise ValueError('target path rotations must remain zero')
+    if not getattr(manager,'rotational_descriptor',False) and any(np.any(x[manager.shell_dofs[:,3:]]) for x in vectors):raise ValueError('target path rotations must remain zero')
     a,b,va,vb=([Q(float(x)) for x in v] for v in vectors);h=Q(float(dt))
     nodal=[a,[x+h*y/3 for x,y in zip(a,va)],[x-h*y/3 for x,y in zip(b,vb)],b]
     refs=np.r_[manager.beam_reference.ravel(),manager.shell.reference_positions.ravel()]

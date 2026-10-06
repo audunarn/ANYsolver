@@ -29,13 +29,29 @@ All540 held artifact payloads remain unchanged. This is development evidence,
 not general impact or engineering acceptance.
 [Flexural evidence](docs/d1_review_support/contact_c6_beam_s3_20261006/flexural_development.md).
 
-Next: remove the fixed-target-director development limitation through a connected
-beam/S3 transient slice using formulation-owned skin work and actual descriptor
-coordinates. The owner first identifies the concrete geometry/work/inertia
-contract and a discriminating test; adopted physics and admission stay reserved.
+The connected rotational slice now executes through a separate opt-in/V18 profile
+using formulation-owned skin work and physical differential/algebraic coordinates.
+Implemented development route: complete endpoint equilibrium and physical Newmark
+acceleration; total-tangent algebraic velocity; explicitly labelled endpoint
+velocity-difference null-coordinate acceleration (a numerical rate, not a C2 DAE
+derivative). Isolated quadratic first touch can lack finite algebraic acceleration.
+The declared event trajectory is the endpoint Hermite segment in all coordinates,
+mapped by the actual affine S3 skin operator; its bound does not certify a nonlinear
+DAE lift. Preserve work-conjugate nodal wrenches separately from geometric skin
+wrenches and their affine-rotation discrepancy. New opt-in profile/restart identity,
+initial consistency, branch checks, actual rotational work, affected transaction
+and temporal checks are mandatory. Old profile/default identities remain intact.
+Installed active impact/opening, work/wrench, rollback/refusal, exact split restart,
+corrupt secant refusal and protected V17 continuation pass. Actual target rotations
+are tiny (<=6.670e-7rad); no broad finite-rotation or DAE-lift acceptance follows.
+[Rotational evidence](docs/d1_review_support/contact_c6_beam_s3_20261006/rotational_development.md).
+
+Next: resolve remaining one-sided full-line activation and general descriptor
+initial-state contracts from the existing equations, then select the next complete
+outcome with valid execution authority. Do not repeat whole passed impact cases.
 Reuse existing descriptor infrastructure rather than adding artificial mass or
-another driver. Retain the SAME180s C6 purse:108.78753899980802s used,
-71.21246100019198s remaining across17terminaljobs. Keep onejob/953MiB/JIT0/
+another driver. Retain the SAME180s C6 purse:169.8124641997274s used,
+10.1875358002726s remaining across27terminaljobs. Keep onejob/953MiB/JIT0/
 Numba1/pools1/watchdog<=min60s,remaining-1. No held C5/C4/domain/native/archive or
 frozen authority is renewed. General rotation/friction, multiple faces, materials,
 other impact pairings and full C6 acceptance remain separate obligations.

@@ -13,6 +13,14 @@ Work only in C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001 on co
 
 ## Current position
 
+Latest C6 development now includes actual affine S3 rotations and eccentric work
+in shared beam/S3 Newmark impact, with declared algebraic velocity and numerical
+null acceleration, public wrench/rate/path semantics and V18 secant-bound restart.
+Installed work, impact/opening, exact active split, refusal/rollback, protected V17
+continuation and legacy archive wire checks pass. Tiny-angle rotational evidence
+does not establish finite rotation, continuum algebraic acceleration or nonlinear
+DAE-path acceptance. [Evidence](docs/d1_review_support/contact_c6_beam_s3_20261006/rotational_development.md).
+
 Named D1-interior and bounded D2 partial-shell handoffs retain their exact historical independent acceptance. Broader shell geometry/search, beam/native acceptance, friction/continuation, impact, native dynamics, application admission and C9 remain open.
 
 Latest native development: curved physical-fibre beam-pair normal sensitivity, actual press/open/recontact, current-origin plastic-history checks and exact complete-chain restart pass in the private installed artifact. Each body's support/load/contact force and moment errors are below 5.89e-9 against 1e-6. These results do not establish native engineering acceptance or spatial convergence.

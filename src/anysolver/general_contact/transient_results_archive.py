@@ -49,7 +49,8 @@ def _types():
     # Fixed imports of producer classes, never names supplied by an archive.
     from . import transient as t
     from .deformable_beam_s3_static import DeformableBeamS3Results
-    records = (DeformableBeamS3Results, t.ContactResults, t._PairResults, t._PatchResults, t._BeamPlaneResults,
+    from .beam_s3_rotational_transient import RotationalBeamS3Results
+    records = (RotationalBeamS3Results, DeformableBeamS3Results, t.ContactResults, t._PairResults, t._PatchResults, t._BeamPlaneResults,
                t.MultipleBeamRigidResults, t.MultipleShellPlaneResults, t._RadialResults,
                t.FreeRigidBodyState)
     return t.TransientContactResults, {c.__module__ + '.' + c.__qualname__: c for c in records}
@@ -257,7 +258,7 @@ def _decode(value, budget, records, depth=0, gap=False, record_roles=None):
         (record_roles or _record_roles)(records[name],data)
         for field,item in data.items():
             if field in ('shell_force','rigid_force','beam_force','integration_force','target_force',
-                    'shell_moment','rigid_moment','beam_moment','integration_moment','target_moment',
+                    'shell_moment','shell_nodal_work_moment','shell_affine_moment_discrepancy','rigid_moment','beam_moment','integration_moment','target_moment',
                     'centre_of_mass_m','velocity_m_s','acceleration_m_s2','angular_velocity_rad_s',
                     'contact_force_n','linear_momentum_kg_m_s','angular_momentum_about_origin_kg_m2_s'):
                 if type(item) not in (tuple,list) or len(item)!=3:

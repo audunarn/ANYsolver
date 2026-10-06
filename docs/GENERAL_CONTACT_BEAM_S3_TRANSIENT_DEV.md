@@ -127,3 +127,38 @@ initial conditions, law, supports, controller and gap budget. Its independent
 structural/line plus physical-mass energy defect improves relative to the
 preserved actual 10 microsecond case. This is a bounded temporal discriminator;
 broader enforcement and spatial refinement/qualification remain open.
+
+
+## Affine rotational descriptor development profile
+
+`allow_rotational_beam_s3_dev=True` selects
+`ELASTIC_B2_B3_AFFINE_ROTATIONAL_S3_ENDPOINT_HERMITE_DEV_V1` and V18
+checkpoints. Existing fixed-director profiles/settings/identities remain unchanged.
+S3 physical skin positions are exactly the formulation-owned affine map
+`x_skin=x_node+h*d_ref+h*(theta cross d_ref)`, including eccentric nodal couples.
+Rotations carry no artificial mass. Complete endpoint structural/contact equilibrium
+is solved by the shared Newmark driver. Algebraic velocity satisfies the TOTAL
+endpoint tangent equation `Z.T K_total v=0`; physical acceleration remains Newmark.
+Null-coordinate acceleration is the finite endpoint-velocity secant numerical
+record, initialized to zero. It is **not** a continuum C2 DAE acceleration.
+
+The declared event segment is the all-coordinate endpoint Hermite polynomial
+from accepted/candidate u/v, mapped through the affine skin map. Its complete
+hull is bounded for gap/rim/orientation. This certifies that represented segment,
+not a nonlinear DAE lift. Endpoints whose MINIMUM gap lies within geometry-scaled floating touch
+uncertainty refuse, including isolated continuous-H interior minimum touch.
+Other topology changes with strictly negative minimum need not refuse because
+this rate contract uses only the continuous endpoint tangent, not its derivative. Full-line
+one-sided ambiguity is never silently resolved using the open tangent.
+
+New result records retain `shell_moment` as geometric skin moment about origin
+zero and expose `shell_nodal_work_moment` and `shell_affine_moment_discrepancy`.
+The latter is `sum(h*(theta cross d_ref) cross f)`. Forces are physical N,
+moments N*m. This affine small-rotation distinction cannot establish finite
+rotation/angular-momentum acceptance. Initial states must be virgin zero,
+unforced, algebraically force/velocity consistent. General initial/preloaded,
+finite-rotation, friction and true-rim impact remain unsupported.
+
+V18 stores the preceding accepted reduced velocity and actual last duration;
+resume cross-checks the null acceleration against that secant before assembly.
+The zero-step initialization uses the declared zero null-rate seed.
