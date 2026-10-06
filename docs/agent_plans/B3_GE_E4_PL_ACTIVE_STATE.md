@@ -1,14 +1,14 @@
 # Current state — 6 October 2026
 
 Revision8 goal ACTIVE; full G0–G6/F01–F13/V01–V28/B01–B18 and release
-remain incomplete. Previous goal turn: PROGRESS (installed metric verification).
-This turn: PROGRESS (installed physical screen, preserved failure and verified prefix).
+remain incomplete. Previous goal turn: PROGRESS (failed screen and verified prefix).
+This turn: PROGRESS (proportional-load source implemented/reviewed; all tests UNRUN).
 Canonical worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
 branch codex/stiffened-main-reconcile-20261001. Actual Git is authoritative.
 Use the goal/plan/acceptance matrix beside this note. Main/remote untouched.
 No contact-worker communication. Global/repository AGENTS and philosophy apply.
 Mistral/local cached unavailable; OpenAI fallback is not different-family
-scientific acceptance. Max3 workers/ONE numerical job. All owned jobs terminal.
+scientific acceptance. Max3 workers/ONE numerical job. All owned workers/jobs terminal.
 
 ## Current decision and next action
 
@@ -45,7 +45,22 @@ product source changes. Freeze actual inputs before approved execution.
 Capacity ledger257.2597296used/342.7402704remaining; one physical screen CONSUMED.
 Remaining scope does not permit another physical route or parameter tuning.
 NEXT source-only: proportional-load arc from verified.5prefix, same geometry/law,
-with durable checkpoint streaming. New execution needs its own granted inputs.
+F(alpha)=(.5+alpha)*F_full, positive tip-z predictor, existing metric/radius.01.
+Explicit new workflow, never automatic fallback/tuning. Public driver source
+admits ordinary-force seeds and checkpoint reads inside post-commit callbacks.
+Bind the original action record and exact prefix bytes; force recovery's raw
+applied_dead_load=None must not be relabelled as recovered public nodal forces.
+Stream owned checkpoint bytes immediately with each accepted observation.
+Successful continuation would open physical turning assessment; failure or
+timeout preserves the actual prefix and identifies the next obstruction.
+New proportional_workflow/source tests/development doc implemented; historical
+workflow/defaults preserved. Independent source review's cached-checkpoint test
+gap repaired: compare complete public recovery after restore/every refusal.
+Root inspected actual repair. No interpreter/collection/model/solve/build run.
+NEXT: fresh bounded authority for focused old/new checks and one installed
+proportional screen ≤12 steps from exactg3fixture; prefix restart/cancel/refusal
+checks,600s cumulative/60s reserve,CPU0/pools1/JIToff/2GiB/one job proposed.
+Reuse unchanged package/wheel. No budget transfer or automatic physical rerun.
 Failure does not establish instability/law failure; all scientific gates remain open.
 Exact receipts/bindings: capacity-dev/root-result-v2.json. All owned jobs terminal.
 

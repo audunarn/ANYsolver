@@ -8,6 +8,7 @@ from copy import deepcopy
 from dataclasses import asdict, dataclass, fields, is_dataclass
 from hashlib import sha256
 from math import pi
+from pathlib import Path
 
 import numpy as np
 from scipy.spatial.transform import Rotation
@@ -226,7 +227,8 @@ def material_activity(result):
         elastic_fold_interpretation_eligible=not (active or boundary))
 
 
-def observe(result, specimen, order, previous=None, *, seed_actions, arc_direction):
+def observe(result, specimen, order, previous=None, *, seed_actions, arc_direction,
+            arc_base_actions=None):
     """Copy all public state, plus physical load/reaction/work observations."""
     shell, _ = reference_nodes(specimen)
     shell_ids = [n for domain,n in order if domain == 'shell']
@@ -255,6 +257,8 @@ def observe(result, specimen, order, previous=None, *, seed_actions, arc_directi
     count = len(order)
     reactions = np.asarray(result.support_reactions)
     seed_load = declared_load_vector(seed_actions,order,len(reactions))
+    arc_base = (seed_load if arc_base_actions is None else
+                declared_load_vector(arc_base_actions,order,len(reactions)))
     direction = declared_load_vector(arc_direction,order,len(reactions))
     if result.applied_dead_load is None:
         # Ordinary force recovery does not expose applied_dead_load. This exact
@@ -265,7 +269,7 @@ def observe(result, specimen, order, previous=None, *, seed_actions, arc_directi
         provenance = 'declared_seed_actions_times_accepted_public_load_factor'
     else:
         applied = np.asarray(result.applied_dead_load)
-        if not np.array_equal(applied,seed_load+result.amplitude*direction):
+        if not np.array_equal(applied,arc_base+result.amplitude*direction):
             raise ValueError('actual arc load differs from fixed seed plus probe direction')
         provenance = 'actual_public_arc_applied_dead_load_verified_against_affine_law'
     if np.any(applied[6*count:] != 0.):
@@ -462,6 +466,182 @@ def workflow(specimen=Specimen(), *, compression_n=None, probe_n=None,
                     sha256=sha256(raw).hexdigest(),size_bytes=len(raw),checkpoint_bytes=raw))
             report['turning_candidates'] = turning_observations(report['observations'])
     report['initial_elastic_screen'] = initial_elastic_screen(report['observations'])
+    return report
+
+
+VERIFIED_FORCE_PREFIX_SHA256 = '4e7adf0619e8708102e564949922d0ab73fcc41fc75ddd5699b5f62ea64925ec'
+VERIFIED_FORCE_PREFIX_BYTES = 27627
+VERIFIED_FORCE_PREFIX_MODEL = 'ec405c7b2085629ba1e4177a5d517e1ec630dd25db61942c11bfa1b3142b0c43'
+# Exact recorded actions from installed-v1/screen-result.json, not a force law
+# inferred from a checksum or common-origin wrench alone.
+VERIFIED_FORCE_PREFIX_ACTIONS = (
+    ss.NodalAction('shell',9,(-2596.463001005903,0.,103.85852004023613,0.,0.,0.)),
+    ss.NodalAction('shell',18,(-5192.926002011806,0.,207.71704008047226,0.,0.,0.)),
+    ss.NodalAction('shell',27,(-2596.463001005903,0.,103.85852004023613,0.,0.,0.)),
+    ss.NodalAction('beam',109,(-6231.511202414168,0.,0.,0.,0.,0.)),
+    ss.NodalAction('beam',209,(-6231.511202414168,0.,0.,0.,0.,0.)))
+
+
+def read_verified_force_prefix(source):
+    """Only the retained, individually verified ordinary-force prefix is bound."""
+    if type(source) is bytes:
+        raw = source
+    elif isinstance(source,(str,Path)):
+        raw = Path(source).read_bytes()  # Path/open errors intentionally propagate.
+    else:
+        raise TypeError('checkpoint bytes or an explicit checkpoint path required')
+    if len(raw) != VERIFIED_FORCE_PREFIX_BYTES or sha256(raw).hexdigest() != VERIFIED_FORCE_PREFIX_SHA256:
+        raise ValueError('checkpoint differs from the verified generation-three force prefix')
+    return raw
+
+
+def validate_proportional_origin(result, preflight):
+    """Bind actual restored public state; checksums alone do not admit mechanics."""
+    if (result.status != 'completed' or result.generation != 3 or
+        not np.isfinite(result.load_factor) or result.load_factor != .5 or
+        getattr(result,'amplitude',None) is not None or
+        tuple(result.accepted_factors) != (.1,.25,.5) or
+        any(getattr(result,name,None) is not None for name in (
+            'load_programme_identity','body_load','pressure_load','distributed_load')) or
+        preflight['identity'] != VERIFIED_FORCE_PREFIX_MODEL):
+        raise ValueError('verified ordinary-force origin/model/generation/factor required')
+    return float(result.load_factor)
+
+
+def proportional_turning_observations(observations):
+    """Actual proportional-factor sign-change brackets, including restored origin."""
+    candidates = []
+    for a,b,c in zip(observations,observations[1:],observations[2:]):
+        left = b['proportional_factor']-a['proportional_factor']
+        right = c['proportional_factor']-b['proportional_factor']
+        if left*right < 0.:
+            candidates.append(dict(generations=[o['generation'] for o in (a,b,c)],
+                kind='proportional_factor_direction_change_unvalidated'))
+    return candidates
+
+
+def _checkpointed_packet(owner, result, observation):
+    """Read the committed public endpoint inside its post-publication observer."""
+    recovered = owner.recover()
+    if recovered.generation != result.generation or _plain(recovered) != _plain(result):
+        raise RuntimeError('accepted callback differs from committed public recovery')
+    raw = owner.checkpoint()
+    if type(raw) is not bytes:
+        raise TypeError('public checkpoint must return owned immutable bytes')
+    return dict(observation=deepcopy(observation), checkpoint_bytes=raw,
+        checkpoint_sha256=sha256(raw).hexdigest(),checkpoint_size_bytes=len(raw),
+        generation=result.generation, accepted_status=recovered.status)
+
+
+def _retain_checkpointed_packet(report, packet, observer):
+    """No borrowed public arrays or user-mutated callback packet is retained."""
+    report['observations'].append(deepcopy(packet['observation']))
+    report['checkpoint_inventory'].append(dict(generation=packet['generation'],
+        sha256=packet['checkpoint_sha256'],size_bytes=packet['checkpoint_size_bytes'],
+        checkpoint_bytes=packet['checkpoint_bytes'],accepted_status=packet['accepted_status']))
+    if observer is not None:
+        observer(deepcopy(packet))
+
+
+def proportional_workflow(prefix_checkpoint, *, arc_steps=24, cancellation_token=None,
+                          on_state=None, on_accepted=None):
+    """SOURCE_ONLY_UNRUN explicit new route: F=(restored_factor+alpha)*F_full.
+
+    Restores the named verified prefix. It never retries the historical failed
+    force seed. on_state receives complete owned observation and checkpoint bytes
+    for the restored origin and every subsequent committed accepted arc endpoint.
+    It may stream durable evidence under separately granted output authority.
+    """
+    if type(arc_steps) is not int or not 1 <= arc_steps <= 64:
+        raise ValueError('bounded 1..64 accepted proportional arc steps required')
+    if any(observer is not None and not callable(observer) for observer in (on_state,on_accepted)):
+        raise ValueError('callable checkpoint/accepted observers required')
+    raw = read_verified_force_prefix(prefix_checkpoint)
+    specimen = Specimen()
+    estimate = specimen.estimate()
+    preload, probe = load_patterns(specimen,1.1*estimate['euler_clamped_free_n'],
+                                   .02*estimate['euler_clamped_free_n'])
+    full_actions = combine((1.,preload),(1.,probe))
+    if _plain(full_actions) != _plain(VERIFIED_FORCE_PREFIX_ACTIONS):
+        raise ValueError('full actions differ from the retained verified seed source record')
+    report = dict(status='source_candidate',production_qualified=False,capacity_claim=False,
+        route='proportional_full_load_from_verified_force_prefix',specimen=asdict(specimen),
+        full_actions=_plain(full_actions), physical_load_law='F(alpha)=(restored_factor+alpha)*F_full',
+        observations=[],checkpoint_inventory=[],turning_candidates=[],failure=None,
+        requested_arc_steps=arc_steps,accepted_arc_steps=0,
+        input_prefix=dict(sha256=sha256(raw).hexdigest(),size_bytes=len(raw)))
+    with ExitStack() as stack:
+        # Construction/restore/checkpoint/model and writer errors propagate.
+        owner = ss.create_analysis(definition=definition(specimen)); stack.callback(owner.close)
+        preflight = owner.preflight(); report['preflight'] = _plain(preflight)
+        origin = owner.restore(raw)
+        base_factor = validate_proportional_origin(origin,preflight)
+        if owner.checkpoint() != raw:
+            raise RuntimeError('restored ordinary-force prefix checkpoint differs')
+        order = tuple(preflight['arc_metric_node_order'])
+        base_actions = combine((base_factor,full_actions))
+        report['origin_factor'] = base_factor
+        report['origin_generation'] = origin.generation
+        report['base_actions'] = _plain(base_actions)
+        control = ss.ArcLengthControl('shell',18,2,metric_for(order,specimen),.01,orientation=1)
+        report['arc_control'] = _plain(control)
+        phase = 'origin_observation'
+        def record(result, *, restored_origin=False):
+            nonlocal phase
+            phase = 'observation_capture'
+            previous = report['observations'][-1] if report['observations'] else None
+            observation = observe(result,specimen,order,previous,seed_actions=full_actions,
+                                  arc_direction=full_actions,arc_base_actions=base_actions)
+            observation['proportional_factor'] = (base_factor if restored_origin else
+                                                  base_factor+result.amplitude)
+            observation['proportional_factor_provenance'] = (
+                'actual_restored_public_force_factor' if restored_origin else
+                'actual_restored_factor_plus_public_arc_amplitude')
+            if restored_origin:
+                observation['affine_origin_diagnosis'] = dict(amplitude=0.,
+                    provenance='verified_restored_ordinary_force_prefix')
+            phase = 'checkpoint_capture'
+            packet = _checkpointed_packet(owner,result,observation)
+            phase = 'checkpoint_writer'
+            _retain_checkpointed_packet(report,packet,on_state)
+            if not restored_origin:
+                report['accepted_arc_steps'] += 1
+                if on_accepted is not None:
+                    phase = 'accepted_callback'; on_accepted(deepcopy(result))
+            phase = 'arc'
+        record(origin,restored_origin=True)
+        try:
+            for _ in range(arc_steps):
+                before = report['accepted_arc_steps']
+                returned = owner.continue_arc_length(full_actions,control,steps=1,
+                    cancellation_token=cancellation_token,on_accepted=record)
+                if returned.status != 'completed':
+                    report['status'] = 'incomplete_arc_return'
+                    report['returned_status'] = returned.status
+                    break
+                if report['accepted_arc_steps'] != before+1:
+                    raise RuntimeError('completed public arc call did not deliver one accepted endpoint')
+            else:
+                report['status'] = 'bounded_completed'
+        except (ss.ArcSelectionFailure,ss.FiniteIncrementFailure,SolveCancelled) as exc:
+            if phase in ('observation_capture','checkpoint_capture','checkpoint_writer','accepted_callback'):
+                raise
+            report['status'] = 'cancelled' if isinstance(exc,SolveCancelled) else 'typed_failure'
+            report['failure'] = dict(phase=phase,type=type(exc).__name__,message=str(exc))
+            for name in ('attempt','attempts','reason','stage'):
+                if hasattr(exc,name): report['failure'][name] = _plain(getattr(exc,name))
+        recovered = owner.recover()
+        report['recovered_status'] = recovered.status
+        report['recovered_generation'] = recovered.generation
+        if report['observations'][-1]['generation'] != recovered.generation:
+            raise RuntimeError('committed endpoint was not delivered by public accepted observer')
+        if owner.checkpoint() != report['checkpoint_inventory'][-1]['checkpoint_bytes']:
+            raise RuntimeError('retained checkpoint differs from actual committed endpoint')
+        report['turning_candidates'] = proportional_turning_observations(report['observations'])
+        if report['status'] == 'bounded_completed':
+            report['status'] = ('turning_candidate_unvalidated' if report['turning_candidates']
+                                else 'bounded_no_turning_observed')
+        report['initial_elastic_screen'] = initial_elastic_screen(report['observations'])
     return report
 
 
