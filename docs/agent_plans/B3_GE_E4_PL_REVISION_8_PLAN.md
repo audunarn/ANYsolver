@@ -1460,3 +1460,34 @@ Post-test example EOF-only trim preserves AST, original bytes and delta binding;
 all99 package modules unchanged. Raw/author/root disposition retained in ANYfem
 .qualification/r8-native-bl5-consumer-20261005-v1. Different-family/physical/
 scale/platform/plastic BL5 and complete-release gates remain OPEN.
+
+### 6 October — native mixed-shell material consumer development
+
+IMPLEMENTED_NOT_QUALIFIED: solver packagecb252cd1/installed integrationef353ba9
+and ANYfem94a0b0c now exercise native physical fibres with all-S3 or mixed Q4/S3
+J2 through the existing BL5 input/Project workflow. A distinct v6 schema preserves
+v1–v5 meaning, exact native bytes, actual material membership and ordinary nodal
+dead-action admission. Eight unique installed consumer cases pass by impact
+(seven V2 plus one V3); this is not a full-suite or scientific acceptance claim.
+Axial S3 stays elastic with yielded fibres; mixed biaxial S3 and fibres yield.
+Loaded generation3 material history is separate from generation4 recovery.
+Case/Project round-trip, fresh restore/continue, refusal and accepted-prefix
+cancellation are verified. The consumer uses wheel0e1ae7b3/solver375e9e45,
+versions unchanged; root independently verifies99consumer module payloads,
+65consumer+250solver imports and742dependency bytes including117frozen siblings.
+Non-author code/evidence closure71294770 has no consequential finding. Source
+bad-yield-premise failure, pre-test origin failure and root CRLF-reader failure
+remain preserved. UNKNOWN tiny bookkeeping child timings remain explicitly
+conservative containing-tool debits, not reconstructed precision.
+
+Reuse this delivered route. Next advance the existing B2 consumer to the already
+implemented distinct physical rigid-pad static/batch/buckling contracts; preserve
+the historical six-row nodal footprint and POINT selectors. This closes a public
+workflow gap without a new element, attachment law or framework. Impact checks
+remain inside the existing residual authority (36.925389800s); no closed physical
+campaign, F03 or pending body retry is renewed. Scientific/different-family,
+physical/external, complete scale/platform and G0–G6/release requirements stay OPEN.
+Raw consumer evidence and root disposition are in the isolated ANYfem worktree at
+.qualification/r8-native-bl5-mixed-j2-consumer-20261006-v1; the acceptance matrix
+binds exact commits and artifacts. Current active note takes precedence over older
+next-action paragraphs; no main/push/publication action follows this slice.

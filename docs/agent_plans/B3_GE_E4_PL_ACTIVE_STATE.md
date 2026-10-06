@@ -5,7 +5,7 @@ scale/platform/consumer and release/main duties remain incomplete. Use the goal,
 plan and single acceptance matrix beside this note. Canonical worktree:
 C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001.
 Branch codex/stiffened-main-reconcile-20261001; actual git log is authoritative.
-Main untouched. IsolatedANYfem df9d1d7: separately owned material consumer active;
+Main untouched. Isolated ANYfem94a0b0c: material consumer installed DEV verified;
 no contact-worker communication. Global/repository AGENTS and adopted philosophy
 rev2026-09-24.2 apply; cached Mistral/local unavailable, no repeated probes.
 ## Decision and delivered behavior
@@ -122,18 +122,18 @@ Batch source/installed rawdirs are linked in matrix; source manifest1ac0cce9,
 installedd4ad3912/root-installed-verification-v1.json. Post pin fields were not
 separately recorded; pre pins/post runtime+module bytes verified. No G6 claim.
 Non-author code review closed; scientific/different-family acceptance remainsOPEN.
-CURRENT native mixed-J2 BL5 SOURCE/INSTALLED DEVELOPMENT verified:8freshPASS.
-Integratedef353ba9/packagecb252cd1/wheel375e9e45; example5fec6a6 fixed caller.
-All-S3/mixedP1 S3+physical-fibre yielding; Q4elastic; axial fibre-only control.
-DefaultmixedP0 example: loadedgen3 member2/fibre3.96528e-5/S3 2.32933e-6;
-finalgen4 fresh restore/continuation byte-exact. Earlier failures remain preserved.
-Root435bindings/430payloads/250imports/117readonly modules and runtime verified.
-Used402.722117700s/600,remaining197.277882300s; no livejob or authority renewal.
-New-policy fullNewton/one boundary/geometric trials; old guards/criteria intact.
-NEXT active /root/native_bl5_material_consumer: ANYfem isolated consumer/persistence;
-24turns/reserve6,197.277882300s shared remaining. Main dirty work untouched.
+CURRENT native mixed-J2 BL5 SOURCE/INSTALLED DEVELOPMENT:8fresh solver checks.
+Integratedef353ba9/packagecb252cd1/wheel375e9e45; public example5fec6a6.
+All-S3/mixedP1 shell+physical-fibre yielding; Q4elastic; axial fibre-only control.
+ANYfem94a0b0c/wheel0e1ae7b3: strict v6 existing BL5 case/Project consumer.
+SourceV1 7PASS/1wrong axial-yield assertion; saved metadata reuse/V2strict1PASS.
+Installed8 unique by impact(7V2+1V3), persistence/native bytes/refusal/cancel pass.
+Axial S3elastic/fibreyield; mixedP1bothyield; history3/recovery4, exact restart.
+Root99modules/65fem+250solverimports/742dependencies incl117frozen siblings match.
+Independent code/evidence closure71294770; pre-case origin/root LF-reader bugs kept.
+Ledger563.074610200s/600,remaining36.925389800s; no livejob/authority renewal.
+NEXT B2 physical-pad static/batch/buckling consumer; checks within residual authority.
 Body approval PENDING; fullprogramme/scientific/G3/G6/scale/external remainOPEN.
-
 ## Preserved restrictions and history
 
 Max3 workers/ONE numerical job. DEV600s/2GiB,affinity[0],pools1,JIT-off, exact CI

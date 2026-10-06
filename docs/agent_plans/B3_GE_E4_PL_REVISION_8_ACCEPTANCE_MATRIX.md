@@ -3747,3 +3747,36 @@ redundant build/installed module copies remain local and manifest-bound.
 Different-family/scientific/F05/G3/G6, consumer, scale/platform, external and full
 Revision8 completion/release duties remain OPEN. Formal F03 unconsumed; body
 retry approval remains PENDING. No main/push/publication authority.
+
+## 6 October — installed native mixed-J2 ANYfem consumer (development only)
+
+Source ANYfem94a0b0c56d9494ea2555aab65ed17c086e4d461b (isolated consumer);
+solvercb252cd15b6db14688dee1d60341ddfeda9103c6/package integrationef353ba9.
+Consumer wheel0e1ae7b3324410cfd64c4ba1dfd8810e1b6e239de22ba8bfeedcf9bb55cb0315,
+solver wheel375e9e4525c93aaa4e1d75a26bbbd8fb506494064ae3a698e5ea67603c9b5a9b.
+Public existing BL5 case/Project workflow has distinct native-mixed-j2-v6 schema,
+owned native input bytes, all-S3/mixed J2 admission, ordinary dead actions,
+fixed-translation loading/unloading, named histories and fresh checkpoint resume.
+SourceV1 7PASS/1FAIL wrong axial shell-yield assertion; corrected saved metadata
+reuse is not a fresh source pass. V2 strict metadata1PASS. InstalledV2 seven and
+V3 one existing case PASS: eight UNIQUE by impact, no full-eight rerun claim.
+Axial S3alpha0 with fibres1.8259807654843005e-5; mixedP1 S3/fibres both yield,
+physical ID2/generalized ID1 kept separate, historygeneration3/finalrecovery4.
+Restore/continue bytes, refusal/cancellation and four legacy schema controls pass.
+Root verified99 source/wheel/site modules,10 wheel metadata records,65consumer/
+250solver actual imports,742dependency bytes including117frozen sibling files.
+Code/evidence review71294770df412fb377fbbb0e071b4a7f8be2625e30b5cfb80365afebe6d0bf28
+leaves no consequential finding. Different-family/scientific acceptance remainsOPEN.
+Raw in C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/.qualification/
+r8-native-bl5-mixed-j2-consumer-20261006-v1/: handoff-v2.md/final-manifest-v2.json,
+root-installed-verification-v1.json, root-integration-disposition/inventory/index
+verification-v1 and independent-consumer-review-v1/v2 preserve scoped provenance.
+Source premise failure, installedV1 pre-case ANYmaterial-origin guard failure and
+rootauditV1 literal-LF metadata-reader failure remain retained; unchanged artifacts
+used after harness repairs. Exact process-wall receipts are separate from three
+conservative tool envelopes with UNKNOWN child durations. Final563.0746102000534/
+600seconds,remaining36.92538979994663; no jobs/renewed authority/publication.
+IMPLEMENTED_NOT_QUALIFIED only: G0–G6/F01–F13/V01–V28/B01–B18, matched physical/
+external references, scale/platform, final artifact/consumer/scientific and release
+obligations remainOPEN. F03 unconsumed; separate body retry approval PENDING.
+Next existing B2 physical-pad consumer bridge must preserve old nodal/POINT routes.
