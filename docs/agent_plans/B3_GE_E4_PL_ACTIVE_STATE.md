@@ -5,8 +5,8 @@ scale/platform/consumer and release/main duties remain incomplete. Use the goal,
 plan and single acceptance matrix beside this note. Canonical worktree:
 C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001.
 Branch codex/stiffened-main-reconcile-20261001; actual git log is authoritative.
-Main untouched. ANYfem last inspected df9d1d7; no sibling ownership or contact-
-worker communication. Global/repository AGENTS and risk-proportionate philosophy
+Main untouched. IsolatedANYfem df9d1d7: separately owned material consumer active;
+no contact-worker communication. Global/repository AGENTS and adopted philosophy
 rev2026-09-24.2 apply; cached Mistral/local unavailable, no repeated probes.
 ## Decision and delivered behavior
 
@@ -123,15 +123,15 @@ installedd4ad3912/root-installed-verification-v1.json. Post pin fields were not
 separately recorded; pre pins/post runtime+module bytes verified. No G6 claim.
 Non-author code review closed; scientific/different-family acceptance remainsOPEN.
 CURRENT native mixed-J2 BL5 SOURCE/INSTALLED DEVELOPMENT verified:8freshPASS.
-Sourcecb252cd1/wheel375e9e45; example5fec6a6 corrects owner and family attribution.
+Integratedef353ba9/packagecb252cd1/wheel375e9e45; example5fec6a6 fixed caller.
 All-S3/mixedP1 S3+physical-fibre yielding; Q4elastic; axial fibre-only control.
 DefaultmixedP0 example: loadedgen3 member2/fibre3.96528e-5/S3 2.32933e-6;
 finalgen4 fresh restore/continuation byte-exact. Earlier failures remain preserved.
 Root435bindings/430payloads/250imports/117readonly modules and runtime verified.
 Used402.722117700s/600,remaining197.277882300s; no livejob or authority renewal.
 New-policy fullNewton/one boundary/geometric trials; old guards/criteria intact.
-Next: existing isolated ANYfem material consumer/persistence in separately scoped
-assignment; unrelated main dirty work preserved. No new consumer work launched.
+NEXT active /root/native_bl5_material_consumer: ANYfem isolated consumer/persistence;
+24turns/reserve6,197.277882300s shared remaining. Main dirty work untouched.
 Body approval PENDING; fullprogramme/scientific/G3/G6/scale/external remainOPEN.
 
 ## Preserved restrictions and history
