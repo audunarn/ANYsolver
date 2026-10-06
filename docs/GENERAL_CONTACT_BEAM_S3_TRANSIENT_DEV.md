@@ -68,3 +68,62 @@ separate 0.5 N / 0.25 Nm scales, gate 1e-6. Local virtual work and directional
 tangent use 1e-5. The fixture physical gap gate is 10 micrometres. Generalized
 reaction components are not automatically physical moments without the node and
 skin work maps. No general deforming-body energy acceptance is claimed here.
+
+## Separate actual flexural B3 fixture
+
+`general_contact_beam_s3_transient_flexural.py` uses the same installed public
+solver/profile and physical inputs. Its B3 nodal z and ry coordinates are free;
+other beam coordinates and S3 rotations remain declared model constraints.
+The beam's uniform-normal MPC is absent. Initial normal rates have a quadratic
+interior bow and matching ry rates equal to minus the initial w-rate slope.
+The beam's genuine rho*Iy rotary mass remains unchanged. Unequal S3 normal
+rates produce target deformation. The earlier uniform fixture/results remain
+separate evidence.
+
+Bending is demonstrated by nonzero ry derivative and the independent bending
+storage integral, with shear storage reported separately. An interior quadratic
+point becomes active while both physical beam endpoints remain open; this
+discriminates actual Q2 curve integration from endpoint chord substitution.
+The completed path opens, and splitting at an exact accepted time preserves
+the B3 continuation checkpoint and displacement arrays exactly.
+
+For this fixture the independent beam potential is
+one-half integral [EA*(one-half*w-prime-squared)^2 + EIy*ry-prime-squared +
+GA*kz*(w-prime+ry)^2] dx. Own Q2 shape functions and three-point Gauss
+integration give the exact polynomial integral. Its gradient is independently
+compared to actual structural work and its differentiated gradient to the
+structural tangent in the actual free chart. Kinetic energy includes both
+translation and physical rho*Iy rotary inertia.
+
+The admitted S3 V2D native elastic response uses fixed small-strain operators
+even when the outer assembler names its kinematics `von_karman`. In this
+normal-only, zero-rotation, zero-offset fixture, membrane, curvature and PL
+storage vanish. Direct shell storage is one-half*A*phi-squared*gradw.T*H*gradw,
+H=(5/6)*G*t*I. MIN3 phi-squared=2*psi/(1+2*psi), with psi equal to the sum of
+the physical rotational bending diagonal divided by the unrelaxed rotational
+shear diagonal. The independent test builds shape gradients and the MIN3
+L/M rotational shear polynomials and integrates three Hammer points. It reads
+no production contact kernel, stiffness matrix or relaxation factor in this
+reference. Comparison to the actual elastic shell force and baseline matrix
+separately establishes the applicable linear recovery; this is not a generic
+von Karman shell energy assertion.
+
+Own Q2 gap coefficients, real roots, active intervals and the polynomial
+square primitive supply the independent complete line potential and minimum.
+The flexural fixture's 1% elastic energy gate uses these two structural
+potentials, the independent line potential, and actual physical mass. Local
+work/tangent tests use h=(1e-7,3e-8,1e-8) with the unchanged 1e-5 gate. Body
+wrench and physical 10 micrometre gap gates remain unchanged. No new inertia,
+admission profile, solver policy or qualification claim is introduced.
+
+The reported beam mean-curvature metric is the endpoint ry difference divided
+by reference length, maximized over saved time states. It is a spatial mean,
+not the exact maximum of the Q2 rotation derivative. The bending-storage
+integral uses the complete Q2 derivative. Historical raw records named this
+mean metric `maximum_curvature`; their executed definition is preserved.
+
+The same flexural fixture also runs at dt=5 microseconds with unchanged model,
+initial conditions, law, supports, controller and gap budget. Its independent
+structural/line plus physical-mass energy defect improves relative to the
+preserved actual 10 microsecond case. This is a bounded temporal discriminator;
+broader enforcement and spatial refinement/qualification remain open.

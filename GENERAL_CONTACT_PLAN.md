@@ -19,14 +19,26 @@ on temporal refinement, against the unchanged1% gate. Supporting source review
 closed the skin-map mutation hole; independent engineering acceptance remains open.
 [Evidence](docs/d1_review_support/contact_c6_beam_s3_20261006/development.md).
 
-Next extend this integrated pairing with actual B3 interior bending during impact
-and a corresponding structural-work discriminator, rather than begin another
-driver. Reuse the held artifact for fixture-only changes; rebuild only if product
-code changes. Retain the SAME180s C6 purse:78.8830406999914s used and
-101.1169593000086s remaining across12terminaljobs. Keep onejob/
-953MiB/JIT0/Numba1/pools1/watchdog<=min60s,remaining-1. No held C5/C4/domain/native/
-archive or frozen authority is renewed. General rotation/friction, multiple faces,
-materials, other impact pairings and full C6 acceptance remain separate obligations.
+The connected flexural continuation now frees physical B3 z/ry coordinates with
+actual rotary mass. Installed impact exhibits bending, interior contact with
+both true endpoints open, release and exact active B3 split restart. Independent
+Q2 beam/MIN3 shell/contact potentials, physical mass and both-body work/wrench
+checks pass; energy defect improves0.0220794% to0.0060105% at half the timestep.
+S3 V2D is small strain in this route; no invented von Karman shell energy is used.
+All540 held artifact payloads remain unchanged. This is development evidence,
+not general impact or engineering acceptance.
+[Flexural evidence](docs/d1_review_support/contact_c6_beam_s3_20261006/flexural_development.md).
+
+Next: remove the fixed-target-director development limitation through a connected
+beam/S3 transient slice using formulation-owned skin work and actual descriptor
+coordinates. The owner first identifies the concrete geometry/work/inertia
+contract and a discriminating test; adopted physics and admission stay reserved.
+Reuse existing descriptor infrastructure rather than adding artificial mass or
+another driver. Retain the SAME180s C6 purse:108.78753899980802s used,
+71.21246100019198s remaining across17terminaljobs. Keep onejob/953MiB/JIT0/
+Numba1/pools1/watchdog<=min60s,remaining-1. No held C5/C4/domain/native/archive or
+frozen authority is renewed. General rotation/friction, multiple faces, materials,
+other impact pairings and full C6 acceptance remain separate obligations.
 
 The solver-side ordinary arc result archive joins the existing static/transient
 archive services. All10producer fields, peak/path records, snapshots/material and

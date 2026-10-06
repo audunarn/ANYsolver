@@ -2572,3 +2572,8 @@ gap. Independently accepted: NO. Released: NO. General deformation energy/spatia
 convergence, nonlinear materials/friction, finite/native rotations, multiple faces,
 true caps/rims, other impact rows/app admission and full C6/C0-C9 remain required.
 No B3 exact restart claim inferred from B2. Historical acceptance unchanged.
+
+
+### 6 October 2026 - C6 flexural B3/deforming S3 development
+
+Implemented/tested: actual physical B3 z/ry bending and interior contact with open true endpoints, separation and exact active split restart. Independent Q2 beam/MIN3 S3/contact potentials, physical mass and both-body work/tangent/wrench checks pass. Installed energy defect0.0220794% to0.0060105% at half timestep. Same fixed-director target profile; all540 held artifact payloads unchanged. Independently accepted:NO; released:NO. Rotational/algebraic target work and broader C6 remain open. [Evidence](d1_review_support/contact_c6_beam_s3_20261006/flexural_development.md). Raw flexural_completed_handoff/summary/source_hashes and root_flexural_installed/source/review audits. SAME C6 purse108.78753899980802/180s,71.21246100019198s remaining,17terminaljobs; no other authority renewed.

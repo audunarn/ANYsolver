@@ -148,6 +148,14 @@ B2 split restart support this bounded development profile. All540 package files
 match source; no general rotation, friction, nonlinear-material or C6 engineering
 acceptance follows. [Evidence](docs/d1_review_support/contact_c6_beam_s3_20261006/development.md).
 
+The same installed route now demonstrates actual B3 bending/rotary inertia and
+interior contact with open endpoints. Independent beam/MIN3-shell/contact energy,
+mass, work/tangent and both-body wrench checks pass; exact B3 split restart passes.
+Its energy defect improves0.0221% to0.00601% with temporal refinement. Solver code
+and the540 payloads are unchanged; fixture/reference-only work reused the held
+artifact. Target rotational/algebraic admission and broader acceptance remain open.
+[Flexural evidence](docs/d1_review_support/contact_c6_beam_s3_20261006/flexural_development.md).
+
 ## Delegated decisions
 
 The lead is expected to choose the fastest credible route to the outcome and may, without further approval:
