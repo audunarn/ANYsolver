@@ -1,8 +1,12 @@
 # Native BL5 stiffened-strip capacity candidate
 
-Status: **implemented source candidate, unverified**. No interpreter, collection,
-numerical solve, build, installation or qualification check has run. This document
-adds no execution authority and renews no historical allowance. The existing native
+Status: **development screen executed; full seed failed; accepted prefix verified**.
+Candidate `4c5867ce` passed 17 focused source checks; two full numerical tests were
+deselected. One installed screen accepted factors 0.1, 0.25 and 0.5, then rejected
+0.75 at the Newton iteration limit. No arc step, turning response or capacity was
+obtained. Its generation-3 checkpoint passed separate installed restore, physical
+recovery, corruption-refusal and pre-cancellation checks. This document adds no
+execution authority and renews no historical allowance. The existing native
 point turning/refinement campaign remains closed. This is a new native line source
 candidate, not a repetition or relabelling of that campaign. F03 and protected
 evidence are unchanged. Trace/release semantics remain experimental.
@@ -10,7 +14,8 @@ evidence are unchanged. Trace/release semantics remain experimental.
 The source is `examples/stiffened_shell_native_capacity.py`; its main entry refuses
 execution. After separately granted bounded numerical authority, an investigator
 may call `workflow`. Tests in `tests/test_stiffened_shell_native_capacity.py` are
-also **UNRUN**, including construction and collection. They distinguish a working
+include two full numerical tests that remain **UNRUN**. The focused tests ran
+against the frozen candidate. They distinguish a working
 restart route from a diagnostic failure; a test that observes failure cannot
 establish numerical acceptance.
 
@@ -163,11 +168,12 @@ no turning. Only typed finite-increment/arc-selection failure and cooperative
 cancellation become terminal diagnostic reports with attempts and the real
 committed prefix. Programming/admission/restart/ownership errors propagate.
 The cancellation test mutates the callback copy and checks fresh restore of the
-actual checkpoint when an arc endpoint exists. All those tests remain unrun.
+actual checkpoint when an arc endpoint exists. These full arc tests remain unrun.
 
 The integration owner adopts this physical load/support proposal only as the
-next bounded development discriminator. Whether a stable buckled seed exists,
-actual execution authority and independent physical acceptance remain open.
+bounded development discriminator. The single approved screen did not obtain a
+full seed. Whether a stable buckled seed exists and independent physical acceptance
+remain open. The failure does not establish physical instability or a law defect.
 No release, capacity or plasticity criterion is adopted from unobserved values.
 
 ## Source review disposition
@@ -178,5 +184,42 @@ generalized yield data and the omitted first turning bracket. The final streamed
 affine-origin binding was inspected by root after the review's delivery caveat.
 Material update flags preserve exact nonzero history. No blocking source finding
 remains in the inspected slice. This is not different-family scientific acceptance.
-All tests and numerical workflows remain **UNRUN**. No execution allowance is
-transferred from the preceding director-metric verification.
+The source review did not supply numerical acceptance. The subsequently executed
+development results are recorded below; no execution allowance was transferred
+from the preceding director-metric verification.
+
+## Executed bounded development result — 6 October 2026
+
+Evidence: `.qualification/b3-ge-e4-pl/r8-native-capacity-dev-20261006-v1/`.
+The unchanged 430-module solver package reused wheel SHA-256 `6464174eb675c4eafd72f01a8ac707bb44d39946c5a7919126e316bc148a63c7`.
+Effective CPU affinity was [0], numerical pools and Numba used one thread, JIT
+was disabled, and the process-tree memory ceiling was 2 GiB. Runtime/import
+bindings and exact process-wall receipts were retained.
+
+The seed failed at factor 0.75 from 0.5: 12 Newton iterations, 73 evaluations,
+12 linear solves and 48 rejected trials. The final rejected equilibrium ratio
+was 0.2774246521471741 and constraint residual 1.467923660754961e-7. Its
+three accepted predecessors satisfy the frozen equilibrium, gap and global
+force/moment checks. No accepted material history/update was recorded.
+
+Checkpoint generation 3 has 27,627 bytes and SHA-256
+`4e7adf0619e8708102e564949922d0ab73fcc41fc75ddd5699b5f62ea64925ec`.
+Restore reproduced bytes and physical recovery at the declared development
+tolerances. Reconstruction iteration count and raw chart-field availability are
+reported separately; actual physical charts are compared. Corruption was tested
+on a fresh owner, followed by valid restore; cancellation preceded any new trial.
+The failed physical load route was not retried.
+
+Runner review identified an unreached defect in v1's later arc corruption check
+and missing terminal audits on exceptional probe return. The separate v2
+prefix-only runner repairs these. V1 returned its typed seed failure normally,
+so its terminal runtime/import audits exist. A hard timeout would retain public
+streamed states but would not prove a restartable prefix without checkpoint bytes.
+
+The fresh 600-second allowance used 257.2597296 seconds, leaving 342.7402704
+seconds within its original scope. It does not authorize another physical screen,
+parameter sweep, F03, body retry, closed campaign or release. The next development
+decision is the continuation route, not automatic force-control tuning. A
+proportional-load arc candidate starting from the verified accepted prefix could
+avoid requiring an unproved postbuckled force seed; it needs its own input contract
+and permitted execution before any numerical claim. Full qualification remains open.

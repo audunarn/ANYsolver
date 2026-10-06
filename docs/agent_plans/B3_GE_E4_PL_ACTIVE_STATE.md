@@ -2,7 +2,7 @@
 
 Revision8 goal ACTIVE; full G0–G6/F01–F13/V01–V28/B01–B18 and release
 remain incomplete. Previous goal turn: PROGRESS (installed metric verification).
-This turn: PROGRESS (reviewed new physical-capacity source candidate and repairs).
+This turn: PROGRESS (installed physical screen, preserved failure and verified prefix).
 Canonical worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
 branch codex/stiffened-main-reconcile-20261001. Actual Git is authoritative.
 Use the goal/plan/acceptance matrix beside this note. Main/remote untouched.
@@ -12,12 +12,12 @@ scientific acceptance. Max3 workers/ONE numerical job. All owned jobs terminal.
 
 ## Current decision and next action
 
-Source candidate4c5867ce is IMPLEMENTED BUT UNVERIFIED: a matching8x2 Q4 strip,
+Source candidate4c5867ce has FAILED its full-seed screen: a matching8x2 Q4 strip,
 two eccentric native straight stiffeners (four B3 members each), existing BL5,
 high-yield initialelastic material data, dead centroid compression and opposite
 transverse probe. Native retained coordinates remain; no point-chain substitute.
-Question: does a stable seed and a bounded physical turning response exist,
-with equilibrium, actual work and complete accepted-state/restart validity?
+Question: can proportional-load arc continuation from the actual accepted seed
+advance this same physical model without requiring a postbuckled force seed?
 Matching shell/halfcell resolution separates this from the off-ratio question.
 Seed failure/no turning is a valid diagnostic; no automatic tuning or refinement.
 Preload is a loaded state, not G4C stress-free imperfection. All aggregate gates open.
@@ -27,18 +27,27 @@ streamable owned observations; typed failures preserve real prefix. Full restore
 and continue compare bytes/recovery. Root and independent source review repaired
 shell-top arm, seed load/chart provenance, exception boundaries, generalized
 units and first bracket. Final stream-origin correction inspected by root.
-Tests, construction and numerical workflow UNRUN. Only staged whitespace checked.
+Focused source checks PASS17/17 (2 full routes deselected). Installed v1 accepted
+factors.1/.25/.5, failed.75 at12iterations/73evals/48rejectedtrials; no arc.
+Generation3 checkpoint4e7adf06 (27627B) passed installed physical recovery,
+byte parity, fresh corruption refusal and pre-cancel preservation. No retry.
+V1's unreached arcpostcheck defect and exceptional audit gap were repaired in
+separate prefix-only v2; independent Read review has no remaining scope blocker.
 See docs/development/stiffened_shell_native_capacity.md and raw
 r8-native-capacity-dev-20261006-v1/source-readiness-v1.json for exact inputs.
 
-NEXT requires fresh authority: proposed600s cumulative focused checks/repairs,
+Fresh600s authority APPROVED by latest human "I approve": focused checks/repairs,
 one installed physical screen ≤12 requested arc steps, restart/cancel/refusal
 checks,60s final reserve;2GiB/CPU0/pools1/JIToff/one numerical job.
-Existing300s allowance explicitly excludes capacity: no transfer or job launch.
+Ledger capacity-dev/ledger.json starts separately; no transfer from earlier300s.
 Reuse unchanged430-module package/wheel6464174e; no rebuild required unless
 product source changes. Freeze actual inputs before approved execution.
-After result, interpret seed/turning/work together and choose one action;
-a scalar bracket is not stability, limit-point or capacity acceptance.
+Capacity ledger257.2597296used/342.7402704remaining; one physical screen CONSUMED.
+Remaining scope does not permit another physical route or parameter tuning.
+NEXT source-only: proportional-load arc from verified.5prefix, same geometry/law,
+with durable checkpoint streaming. New execution needs its own granted inputs.
+Failure does not establish instability/law failure; all scientific gates remain open.
+Exact receipts/bindings: capacity-dev/root-result-v2.json. All owned jobs terminal.
 
 ## Completed adjacent evidence and exact authority
 

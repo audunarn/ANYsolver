@@ -4004,3 +4004,28 @@ Fresh600s bounded checks and one <=12-step physical screen PROPOSED/PENDING,
 2GiB/CPU0/one thread/JIToff/one job/60s reserve; no authority transferred from
 completed metric300s. F03/body/closed campaigns/main/push/release unchanged.
 Exact source hashes/prior-note preservation: capacity-dev/source-readiness-v1.json.
+
+## 6 October 2026: installed native capacity screen — failed seed, verified prefix
+
+Candidate4c5867ce: IMPLEMENTED_NOT_QUALIFIED. Focused source17/17 PASS;
+2 full numerical tests deselected. One installed frozen12-step screen obtained
+NO arc: accepted force factors.1/.25/.5, then rejected.75 at Newton limit
+(12 iterations,73 evaluations,12 solves,48 rejectedtrials; eq0.2774246521,
+gap1.4679236608e-7). This is numerical nonconvergence, not physical instability,
+connection-law failure, first limit point, descending branch or capacity acceptance.
+Accepted generation3 checkpoint4e7adf06/27627B independently exercised through
+installed restore, physical recovery, byte equality, fresh corrupt-refusal atomicity
+and pre-step cancellation. All3 accepted states pass frozen equilibrium/gap/global
+wrench checks; no material update/history observed. The failed route was not retried.
+Unreached runner corruption check and exceptional terminal-audit gap repaired in
+separate prefix-only v2, reviewed independently (OpenAI; not different-family
+scientific acceptance). Timeout streaming alone does not establish restartability.
+All430 package/wheel/site modules identical; reusedwheel6464174e. CPU0/pools1/
+Numba1/JIToff before/after; sampled tree peak204021760B across3 terminal jobs.
+Fresh600s authority from latest human approval:257.2597296used/342.7402704remaining;
+one physical screen consumed, no new route/tuning or authority transfer allowed.
+Full receipts, frozen inputs, failed result and checkpoint: capacity-dev/raw;
+root-result-v2.json corrects v1 PowerShell count-only summary error (v1 retained).
+Next source-only decision: proportional-load continuation from verified.5prefix,
+same physical definition; durable checkpoint streaming. No new numerical authority.
+F03/body/closed campaigns/main/push/release and all aggregate gates unchanged.
