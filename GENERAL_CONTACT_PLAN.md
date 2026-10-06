@@ -257,14 +257,32 @@ artifact only. All13jobs used76.432764199679/180s,103.567235800321s remaining wi
 this C5 route. Perjob watchdog<=60s/remaining-1,953MiB, onejob,JIT0/pools1.
 No archive/C4/domain/native/frozen authority is renewed.
 
-Next close the explicitly unexecuted prescribed-affine-support fixture, then
-extend toward required general shell/deformable-target, augmented/friction,
-nonlinear-material and parameter-dependent tool continuation through existing
-owners. Preload/imperfection/native/finite-rotation remain required but unsupported
-in this first profile. Retain all C5 breadth and C0-C9 completion; do not turn this
-successful subset into the programme endpoint. Root owns governing decisions,
-records/Git/acceptance; reuse the sustained owner by delta. Select a bounded
-discriminating check and preflight the actual remaining purse before execution.
+The prescribed-affine-support fixture and ordinary physical preload are now
+implemented and installed-development verified. Additive support staging is
+unchanged: lambda*a without preload, preload to a then (1+lambda)*a. The same
+qualified lease covers gated ordinary-static preload and arc continuation.
+V2 binds the committed base, every preload contact pose, structural summary and
+whole-model elastic material scope. Resume validates constraints/equilibrium and
+does not rerun preload. No-preload V1/no-contact helper contracts remain intact.
+
+Eight installed controls and the public affine example passed before the final
+two replay safeguards. One distinct repaired artifact then passed three affected
+installed controls: whole-model material refusal, re-signed history mismatch
+refusal and actual valid preload/continuation with exact split restart. Root
+independently compared all538payloads and seven held source hashes. Independent
+preload response1.6935e-11, spherical4.039e-16 and wrench4.6874e-12 pass retained
+1e-6targets. Unaffected checks were reused, not repeated. These are development
+results; engineering acceptance/application admission/release remain separate.
+[Affine evidence](docs/d1_review_support/contact_arc_length_20261006/affine_development.md).
+
+The SAME C5 purse now records26terminaljobs,170.846466999850/180s used and
+9.153533000150s remaining, including every failure/build/install/check. The earlier
+103.567s remainder is historical. No new mechanical campaign fits this residual
+time; do not renew or borrow another purse. General shell/deformable-target,
+augmented/friction, nonlinear-material and parameter-dependent tool continuation,
+imperfection/native/finite rotation remain required. Root owns governing
+decisions/records/Git/acceptance; retain the sustained owner and select a required
+unblocked outcome with its actual authority. Full C0-C9 remains incomplete.
 
 ### Independent current slice: transient result archive
 

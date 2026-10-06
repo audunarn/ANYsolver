@@ -77,7 +77,7 @@ def test_arc_refusal_cancel_and_exception(monkeypatch):
     model,definition,settings=case();load=LoadCase('test');load.add_nodal_load(2,forces=(0.,0.,-.05))
     kwargs=dict(contact=definition,contact_settings=settings,control=ArcLengthControl(initial_load_increment=2.5e-5,minimum_load_increment=5e-7,maximum_load_increment=2.5e-5,max_steps=1))
     assert report_general_contact_capability(model,definition,settings,analysis_control='arc_length').validation.profile==PROFILE
-    for extra in ({'kinematics':'corotational'},{'imperfection':{}},{'constant_load_case':load}):
+    for extra in ({'kinematics':'corotational'},{'imperfection':{}}):
         with pytest.raises(ValueError):solve_static_arc_length(model,load,**kwargs,**extra)
     from anysolver.control import CancellationToken,SolveCancelled
     token=CancellationToken();token.cancel()

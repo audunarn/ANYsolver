@@ -17,7 +17,7 @@ Named D1-interior and bounded D2 partial-shell handoffs retain their exact histo
 
 Latest native development: curved physical-fibre beam-pair normal sensitivity, actual press/open/recontact, current-origin plastic-history checks and exact complete-chain restart pass in the private installed artifact. Each body's support/load/contact force and moment errors are below 5.89e-9 against 1e-6. These results do not establish native engineering acceptance or spatial convergence.
 
-Next enable actual spatial refinement through explicit connected multi-element native beam bodies. Preserve authoritative retained coordinates and every structural/contact cross block, true physical geometry/junction/end identity and existing native guards/default identities. No independent-element condensation or insertion of B3-GE into generic FEModel. [Latest evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/curved_pair_lifecycle.json).
+Spatial refinement through explicit connected multi-element native beam bodies remains required, with integrated verification held under its recorded authority. Preserve authoritative retained coordinates and every structural/contact cross block, true physical geometry/junction/end identity and existing native guards/default identities. No independent-element condensation or insertion of B3-GE into generic FEModel. [Latest evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/curved_pair_lifecycle.json).
 
 The connected-body endpoint candidate is locally checkpointed but its integrated
 verification is held within its remaining authority. D2 declared-domain automatic
@@ -70,6 +70,16 @@ state and valid incompatible-checkpoint rejection. Root independently verified
 all538package payloads. This adds the ordinary continuation route; augmentation,
 friction/native/moving tools, finite rotation and broader C5 acceptance remain
 required. [Arc development evidence](docs/d1_review_support/contact_arc_length_20261006/development.md).
+
+The ordinary arc route also has installed development evidence for prescribed
+affine supports and a physical, contact-gated constant preload. Supports retain
+the existing additive stages: preload to a, then (1+lambda)*a; without preload,
+lambda*a. The V2 checkpoint preserves the committed preload origin and replays
+constraints, equilibrium and the complete accepted path without repeating preload.
+Whole-model elastic admission and history/summary cross-binding are enforced.
+Independent response/wrench and exact full/split restart pass. This closes these
+bounded development gaps, not nonlinear-material or general continuation acceptance.
+[Affine/preload evidence](docs/d1_review_support/contact_arc_length_20261006/affine_development.md).
 
 ## Preserved history and decisions
 

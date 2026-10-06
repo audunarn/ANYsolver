@@ -2495,3 +2495,25 @@ All13jobs76.432764199679/180s, remaining103.567235800321s with this C5 milestone
 other purses/frozen authority are unchanged. See
 [arc evidence](d1_review_support/contact_arc_length_20261006/development.md) and
 [usage](GENERAL_CONTACT_ARC_LENGTH_DEV.md). Full C0-C9 remains incomplete.
+
+
+## 2026-10-06 C5 ordinary arc: affine supports and physical preload
+
+Parent513e8db0; fixed planar finite triangulated rigid tool / connected physical
+S3 shared-P1 penalty / ordinary elastic von Karman spherical arc. Implemented
+and installed-development tested, NOT independently accepted or released.
+Same qualified lease: gated ordinary-static preload to support a, continuation
+support (1+lambda)*a; no-preload lambda*a. V2 binds committed preload origin,
+accepted geometry/contact/structural path and whole assembled elastic material
+scope. Every preload step's sweep/gap/constraint/equilibrium replays; summary
+count/index/factors match. Resume does not repeat preload. V1/no-contact intact.
+First affine artifact8controls/example PASS; final repaired3affected controls
+PASS including actual valid preload/continuation, independent response/wrench,
+exact3versus1+2restart, unselected plastic and re-signed history refusal.
+Root538payload/sevenhash parity and235installed imports/errors0; JIT0/pools1.
+Wheel b76c5933b2e822c1f847e8a629175226e75aa1dcfbcbea5c7f59662cc1be54ba.
+Evidence docs/d1_review_support/contact_arc_length_20261006/affine_development.md;
+raw C:/ANYworkspaceWork/contact_arc_length_20261006/root_affine_repaired_audit.json.
+Same C5 purse170.846466999850/180s used,9.153533000150s remaining,26terminaljobs;
+all prior artifacts/failures retained. General nonlinear/friction/native/moving
+and finite-rotation continuation, independent acceptance and full C0-C9 remain.

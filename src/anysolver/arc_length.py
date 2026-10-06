@@ -1016,7 +1016,8 @@ def _solve_static_arc_length_under_lease(
         resolved_corotational_tangent=resolved_corotational_tangent,
     )
     if _arc_contact is not None:
-        restart_analysis_contract["schema"] = "ANYSOLVER_ARC_CONTACT_RESTART_CONTRACT_V1"
+        restart_analysis_contract["schema"] = ("ANYSOLVER_ARC_CONTACT_RESTART_CONTRACT_PRELOAD_V2"
+            if _arc_contact.preload_enabled else "ANYSOLVER_ARC_CONTACT_RESTART_CONTRACT_V1")
         restart_analysis_contract["general_contact"] = _arc_contact.restart_contract()
     validated_restart = None
     restored_arc_path: Optional[Dict[str, Any]] = None
@@ -1236,7 +1237,7 @@ def _solve_static_arc_length_under_lease(
         preload_info = None
         preload_path_info = None
 
-    if constant_load_case is not None and prescribed_path_active:
+    if constant_load_case is not None and prescribed_path_active and _arc_contact is None:
         raise NotImplementedError(
             "arc-length continuation does not yet combine a constant preload "
             "with a proportional prescribed-displacement path"
@@ -1244,10 +1245,16 @@ def _solve_static_arc_length_under_lease(
     if (
         restored_arc_path is None
         and constant_load_case is not None
-        and float(np.linalg.norm(F_const_red)) > _SMALL
+        and (float(np.linalg.norm(F_const_red)) > _SMALL or _arc_contact is not None)
     ):
-        preload = _solve_static_nonlinear_under_lease(
+        preload_solver = _solve_static_nonlinear_under_lease
+        preload_extra = {}
+        if _arc_contact is not None:
+            preload_solver = _arc_contact.preload
+            preload_extra = {"summary": _arc_preload_summary}
+        preload = preload_solver(
             working_model,
+            **preload_extra,
             load_case=constant_load_case,
             max_load_factor=1.0,
             num_steps=settings.preload_steps,
@@ -1258,7 +1265,7 @@ def _solve_static_arc_length_under_lease(
             kinematics=kinematics,
             corotational_tangent=corotational_tangent,
             cancellation_token=cancellation_token,
-            record_increment_snapshots=record_increment_snapshots,
+            **({} if _arc_contact is not None else {"record_increment_snapshots": record_increment_snapshots}),
             _qualified_runtime_guard=exact_guard,
         )
         exact_guard(working_model, context="arc-length preload result")
@@ -1397,6 +1404,30 @@ def _solve_static_arc_length_under_lease(
         )
         exact_guard(working_model, context="arc-length external-load system")
         return constant_force, constant_tangent, proportional_force, proportional_tangent
+
+    if _arc_contact is not None and _arc_contact.preload_enabled:
+        _arc_contact.validate_base_inventory()
+        base = _arc_contact.base
+        if base['summary'] != preload_path_info:
+            raise ValueError('arc preload base differs from structural preload summary')
+        # The admitted material profile is elastic: replay every accepted preload
+        # pose from the bound material origin without committing a new state.
+        for row in base['history']:
+            pose, factor = row['displacements'], row['load_factor']
+            imposed = factor*prescribed_offset
+            try:
+                base_q = _recover_reduced_coordinates(T, imposed, pose)
+            except RuntimeError as exc:
+                raise ValueError('arc preload base violates prescribed constraints') from exc
+            guard = 512*np.finfo(float).eps*max(1.,float(np.linalg.norm(pose)))
+            if np.linalg.norm(T @ base_q + imposed-pose) > guard:
+                raise ValueError('arc preload base violates prescribed constraints')
+            base_force, _, base_trial = _assemble_nonlinear_system(working_model,
+                pose,base['element_states'],num_layers,tangent=False,
+                kinematics=kinematics,corotational_tangent=resolved_corotational_tangent)
+            _discard_nonlinear_state_candidate(base['element_states'])
+            if np.linalg.norm(T.T @ (factor*F_const-base_force)) > tolerance*max(1.,np.linalg.norm(T.T @ (factor*F_const))):
+                raise ValueError('arc preload base is not in equilibrium')
 
     # Establish the first tangent direction and derive fixed path-space radius
     # limits from the user-facing load-increment settings.
@@ -2397,9 +2428,9 @@ def solve_static_arc_length(
     if contact is not None:
         if kinematics != 'von_karman' or corotational_tangent != 'auto':
             raise ValueError('arc contact requires von_karman/auto physical skin chart')
-        if imperfection is not None or constant_load_case is not None or initial_element_states is not None:
-            raise ValueError('arc contact preload/imperfection/seeded history is not integrated')
-        if _has_follower_pressure(load_case, model=model):
+        if imperfection is not None or initial_element_states is not None:
+            raise ValueError('arc contact imperfection/seeded history is not integrated')
+        if _has_follower_pressure(load_case, model=model) or _has_follower_pressure(constant_load_case, model=model):
             raise ValueError('arc fixed-tool profile requires dead proportional load')
         if getattr(model,'initial_fields',None):
             raise ValueError('arc contact initial fields are unsupported')
@@ -2455,7 +2486,7 @@ def solve_static_arc_length(
             return run_adapter()
         from .general_contact.arc_contact import arc_contact_scope
         cancellation_safe_point(cancellation_token, 'arc_length.contact_preflight')
-        with arc_contact_scope(model, contact, contact_settings) as adapter:
+        with arc_contact_scope(model, contact, contact_settings, preload=constant_load_case is not None) as adapter:
             return run_adapter(adapter)
 
     return run_under_lease(
