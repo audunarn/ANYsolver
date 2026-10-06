@@ -3112,3 +3112,19 @@ Exact diagnosis and independent limitations: material-dev-20261006-v1
 root-diagnosis-preservation-v4.json. One geometry-frozen fixed-origin local
 material audit adopted; no global continuation, tolerance or product change.
 A local pass cannot establish whole-chain tangent, convergence or qualification.
+
+
+### 6 October - geometry-frozen material discriminator passed
+Scoped smooth constitutive compliance PASS1e-5: generalized1.5111e-11,
+physical2.2076e-11; meaningful weighted norms above1. Eight ordinary binary64
+cell inputs, paired output reduction, exact unchanged accepted origins; source,
+callbacks, wheel/site/runtime and independent limitations bound in
+material-dev-20261006-v1/local-audit-v4/root-local-audit-binding-v1.json.
+Explicit ELASTIC->PLASTIC_NEGATIVE station0/fibre1 and signed margin/compliance
+relation support the narrow branch inference. No whole-chain tangent, global
+convergence, simultaneous history or aggregate gate acceptance follows.
+New-policy-only boundary-informed trial proposal adopted as ONE reversible
+implementation candidate; unchanged laws, tolerances, original screen controls,
+full-first and13trial budget, strict actual merit, legacy dispatch and checkpoints.
+First changed-source.3125 screen must pass before unchanged fullhistories or
+installed candidate campaign. No automatic alternate or failed-campaign renewal.

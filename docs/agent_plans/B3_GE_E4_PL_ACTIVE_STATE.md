@@ -107,12 +107,27 @@ controls and closed campaigns unchanged; no driver change follows automatically.
 Independent affected review confirms the small-step piecewise fit only under
 limited curvature/one transition; full-step changes two activity bits and does
 not fit. Endpoint derivative change is not a finite geometric-defect bound.
-/root/native_bl5_material now owns NEW raw/local-audit-v4 only; numerical lease
-GRANTED for one geometry-frozen audit,35 active minutes from~00:14UTC,final10
-reserved. DEV600s/2GiB/affinity1/pools1/JIT-off/exact existing wheel+CI; no global
-Newton/continuation or product edits. One compile/one saved-prefix restore only
-if required for exact origins, count preparation. Observe actual worker/owned
-process handles before resuming; no evidence or consumed campaign may be renewed.
+Local audit completed2.8753s/166MBsampled,8 cellresponses plus explicit preparation;
+generalized/physical smooth errors1.51e-11/2.21e-11 PASS unchanged1e-5. Ordinary
+binary64 p updates, paired output reduction; fixed restored origins unchanged.
+Explicit ELASTIC->PLASTIC_NEGATIVE station0/fibre1 and signed margins support
+crossing h~.00017062445044; paired secant consistency4.39e-11. Independent review
+finds no local defect; full assembled derivative/convergence remain unproved.
+Exact local-audit-v4 handoff/manifest/independent-review/root binding. Lease RELEASED.
+
+Adopt ONE new-policy-only boundary-informed trial-proposal candidate. Derive from
+existing native cell response/moduli and fixed origins; unchanged constitutive/
+connection laws, strict actual merit and convergence,24/12 original screen controls.
+Same-parent trials/atomic state; transient owned event data cannot outlive invalidation.
+Full first trial and original13 evaluation budget; fallback remains halving.
+No legacy dispatch/default/API/checkpoint identity or numerical-backend change.
+Owner /root/native_bl5_material, bounded90 active minutes/final20 reserved; exact
+ownership/check ceilings in root brief. FIRST one changed-candidate saved.3125
+screen, stop at first acceptance or failure; no extension on nonconvergence.
+Only if passing: unchanged two strict full histories, focused old-route impacts,
+new isolated installed artifact. Review actual source/results before integration.
+All jobs DEV600s/2GiB/affinity1/pools1/JIT-off, ONE job at a time. No F03/closed
+campaign renewal, automatic alternate candidate or physical-limit conclusion.
 
 Material V1 lifecycle failure used unintended global NumPy fallback due sandbox
 CI read denial; no intended-CI acceptance or physical inference. Exact elevated
