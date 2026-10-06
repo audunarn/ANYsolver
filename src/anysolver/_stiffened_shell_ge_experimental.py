@@ -611,11 +611,14 @@ class ExperimentalGEAnalysis:
         groups = groups or tuple(g.footprint for g in finite_groups)
         if len({g.footprint_id for g in groups}) != len(groups):
             raise ValueError("duplicate distributing footprint ID")
-        from ._stiffened_shell_ge_reference_modal import GE_FREE_FREE_MODAL_ONLY_V1
+        from ._stiffened_shell_ge_reference_modal import (
+            GE_FREE_FREE_MODAL_ONLY_V1, GE_MIXED_FREE_FREE_MODAL_ONLY_V1)
         if (type(definition.modal_boundary_policy) is not str or
-                definition.modal_boundary_policy not in ("supported", GE_FREE_FREE_MODAL_ONLY_V1)):
+                definition.modal_boundary_policy not in ("supported", GE_FREE_FREE_MODAL_ONLY_V1,
+                                                         GE_MIXED_FREE_FREE_MODAL_ONLY_V1)):
             raise ValueError("explicit admitted GE modal boundary policy required")
-        self._modal_only = definition.modal_boundary_policy == GE_FREE_FREE_MODAL_ONLY_V1
+        self._modal_only = definition.modal_boundary_policy in (
+            GE_FREE_FREE_MODAL_ONLY_V1, GE_MIXED_FREE_FREE_MODAL_ONLY_V1)
         if self._modal_only and (definition.fixed or definition.lines or definition.footprints):
             raise ValueError("free-free modal-only policy requires empty supports and six-pose points only")
         if (type(definition.bl5_material_policy) is not str or
@@ -691,6 +694,7 @@ class ExperimentalGEAnalysis:
             definition.beams)
         self._reference_modal_inertias = beam_inertias
         self._reference_modal_mass = None
+        self._mixed_reference_modal_mass = None
         self._has_physical_fibre = any(type(element.section) is PhysicalFibreSection
                                       for element, _, _ in beam_parts)
         if groups and self._has_physical_fibre and not self._distributing_native:
@@ -1015,7 +1019,7 @@ class ExperimentalGEAnalysis:
             6*(len(constraint_rows)+i)) for i,(compiled,pose) in enumerate(zip(distributing_compiled,finite_poses)))
         if self._modal_only:
             from ._stiffened_shell_ge_reference_modal import _admit
-            _admit(self)
+            _admit(self, mixed=definition.modal_boundary_policy == GE_MIXED_FREE_FREE_MODAL_ONLY_V1)
 
     def _require_open(self):
         if self._closed:
@@ -1332,6 +1336,13 @@ class ExperimentalGEAnalysis:
         from ._stiffened_shell_ge_point_buckling import capabilities
         with self._operation_lock:
             return capabilities(self)
+
+    @property
+    def mixed_reference_modal_capabilities(self):
+        """Distinct typed virgin flat Q4/S3/native POINT/BL5 modal extension."""
+        from ._stiffened_shell_ge_reference_modal import mixed_capabilities
+        with self._operation_lock:
+            return mixed_capabilities(self)
 
     @property
     def line_buckling_capabilities(self):

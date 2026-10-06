@@ -15,6 +15,8 @@ from ._stiffened_shell_ge_body_load import GEBodyLoad, GEBodyRecovery
 from ._stiffened_shell_staged_load_experimental import StagedDeadLoadProgramme
 from ._stiffened_shell_ge_reference_modal import (
     GEReferenceModesRequest, GEReferenceModesResult, GEFreeReferenceModesResult,
+    GEMixedReferenceModesRequest, GEMixedReferenceModesResult,
+    GE_MIXED_FREE_FREE_MODAL_ONLY_V1,
     GE_FREE_FREE_MODAL_ONLY_V1,
 )
 from ._stiffened_shell_ge_point_buckling import GEPointBucklingRequest, GEPointBucklingResult, GELineBucklingRequest, GELineBucklingResult
@@ -263,6 +265,8 @@ __all__ = [
     "FixedCoordinate", "NodalAction", "LinearDefinition", "LinearResult",
     "StagedDeadLoadProgramme",
     "GEReferenceModesRequest", "GEReferenceModesResult",
+    "GEMixedReferenceModesRequest", "GEMixedReferenceModesResult",
+    "GE_MIXED_FREE_FREE_MODAL_ONLY_V1",
     "GEFreeReferenceModesResult", "GE_FREE_FREE_MODAL_ONLY_V1",
     "GE_NODAL_FOOTPRINT_INCREMENT_ORIGIN_CHART_V2",
     "B2LinearDefinition", "B2Q4PointDefinition", "B2Q4PanelDefinition",

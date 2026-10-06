@@ -398,3 +398,13 @@ tests/data/native_s3_fibre_history/** -text
 /tests/test_r8_bl5_body_port_twofold_workflow.py -text whitespace=cr-at-eol,-blank-at-eof
 /docs/reference_cases/stiffened_shell_bl5_body_port_twofold_workflow.md -text whitespace=cr-at-eol
 /.qualification/b3-ge-e4-pl/r8-bl5-body-port-twofold-slot-repair-dev-20261006-v1/** -text -whitespace
+/src/anysolver/_stiffened_shell_ge_reference_modal.py -text whitespace=cr-at-eol,-blank-at-eof
+/src/anysolver/_stiffened_shell_ge_experimental.py -text whitespace=cr-at-eol,-blank-at-eof
+/src/anysolver/stiffened_shell.py -text whitespace=cr-at-eol,-blank-at-eof
+/src/anysolver/_stiffened_shell_ge_mixed_modal_mass.py -text whitespace=cr-at-eol,-blank-at-eof
+/src/anysolver/_stiffened_shell_physical_s3_mass.py -text whitespace=cr-at-eol,-blank-at-eof
+/tests/test_stiffened_shell_ge_mixed_reference_modal.py -text whitespace=cr-at-eol,-blank-at-eof
+/tests/test_stiffened_shell_physical_s3_mass.py -text whitespace=cr-at-eol,-blank-at-eof
+/examples/stiffened_shell_ge_mixed_reference_modes.py -text whitespace=cr-at-eol,-blank-at-eof
+/docs/reference_cases/stiffened_shell_ge_mixed_reference_modal.md -text whitespace=cr-at-eol,-blank-at-eof
+/.qualification/b3-ge-e4-pl/r8-ge-mixed-reference-modal-dev-20261006-v1/** -text -whitespace

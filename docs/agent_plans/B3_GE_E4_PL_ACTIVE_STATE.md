@@ -85,6 +85,40 @@ computed material fields are recorded CALCULATED_NOT_VALIDATED. Material stage
 not reached. No coupled calibration/refinement/external/F03 job permitted here.
 Same author owns NEW workflow/test/doc/raw; root owns note/matrix/Git/contracts.
 
+## Independent next slice: physical reference modes
+
+Mandatory M4/F07/V20: extend the existing full descriptor route to flat mixed
+Q4/S3, generalized/virgin native-fibre families and admitted POINT/BL5 attachments
+through an explicit new request/policy. Preserve historical request meanings.
+Question: do the actual shell/director and native retained coordinates support
+the existing physical kinetic law? Derive/check local kinetic work and actual
+public sparse modes against a small independent dense QZ oracle; no invented
+algebraic inertia or static mass reduction. Reject unsupported family histories.
+If coordinate/mass compatibility fails, report the specific law/lift obstruction
+rather than inserting a floor. Body retry remains independently blocked.
+OpenAI author/reviewer fallback: Mistral/local cached unavailable, no new probe.
+Author owns modal/owner-dispatch/facade + new mass/tests/example/docs/raw; root
+owns contracts/adoption/note/matrix/Git. Non-author mechanics reviewer separate.
+New raw r8-ge-mixed-reference-modal-dev-20261006-v1/. Root adopts experimental
+V2D linear nodal mid-surface/director kinetics only: triangleG=A/12(ones+I),
+rhoh translation and rhohÂ³/12 tangential rotation. This is a declared approximation,
+not full MIN3 displacement-correction inertia or legacy S3 mass. Actual V2D has
+18 corner coordinates; the separate bubble-S3 family is NOT admitted. No physical
+bubble static/dynamic reduction. Distinct request/mass policy; no qualification.
+Native kinetic lift/inertia remains explicit captured geometry+spatial inertia.
+Implemented source extension: typed GEMixedReferenceModesRequest/result plus
+separate mixed POINT-only free-free boundary, immutable mass cache and public
+capabilities. Q4/S3/mixed, generalized/virgin axial-biaxial/mixed native families,
+supported POINT/BL5 paths and six free-free rigid fields tested. Old request and
+Q4 mass preserved. Source V1:73PASS/3FAIL; repaired independent full-pencil QZ and
+curved-frame tests V3:3PASS,73DESELECT. Root verifies22 frozen snapshots and only
+two test-function changes;76 unique instances by impact reuse, no full rerun.
+V2 root launcher path error caught pinned-version guard BEFORE pytest; preserved.
+V3 original CI/affinity0/pools1/Numba1/JIToff verified,5.463s228888576B sampled.
+Independent source/V3 review has no blocking development finding. Installed
+artifact + standalone example NEXT; 2% spectral convergence/external/different-
+family scientific acceptance remain OPEN. No body retry/F03; owned jobs terminal.
+
 ## Preserved restrictions and history
 
 Max3 workers/ONE numerical job. DEV600s/2GiB,affinity[0],pools1,JIT-off, exact CI

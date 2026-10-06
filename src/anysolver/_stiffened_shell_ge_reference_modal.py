@@ -17,11 +17,16 @@ from .linalg import MatrixClass, factorize_cached
 from ._native_reference_modal import _owned
 from ._ge_beam3_p5_centered.mass import reference_kinetic_factors
 from ._stiffened_shell_physical_q4_mass import physical_mass
+from ._stiffened_shell_physical_s3_mass import physical_mass as s3_physical_mass
+from ._stiffened_shell_ge_mixed_modal_mass import native_physical_mass
 from ._stiffened_shell_b2_q4_panel_experimental import _modal_scaled_residual
 
 POLICY = "GE_Q4_POINT_SUPPORTED_VIRGIN_FULL_DESCRIPTOR_REFERENCE_MODES_V1_EXPERIMENTAL"
 MASS_POLICY = "Q4_DIRECTOR_AND_CENTERED_NATIVE_FULL_CELL_INERTIA_24_POINT_V1"
 GE_FREE_FREE_MODAL_ONLY_V1 = "GE_CONNECTED_Q4_POINT_FREE_FREE_MODAL_ONLY_V1_EXPERIMENTAL"
+MIXED_POLICY = "GE_FLAT_Q4_S3_NATIVE_VIRGIN_FULL_DESCRIPTOR_REFERENCE_MODES_V1_EXPERIMENTAL"
+MIXED_MASS_POLICY = "Q4_DIRECTOR_S3_LINEAR_NODAL_DIRECTOR_CENTERED_NATIVE_FULL_CELL_INERTIA_24_POINT_V1"
+GE_MIXED_FREE_FREE_MODAL_ONLY_V1 = "GE_FLAT_Q4_S3_POINT_FREE_FREE_MODAL_ONLY_V1_EXPERIMENTAL"
 
 
 @dataclass(frozen=True)
@@ -66,6 +71,23 @@ class GEReferenceModesResult:
 
 
 @dataclass(frozen=True)
+class GEMixedReferenceModesRequest:
+    """Explicit flat Q4/S3, native generalized/fibre, POINT/BL5 extension."""
+    count: int = 3
+    shift_hz: float = 1.
+    max_iterations: int = 600
+
+    def __post_init__(self):
+        GEReferenceModesRequest.__post_init__(self)
+
+
+@dataclass(frozen=True)
+class GEMixedReferenceModesResult(GEReferenceModesResult):
+    policy: str = MIXED_POLICY
+    mass_policy: str = MIXED_MASS_POLICY
+
+
+@dataclass(frozen=True)
 class GEFreeReferenceModesResult:
     """Separate zero-mode space and flexible requested pairs; no legacy schema change."""
     status: str
@@ -90,20 +112,34 @@ class _ModalFailure(RuntimeError):
     pass
 
 
-def _admit(owner):
+def _admit(owner, *, mixed=False):
     owner._require_open()
     if owner._definition.distributing_footprints or owner._definition.finite_distributing_footprints:
         raise ValueError('spectral operations exclude reference-linear distributing footprints')
     if getattr(owner,"_curved_reference",False):
         raise ValueError("curved reference spectra are not admitted")
     definition = owner._definition
+    if not mixed and definition.modal_boundary_policy == GE_MIXED_FREE_FREE_MODAL_ONLY_V1:
+        raise ValueError("mixed free-free boundary requires GEMixedReferenceModesRequest")
     if (owner._accepted is not None or owner._finite_driver is not None or
             owner._generation != 0):
         raise ValueError("GE reference modes require a fresh virgin owner without accepted histories")
-    if (definition.lines or definition.footprints or definition.shell.s3_elements or
+    if not mixed and (definition.lines or definition.footprints or definition.shell.s3_elements or
             definition.shell.j2_curve is not None or owner._has_physical_fibre or
             not definition.points or (not definition.fixed and not owner._modal_only)):
         raise ValueError("virgin elastic Q4/generalized-GE six-pose points required; lines, footprints, S3 and materials unsupported")
+    if mixed:
+        from ._stiffened_shell_l1_assembly_experimental import ExperimentalBL5Line
+        from .e4_pl_s3_v2d_element import FORMULATION_ID
+        if (definition.footprints or definition.shell.j2_curve is not None or
+                not (definition.points or definition.lines) or
+                (not definition.fixed and not owner._modal_only) or
+                any(type(line) is not ExperimentalBL5Line for line in definition.lines) or
+                owner._bl5_material or owner._bl5_shell_material or owner._bl5_native_material):
+            raise ValueError("mixed reference modes require virgin elastic flat POINT/BL5; material BL5, shell J2 and footprints unsupported")
+        if any(len(slots) == 18 and getattr(element, "formulation_id", None) != FORMULATION_ID
+               for _, element, slots, _ in owner._shell_parts):
+            raise ValueError("S3 linear nodal director mass requires actual direct18 V2D owner; bubble families unsupported")
     if owner._unsupported_modes:
         raise ValueError(owner._unsupported_modes[0])
     # The shell's compile seam already requires one connected cell graph.
@@ -113,6 +149,10 @@ def _admit(owner):
         for node in element.node_ids:
             neighbours[node].update(element.node_ids)
     linked = {point.beam_node for point in definition.points}
+    if mixed:
+        for line in definition.lines:
+            for member, _ in line.beam_halfcells:
+                linked.update(owner._beam_parts[member][0].node_ids)
     unseen = set(neighbours)
     while unseen:
         start = min(unseen)
@@ -215,11 +255,33 @@ def capabilities(owner):
         production_qualified=False)
 
 
-def _assemble_mass(owner, check=lambda stage: None):
+def mixed_capabilities(owner):
+    reason = None
+    try:
+        _admit(owner, mixed=True)
+    except (ValueError, RuntimeError) as exc:
+        reason = str(exc)
+    return dict(policy=GE_MIXED_FREE_FREE_MODAL_ONLY_V1 if owner._modal_only else MIXED_POLICY,
+        mass_policy=MIXED_MASS_POLICY,
+        status="EXPERIMENTAL_NOT_QUALIFIED", operation="modes",
+        scope="virgin flat Q4/S3/mixed shell; generalized and axial/biaxial physical fibre; POINT/BL5",
+        eligible=reason is None, ineligibility_reason=reason,
+        boundary="six canonical rigid fields" if owner._modal_only else "supported",
+        mass_source="explicit native 6x6 definition inertia; shell density and thickness",
+        algebraic="shell normal spin, native nodal rotation traces, retained18 and multipliers",
+        selection="requested finite pairs nearest shift; completeness unqualified",
+        excluded=("accepted histories", "prestress", "active plasticity", "shell J2",
+                  "material BL5", "chart state", "curved shell", "footprints"),
+        production_qualified=False)
+
+
+def _assemble_mass(owner, check=lambda stage: None, *, mixed=False):
     """Reuse physical local kinetic laws and the owner's authoritative slots."""
-    if owner._reference_modal_mass is not None:
+    cache_name = "_mixed_reference_modal_mass" if mixed else "_reference_modal_mass"
+    cached = getattr(owner, cache_name, None)
+    if cached is not None:
         check("cached_mass")
-        return owner._reference_modal_mass
+        return cached
     rows = []; columns = []; values = []
     zero = {6*i+5 for i in range(len(owner._shell_ids))}
     offset = owner._shell_count
@@ -232,14 +294,18 @@ def _assemble_mass(owner, check=lambda stage: None):
     for _, _, slots, _ in owner._shell_parts:
         check("shell_mass")
         vertices = owner._shell_xyz[np.asarray(slots)[::6]//6]
-        scatter(slots, physical_mass(vertices, density_kg_m3=panel.density_kg_m3,
+        law = s3_physical_mass if mixed and len(slots) == 18 else physical_mass
+        scatter(slots, law(vertices, density_kg_m3=panel.density_kg_m3,
                                     thickness_m=panel.thickness_m))
     for inertia, (element, slots, _) in zip(owner._reference_modal_inertias, owner._beam_parts):
         check("beam_mass")
         _physical_spatial_inertia(inertia)
-        factors = reference_kinetic_factors(element.operator.reference,
-            element.section.elastic, inertia, order=24)
-        local = factors.full.T@factors.full
+        if mixed:
+            local = native_physical_mass(element.operator.reference, inertia)
+        else:
+            factors = reference_kinetic_factors(element.operator.reference,
+                element.section.elastic, inertia, order=24)
+            local = factors.full.T@factors.full
         if not np.isfinite(local).all():
             raise ValueError("finite explicit native reference inertia required")
         # slots are beam-local global incidences; the first24 retain nodal18
@@ -254,15 +320,17 @@ def _assemble_mass(owner, check=lambda stage: None):
     if np.any(mass.diagonal()[[i for i in range(mass.shape[0]) if i not in zero]] <= 0.):
         raise ValueError("positive physical reference coordinate inertia required")
     digest = sha256()
-    digest.update(owner._identity.encode("ascii")); digest.update(MASS_POLICY.encode("ascii"))
+    digest.update(owner._identity.encode("ascii"))
+    digest.update((MIXED_MASS_POLICY if mixed else MASS_POLICY).encode("ascii"))
     for array in (mass.indptr, mass.indices, mass.data): digest.update(array.tobytes())
     # Immutable byte-backed arrays; publication only after complete preparation.
     for name in ("data", "indices", "indptr"):
         array = getattr(mass, name)
         setattr(mass, name, np.frombuffer(array.tobytes(), dtype=array.dtype))
     check("mass_publish")
-    owner._reference_modal_mass = (mass, zero, digest.hexdigest())
-    return owner._reference_modal_mass
+    result = (mass, zero, digest.hexdigest())
+    setattr(owner, cache_name, result)
+    return result
 
 
 def _congruence(owner, A, B):
@@ -344,8 +412,9 @@ def _free_rigid_space(owner, mass, scale, Bs, check):
 
 
 def solve(owner, request, *, cancellation_token=None):
-    _admit(owner)
-    if type(request) is not GEReferenceModesRequest:
+    mixed = type(request) is GEMixedReferenceModesRequest
+    _admit(owner, mixed=mixed)
+    if type(request) not in (GEReferenceModesRequest, GEMixedReferenceModesRequest):
         raise ValueError("typed GE reference-mode request required")
     if cancellation_token is not None and not isinstance(cancellation_token, CancellationToken):
         raise ValueError("CancellationToken required")
@@ -365,7 +434,10 @@ def solve(owner, request, *, cancellation_token=None):
         if free:
             kwargs.update(policy=GE_FREE_FREE_MODAL_ONLY_V1,
                           selection="flexible finite pairs nearest negative shift; completeness unqualified")
-        flexible = GEReferenceModesResult(status, owner._identity, mass_id,
+        if mixed:
+            kwargs["policy"] = GE_MIXED_FREE_FREE_MODAL_ONLY_V1 if free else MIXED_POLICY
+        result_type = GEMixedReferenceModesResult if mixed else GEReferenceModesResult
+        flexible = result_type(status, owner._identity, mass_id,
             zero_inertia_dofs=zero, inverse_eigenvalues=raw,
             factorization_count=handle.factorization_count if handle else 0,
             solve_count=handle.solve_count if handle else 0,
@@ -381,11 +453,12 @@ def solve(owner, request, *, cancellation_token=None):
                 rigid_equation_residuals=rigid["equations"],
                 rigid_constraint_residuals=rigid["gaps"],
                 rigid_flexible_mass_overlap=overlap)
+        if mixed: data["policy"] = GE_MIXED_FREE_FREE_MODAL_ONLY_V1
         return GEFreeReferenceModesResult(status, owner._identity, flexible,
             spectral_shift_rad2_s2=sigma, failure_reason=flexible.failure_reason, **data)
     try:
         check("start")
-        mass, zero, mass_id = _assemble_mass(owner, check)
+        mass, zero, mass_id = _assemble_mass(owner, check, mixed=mixed)
         B = sparse.block_diag((mass[owner._free, :][:, owner._free],
                               sparse.csc_matrix((r, r))), format="csc")
         A = owner._A.copy()

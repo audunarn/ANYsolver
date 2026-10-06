@@ -3314,3 +3314,38 @@ Root byte-verifies six raw, three source snapshots and all41 protected previous
 entries, plus prior manifest and reviewer correction. No second numerical job;
 auto-review refusal and pending explicit user retry question remain binding.
 All aggregate programme/scientific/artifact/release obligations remain open.
+
+
+## 6 October 2026 - mixed shell/native reference-modal source development
+
+IMPLEMENTED_FOCUSED_SOURCE_VERIFIED_NOT_QUALIFIED. Explicit new mixed request/result
+and POINT-only free-free boundary retain historical modal admission and Q4 mass
+bytes. Actual flat Q4/S3-V2D/mixed, generalized/virgin axial-biaxial fibre/mixed
+native families and supported POINT/BL5 paths complete public descriptor modes;
+POINT free-free verifies six canonical rigid fields. Full sparse singular/
+indefinite pencil retains beam coordinates, resultants, traces and multipliers.
+Explicit captured native inertia, same centered24point kinetic lift. No artificial
+algebraic inertia, static reduction, tangent averaging or floor. S3 linear nodal
+mid-surface/director kinetics is a NEW declared approximation, not full MIN3
+enriched displacement inertia or the separate physical-bubble S3 formulation.
+V1:73PASS/3FAILof76 in8.474s, supervisor13.010s232493056B sampled; preserve raw.
+Two full-pencil dense-QZ comparisons failed unconditioned; curved test supplied
+invalid triads. Test-only independent binary unit normalization/congruence now
+retains all entries/variables and checks mapped ORIGINAL physical/constraint
+residuals at1e-8/1e-9; original eigencomparisonrtol1e-8 unchanged. Curved oracle
+uses tangent-aligned frames/direct quadratic offsets. V3 affected3PASS/73DESELECT
+in1.801s, supervisor5.463s228888576B. Root hashes22 snapshots/11currentbindings
+and confirms only two test functions changed;76 unique passes by impact reuse.
+V2 ROOT launcher suffix substitution broke fixedCI path; runtime version guard
+caught global fallback BEFORE pytest,0tests,1.910s156971008B; failure preserved.
+V1/V3 actual NumPy2.5.3/SciPy1.18.1/Numba0.68.0/llvmlite0.50.0 isolatedCI,source
+anysolver,affinity[0]/bothBLAS1/Numba1/JIToff/unforcedbackend verified.
+Non-author product/V3 review has no blocking development finding; reviewSHA
+077777bf7c6c73df4c8cda9e561fb2707cbe6f87677a77bb8bf8f205281cd0b2.
+Raw r8-ge-mixed-reference-modal-dev-20261006-v1/: bounded manifest
+94ebecde517e8799b465f6a13d2b86a55c77e1219ede37fc747d33e0e83f0e53;
+16source/dependency +18specific raw entries root-verified.
+CLI standalone example and installed artifact NOT YET EXECUTED. 2% spectral
+convergence/external references, required different-family review and aggregate
+programme acceptance remain open. No formalF03/bodyretry/closedcampaign authority
+used, no release/push/main/sibling/contact action.
