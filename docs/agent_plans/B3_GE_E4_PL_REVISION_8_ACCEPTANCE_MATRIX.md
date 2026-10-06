@@ -3985,3 +3985,22 @@ not accept F03, engineering mesh/unit invariance, capacity/first limit point/
 descending branch, G4D, external/scale/platform or aggregate G0-G6 obligations.
 No element/material/attachment equation, default, tolerance or version changed.
 No main merge, push, capacity/body/closed campaign or release authority follows.
+
+## 6 October 2026: source-only physical native BL5 capacity discriminator
+
+Candidate4c5867ce: IMPLEMENTED_NOT_QUALIFIED/UNVERIFIED. New matching8x2 Q4
+strip, two straight eccentric native stiffeners, existing5-row BL5 and retained
+coordinates. Dead centroid compression plus opposite transverse probe; loaded
+preload, NOT geometric imperfection. Complete state/work/reaction observations,
+owned streaming, typed failures, exact public restart/continue and material
+activity flags. Source review corrected arm/provenance/exception boundaries,
+generalized units and omitted first bracket; root inspected final stream tag.
+All tests/model construction/workflow UNRUN. Staged whitespace checks only.
+Different-family/scientific acceptance absent; stable seed, turning, capacity,
+plasticity, matched reference and aggregate G4D remain OPEN. A reported diagnostic
+failure is not a successful continuation even if its reporting test passes.
+430 package source modules unchanged; existingwheel6464174e eligible for reuse.
+Fresh600s bounded checks and one <=12-step physical screen PROPOSED/PENDING,
+2GiB/CPU0/one thread/JIToff/one job/60s reserve; no authority transferred from
+completed metric300s. F03/body/closed campaigns/main/push/release unchanged.
+Exact source hashes/prior-note preservation: capacity-dev/source-readiness-v1.json.
