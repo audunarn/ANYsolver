@@ -65,3 +65,25 @@ Prepared five safety cases and updated private artifact verification remain open
 A90-second scoped extension was requested, not presumed. No original authority,
 failed evidence or prior package is replaced. Root raw safety audits/review and
 worker receipt handoff are retained under the existing evidence directory.
+
+## Final repaired artifact - targeted development verified
+
+Source repairb894a3b6. User approved90additional measured seconds; original authority
+and every failed input/result remain unchanged. Five installed commit/receipt checks
+PASS30.395977600011975s; actual in-flight cancellation PASS8.463345799944364s.
+Authentic accepted epoch1 at.001s exposes the exact prepared prefix and matching
+ordinary native checkpoint; unaccepted trial/rollback paths retain old usable prefix.
+
+New offline build11.562672900035977s/private install3.9935992000391707s terminal0.
+Wheel6252c0f69bc3f621755216c694c2bf6d3e608f0e032938b4eafa3047e3cdc3cb;
+native_transient_receipt_dist3/installed3.545 payloads+6metadata match source/wheel/
+installation.194 private imports per wave/errors0,JITdisabled/Numba1/observedpools1.
+Peak new checks168341504B. Root rechecked payload hashes, actual call outcomes,
+accepted prefix and runtime/import provenance. Source equations/profile/codec and
+historical finite-spin NONPASS unchanged; supporting same-family review only.
+
+Twelve jobs total231.94363670004532/270s, residual38.05636329995468s scoped only to
+approved trajectory/safety. Numerical work stopped. No full-module PASS, broader
+scientific C7 acceptance or release. Prior wheel and prior manual/split/loadedCLI
+remain separately bound. Raw extension final manifest/handoff, root evidence/
+payload/runtime audits and actual job records provide the reproducible current result.

@@ -282,6 +282,6 @@ Endpoint energy/momentum and midpoint load/support work/impulses are diagnostics
 not added energy gates or exact continuous integrals. The fixed-frame clamp
 couple is a genuine stage reaction despite zero frame inertia; free algebraics
 and resultants are not inertial loads. Source-prepared tests retain separate
-force/moment scales; old finite-spin NONPASS is not regraded. Eight jobs used
-177.528041/180s. The new actual postcommit regression timed out after setup;
-repair and updated installed gates remain open; prior wheel545-payload parity holds.
+force/moment scales; old finite-spin NONPASS is not regraded. Updated private
+installed commit/receipt5cases and impacted cancellation1case pass; the original
+12s source timeout stays retained. Twelve jobs used231.943637/270s; C7 stays open.

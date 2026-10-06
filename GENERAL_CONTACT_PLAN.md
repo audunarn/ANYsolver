@@ -21,17 +21,18 @@ restart. Three installed workflow/safety checks and the loaded clamped CLI pass;
 all545 package files and6 metadata files match. Native formulas/defaults/profile
 remain unchanged. The two source timeouts, original load-adapter2FAIL and passing
 partial prefixes remain explicit; the full new test module did not complete.
-C7 execution now177.52804120001383/180s across eight jobs;2.4719587999861687s
-remains, scoped only to this slice. The subsequent authentic postcommit safety
-check timed out after12.0644232s with setup only; it did not establish a pass. No complete C7 acceptance, energy-conservation or release claim.
+C7 execution now231.94363670004532/270s across12jobs;38.05636329995468s remains,
+scoped to this trajectory/safety development only. The pre-receipt postcommit
+attempt timed out12.0644232s after setup; that failure remains preserved. No complete C7 acceptance, energy-conservation or release claim.
 
-Current bounded slice: finish native-owned trial receipt/cleanup and reconcile
-controller publication with the exact authentic commit outcome. Supporting source
-review identified both return-time interruption windows. Preserve the original
-control signal and expose the matching accepted prefix; never discard an accepted
-endpoint or clear unrelated candidates. Current source/installed safety gates are
-open; prior wheel verification applies only to checkpoint36e99e02. Broader native
-mechanics expansion follows this repair rather than another diagnostic campaign.
+Return-time state safety is now development verified: five installed interruption
+checks plus one in-flight cancellation check pass. Authentic accepted endpoints
+expose exact prepared prefixes; native-owned trial receipts clean only genuine
+pending issuance, including atomic rollback. All545 source/wheel/installed package
+files and6 metadata files match;194 installed imports have correct provenance,
+JIT disabled/Numba1/observed pools1. Source equations and historical scientific
+gates are unchanged. This closes the bounded controller safety gap, not full C7
+engineering acceptance. No more optional repeats on this slice.
 
 Next: close consequential C7 retained finite-velocity scientific gaps using the
 existing owner/controller and references; preserve the prior finite-spin NONPASS.

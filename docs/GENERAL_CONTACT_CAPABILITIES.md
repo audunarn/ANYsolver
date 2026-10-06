@@ -2819,3 +2819,34 @@ native dynamics and common-stage native/shell impact remain open; full C0-C9 inc
 - Evidence:docs/d1_review_support/contact_native_transient_20261006/trajectory_development.md;
   raw C:/ANYworkspaceWork/contact_native_transient_20261006 safety audits/handoff.
 - Prior finite-spin NONPASS and full C7/C0-C9 acceptance gaps remain unchanged.
+
+
+### Native trajectory return-time safety - installed development verified (2026-10-06)
+
+- Source repair checkpoint:b894a3b6; final Python source unchanged after private build.
+- Status: implemented and targeted installed TESTED; not independently accepted/released.
+- User explicitly approved90additional seconds. Original authority unchanged;
+ 12terminal C7 jobs now231.94363670004532/270s;38.05636329995468s remains.
+  Other purses, frozen authorities and all historical failures remain unchanged.
+- Five genuine native installed safety cases PASS30.395977600011975s: authentic
+  commit then KeyboardInterrupt exposes exact accepted prepared prefix/native
+  capsule; precommit KeyboardInterrupt/SystemExit preserve old prefix; authentic
+  issuance then signal cleans only its candidate; captured receipt then atomic
+  rollback no-ops cleanup. Original control exceptions are preserved.
+- Actual in-flight SolveCancelled under new receipt/cleanup PASS8.463345799944364s.
+- Offline build11.562672900035977s and private install3.9935992000391707s terminal0.
+- All545 source/wheel/installed payloads+6metadata exact.194 private imports/errors0
+  on both waves. Effective JITdisabled/Numba1/two observed BLAS pools each1.
+  Peak new test RSS168341504B under953MiB; one job at a time.
+- Wheel6252c0f69bc3f621755216c694c2bf6d3e608f0e032938b4eafa3047e3cdc3cb,
+  native_transient_receipt_dist3; private native_transient_receipt_installed3.
+- Prior wheel/manual/split/loadedCLI evidence remains artifact-scoped. Earlier12s
+  postcommit TIMEOUT and all other failures retained; no full-module pass inferred.
+- Root inspected actual eager call results, source equations, all payload bytes,
+  imported-file hashes and effective settings; supporting same-family source review.
+- This closes the bounded controller safety gap. Full C7 finite-angle/temporal/
+  section/connected-native mechanics qualification and complete C0-C9 remain OPEN.
+- Raw C:/ANYworkspaceWork/contact_native_transient_20261006:
+  native_transient_receipt_extension_final_manifest.json/worker_handoff.md,
+  native_transient_receipt_root_evidence/payload/runtime_audit.json;
+  installed3_check and installed_cancel3 exact inputs/logs/resource/results.

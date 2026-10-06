@@ -13,7 +13,7 @@ workers/jobs terminal. Mistral/local cached unavailable; sustained OpenAI fallba
 plus supporting Read review. Same-family scrutiny is not engineering acceptance.
 Ledger append ASCII BYTES ONLY; preserve working-CRLF/Git-LF prefixes.
 
-## Current interruption repair - implemented, verification open
+## Current interruption repair - development verified
 
 Follow-up to36e99e02: actual published endpoint identity reconciles an authentic
 commit with already prepared controller/native/result bytes. Native-owned private
@@ -24,14 +24,21 @@ mechanics rollback, state transplant, unrelated candidate clear or changed physi
 Root AST audit: exact original trial body;43 other midpoint and all original facade
 methods unchanged. Supporting same-family source review found no residual defect.
 
-Five new safety cases are prepared. Authentic postcommit source attempt TIMEOUT
-12.064423200092278s, setup only; no call/result/runtime/import completion. Current
-repair is NOT numerically/installed verified. Prior held wheel still binds its old
-checks.90-second extension requested for new build/private install/targeted5cases;
-PENDING, no approval presumed. Source work and authorized local checkpoint complete.
+Five installed safety checks PASS30.3959776s; actual in-flight cancellation
+PASS8.4633458s. Build11.5626729s/install3.9935992s terminal0. All545 source/wheel/
+installed payloads+6metadata agree;194 imports/errors0,JIT0/Numba1/observedpools1.
+Actual postcommit accepted epoch1/time.001 and native checkpoint parity verified.
+The pre-receipt source attempt TIMEOUT12.0644232s with setup only remains retained.
+User approved90s extension;12total jobs below270s. No more optional execution.
+Prior wheel immutable. New held wheel6252c0f69bc3f621755216c694c2bf6d3e608f0e032938b4eafa3047e3cdc3cb,
+private native_transient_receipt_installed3. Local source checkpointb894a3b6;
+inspect HEAD for final records checkpoint. Full C7 engineering acceptance OPEN.
 Mistral/local remain cached unavailable; sustained fallback ownership preserved.
 Raw native_transient_receipt_worker_handoff.md/final_manifest/source_audit and
 root safety_formula_audit/source_review/start plus exact timeout snapshots retained.
+Current native_transient_receipt_extension_final_manifest.json/worker_handoff.md,
+root receipt_evidence/payload/runtime audits and both installed job records bind
+the verified repair. No later packaged Python or test-body changes.
 
 ## Latest delivery - native contact-free trajectory
 
@@ -70,7 +77,7 @@ exact reconstructed failed fixture and binding correction are retained.
 
 | Scope | Used/total seconds | Remaining seconds |
 |---|---:|---:|
-| New C7 native trajectory |177.52804120001383/180|2.4719587999861687|
+| New C7 native trajectory |231.94363670004532/270|38.05636329995468|
 | C6 beam/S3 |409.0956022000173/420|10.90439779998269|
 | C5 arc |186.04257249983493/240|53.95742750016507|
 | C4 triangulated/connected S3 |172.93152889993507/180|7.068471100064926|
@@ -78,7 +85,8 @@ exact reconstructed failed fixture and binding correction are retained.
 | Automatic domains |174.026839300175/180|5.973160699825|
 | Native connected spatial |177.357927799691/180|2.642072200309|
 
-C7 eight jobs terminal; authority native_transient_authority.json. Onejob60s,
+C7 twelve jobs terminal; original authority native_transient_authority.json and
+approved native_transient_receipt_extension90_authority.json; original unchanged. Onejob60s,
 953MiB/JIT0/Numba1/pools1, actual remainder and reserve. All failures/imports/
 build/install count. C6/C5/C4/C9 terminaljobs70/28/33/34. Original120h consumed
 432011s. No borrowing/replay/renewal. Domain180 request unanswered; remaining
@@ -92,11 +100,13 @@ and common-stage native/shell impact remain open. Keep accepted physical inertia
 retained coordinates and complete work maps. New numerical scope needs its actual
 authority; source work can proceed within authorized ownership.
 
-First close the current return-time interruption repair using its concrete
-verification proposal and actual approval. Do not execute the pending extension.
-Prior installed precommit checks are unaffected historical evidence, not current
-repair verification. No full-suite replay. Preserve the old finite-spin NONPASS as
-a separate scientific gap; this state repair does not adjudicate it.
+Current return-time safety closes through6installedPASS and exact package/runtime
+provenance. Resume broader C7 scientific work from this owner/controller; do not
+repeat this completed slice or the long original test module. Preserve finite-spin
+NONPASS and full trajectory refinement/section/connected-native gaps. Current
+remaining C7 seconds cover only the approved trajectory/safety scope; they do not
+authorize a new finite-angle campaign. Source development can proceed; identify
+the next concrete mechanics discrepancy before requesting its numerical authority.
 
 Use measured case costs and eager per-case reports; whole17case file exceeds
 current60s job cap. Reuse unaffected evidence, targeted groups and held artifacts;
