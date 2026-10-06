@@ -1,6 +1,6 @@
 {
-  "status": "PENDING_USER_APPROVAL",
-  "approval_evidence": null,
+  "status": "APPROVED",
+  "approval_evidence": "Direct human reply I approve on 6 October 2026 to pending ea190bc4 bounded local-diagnostic scope amendment; SAME existing300s allowance, no renewal.",
   "total_seconds": 300,
   "existing_used_seconds": 55.6802591,
   "existing_remaining_seconds": 244.3197409,
@@ -22,5 +22,6 @@
     "examples/stiffened_shell_native_fold_assessment.py": "903a3da271c3f3033641ffd6038e1e8d2b6e5c3a4a122a9f28d4e0b153175d35",
     "examples/stiffened_shell_native_fold_local_diagnostic.py": "7cebefe03b9c7080cf9592be3071d22bbeaf7951dd5397375223f8f8d09fc170",
     "tests/test_stiffened_shell_native_fold_local_diagnostic.py": "2e7b85d6f3a8a46f8b27b9b8d19927f008eb8d4d254abe0ab20df1062bafecb7"
-  }
+  },
+  "candidate": "ea190bc434988ecbac5810f154226fd9e19cefd5"
 }

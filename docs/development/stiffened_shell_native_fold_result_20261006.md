@@ -58,3 +58,36 @@ Evidence: `.qualification/b3-ge-e4-pl/r8-native-fold-assessment-dev-20261006-v1/
 contains raw results, receipts, runtime/import/artifact bindings, authority/ledger,
 independent review, saved-array diagnosis and `root-result-v2.json`. Earlier
 registrations and the failed directional results are retained unchanged.
+
+## Approved local capture: 6 October 2026
+
+All23focused controls passed. The single installed g13 capture completed five
+actual evaluations and one sparse border, with unchanged complete public
+recovery/checkpoint bytes. Frozen430module artifact/runtime bindings and five
+flushed/atomic capture hashes reconcile. Peak process-tree RSS291770368B.
+The first sandbox launch failed at dependency admission before tests/model;
+its9.9780406s remains charged and preserved. Frozen host environment passed.
+Same300s ledger:109.1353426used/190.8646574remaining; both primary runs consumed.
+
+| Existing perturbation | Q4 discrepancy | Conditional summation bound |
+|---|---:|---:|
+| 1e-5 | 1.910722139e-6 | 8.051403249e-10 |
+| 1e-6 | 5.318902018e-6 | 8.051382181e-9 |
+
+The dominant discrepancy precedes assembly: local force derivatives track
+stiffness applied to captured local-coordinate derivatives. Elements1/9 mainly
+show rotation-y/x mismatch (~2.33e-15rad in signed differences); input update
+rounding accounts for only .0918%/.0419% of their coordinate-error norms.
+These mixed-unit norms are diagnostic; they neither bound element arithmetic
+nor prove complete operator correctness. Procrustes arithmetic remains possible.
+
+Actual stable_rotation=False uses cancellation-prone legacy principal-Log
+scalar formulas at relative rotations~.011-.021rad. Adopt an isolated Log-only
+candidate using the existing stable value/first/second helper, preserving original
+Exp/chart and physical law. Prepare source/controls before a separately approved
+numerical comparison. No production route or checkpoint-compatibility change.
+
+Directional criteria remain1e-6 and unmet. No first/simplefold, branchmargin,
+stability/capacity, G4D/F03 or complete programme acceptance follows.
+Raw root-result-v3.json, root-local-attribution-v2.json and independent-local-
+evidence-review-v1.json bind this interpretation and preserved failed execution.

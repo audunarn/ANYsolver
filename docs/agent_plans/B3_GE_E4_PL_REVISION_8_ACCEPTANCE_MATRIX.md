@@ -4115,3 +4115,18 @@ All new controls UNRUN. Pendingv2 scope amendment preserves SAME300ledger,
 55.6802591used/244.3197409remaining and60sreserve; no budget renewal.
 No new run until direct human scope approval; originalONE assessment CONSUMED.
 G4D/F03 and complete programme remain OPEN; no main/push/release.
+## 2026-10-06 - approved local capture,23PASS and mechanics INCONCLUSIVE
+
+Candidateea190bc4/wheel6464174e. Source23PASS; first runtime-admission failure
+retained/charged. ONEg13 capture completed1border/5evaluations/16Q4each,
+unchanged full public recovery/checkpoint.430artifactmodules, frozen runtime,
+5durable capture hashes and process-wall ledger independently reconcile.
+109.1353426used/190.8646574remaining of SAME300; primaryassessments CONSUMED.
+Q4 errors1.91e-6/5.32e-6 exceed conditional given-float assemblybounds by orders;
+localrotational coordinate discrepancy amplified by Klocal is major contributor.
+LegacyLog arithmetic is the specific source candidate; Procrustes/internal
+arithmetic/fulloperator exclusion unproved. No tolerance/normalization change.
+Private isolated Log-only candidate source preparation adopted; no owner/default/
+checkpoint change and no newcandidate numerical run without scope amendment.
+Raw fold-assessment-dev/root-result-v3.json; supporting reviewclean, not
+scientific/differentfamily acceptance. G4D/F03/fullprogramme remain OPEN.
