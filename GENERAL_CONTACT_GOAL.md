@@ -138,6 +138,16 @@ Independent assessment needs a check matched to the claim: an analytical solutio
 
 D1 acceptance remains bound to its linked handoff and assessment. Each subsequent delivery requires its own applicable capability rows, usable installed handoff and closed independent assessment; full completion requires all programme rows. Keep **implemented**, **locally tested**, **independently accepted** and **released** distinct. A useful negative result or an exhausted budget does not complete this delivery.
 
+### Latest C6 development
+
+Ordinary Newmark now runs classical B2/B3 round-centreline impact against a
+genuinely deforming fixed-director S3 physical skin. Installed10 focused controls
+and the public unequal-target example pass. Independent uniform-normal response,
+momentum/energy, both-body physical wrench, full-path refusal, rollback and exact
+B2 split restart support this bounded development profile. All540 package files
+match source; no general rotation, friction, nonlinear-material or C6 engineering
+acceptance follows. [Evidence](docs/d1_review_support/contact_c6_beam_s3_20261006/development.md).
+
 ## Delegated decisions
 
 The lead is expected to choose the fastest credible route to the outcome and may, without further approval:

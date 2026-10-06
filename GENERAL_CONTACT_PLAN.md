@@ -5,6 +5,29 @@ This plan changes the route, not scientific obligations or execution authority.
 
 ## Current delivered development
 
+### Delivered C6 development: beam/deformable-S3 impact
+
+The shared Newmark route now executes elastic B2/B3 round-centreline contact
+against a genuinely deforming fixed-director S3 skin. Complete both-body work,
+actual reduced mass, explicit zero target rotations/rates and full Hermite gap,
+orientation and rim bounds remain mandatory. The existing line law is unchanged.
+Installed10 controls and the public unequal-target example pass, including actual
+B2/B3 activation/release, exact B2 split restart, per-body inertia/structural/
+support/contact wrench, hidden target motion and transaction/refusal checks.
+The uniform independent reference has energy defect0.0292%, decreasing to0.00704%
+on temporal refinement, against the unchanged1% gate. Supporting source review
+closed the skin-map mutation hole; independent engineering acceptance remains open.
+[Evidence](docs/d1_review_support/contact_c6_beam_s3_20261006/development.md).
+
+Next extend this integrated pairing with actual B3 interior bending during impact
+and a corresponding structural-work discriminator, rather than begin another
+driver. Reuse the held artifact for fixture-only changes; rebuild only if product
+code changes. Retain the SAME180s C6 purse:78.8830406999914s used and
+101.1169593000086s remaining across12terminaljobs. Keep onejob/
+953MiB/JIT0/Numba1/pools1/watchdog<=min60s,remaining-1. No held C5/C4/domain/native/
+archive or frozen authority is renewed. General rotation/friction, multiple faces,
+materials, other impact pairings and full C6 acceptance remain separate obligations.
+
 The solver-side ordinary arc result archive joins the existing static/transient
 archive services. All10producer fields, peak/path records, snapshots/material and
 complete V2 checkpoint survive inert export/read. Source4 and installed4 controls

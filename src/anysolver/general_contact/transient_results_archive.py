@@ -48,7 +48,8 @@ def _limit(value):
 def _types():
     # Fixed imports of producer classes, never names supplied by an archive.
     from . import transient as t
-    records = (t.ContactResults, t._PairResults, t._PatchResults, t._BeamPlaneResults,
+    from .deformable_beam_s3_static import DeformableBeamS3Results
+    records = (DeformableBeamS3Results, t.ContactResults, t._PairResults, t._PatchResults, t._BeamPlaneResults,
                t.MultipleBeamRigidResults, t.MultipleShellPlaneResults, t._RadialResults,
                t.FreeRigidBodyState)
     return t.TransientContactResults, {c.__module__ + '.' + c.__qualname__: c for c in records}

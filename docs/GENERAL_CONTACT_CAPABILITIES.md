@@ -2536,3 +2536,39 @@ raw C:/ANYworkspaceWork/contact_transient_archive_20261006/root_arc_payload_audi
 Same archive157.759157099645/180s spent,22.240842900355s remaining,29terminaljobs.
 Every prior artifact/failure/authority retained. Applications/admission and full
 C0-C9 engineering acceptance remain open. Archive grants no restart authority.
+
+
+## C6 elastic beam / deformable-S3 impact development - 2026-10-06
+
+Implemented/tested: explicit one B2/B3 round-centreline tube against one genuinely
+deforming fixed-director S3 physical skin in the shared Newmark route. Full
+both-body Jet2 line work, actual SPD reduced mass, MODEL-constrained exact zero
+target rotations/rates, complete both-body Hermite normal/rim/gap bounds, bounded
+cutback, transactions and distinct opt-in V17 restart. Existing line law unchanged.
+
+Installed10 controls PASS14.707884s; actual unequal-target example PASS2.921510s.
+Actual B2/B3 impact181states/32active/release. Independent B2 response error
+1.395e-13/2.217e-13, momentum6.076e-12; energy0.029213% to0.0070375% under dt
+refinement against1%. Separate body inertia/internal/support/contact F/M errors
+<=2.002e-16 against1e-6. Exact accepted-grid B2 split checkpoint, cancellation,
+exception, rejected-path retry and geometry/operator/profile refusals pass.
+Installed derivative interval h1e-7/1e-8/1e-9 PASS2.824441s, maxH1.061e-9/
+work6.566e-10 against1e-5. Product unchanged; test-only follow-up reuses artifact.
+Legacy transient wire fixture exact; global producer class fields/AST unchanged.
+
+Root audits540source/wheel/installed payloads/sixfinalhashes and228/221/227 actual
+installed imports/errors0, JITdisabled/Numba1/pools1. WheelSHA256
+d5d46ced9e0a4882edf7106afe7134fbd132820a170dc660714fde30930ce5a8.
+Raw C:/ANYworkspaceWork/contact_c6_beam_s3_20261006: worker_handoff.md,
+summary.json, held_source_hashes.json, final_source_hashes.json,
+root_final_installed_audit.json and preserved failed runs/input/resource logs.
+Evidence docs/d1_review_support/contact_c6_beam_s3_20261006/development.md;
+usage docs/GENERAL_CONTACT_BEAM_S3_TRANSIENT_DEV.md.
+
+SAME distinct C6 purse78.8830406999914/180s,101.1169593000086remaining,
+12terminaljobs incl all failures/build/install. No older authority renewed.
+Supporting same-family source scrutiny found/repaired the actual skin-map binding
+gap. Independently accepted: NO. Released: NO. General deformation energy/spatial
+convergence, nonlinear materials/friction, finite/native rotations, multiple faces,
+true caps/rims, other impact rows/app admission and full C6/C0-C9 remain required.
+No B3 exact restart claim inferred from B2. Historical acceptance unchanged.
