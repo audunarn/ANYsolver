@@ -3918,3 +3918,10 @@ Collection-only installed check completed5.030493s:1 collected/ZERO executed,
 185982976bytes. Existing300s ledger now281.6991968used/18.3008032remaining.
 Evidence preserved at solverb2478089 in existing native arc raw; no consumer
 allowance, scientific campaign, acceptance or release authority transferred.
+## 2026-10-06 native arc saved-checkpoint compatibility follow-through
+
+Implementation candidate9bc30096 unchanged; no production edits. Independent source oracle ae256679 retains full common-origin material/retained/bordered derivative criteria.
+- First full-case installed attempt FAILED8.1333663s after successful strict restoration: test conflated fixed-displacement completed with arc accepted_prefix. No arc candidate, branch inventory or derivative executed. Failed bytes/logs retained; exact expectation corrected.
+- Separate installed old-checkpoint compatibility PASS1/1,6.5698668 process seconds, wheel4c027af1. Authentic mixed/biaxial/P1 gen3 checkpoint70b16259/46984bytes roundtrips exactly; retained frames/resultants, load/multipliers, native histories and Q4/S3 alpha/plastic arrays match decoded old state. Physical recovery is finite; existing equilibrium/constraint thresholds pass. Full Jacobian NOT executed; no capacity/scientific qualification.
+- Root inspected terminal JUnit,430 source/wheel/site bound modules,997 actual imports, effective before/after affinity0/pools1/Numba1/JIToff,71 samples/190423040 peak treeRSS. Raw and scoped root proof: r8-native-material-bl5-arc-dev-20261006-v1/installed-old-checkpoint-compatibility-v2 and root-compatibility-proof-v2.json.
+- Approved300s ledger296.4024299used/3.5975701remaining. Fresh120s native full-Jacobian request PENDING; consumer150s PENDING/zero. No consumer/body/F03/main/publication runtime inferred. Full G0-G6 and related scientific/external/platform/scale/consumer obligations remain OPEN.

@@ -16,7 +16,7 @@ Deliver native material BL5 continuation using the existing owner and services,
 then close its missing verification and capacity obligations. Do not rebuild
 previous GE/B2 owners or treat this small development route as programme completion.
 Source candidate9bc30096728ec535bf197e66c548f18295c173db now has LIMITED INSTALLED
-DEVELOPMENT verification: one source core and five distinct installed cases.
+DEVELOPMENT verification: one source core and six distinct installed cases.
 The mixed/biaxial/P1 fixed-translation endpoint has direct positive S3/physical
 fibre histories; public arc, exact fresh restart and continued stepping pass.
 Installed cancellation preserves precommit checkpoint and committed prefix.
@@ -30,17 +30,22 @@ source/API/schema changes. Complete source review passed after cleanup repair.
 All99 source modules match existing d1c9714d wheel; reuse avoids another build.
 Both new tests UNRUN. Fresh150s consumer authority requested and still pending;
 no consumer runtime allowance inferred from solver remainder.
-Source-only follow-through: same consumer author prepares frozen installed-check
-harness; independent verification owner writes a common-state/new-origin arc
-border derivative oracle. Both source-only assignments completed. Root bounded
-collection imported that oracle:1 collected/ZERO executed,5.030493s; derivative
-branch/criteria remain UNRUN. Consumer approval/ledger remains PENDING/zero.
+Consumer source/harness committed3bbc1a65; both tests UNRUN, approval/ledger
+PENDING/zero. Independent full Jacobian oracle source SHAae256679 is prepared.
+Its first attempt FAILED8.1333663s on a test status error after strict restore:
+fixed displacement returns completed, whereas arc publication is accepted_prefix.
+The exact expectation was corrected; no product status/physics change.
+Separate installed old-checkpoint compatibility PASS6.5698668s: authentic
+gen3 mixed/biaxial/P1 checkpoint70b16259 restores byte-identically, retained,
+load/frame, Q4/S3 and beam material arrays match; finite physical recovery and
+existing equilibrium/constraint thresholds pass. Full arc Jacobian NOT executed.
 Independent evidence review confirms three earlier installed full equilibrium
 directional checks apply to unchanged assembly/update modules. Their endpoint
 predecessors differ from arc's newly accepted origins; a common-state full arc
 bordered derivative remains unverified. See the existing arc review's appended
-applicability analysis. Next: review the complete consumer slice, then verify
-under its own explicit allowance. Broader legacy, other parameter routes,
+applicability analysis. Fresh120s full-Jacobian allowance requested/PENDING,
+20s final reserve; no launch. Consumer150s independently PENDING. Broader legacy,
+other parameter routes,
 same-origin full arc Jacobian, real cutback/turning point,
 mesh/unit capacity and physical/scientific acceptance remain OPEN. A failed or
 missing gate remains visible; do not rerun a timeout just to reconstruct evidence.
@@ -54,14 +59,14 @@ One offline build/install; all430 source/wheel/site module bytes match.
 Root verifies250 actual core/control solver imports +748 dependency files,
 249 derivative imports +748 dependencies,6 frozen inputs and5 snapshot example
 origins; effective before/after affinity[0], pools1, NumBa1/JIToff match.
-Successful installed jobs:34.1895612s/38.5294439s/8.4307776s; five cases.
+Successful installed jobs:34.1895612s/38.5294439s/8.4307776s/6.5698668s; six cases.
 Raw: .qualification/b3-ge-e4-pl/r8-native-material-bl5-arc-dev-20261006-v1/.
 Latest author handoff-v2.md SHA658e5eeb; final-manifest-v2.json SHAf306dfdb.
 Independent review docs/development/stiffened_shell_native_material_bl5_arc_independent_review.md
-SHAfa97020a: no new blocking finding in TESTED SCOPE, not scientific acceptance.
+SHA4947c4da: source/status repair and compatibility oracle, not scientific acceptance.
 Root artifact/core/controls/derivative proof files and preserved failures are in raw.
 
-NEW user-approved300s ledger:281.6991968s used,18.3008032s remain. All jobs
+NEW user-approved300s ledger:296.4024299s used,3.5975701s remain. All jobs
 terminal; no numerical work running. Remaining authority is ONLY this approved
 candidate's checks/repair scope,2GiB treeRSS/affinity0/pools1/JIToff/backend unforced.
 Sixty seconds were reserved FOR final verification and used during that stage;

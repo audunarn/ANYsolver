@@ -4,6 +4,10 @@ One mixed/P1 loaded fixture and one uncommitted arc candidate. This is neither
 a limit-point test nor authority to run a new numerical campaign.
 """
 import json
+import hashlib
+import os
+from pathlib import Path
+from dataclasses import fields, is_dataclass
 import numpy as np
 import pytest
 from scipy import sparse
@@ -17,6 +21,63 @@ from anysolver.plasticity import _jit_consistency_residual_scalar
 from examples.stiffened_shell_native_fibre_bl5_mixed_j2_displacement import definition
 from examples.stiffened_shell_native_fibre_bl5_displacement import ACTIONS, CONTROL, OPTIONS, TARGETS
 from examples.stiffened_shell_native_material_bl5_arc import arc_control
+
+
+def _loaded_seed(owner, tmp_path):
+    """Optional authentic gen3 input; strict restore remains the admission gate."""
+    source = os.environ.get('ANY_NATIVE_BL5_ARC_JACOBIAN_FIXTURE')
+    expected = os.environ.get('ANY_NATIVE_BL5_ARC_JACOBIAN_FIXTURE_SHA256')
+    attempt = dict(source=source or 'fresh loaded fixture', expected_sha256=expected, phase='requested')
+    diagnostic = tmp_path/'seed-attempt.json'
+    diagnostic.write_text(json.dumps(attempt, indent=2))
+    assert (source is None) == (expected is None), 'fixture path and expected SHA256 must be supplied together'
+    if source is None:
+        owner.solve(ACTIONS, (.001,), **OPTIONS)
+        owner.solve(ACTIONS, TARGETS[:2], displacement_control=CONTROL, **OPTIONS)
+        provenance = dict(source='fresh loaded fixture')
+    else:
+        # Root adopted this exact existing matched mixed/P1 checkpoint. Neither
+        # an arbitrary caller digest nor a fabricated replacement is admitted.
+        raw = Path(source).read_bytes()
+        attempt.update(phase='input read', actual_sha256=hashlib.sha256(raw).hexdigest(), bytes=len(raw))
+        diagnostic.write_text(json.dumps(attempt, indent=2))
+        assert expected == '70b162593ee8939aea0755fa20a5d84956da58a435879518aa5e26ad0573f8dc'
+        assert len(raw) == 46984 and hashlib.sha256(raw).hexdigest() == expected
+        copied = tmp_path/'loaded-seed-fixture.bin'
+        copied.write_bytes(raw)
+        owned = copied.read_bytes()
+        assert owned == raw and hashlib.sha256(owned).hexdigest() == expected
+        loaded = owner.restore(owned)
+        attempt.update(phase='strict restore returned', status=loaded.status,
+                       generation=loaded.generation, target=loaded.target,
+                       restored_sha256=hashlib.sha256(owner.checkpoint()).hexdigest())
+        diagnostic.write_text(json.dumps(attempt, indent=2))
+        assert loaded.status == 'completed' and loaded.generation == 3
+        assert loaded.target == TARGETS[1]
+        assert owner.checkpoint() == owned, 'strict model/pose/material restore changed bytes'
+        provenance = dict(source=str(Path(source)), sha256=expected, bytes=len(raw))
+    loaded = owner.recover()
+    attempt.update(phase='public recovery returned', status=loaded.status,
+                   generation=loaded.generation, target=loaded.target)
+    diagnostic.write_text(json.dumps(attempt, indent=2))
+    assert loaded.status == 'completed' and loaded.generation == 3
+    assert loaded.target == TARGETS[1]
+    return loaded, provenance
+
+
+def _json_record(value):
+    """Serialize the complete actual public record, including failure diagnostics."""
+    if is_dataclass(value):
+        return {field.name: _json_record(getattr(value, field.name)) for field in fields(value)}
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, (tuple, list)):
+        return [_json_record(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _json_record(item) for key, item in value.items()}
+    return value
 
 
 def _inventory(owner, driver, state, shell, beam, evaluation):
@@ -84,9 +145,7 @@ def _inventory(owner, driver, state, shell, beam, evaluation):
 def test_common_accepted_origins_full_arc_residual_direction(request, tmp_path):
     owner = ss.create_analysis(definition=definition('mixed', 'biaxial', 'mixed', 'continuous_p1_coarse'))
     request.addfinalizer(owner.close)
-    owner.solve(ACTIONS, (.001,), **OPTIONS)
-    owner.solve(ACTIONS, TARGETS[:2], displacement_control=CONTROL, **OPTIONS)
-    loaded = owner.recover()
+    loaded, fixture_provenance = _loaded_seed(owner, tmp_path)
     assert any(np.any(row.alpha > 0.) for row in loaded.shell_s3_material)
     driver = owner._finite_driver
     saved = owner.checkpoint()
@@ -163,8 +222,69 @@ def test_common_accepted_origins_full_arc_residual_direction(request, tmp_path):
     assert owner.checkpoint() == saved
     (tmp_path/'same-origin-arc-jacobian.json').write_text(json.dumps(dict(
         status='EXECUTED_DEVELOPMENT_DIRECTIONAL_CHECK', errors=errors,
+        fixture=fixture_provenance,
         center_branches=center[0], stencil=inventories, direction=direction.tolist(),
         amplitude_direction=amplitude_direction, shape=list(border.shape),
         material_criterion=1e-5, norm='all-row unweighted L2; denominator max(norm(expected),1)',
         path_criteria=dict(relative=1e-8, absolute=1e-10),
         production_qualified=False), indent=2))
+
+
+def test_authentic_old_loaded_checkpoint_current_owner_recovery(request, tmp_path):
+    """Old fixed-displacement layout compatibility, never a Jacobian substitute."""
+    assert os.environ.get('ANY_NATIVE_BL5_ARC_JACOBIAN_FIXTURE') is not None
+    owner = ss.create_analysis(definition=definition('mixed', 'biaxial', 'mixed', 'continuous_p1_coarse'))
+    request.addfinalizer(owner.close)
+    loaded, provenance = _loaded_seed(owner, tmp_path)
+    public = _json_record(loaded)
+    # Preserve the actual record even when a later finite/content assertion fails.
+    (tmp_path/'restored-public-recovery.json').write_text(json.dumps(public, indent=2))
+    json.dumps(public, allow_nan=False)
+    assert loaded.support_reactions.size and loaded.applied_dead_load.size
+    assert loaded.cell_frames.size and loaded.cell_resultants.size and loaded.multipliers.size
+    assert loaded.beam_fibre_material and loaded.beam_generalized_material
+    assert loaded.shell_s3_material and loaded.shell_q4_material
+    assert any(np.any(row.alpha > 0.) for row in loaded.shell_s3_material)
+    physical = {row.element_id for row in loaded.beam_fibre_material}
+    generalized = {row.element_id for row in loaded.beam_generalized_material}
+    assert physical and generalized and physical.isdisjoint(generalized)
+    from anysolver._stiffened_shell_displacement_checkpoint import decode_snapshot
+    raw = owner.checkpoint()
+    _, payload = decode_snapshot(owner, raw)
+    for name, value in (('frames', loaded.beam_frames), ('cells', loaded.cell_frames),
+                        ('resultants', loaded.cell_resultants), ('multipliers', loaded.multipliers),
+                        ('applied_load', loaded.applied_dead_load),
+                        ('shell_anchors', loaded.shell_rotation_anchors)):
+        np.testing.assert_array_equal(value, payload[name])
+    np.testing.assert_array_equal(loaded.shell_chart_coordinates.reshape(-1),
+                                  payload['q'][:owner._shell_count])
+    accepted = dict(beam_arrays(owner._beam_parts, owner._finite_driver._beam_origins, 'beam'))
+    assert np.any(accepted['beam_fibres'][:, 2:] > 0.)
+    for name, value in accepted.items():
+        np.testing.assert_array_equal(value, payload[name])
+    for record, alpha, plastic in zip(loaded.shell_q4_material, payload['shell_alpha'],
+                                     payload['shell_plastic'], strict=True):
+        np.testing.assert_array_equal(record.alpha, alpha)
+        np.testing.assert_array_equal(record.plastic_strain, plastic)
+    q4_count = len(owner._definition.shell.q4_elements)
+    s3_parts = owner._shell_parts[q4_count:]
+    assert len(payload['s3_states']) == 2*len(s3_parts)
+    material = owner._shell_model.get_material('shell')
+    # Native layout stores accepted S3 blobs first, predecessor blobs second.
+    # Use the element's actual model-bound codec; never invent a blob schema.
+    for part, record, blob in zip(s3_parts, loaded.shell_s3_material,
+                                  payload['s3_states'][:len(s3_parts)], strict=True):
+        eid, element, _, _ = part
+        assert record.element_id == eid
+        original = element.deserialize_nonlinear_state(owner._shell_model.mesh, material, blob, 3)
+        np.testing.assert_array_equal(record.alpha, original['alpha'])
+        np.testing.assert_array_equal(record.plastic_strain, original['plastic_strain'])
+    assert loaded.free_equilibrium_ratio <= 1e-8 and loaded.constraint_max <= 1e-9
+    assert owner.checkpoint() == (tmp_path/'loaded-seed-fixture.bin').read_bytes()
+    (tmp_path/'old-checkpoint-compatibility.json').write_text(json.dumps(dict(
+        status='EXECUTED_OLD_CHECKPOINT_COMPATIBILITY_ONLY', fixture=provenance,
+        generation=loaded.generation, target=loaded.target, restored_status=loaded.status,
+        physical_member_ids=sorted(physical), generalized_member_ids=sorted(generalized),
+        public_recovery='restored-public-recovery.json', checkpoint_bytes_equal=True,
+        s3_accepted_blob_material_arrays_equal=True,
+        full_arc_jacobian_executed=False, production_qualified=False), indent=2))

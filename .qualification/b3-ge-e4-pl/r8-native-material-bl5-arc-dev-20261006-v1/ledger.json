@@ -2,7 +2,7 @@
   "status": "USER_APPROVED_NEW_ALLOWANCE",
   "candidate": "9bc30096728ec535bf197e66c548f18295c173db",
   "total_seconds": 300.0,
-  "used_seconds": 281.6991968,
+  "used_seconds": 296.40242989999996,
   "final_verification_reserve_seconds": 60.0,
   "memory_limit_bytes": 2147483648,
   "affinity": [
@@ -237,6 +237,50 @@
         "remaining_seconds": 18.300803199999997,
         "supervisor_sha256": "0dbdb59e674c698c3b4a629ff27b0eee093dc0b92a38e14c3fc34df3a497fe46",
         "entry_sha256": "9ef03cf786f3e2f8aadf3786ac205a4af9a8bf2935285b48bfad78b530d8bc90",
+        "tree_memory": "entry psutil sampled entire process tree, 2GiB ceiling; native timeout kills entire tree"
+      }
+    },
+    {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-main-reconcile-20261001\\.qualification\\b3-ge-e4-pl\\r8-native-material-bl5-arc-dev-20261006-v1\\installed-same-origin-jacobian-v1",
+      "receipt": {
+        "command": [
+          "C:/Python/Python314/python.exe",
+          "-I",
+          "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-main-reconcile-20261001\\.qualification\\b3-ge-e4-pl\\r8-native-material-bl5-arc-dev-20261006-v1\\entry-jacobian-v1.py",
+          "installed",
+          "installed-same-origin-jacobian-v1"
+        ],
+        "cwd": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-main-reconcile-20261001\\.qualification\\b3-ge-e4-pl\\r8-native-material-bl5-arc-dev-20261006-v1",
+        "status": "failed",
+        "exit_code": 1,
+        "process_wall_seconds": 8.1333663,
+        "seconds_limit": 17.0,
+        "cumulative_used_seconds": 289.83256309999996,
+        "remaining_seconds": 10.167436900000018,
+        "supervisor_sha256": "49d221b5c7915d4ba42535ed4d30270307c8d5afa7fd6a64e9aa89cf163a244b",
+        "entry_sha256": "f7a13b10b1695b8748592b95cafa945e367ff7df8f085a0cee6bfc53a09eb788",
+        "tree_memory": "entry psutil sampled entire process tree, 2GiB ceiling; native timeout kills entire tree"
+      }
+    },
+    {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-main-reconcile-20261001\\.qualification\\b3-ge-e4-pl\\r8-native-material-bl5-arc-dev-20261006-v1\\installed-old-checkpoint-compatibility-v2",
+      "receipt": {
+        "command": [
+          "C:/Python/Python314/python.exe",
+          "-I",
+          "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-main-reconcile-20261001\\.qualification\\b3-ge-e4-pl\\r8-native-material-bl5-arc-dev-20261006-v1\\entry-compatibility-v2.py",
+          "installed",
+          "installed-old-checkpoint-compatibility-v2"
+        ],
+        "cwd": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-main-reconcile-20261001\\.qualification\\b3-ge-e4-pl\\r8-native-material-bl5-arc-dev-20261006-v1",
+        "status": "completed",
+        "exit_code": 0,
+        "process_wall_seconds": 6.5698668,
+        "seconds_limit": 9.0,
+        "cumulative_used_seconds": 296.40242989999996,
+        "remaining_seconds": 3.5975701000000413,
+        "supervisor_sha256": "effdd494d5db297a64d46bbdd856f82798dbe429b45913c97269ef8d951db225",
+        "entry_sha256": "5b8253767eeb8a4cf2c07a6fd287738494d3e446c3841b641e2c1cb37988e031",
         "tree_memory": "entry psutil sampled entire process tree, 2GiB ceiling; native timeout kills entire tree"
       }
     }
