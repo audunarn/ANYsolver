@@ -46,6 +46,12 @@ Separate240s request is PENDING. Raw execution_preparation.json binds candidate
 7986c5bd,549 product files/563 total inputs and37 permitted test functions;
 SHA2566737e9bc89fcc6112aaea36e0e5a60120450f95a70b5276c48883dcadf73cd3a.
 connected_shared_run.py fails closed without exact new authority. No job started.
+Artifact audit helper is prepared at raw audit_connected_artifact.py; reads
+source/wheel/install bytes, RECORD inventories and saved import/runtime/case data.
+artifact_audit_preparation.json records hashes, two outer/two embedded AST checks,
+finite timeout/reserve and unaccounted-job refusal guards, process identity capture
+and CLI import hashes. Private install uses --no-compile. Helpers UNEXECUTED;
+saved old RECORD observation is data inspection only, not renewed solver evidence.
 Old loading wheel does NOT contain the new shared driver/connected modules.
 Independent deforming/spatial/section and broad C7/C8 gates remain open.
 
