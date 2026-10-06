@@ -2904,3 +2904,18 @@ Five installed checks and actual four-step CLI PASS at fdbae395/held wheel6252c0
 ## 2026-10-06 connected native shared controller: implemented source candidate
 
 Explicit connected6N+24E retained midpoint owner now uses shared coordinate-free TransientConfig transaction/cutback controller, physical3N+6E origins, strict separate journal/schema and authentic endpoint/receipt publication. Source review findings on adaptive history/final-next_dt, native lease/cancellation and fixed coordinates repaired; clipped-prefix extended histories preserved. Eight held hashes/seven AST/whitespace/root protected-source checks PASS; unchanged old17-node/loop equivalence reused. ALL new numerical/installed/legacy checks UNEXECUTED; no connected execution allowance. Supporting same-family scrutiny is not independent scientific acceptance. No loads/contact admission or C7/C8 completion. Raw: contact_native_connected_transient_20261006/source_preparation_v2.json, worker_handoff_v2.md, shared_controller_source_review.md, root_repaired_source_audit.json. Existing failures, old artifacts and scoped purses unchanged.
+
+
+### 6 October 2026 - connected native/shared controller installed development
+
+Product7986c5bd:32 distinct installed PASS (3 assembled mechanics,27 connected
+workflow/restart/safety,2 legacy), actual2-step CLI PASS. All549 payloads+6metadata
+exact, complete private imports190-196/JITdisabled/Numba1/pools1. Legacy saved
+full/resumed fixture results byte-identical to earlier installed evidence.
+Retain workflow13PASS+1test defect, nine immutable-config repairs, and legacy
+timeout with incomplete metadata; affected case and complete retry PASS.
+Separate disposition preserves aggregate history non-success.12jobs used
+230.89657720038667/240s,9.103422799613327s remains in connected scope only;
+peak169820160 bytes. Implemented/tested development, NOT independently accepted,
+NOT released; independent deforming/finite-angle/support and broader C7/C8 open.
+Evidence: d1_review_support/contact_native_connected_transient_20261006/connected_shared_development.md.

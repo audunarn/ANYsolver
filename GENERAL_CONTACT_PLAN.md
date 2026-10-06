@@ -48,27 +48,34 @@ All 545 held installed payloads and 194 imported modules per run match wheel
 Reuse N192 and N162/N216 evidence; retain older N16 NONPASS and withdrawn
 energy-field source finding. No broader C7 acceptance or C8 claim follows.
 
-### Connected native dynamics: shared-controller source candidate
+### Connected native dynamics: installed development verified
 
-The explicit connected owner now joins one 6N+24E retained midpoint system to
-TransientConfig through a shared coordinate-free transaction/cutback controller.
-The old 17 functions/classes and expanded advancement loop are AST-equivalent
-to the held original source; this is source evidence, not runtime compatibility.
-Separate connected schema, physical 3N+6E initial data, authentic endpoint
-publication and native-owned receipts are implemented. Source review findings
-on controller history, replay lease/cancellation and fixed-slot validation are
-repaired, including historical clipped-prefix continuation. Seven AST/eight
-hash/whitespace checks pass; supporting review identifies no remaining blocker.
-All new connected/shared numerical tests, build and installed checks remain
-UNEXECUTED, with no execution allowance. The frozen loading artifact does not
-contain this candidate. Next build a private artifact and execute the affected
-mechanics, workflow, state/restart and legacy checks once against its exact
-verified payloads, under a separately requested 240-second allowance. This
-installed-first order avoids duplicate source/installed mechanical runs; source
-AST equivalence and all numerical/compatibility gates retain their scope.
-Independent deformation, finite-angle, support wrench/impulse, section and C7/C8
-obligations remain. Source evidence: raw contact_native_connected_transient_20261006
-and [guide](docs/GENERAL_CONTACT_NATIVE_CONNECTED_DYNAMIC_DEVELOPMENT.md).
+The global 6N+24E retained midpoint owner now uses the shared TransientConfig
+transaction/cutback controller. Thirty-two distinct installed cases pass: three
+assembled mechanics/work checks, twenty-seven connected workflow/restart/safety
+checks and two legacy compatibility checks. The actual public example completes
+two steps. All 549 source/wheel/installed product payloads and six wheel metadata
+records match; completed sessions have verified private imports and effective
+JIT-disabled/Numba1/pools1 settings. Saved legacy full/resumed outputs are byte-
+identical to the earlier installed workflow, with saved provenance checked.
+
+Retain the workflow FrozenInstanceError (test defect repaired with nine immutable
+TransientConfig replacements, unchanged inputs/assertions) and legacy timeout
+(partial CALL PASS without terminal runtime/import metadata, then complete retry
+PASS). The aggregate history audit remains non-success; separate current
+disposition records the repaired coverage without erasing failed attempts.
+Product candidate7986c5bd is unchanged. Private wheel SHA begins a9febab4c77c.
+Twelve terminal jobs used230.89657720038667/240 approved seconds;9.103422799613327
+seconds remain only for C7_CONNECTED_SHARED_DEV. Peak tree169820160 bytes.
+No live job or optional repeat. Full C7/C8 and independent acceptance remain open.
+[Delivery evidence](docs/d1_review_support/contact_native_connected_transient_20261006/connected_shared_development.md).
+
+Next close independent connected deformation/finite-angle and support work/
+impulse evidence through the existing owner/controller. Use one bounded
+implementation outcome and a discriminating reference; retain all coordinates,
+inertial work, state safety and current admission limits. No new time-driver
+stack, unaffected-test replay or automatic budget renewal. New numerical scope
+requires its own sufficient authority; the9.1s balance is not a completion estimate.
 
 ### Independent represented-path gap: development verified
 

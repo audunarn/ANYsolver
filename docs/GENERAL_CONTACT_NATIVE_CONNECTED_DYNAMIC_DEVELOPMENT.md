@@ -1,4 +1,4 @@
-# Connected retained native dynamics: source development candidate
+# Connected retained native dynamics: tested development candidate
 
 Status: IMPLEMENTED, UNVERIFIED. No solver/numerical imports, tests, builds or
 installed execution are authorized or have run. Existing native single-element
@@ -54,12 +54,12 @@ reference evidence or scientific truth authenticated merely by a digest.
 examples/native_connected_dynamic_dev.py advances two elements sharing node30
 in one owner. Prepared tests cover map/shared mass and rigid reference, complete
 shared-work/tangent, discard/fresh restart, mutation/cancellation, corrupt
-restore, singular mass and unrepresentable dt. They are all UNEXECUTED.
-The original example is a bounded owner workflow. The following source-only
-shared TransientConfig adapter now prepares that integration. Actual
+restore, singular mass and unrepresentable dt. Three assembled mechanics cases are now installed-tested; remaining owner-only
+controls were not executed in this slice. The public shared TransientConfig
+workflow is installed-tested as recorded below. Actual
 clamped reaction/impulse balance, independent deforming response, finite-angle
-energy/momentum/work, installed execution and broader C7 acceptance remain
-open. No numerical pass, release or engineering acceptance is claimed.
+energy/momentum/work and broader C7 acceptance remain open. Numerical passes
+are confined to the recorded coverage; no release or engineering acceptance is claimed.
 
 ## Shared trajectory controller candidate
 
@@ -76,7 +76,9 @@ a shared private transaction engine. Legacy settings/schema/results/validators
 and literal step preparation remain unchanged. AST expansion of the common
 loop plus legacy preparation exactly matches the original loop;17 other old
 functions/classes and constants/imports have identical AST. This is source
-equivalence, not an executed old/new byte or numerical regression claim.
+equivalence. Two installed legacy checks also pass, and their saved full/resumed
+JSON results are byte-identical to the earlier installed fixture; broader
+compatibility is not inferred.
 
 Connected candidate endpoint publication now uses the exact authenticated
 issued object after complete validation; its mechanical bytes are unchanged.
@@ -96,10 +98,11 @@ homogeneous support work is zero. No algebraic inertia is invented.
 examples/native_connected_transient_dev.py is the public workflow candidate.
 New tests prepare full/split equality, physical SO3 origin, pre/post issuance
 commit/cancellation/control interruptions, cutback, corrupted journal and
-legacy smoke controls. ALL remain UNEXECUTED; numerical/installed compatibility,
-independent physical energy/momentum/clamp balance and full C7 acceptance stay
-open. The pending loading scope binds its old545-payload wheel; these new
-connected/controller files are not covered by that artifact or authority.
+legacy smoke controls. Twenty-seven connected-controller and two legacy checks
+now pass against the549-payload private artifact, with three assembled mechanics
+checks and the actual two-step example. Independent physical energy/momentum/
+clamp balance and full C7 acceptance stay open. The separate240-second connected
+allowance is approved and accounted; the old loading wheel/evidence remain separate.
 
 
 ### Connected restart replay source repair
@@ -111,5 +114,18 @@ Saved fixed midpoint coordinates must be exactly zero. Complete mechanical journ
 replay, cancellation checks, native restore and publication preparation now share
 one native-owned exclusive atomic lease; no nested lock or early visible origin
 is introduced. Forged cadence/fixed-coordinate capsules, clipped-prefix extension
-and in-replay cancellation controls are prepared but UNEXECUTED. Old single
-adapter/schema/formula equivalence remains source evidence only.
+and in-replay cancellation controls now pass installed checks. Old single
+adapter/schema/formula source equivalence remains recorded alongside the bounded
+installed legacy comparison; neither establishes universal equivalence.
+
+
+## Current execution evidence
+
+See [the development delivery record](d1_review_support/contact_native_connected_transient_20261006/connected_shared_development.md)
+for exact source/artifact identities,32 distinct passing cases, actual example,
+test-only repair, retained timeout/failure, unchanged scientific scope and required
+remaining mechanics evidence. Twelve jobs consumed230.89657720038667/240 seconds;
+9.103422799613327 seconds remain in this connected scope. This guide's earlier
+source-only chronology and prepared test docstrings are historical preparation
+labels; they do not supersede the scoped execution record. No engineering
+acceptance or release follows.

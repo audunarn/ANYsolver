@@ -1,5 +1,6 @@
 """Prepared actual connected public-controller controls; all UNEXECUTED."""
 from hashlib import sha256
+from dataclasses import replace
 import json
 import numpy as np
 import pytest
@@ -28,10 +29,10 @@ def test_public_connected_rigid_trajectory_exact_split_restart():
 
 def test_nonzero_physical_displacement_and_unsupported_controls():
     owner=build();c=config(owner,0);u=np.zeros(len(owner.physical));u[:3*owner.n]=np.tile((.001,0.,0.),owner.n)
-    u[3*owner.n:]=np.tile((.125,0.,0.),2*owner.e);c.initial_displacement=u
+    u[3*owner.n:]=np.tile((.125,0.,0.),2*owner.e);c=replace(c,initial_displacement=u)
     result=solve_transient(owner,c);assert result.success
     assert np.linalg.norm(owner.current.positions-owner.reference_positions-np.array((.001,0.,0.)))<1e-11
-    bad=build();c=config(bad);c.rayleigh_alpha=.1
+    bad=build();c=config(bad);c=replace(c,rayleigh_alpha=.1)
     with pytest.raises(NativeTransientError):solve_transient(bad,c)
     assert bad.current is None
 
@@ -88,7 +89,7 @@ def test_cutback_is_shared_and_incompatible_config_refuses(monkeypatch):
     assert result.to_dict()['steps'][0]['cutbacks']==[{'dt':DT,'reason':'connected midpoint iteration limit'}]
     restored=build();same=solve_transient(restored,config(restored,1),checkpoint=result.checkpoint,expected_sha256=sha256(result.checkpoint).hexdigest())
     assert same.checkpoint==result.checkpoint and same.to_dict()==result.to_dict()
-    fresh=build();changed=config(fresh,2);changed.save_every=1
+    fresh=build();changed=config(fresh,2);changed=replace(changed,save_every=1)
     with pytest.raises(NativeTransientError):solve_transient(fresh,changed,checkpoint=result.checkpoint,expected_sha256=sha256(result.checkpoint).hexdigest())
     assert fresh.current is None
 
@@ -132,7 +133,7 @@ def _resign_connected_controller(data):
 def test_resigned_controller_cadence_and_fixed_unknown_refusal(case):
     clamped=case=='fixed_unknown'
     old=build(clamped=clamped);c=config(old,1)
-    if clamped:c.initial_velocity=np.zeros(len(old.physical))
+    if clamped:c=replace(c,initial_velocity=np.zeros(len(old.physical)))
     prefix=solve_transient(old,c);data=json.loads(prefix.checkpoint)
     controller=data['body']['controller']
     if case=='next_dt':controller['next_dt']=DT*.5
@@ -141,7 +142,7 @@ def test_resigned_controller_cadence_and_fixed_unknown_refusal(case):
     else:controller['steps'][0]['midpoint_unknown_global'][old.fixed[0]]=.01
     raw,digest=_resign_connected_controller(data)
     fresh=build(clamped=clamped);request=config(fresh,2)
-    if clamped:request.initial_velocity=np.zeros(len(fresh.physical))
+    if clamped:request=replace(request,initial_velocity=np.zeros(len(fresh.physical)))
     message={'next_dt':'endpoint/cadence','truncated':'truncation','cutback_reason':'only connected Newton','fixed_unknown':'exactly zero'}[case]
     with pytest.raises(NativeTransientError,match=message):
         solve_transient(fresh,request,checkpoint=raw,expected_sha256=digest)
@@ -181,18 +182,18 @@ def test_closed_adaptive_policy_valid_halving_and_horizon_history():
 
 
 def test_clipped_prefix_extended_history_fresh_restore():
-    first=build();request=config(first,0);request.t_end=DT/2
+    first=build();request=config(first,0);request=replace(request,t_end=DT/2)
     prefix=solve_transient(first,request)
-    second=build();request=config(second,0);request.t_end=1.5*DT
+    second=build();request=config(second,0);request=replace(request,t_end=1.5*DT)
     extended=solve_transient(second,request,checkpoint=prefix.checkpoint,
         expected_sha256=sha256(prefix.checkpoint).hexdigest())
     steps=extended.to_dict()['steps']
     assert steps[0]['truncated'] and len(steps)>1
-    third=build();request=config(third,0);request.t_end=1.5*DT
+    third=build();request=config(third,0);request=replace(request,t_end=1.5*DT)
     same=solve_transient(third,request,checkpoint=extended.checkpoint,
         expected_sha256=sha256(extended.checkpoint).hexdigest())
     assert same.checkpoint==extended.checkpoint and same.to_dict()==extended.to_dict()
-    fourth=build();request=config(fourth,0);request.t_end=2.5*DT
+    fourth=build();request=config(fourth,0);request=replace(request,t_end=2.5*DT)
     continued=solve_transient(fourth,request,checkpoint=extended.checkpoint,
         expected_sha256=sha256(extended.checkpoint).hexdigest())
     assert continued.success and continued.to_dict()['steps'][:len(steps)]==steps
