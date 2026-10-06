@@ -1569,3 +1569,18 @@ cannot fit it. Do not rerun the timed-out source campaign to reconstruct evidenc
 Then undertake the still-required equilibrium-Jacobian and physical capacity
 assessment under their actual prerequisites and authority. No replacement API,
 new qualification packages, weaker gates or intermediate production release.
+
+### 6 October — explicit native director-metric capacity prerequisite
+
+Source candidate4295a3da implements opt-in NativeDirectorChordMetric through the
+existing driver, predictor, actual-update path row and atomic restart services.
+Shell position/director motion and full beam-frame motion define its seminorm;
+retained variables and multipliers remain equilibrium unknowns. The full-frame
+default and historical metric/codec contracts remain available unchanged.
+Independent source review findings on guard placement, initial cutback and atomic
+test coverage are repaired. New tests/example remain UNRUN; no capacity or
+qualification claim follows. See the current active note and
+docs/development/stiffened_shell_native_director_arc_metric.md. Fresh bounded
+source/installed verification is the next action; prior Jacobian/consumer
+allowances do not cover this slice. All physical, external, F03, scale and
+complete-release obligations and closed authorities remain binding.

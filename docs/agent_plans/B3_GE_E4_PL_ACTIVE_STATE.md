@@ -12,8 +12,22 @@ is not different-family scientific acceptance. Max3 workers/ONE numerical job.
 
 ## Decision, established facts, uncertainty and next action
 
-Native material BL5 continuation has LIMITED INSTALLED DEVELOPMENT verification:
-product9bc30096 unchanged, one source core and seven distinct installed cases.
+Source candidate4295a3da: explicit NativeDirectorChordMetric for admitted flat
+native material BL5, shell position/director and full beam frames. Predictor,
+actual-update path rows, typed initial-domain cutback and distinct metric restart
+identity are integrated. Legacy full-frame default/equations are preserved.
+Independent complete-slice source review found no blocking defect after guard
+placement/retry and full-record atomicity-test repairs. New tests/example UNRUN;
+Git whitespace checks only. No interpreter/build/numerical campaign ran.
+Next: fresh300s cumulative focused source/legacy, one wheel build/install and
+installed loaded-prefix/restart/refusal verification, 60s final-check reserve,
+existing2GiB/CPU0/one-thread/JIToff/one-job limits. Approval is still required;
+remaining120s/150s allowances do not cover this slice. Body/F03/main/release and
+closed campaigns remain unavailable. Then address genuine physical capacity.
+
+Prior native material BL5 candidate9bc30096 has LIMITED INSTALLED DEVELOPMENT
+verification: one source core and seven distinct installed cases. Those results
+and wheels bind their prior source, not the unexecuted4295a3da metric candidate.
 Latest common-origin full retained bordered DIRECTION passes at h1e-5/h1e-6:
 equilibrium/material relative errors7.143930645e-10/8.794909493e-12, path errors
 8.012254055e-17/3.265654213e-15. Shape147x147,88 actual branch labels, same newly

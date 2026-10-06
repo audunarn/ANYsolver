@@ -3945,3 +3945,20 @@ Native root proof and complete outputs: existing raw/root-common-origin-directio
 ### Complete executed slice independent review
 
 Independent OpenAI Read/source+actual-output review found no blocking defect in the native directional and installed consumer slice. Actual copies SHA1c0f881c/37a95ea4, terminalJUnit and receipts support the scoped claims. Positive histories are from loaded seed, with exact restart/continuation comparisons; no every-step plastic-flow or general concurrent-race claim. Single direction/mixed global norm/full-frame metric/single fixture/platform remain limits. Different-family/scientific/aggregate acceptance still OPEN; no mandatory gate promoted. Source and failed evidence unchanged; no further execution or authority consumed.
+
+## 6 October - explicit native BL5 director-metric source candidate
+
+Source4295a3da130adf9d7e43bdf6ec6958b40c131b63: IMPLEMENTED_NOT_QUALIFIED.
+Opt-in NativeDirectorChordMetric is integrated with physical predictor norm,
+actual-update path rows, typed initial-domain cutback, separate outer metric
+policy/metadata and strict restart/controller/publication identity refusal.
+Legacy full-frame default remains; element/material/attachment equations and
+scientific tolerances are unchanged. Independent OpenAI complete-slice Read
+review found no blocking source defect after guard/retry placement and full
+public-record/live-state atomicity test repairs. Different-family acceptance
+is not supplied. New tests/example UNRUN; Git whitespace checks only. No
+Python, build/install or numerical job ran. Earlier installed evidence binds
+its own source/wheels, not this new candidate. Fresh300s focused source/legacy
+and installed verification is requested; existing120s/150s scopes are not
+transferred. G4D capacity, physical/mesh/unit/limit/descending branch, F03,
+external/scale/platform and all aggregate programme/release duties stay OPEN.
