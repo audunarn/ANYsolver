@@ -3700,3 +3700,50 @@ See `root-source-verification-v1.json` for independent provenance checks and
 `docs/stiffened_shell_native_bl5_mixed_j2_development.md` for the bounded route.
 Installed verification, consumer/external/scale/different-family and aggregate
 F05/G3/programme acceptance remain OPEN. No main/push/publication authority.
+
+
+## 6 October 2026 - installed native BL5 all-S3/mixed J2 material route
+
+IMPLEMENTED_NOT_QUALIFIED / SOURCE AND INSTALLED DEVELOPMENT VERIFIED.
+Package source cb252cd15b6db14688dee1d60341ddfeda9103c6; unchanged version0.4.7
+wheel375e9e4525c93aaa4e1d75a26bbbd8fb506494064ae3a698e5ea67603c9b5a9b.
+New example caller5fec6a6285aedcd8d006bd487d354082890d63bc3be8fd2d5307b4cf5cac14d9
+is outside package payload; no rebuild followed either caller correction.
+Eight fresh installed cases PASS: all-S3 P0/mixed Q4-S3 coarse-P1 biaxial mixed
+members, all-S3 axial physical-only control, three assembled tangent/capture
+checks, two old-policy guards, actual recovery and atomic/fresh restart paths.
+Named raw histories establish S3 and physical-fibre yielding in the two biaxial
+cases; mixed Q4 remains elastic and the axial control proves fibre-only yielding.
+Two-h/all-row/floor1 derivative screens are supporting DEV, not full qualification.
+
+One separately checked default mixed-P0 public workflow completes to generation4
+with byte-identical fresh restore/continued checkpoint. Loaded histories are
+explicit generation3: physical member2 has eight station observations, maximum
+3.9652810444073206e-5; direct S3 alpha maximum2.3293252386141757e-6.
+Final equilibrium ratio1.4433105002389648e-10/gap2.3111337108297358e-17.
+The original installed job retains eightPASS plus exampleFAIL from owner reuse;
+V2 lifetime repair passed but its aggregate fibre label remains unattributed.
+V3 harness failed BEFORE workflow: both CI paths wrong, effective pins unverified;
+root/owner contrary inference withdrawn. V4 repairs harness and family reporting,
+without repeating eight-case campaign or changing solver/physics/loads/criteria.
+Source failures, original reports, manifests and staged inputs remain preserved.
+
+Root verified1431 frozen raw hashes,435 current source/build bindings,430 exact
+source-stage-wheel-site payloads,250 actual installed module hashes and117
+read-only sibling module hashes; effective CIv2 pins/affinity0/pools1/Numba1/
+JIToff/unforced before/after. Existing385 Git-LF/checkout-CRLF-only differences
+are enumerated; tested source/stage/wheel/site bytes were never normalized.
+Cumulative exact process-wall402.72211770003196s/600; remaining197.27788229996804s.
+V4 process27.061054199934006s,170426368B sampled RSS,max1; sampled limits are not
+G5 resource qualification. No live numerical job or consumed-authority renewal.
+
+Raw: .qualification/b3-ge-e4-pl/r8-native-fibre-bl5-mixed-j2-installed-dev-20261006-v1/.
+Final handoff4612fc7f; frozen manifest86eef848; supporting non-author final
+review38b04d87 resolves example attribution; original finding report088bad58 kept.
+Root-installed-verification-v4.json and root-installed-family-verification-v1.json
+bind independent byte/resource and per-family output checks. Integration inventory
+tracks wheel, full numerical histories/logs/receipts, inputs and provenance; only
+redundant build/installed module copies remain local and manifest-bound.
+Different-family/scientific/F05/G3/G6, consumer, scale/platform, external and full
+Revision8 completion/release duties remain OPEN. Formal F03 unconsumed; body
+retry approval remains PENDING. No main/push/publication authority.

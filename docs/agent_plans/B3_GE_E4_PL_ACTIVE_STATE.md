@@ -8,20 +8,18 @@ Branch codex/stiffened-main-reconcile-20261001; actual git log is authoritative.
 Main untouched. ANYfem last inspected df9d1d7; no sibling ownership or contact-
 worker communication. Global/repository AGENTS and risk-proportionate philosophy
 rev2026-09-24.2 apply; cached Mistral/local unavailable, no repeated probes.
-
 ## Decision and delivered behavior
 
 Native physical-fibre BL5 fixed-translation displacement control works through
 public solve/recover/checkpoint/restore with distinct native-history ownership.
 Ordinary nonadaptive force seed only; pending adaptive cursors explicitly refused.
-No adaptive displacement/event/chart/rebase/arc/S3plastic claim or old identity change.
+Earlier Q4 route has no adaptive/event/chart/rebase/arc/S3 plastic admission.
 Source a5c7dec; installed DEVELOPMENT415a4ac5 with fresh wheel02f3506c:
 425 source/wheel/site payloads and245 actual imports verified; public axial Q4J2/
 biaxial load-unload-resume and6 selected checks pass. Known same-origin force/
 control parity FAILED, explicitly1DESELECT; no full-file/qualification claim.
 Original transverse material force target remains failed; no further force retry.
-Source raw r8-native-fibre-bl5-displacement-dev-20261006-v1/ and installed raw
-r8-native-fibre-bl5-displacement-installed-dev-20261006-v1/ carry full identities.
+Prior Q4 source/installed raw r8-native-fibre-bl5-displacement-*-20261006-v1/ retain identities.
 
 Reviewed two-part body solution committed689a37f2. Physical q and gauge eta retain
 binary64 high/low parts; exact dyadic contractions keep original K/load/gauge and
@@ -30,7 +28,6 @@ Ten manufactured instances pass by impact reuse; all prior failures preserved.
 Final positive-congruence guard source/syntax only, numerically unexecuted.
 Raw r8-bl5-body-port-twofold-dev-20261006-v1/:55-path manifest77370006,
 handoff8332a747, non-author review995fe368. Original body V1/V2 remain failed.
-
 ## Body retry remains barred pending explicit approval
 
 Twofold body workflow is PARTIAL_IMPLEMENTATION, not a solver/public policy.
@@ -55,7 +52,6 @@ Material consumer is virgin ELASTIC quadratic superposition only: two response
 parts and returned gradient halves, original J, EHi+ELo+crosswork, zero reference,
 unchanged history/dissipation and individual/combined elastic guards. Actual
 material stage never reached. No calibration/refinement/external/F03 authority.
-
 ## Delivered mixed reference modes and current B2 buckling slice
 
 Native full descriptor reference modes are installed DEVELOPMENT verified at
@@ -68,8 +64,7 @@ mid-surface/director approximation, not full MIN3/bubble inertia. Installed
 and installation guard failures preserved. Two QZ infinity warnings retained.
 Scientific2%/external/different-family and aggregateF07/G4B remainOPEN.
 
-B2 endpoint POINT reference-buckling at71dfeddb SOURCE DEVELOPMENT VERIFIED:
-19unique cases by V4/V5/V6 impact reuse; not a full-suite or installed claim.
+B2 endpointPOINT source71dfeddb:19unique DEVcases byV4/V5/V6 impact; installed below.
 Member fullGreen S11/S12/S13 work uses owned explicit source-bound traction
 quadrature; no inferredWagner. Objective geodesic beam/polar shell port Hessians
 and joint chart curvature enter once. General shifted full sparse KKT uses
@@ -77,8 +72,8 @@ reference K/C scaling; static success is completed, failed preloads retained.
 Public Q4/all-S3/mixed solve, independent full-pencilQZ, crossing shift, scalar/
 coupled sectional work, finite actual rigid path and midassembly cancellation
 pass. Default two-member Q4 public factor24.60872920125391, nonqualified.
-Final product7b6e6454/testsf6713f3d; 245actualsourceimports/run and frozen bytes
-verified. V2 12FAIL/V3 11FAIL/V4 5FAIL preserved; V5affected6PASS23.180s;
+Finalproduct7b6e6454/testsf6713f3d;245sourceimports/frozenbytes verified.
+V2 12FAIL/V3 11FAIL/V4 5FAIL preserved; V5affected6PASS23.180s;
 V6new2PASS3.022s. No scientific criteria changed. Distinct-author OpenAI code
 review defects closed, not different-family scientific acceptance. Raw
 r8-b2-reference-buckling-dev-20261006-v1/root-source-verification-v1.json.
@@ -127,12 +122,17 @@ Batch source/installed rawdirs are linked in matrix; source manifest1ac0cce9,
 installedd4ad3912/root-installed-verification-v1.json. Post pin fields were not
 separately recorded; pre pins/post runtime+module bytes verified. No G6 claim.
 Non-author code review closed; scientific/different-family acceptance remainsOPEN.
-CURRENT native mixed-J2 BL5 source8PASS by impact; named S3/physical fibre proof.
-All-S3/mixedP1 biaxial S3+fibre yielding; mixedQ4 elastic; axial fibre-only control.
-New-policy: full Newton/one boundary/geometric trials; old guards/criteria stay.
-V1-V5 failures kept; V4/V6 terminal,252.454656600s/600s; installed pending.
-Broader attachments/modes/consumer/external/refinement and fullprogramme OPEN.
-Body approval PENDING; no body/F03/closedcampaign restart or authority renewal.
+CURRENT native mixed-J2 BL5 SOURCE/INSTALLED DEVELOPMENT verified:8freshPASS.
+Sourcecb252cd1/wheel375e9e45; example5fec6a6 corrects owner and family attribution.
+All-S3/mixedP1 S3+physical-fibre yielding; Q4elastic; axial fibre-only control.
+DefaultmixedP0 example: loadedgen3 member2/fibre3.96528e-5/S3 2.32933e-6;
+finalgen4 fresh restore/continuation byte-exact. Earlier failures remain preserved.
+Root435bindings/430payloads/250imports/117readonly modules and runtime verified.
+Used402.722117700s/600,remaining197.277882300s; no livejob or authority renewal.
+New-policy fullNewton/one boundary/geometric trials; old guards/criteria intact.
+Next: existing isolated ANYfem material consumer/persistence in separately scoped
+assignment; unrelated main dirty work preserved. No new consumer work launched.
+Body approval PENDING; fullprogramme/scientific/G3/G6/scale/external remainOPEN.
 
 ## Preserved restrictions and history
 

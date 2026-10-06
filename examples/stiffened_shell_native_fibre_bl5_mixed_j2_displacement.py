@@ -23,18 +23,36 @@ def workflow(shell='mixed',family='biaxial',beams='mixed',basis='p0',on_accepted
         if seed.status!='completed':raise RuntimeError('ordinary native force seed failed')
         raw_seed=owner.checkpoint();fresh.restore(raw_seed)
         assert fresh.checkpoint()==raw_seed
+        fresh.close()
+        fresh=ss.create_analysis(definition=model)
         loaded=owner.solve(ACTIONS,TARGETS[:2],displacement_control=CONTROL,on_accepted=on_accepted,**OPTIONS)
+        if loaded.status!='completed':raise RuntimeError('fixed translation loading failed')
         raw=owner.checkpoint();fresh.restore(raw)
         assert fresh.checkpoint()==raw
         final=owner.solve(ACTIONS,TARGETS[2:],displacement_control=CONTROL,**OPTIONS)
         continued=fresh.solve(ACTIONS,TARGETS[2:],displacement_control=CONTROL,**OPTIONS)
+        if final.status!='completed' or continued.status!='completed':
+            raise RuntimeError('fixed translation continuation failed')
         assert owner.checkpoint()==fresh.checkpoint()
         assert final.shell_s3_material and final.beam_fibre_material
         if beams=="mixed":assert final.beam_generalized_material
+        # The accumulated observable follows definition order and includes both
+        # section families. Public fibre recovery identifies the physical members;
+        # its per-fibre plastic_increment is not cumulative plastic history.
+        member_ids=tuple(beam.instantiate()[0].element_id for beam in model.beams)
+        assert len(member_ids)==len(loaded.beam_station_accumulated)
+        physical_ids={record.element_id for record in loaded.beam_fibre_material}
+        physical_members=[dict(element_id=element_id,station_accumulated=list(values))
+            for element_id,values in zip(member_ids,loaded.beam_station_accumulated)
+            if element_id in physical_ids]
+        assert physical_members and {row['element_id'] for row in physical_members}==physical_ids
         return dict(status=final.status,shell=shell,policy=model.bl5_material_policy,
             target=final.target,amplitude=final.amplitude,generation=final.generation,
+            history_generation=loaded.generation,
             shell_alpha_max=max(map(max,loaded.shell_layer_alpha)),
-            fibre_alpha_max=max(map(max,loaded.beam_station_accumulated)),
+            s3_alpha_max=max(float(value) for record in loaded.shell_s3_material for value in record.alpha),
+            fibre_alpha_max=max(value for row in physical_members for value in row['station_accumulated']),
+            physical_fibre_members=physical_members,
             free_equilibrium_ratio=final.free_equilibrium_ratio,constraint_max=final.constraint_max,
             fresh_restore_bytes_equal=True,continued_bytes_equal=True,production_qualified=False)
     finally:owner.close();fresh.close()
