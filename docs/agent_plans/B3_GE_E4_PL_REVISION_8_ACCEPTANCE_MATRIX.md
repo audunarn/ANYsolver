@@ -3901,3 +3901,20 @@ this permits artifact reuse, not a consumer execution claim. Fresh150s scope is
 requested, not assumed. Solver23.3312962s remains untouched. No new campaign,
 release/main authority or aggregate gate acceptance follows. Existing failures,
 scientific tolerances, protected history and open full programme remain binding.
+## 2026-10-06 — Frozen consumer check and common-origin derivative oracle
+
+ANYfem source/harness preserved at3bbc1a65:5 frozen inputs,99 consumer/430 solver
+wheel/site/source modules and743 readonly dependency bindings. Current consumer
+150s authority/ledger remains PENDING_USER_APPROVAL/zero; no interpreter launched
+by that assignment. Reused wheel identities unchanged. No build repeated.
+
+Independent new oracle tests/test_native_material_bl5_arc_same_origin_jacobian.py
+SHA7cecd037ed6f1054b8bd172e360e6bb58800a2c2ee9d0c5c83dddc38771c35dc is
+IMPLEMENTED_NOT_QUALIFIED. It checks full common-state [R,g] vs [J,-p;Dg,0],
+fixed newly accepted origins and actual retained updates with explicit branch
+inventory. Actual numerical branch suitability and derivative remain UNRUN.
+Collection-only installed check completed5.030493s:1 collected/ZERO executed,
+247 actual solver imports, before/after affinity0/pools1/JIToff, sampled peak
+185982976bytes. Existing300s ledger now281.6991968used/18.3008032remaining.
+Evidence preserved at solverb2478089 in existing native arc raw; no consumer
+allowance, scientific campaign, acceptance or release authority transferred.
