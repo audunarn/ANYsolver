@@ -20,6 +20,9 @@ CHART_POLICY="B3_GE_BL5_COUPLED_DISPLACEMENT_CONTROL_CHART_V2_DEV"
 def identities(owner):
     """Bind the controller and mechanical payload to their admitted profile."""
     from ._stiffened_shell_affine_endpoint import is_native_point_material
+    if getattr(owner,"_bl5_native_mixed_material",False):
+        return ("finite_displacement_native_fibre_bl5_mixed_shell",
+                "B3_GE_NATIVE_FIBRE_BL5_MIXED_SHELL_J2_DISPLACEMENT_V1_DEV",None,None)
     if getattr(owner,"_bl5_native_material",False):
         return ("finite_displacement_native_fibre_bl5",
                 "B3_GE_NATIVE_FIBRE_BL5_DISPLACEMENT_V1_DEV",None,None)
@@ -115,7 +118,8 @@ def encode_snapshot(owner, *, generation, seed_generation, seed_sha256,
         raise ValueError("invalid displacement snapshot fields")
     numeric=tuple((name,arrays[name]) for name,_ in _layout(owner,steps))
     inner=(encode_s3(owner._identity,generation,numeric,arrays["s3_states"],
-                    native_material=True,displacement=True) if s3_material else
+                    native_material=True,displacement=True,
+                    mixed_shell_material=getattr(owner,"_bl5_native_mixed_material",False)) if s3_material else
            encode(kind,owner._identity,generation,numeric))
     content=MAGIC+len(header).to_bytes(4,"little")+header+inner
     if len(content)+32>MAX_CHECKPOINT_BYTES:
@@ -187,7 +191,8 @@ def decode_snapshot(owner,raw):
             return _layout(owner,m["steps"])
         _,a,states=decode_s3(raw[start+length:-32],owner._identity,s3_shapes,
                             2*len(owner._definition.shell.s3_elements),
-                            native_material=True,displacement=True)
+                            native_material=True,displacement=True,
+                            mixed_shell_material=getattr(owner,"_bl5_native_mixed_material",False))
         a["s3_states"]=states
     else:
         _,_,a=decode(raw[start+length:-32],owner._identity,shapes)

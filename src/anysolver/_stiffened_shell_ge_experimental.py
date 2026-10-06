@@ -81,6 +81,7 @@ BL5_COUPLED_J2_MATERIAL_V1 = "BL5_COUPLED_J2_MATERIAL_V1_DEV"
 BL5_ELASTIC_NATIVE_FIBRE_V1 = "BL5_ELASTIC_NATIVE_FIBRE_V1_DEV"
 BL5_ELASTIC_NATIVE_FIBRE_MIXED_SHELL_V1 = "BL5_ELASTIC_NATIVE_FIBRE_MIXED_SHELL_V1_DEV"
 BL5_NATIVE_FIBRE_MATERIAL_V1 = "BL5_NATIVE_FIBRE_MATERIAL_V1_DEV"
+BL5_NATIVE_FIBRE_MIXED_SHELL_MATERIAL_V1 = "BL5_NATIVE_FIBRE_MIXED_SHELL_MATERIAL_V1_DEV"
 GE_FINITE_DISTRIBUTING_GENERALIZED_MATERIAL_V1 = "GE_FINITE_DISTRIBUTING_GENERALIZED_MATERIAL_V1_DEV"
 GE_FINITE_DISTRIBUTING_COUPLED_J2_MATERIAL_V1 = "GE_FINITE_DISTRIBUTING_COUPLED_J2_MATERIAL_V1_DEV"
 GE_FINITE_DISTRIBUTING_GENERALIZED_CYCLIC_MATERIAL_V1 = "GE_FINITE_DISTRIBUTING_GENERALIZED_CYCLIC_MATERIAL_V1_DEV"
@@ -622,12 +623,13 @@ class ExperimentalGEAnalysis:
         if self._modal_only and (definition.fixed or definition.lines or definition.footprints):
             raise ValueError("free-free modal-only policy requires empty supports and six-pose points only")
         if (type(definition.bl5_material_policy) is not str or
-                definition.bl5_material_policy not in ("elastic", BL5_GENERALIZED_MATERIAL_V1, BL5_COUPLED_J2_MATERIAL_V1, BL5_ELASTIC_NATIVE_FIBRE_V1, BL5_ELASTIC_NATIVE_FIBRE_MIXED_SHELL_V1, BL5_NATIVE_FIBRE_MATERIAL_V1)):
+                definition.bl5_material_policy not in ("elastic", BL5_GENERALIZED_MATERIAL_V1, BL5_COUPLED_J2_MATERIAL_V1, BL5_ELASTIC_NATIVE_FIBRE_V1, BL5_ELASTIC_NATIVE_FIBRE_MIXED_SHELL_V1, BL5_NATIVE_FIBRE_MATERIAL_V1, BL5_NATIVE_FIBRE_MIXED_SHELL_MATERIAL_V1)):
             raise ValueError("explicit admitted BL5 material policy required")
         self._bl5_shell_material = definition.bl5_material_policy == BL5_COUPLED_J2_MATERIAL_V1
-        self._bl5_native_mixed_shell = definition.bl5_material_policy == BL5_ELASTIC_NATIVE_FIBRE_MIXED_SHELL_V1
-        self._bl5_native_material = definition.bl5_material_policy == BL5_NATIVE_FIBRE_MATERIAL_V1
-        self._bl5_native_fibre = definition.bl5_material_policy in (BL5_ELASTIC_NATIVE_FIBRE_V1, BL5_ELASTIC_NATIVE_FIBRE_MIXED_SHELL_V1, BL5_NATIVE_FIBRE_MATERIAL_V1)
+        self._bl5_native_mixed_material = definition.bl5_material_policy == BL5_NATIVE_FIBRE_MIXED_SHELL_MATERIAL_V1
+        self._bl5_native_mixed_shell = definition.bl5_material_policy in (BL5_ELASTIC_NATIVE_FIBRE_MIXED_SHELL_V1, BL5_NATIVE_FIBRE_MIXED_SHELL_MATERIAL_V1)
+        self._bl5_native_material = definition.bl5_material_policy in (BL5_NATIVE_FIBRE_MATERIAL_V1, BL5_NATIVE_FIBRE_MIXED_SHELL_MATERIAL_V1)
+        self._bl5_native_fibre = definition.bl5_material_policy in (BL5_ELASTIC_NATIVE_FIBRE_V1, BL5_ELASTIC_NATIVE_FIBRE_MIXED_SHELL_V1, BL5_NATIVE_FIBRE_MATERIAL_V1, BL5_NATIVE_FIBRE_MIXED_SHELL_MATERIAL_V1)
         self._bl5_material = definition.bl5_material_policy in (BL5_GENERALIZED_MATERIAL_V1, BL5_COUPLED_J2_MATERIAL_V1)
         if self._bl5_material and (not definition.lines or definition.footprints or
                 definition.q4_pullback_policy != Q4_ALGORITHMIC_PULLBACK_V1):
@@ -731,6 +733,7 @@ class ExperimentalGEAnalysis:
             "PHYSICAL_AXIAL_BIAXIAL_FIBRE" if type(element.section) is PhysicalFibreSection
             else "RESULTANT_ELLIPSOID" for element, _, _ in beam_parts))
         if self._bl5_native_fibre and (not self._has_physical_fibre or not definition.lines or
+                (self._bl5_native_mixed_material and panel.j2_curve is None) or
                 (not panel.s3_elements if self._bl5_native_mixed_shell else
                  not panel.q4_elements or bool(panel.s3_elements)) or (panel.j2_curve is not None and not self._bl5_native_material) or
                 definition.shell_reference_policy != "flat" or definition.footprints or groups or
@@ -1212,6 +1215,11 @@ class ExperimentalGEAnalysis:
                     open_domains=("plastic S3 native BL5", "native material BL5 chart rebase", "consumer integration", "scale qualification"))
                 for key in ("body_acceleration", "beam_distributed_loads", "staged_beam_distributed_loads", "shell_pressure_loads", "staged_dead_loads"):
                     capabilities[key] = ()
+        if self._bl5_native_mixed_material:
+            capabilities.update(analysis=("reference_linear", "experimental_native_fibre_mixed_shell_j2_bl5"),
+                native_bl5_material_domain="existing physical-fibre and generalized histories; isotropic Q4/S3 J2 shell",
+                finite_trial_proposal="experimental_fixed_origin_native_and_q4_s3_boundary_v1; actual strict merit; unchanged candidate budget",
+                open_domains=("native material BL5 chart rebase", "consumer integration", "scale qualification"))
         if self._definition.footprints:
             capabilities["attachment"] = (
                 (("reference point pose",) if self._definition.points else ())+
@@ -1231,6 +1239,8 @@ class ExperimentalGEAnalysis:
             capabilities["footprint_finite_numerical_policy"] = stable_s3_policy_descriptor()
         if self._bl5_native_material:
             capabilities["displacement_control"] = "experimental_native_fibre_bl5_fixed_translation_v1"
+            if self._bl5_native_mixed_material:
+                capabilities["displacement_control"] = "experimental_native_fibre_bl5_mixed_shell_j2_fixed_translation_v1"
             capabilities["displacement_control_seed"] = "ordinary nonadaptive accepted force endpoint; no chart/event/adaptive controller"
         from ._stiffened_shell_affine_endpoint import is_native_point_material
         if is_native_point_material(self):

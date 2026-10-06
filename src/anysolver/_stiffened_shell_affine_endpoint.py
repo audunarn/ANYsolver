@@ -43,7 +43,7 @@ def require_native_displacement_policy(owner,driver):
 
 
 def has_native_s3_material(owner):
-    return bool(is_native_point_material(owner) and owner._definition.shell.s3_elements
+    return bool((is_native_point_material(owner) or getattr(owner,"_bl5_native_mixed_material",False)) and owner._definition.shell.s3_elements
                 and owner._definition.shell.j2_curve is not None)
 
 

@@ -120,18 +120,19 @@ Raw r8-b2-physical-rigid-footprint-installed-dev-20261006-v1/: manifestSHA
 bf7f3b99/handoff/root-installed-verification-v1.json. No product drift/rebuild.
 Installed child117840 terminal42.6933s220889088B sampled RSS. No qualification.
 B2 physical-pad batches atb6ef85cf SOURCE/INSTALLED DEVELOPMENT VERIFIED.
-Source29PASSbyimpact; eager-factor test-premise failures and metadata fixes kept.
-Fresh29PASS cover1/10/100, selected rows20..39, lifetime/failure and covariance.
+Source29byimpact/fresh29PASS cover1/10/100/rows20..39; failed premises kept.
 Wheel4084e711; installed17.222s221421568B sampled RSS, batch10 uses1factor.
 Root429payload/434bindings/7inputs/246importbytes/117readonly modules verified.
-Source raw r8-b2-physical-footprint-batch-dev-20261006-v1/ manifestV2 1ac0cce9;
-installed raw r8-b2-physical-footprint-batch-installed-dev-20261006-v1/ manifest
-d4ad3912/root-installed-verification-v1.json. Post numerical pin fields were not
+Batch source/installed rawdirs are linked in matrix; source manifest1ac0cce9,
+installedd4ad3912/root-installed-verification-v1.json. Post pin fields were not
 separately recorded; pre pins/post runtime+module bytes verified. No G6 claim.
 Non-author code review closed; scientific/different-family acceptance remainsOPEN.
-NEXT native GE S3 material/admission integration, preserving elastic guards.
+CURRENT native mixed-J2 BL5 source8PASS by impact; named S3/physical fibre proof.
+All-S3/mixedP1 biaxial S3+fibre yielding; mixedQ4 elastic; axial fibre-only control.
+New-policy: full Newton/one boundary/geometric trials; old guards/criteria stay.
+V1-V5 failures kept; V4/V6 terminal,252.454656600s/600s; installed pending.
 Broader attachments/modes/consumer/external/refinement and fullprogramme OPEN.
-Body approval PENDING; no body/F03/closedcampaign restart. No live owned job.
+Body approval PENDING; no body/F03/closedcampaign restart or authority renewal.
 
 ## Preserved restrictions and history
 
@@ -146,5 +147,4 @@ PR62 NONPASS/local02ca395e unpushed. No push/main merge/publication authority.
 
 V6 material event targets FAILED; V7 full post-switch compound merit worsened,
 no commit/new product. Preserve4219ad1f/ec9e78b5 and original strict test/example.
-Prior scopes remain distinct; Git and append-only matrix retain all historical
-identities/failures/dispositions. Mistral/local cached unavailable; no reprobes.
+Git/matrix preserve prior scopes/failures; cached worker unavailability persists.

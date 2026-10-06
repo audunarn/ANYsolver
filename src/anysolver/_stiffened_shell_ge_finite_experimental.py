@@ -705,9 +705,13 @@ class FinitePointDriver:
                     owner._shell_model, element, state.q[slots], origin, 3,
                     rotation_anchors=anchors, stable_translation=self._stable_s3)
             elif len(slots) == 18:
-                force, tangent, candidate = s3_algorithmic_response(
+                s3_response = s3_algorithmic_response(
                     owner._shell_model, element, state.q[slots], origin, 3,
-                    rotation_anchors=anchors)
+                    rotation_anchors=anchors,
+                    **({"capture_material_trial": True} if owner._bl5_native_material else {}))
+                force, tangent, candidate = s3_response[:3]
+                if owner._bl5_native_material:
+                    q4_boundary_material.append((tuple(map(int, slots)), s3_response[3]))
             elif owner._definition.q4_pullback_policy == Q4_ALGORITHMIC_PULLBACK_POLICY:
                 q4_response = q4_algorithmic_response(
                     owner._shell_model, element, state.q[slots], origin, 3,
@@ -880,10 +884,12 @@ class FinitePointDriver:
                 shell_cached[1] is not self._shell_origins or shell_cached[2] != self.owner._generation):
             raise ValueError("stale Q4 material boundary trial")
         from ._stiffened_shell_q4_material_event import boundary_amount as q4_boundary_amount
+        from ._stiffened_shell_s3_material_event import boundary_amount as s3_boundary_amount
         for slots, material in shell_cached[3]:
             if material.displacement != tuple(state.q[list(slots)]):
                 raise ValueError("changed Q4 material boundary coordinates")
-            amount = q4_boundary_amount(material, increment[list(slots)], origin=material.origin)
+            amount = (s3_boundary_amount if len(slots)==18 else q4_boundary_amount)(
+                material, increment[list(slots)], origin=material.origin)
             if amount is not None: amounts.append(amount)
         retained = self.owner._shell_count+self._beam_nodal
         for i, material in cached[3]:

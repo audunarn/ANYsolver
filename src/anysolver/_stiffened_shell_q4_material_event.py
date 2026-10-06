@@ -22,7 +22,7 @@ def _origin_values(origin):
         if isinstance(value,(tuple,list,np.ndarray)):return tuple(owned(x) for x in value)
         return float(value)
     offsets=tuple((key,owned(origin[key])) for key in ('initial_membrane_stress','initial_bending_stress',
-        'initial_membrane_prestrain','initial_curvature_prestrain') if key in origin)
+        'initial_membrane_prestrain','initial_curvature_prestrain','initial_generalized_prestrain','initial_generalized_resultant') if key in origin)
     return (tuple(tuple(float(x) for x in row) for row in origin['plastic_strain']),tuple(map(float,origin['alpha'])),offsets)
 
 def capture(model, element, displacement, local, differential, origin, candidate, layers):
@@ -43,20 +43,25 @@ def capture(model, element, displacement, local, differential, origin, candidate
         tuple(map(float,flow)),float(signature(plane_stress_return_map).parameters['tolerance'].default))
 
 def boundary_amount(trial,direction,*,origin):
+    return _boundary_amount(trial,direction,origin=origin,coordinate_count=24)
+
+def _boundary_amount(trial,direction,*,origin,coordinate_count):
     """Local predictor only: pose remainder and kernel/flow/dot rounding are
     not certified by the outward affine-update margin. Actual merit decides.
     """
     if type(trial) is not Q4MaterialTrial or trial.origin is not origin or trial.origin_values!=_origin_values(origin):
         raise ValueError('current origin-bound Q4 material trial required')
     values=tuple(direction)
-    if len(values)!=24 or any(isinstance(x,(bool,np.bool_)) or not isfinite(float(x)) for x in values):
-        raise ValueError('24 finite Q4 coordinate corrections required')
-    if (len(trial.displacement)!=24 or len(trial.strain)!=len(trial.flow) or
+    if type(coordinate_count) is not int or coordinate_count not in (18,24):
+        raise ValueError('admitted shell coordinate dimension required')
+    if len(values)!=coordinate_count or any(isinstance(x,(bool,np.bool_)) or not isfinite(float(x)) for x in values):
+        raise ValueError('finite complete shell coordinate corrections required')
+    if (len(trial.displacement)!=coordinate_count or len(trial.strain)!=len(trial.flow) or
         len(trial.strain)!=len(trial.origin_values[0]) or len(trial.strain)!=len(trial.origin_values[1]) or
         any(len(r)!=3 for r in trial.origin_values[0]) or
         len(trial.strain_differential)!=len(trial.strain) or len(trial.elastic_matrix)!=3 or
         any(len(r)!=3 for r in trial.elastic_matrix) or any(len(r)!=3 for r in trial.strain) or
-        any(len(layer)!=3 or any(len(r)!=24 for r in layer) for layer in trial.strain_differential)):
+        any(len(layer)!=3 or any(len(r)!=coordinate_count for r in layer) for layer in trial.strain_differential)):
         raise ValueError('complete Q4 material trial shapes required')
     scalars=(*trial.displacement,*trial.flow,trial.tolerance,*[x for r in trial.strain for x in r],
         *[x for r in trial.elastic_matrix for x in r],*[x for layer in trial.strain_differential for r in layer for x in r],

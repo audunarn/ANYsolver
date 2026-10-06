@@ -3662,3 +3662,41 @@ Complete B05-B07/F04/F12/F13/G4/G6 and external/refinement/consumer/platform/
 scale/release obligations remainOPEN. Next return to native GE S3 material/
 admission integration; preserve existing elastic guard and original force/parity
 failures. No bodyretry/F03/closedcampaign/sibling/contact/main/push/release.
+
+
+## 6 October 2026 - native BL5 S3/mixed J2 material source slice
+
+| Capability | Implementation | Acceptance | Evidence boundary |
+|---|---|---|---|
+| `BL5_NATIVE_FIBRE_MIXED_SHELL_MATERIAL_V1_DEV` | SOURCE DEVELOPMENT VERIFIED | IMPLEMENTED_NOT_QUALIFIED | Public all-S3 P0 and mixed Q4/S3 coarse continuous-P1, biaxial physical/generalized families; separate axial physical-only control. Dead translation seed, fixed translation load/unload, actual recovery, fresh checkpoint restore/continue. |
+
+Eight unique cases by impact: V6 fresh two biaxial lifecycle cases; V4 axial
+lifecycle, three restricted assembled tangents and two old-policy refusal cases.
+Direct loaded/final artifacts prove positive S3 and physical-only fibre histories.
+Mixed Q4 remains elastic; no mixed-Q4-yield claim. Tangent checks use two step
+sizes and restricted directions/unweighted norms, not full programme acceptance.
+New displacement controller/framing is separate; force snapshot reuses the
+existing stable-native layout under the new model/material-policy identity.
+S3 boundary capture uses actual18-column layer differentials from the same
+accepted predecessor; Q4 Decimal arithmetic/capture AST remains unchanged.
+New-policy-only full Newton/one optional boundary/geometric proposal schedule
+retains strict merit, mandatory equilibrium/constraints and original trial budget.
+Old native Q4/elastic mixed identities and guards remain unchanged.
+
+Source process-wall aggregate252.45465660013724s of600s, remaining347.54534339986276s.
+V4 8PASS69.238604300s and V6 2PASS35.092232100s process-wall; actual250 source
+imports each, pinned CI NumPy2.5.3/SciPy1.18.1/Numba0.68.0/llvmlite0.50.0,
+affinity0/pools1/JIT-off. Sampled memory/thread scope is not resource qualification.
+V1 preflight, V2/V3 product/test failures and V5 artifact-path failure preserved.
+Initial draft manifest binds an evolving V1 review; its sole known drift remains
+visible. V2 evidence is frozen after the final reviews. Initial broad filename
+discovery incident is recorded; no canary content/copy/execution claim is made.
+Root verified170 evidence hashes,13 final source/doc bindings,70 executed snapshot
+bindings, actual imports and four mapped loaded/final material artifacts.
+
+Raw: `.qualification/b3-ge-e4-pl/r8-native-fibre-bl5-mixed-j2-dev-20261006-v1/`.
+Final handoff SHAa6d39f1c; manifest4b4a754d; non-author supporting reviewcec07354.
+See `root-source-verification-v1.json` for independent provenance checks and
+`docs/stiffened_shell_native_bl5_mixed_j2_development.md` for the bounded route.
+Installed verification, consumer/external/scale/different-family and aggregate
+F05/G3/programme acceptance remain OPEN. No main/push/publication authority.

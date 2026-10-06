@@ -363,3 +363,5 @@ __all__ += ["GEMixedBucklingRequest", "GEMixedBucklingResult"]
 __all__ += ["GENativeLineBucklingRequest", "GENativeLineBucklingResult", "BL5_ELASTIC_NATIVE_FIBRE_V1", "BL5NativeElasticDomainError"]
 __all__ += ["BL5_ELASTIC_NATIVE_FIBRE_MIXED_SHELL_V1"]
 __all__ += ["BL5_NATIVE_FIBRE_MATERIAL_V1"]
+from ._stiffened_shell_ge_experimental import BL5_NATIVE_FIBRE_MIXED_SHELL_MATERIAL_V1
+__all__ += ["BL5_NATIVE_FIBRE_MIXED_SHELL_MATERIAL_V1"]

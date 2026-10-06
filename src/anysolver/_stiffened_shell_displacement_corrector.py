@@ -222,8 +222,18 @@ def correct(driver, *, base_load, load_direction, amplitude, control_dof,
             except DisplacementCorrectorFailure as error:
                 raise failure(str(error),iteration) from error
             record.update(amount=initial_amount,events=events)
+        native_cutback=None
+        if getattr(owner,"_bl5_native_mixed_material",False):
+            # Copy same-predecessor shell/fibre switch proposals before trial
+            # assembly replaces recovery scratch. Full Newton remains first.
+            native_cutback=driver._native_boundary_amount(state,step)
         for backtrack in range(max_backtracks+1):
             amount=initial_amount*.5**backtrack
+            if native_cutback is not None and native_cutback<.5 and backtrack:
+                # A local affine material switch is only a proposal. Give it
+                # one bounded trial, then retain geometric merit cutbacks if
+                # finite-pose remainder makes that proposal ineffective.
+                amount=native_cutback if backtrack==1 else .5**(backtrack-1)
             try:
                 candidate=driver._advance(state,step,amount)
                 value=amplitude+amount*delta

@@ -23,7 +23,8 @@ def local_coordinates(model, element, displacement, *, rotation_anchors=None):
                        rotation_anchors=rotation_anchors)[0]
 
 
-def response(model, element, displacement, origin, layers, *, rotation_anchors=None):
+def response(model, element, displacement, origin, layers, *, rotation_anchors=None,
+             capture_material_trial=False):
     """Return one objective trial and owned local material candidate.
 
     With d(q), D=dd/dq: g=D.T f and dg/dq=D.T K_alg D+sum(f_i Hess d_i).
@@ -31,6 +32,8 @@ def response(model, element, displacement, origin, layers, *, rotation_anchors=N
     Every call uses the caller's same accepted local constitutive predecessor.
     """
     material = model.get_material(element.material_name)
+    if type(capture_material_trial) is not bool:
+        raise ValueError("explicit S3 material trial capture policy required")
     if (getattr(element, "formulation_id", None) != FORMULATION_ID or
             element.num_nodes != 3 or element.shell_section is not None or
             not isinstance(material.hardening_curve, DNVC208MaterialCurve) or
@@ -49,4 +52,8 @@ def response(model, element, displacement, origin, layers, *, rotation_anchors=N
             candidate is None):
         raise ValueError("finite S3 J2 algorithmic trial required")
     residual, spatial_tangent = spatial_response(u, force, tangent, differential, second)
+    if capture_material_trial:
+        from ._stiffened_shell_s3_material_event import capture
+        return residual, spatial_tangent, candidate, capture(
+            model, element, u, differential, origin, candidate, layers)
     return residual, spatial_tangent, candidate
