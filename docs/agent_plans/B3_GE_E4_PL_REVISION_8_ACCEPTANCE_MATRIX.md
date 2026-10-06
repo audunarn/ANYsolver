@@ -4071,3 +4071,15 @@ Implementation/test evidence advanced; G4D/validatedfirstlimitpoint/descending
 branch, physicalconnection,F03,external/scale/platform/differentfamily and full
 G0-G6 programme acceptance remain OPEN. No capacity/stability qualification.
 No force-seedrerun,tuning,extra primaryscreen,body,closed,main,push or release.
+
+## 2026-10-06 - saved native tangent assessor source candidate
+
+Implemented new saved-g13/g14/g15 supported mixed-tangent assessor and independent
+analytic/refusal controls. Source delta review found no consequential blocker.
+Original retained/multiplier rows and actual chart updates retained; fixed positive
+tip progress, original finite witnesses and two fixed FD steps/full-load reference.
+All new checks UNRUN. Fresh300s proposed; prior screen remainder is not authority.
+Package source unchanged; wheel6464174e eligible for reuse. Source and proposal:
+.qualification/b3-ge-e4-pl/r8-native-fold-assessment-dev-20261006-v1/.
+Any sign bracket is CANDIDATE only; branch margin, forward accuracy, simple/first
+fold, capacity/stability, G4D, F03 and complete programme acceptance remain OPEN.
