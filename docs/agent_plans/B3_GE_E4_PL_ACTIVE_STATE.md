@@ -4,110 +4,81 @@ Revision8 goal ACTIVE; full G0-G6/F01-F13/V01-V28/B01-B18 acceptance,
 external/scale/platform/consumer duties and release remain incomplete.
 Use REVISION_8_GOAL.md, REVISION_8_PLAN.md and the single acceptance matrix.
 Canonical worktree: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001.
-Branch codex/stiffened-main-reconcile-20261001; v6 committed4219ad1f, based on1bc4dd4f.
-ANYfem consumer last inspected df9d1d7; no current sibling ownership/edits.
+Branch codex/stiffened-main-reconcile-20261001; displacement source based on ec9e78b5.
+Actual local commit is authoritative from git log; main untouched. ANYfem last
+inspected df9d1d7; no sibling ownership/edits or contact-worker communication.
 
-## Delivered behavior and scientific boundary
+## Decision and working behavior
 
-Experimental native elastic BL5 supports Q4/S3/mixed shells, native generalized/
-physical-fibre members, retained42, finite solve/recovery, atomic prefixes,
-fresh/chart restart, conservative native-line buckling and installed ANYfem
-native-elastic-v5. Existing physical B2/GE/footprint/load routes retain their own
-source-bound evidence. Do not repeat passed campaigns or imply aggregate acceptance.
-See docs/reference_cases/stiffened_shell_native_fibre_bl5.md and
-stiffened_shell_native_fibre_bl5_material.md in that same directory.
+Native physical-fibre BL5 fixed translation displacement control is implemented
+through existing public DisplacementControl/solve/recover/checkpoint/restore.
+Distinct native-history predicate preserves POINT ownership; new experimental
+snapshot kind finite_displacement_native_fibre_bl5. No old identity/default change.
+Ordinary nonadaptive accepted force seed only; no silent pending-controller reset.
+Adaptive displacement, event/chart/rebase, arc and S3plastic scope remain refused.
+All admitted native histories and actual finite charts/retained layouts preserved.
 
-Retain experimental five-channel BL5/P0. Connection fidelity and interface
-stability are NOT accepted. Saved102node/8C3D20 weak reference changes strong
-response6.15%; native remains2.51x weak. Common-density body comparison FAILED
-loaded-row equilibrium; no beam/coupled comparison followed. No cause allocation,
-new reference/refinement sweep or formalF03 execution follows from those results.
+Raw: .qualification/b3-ge-e4-pl/r8-native-fibre-bl5-displacement-dev-20261006-v1/.
+State IMPLEMENTED_SOURCE_ONLY; FORCE_CONTROL_PARITY_UNMET.
+handoff.json SHA73bfa90e24e1bcdb87a438aab7baf366ddd400977b4c0c3d0343497ce9920906;
+93-path manifest SHA9da788ba86c5fca3ff405a705eead07bb30105ba0c272a25b439cef0cc57ec30.
+Root verifies93 raw/9 final source/doc paths; original strict test/example intact.
 
-## Latest complete development slice: v6
+Public axial screen PASS13.555363s/168357888B/pools1: load/unload, active Q4J2
+and biaxial fibre histories, fresh restore/resumed checkpoint byte-equal; eq
+1.44170e-10/gap1.37550e-17. Global retained48; local beam layout42.
+Tests-v1 2FAIL/7PASS retained: live-owner corruption test and sub-tolerance parity
+were inadequate tests. Tests-v2 1FAIL/1PASS: corrected fresh-owner refusal checks
+pass; meaningful qX1e-6 endpoint force oracle hits unchanged24-Newton limit.
+No force rerun/tuning. Force/control same-origin parity remains FAILED/UNMET.
 
-BL5_NATIVE_FIBRE_MATERIAL_V1_DEV remains Q4/physical fibres, optional mixed
-native generalized members and existing isotropic shellJ2; translation loads only.
-Legacy equations/defaults/identities/checkpoint decoding remain unchanged.
-Reject unsupported loads/control, loaded rebase, S3plasticity and active-plastic spectra.
+Tests-v3 2PASS: legacy refusal and separately named shell-elastic native fibre/
+generalized directional check. Two h1e-5/1e-6 errors6.28199e-12/5.60593e-11;
+all32 signed branch/modulus labels match sampled endpoints. Unweighted all-row
+L2/floor1 only; no interval certificate, weighted programme or coupled-J2/global
+tangent qualification. Separate defect/Kd norms absent; denominator strength
+unassessed. Actual selected new caller instances and4 existing POINT instances
+passed; do not claim the entire new test file/full regressions passed.
 
-Raw: .qualification/b3-ge-e4-pl/r8-native-fibre-bl5-material-dev-20261006-v1/
-j2-unblock-dev-v6/. handoff-v6.json SHAaa251fbf32e80d20e754017092bd456653a573c9364694d006541302ed9c8d0f;
-artifact-sha256-v6.json293files SHAb5c53d48edad809b30fbb003f16f4c1e577ae715f8dfa079db2cb5dd8300b1a9.
-State FAILED_FULL_TARGET: implemented experimental predictor, helper checks25PASS;
-no complete material/lifecycle gate, installed wheel or performance claim.
+Non-author source/delta reviews find no consequential defect in bounded scope;
+independent-source-review-v2.md SHA16024be9507d73c1a92b8206b38cb61b0c651bc16b1d88c5e108c019d261616c.
+Different-family acceptance remains unmet (Mistral/local cached unavailable).
+No wheel/installed gate or consumer change yet for this new slice.
 
-One old-source paired run consumed56.571617s/184254464B; accepted.875/gen3
-checkpoint/controller bytes preserved. A rejects1/.9375/.90625; full parent/
-candidates/KKT solve and same-origin +/-h1e-4/1e-5/1e-6 saved. A central errors
-.0811159/6.58317e-5/3.50837e-4 establish neither tangent defect nor pass.
-B elastic-shell1/gen2 original rich-direction check preserves all rows/scales/
-fixed predecessors. Coarse +1e-4 crosses one physical fibre sign/modulus branch;
-original fine errors4.79547e-10/2.23278e-9 pass1e-5 on certified smooth intervals.
-Root adopted this bounded B claim after independent-paired-review-v1.md;
-historical strict pytest remainsFAIL, strict source fixture/test is unchanged.
+## Next outcome and ownership
 
-New-policy-only Q4 event predictor uses admitted deformation/layer-strain
-Jacobian and actual fixed-origin trial-yield cutoff, without a new return map.
-Earliest positive quadratic root combines with fibre event; owned cache rejects
-stale state/origin/generation/coordinates and optional initial-offset mutation.
-Original unused adapter3tuple unchanged. Helper-v1's4FAIL/20PASS and repaired
-helper-v2's25PASS retained; no assertion/tolerance weakening. Independent source
-review finds no remaining concrete blocker within this local predictor scope.
-It is not a certified nonlinear event locator or semismoothness proof.
+Complete an installed DEVELOPMENT verification of this source-only workflow,
+with actual import/wheel identities and explicit exclusion of known failed force
+parity from any selected-check summary. Do not repeat closed scientific force,
+event, rounding, compound or reference campaigns. Root owns contracts/Git/note/
+matrix; same author /root/native_bl5_material finished source assignment and is
+available for bounded installed follow-through. No numerical activity live now.
 
-ONE changed-source pending-controller run consumed68.556622s/177401856B:
-all remaining targets1/.9375/.90625 reach original Newton24 with equilibrium
-.11615025845/.05728712741/.02493599258; no accepted state, .875/gen3 bytes equal.
-The final event2.49476e-14 ACTUALLY activates a Q4 layer but raises merit3.47e-12;
-accepted smaller elastic trial improves only2.78e-17, then budget exhausts.
-Stop rounding/event-proposal iteration. Exact saved branch/row/scalar evidence
-is candidate-obstruction-v1.json and owner-findings-v6.md. All response/solve
-counts recorded; discarded internal constitutive iteration totals are missing.
-No complete internal-work or speedup claim follows.
+Existing GE/B2/footprint/POINT routes and their source-bound installed evidence
+remain; do not rebuild delivered owners. Mandatory physical/connection/interface,
+material, load/stability/capacity, scale, external/platform and consumer acceptance
+remain distinct. See matrix and docs/reference_cases for exact historical scopes.
 
-## Closed discriminator and next implementation outcome
+## Preserved failures and authority
 
-V7 compound-trial-dev-v7 is CLOSED_FAILED_NO_IMPLEMENTATION. Actual Q4 switch
-and one full post-switch correction raise original-parent merit .02493599258
-to20.64461538; no state/history commit. Checkpoint, controller and fixed origins
-remain byte-equal. Local run3.716243s/169406464B/pools1; owned processes0 and
-leaseRELEASED. Root independently verified44 artifacts and6 source bindings.
-handoff-v7.json SHAa314f601b408586f5351bf60a343d793332e6f74971452317f0b0baa7040a4bf;
-artifact-sha256-v7.json SHA31e99e81416992d12c8bef436f68bad129695de7e2e8334272bced951f7e7809.
-No product implementation, full-target retry, cohort or wheel followed. This
-rejects the tested full correction only; no instability or formulation-failure
-claim, and no automatic damped compound/event/rounding follow-up.
+V6 event proposal FAILED remaining force targets1/.9375/.90625; no commit at
+.875/gen3. V7 actual full post-switch compound pilot raises merit .02493599 to
+20.64462, no product change/commit; closed failed, not formulation/instability
+proof. V7 is preserved ec9e78b5, v6 source/evidence4219ad1f. No automatic damped
+compound, local event-root or original full-target retry. Classical/reference
+closed campaigns remain closed; connection fidelity/F03 are not accepted.
 
-Next ready mandatory M4 capability: native physical-fibre BL5 translation
-displacement control with material recovery and durable restart, using existing
-public controller/services. Force-control's original full-target failure stays
-open. Same author /root/native_bl5_material owns the connected source/tests/example
-slice; Mistral/local cached unavailable. Root owns contracts, notes, matrix/Git.
-Prospective45 active-minute development budget/final10 reserved; raw only
-.qualification/b3-ge-e4-pl/r8-native-fibre-bl5-displacement-dev-20261006-v1/.
-Fresh successful force seed or explicit pending-controller refusal; never clear
-unfinished force progress. Preserve old identities/dispatch and all native
-histories, physical tolerances, actual chart/work and atomic acceptance. New
-combination receives its own experimental displacement snapshot identity.
-One initial integrated loading/unloading screen, focused impact/lifecycle checks
-and repair within budget; independent source-ready review before installed gate.
-No rebase/arc/S3plastic admission, fixture tuning, qualification or release claim.
-
-## Execution and release limits
-
-V6/V7 owned processes0; paired42195/candidate19978/local7124 terminal.
 ONE numerical job/max3 workers. DEV600s/2GiB process tree, affinity[0], pools1,
-JIT-off/unforced backend, exact CI imports and hash-bound Python314 _wmi exception.
-FormalF03 UNCONSUMED: never execute/copy/substitute its prepared driver.
-NEVER inspect/traverse/copy/archive us3-modal-canary; no Get-CimInstance.
-FrozenG3c/closedFy/pressure/native80/material/turning/adaptive1.01 authorities stay
-binding. PortableS3 STOPPED/NOT_DELIVERED. No consumed authority renewal.
-PR62 NONPASS/local02ca395e repair unpushed. Main untouched; no contact
-communication, push/merge/publication or qualification claim.
+JIT-off/unforced backend; exact CI-site-network-v2 and trusted Python314 _wmi.
+All4 displacement jobs terminal/processes0/leaseRELEASED. FormalF03 UNCONSUMED:
+never execute/copy/substitute prepared driver. NEVER inspect/traverse/copy/archive
+us3-modal-canary; no Get-CimInstance. FrozenG3c/closedFy/pressure/native80/material/
+turning/adaptive1.01 authorities binding; no consumed authority renewal.
+PortableS3 STOPPED/NOT_DELIVERED; PR62 NONPASS/local02ca395e repair unpushed.
+No push/main merge/publication or qualification claim.
 
-Old760/779/16read/33local/184v5 artifacts and424 ca2503 wheel installed sources
-preserved. ca2503 is OLD SOURCE ONLY. Protected prior live record archived at
-history/PRE_J2_UNBLOCK_SHORTENING_20261006.md,13665bytes,
-SHA0d1864bc2e136f645f082b99b481e52d54a23fdcea05bff623cf317ccca2a888.
-Canonical philosophy ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1 rev2026-09-24.2;
-lighter prospective procedure preserves scientific, resource and release gates.
+Old760/779/16read/33local/184v5/293v6/44v7 evidence and424 ca2503 installed sources
+preserved; ca2503 is OLD SOURCE ONLY. Prior detailed note remains in Git/ec9e78b5
+and history/PRE_J2_UNBLOCK_SHORTENING_20261006.md (13665B, SHA0d1864bc2e136f645f082b99b481e52d54a23fdcea05bff623cf317ccca2a888).
+Canonical risk-proportionate philosophy rev2026-09-24.2 applies prospectively;
+scientific criteria, protected history, resources and release gates unchanged.

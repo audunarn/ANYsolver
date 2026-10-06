@@ -20,6 +20,9 @@ CHART_POLICY="B3_GE_BL5_COUPLED_DISPLACEMENT_CONTROL_CHART_V2_DEV"
 def identities(owner):
     """Bind the controller and mechanical payload to their admitted profile."""
     from ._stiffened_shell_affine_endpoint import is_native_point_material
+    if getattr(owner,"_bl5_native_material",False):
+        return ("finite_displacement_native_fibre_bl5",
+                "B3_GE_NATIVE_FIBRE_BL5_DISPLACEMENT_V1_DEV",None,None)
     if is_native_point_material(owner):
         if owner._definition.shell.s3_elements:
             if owner._definition.shell.j2_curve is not None:
@@ -63,8 +66,8 @@ def _layout(owner,steps):
         ("shell_plastic",(shells,12,3)),("shell_alpha",(shells,12)),
         ("shell_origin_plastic",(shells,12,3)),("shell_origin_alpha",(shells,12)))
     from ._stiffened_shell_affine_endpoint import has_shell_material
-    from ._stiffened_shell_affine_endpoint import is_native_point_material
-    if is_native_point_material(owner):
+    from ._stiffened_shell_affine_endpoint import uses_native_material_history
+    if uses_native_material_history(owner):
         from ._stiffened_shell_beam_history import shapes
         native=layout[:12]+shapes(owner._beam_parts,"beam")+shapes(owner._beam_parts,"beam_origin")
         result=native+(layout[-4:] if has_shell_material(owner) else ())

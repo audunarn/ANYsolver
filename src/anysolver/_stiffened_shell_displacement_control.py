@@ -81,8 +81,8 @@ def prepare(owner,raw):
                           "alpha":a["shell_alpha"][i]}
                          for i,candidate in enumerate(shell_next[:q4_count] if s3_material else shell_next))
         shell_next=q4_next+driver._snapshot_s3_accepted if s3_material else q4_next
-    from ._stiffened_shell_affine_endpoint import is_native_point_material
-    native=is_native_point_material(owner)
+    from ._stiffened_shell_affine_endpoint import uses_native_material_history
+    native=uses_native_material_history(owner)
     if native:
         from ._stiffened_shell_beam_history import histories
         beam_next=histories(owner._beam_parts,a,"beam")
@@ -130,8 +130,8 @@ def publish(owner,raw,*,expected_driver,expected_generation,cancellation_token=N
     adaptive_raw=None
     if adaptive is not None:
         from ._stiffened_shell_displacement_adaptive import encode
-        from ._stiffened_shell_affine_endpoint import is_native_point_material
-        adaptive_raw=encode(owner._identity,adaptive,raw,native=is_native_point_material(owner))
+        from ._stiffened_shell_affine_endpoint import uses_native_material_history
+        adaptive_raw=encode(owner._identity,adaptive,raw,native=uses_native_material_history(owner))
         result=replace(result,status="completed" if adaptive.state.completed else "accepted_prefix",
                        increment_attempts=adaptive.state.attempts)
         driver._accepted=result
@@ -150,10 +150,10 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
           cancellation_token=None,on_accepted=None,_adaptive=None):
     from ._stiffened_shell_ge_finite_experimental import _material_arrays,_shell_material_arrays
     from ._stiffened_shell_rotation_charts import physical_frames
-    from ._stiffened_shell_affine_endpoint import is_native_point_material
-    native=is_native_point_material(owner)
+    from ._stiffened_shell_affine_endpoint import uses_native_material_history
+    native=uses_native_material_history(owner)
     if native and type(control) is DisplacementControl and control.trial_policy is not None:
-        raise ValueError("native point displacement excludes branch event policy")
+        raise ValueError("native material displacement excludes branch event policy")
     if type(control) is not DisplacementControl or not (
             owner._bl5_shell_material or getattr(owner,"_curved_material",False) or native):
         raise ValueError("coupled BL5 or curved material displacement control required")
@@ -165,6 +165,9 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
         raise ValueError("displacement control requires an accepted force-controlled seed")
     from ._stiffened_shell_affine_endpoint import require_native_displacement_policy
     require_native_displacement_policy(owner,driver)
+    if native:
+        from ._stiffened_shell_displacement_adaptive import require_native_seed
+        require_native_seed(owner,driver)
     if type(targets) is not tuple or not targets or any(not isinstance(v,(float,int,np.floating,np.integer)) or isinstance(v,(bool,np.bool_)) or not np.isfinite(v) for v in targets):
         raise ValueError("finite displacement targets required")
     dof=control.dof(owner);direction=driver._load(actions)

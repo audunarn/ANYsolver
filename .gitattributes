@@ -385,3 +385,6 @@ tests/data/native_s3_fibre_history/** -text
 /docs/agent_plans/history/PRE_J2_UNBLOCK_SHORTENING_20261006.md -text
 /src/anysolver/_stiffened_shell_q4_material_event.py -text whitespace=cr-at-eol
 /tests/test_q4_native_material_event.py -text whitespace=cr-at-eol
+/.qualification/b3-ge-e4-pl/r8-native-fibre-bl5-displacement-dev-20261006-v1/** -text -whitespace
+/examples/stiffened_shell_native_fibre_bl5_displacement.py -text whitespace=cr-at-eol
+/tests/test_native_fibre_bl5_displacement.py -text whitespace=cr-at-eol

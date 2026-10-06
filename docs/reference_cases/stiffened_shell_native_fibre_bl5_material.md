@@ -174,3 +174,57 @@ mapping, ownership, schema and refusal tests pass; an earlier helper run's four
 failures and all scientific failures are preserved. No full cohort or new wheel
 was run. The candidate remains experimental, partial and unqualified; original
 strict lifecycle tests, fixtures and criteria are unchanged.
+
+
+## Experimental fixed translation displacement control
+
+The explicit native-fibre BL5 material policy also admits the existing public
+`DisplacementControl` facade for fixed translational targets and nodal dead
+translation loads. This uses the existing sparse bordered load-amplitude
+corrector, actual finite charts, fixed accepted material predecessors and
+unchanged equilibrium `1e-8` / compatibility `1e-9` criteria. It preserves the
+42-coordinate local native element layout; the two-member example has 48 global
+retained coordinates. The POINT ownership predicate and all older checkpoint
+identities remain unchanged.
+
+This combination has its own snapshot kind
+`finite_displacement_native_fibre_bl5` and policy
+`B3_GE_NATIVE_FIBRE_BL5_DISPLACEMENT_V1_DEV`, with native generalized/physical
+station histories, both halves of compensated fibre values, and optional Q4 J2
+accepted/predecessor arrays. Replay validates mechanics before atomic publication;
+a fresh owner can restore and continue the same control/load direction. The
+seed must be an ordinary nonadaptive accepted force endpoint. Completed and
+pending force-controller cursors are excluded rather than cleared. Adaptive
+displacement, chart rebasing, branch-event trials and arc control remain excluded
+for this combination, including unsupported checkpoint envelopes.
+
+Run `python examples/stiffened_shell_native_fibre_bl5_displacement.py` for the
+separate axial load/control example. Its biaxial physical-fibre plus generalized
+member/Q4 J2 loading and unloading screen reached targets `1e-6`, `1e-5`, `5e-6`
+with exact fresh-restore/continued checkpoint equality. Fibre and shell alpha
+both advanced in the second accepted increment. Final shell alpha was
+`2.1816640343901213e-6`, fibre alpha `4.940943615836841e-5`, equilibrium ratio
+`1.4416981353202364e-10` and attachment gap `1.3755039148934628e-17`. Focused
+caller coverage also passed axial physical-fibre/mixed-member control with an
+elastic shell, accepted-prefix cancellation, recovery, restart identity, stale
+publication, mutation and unsupported-control/snapshot refusals. Four existing
+native POINT displacement tests passed. A separate smooth fixed-predecessor
+material derivative check passed at both original steps `1e-5`, `1e-6`, errors
+`6.281988772597572e-12`, `5.6059284921967115e-11`, with all 32 signed fibre
+branch/modulus labels unchanged; this is an all-row unweighted directional
+check with an elastic Q4 shell, not the earlier weighted programme criterion,
+coupled-J2 tangent qualification or complete tangent-matrix certification.
+Matching endpoint labels do not supply a general interval certificate. The saved
+FD summary omits `norm(K0*d)` and the defect norm, so the denominator strength
+relative to its floor cannot be independently reconstructed from that summary.
+
+The same-origin force/control parity oracle remains FAILED: after the public
+`1e-6` controlled endpoint solved, a force-controlled solve at its actual axial
+affine load reached the unchanged 24-Newton iteration limit. That failing test
+remains visible. The initial focused run also preserved two test-contract
+failures (fresh-owner restore admission and a target change below the existing
+compatibility floor); their isolated corrections passed. No force-oracle retry,
+full material cohort, candidate wheel or installed displacement gate was run.
+This displacement slice is implemented with focused source evidence, with
+force/control parity and integration acceptance still unmet. It neither closes
+nor repairs the historical transverse force-target failures above.

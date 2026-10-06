@@ -1200,7 +1200,7 @@ class ExperimentalGEAnalysis:
                     native_bl5_material_domain="existing physical-fibre and generalized constitutive histories; elastic or isotropic Q4 J2 shell",
                     native_bl5_checkpoint="existing native-material/native-shell binary schema; explicit model/line/material-policy identity",
                     excluded=tuple(v for v in capabilities["excluded"] if v not in ("shell J2 plastic", "generalized B3 plastic finite BL5")) +
-                        ("native material BL5 staged/external loads", "native material BL5 displacement/arc control", "native material BL5 spectra", "native material BL5 chart rebase"),
+                        ("native material BL5 staged/external loads", "native material BL5 adaptive displacement/arc control", "native material BL5 spectra", "native material BL5 chart rebase"),
                     open_domains=("plastic S3 native BL5", "native material BL5 chart rebase", "consumer integration", "scale qualification"))
                 for key in ("body_acceleration", "beam_distributed_loads", "staged_beam_distributed_loads", "shell_pressure_loads", "staged_dead_loads"):
                     capabilities[key] = ()
@@ -1221,6 +1221,9 @@ class ExperimentalGEAnalysis:
                 if self._footprint_increment_chart else ("nodal-footprint chart rebase and rebased checkpoint restore",))
         if self._footprint_stable_s3:
             capabilities["footprint_finite_numerical_policy"] = stable_s3_policy_descriptor()
+        if self._bl5_native_material:
+            capabilities["displacement_control"] = "experimental_native_fibre_bl5_fixed_translation_v1"
+            capabilities["displacement_control_seed"] = "ordinary nonadaptive accepted force endpoint; no chart/event/adaptive controller"
         from ._stiffened_shell_affine_endpoint import is_native_point_material
         if is_native_point_material(self):
             capabilities["displacement_control"] = (
@@ -1507,9 +1510,9 @@ class ExperimentalGEAnalysis:
         """
         self._require_open()
         self._require_distributing_reference_only("finite solve and its controllers")
-        if self._bl5_native_material and (displacement_control is not None or
+        if self._bl5_native_material and (
                 type(actions) is not tuple or any(type(a) is not NodalAction or any(a.wrench[3:]) for a in actions)):
-            raise ValueError("native material BL5 admits force-controlled nodal dead translations only")
+            raise ValueError("native material BL5 requires nodal dead translations")
         if self._finite_distributing:
             if self._distributing_cyclic and increment_control is not None:
                 raise ValueError("cyclic distributing material histories admit fixed increments only")
@@ -1530,6 +1533,8 @@ class ExperimentalGEAnalysis:
         if getattr(self,"_arc_snapshot",None) is not None:
             raise ValueError("arc history requires its dedicated continuation controller")
         if displacement_control is not None:
+            if self._bl5_native_material and increment_control is not None:
+                raise ValueError("native material BL5 displacement excludes adaptive control")
             if self._unsupported_modes:
                 raise ValueError(self._unsupported_modes[0])
             if increment_control is not None:
@@ -1680,6 +1685,10 @@ class ExperimentalGEAnalysis:
             return publish(self,raw,expected_driver=None,expected_generation=self._generation,restoring=True)
         from ._stiffened_shell_displacement_adaptive import MAGICS as DISPLACEMENT_ADAPTIVE_MAGICS
         if raw.startswith(DISPLACEMENT_ADAPTIVE_MAGICS):
+            if self._bl5_native_material:
+                raise ValueError("native material BL5 displacement excludes adaptive checkpoints")
+            if self._bl5_native_material:
+                raise ValueError("native material BL5 displacement excludes adaptive checkpoints")
             from ._stiffened_shell_displacement_adaptive import decode,validate_progress
             context,inner=decode(self,raw)
             prepared=copy(self);prepared._commit_lock=RLock();prepared._writing=False

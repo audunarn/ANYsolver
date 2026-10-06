@@ -29,6 +29,11 @@ def is_native_point_material(owner):
         not definition.distributing_footprints and not definition.finite_distributing_footprints)
 
 
+def uses_native_material_history(owner):
+    """Native station histories, without broadening POINT profile admission."""
+    return is_native_point_material(owner) or bool(getattr(owner,"_bl5_native_material",False))
+
+
 def require_native_displacement_policy(owner,driver):
     """Never upgrade legacy S3 force-seed arithmetic during replay."""
     if (is_native_point_material(owner) and owner._definition.shell.s3_elements and
@@ -44,7 +49,7 @@ def has_native_s3_material(owner):
 
 def has_shell_material(owner):
     """Only admitted algorithmic shell histories belong in affine endpoints."""
-    return owner._bl5_shell_material or (is_native_point_material(owner) and
+    return owner._bl5_shell_material or (uses_native_material_history(owner) and
         owner._definition.shell.j2_curve is not None) or (
         getattr(owner, "_curved_material", False)
         and owner._definition.shell.j2_curve is not None)
@@ -52,7 +57,7 @@ def has_shell_material(owner):
 
 def validate_arrays(owner,a,*,native_chart=False):
     """Replay decoded fixed-affine translation arrays in isolated mechanics."""
-    if not (owner._bl5_shell_material or getattr(owner,"_curved_reference",False) or is_native_point_material(owner)):
+    if not (owner._bl5_shell_material or getattr(owner,"_curved_reference",False) or uses_native_material_history(owner)):
         raise ValueError("bounded coupled affine endpoint required")
     prepared=copy(owner);prepared._commit_lock=RLock();prepared._writing=False
     prepared._finite_driver=None;prepared._accepted=None
@@ -70,7 +75,7 @@ def validate_arrays(owner,a,*,native_chart=False):
     if not np.any(a["load_direction"][owner._free]):
         raise ValueError("nonzero free displacement load direction required")
     anchors=owned_anchors(a["shell_anchors"],len(owner._shell_ids))
-    if is_native_point_material(owner) and not native_chart and not np.array_equal(
+    if uses_native_material_history(owner) and not native_chart and not np.array_equal(
             anchors,np.tile(np.eye(3),(len(owner._shell_ids),1,1))):
         raise ValueError("native point displacement excludes rebased shell charts")
     witness=owned_anchors(a["shell_frames"],len(owner._shell_ids))
@@ -102,7 +107,7 @@ def validate_arrays(owner,a,*,native_chart=False):
         driver._snapshot_s3_accepted = accepted_s3
         driver._shell_predecessor_q = origin_q
         driver._shell_predecessor_anchors = origin_anchors
-    native=is_native_point_material(owner)
+    native=uses_native_material_history(owner)
     if native:
         from ._stiffened_shell_beam_history import histories
         beam_parent=histories(prepared._beam_parts,a,"beam_origin")

@@ -3189,3 +3189,24 @@ SHAa314f601b408586f5351bf60a343d793332e6f74971452317f0b0baa7040a4bf;
 
 Full G0-G6/F/V/B, installed/external/practical-scale/consumer/release obligations
 remain open. No tolerance, physics, legacy-default or checkpoint-identity change.
+
+
+## 6 October 2026 - native BL5 material displacement source milestone
+
+| Capability | Implementation | Qualification/disposition | Executed evidence |
+|---|---|---|---|
+| Native physical-fibre BL5 fixed translation control | IMPLEMENTED_SOURCE_ONLY | NOT_QUALIFIED; original force failures remain open | Existing sparse bordered corrector, separate native-history predicate, complete native histories/recovery and new displacement identity. Fixed translation/nonadaptive ordinary force seed only; adaptive, event, chart/rebase, arc and S3plastic scope refused. Public axial loading/unloading example13.555363s/168357888B, active Q4J2/fibre histories, fresh restart/continue checkpoint byte-equal, eq1.44170e-10/gap1.37550e-17. |
+| Atomic state and refusals | Focused source caller coverage | PASSED executed selections only | New axial/elastic and biaxial/J2 history/cancel/restart cases, pending force cursor refusal, stale publication, control/load signature, corrupted native-history/metadata fresh-owner restore refusal; existing4 POINT instances passed. Initial tests-v1 2FAIL/7PASS retained; repaired fresh-owner refusal test passed in tests-v2. No complete-file/full-regression claim. |
+| Same-origin meaningful force/control parity | Existing force oracle | FAILED before comparison; UNMET | tests-v2 1FAIL/1PASS; actual1e-6 control endpoint solved, but its actual affine axial load force oracle reaches unchanged24-Newton limit. Failed test remains visible; no retry, weaker criterion or fixture adjustment. |
+| Fixed-origin native fibre/generalized direction | Separate named development check | PASSED bounded unweighted elastic-shell predicate only | tests-v3 2PASS incllegacy refusal; h1e-5/1e-6 errors6.28199e-12/5.60593e-11, all32 signed branch/modulus endpoint labels match. All-row unweighted L2/floor1; not prior weighted programme, interval certificate, coupled-Q4J2 or global tangent qualification. Saved record omits separate defect/Kd norms. |
+| Installed artifact/consumer/physical acceptance | NOT_STARTED for this slice | OPEN | Source-ready independent review completed; no new wheel or installed displacement gate, no consumer change or complete material qualification. |
+
+Exact raw .qualification/b3-ge-e4-pl/r8-native-fibre-bl5-displacement-dev-20261006-v1/:
+handoff.json SHA73bfa90e24e1bcdb87a438aab7baf366ddd400977b4c0c3d0343497ce9920906;
+93-path manifest SHA9da788ba86c5fca3ff405a705eead07bb30105ba0c272a25b439cef0cc57ec30.
+Root independently verified93 actual raw files, final9 source/doc paths and original
+strict test/example hashes. Non-author reviews v1/v2 preserved; finaldelta SHA
+16024be9507d73c1a92b8206b38cb61b0c651bc16b1d88c5e108c019d261616c. No consequential
+source defect identified within their declared scope; different-family acceptance
+remains unmet. All4 jobs terminal/processes0/leaseRELEASED. Historical failures,
+raw sources, ca2503 old wheel and full scientific/release obligations retained.
