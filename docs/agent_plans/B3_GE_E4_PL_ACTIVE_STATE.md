@@ -60,7 +60,9 @@ Remaining351.9606696s is prior scoped verification ONLY, not fold authority.
 New assessor/FD/toy tests are UNRUN; final source Read review found no blocker.
 Fresh300s proposal at native-fold-assessment-dev/authority-proposal-v1.json;
 3saved endpoints/3borders/15assemblies, fixed h pair, no continuation or sweep.
-Approval PENDING. Historical prior-screen allowance does not cover this slice.
+Candidate8d1373cf committed; approval question issued, response PENDING.
+Harness prepared/source-reviewed, bindings5inputs/6savedartifacts/430modules;
+zero usage/no interpreter. Prior-screen allowance does not cover this slice.
 No validated first limit point or qualified descending branch is established.
 Archive of the prior full active note is root-active-before-proportional-preparation-v1.md
 in new raw; prior records remain byte-preserved in Git and their evidence directories.
