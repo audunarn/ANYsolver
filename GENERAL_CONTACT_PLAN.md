@@ -5,6 +5,13 @@ This plan changes the route, not scientific obligations or execution authority.
 
 ## Current delivered development
 
+Finite planar triangulated rigid obstacles now execute through the ordinary
+static solver against one elastic S3 physical skin. Installed12PASS; actual
+force equilibrium, press/open/recontact, exact complete-checkpoint restart,
+partial-footprint work, FE rotational pullback and physical tool wrench pass.
+All536 source/wheel/installed payload files match. This is a development
+handoff, not full C4 acceptance. [Evidence](docs/d1_review_support/contact_triangulated_rigid_20261006/development.md).
+
 The solver-side transient result archive is implemented and installed-development
 verified: actual impact/export/read, 14 controls, all 534 source/wheel/package
 files matching. Exact producer fields, contact variants, flags and checkpoint
@@ -22,6 +29,69 @@ C:/ANYworkspaceWork/contact_automatic_domain_20261006.
 Local checkpoint 24b14ff2 completes actual curved native physical-fibre beam-pair press/open/recontact and canonical split restart. Installed opening 70.959 s, recontact 64.464 s; final exact replay/program refusal 37.388 s. Independent current-origin material returns and both-body support/contact/load wrenches pass. Fixed-mesh4k/8k normal sensitivity also passes (all integrated response changes <=0.106% against 2%). Native engineering acceptance and spatial/section breadth remain open. The earlier cold8k timeout remains NONPASS; no general twofold speed claim follows.
 
 [Lifecycle guide](docs/GENERAL_CONTACT_NATIVE_CURVED_PAIR_LIFECYCLE_DEV.md), [curated evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/curved_pair_lifecycle.json), [restart/ownership](GENERAL_CONTACT_RESTART.md).
+
+## C4 development handoff: finite triangulated rigid obstacles
+
+Previous goal turn made concrete progress: archive implementation, installed
+producer/consumer verification and local checkpoint3829f01d. Both held mechanics
+purses remain unchanged. Advance the missing triangulated-obstacle requirement
+through existing physical shell work maps, shared primal mortar/Jet2 integration
+and the ordinary nonlinear static solver, rather than recreate completed friction
+or native components.
+
+One sustained owner implemented immutable oriented rigid mesh data, geometry/
+topology admission, contributor work/tangent/reactions, state/restart, actual
+static lifecycle and installed example. First mechanical profile is consistently
+oriented planar finite triangles; nonplanar and real boundary-only contact remain
+separate required rows. Keep finite footprints, physical skins and real boundary
+identity. Artificial internal diagonals add no contact features or pressure DOFs.
+Accumulate support and weighted gap over all contributing triangles before the
+shared pressure law. Do not insert fake target FE nodes/materials, substitute an
+infinite plane, omit candidates or sum independent face pressure laws.
+
+First executable profile uses one elastic S3 physical skin and a fixed planar
+tool. The shared penalty potential is E = k/2 sum(w_i^2/s_i) on compressive
+supported modes, including moving support and full source/target geometry work.
+Its affine skin map requires the existing von Karman route; finite-rotation,
+nonlinear-material and moving-tool admission remain separate required work.
+
+Core validation/factory and prescribed-path hooks change only for explicit new
+geometry. A narrow ordinary-static preflight refuses incompatible kinematics.
+Existing public signatures/defaults and formulation identities stay
+valid. Bind oriented mesh, body/feature identity, side/path/settings into restart;
+reject incompatible continuation. For the fixed planar tool, affine vertex
+heights and quadratic Bernstein source-normal controls bound the actual linear
+trial path. A plane superset is used only for conservative gap certification;
+the contact potential retains the finite mesh footprint. Unresolved crossings
+or physical rims produce cutback/refusal, not sampled certificates.
+Independent local work/tangent, manufactured constant-pressure response, separate
+body force/moment balance, finite-footprint/triangulation controls, physical skins,
+rollback/refusals and split restart support development disposition. Qualification
+and full C4 acceptance remain separate.
+
+The milestone used122.032401899807/180s across24 terminal jobs, including failed
+runs and five private builds. Remaining57.967598100193s stays with this milestone;
+it cannot renew held domain/native or frozen campaigns. Final artifact is
+dist5/installed5, wheel83d9f843ae9ecb3b549295d35aafe6c5cc14eb205cb758291404435c8fb22b1e.
+Same-family Read scrutiny closed the specific work/swept/binding/rim findings;
+it is not formal independent engineering acceptance. Root inspected exact
+source hashes, installed imports/runtime, payload parity and actual mechanics.
+The independent constrained structural-K displacement oracle was not added;
+broader geometry, material, refinement, acceptance and scale evidence remain open.
+
+Finalize the changed-path review before building the delivery wheel. Ordinary
+unstaged diff checks omit new files; include them explicitly in the final source
+check. Use one installed verification for a coherent held candidate and rebuild
+only for an actual consequential source or packaging change. Retain superseded
+artifacts at their executed identities instead of overwriting their evidence.
+
+New distinct milestone180s cumulative numerical/build/install; perjob120s/953MiB,
+one job, effective JIT0/Numba1/pools1 and process-tree watchdog. No archive/domain/
+native or frozen purse is renewed. Raw C:/ANYworkspaceWork/contact_triangulated_rigid_20261006.
+Worker owns new geometry/contributor/test/example/guide and narrow core/lazy-export/
+necessary rigid-path hooks and the new-profile-only static preflight; root owns
+contracts, living records, review and Git. No structural-equation changes,
+sibling/automatic/native/friction edits or other-chat messages.
 
 ## Held integrated outcome: native spatial refinement
 
@@ -59,7 +129,7 @@ Before further execution select a genuinely unblocked programme requirement or
 obtain the specific execution decision needed for this changed integrated route.
 [Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/grouped_body_development.md).
 
-### Current unblocked integrated row: D2 declared-domain pairing
+### Delivered D2 domain foundation; coupled mechanics held
 
 The native source checkpoint is held without renewing its residual test purse.
 Advance automatic shell/rigid pairing through a standalone immutable declaration

@@ -588,6 +588,10 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         return ContactValidationReport("invalid", ("ContactDefinition required",))
     if settings is not None and type(settings) is not ContactSolverSettings:
         return ContactValidationReport("invalid", ("ContactSolverSettings required",))
+    from .triangulated_rigid import TriangulatedRigidContactBody
+    if any(type(body) is TriangulatedRigidContactBody for body in definition.rigid_bodies):
+        from .triangulated_rigid_static import validate_triangulated_rigid
+        return validate_triangulated_rigid(model, definition, settings, analysis_control=analysis_control)
     if settings is not None and settings.beam_end_cap_work == 'hemisphere_coupled_tool_dev':
         from .beam_hemisphere_coupled_tool import validate_coupled_hemisphere_tool
         return validate_coupled_hemisphere_tool(model, definition, settings,
@@ -1255,6 +1259,19 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
                    *, allow_augmented: bool = False,
                    analysis_control: str = "force") -> Iterator[object]:
     settings = ContactSolverSettings() if settings is None else settings
+    from .triangulated_rigid import TriangulatedRigidContactBody
+    if any(type(body) is TriangulatedRigidContactBody for body in definition.rigid_bodies):
+        from .triangulated_rigid_static import TriangulatedRigidManager
+        report = validate_general_contact(model,definition,settings,analysis_control=analysis_control)
+        if not report.valid:
+            raise ValueError('unsupported rigid mesh contact: '+'; '.join(report.issues))
+        manager = TriangulatedRigidManager(model, definition, settings, initial_displacement)
+        token = _ACTIVE_CONTACT.set(manager)
+        try:
+            yield manager
+        finally:
+            _ACTIVE_CONTACT.reset(token)
+        return
     if settings.beam_end_cap_work == 'hemisphere_coupled_tool_dev':
         from .beam_hemisphere_coupled_tool import CoupledHemisphereToolManager
         report = validate_general_contact(model, definition, settings,

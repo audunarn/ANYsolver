@@ -1,86 +1,81 @@
 # General contact - restart (6 October 2026)
 
-## Authority and current state
+## Authority / state
 
-Worktree C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001; archive parent0b9ecf71.
-Full C0-C9 ACTIVE/incomplete. Local commits permitted; no push/merge/release,
-protected original checkout access, sibling edits or other-chat messages.
-[Goal](GENERAL_CONTACT_GOAL.md), [plan](GENERAL_CONTACT_PLAN.md),
-[ledger](docs/GENERAL_CONTACT_CAPABILITIES.md).
-Global AGENTS reread; SHA2564233b732fa295b1e5862cc643a9c78413a47ec2c14c2976f84d35f9c43c96a1a.
-Mistral/local cached unavailable; sustained OpenAI fallback ownership retained.
-Both workers and every owned numerical job terminal at archive handoff. Recheck
-actual handles before later execution; a stale note is not proof of live activity.
+Authoritative worktree C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
+branch codex/contact-main-reconcile-20261001; C4 parent3829f01d. Inspect current HEAD.
+Full C0-C9 ACTIVE/incomplete. [Goal](GENERAL_CONTACT_GOAL.md),
+[plan](GENERAL_CONTACT_PLAN.md), [ledger](docs/GENERAL_CONTACT_CAPABILITIES.md).
+Local commits authorized; no push/merge/release, protected original checkout access,
+sibling edits or other-chat messages. Global AGENTS reread; SHA256
+4233b732fa295b1e5862cc643a9c78413a47ec2c14c2976f84d35f9c43c96a1a.
+Mistral/local cached unavailable; sustained OpenAI fallback. Both workers and all
+24 owned C4 numerical/build/install jobs are terminal. Verify handles on resume.
+[Archived prior restart](docs/d1_review_support/contact_triangulated_rigid_20261006/prior_restart.md).
 
-## Latest delivery: C9 transient archive foundation
+## Latest C4 development handoff
 
-Closed V1 public serialize/read + immutable bytes/fresh decoded views preserve
-all26 producer fields, exact NumPy/scalar bits,7contact variants/nesting, inert
-free-body/material data, producer flags and exact restart payload. Generalized
-constraint reactions remain work-conjugate coordinates, not physical moments.
-New module/test/example/guide; only lazy exports and result convenience method
-changed existing modules. No solver/state/physics/default/admission changes.
+Fixed oriented finite planar rigid triangles / one elastic S3 physical skin,
+ordinary force and path static routes. Shared support/gap penalty + existingJet2,
+full skin rotation pullback and physical target-gradient wrench; no fake FE nodes.
+Exact full checkpoint split replay, active/open/recontact, finite-footprint,
+partial-work/normal-H, hidden crossing and mutation/refusal controls pass.
+Unrepresented singular/tiny contact must prove represented positive-area ownership
+or refuse; disconnected/nonconvex planar geometry is retained, no convex shortcut.
+Fixed-tool sweep encloses actual affine map/normal path, including cancellation.
 
-Final installed14PASS10.336975s/186937344B; actual141-state Q4/plane impact has
-23active states then release, reactions141x24, exact arrays/work/checkpoint.
-Wheel a356265204635aa8ad0bb4ca409a0e7cf45a9c47fda2e666194c6945ab497e30;
-all534 source/wheel/installed files match.223imports/errors[],JIT0/Numba1/all3pools1.
-Scoped Read findings repaired; no further consequential defect found. Same-family
-supporting review is not formal engineering acceptance. Root inspected evidence.
-14jobs96.140970999724/180s;83.859029000276s remain in archive purse; peak195780608B.
-First Newton-history-length and later closed-role/test NONPASS runs retained.
-Raw C:/ANYworkspaceWork/contact_transient_archive_20261006: worker_handoff.md,
-summary.json,final_source_hashes.json,installed_payload_parity.json,perjob evidence.
-[Curated evidence](docs/d1_review_support/contact_transient_archive_20261006/development.md).
-Do not replay passed checks without changed inputs or a concrete unresolved risk.
-Actual free-body/plastic/beam dynamics were not rerun; optional fields have codec
-controls. Applications, physical qualification and fullC9 remain open.
+Final installed12PASS3.8359572s/181317632B; actual force gap-4.610748107um vs50um,
+force/moment errors5.4758e-11/4.1727e-11 vs1e-6; full checkpoint and displacement
+split equality0. Path gaps-30/+10/-30um. This50um is a development fixture setting,
+not a qualification-budget change. Wheel
+83d9f843ae9ecb3b549295d35aafe6c5cc14eb205cb758291404435c8fb22b1e:
+536source/wheel/installed5 payloads match;234imports/errors[],JIT0/Numba1/all3pools1.
+Root inspected9source hashes/evidence/diff. Separate same-family Read scrutiny
+closed consequential work/swept/binding/rim findings; not engineering acceptance.
+24jobs122.032401899807/180s;57.967598100193s remain; maximum216449024B.
+Eight NONPASS jobs and prior artifacts remain, including coarse-sweep/test/oracle
+and checkpoint failures. No stale route rerun or twofold speedup claim.
+[Guide](docs/GENERAL_CONTACT_TRIANGULATED_RIGID_DEV.md),
+[evidence](docs/d1_review_support/contact_triangulated_rigid_20261006/development.md).
+Raw C:/ANYworkspaceWork/contact_triangulated_rigid_20261006 includes worker handoff,
+exact hashes, summary, perjob logs/runtime/import/resources and payload parity.
+Q4/multiple source/nonplanar/moving/free/friction/self/native/boundary-only mechanics,
+independent structural-K displacement oracle and fullC4 qualification remain open.
 
-## Held automatic coupled row
+## Held mechanics and prior delivery
 
-Declared shell/rigid domains are source/private-installed development-tested;
-actual two DISTINCT tools .1um apart:.25/.15N, wrench normalized<=7.43e-13vs1e-6,
-gap-.25um<=1um; half/full/split restart and incompatible provenance refusal pass.
-Historic wheel8b9f9c83e69a636bac2b32bdcf2a09fb2de12251919b93bbec6e0dfe8ee2ddf0,
-533payload files matched. Compiler bytes unchanged by later fixture edits.
-Q4/S3 single-face Jet2 refusal and FD TIMEOUT100.161061s yielded no checkpoint.
-Separate refined2Q4/2S3 projected_penalty+Jet2 complete-profile solve returned,
-but result writer failed before status/gates persisted:NONPASS19.4049993s.
-Serializer repaired/AST only. No verified actual coupled press/lifecycle claim.
-Cumulative174.026839300175/180s;5.973160699825s remain. Requested further180s is
-PENDING, not approved. Do not run held press or renew purse without the reply.
-If granted: fixed fixture/scales/gates, actual press/gap/wrench/target motion,
-then lifecycle/parity/restart; no unchanged FD replay or same-mechanics speed claim.
-[Evidence](docs/d1_review_support/contact_automatic_domain_20261006/development.md),
-raw C:/ANYworkspaceWork/contact_automatic_domain_20261006 including executed hashes.
+Automatic domain/compiler/two-distinct-tool installed controls remain valid.
+Actual refinedQ4/S3 solve returned but writer NONPASS19.4049993s persisted no
+status/gates/checkpoint; writer repaired only. Earlier FD TIMEOUT100.161061s and
+singleQ4Jet2 refusal retained. Actual automatic shell-shell lifecycle unverified.
+174.026839300175/180s used;5.973160699825s remain. Further180s request PENDING,
+not approved. Do not run held press or renew purse without the user decision.
+[Evidence](docs/d1_review_support/contact_automatic_domain_20261006/development.md).
 
-## Held native spatial row
+Connected native156-coordinate body candidate remains partial. V8 curved caller
+NONPASS4.089651s at uncertain interior/junction root; no complete R/H/gap/wrench.
+V9 charged-zero junction omission implemented, integrated controls UNVERIFIED.
+177.357927799691/180s used;2.642072200309s remain, not renewed. Do not squeeze a
+full route into that purse. Historical single-element curved lifecycle/restart
+passes do not prove spatial/native engineering acceptance.
+[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/grouped_body_development.md).
 
-24b14ff2 installed curved single-element physical-fibre plastic pair lifecycle
-and exact split restart pass; native spatial/section/engineering acceptance open.
-Connected156-coordinate bodies remain partial. V8 endpoint2PASS.114148s and
-analytical KKT/shared-jet1PASS.597248s; actual curved callerNONPASS4.089651s/
-168890368B after15domains: interior Brent root rounded into junction band.
-No complete residual/H/gap/wrench or active156 solve/restart returned.
-V9 charged zero junction omission implemented but integrated correction and new
-accounting/refusal controls UNVERIFIED. Complete half-weighted physical30E/F/H/
-root-H and unchanged total/half reserves/native propagation retained; no fallback.
-30terminal jobs177.357927799691/180s;2.642072200309s remain, not renewed.
-No full route fits residual purse. No source-default/core-guard/tolerance rescue.
-[Evidence and archived restart](docs/d1_review_support/contact_native_fibre_s3_20261005/grouped_body_development.md).
+C9 transient archive delivery3829f01d preserves all26producer fields and exact
+bits/checkpoints as inert data; installed14PASS/534payloads. Actual141-state impact
+export/read verified, not new impact/free-body/plastic qualification. Archive
+96.140970999724/180s,83.859029000276s remain; this is not C4/domain/native authority.
+[Evidence](docs/d1_review_support/contact_transient_archive_20261006/development.md).
 
-## Next action and remaining programme
+## Next action / ownership
 
-Root owns integration/Git/living records/ledger. Sustained /root/pair_geometry_swept
-owns subsequent connected implementation only after a bounded delta assignment;
-/root/curved_switch_review provided terminal Read scrutiny. No other-chat messages.
-Archive slice is delivered; choose the highest-value genuinely unblocked required
-row, or apply the pending explicit coupled-budget decision if it arrives. Never
-use the archive purse to renew automatic/native or consumed qualification work.
-Full geometry/self-contact, beam/native acceptance, friction/arc length, impact,
-native dynamics, applications/packages/scale remain required. D1-interior/bounded
-D2 acceptance stays tied to its original evidence. Original120h consumed432011s;
-later resumption grants bounded work, not frozen authority renewal. One numerical
-job; routine180s/1GB,named900s/4GB only prospectively, stricter candidate caps prevail.
-Ledger contains historical invalidUTF8: append ASCII bytes only. Full goal active.
+Root owns governing decisions, integration/Git/living records/ledger. Sustained
+/root/pair_geometry_swept is terminal after this handoff; a bounded delta assignment
+may resume compatible implementation. /root/curved_switch_review terminal Read.
+Do not relaunch from a stale note or overlap numerical jobs/solver writes.
+Extend a useful installed capability toward remaining C4 geometry/physical boundaries
+or another genuinely unblocked programme row; inspect prerequisites and ownership.
+No passed checks repeated without changed inputs or a concrete unresolved risk.
+Original120h consumed432011s; subsequent resumption is bounded work, not renewal.
+One numerical job; stricter milestone purses prevail. Ledger has historical invalid
+UTF8: append ASCII bytes only. Full geometry/self-contact, beam/native acceptance,
+friction/arc length, impact/native dynamics, applications/packages/scale remain.

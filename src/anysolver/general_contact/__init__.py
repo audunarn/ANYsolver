@@ -40,7 +40,9 @@ _AUTOMATIC_EXPORTS = frozenset({
 
 
 def __getattr__(name: str):
-    if name == "RigidCappedCylinder":
+    if name == "TriangulatedRigidContactBody":
+        module = "triangulated_rigid"
+    elif name == "RigidCappedCylinder":
         module = "capped_cylinder"
     elif name in _CORE_EXPORTS:
         module = "core"
@@ -73,6 +75,7 @@ def __dir__():
     return sorted(set(globals()) | set(__all__))
 
 __all__ = [
+    "TriangulatedRigidContactBody",
     *sorted(_ARCHIVE_EXPORTS),
     *sorted(_AUTOMATIC_EXPORTS),
     "NativeS3ContactPair", "create_native_contact_analysis",

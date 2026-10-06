@@ -8072,6 +8072,12 @@ def solve_static_nonlinear(
                 and (kinematics != "von_karman"
                      or corotational_tangent != "auto")):
             raise ValueError("radial rigid contact currently admits von_karman kinematics only")
+        from .general_contact.triangulated_rigid import TriangulatedRigidContactBody
+        if any(type(body) is TriangulatedRigidContactBody for body in contact.rigid_bodies):
+            if kinematics != 'von_karman' or corotational_tangent != 'auto':
+                raise ValueError('triangulated rigid contact requires von_karman affine small-rotation skins')
+            if initial_element_states is not None or initial_fields is not None or fracture_config is not None:
+                raise ValueError('triangulated rigid contact does not admit seeded material/initial fields or fracture')
         if any(body.path_translation is not None for body in contact.rigid_bodies):
             if str(control).lower() not in {"force", "displacement"} or load_program is not None:
                 raise ValueError("prescribed rigid-tool translation requires force or displacement control without a load program")

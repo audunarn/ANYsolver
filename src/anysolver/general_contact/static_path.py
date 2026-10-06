@@ -394,7 +394,9 @@ def solve_static_contact_path(
     from .s3_patch_static import SupportResetForceBudgetExceeded
     from .q4_s3_overlap_derivatives import UnsupportedQ4S3Branch
 
+    from .triangulated_rigid_static import PROFILE as rigid_mesh_profile
     general_s3_patch = report.profile in {
+        rigid_mesh_profile,
         s3_patch_profile, mixed_patch_profile, source_q4_patch_profile,
         q4_pair_profile, general_augmented_profile, mixed_augmented_profile,
         refined_augmented_profile, refined_q4_s3_augmented_profile,
@@ -408,7 +410,7 @@ def solve_static_contact_path(
     }
     if not general_s3_patch and "RESTRICTED_SLIDING" not in report.profile:
         raise ValueError("unsupported contact path profile: " + report.profile)
-    if (definition.rigid_bodies or
+    if ((definition.rigid_bodies and report.profile != rigid_mesh_profile) or
             settings.pair_motion != ("general" if general_s3_patch
                                     else "restricted_sliding")):
         raise ValueError("contact path currently requires a deformable shell pair")

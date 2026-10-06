@@ -36,6 +36,14 @@ application adapters, impact qualification or C9 acceptance. Coupled automatic
 and native verification remain held under their recorded limits; no authority
 is renewed. [Archive evidence](docs/d1_review_support/contact_transient_archive_20261006/development.md).
 
+C4 fixed planar triangulated rigid/S3 contact now has source and private installed
+development evidence:12controls, actual force equilibrium, press/open/recontact,
+complete FE physical-skin pullback, tool wrenches and exact full-checkpoint split
+restart pass. All536 package files match. Disconnected/nonconvex planar footprints
+remain represented; unrepresented rim contact refuses rather than appearing open.
+Q4, nonplanar, boundary-only mechanics and full C4 acceptance remain required.
+[C4 evidence](docs/d1_review_support/contact_triangulated_rigid_20261006/development.md).
+
 ## Preserved history and decisions
 
 The [unaltered prior goal](GENERAL_CONTACT_GOAL_HISTORY_20261005.md) and [prior plan](GENERAL_CONTACT_PLAN_HISTORY_20261005.md) retain all development decisions, counterexamples, failures, references and source identities. Unaffected scientific contracts, registered criteria, frozen/consumed authorities and assessed capability boundaries remain binding. Historical chronological next actions are superseded by this live goal/plan; this consolidation changes no mechanics or acceptance target and authorizes no repeated campaign.
