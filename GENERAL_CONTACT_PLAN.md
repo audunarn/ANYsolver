@@ -90,13 +90,26 @@ all failures, commands and raw results are retained.
 [Evidence](docs/d1_review_support/contact_native_connected_deformation_20261006/deformation_development.md).
 [Derivation and usage](docs/GENERAL_CONTACT_NATIVE_CONNECTED_DEFORMATION_DEV.md).
 
-Next select a required connected bending/finite-angle or nonprincipal dynamic
-discriminator through the existing retained owner/controller, with independent
-reference and sufficient scoped execution authority. Retain full physical inertia,
-algebraic work, state safety and admission limits. This short axial invariant is
-not continuum/spatial convergence, general bending, section breadth or fullC7.
-C8 common-stage native/shell impact and fullC0-C9 completion remain open.
-No new driver stack or unaffected-test replay.
+Connected transverse bending source candidate is now implemented, numerical
+UNEXECUTED: independent actual affine-half-cell nonlinear plane work, all27
+physical mass coordinates, global algebraic frame elimination and a lowest
+bending mode over about0.2rad phase. Public ordinary retained midpoint fixture,
+full initial/stage/endpoint response/support/impulses, complete4=2+2 restart and
+modal phase controls are prepared. No product or existing installed payload change.
+Review repairs retain original source drafts: stable axial arithmetic, correct
+per-element force/moment grouping, separate physical units, descriptor zero rates,
+exact-rational eigen-residual in conditional bounds, actual0.1% analytical-response
+gate and saved diagnostics before assertions. Scientific targets unchanged.
+[Derivation and usage](docs/GENERAL_CONTACT_NATIVE_CONNECTED_BENDING_DEV.md).
+Raw contact_native_connected_bending_20261006 holds V1/V2/V3 source and reviews.
+
+Next obtain sufficient separate260s numerical scope for this concrete candidate:
+four focused tests in three groups and actualCLI4, each<=60s/953MiB, one job,
+JITdisabled/Numba1/pools1,20s final reserve; reuse exact549-payload private wheel.
+This is proposed authority, not runtime evidence or approval. Current axial
+residue cannot cover the new fixture. No unaffected-test replay/new driver stack.
+Finite-angle/nonprincipal dynamics, curved/section/spatial admission, fullC7 and
+C8 common-stage native/shell impact remain open; fullC0-C9 remains incomplete.
 
 ### Independent represented-path gap: development verified
 

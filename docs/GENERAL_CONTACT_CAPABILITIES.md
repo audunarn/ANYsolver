@@ -2943,3 +2943,17 @@ All jobs terminal. Supporting same-family review only; no independent acceptance
 or release. Fixed-orientation elastic axial invariant, not bending/finite-angle,
 continuum/spatial/section breadth or fullC7/C8. Historical failures unchanged.
 Evidence: d1_review_support/contact_native_connected_deformation_20261006/deformation_development.md.
+
+
+### 2026-10-06: connected transverse bending - SOURCE IMPLEMENTED, UNEXECUTED
+
+Four new reference/example/test/guide files implement independent nonlinear
+planar affine-half-cell work, global massless-frame elimination, ALL27 physical
+mass coordinates and meaningful lowest bending mode phase. Full initial/stage/
+endpoint response/support/impulse, complete4=2+2 restart and modal controls ready.
+Product7986c5bd unchanged; private549-payload artifact reuse subject to byte check.
+V1/V2 source/review findings retained; V3 repairs ordering/arithmetic/dimensions,
+eigen-residual bound, actual0.1% response gate and failure-metric preservation.
+Numerical tests/CLI UNEXECUTED. Proposed separate260s not yet granted. No acceptance
+or release. Finite-angle/nonprincipal/curved/spatial/sections/fullC7/C8 remain open.
+Guide: GENERAL_CONTACT_NATIVE_CONNECTED_BENDING_DEV.md.

@@ -5,8 +5,8 @@
 Full C0–C9 ACTIVE/incomplete: [goal](GENERAL_CONTACT_GOAL.md),
 [plan](GENERAL_CONTACT_PLAN.md), [ledger](docs/GENERAL_CONTACT_CAPABILITIES.md).
 Only C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001. Source candidate15d34aa;
-product7986c5bd unchanged. Documentation-only verification checkpoint follows.
+branch codex/contact-main-reconcile-20261001. Bending source parent6295a341;
+product7986c5bd unchanged. Source checkpoint identity is recorded in raw evidence.
 Protected original is not accessed; no sibling edits, other-chat communication,
 publication, merge/release or default changes. Local checkpoints authorized.
 Ledger ASCII append only. Mistral/local cached unavailable; sustained OpenAI
@@ -38,11 +38,21 @@ Source-only pending/block records remain historical; user approval resolved them
 
 ## Next action and limits
 
-Choose the next required connected bending/finite-angle or nonprincipal dynamics
-discriminator through the existing retained owner/shared controller. Use one
-coherent implementation owner, independent physical reference and sufficient
-new scoped numerical authority. Current residual allowance is not authority for
-a new physical fixture or qualification campaign. No additional driver stack.
+Connected transverse bending source implementation is complete in four new
+reference/example/test/guide files; worker terminal, V3 held source. Independent
+nonlinear planar work, all27physical mass coordinates, meaningful~0.2rad modal
+phase, complete response/support and4=2+2 restart controls. No product change.
+V1/V2 reviews and repaired ordering/arithmetic/bound defects preserved. Supporting
+V3 source review closes B1-B5; no numerical PASS or engineering acceptance follows.
+[Source review](docs/d1_review_support/contact_native_connected_bending_20261006/final_source_review_v3.md).
+[Guide](docs/GENERAL_CONTACT_NATIVE_CONNECTED_BENDING_DEV.md).
+Raw C:/ANYworkspaceWork/contact_native_connected_bending_20261006:
+source_preparation_v3.json,worker_handoff_v3.md,lead_source_review_decisions.json,
+source snapshots/reviews and proposed guarded execution tooling.
+Request separate260s for four tests in three groups+actualCLI4,20s final reserve,
+one job<=60s/953MiB,JITdisabled/Numba1/pools1. Reuse exact549-payload installation;
+no build. No authority granted yet; no live numerical job. Axial residue is not
+authority for this new fixture. No new driver or repeated passed suites.
 This axial fixed-orientation/zero-spin elastic invariant is short-horizon and
 semidiscrete; no general bending, continuum/spatial or section-family acceptance.
 Full C7 and C8 common-stage native/shell impact remain open. Broader C0–C9 goal

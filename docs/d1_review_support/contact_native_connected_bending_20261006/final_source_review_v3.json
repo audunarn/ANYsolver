@@ -1,0 +1,73 @@
+{
+  "status": "V3_SOURCE_REPAIRS_VERIFIED_SUPPORTING_ONLY",
+  "numerical_jobs": 0,
+  "solver_imports": 0,
+  "engineering_acceptance": false,
+  "files": [
+    {
+      "path": "examples/native_connected_bending_reference.py",
+      "sha256": "28242c6a93e5e039ce6950e08a34df3e7840e7bfb2f117e641deca1dadcb71a5",
+      "held_v3_sha256": "28242c6a93e5e039ce6950e08a34df3e7840e7bfb2f117e641deca1dadcb71a5",
+      "match": true
+    },
+    {
+      "path": "examples/native_connected_bending_dev.py",
+      "sha256": "43f984835ab5cc7fa8bcc44541c987aa4a8d469f674830e2e9c456af4b7d5118",
+      "held_v3_sha256": "43f984835ab5cc7fa8bcc44541c987aa4a8d469f674830e2e9c456af4b7d5118",
+      "match": true
+    },
+    {
+      "path": "tests/test_ge_beam3_native_connected_bending.py",
+      "sha256": "a7207022c88b8043502dc24d400c5397275324f598ab29b3e8b861b1ce46a4e2",
+      "held_v3_sha256": "a7207022c88b8043502dc24d400c5397275324f598ab29b3e8b861b1ce46a4e2",
+      "match": true
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_NATIVE_CONNECTED_BENDING_DEV.md",
+      "sha256": "5bbe2446e20f19c100b11ca86fd765705c998d957eb3e062d0d14ffa850147f3",
+      "held_v3_sha256": "5bbe2446e20f19c100b11ca86fd765705c998d957eb3e062d0d14ffa850147f3",
+      "match": true
+    }
+  ],
+  "findings": [
+    {
+      "id": "B1",
+      "status": "CLOSED",
+      "evidence": "test46,64-65,192-195: per-element2x18 force6/moment12 state and dual slicing; retained rates exact-zero separately."
+    },
+    {
+      "id": "B2",
+      "status": "CLOSED",
+      "evidence": "test113-138: actual saved endpoint q/v versus semidiscrete reference <=.001; worst-case bound separate diagnostic."
+    },
+    {
+      "id": "B3",
+      "status": "CLOSED",
+      "evidence": "reference274-276: exactFraction omega squared and Kq-omega squared Mq forcing term included for binary modal data."
+    },
+    {
+      "id": "B4",
+      "status": "CLOSED",
+      "evidence": "reference50-62/test147-167: complete27physicalM,3D P1 translation, rotated principal cell inertia, separate kg/kgm2/kgm and positive rotated offdiag scales."
+    },
+    {
+      "id": "B5",
+      "status": "CLOSED",
+      "evidence": "test119-139: bound Boolean/excess accumulated, metrics saved133 before assertions134-139."
+    }
+  ],
+  "unresolved_findings": [],
+  "checks": [
+    "Read heldV3 repair ranges and example/guide mass and claim updates.",
+    "Matched four direct source SHA256 hashes to source_preparation_v3.json.",
+    "Reconciled B1-B5 against exact governing equations and source assertions."
+  ],
+  "limits": [
+    "No numerical/import/test/build/install execution. All candidate checks/CLI unexecuted.",
+    "Exact plane mathematical oracle does not certify production floating SO3 arithmetic.",
+    "No general finite-angle/nonprincipal/material/contact/spatial/continuum or overallC7 acceptance.",
+    "Linear phase halfdt test is independent formula, not native refinement execution.",
+    "Same-family source review supports development; root owns science/acceptance and execution authority."
+  ],
+  "previous_history": "Prior early_reference_review and final_source_review remain unchanged."
+}
