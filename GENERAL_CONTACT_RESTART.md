@@ -1,157 +1,90 @@
 # General contact - restart (6 October 2026)
 
-## Scope and ownership
+## Objective, checkout and ownership
 
-ONLY C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001. Source-startbe86a483; inspect
-HEAD/status for the local checkpoint. Full C0-C9 ACTIVE/incomplete:
-[goal](GENERAL_CONTACT_GOAL.md), [plan](GENERAL_CONTACT_PLAN.md),
-[ledger](docs/GENERAL_CONTACT_CAPABILITIES.md).
-No protected-original access, sibling edits, other-chat messages, push/merge/
-release or historical defaults changes. Local checkpoints authorized. All numerical
-jobs and source workers terminal. Mistral/local cached unavailable; sustained OpenAI fallback
-plus supporting Read review. Same-family scrutiny is not engineering acceptance.
-Ledger append ASCII BYTES ONLY; preserve working-CRLF/Git-LF prefixes.
+Full C0-C9 ACTIVE/incomplete: [goal](GENERAL_CONTACT_GOAL.md),
+[plan](GENERAL_CONTACT_PLAN.md), [ledger](docs/GENERAL_CONTACT_CAPABILITIES.md).
+ONLY C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001;
+branch codex/contact-main-reconcile-20261001, source-startfdbae395.
+No protected-original access, sibling edits, other-chat messages, publication,
+merge/release/default changes. Local checkpoints authorized. Ledger ASCII-byte
+append only; preserve historical prefixes. Mistral/local cached unavailable;
+sustained OpenAI fallback authorpair_geometry_swept and supporting source
+reviewercurved_switch_review. Same-family scrutiny is not engineering acceptance.
 
-## Current C7 source slice - exact finite-rotation dynamic loading
+## Current work and next action
 
-Source-startbe86a483. Sustained fallback authorpair_geometry_swept owns the
-connected independent reference/test/publicexample/guide outcome. Supporting
-source reviewer confirms actual DistributedPattern force and cell-only physical
-couple work: no algebraic load, no nodal-moment substitute. Exact invariant needs
-straight ZERO-lift reference, centered geometric inertia, principalx/commonRx
-frames/free supports. Primitive ellipse inertia and nonzero force+torque give
-constant common nodal and principal angular acceleration; compare full E/P/H,
-load work and impulses with the independently derived endpoint solution.
-Discrete midpoint stage pose is the endpoint average, with a*h^2/8 and
-alpha*h^2/8 offsets from continuum midtime; do not assert false stage equality.
+1. Native loading reference source candidate checkpointfdbae395: independent
+primitive ellipse/integrals, actual force+cell-couple work, five cases/eight
+advances and exact fresh split restart. All new tests/CLI UNEXECUTED. Separate
+100s loading execution request PENDING; no authority exists. Prior38.0563633s
+safety residue cannot cover it. Raw contact_native_transient_20261006 holds
+native_transient_manufactured_loading_preparation_v2.json and matching prefixed
+worker_handoff_v2.md, independent_source_review.md and root checkpoint/package
+audits.
+Original reference sources and withdrawn energy-field finding retained. Constructor
+mapping confirms raw mechanical energy checks; derived conservative quantities
+subtract verified line work. Prepared native_manufactured_loading_run.py fails
+closed without exact separate approved scope, and uses its own job accounting.
 
-N192 finite-angle and N162/N216 temporal refinement already PASS for their named
-bounded development rows (guide/evidence); reuse rather than repeat. Old N16
-NONPASS and all qualification boundaries remain. Source work only so far; current
-38.0563633s safety reserve is NOT this new loading/reference authority. Five
-source-prepared cases/eight advances and the public example await a separately
-requested100s loading allowance; no execution authorized yet. Root verified all
-545 current package/wheel/installed3 payloads+6metadata exact: reuse this artifact.
-The source reviewer withdrew an energy-field finding after exact constructor
-inspection; original mechanical energy tests were correct. Retain that exchange
-and separately labelled conservative-energy checks, with no product change.
-Broader C7 deforming/spatial,
-section/connected-native and C8 common-stage obligations remain open.
+2. Connected-native C7 owner is implemented SOURCE ONLY; workers now terminal.
+Five new files held by source_preparation_v2.json/worker_handoff_v2.md in raw
+contact_native_connected_dynamic_20261006; root independently checked hashes,
+four ASTs, all545 unchanged old product payloads, and five preserved V1 snapshots.
+No numerical checks/build/install ran. Existing single-beam profile/codec unchanged.
+Adopted architecture: explicit
+DEVELOPMENT profile/schema, 6N+24E global chart, Boolean local42 restrictions;
+unique nodal translations physical, nodal frames algebraic, independent retained
+cell spins physical and resultants algebraic. Sum complete work/inertia derivatives,
+solve shared-junction algebraic equations GLOBALLY, check assembled rank/physical
+mass, then apply actual global midpoint acceleration/exp-map chart. No independent
+beam stepping, hidden inertia or physical condensation. New512 coordinate preflight,
+existing canonical2MiB bound/construction120s lifetime are resource controls only.
+Actual nonlinear-stage directional and in-flight rollback checks are prepared,
+unexecuted. Shape finding withdrawn as stale; root verified heldV1 already guards
+shape before reshape. Next integrate shared TransientConfig controller/reporting;
+global mechanics/installed/clamped impulse/independent deformation gates remain.
 
-Prepared files: examples/native_manufactured_loading_reference.py,
-examples/native_manufactured_dynamic_loading_dev.py,
-tests/test_ge_beam3_native_manufactured_loading.py and native development guide.
-Raw preparation_v2/handoff_v2/review and root package audit are under the existing
-contact_native_transient_20261006 directory. All new numerical claims UNEXECUTED.
-Prepared native_manufactured_loading_run.py fails closed without separately
-approved100s loading authority. Five-case installed wave60s, CLI25s, reserve15s;
-exact accounting uses its own job directories, never old trajectory purses.
+Loading uses the unchanged HELD installed3 artifact/source binding, not an assertion
+that later connected modules are installed. The old545 payloads+6metadata matched
+wheel6252c0f69bc3f621755216c694c2bf6d3e608f0e032938b4eafa3047e3cdc3cb atfdbae395.
 
-## Current interruption repair - development verified
+## Completed evidence to reuse
 
-Follow-up to36e99e02: actual published endpoint identity reconciles an authentic
-commit with already prepared controller/native/result bytes. Native-owned private
-trial receipt captures issuance before caller return; cleanup deletes only that
-exact authentic pending candidate, or no-ops if atomic rollback already removed it.
-Original control signals retain the matching full accepted prefix; no accepted
-mechanics rollback, state transplant, unrelated candidate clear or changed physics.
-Root AST audit: exact original trial body;43 other midpoint and all original facade
-methods unchanged. Supporting same-family source review found no residual defect.
-
-Five installed safety checks PASS30.3959776s; actual in-flight cancellation
-PASS8.4633458s. Build11.5626729s/install3.9935992s terminal0. All545 source/wheel/
-installed payloads+6metadata agree;194 imports/errors0,JIT0/Numba1/observedpools1.
-Actual postcommit accepted epoch1/time.001 and native checkpoint parity verified.
-The pre-receipt source attempt TIMEOUT12.0644232s with setup only remains retained.
-User approved90s extension;12total jobs below270s. No more optional execution.
-Prior wheel immutable. New held wheel6252c0f69bc3f621755216c694c2bf6d3e608f0e032938b4eafa3047e3cdc3cb,
-private native_transient_receipt_installed3. Local source checkpointb894a3b6;
-inspect HEAD for final records checkpoint. Full C7 engineering acceptance OPEN.
-Mistral/local remain cached unavailable; sustained fallback ownership preserved.
-Raw native_transient_receipt_worker_handoff.md/final_manifest/source_audit and
-root safety_formula_audit/source_review/start plus exact timeout snapshots retained.
-Current native_transient_receipt_extension_final_manifest.json/worker_handoff.md,
-root receipt_evidence/payload/runtime audits and both installed job records bind
-the verified repair. No later packaged Python or test-body changes.
-
-## Latest delivery - native contact-free trajectory
-
-Opt-in native solve_transient uses existing TransientConfig and retained-inertia/
-SO3 midpoint owner. Actual physical15 input, native algebraics, both compensation
-parts, immutable committed origins and genuine constrained-frame reaction couple.
-Native-owned genesis/restore preparation and disposable candidate accounting/
-capsule/journal/result preparation before one commit; no duplicate integrator,
-state transplant, artificial inertia or changed factory/profile/default equations.
-
-Installed3PASS48.5399743s: actual manual/two-step/grid-aligned split equality,
-in-flight precommit cancellation and KeyboardInterrupt candidate cleanup.
-Actual loaded/clamped installedCLI1step PASS7.8098067s.545 source/wheel/installed
-payloads+6metadata match;194 imports/errors0,JITdisabled/Numba1/all pools1.
-Saved source free P/H defects4.46e-11/4.85e-11, clamped1.55e-8/6.61e-9,
-separate .03N/.05Nm scales atdt.001s; exact zero homogeneous support work.
-Existing31 protected methods and extracted native formulas match by source AST.
-
-Full new17-case module UNFINISHED: source1TIMEOUT60.0649128s with12PASS/2FAIL
-markers; terminal loaded2FAIL2.4411633s from incorrect bareLinePattern example.
-Only adapter repaired to existing DistributedPattern, same loads. Repaired
-source subsetTIMEOUT35.0687126s after3passing markers. Final two safety cases
-passed installed. Every partial/failure retained; no full-suite/energy/acceptance
-claim. Old N16 finite-spin NONPASS and half-dt evidence remain binding.
-
+Native return-time safety checkpointb894a3b6/recordsbe86a483:5installed interruption
+cases and1actual in-flight cancellation PASS; exact accepted prefix/native capsules,
+owned issuance cleanup, rollback no-op. All545 old payloads+6metadata match,
+194 private imports/errors0, JITdisabled/Numba1/observed pools1. Prior12s source
+timeout and long-module partial/failure evidence remain. No full-module/C7 acceptance.
 [Delivery record](docs/d1_review_support/contact_native_transient_20261006/trajectory_development.md).
-Raw C:/ANYworkspaceWork/contact_native_transient_20261006:
-native_transient_final_manifest.json, native_transient_worker_handoff.md,
-root_evidence/formula/saved_metrics audits and independent_source_review.md.
-Private wheel native_transient_dist1/anysolver-0.4.7-py3-none-any.whl,
-SHA1b90d1bd2f36614f5031b941ddfdbc54c29a73573eb64c316ec321b679fa47f7;
-private install native_transient_installed1. Executed test/example snapshots,
-exact reconstructed failed fixture and binding correction are retained.
+Named N192 finite-angle and N162/N216 temporal DEVELOPMENT checks already PASS;
+reuse, never repeat to recreate evidence. Old N16 NONPASS stays retained.
+Broader deforming/spatial/section/connected-native scientific qualification and
+C8 common-stage impact remain open. C6 multiple beam/sharedS3 checkpointe01164d3
+retains6source/6installedPASS,0.0463843%energy, exact split restart; wider C6 open.
 
-## Execution authority
+## Execution authority (unchanged, no live numerical job)
 
-| Scope | Used/total seconds | Remaining seconds |
+|Scope|Used/total seconds|Remaining seconds|
 |---|---:|---:|
-| New C7 native trajectory |231.94363670004532/270|38.05636329995468|
-| C6 beam/S3 |409.0956022000173/420|10.90439779998269|
-| C5 arc |186.04257249983493/240|53.95742750016507|
-| C4 triangulated/connected S3 |172.93152889993507/180|7.068471100064926|
-| C9 archives |177.6984974995721/180|2.301502500427895|
-| Automatic domains |174.026839300175/180|5.973160699825|
-| Native connected spatial |177.357927799691/180|2.642072200309|
+|C7 trajectory/safety|231.94363670004532/270|38.05636329995468|
+|C6 beam/S3|409.0956022000173/420|10.90439779998269|
+|C5 arc|186.04257249983493/240|53.95742750016507|
+|C4 triangulated/connected S3|172.93152889993507/180|7.068471100064926|
+|C9 archives|177.6984974995721/180|2.301502500427895|
+|Automatic domains|174.026839300175/180|5.973160699825|
+|Native connected spatial|177.357927799691/180|2.642072200309|
 
-C7 twelve jobs terminal; original authority native_transient_authority.json and
-approved native_transient_receipt_extension90_authority.json; original unchanged. Onejob60s,
-953MiB/JIT0/Numba1/pools1, actual remainder and reserve. All failures/imports/
-build/install count. C6/C5/C4/C9 terminaljobs70/28/33/34. Original120h consumed
-432011s. No borrowing/replay/renewal. Domain180 request unanswered; remaining
-C5 reserve is not a new campaign. No more optional checks on this slice.
+C7 twelve terminal jobs; original authority and approved90extension immutable.
+C6/C5/C4/C9 terminal counts70/28/33/34. Original120h consumed432011s.
+One job,60s,953MiB,JIT0/Numba1/pools1; exact process-wall including failed work.
+No borrowing, replay or renewal. Loading100s request and domain180 request pending.
+Connected source is authorized implementation, not a numerical campaign allowance.
 
-## Next required action and retained history
+## Retained history
 
-Extend the required C7 native dynamics row using the existing production owner/
-controller and references. Named finite-angle and temporal development checks
-passed; broader deforming/spatial/section/connected dynamics qualification
-and common-stage native/shell impact remain open. Keep accepted physical inertia,
-retained coordinates and complete work maps. New numerical scope needs its actual
-authority; source work can proceed within authorized ownership.
-
-Current return-time safety closes through6installedPASS and exact package/runtime
-provenance. Resume broader C7 scientific work from this owner/controller; do not
-repeat this completed slice or the long original test module. Preserve finite-spin
-NONPASS and wider spatial/section/connected-native qualification gaps. Current
-remaining C7 seconds cover only the approved trajectory/safety scope; they do not
-authorize a new finite-angle campaign. Source development can proceed; identify
-the next concrete mechanics discrepancy before requesting its numerical authority.
-
-Use measured case costs and eager per-case reports; whole17case file exceeds
-current60s job cap. Reuse unaffected evidence, targeted groups and held artifacts;
-no rerun to reconstruct counts. Broader C0-C9 remains incomplete.
-
-Prior C6 multiple beam/sharedS3 delivery at e01164d3 remains6source/6installed
-PASS,51states/32active, energy0.0463843%, exact complete restart and544payload
-parity. Its archive/flexural/refinement/acceptance gaps stay open. Raw
-C:/ANYworkspaceWork/contact_c6_beam_s3_20261006 has extension manifests/audits;
-private wheel e801b2fb... and installed2 preserved. Old loaded-impact97b2bb9c,
-represented-path7729fe2b, default/fine-step/FD failures and original restart history
-remain linked there. No historical claim has been broadened.
+Previous full restart saved at raw contact_native_connected_dynamic_20261006/
+restart_before_connected_source.md and infdbae395. Raw safety evidence remains
+contact_native_transient_20261006; prior beam evidence contact_c6_beam_s3_20261006.
+Keep existing failures, source identities, independent scientific gates and all
+programme dependencies. Full C0-C9 remains required; publication not authorized.

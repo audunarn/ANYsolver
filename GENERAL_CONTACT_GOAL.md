@@ -65,6 +65,23 @@ held verified installed package, so no rebuild is needed. Preserve the original
 source snapshot and withdrawn energy-field review finding; actual constructor
 semantics confirm the mechanical energy checks. No product equations changed.
 
+### Connected native dynamics: source candidate
+
+The new explicit connected owner assembles shared nodal coordinates and retained
+cell motion in one 6N+24E midpoint system. Atomic trial/commit/discard, strict
+fresh-owner restart, a two-element example and focused derivative/refusal checks
+are implemented and source-reviewed. Numerical tests and installed verification
+remain UNEXECUTED; this is not C7 acceptance. The existing single-element profile
+and all545 old package payloads are unchanged. New connected modules are absent
+from the held loading/safety wheel.
+
+Next integrate this owner with the existing shared TransientConfig transaction
+and reporting route, then verify the coupled equations and state controls under
+their own execution allowance. Retain independent deforming, finite-angle,
+clamped reaction/impulse, section and broad C7/C8 obligations. Source evidence:
+raw contact_native_connected_dynamic_20261006/worker_handoff_v2.md and
+[guide](docs/GENERAL_CONTACT_NATIVE_CONNECTED_DYNAMIC_DEVELOPMENT.md).
+
 ### Independent represented-path gap: development verified
 
 All 80 coarse and 160 fine loaded-impact Hermite segments now pass a separate

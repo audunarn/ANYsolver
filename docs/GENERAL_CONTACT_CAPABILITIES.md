@@ -2871,3 +2871,26 @@ native dynamics and common-stage native/shell impact remain open; full C0-C9 inc
 - Raw contact_native_transient_20261006: manufactured_loading_preparation.json,
   manufactured_loading_worker_handoff.md, independent_source_review.md and
   root_package_preflight.json, all with native_transient_ prefix.
+
+
+### Connected native midpoint owner - SOURCE ONLY (2026-10-06)
+
+- New explicit DEVELOPMENT profile GE_BEAM3_CONNECTED_CENTERED_ELASTIC_MIDPOINT_DEV_V1.
+- Implemented shared-node/independent-cell6N+24E assembly using existing work/inertia
+  kernels, global algebraic compatibility/rank and physical mass, SO3 midpoint,
+  atomic issued-state trial/commit/discard and exact fresh-owner checkpoint.
+- Five held files, four AST/source checks PASS; numerical tests/example UNEXECUTED.
+- Prepared stressed/spinning full-stage tangent interval, actual second-element/
+  exit-guard rollback, shared mass/rigid response, routing and restore refusals.
+- Root verified all545 OLD product payloads unchanged. Two new connected modules
+  are not in the old wheel. No full-current-package installed parity claim.
+- Source reviewer findings repaired; alleged held-V1 shape defect withdrawn as
+  stale interim source. Root verified five V1 snapshots and actual guard ordering.
+- Shared TransientConfig driver/reporting integration, numerical/installed checks,
+  independent deformation, clamp reaction/impulse and broad C7/C8 remain OPEN.
+- No scientific execution or authority consumption; pending loading100 request
+  is not connected-dynamics authority. Existing scientific gates unchanged.
+- Evidence raw contact_native_connected_dynamic_20261006/source_preparation_v2.json,
+  worker_handoff_v2.md, assembly_source_review.md, root_source_audit.json and guide
+  docs/GENERAL_CONTACT_NATIVE_CONNECTED_DYNAMIC_DEVELOPMENT.md.
+- Status implemented/source-reviewed only; NOT tested/accepted/released. Full C0-C9 OPEN.
