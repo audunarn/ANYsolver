@@ -4029,3 +4029,23 @@ root-result-v2.json corrects v1 PowerShell count-only summary error (v1 retained
 Next source-only decision: proportional-load continuation from verified.5prefix,
 same physical definition; durable checkpoint streaming. No new numerical authority.
 F03/body/closed campaigns/main/push/release and all aggregate gates unchanged.
+
+## 6 October 2026: source-only proportional native capacity route
+
+Candidate151cb3d4: IMPLEMENTED_NOT_QUALIFIED, all new tests/model/route UNRUN.
+Explicit proportional_workflow restores only verifiedg3/factor.5/SHA4e7adf06,
+requires recorded full actions and original model identity, uses F=(.5+alpha)Ffull,
+positive tip-z predictor and existing native director metric/radius.01. It avoids
+repeating failed force seed rather than changing geometry/material/BL5 equations.
+Original opposite-probe workflow/default preserved. Actual affine arc loads are
+checked; ordinary-origin forces remain labelled reconstruction. Owned full-state
+checkpoint packets stream immediately at restored origin/every accepted endpoint.
+Complete-slice independent source Read review found cached-checkpoint-only test
+gap, repaired by actual full public recovery comparisons after restore/refusals.
+Root inspected repair; source whitespace PASS, no numerical acceptance supplied.
+No package source changes; previous wheel6464174e reuse eligible. New execution
+PENDING fresh bounded authority; previous600 has one physical screen consumed,
+257.2597296used/342.7402704remaining and does NOT authorize this new physical route.
+Bindings/proposal: native-proportional-capacity-dev/source-readiness-v1.json.
+G4D/first limit point/descending branch, F03, external/scale/platform/different-family
+and full programme obligations remain OPEN. No body/closed/main/push/release action.
