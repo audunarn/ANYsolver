@@ -21,7 +21,7 @@ accepted predecessors; accepted checkpoint70b16259 remains byte-identical.
 One mixed-unit direction does NOT establish every row/block/column or capacity.
 The independent source review found no blocking sign/update/origin defect.
 
-ANYfem dd75542 now delivers installed mixed/biaxial/P1 native arc workflow through
+ANYfem current Git (installed candidate dd75542) delivers installed mixed/biaxial/P1 native arc workflow through
 existing v6 case/Project bridge and public owner: save/reopen, loaded gen3,
 accepted prefix4, fresh restore/continued gen5, exact checkpoint/recovery parity.
 Both final installed cases PASS; positive physical-fibre alpha3.676299624e-5 and
@@ -37,8 +37,8 @@ and consumer pre-case origin failures, wrong filename and invalid thickness/arm
 negative control are preserved. Same source owner repaired consumer paths/model;
 exact source snapshots and all attempt logs remain immutable.
 
-Next: independent assessment of the complete tested continuation/consumer slice,
-then the genuine physical capacity/cutback/mesh-unit and broader-domain obligations.
+Complete tested continuation/consumer slice independently reviewed: no blocking defect.
+Next: genuine physical capacity/cutback/mesh-unit and broader-domain obligations.
 Do not replace those by more small-direction or compatibility tests. No retries
 of closed turning/adaptive/force/parity/reference campaigns follow this success.
 Connection law/F03, matched external/physical evidence and aggregate gates remain
