@@ -106,23 +106,28 @@ not full MIN3 displacement-correction inertia or legacy S3 mass. Actual V2D has
 18 corner coordinates; the separate bubble-S3 family is NOT admitted. No physical
 bubble static/dynamic reduction. Distinct request/mass policy; no qualification.
 Native kinetic lift/inertia remains explicit captured geometry+spatial inertia.
-Implemented source extension: typed GEMixedReferenceModesRequest/result plus
-separate mixed POINT-only free-free boundary, immutable mass cache and public
-capabilities. Q4/S3/mixed, generalized/virgin axial-biaxial/mixed native families,
-supported POINT/BL5 paths and six free-free rigid fields tested. Old request and
-Q4 mass preserved. Source V1:73PASS/3FAIL; repaired independent full-pencil QZ and
-curved-frame tests V3:3PASS,73DESELECT. Root verifies22 frozen snapshots and only
-two test-function changes;76 unique instances by impact reuse, no full rerun.
-V2 root launcher path error caught pinned-version guard BEFORE pytest; preserved.
-V3 original CI/affinity0/pools1/Numba1/JIToff verified,5.463s228888576B sampled.
-Prior non-author review found no blocker; ROOT subsequently caught a public
-capability defect: new free-free owner delegated generic capabilities to legacy
-ineligible descriptor. Same owner corrected metadata selection and added public
-capability/preflight + legacy regression assertions;2 AST PASS, runtime UNEXECUTED.
-Owner708ca8ea/test1d84bd69; old reviews/source snapshots preserved. Wheel5639b79b
-(427 equal source/stage/wheel/site modules) superseded UNEXECUTED. Build fixed
-VERSIONED artifact next;2% convergence/external/different-family acceptance OPEN.
-No body retry/F03; owned jobs terminal.
+Installed source c3950ae6/wheel9e6ab8a4: flatQ4/S3/mixed, generalized/virgin
+axial-biaxial/mixed native families, supportedPOINT/BL5 reference modes. POINT
+free-free verifies six canonical rigid fields; full singular pencil preserved.
+SourceV1 73PASS/3FAIL; repaired full-pencilQZ/curved-frameV3 affected3PASS.
+76 unique source passes by impact reuse; rootlauncherCI error preserved,0tests.
+Root later caught generic modal-only capabilities selecting legacy ineligible
+scope. Same owner repaired metadata/assertions; prior reviews missed that seam.
+InstalledV4 FULL76PASS/0fail/error/skip8.702s, including actual generic capability
+and preflight/legacy assertions. Default public mixed/nativeBL5 example passes
+at117.6519074/253.5976933Hz, explicitly experimental/nonqualified. Root verifies
+427source/stage/wheel/host-site bytes,244actual imports,45raw/6source bindings,
+pinnedCI/affinity0/pools1/Numba1/JIToff/unforced. Supervisor14.2558s232947712B
+sampled,terminal. TwoQZ infinity warnings retained; no criteria change.
+Wheel5639b79b superseded/unexecuted; installedV2/V3 access guards FAILED BEFORE
+tests. Samewheelhost-install recovery preserved, no ACL/source changes. Raw
+r8-ge-mixed-reference-modal-installed-dev-20261006-v1/: finalhandoff/manifest-v2
+and root-integrated-verification-v1.json. Scientific2% convergence/external/
+different-family and aggregateF07/G4B remainOPEN. NEXT: independent Read of B2
+F12/B14 element AND attachment prestress in existing owner, no numericaljob.
+Adopt governing contract before implementation; no inventedWagner/zero-affine-
+Hessian accuracy claim/legacyfloor. Body retry still needs explicit approval.
+No F03/closedcampaign restart. Owned modal jobs terminal.
 
 ## Preserved restrictions and history
 

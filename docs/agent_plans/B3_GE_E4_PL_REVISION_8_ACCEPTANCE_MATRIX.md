@@ -3373,3 +3373,32 @@ VERSIONEDfixed artifact for changed source. Not an installed pass or failure.
 New raw r8-ge-mixed-reference-modal-installed-dev-20261006-v1/source-fix-v1/
 records before/after source and disposition. Installed workflow and all scientific
 convergence/external/different-family/aggregate/release obligations stay open.
+
+
+## 6 October 2026 - installed mixed native reference modes
+
+IMPLEMENTED_NOT_QUALIFIED. Source c3950ae69dcc3fa14f97502f9eafb86a3a11276e:
+wheel9e6ab8a43ae2354e710f899336415c4d15f9adb938bcaa699e7d130bab31468b.
+Root independently verifies427 source/stage/wheel/host-site package bytes and
+244 actual installed imports, pinnedCI NumPy2.5.3/SciPy1.18.1/Numba0.68.0/
+llvmlite0.50.0, affinity[0]/pools1/Numba1/JIToff/unforcedbackend before/after.
+V4 fresh four-file installed suite:76PASS/0fail/0error/0skip in8.702s; repaired
+generic capability/preflight and legacy-boundary assertions now execute. Default
+public mixed-shell/native-family BL5 example workflow COMPLETED with117.6519074/
+253.5976933Hz, explicit experimental policy and production_qualified=False.
+Supervisor14.2558055s232947712B sampled process tree,600s/2GiB; terminalexit0.
+Root checks45 named worker raw hashes and6 consumed source bindings, fullJUnit
+and current payloads. Two full-pencil QZ infinite-value rescaling warnings
+retained; selected finite pairs/original-pencil residuals pass unchanged criteria.
+V1 wheel5639b79b remains superseded/unexecuted. V2 sandbox could not read fixedCI
+and V3 host could not read sandbox-created installed target; both runtimeguards
+FAILED BEFORE pytest/example,0tests. Preserve each receipt/runtime/traceback.
+Same immutable wheel installed in new host-created target,427 payload matches;
+no source/rebuild/ACL change or new physical cases. Exact commands remain raw.
+Raw r8-ge-mixed-reference-modal-installed-dev-20261006-v1/, worker-installed-
+manifest-v2.json SHA5f9a960fdd87f7c203df1b1b129b6b19e0244de8063814066dad597b53f37524;
+handoff-v2 SHAa5f10476b58377885e747b574b72a791a1591287387ccc604ff9b0614cf2f38d; root-integrated-verification-v1.json.
+S3 kinetics remains declared linear nodal director approximation, not fullMIN3
+velocity enrichment. Final2% spectral convergence/external/different-family and
+aggregateF07/G4B/M4/M5/platform/consumer/release acceptance stay OPEN. No formal
+F03/bodyretry/closedcampaign/push/main/sibling/contact authority consumed.
