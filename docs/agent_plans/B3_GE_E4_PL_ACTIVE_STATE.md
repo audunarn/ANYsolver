@@ -4,7 +4,7 @@ Revision8 goal ACTIVE; full G0-G6/F01-F13/V01-V28/B01-B18 acceptance,
 external/scale/platform/consumer duties and release remain incomplete.
 Use REVISION_8_GOAL.md, REVISION_8_PLAN.md and the single acceptance matrix.
 Canonical worktree: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001.
-Branch codex/stiffened-main-reconcile-20261001; v6 candidate based on1bc4dd4f.
+Branch codex/stiffened-main-reconcile-20261001; v6 committed4219ad1f, based on1bc4dd4f.
 ANYfem consumer last inspected df9d1d7; no current sibling ownership/edits.
 
 ## Delivered behavior and scientific boundary
@@ -14,7 +14,8 @@ physical-fibre members, retained42, finite solve/recovery, atomic prefixes,
 fresh/chart restart, conservative native-line buckling and installed ANYfem
 native-elastic-v5. Existing physical B2/GE/footprint/load routes retain their own
 source-bound evidence. Do not repeat passed campaigns or imply aggregate acceptance.
-See reference_cases/stiffened_shell_native_fibre_bl5.md and material.md.
+See docs/reference_cases/stiffened_shell_native_fibre_bl5.md and
+stiffened_shell_native_fibre_bl5_material.md in that same directory.
 
 Retain experimental five-channel BL5/P0. Connection fidelity and interface
 stability are NOT accepted. Saved102node/8C3D20 weak reference changes strong
@@ -64,25 +65,37 @@ is candidate-obstruction-v1.json and owner-findings-v6.md. All response/solve
 counts recorded; discarded internal constitutive iteration totals are missing.
 No complete internal-work or speedup claim follows.
 
-## Next decision and ownership
+## Closed discriminator and next implementation outcome
 
-Author /root/native_bl5_material completed and released numerical lease;
-OpenAI fallback because Mistral/local cached unavailable. Root owns contracts,
-Git, notes and matrix. Root adopts the independently reviewed compound scratch
-route prospectively: actual post-switch R/K Newton correction, measured against
-ORIGINAL parent strict merit. Both scratch assemblies consume existing13 trial
-slots; every additional solve consumes the original24 correction budget. Keep
-actual charts, fixed accepted origins, refusal/cancellation and atomic acceptance.
-independent-transition-decision-v1.md SHA358aec32afb0c1ff10867e5fbbc64b52bded50857dabc50a02de1418be7971c8.
-No benefit/implementation proven yet. Next connected assignment must first
-test one compound candidate at the exact saved blocked parent; no campaign
-or source edit follows automatically from this note alone.
-No tolerance relaxation, cutoff change, slack, Armijo reopening or automatic rerun.
-Current frozen candidate remains experimental/unqualified; preserve failures.
+V7 compound-trial-dev-v7 is CLOSED_FAILED_NO_IMPLEMENTATION. Actual Q4 switch
+and one full post-switch correction raise original-parent merit .02493599258
+to20.64461538; no state/history commit. Checkpoint, controller and fixed origins
+remain byte-equal. Local run3.716243s/169406464B/pools1; owned processes0 and
+leaseRELEASED. Root independently verified44 artifacts and6 source bindings.
+handoff-v7.json SHAa314f601b408586f5351bf60a343d793332e6f74971452317f0b0baa7040a4bf;
+artifact-sha256-v7.json SHA31e99e81416992d12c8bef436f68bad129695de7e2e8334272bced951f7e7809.
+No product implementation, full-target retry, cohort or wheel followed. This
+rejects the tested full correction only; no instability or formulation-failure
+claim, and no automatic damped compound/event/rounding follow-up.
+
+Next ready mandatory M4 capability: native physical-fibre BL5 translation
+displacement control with material recovery and durable restart, using existing
+public controller/services. Force-control's original full-target failure stays
+open. Same author /root/native_bl5_material owns the connected source/tests/example
+slice; Mistral/local cached unavailable. Root owns contracts, notes, matrix/Git.
+Prospective45 active-minute development budget/final10 reserved; raw only
+.qualification/b3-ge-e4-pl/r8-native-fibre-bl5-displacement-dev-20261006-v1/.
+Fresh successful force seed or explicit pending-controller refusal; never clear
+unfinished force progress. Preserve old identities/dispatch and all native
+histories, physical tolerances, actual chart/work and atomic acceptance. New
+combination receives its own experimental displacement snapshot identity.
+One initial integrated loading/unloading screen, focused impact/lifecycle checks
+and repair within budget; independent source-ready review before installed gate.
+No rebase/arc/S3plastic admission, fixture tuning, qualification or release claim.
 
 ## Execution and release limits
 
-No owned numerical process/session live; paired42195 and candidate19978 terminal.
+V6/V7 owned processes0; paired42195/candidate19978/local7124 terminal.
 ONE numerical job/max3 workers. DEV600s/2GiB process tree, affinity[0], pools1,
 JIT-off/unforced backend, exact CI imports and hash-bound Python314 _wmi exception.
 FormalF03 UNCONSUMED: never execute/copy/substitute its prepared driver.

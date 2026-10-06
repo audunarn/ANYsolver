@@ -3167,3 +3167,25 @@ Handoff SHAaa251fbf32e80d20e754017092bd456653a573c9364694d006541302ed9c8d0f;
 Exact response/global-solve counts retained; discarded internal constitutive iteration totals are missing.
 Old760/779/16read/33local/184v5 and424 older installed sources preserved. Numerical leaseRELEASED;
 owned processes0. No new installed artifact, family/external acceptance, G0-G6 closure or release.
+
+
+## 6 October 2026 - closed compound discriminator and next material-control slice
+
+V7 is LOCAL_COMPOUND_DISCRIMINATOR_FAILED_NO_IMPLEMENTATION. One actual full
+post-switch correction raised strict original-parent merit from .02493599258
+to20.64461538; actual branch escape did not establish merit decrease or equilibrium.
+No product edits, accepted commits, full-target continuation, cohort or wheel.
+Checkpoint/controller/origin bytes preserved;3.716243s/169406464B/pools1,
+owned processes0/leaseRELEASED. Root independently verified44 raw artifacts and
+six unchanged source bindings; no numerical rerun. Exact handoff
+.qualification/b3-ge-e4-pl/r8-native-fibre-bl5-material-dev-20261006-v1/compound-trial-dev-v7/handoff-v7.json
+SHAa314f601b408586f5351bf60a343d793332e6f74971452317f0b0baa7040a4bf;
+44-file manifest SHA31e99e81416992d12c8bef436f68bad129695de7e2e8334272bced951f7e7809.
+
+| Capability/decision | Implementation | Qualification/disposition | Next action |
+|---|---|---|---|
+| Full compound post-switch correction | NOT_IMPLEMENTED; bounded local pilot only | FAILED tested original-parent merit | Close this investigation; no automatic damped compound, event-root or rounding retry. Failure does not prove physical instability or all compound constructions impossible. |
+| Native physical-fibre BL5 translation displacement control | IN_PROGRESS; same-owner existing-service extension assigned | NOT_QUALIFIED; separate mandatory M4 capability | Actual public solve/material recovery/checkpoint/restore/cancel slice. Fresh successful seed or refuse pending force cursor; original force-target failure remains open. Source-ready review before installed gate. |
+
+Full G0-G6/F/V/B, installed/external/practical-scale/consumer/release obligations
+remain open. No tolerance, physics, legacy-default or checkpoint-identity change.
