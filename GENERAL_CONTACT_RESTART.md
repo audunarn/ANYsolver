@@ -5,7 +5,8 @@
 Full C0-C9 ACTIVE/incomplete: [goal](GENERAL_CONTACT_GOAL.md),
 [plan](GENERAL_CONTACT_PLAN.md), [ledger](docs/GENERAL_CONTACT_CAPABILITIES.md).
 ONLY C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001;
-branch codex/contact-main-reconcile-20261001, source-start9face034; shared source checkpoint recorded by Git below.
+branch codex/contact-main-reconcile-20261001; shared source checkpoint7986c5bd,
+loading verification checkpoint9face034. Worktree documentation records pending authority.
 No protected-original access, sibling edits, other-chat messages, publication,
 merge/release/default changes. Local checkpoints authorized. Ledger ASCII-byte
 append only; preserve historical prefixes. Mistral/local cached unavailable;
@@ -41,6 +42,10 @@ old equivalence proofs. Workers terminal. Next request separate240s for build/
 private install, then impacted mechanics/workflow/restart/safety/legacy tests
 once against verified installed payloads. Full relevant gates remain required;
 resource caps are not completion forecasts. No connected/shared authority exists.
+Separate240s request is PENDING. Raw execution_preparation.json binds candidate
+7986c5bd,549 product files/563 total inputs and37 permitted test functions;
+SHA2566737e9bc89fcc6112aaea36e0e5a60120450f95a70b5276c48883dcadf73cd3a.
+connected_shared_run.py fails closed without exact new authority. No job started.
 Old loading wheel does NOT contain the new shared driver/connected modules.
 Independent deforming/spatial/section and broad C7/C8 gates remain open.
 
