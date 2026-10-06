@@ -132,7 +132,7 @@ Supervised589.865712700s/conservative601.903202000s inclUNKNOWN ASTbound;
 600s complianceUNPROVEN; zero positive check authority/no numericaljobs.
 Native materialBL5 arc9bc30096 IMPLEMENTED_BUT_UNVERIFIED; source review4df09070.
 Full-frame normal-spin metric explicit; no director-gauge/capacity acceptance.
-Next: fresh bounded check authority; focused source/legacy and installed verification.
+Next: DEV300s cumulative verification requested; reserve60s; user answerPENDING.
 Body approvalPENDING; fullprogramme/scientific/G3/G6/scale/external remainOPEN.
 ## Preserved restrictions and history
 
