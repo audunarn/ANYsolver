@@ -41,3 +41,28 @@ rejected a combined repair/second-launch command under the no-rerun restriction;
 no second job ran. Execution requires a separate explicit decision. The original
 failed evidence and executed source are preserved. This is partial implementation,
 not a successful body-work discriminator or scientific acceptance.
+
+## Source-only correction of the material slot domain
+
+Authoritative current and historical installed `_beam_reference` source builds
+member slots in the beam-local domain, including the retained blocks after beam
+nodal coordinates, and stores those slots unchanged in `owner._beam_parts`.
+The original probe's beam-only material input was therefore correct. The earlier
+review diagnosis and root adoption of global member slots were incorrect. The
+first workflow's global material gather would have read shell/other-domain
+coordinates after a beam pass. No beam solve or material evaluation ran, so no
+numerical result was contaminated. Earlier reviews and the failed V1 remain
+unchanged historical evidence.
+
+The workflow keeps its full global two-part q for final traces. Material gathering
+now adds `owner._shell_count` to the authoritative beam-local member slots for
+both parts. Diagnostics retain both local and global slot maps. The revised mock
+caller uses actual beam-local slots and distinct shell/beam values. A separate
+regression invokes the real material gather through zero/pHi/pLo native cell
+response calls with the authentic18-nodal+24-retained local layout; it checks
+that the intended pHi and pLo reach the existing float-only API.
+
+This repair and its tests are source/AST checked only. No tests or numerical
+jobs were executed in this assignment. The numpy-int support adapter remains.
+Numerical retry is still blocked pending explicit user approval. The represented
+body-work, material and trace gates remain unassessed.

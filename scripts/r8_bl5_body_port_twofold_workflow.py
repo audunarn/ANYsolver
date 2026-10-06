@@ -45,12 +45,17 @@ def material(owner,q,diagnostics=None):
     Field pairs returned by the cell are separate from coordinate pairs. All
     contractions include both. Reference-linear J acts on both pose parts.
     Combined section response is an admission witness, not a new constitutive law.
+    Input q is global; owner._beam_parts slots are beam-local and need the
+    shell-count offset before gathering either coordinate part.
     """
     rows=[];energy=F(0);calls=0
     for element_index,(element,slots,origin) in enumerate(owner._beam_parts):
         op=element.operator;ref=op.reference
         if origin!=op.cell.virgin():raise ValueError('strict virgin elastic origin required')
-        local=core.TwofoldVector(q.high[slots],q.low[slots])
+        # _beam_reference stores beam-local nodal/retained slots unchanged.
+        # q is the full shell+beam vector used by the final trace consumer.
+        global_slots=owner._shell_count+np.asarray(slots,dtype=np.intp)
+        local=core.TwofoldVector(q.high[global_slots],q.low[global_slots])
         zero=op.cell.response([0.]*18,origin,check=op.guard,include_energy=True);calls+=1
         if diagnostics is not None:write(Path(diagnostics)/('material-reference-'+str(element_index)+'.json'),dict(status='CALCULATED_NOT_VALIDATED',response=zero))
         require_elastic(zero,origin)
@@ -87,7 +92,7 @@ def material(owner,q,diagnostics=None):
                     raise ValueError('combined actual fibre stress is not strictly elastic')
                 witnesses.append(dict(id=fibre.fibre_id,branch=witness.branch,exact_stress=text([stress])[0]))
             stations.append(dict(strain_exact=text(strain),strain_hi=h.tolist(),strain_lo=l.tolist(),fibres=witnesses))
-        row=dict(element=element.node_ids,origin_identity=op.cell.identity,history_unchanged=True,
+        row=dict(element=element.node_ids,beam_local_slots=[int(i) for i in slots],global_slots=global_slots.tolist(),origin_identity=op.cell.identity,history_unchanged=True,
             p_hi=local.high[24:].tolist(),p_lo=local.low[24:].tolist(),gradient_hi_fields=hi['gradient'],
             gradient_lo_fields=lo['gradient'],stationarity=text(residual),energy_hi=str(core._decimal(eh)),
             energy_lo=str(core._decimal(el)),energy_cross=str(core._decimal(cross)),stored_energy=str(core._decimal(stored)),stations=stations)
@@ -132,6 +137,8 @@ def run(saved,prepared,output):
         energy_error=str(core._decimal(error)),point_gaps=points,integrated_gap_exact=text(action(owner._C,q)),
         limitations='Same-density effective work only. Common-action subset and unmatched broken-cell trace limits remain; no coupled/accuracy/qualification claim.')
     write(output/'result.json',result);return result
+
+
 
 
 

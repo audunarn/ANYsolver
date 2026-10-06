@@ -3291,3 +3291,26 @@ non-author review SHA f2e741ef581c4c52fb4684da5f6f03035733dbcd10c4e6b382f4fa84a2
 Root verifies41 raw/three final snapshots/seven executed source/two tools/424
 operator files/wheel; no physical comparison, qualification or release claim.
 All aggregate G0-G6/F/V/B, external/scale/platform/consumer/release duties open.
+
+
+## 6 October 2026 - correction of withdrawn material-slot review
+
+SOURCE_CORRECTED_RUNTIME_UNVERIFIED. The previous review claim and root adoption
+of full-owner member slots were WRONG. Current and immutable installed owner
+source build/store beam-local slots. Original beam-only consumer was correct;
+the recommended global-only gather introduced a wrong-domain read. No beam solve
+or material evaluation reached it. Prior reviews/failed outputs remain unchanged.
+New global consumer explicitly gathers shell_count+local_slots for BOTH parts.
+Focused source regression exercises actual material gather/native cell response
+seam with authentic retained layout and distinct shell/beam values. Support-int
+adapter preserved. Two AST checks PASS; zero tests/numerical imports/body RHS.
+Script a0dfea5e/tests bb5c3d5d/doc3e72e9fb. Independent non-author correction
+5eb225b6779539219c95b61dec59d13559a6d258e85eed392f1eebe90ccde853 explicitly withdraws
+the historical finding and source-reviews repaired mapping. No numerical claim.
+New raw r8-bl5-body-port-twofold-slot-repair-dev-20261006-v1/ six-file manifest
+d0cade4fe5117dfd4f20968c61b660878fcb519e3a4480d06565ea71f3a7f778;
+handoff fb5b0e5214029a39e5f6b850e26cd9b1239d535199067e7f9db5fbc65f2164e3.
+Root byte-verifies six raw, three source snapshots and all41 protected previous
+entries, plus prior manifest and reviewer correction. No second numerical job;
+auto-review refusal and pending explicit user retry question remain binding.
+All aggregate programme/scientific/artifact/release obligations remain open.

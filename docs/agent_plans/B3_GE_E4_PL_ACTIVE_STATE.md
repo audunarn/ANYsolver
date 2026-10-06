@@ -39,9 +39,16 @@ Original immutable operator wheelb3d5f572/site424 modules and all242 actual impo
 verified; exact CI/affinity[0]/pools1/JIT-off/unforced backend. Saved continuum and
 prepared load/density/common-wrench preflight match original V2 exactly.
 Five consumer tests PASS0.32s, including complete mocked run-to-material receiver.
-Independent review caught beam-local/full-owner index mismatch; repaired BEFORE
-execution by constructing the full global two-part vector. Root inspected the
-subsequent diagnostic-preservation delta; reviewer binds the prior exact bytes.
+CORRECTION: the earlier reviewer/root slot diagnosis was WRONG and withdrawn.
+Authoritative current/immutable owner source stores BEAM-LOCAL slots; the original
+probe consumer was correct. The recommended global-only gather introduced wrong
+reads. No beam/material evaluation reached that path. Historical review preserved.
+Source-only repair now adds shell_count to local slots for BOTH parts; actual
+material-gather/cell API regression added with distinct shell/beam values. Two AST
+parses PASS; tests UNEXECUTED, no numerical job. Final script a0dfea5e/tests bb5c3d5d/
+doc3e72e9fb; independent withdrawal/repaired-source review5eb225b6. New slot-repair
+raw:6-file manifest d0cade4f/handoff fb5b0e52, all41 earlier raw bytes unchanged.
+Runtime approval remains pending; source review is not numerical acceptance.
 
 Attempt V1 FAILED at core fixed-index type admission (numpy.int64 vs Python int),
 BEFORE factorization/linear solve. One solver INVOCATION, zero body linear solves;
@@ -49,7 +56,7 @@ no shell/beam response, material evaluation or compliance result. Runtime label
 BODY_RHS_STARTED is preserved as invocation intent; traceback proves actual stop.
 Supervisor3.104208s/180613120B sampled tree/pools1. PID124584 verified absent.
 Caller fix tuple(int(i)...) and improved mocked native-int admission assertion are
-saved, syntax-only/unexecuted: script4d695503, tests5f745d52. No core/physical change.
+saved; superseded by the unexecuted slot repair above. No core/physical change.
 
 Raw r8-bl5-body-port-twofold-specimen-dev-20261006-v1/:41-file manifest
 raw-artifact-sha256.json SHAa9bc308a31b8d3d120c651a4c57f448f4d59a84e91fd40f4e7797145ddc9ec5e;
