@@ -3825,3 +3825,24 @@ release/main obligations remain OPEN. No F03/body/closed campaign/main/push or
 publication authority consumed/renewed. Next mandatory source-first capacity
 slice targets currently excluded native materialBL5 arc via existing services;
 its new checks require explicit bounded authority, not this exhausted allowance.
+
+## 2026-10-06 — native material BL5 arc source candidate
+
+- Source: `9bc30096728ec535bf197e66c548f18295c173db`; local integration only.
+- Status: IMPLEMENTED_NOT_QUALIFIED / IMPLEMENTED_BUT_UNVERIFIED.
+- Scope: existing native BL5 material arc admission, histories, atomic publication,
+  distinct checkpoint/chart identities; unrebased nonadaptive force/fixed-translation
+  seed; existing full-frame development metric includes normal-spin cost.
+- Source inventory: eight declared hashes and ten exact staged file bytes checked.
+  Source handoff and independent review are in docs/development; closure SHA256:
+  4df090705d7522526c7f57694cdf29fa47d42f2ada3094767f1913dfcacde0bc.
+- Verification: source/diff inspection ONLY; tests/example UNRUN; no build/install.
+  Equality defect repaired in source; path-row/retained-border assertions planned,
+  not measured equilibrium-Jacobian/real-cutback/limit-point evidence.
+- Resources: historical supervised589.865712700s/conservative601.903202000s;
+  600s compliance UNPROVEN; zero checks assumed. Fresh explicit bounded DEV
+  authority needed before any interpreter/numerical/artifact verification.
+- Open: source/installed impact checks, actual material/retained-state evidence,
+  legacy contracts, physical capacity/mesh/unit/reference evidence, independent
+  scientific/different-family acceptance and all unfinished programme gates.
+- No F03/body/closed-campaign renewal, main/push/release or sibling authority.

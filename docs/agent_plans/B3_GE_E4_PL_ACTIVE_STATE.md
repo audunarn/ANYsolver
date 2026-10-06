@@ -1,5 +1,4 @@
 # Current state - 6 October 2026
-
 Revision8 goal ACTIVE; complete G0-G6/F01-F13/V01-V28/B01-B18, physical/external,
 scale/platform/consumer and release/main duties remain incomplete. Use the goal,
 plan and single acceptance matrix beside this note. Canonical worktree:
@@ -9,7 +8,6 @@ Main untouched. Isolated ANYfem67744ba7: B2 physical-pad consumer installed chec
 no contact-worker communication. Global/repository AGENTS and adopted philosophy
 rev2026-09-24.2 apply; cached Mistral/local unavailable, no repeated probes.
 ## Decision and delivered behavior
-
 Native material BL5 fixed-translation solve/recovery/checkpoint/restore delivered;
 ordinary nonadaptive force seeds only. Q4a5c7dec/415a4ac5/wheel02f3506c:6PASS,
 knownforce/control parityFAILED(1DESELECT), transverse-force targetFAILED.
@@ -131,8 +129,10 @@ Case/Project/static1/10/100/buckling, fullmapping/refusal/cancel; root99modules,
 65fem+246solver/742deps/reviewc02d0091. RawANYfem/r8-b2-physical-footprint-consumer-20261006-v1/.
 V1/V2 defects repaired; V3wrongstatus/eagerfactor assertions:1PASS2FAIL retained.
 Supervised589.865712700s/conservative601.903202000s inclUNKNOWN ASTbound;
-600s complianceUNPROVEN; zero assumed checks/no numericaljobs. ACTIVEsource-only native
-materialBL5 arc owner native_bl5_material_consumer; no closed targets; checks need fresh authority.
+600s complianceUNPROVEN; zero positive check authority/no numericaljobs.
+Native materialBL5 arc9bc30096 IMPLEMENTED_BUT_UNVERIFIED; source review4df09070.
+Full-frame normal-spin metric explicit; no director-gauge/capacity acceptance.
+Next: fresh bounded check authority; focused source/legacy and installed verification.
 Body approvalPENDING; fullprogramme/scientific/G3/G6/scale/external remainOPEN.
 ## Preserved restrictions and history
 

@@ -1515,3 +1515,25 @@ original work/equilibrium tolerances, legacy identities and closed campaigns.
 Implement a reversible candidate before seeking any new bounded verification
 allowance; no current job, F03, body retry, main merge or publication is renewed.
 This development ordering does not qualify capacity or close aggregate G4D.
+
+### 6 October — source-only native material BL5 arc candidate
+
+Local candidate `9bc30096728ec535bf197e66c548f18295c173db` extends the existing
+arc driver, atomic publication and checkpoint services to explicitly admitted
+native material BL5 domains. Unrebased ordinary nonadaptive force or fixed
+translation seeds only; no staged/external/adaptive/event seed is admitted.
+No new API, material equations, attachment law, tolerance or default is adopted.
+The existing full-frame development metric includes released shell normal spin;
+no director-gauge-invariant step size or capacity claim follows.
+
+Status: IMPLEMENTED_BUT_UNVERIFIED. Source review closure `4df09070` resolves the
+ndarray comparison defect and separates proposed path-row/full retained-border
+checks from an equilibrium-Jacobian or turning-point oracle. Tests/example UNRUN;
+no interpreter, build or installed checks. Exact source inventory and limitations:
+`docs/development/stiffened_shell_native_material_bl5_arc.md` and adjacent review.
+
+Next: fresh explicit bounded development verification authority, focused candidate
+and affected legacy checks, then one installed artifact verification/repair within
+that allowance. Historical 600s compliance stays UNPROVEN; zero checks remain.
+No closed campaign, F03, body retry, contact communication, main/push or release
+is renewed. Aggregate G4D and full programme remain open.
