@@ -3099,3 +3099,16 @@ Final partial example.25625/gen4 reports actual fibre alpha1.2678570601992559e-6
 shell alpha0. No qualification, main change, merge, publication or F03 consumption.
 Next: saved rejected-trial work/chart/branch/precision interpretation, no automatic
 continuation, fixture, strength, globalization or refinement sweep.
+
+
+### 6 October - saved rejected-trial discriminator, gates unchanged
+READ reconstruction isolates whole-KKT FD discrepancies to four axial
+compatibility rows; their source is not certified and the1e-5 gate remains OPEN.
+Original column-role labeling error preserved/corrected. Small finite samples
+support one compliance crossover below dyadic reach; full-step differs and
+endpoint tangent change is not a finite geometric-defect bound. Linear-solve
+defect is far below actual nonlinear rejection, no scaling repair adopted.
+Exact diagnosis and independent limitations: material-dev-20261006-v1
+root-diagnosis-preservation-v4.json. One geometry-frozen fixed-origin local
+material audit adopted; no global continuation, tolerance or product change.
+A local pass cannot establish whole-chain tangent, convergence or qualification.

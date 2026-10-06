@@ -93,6 +93,27 @@ NEXT: interpret saved rejected-trial whole-Jacobian/work/branch/precision data
 before any new solver candidate or numerical continuation. No automatic sweeps.
 Exact material evidence in own raw; independent-review-v1/v2 distinguish claims.
 
+Saved-data diagnosis now localizes FD errors to four axial compatibility rows;
+small numerators/rotation rounding are consistent with noise, not a certified
+tangent pass. Corrected role mapping preserves the original mislabeled report.
+Finite residual/compliance changes fit one fibre crossover h~.00017062445 below
+minimum dyadic.000244140625; actual branch identity still needs explicit margins.
+Next bounded discriminator: geometry-frozen coupled material response at saved
+p, p+/-1e-4*d_p and the saved last-candidate p, same accepted origins. Compare
+gradient/compliance pairs and signed yield margins; no global solve/history commit.
+Failure isolates the local compliance/origin path; passing narrows that path,
+without proving whole-chain FD noise or global convergence. Physical tolerances,
+controls and closed campaigns unchanged; no driver change follows automatically.
+Independent affected review confirms the small-step piecewise fit only under
+limited curvature/one transition; full-step changes two activity bits and does
+not fit. Endpoint derivative change is not a finite geometric-defect bound.
+/root/native_bl5_material now owns NEW raw/local-audit-v4 only; numerical lease
+GRANTED for one geometry-frozen audit,35 active minutes from~00:14UTC,final10
+reserved. DEV600s/2GiB/affinity1/pools1/JIT-off/exact existing wheel+CI; no global
+Newton/continuation or product edits. One compile/one saved-prefix restore only
+if required for exact origins, count preparation. Observe actual worker/owned
+process handles before resuming; no evidence or consumed campaign may be renewed.
+
 Material V1 lifecycle failure used unintended global NumPy fallback due sandbox
 CI read denial; no intended-CI acceptance or physical inference. Exact elevated
 CI reads and root/version fail-fast now adopted; admission-v3/onset checks pass.
