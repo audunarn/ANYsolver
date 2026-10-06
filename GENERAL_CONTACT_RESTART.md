@@ -3,15 +3,50 @@
 ## Scope and ownership
 
 ONLY C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001. Source-start36e99e02; inspect
+branch codex/contact-main-reconcile-20261001. Source-startbe86a483; inspect
 HEAD/status for the local checkpoint. Full C0-C9 ACTIVE/incomplete:
 [goal](GENERAL_CONTACT_GOAL.md), [plan](GENERAL_CONTACT_PLAN.md),
 [ledger](docs/GENERAL_CONTACT_CAPABILITIES.md).
 No protected-original access, sibling edits, other-chat messages, push/merge/
-release or historical defaults changes. Local checkpoints authorized. All owned
-workers/jobs terminal. Mistral/local cached unavailable; sustained OpenAI fallback
+release or historical defaults changes. Local checkpoints authorized. All numerical
+jobs and source workers terminal. Mistral/local cached unavailable; sustained OpenAI fallback
 plus supporting Read review. Same-family scrutiny is not engineering acceptance.
 Ledger append ASCII BYTES ONLY; preserve working-CRLF/Git-LF prefixes.
+
+## Current C7 source slice - exact finite-rotation dynamic loading
+
+Source-startbe86a483. Sustained fallback authorpair_geometry_swept owns the
+connected independent reference/test/publicexample/guide outcome. Supporting
+source reviewer confirms actual DistributedPattern force and cell-only physical
+couple work: no algebraic load, no nodal-moment substitute. Exact invariant needs
+straight ZERO-lift reference, centered geometric inertia, principalx/commonRx
+frames/free supports. Primitive ellipse inertia and nonzero force+torque give
+constant common nodal and principal angular acceleration; compare full E/P/H,
+load work and impulses with the independently derived endpoint solution.
+Discrete midpoint stage pose is the endpoint average, with a*h^2/8 and
+alpha*h^2/8 offsets from continuum midtime; do not assert false stage equality.
+
+N192 finite-angle and N162/N216 temporal refinement already PASS for their named
+bounded development rows (guide/evidence); reuse rather than repeat. Old N16
+NONPASS and all qualification boundaries remain. Source work only so far; current
+38.0563633s safety reserve is NOT this new loading/reference authority. Five
+source-prepared cases/eight advances and the public example await a separately
+requested100s loading allowance; no execution authorized yet. Root verified all
+545 current package/wheel/installed3 payloads+6metadata exact: reuse this artifact.
+The source reviewer withdrew an energy-field finding after exact constructor
+inspection; original mechanical energy tests were correct. Retain that exchange
+and separately labelled conservative-energy checks, with no product change.
+Broader C7 deforming/spatial,
+section/connected-native and C8 common-stage obligations remain open.
+
+Prepared files: examples/native_manufactured_loading_reference.py,
+examples/native_manufactured_dynamic_loading_dev.py,
+tests/test_ge_beam3_native_manufactured_loading.py and native development guide.
+Raw preparation_v2/handoff_v2/review and root package audit are under the existing
+contact_native_transient_20261006 directory. All new numerical claims UNEXECUTED.
+Prepared native_manufactured_loading_run.py fails closed without separately
+approved100s loading authority. Five-case installed wave60s, CLI25s, reserve15s;
+exact accounting uses its own job directories, never old trajectory purses.
 
 ## Current interruption repair - development verified
 
@@ -95,7 +130,8 @@ C5 reserve is not a new campaign. No more optional checks on this slice.
 ## Next required action and retained history
 
 Extend the required C7 native dynamics row using the existing production owner/
-controller and references; full finite-angle/refinement/section/connected dynamics
+controller and references. Named finite-angle and temporal development checks
+passed; broader deforming/spatial/section/connected dynamics qualification
 and common-stage native/shell impact remain open. Keep accepted physical inertia,
 retained coordinates and complete work maps. New numerical scope needs its actual
 authority; source work can proceed within authorized ownership.
@@ -103,7 +139,7 @@ authority; source work can proceed within authorized ownership.
 Current return-time safety closes through6installedPASS and exact package/runtime
 provenance. Resume broader C7 scientific work from this owner/controller; do not
 repeat this completed slice or the long original test module. Preserve finite-spin
-NONPASS and full trajectory refinement/section/connected-native gaps. Current
+NONPASS and wider spatial/section/connected-native qualification gaps. Current
 remaining C7 seconds cover only the approved trajectory/safety scope; they do not
 authorize a new finite-angle campaign. Source development can proceed; identify
 the next concrete mechanics discrepancy before requesting its numerical authority.

@@ -285,3 +285,47 @@ and resultants are not inertial loads. Source-prepared tests retain separate
 force/moment scales; old finite-spin NONPASS is not regraded. Updated private
 installed commit/receipt5cases and impacted cancellation1case pass; the original
 12s source timeout stays retained. Twelve jobs used231.943637/270s; C7 stays open.
+
+## Manufactured principal-axis loading candidate (source only)
+
+`examples/native_manufactured_dynamic_loading_dev.py` prepares the existing public
+`solve_transient` route with simultaneous constant distributed force and longitudinal
+distributed couple. Its independent helper imports no solver or production kernel.
+The geometric ellipse is separately declared: A=pi*b*c, Iy=A*c^2/4, Iz=A*b^2/4,
+rhoJx=rho*(Iy+Iz). EllipsoidalGeneralizedSection names a generalized yield law;
+it does not establish this geometry or a contact envelope.
+
+The reference requires a free, straight, centered, zero-lift element, world-x
+principal axis, diagonal physical inertia, common translations and Rx frames.
+a=f/rhoA and alpha=c_x/rhoJx give quadratic endpoint position/angle and linear
+velocity/spin. Strains, resultants and elastic storage remain zero. Work is
+F dot delta_shift + Cx*delta_angle on this commuting path; angular impulse also
+includes the centroid orbital moment about fixed global zero. This is not a
+general SO(3) couple potential. Actual half-cell interpolation gives force
+weights L/4,L/2,L/4 and physical cell-couple weights L/2,L/2.
+
+Frozen candidate: L=2m, rho=2700kg/m^3, b=.02m, c=.03m, E=1e7Pa, nu=.3,
+f=(0,.4,0)N/m, c=(.04,0,0)Nm/m, v0=(0,.1,.02)m/s, phi0=.125rad,
+omega0=25rad/s, dt=.0025s, four steps. Native midpoint poses are endpoint
+averages, differing from continuum midtime by a*dt^2/8 and alpha*dt^2/8;
+reference stages respect that distinction. Separate positive SI input scales
+normalize analytic errors (<=.1%) and work/impulse/balance errors (<=1e-6).
+
+The five prepared tests share one observed four-step public trajectory plus
+fresh two-step prefix and two-step resume owners: eight native advances total.
+Stage observation calls the authentic audit then copies data; it does not
+modify mechanics. Exact checkpoint/results restart equality is separate from
+tolerance-based analytic comparison. AST/whitespace checks only have run.
+All new numerical tests and the CLI remain UNEXECUTED pending separate authority.
+The earlier trajectory/safety residue is not loading-reference authority.
+Deforming/nonprincipal/spatial/continuum validation and full C7 acceptance remain
+open; this invariant candidate supplies no engineering qualification.
+
+The loading candidate preserves the producer's energy labels: raw elastic_energy
+is work.mixed_potential=response.potential (strain potential), and total_energy
+is kinetic plus strain potential. It independently verifies line_force_work,
+then separately derives conservative potential/total by subtracting that work.
+The derived total increment is physical load work minus line-force-work change;
+these extra checks do not relabel or alter native accounting. A contrary early
+review finding was withdrawn after constructor/source inspection; both the
+initial source snapshot and resolved review delta remain in raw evidence.

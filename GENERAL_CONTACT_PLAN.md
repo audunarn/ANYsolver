@@ -34,11 +34,31 @@ JIT disabled/Numba1/observed pools1. Source equations and historical scientific
 gates are unchanged. This closes the bounded controller safety gap, not full C7
 engineering acceptance. No more optional repeats on this slice.
 
-Next: close consequential C7 retained finite-velocity scientific gaps using the
-existing owner/controller and references; preserve the prior finite-spin NONPASS.
-Do not repeat unchanged long test files: use recorded case costs, targeted groups
-and eager per-case results. Source development can proceed; new numerical scope
-requires its actual authority. Native coupled impact still depends on C7 acceptance.
+Next C7 slice: independent manufactured finite-rotation loading through the
+existing public native trajectory owner. Reuse the completed N192 finite-angle
+and N162/N216 temporal evidence; preserve the older N16 NONPASS. Do not repeat
+those trajectories. Derive a straight, centered, principal-axis invariant with
+uniform force and longitudinal couple from the actual physical load work maps.
+The reference uses declared geometric mass/inertia and elementary mechanics,
+not production kernels. Distinguish exact continuum endpoints from discrete
+midpoint stage poses; constant acceleration gives a*h^2/8 and alpha*h^2/8 offsets.
+
+Question: does the current DistributedPattern physical work support this exact
+loaded motion without strain? Source scrutiny confirms it only for zero lift,
+centered inertia, a principal longitudinal axis, common directors and free ends;
+nodal moment loads are not equivalent. Implement one integrated reference/example
+and focused checks before requesting a separate bounded numerical allowance.
+Reuse the held installed package if product code is unchanged. No remaining
+safety allowance is borrowed and no mandatory gate is weakened. This case does
+not replace independent deforming/spatial accuracy, broader native sections/
+connected dynamics or common-stage coupled impact. Full C0-C9 remains required.
+
+Current source candidate: independent helper, public example and five focused
+checks implemented and source-reviewed; numerical execution remains UNEXECUTED.
+Separate100s loading allowance requested. All545 production payloads match the
+held verified installed package, so no rebuild is needed. Preserve the original
+source snapshot and withdrawn energy-field review finding; actual constructor
+semantics confirm the mechanical energy checks. No product equations changed.
 
 ### Independent represented-path gap: development verified
 

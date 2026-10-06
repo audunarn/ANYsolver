@@ -2850,3 +2850,24 @@ native dynamics and common-stage native/shell impact remain open; full C0-C9 inc
   native_transient_receipt_extension_final_manifest.json/worker_handoff.md,
   native_transient_receipt_root_evidence/payload/runtime_audit.json;
   installed3_check and installed_cancel3 exact inputs/logs/resource/results.
+
+
+### Native manufactured force/torque loading - source candidate (2026-10-06)
+
+- Status: implemented SOURCE ONLY; new tests/example UNEXECUTED. No acceptance/release.
+- Straight centered zero-lift principal-axis invariant, actual DistributedPattern
+  force/cell-couple maps, independent primitive ellipse and elementary mechanics.
+- Five prepared cases/eight advances cover finite rotation, load work, E/P/H,
+  both load maps, actual midpoint fields and fresh exact split restart.
+- Completed N192 finite-angle and N162/N216 temporal DEVELOPMENT evidence reused;
+  older N16 NONPASS retained. Broader C7 scientific and full C0-C9 remain OPEN.
+- Source review energy-field disagreement resolved through exact constructor:
+  mixed_potential is material strain potential; original energy checks correct.
+  Withdrawn reviewer finding retained; derived conservative quantities separately labelled.
+- All545 current source/wheel/private-installed3 payloads+6metadata exact:
+  reuse wheel6252c0f69bc3f621755216c694c2bf6d3e608f0e032938b4eafa3047e3cdc3cb.
+- Separate100s loading execution request PENDING; no authority created/consumed.
+  Prior38.05636329995468s safety residue untouched, not borrowed.
+- Raw contact_native_transient_20261006: manufactured_loading_preparation.json,
+  manufactured_loading_worker_handoff.md, independent_source_review.md and
+  root_package_preflight.json, all with native_transient_ prefix.
