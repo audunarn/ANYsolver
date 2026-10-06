@@ -22,7 +22,14 @@ WORK_SCALE=1.e-6
 
 def write_report(tmp_path,name,data):
     target=Path(os.environ.get('CONTACT_APP_RESULT_RECORD',str(tmp_path/(name+'.json'))))
-    target.write_text(json.dumps(data,indent=2),encoding='utf-8')
+    # Preserve separate producer, metric and work evidence when pytest shares
+    # one configured result path. The configured path is only a report index.
+    stage='_'+data['stage'] if 'stage' in data else ''
+    report=target.with_name(target.stem+'_'+name+stage+target.suffix)
+    report.write_text(json.dumps(data,indent=2),encoding='utf-8')
+    inventory=json.loads(target.read_text(encoding='utf-8')) if target.exists() else {'reports':{}}
+    inventory['reports'][name+stage]=str(report)
+    target.write_text(json.dumps(inventory,indent=2),encoding='utf-8')
 
 
 def coordinates(model,result):
@@ -138,7 +145,7 @@ def test_shared_skin_impact_reference_and_restart(tmp_path):
     assert all(set(row)=={'line_a','line_b'} for row in result.pair_swept_minimum_gaps)
     changed=replace(build()[2],beam_shell_rim_clearance=.03)
     m,d,_,velocity=build()
-    with pytest.raises(ValueError,match='fingerprint|contract|restart'):
+    with pytest.raises(ValueError,match='checkpoint.*incompatible'):
         solve_transient_contact(m,d,TransientConfig(dt=1.e-5,t_end=.0005,initial_velocity=velocity),
             contact_settings=changed,solver_controls=ContactTransientSolverControls(
                 allow_multiple_deformable_beam_s3_dev=True,save_constraint_reactions_dev=True),
@@ -221,7 +228,7 @@ def test_inventory_tolerances_guards_and_controls():
     for rotation,rate in ((1.e-5,0.),(0.,1.e-5)):
         m,d,s,v=build();u=np.zeros_like(v);rid=m.mesh.dof_manager.get_node_dofs(3)[3]
         u[rid]=rotation;v[rid]=rate
-        with pytest.raises(ValueError,match='rotation'):
+        with pytest.raises(ValueError,match='rotation|structural constraints'):
             solve_transient_contact(m,d,TransientConfig(dt=1.e-5,t_end=1.e-5,
                 initial_displacement=u,initial_velocity=v),contact_settings=s,
                 solver_controls=ContactTransientSolverControls(allow_multiple_deformable_beam_s3_dev=True))
@@ -255,19 +262,28 @@ def test_rejected_path_exception_and_cancellation_cleanup(monkeypatch):
     # check it retries from unchanged accepted u/v and releases runtime state.
     from anysolver.general_contact import multiple_beam_s3_transient as aggregate
     from anysolver.general_contact.runtime import _ACTIVE_CONTACT
-    original=aggregate.multiple_hermite_gap_bounds;seen=[]
+    original=aggregate.multiple_hermite_gap_bounds;seen=[];rejected=[]
+    def active_start(owner,start):
+        child=owner.pairs[0][1]
+        return start[child.beam_dofs[0,2]]-start[child.shell_dofs[0,2]]< -5.e-6
     def reject_once(owner,start,end,vstart,vend,dt,**kwargs):
         seen.append((start.copy(),vstart.copy()))
-        if len(seen)==1:return -np.inf,False,1,{name:-np.inf for name,_ in owner.pairs}
+        if not rejected and active_start(owner,start):
+            rejected.append(len(seen)-1)
+            return -np.inf,False,1,{name:-np.inf for name,_ in owner.pairs}
         return original(owner,start,end,vstart,vend,dt,**kwargs)
     monkeypatch.setattr(aggregate,'multiple_hermite_gap_bounds',reject_once)
-    _,result=run(end=.0012)
-    assert result.cutbacks>=1 and np.array_equal(seen[0][0],seen[1][0])
-    assert np.array_equal(seen[0][1],seen[1][1]) and _ACTIVE_CONTACT.get() is None
+    _,result=run(end=.00016,emit_checkpoint=False)
+    assert rejected
+    j=rejected[0]
+    assert result.cutbacks>=1 and np.array_equal(seen[j][0],seen[j+1][0])
+    assert np.array_equal(seen[j][1],seen[j+1][1]) and _ACTIVE_CONTACT.get() is None
     # Propagating exception at a real path boundary discards the pending trial.
-    def fail(*args,**kwargs):raise RuntimeError('owned candidate failure')
+    def fail(owner,start,*args,**kwargs):
+        if active_start(owner,start):raise RuntimeError('owned candidate failure')
+        return original(owner,start,*args,**kwargs)
     monkeypatch.setattr(aggregate,'multiple_hermite_gap_bounds',fail)
-    with pytest.raises(RuntimeError,match='owned candidate failure'):run(end=1.e-5)
+    with pytest.raises(RuntimeError,match='owned candidate failure'):run(end=.00016)
     assert _ACTIVE_CONTACT.get() is None
 
 
@@ -284,7 +300,9 @@ def test_inflight_cancel_preserves_accepted_origin(monkeypatch):
     def cancel(*args,**kwargs):
         nonlocal calls
         calls+=1
-        if calls==3:
+        if calls==13:
+            owner,start=args[:2];child=owner.pairs[0][1]
+            assert start[child.beam_dofs[0,2]]-start[child.shell_dofs[0,2]]< -5.e-6
             token.cancel('owned multiple beam/S3 path')
             kwargs['check_cancel']()
         return path(*args,**kwargs)
@@ -292,6 +310,6 @@ def test_inflight_cancel_preserves_accepted_origin(monkeypatch):
     monkeypatch.setattr(aggregate,'multiple_hermite_gap_bounds',cancel)
     sentinel=object();context=_ACTIVE_CONTACT.set(sentinel)
     try:
-        with pytest.raises(SolveCancelled):run(end=1.e-4,cancellation_token=token)
-        assert len(commits)==3 and _ACTIVE_CONTACT.get() is sentinel
+        with pytest.raises(SolveCancelled):run(end=.00016,cancellation_token=token)
+        assert len(commits)==13 and _ACTIVE_CONTACT.get() is sentinel
     finally:_ACTIVE_CONTACT.reset(context)

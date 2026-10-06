@@ -2727,3 +2727,24 @@ with dimensionless steps is UNEXECUTED, not a regrade. Build TIMEOUT; no
 installed/new archive admission. Supporting source review, no engineering
 acceptance/release. C6 total358.00242149992846/360s (63jobs); +60request pending.
 See d1_review_support/contact_c6_beam_s3_20261006/multiple_pair_development.md.
+
+
+## 2026-10-06 explicit multiple beam/S3 - source and installed tested
+
+Supersedes prior partial disposition for final held candidate; original failures
+remain unchanged. Source6PASS, installed6PASS, reporting-only installed2PASS.
+B2+B3 share one deformable fixed-director S3/global Newmark owner;51states,
+32simultaneously active, min gap-4.9691um/finalOPEN+4.36969um, complete exact
+q/v/a/contact/checkpoint/pair-path split continuation. Independent three-mode
+response<=7.2e-13; body balance<=5.6e-15; energy defect0.0463843%.
+Unit-correct NEW5um chart work<=3.52e-9,H-relative<=8.97e-9 and force-rate
+<=2.26e-7 satisfy1e-5; old dimensional NONPASS is not regraded. Active-origin
+rejection/exception/cancellation and mutation/refusal controls pass.
+Private same-backend wheel e801b2fb...:544 source/wheel/installed payloads
+match,227 imports/errors0,JITdisabled/Numba1/BLAS1. Metadata also matches.
+Development scope only; no engineering acceptance/release, new archive codec
+or general flexural/native/friction admission. Checkpoint requires accepted
+untruncated final step. Historical profiles/defaults remain unchanged.
+Explicit user+60 recorded; C6 total409.0956022000173/420s,70terminaljobs; other
+purses unchanged. Evidence: multiple_pair_development.md and raw extension
+final_manifest/worker_handoff/root_final_audit.json. No further optional runs.

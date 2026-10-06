@@ -1,8 +1,8 @@
 """Two distinct elastic tubes impacting one deformable S3 skin.
 
-Development candidate: its coupled producer retained source-run metrics, but
-complete and installed verification remain open. The three uniform modes retain
-their actual element mass; no inertia or constraints are supplied by contact.
+Explicit development example, verified by focused source controls; installed
+verification is recorded separately. Three uniform physical modes use actual
+beam/shell mass, without contact-supplied inertia or hidden constraints.
 """
 import numpy as np
 from anysolver import (BoundaryCondition, ContactDefinition, ContactSurface,
@@ -47,12 +47,12 @@ def build():
     return model,definition,settings,velocity
 
 
-def run(*,end=.0005,dt=1.e-5,restart=None,cancellation_token=None):
+def run(*,end=.0005,dt=1.e-5,restart=None,cancellation_token=None,emit_checkpoint=True):
     model,definition,settings,velocity=build()
     result=solve_transient_contact(model,definition,
         TransientConfig(dt=dt,t_end=end,initial_velocity=velocity),contact_settings=settings,
         solver_controls=ContactTransientSolverControls(allow_multiple_deformable_beam_s3_dev=True,
-            save_constraint_reactions_dev=True),emit_restart_checkpoint=True,
+            save_constraint_reactions_dev=True),emit_restart_checkpoint=emit_checkpoint,
         restart_checkpoint=restart,cancellation_token=cancellation_token)
     return model,result
 

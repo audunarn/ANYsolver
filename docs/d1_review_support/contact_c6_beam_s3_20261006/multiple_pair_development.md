@@ -1,51 +1,65 @@
-# Explicit multiple beam/S3 transient - development checkpoint
+# Explicit multiple beam/S3 transient - development tested
 
-**Implemented; partially source verified. Not accepted or released.**
+**Source and private installed checks pass. Not independently accepted or released.**
 
-The explicit opt-in V21 route reuses existing B2/B3 line potentials and physical
-S3 maps in one Newmark structural/mass/transaction owner. Stable pair identities,
-complete actual model/operator/DOF binding, per-pair endpoint and represented
-Hermite path checks, and one shared finite search-work cap are enforced.
-Fixed-director target rotations and rates remain exactly zero. This does not
-admit friction, native dynamics, finite rotation or target patch unions.
+Opt-in V21 composes existing B2/B3 round-line work and physical fixed-director
+S3 maps on shared coordinates in the ordinary Newmark owner. Structural/mass
+assembly and physical commits occur once. Complete canonical pair identity,
+actual model/operator/DOF guards, individual gap budgets and one finite shared
+Hermite-path work cap remain enforced. Zero constrained target rotations/rates
+and actual SPD reduced mass<=512 bound this profile.
 
-## Executed evidence
+## Final retained evidence
 
-- Coupled source attempt: TIMEOUT6.674182900111191s, peak181772288B. Saved51
-  states,32simultaneously active states, final opening, response errors below
-  7.2e-13 against an independent physical three-mode reference, energy defect
-  0.0463843%, body balances below5.6e-15, and exact q/v/a/contact/checkpoint/
-  pair-path split continuation. No terminal selector PASS.
-- Private build: TIMEOUT3.2175815999507904s, peak107470848B. Metadata finished,
-  wheel construction started. No completed private artifact/install.
-- Source guard/work check:1PASS1FAIL,5.015348799992353s, peak183074816B.
-  Actual beam section/orientation/kinematic/material branch, shell skin and
-  DOF mutation refusals pass. Hidden single-pair path refuses. Dimensional
-  work/force-rate finite-difference gates fail; relative Hessian errors
-  5.06e-11..3.02e-9 do not regrade that failure.
+| Check | Result | Process-wall seconds |
+|---|---|---:|
+| Corrected focused source file |6PASS|7.435035800095648|
+| Same configured backend private build |Completed|7.477676500100642|
+| Offline private install |Completed|4.545667400001548|
+| Installed focused file |6PASS|7.476818699971773|
+| Reporting-only installed affected checks |2PASS|6.260148599976674|
 
-The original O(1) translation direction amplifies finite-difference roundoff
-relative to micro-motion force/work scales. A prospective physical5um direction
-with dimensionless steps(.01,.001,.0001) is prepared, UNEXECUTED. It retains
-1e-5 dimensionless thresholds but changes the absolute per-metre chart.
-Original failed test bytes, hashes, result and logs are retained. No product
-mechanics repair or scientific acceptance follows from this normalization change.
+The two-pair producer saved51states,32with simultaneous contact. Minimum
+physical gap-4.96910065um meets10um; final opening+4.36969078um. Independent
+three-mode displacement/velocity errors<=7.2e-13, separate force/moment body
+balance<=5.6e-15, energy defect0.0463843%. Full q/v/a/contact/checkpoint and
+pair-path split continuation is exact. Active-origin trial rejection, exception
+and cancellation, incompatible restart, inventory and actual-operator mutations
+are covered. The local operator pose is deliberately outside the uniform MPC
+chart; it is not a general coupled flexural qualification.
 
-## Handoff and remaining checks
+The prospective physical5um direction/dimensionless steps(.01,.001,.0001)
+yields work<=3.52e-9, relative H<=8.97e-9, force-rate<=2.26e-7, moment-rate
+<=1.52e-14 versus1e-5. This NEW chart changes absolute per-metre allowances;
+the original dimensional NONPASS stays unchanged. Source3FAIL3PASS assertions
+were corrected for exact refusals and shortened-tail checkpoint restrictions;
+source/build timeouts and original snapshots remain. No kernel/tolerance change
+was needed for those verification defects.
 
-Raw evidence: `C:/ANYworkspaceWork/contact_c6_beam_s3_20261006/`.
-Use `multiple_s3_source_final_worker_handoff.md`,
-`multiple_s3_source_final_manifest.json`, `multiple_s3_source_unit_repair_manifest.json`
-and `multiple_s3_root_checkpoint_audit.json`; original attempt directories are
-`multiple_s3_source_integrated1`, `multiple_s3_source_build1`,
-`multiple_s3_source_guard_work1`. Final effective import/runtime audit is in the
-last directory. Prior attempted source hashes and final verification-test hash
-have distinct meanings. Reuse unaffected evidence through impact analysis.
+Wheel SHAe801b2fb83772e4a6816d95bd4901a180f71ec8d81b2439a19c33015f2e2dfae
+in raw/multiple_s3_extension_dist2. Private install: raw/multiple_s3_extension_
+installed2. All544 source/wheel/installed package bytes and metadata match.
+227 installed imports/errors0,JITdisabled/Numba1/BLAS1 prove effective routing.
+Two distinct reports plus full producer and index retain quantitative results;
+the earlier report overwrite remains historical, not a missing PASS.
 
-Complete corrected work/tangent verification, terminal integrated restart/refusal
-checks, rejection/cancellation/exception controls and private installed workflow
-remain open. The new result archive codec is a separate C9 obligation. Old
-control-field/default ordering is AST-checked; no historical wire run is claimed.
-Supporting same-family source review does not establish independent acceptance.
-C6 used358.00242149992846/360s; additional60seconds requested, not yet granted.
-Other purses, scientific gates and full C0-C9 scope are unchanged.
+## Handoff and open boundaries
+
+Raw root: `C:/ANYworkspaceWork/contact_c6_beam_s3_20261006/`.
+Use `multiple_s3_extension_final_manifest.json`,
+`multiple_s3_extension_worker_handoff.md`, `multiple_s3_extension_root_final_audit.json`.
+Final report directory: `multiple_s3_extension_installed2_reports`.
+Earlier partial/source NONPASS records stay at original hashes/paths. The
+example's later docstring-only change is distinct from source-executed bytes;
+installed checks bind its final producer. A separate CLI print-only replay
+was not performed. Same-family supporting source review found no remaining
+production blocker; it is not different-family engineering acceptance.
+
+Checkpoint export requires an accepted UNTRUNCATED final step; shortened-tail
+cutback export remains unsupported. New summary archive codec and broader
+multiple-pair flexure/geometry/refinement/engineering acceptance remain open.
+No native dynamics, friction, target patch union or normal application admission
+follows. Full C0-C9 programme remains required. User+60C6 was explicit; total
+409.0956022000173/420s,10.90439779998269s remaining,70terminaljobs. Other
+purses and scientific gates are unchanged. Do not repeat passed checks just
+for counts or borrow this remainder for unrelated capabilities.

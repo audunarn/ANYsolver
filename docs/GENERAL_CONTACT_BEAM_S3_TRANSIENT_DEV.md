@@ -338,38 +338,38 @@ helper is fixture-specific development evidence, not a new public admission
 service or engineering acceptance. See `tilted_path_final_manifest.json` and
 `tilted_path_worker_handoff.md` for exact hashes/runtime/resources.
 
-## Explicit multiple fixed-director Beam/S3 source candidate
+## Explicit multiple fixed-director Beam/S3 development profile
 
 `ContactTransientSolverControls(allow_multiple_deformable_beam_s3_dev=True)`
-selects the separate V21 development profile and checkpoint family. This
-source candidate is **not numerically verified or accepted**. The prepared
-example `general_contact_multiple_beam_s3_transient.py` uses a B2 and a B3
-against one shared deformable S3 with actual three-mode physical mass.
+selects V21 and its separate checkpoint family. A B2 and B3 share one S3:
+source6/installed6 controls passed, plus2 installed reporting checks. The public
+example producer reached51states/32active, minimumgap-4.969um and finalOPEN
++4.370um, exact q/v/a/checkpoint/contact/pair-path restart and independent
+three-mode response. Energy defect was0.0464%; per-body balance<=5.56e-15.
+Exact544 payloads matched source/wheel/private install; JITdisabled, Numba1,
+BLAS pools1 and227 installed imports were verified. These are development
+checks, not engineering acceptance; separate CLI entry remains unexecuted.
 
-Each explicit interaction retains its own radius, line stiffness, gap budget,
-physical skin and complete cubic Hermite proof. The global residual/tangent
-sums child work on shared coordinates; structural and mass assembly remain
-once per shared driver evaluation. Target rotations/rates must be exactly
-zero under actual model constraints; reduced physical mass must be positive
-definite with at most 512 coordinates. No hidden inertia or constraint is
-added. Pair order is canonical by stable interaction name. Aliases, duplicated
-physical pairs, unselected elements, unsupported materials and resource
-exhaustion refuse. Candidate pairs use the declared finite settings cap; all
-path proofs share one finite visited-interval budget. Per-pair gap bounds and
-tolerances remain visible; there is no aggregate tolerance substitution.
+Explicit pairs retain individual radius/stiffness/gap tolerance and complete
+Hermite proof. Contact work sums on shared global coordinates; structural/mass
+and commit remain once in the shared driver. Model target rotations/rates must
+be constrained/exact zero, actual reduced mass SPD and <=512 coordinates.
+Canonical complete pair inventory, duplicate aliases, unsupported materials,
+unselected elements and pair-cap/resource overflow refuse; paths share one
+finite visited-work cap. No hidden inertia, force drop or fallback is added.
 
-The reused chart allowance is per mapped position: one reference plus at most
-four CSR products, with coordinatewise Hermite arithmetic, independent of
-global vector width. Child maps and the complete model/DOF configuration are
-guarded. New result records have no admitted archive consumer yet. The old
-flags/defaults/checkpoint families are unchanged by inactive selection.
-The first 6.5-second bounded integrated source attempt saved active/open,
-reference, exact split and body-balance metrics, then timed out before pytest
-completion. Those metrics belong to its executed hashes. Final guard repairs
-and separate work/safety checks remain unverified; no installed-package
-parity or engineering acceptance follows from the source attempt.
+Public model/DOF identity, actual beam scalar section/orientation/VK/elastic
+branch and all child maps/operators are guarded and restart-bound. The chart
+allowance is local: one reference plus <=4 CSR products per position, with
+coordinatewise Hermite arithmetic, independent of global vector width.
+The new summary has no admitted archive consumer. Legacy inactive selection
+is isolated; old-wire continuation has not been rerun in this slice.
 
-Final cached-operator/model-routing refusals passed; old dimensional FD failed.
-New physical5um direction/dimensionless h chart keeps1e-5 and relative H
-thresholds but changes absolute per-metre allowance; repair UNEXECUTED.
-Hidden path refused correctly; private build timed out, no verified artifact.
+Local work is an unconstrained operator check, not the uniform MPC chart.
+Original dimensionalFD NONPASS is retained. New physical5um direction and
+dimensionless h=(.01,.001,.0001) retain1e-5/relativeH thresholds but change
+absolute per-metre allowance; repaired work/H passed. Active rejection,
+exception and cancellation passed. Prior timeouts/harness failures remain.
+Checkpoint export requires an accepted UNTRUNCATED final step; a cutback
+ending on a shortened grid tail cannot emit a checkpoint in this profile.
+Broader multi-pair deforming/flexural sensitivity and acceptance remain open.
