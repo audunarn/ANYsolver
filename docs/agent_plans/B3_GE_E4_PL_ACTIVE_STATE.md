@@ -60,22 +60,38 @@ not validate the rejected Newton trial, whose state was not saved before exit.
 ONE pinpoint .284375->.3125 replay completed FAIL,55.70s/thread1/178MBsampled;
 131 evaluations/failure state saved, prefix unchanged. All13 dyadic candidates
 fail, min h2.44e-4; actual Newton direction branch-stable h1e-4/1e-5/1e-6 descends.
-Rich direction crosses branches; its FD errors are inapplicable. No tangent defect
-or physical limit established; raw linear residual needs full KKT interpretation.
-Root adopts new-policy-only safeguarded quadratic backtracking candidate under
-same trial/iteration budgets and unchanged max-merit/physical acceptance. Fit
-squared frozen merit with justified Newton slope, safeguarded finite estimate/
-fallback and same-parent trials. Historical dyadic dispatch remains unchanged.
-After4 restore fixes, compare ONE same-law pending.3125 candidate; only if it
-converges proceed original simultaneous history/lifecycle/installed checks within
-existing90min/final15 reserve. No parameter sweep/floor/tolerance/iteration change
-or closed Armijo reopening. Owner keeps numerical lease. Independent affected
-mathematical/source review running, no numerical jobs; root owns Git/adoption.
-Non-author review finds four restore admission bypasses: linear moment/retained
-load and chart/staged/distributed envelopes. Fixed-support-only moment with zero
-q is a source-level consistent linear counterexample. Inner native/native-shell
-patterns and public rebase guards are correct. Same owner repairs all4 with
-atomic-refusal coverage; runtime proof pending. Raw independent-review-v1.md.
+Rich direction crosses branches; its FD errors are inapplicable. Complete-free
+Newton directional errors2.76e-4/2.91e-3/9.74e-3 worsen as h shrinks, so NO failed-
+trial tangent pass. Active tip row agrees closely; cancellation/row interpretation
+remains unresolved. No defect or physical limit established; raw linear residual
+needs full KKT interpretation. Independent review supports homogeneous merit
+slope only for actual-chart Newton; interpolation is a proposal, not certificate.
+Bounded new-policy quadratic candidate FAILS pending.3125:24iterations/73eval,
+equilibrium.071221364/gap5.54e-16, prefix unchanged,28.30s/thread1/178MBsampled.
+Independent review finds algebra/strict-merit/budget consistent, not convergence.
+Root STOP: preserve candidate bytes/failed evidence, remove product helper/
+dispatch/capability label; owner restores prequadratic driver bytes. No further
+continuation/globalization/fixture/strength sweep. Failed full-KKT derivative
+and simultaneous-history obligations remain open. No closed Armijo reopening.
+All4 restore refusal gaps repaired: actual fixed-support moment/retained load
+and chart/staged/distributed/programme signatures rejected atomically;2PASS4.34s.
+Old-policy support-only moment control passes. Signatures do not prove valid
+legacy-envelope replay. Independent affected source review clear for these fixes.
+Impact4PASS49.41s includes partial public/oldelastic realyield refusal/generalized
+restart/finite point route; imported failed quadratic candidate, historical
+dispatch unchanged. After rollback: old generalized/coupled-point material impact
+3PASS153.41s; partial atomic failure/cancellation/mutation1PASS9.66s. Installed
+partial workflow PASS20.05s,424 source/site/wheel module identities and244 actual
+imports, exact CI/pools1. Wheel ca2503e2178aa536b79d556a2c105faef29977f6d7a1442e989bddde077cd849.
+Root found final report used prefix material maxima; same owner repaired example/
+regression/doc. Same installed wheel reporting1PASS19.99s: final.25625/gen4,
+fibre alpha1.26785706e-6,shell0. Original760 artifacts unchanged; V2 has779.
+Strict full lifecycle tests remain unchanged and unpassed; candidate PARTIAL,
+not CI-green/merge-ready/qualified. Independent review plus root byte/installed
+inspection bound to exact changes. Author RELEASED; no owned numerical job.
+NEXT: interpret saved rejected-trial whole-Jacobian/work/branch/precision data
+before any new solver candidate or numerical continuation. No automatic sweeps.
+Exact material evidence in own raw; independent-review-v1/v2 distinguish claims.
 
 Material V1 lifecycle failure used unintended global NumPy fallback due sandbox
 CI read denial; no intended-CI acceptance or physical inference. Exact elevated

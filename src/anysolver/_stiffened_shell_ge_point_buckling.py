@@ -234,6 +234,8 @@ def _native_line_policy(owner):
 
 def _admit(owner, generation=None, *, lines=False, mixed=False, native_lines=False):
     owner._require_open()
+    if owner._bl5_native_material:
+        raise ValueError('native material BL5 spectra are not admitted')
     d = owner._definition
     driver = owner._finite_driver
     if native_lines and (not lines or not mixed or not owner._bl5_native_fibre or

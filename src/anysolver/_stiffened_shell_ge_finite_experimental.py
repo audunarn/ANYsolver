@@ -729,7 +729,7 @@ class FinitePointDriver:
             tangent = spatial_jacobian(
                 response.residual, response.hessian+response.hessian_low)
             scatter(slots+owner._shell_count, response.residual, tangent)
-            if owner._bl5_native_fibre:
+            if owner._bl5_native_fibre and not owner._bl5_native_material:
                 from ._stiffened_shell_bl5_native_elastic import require_elastic
                 require_elastic(element, response, origin)
             if getattr(owner, "_finite_bl5", False) and not owner._bl5_material and not owner._bl5_native_fibre and any(
@@ -740,7 +740,7 @@ class FinitePointDriver:
             if getattr(owner, "_curved_reference", False) and not getattr(owner,"_curved_material",False):
                 _require_elastic_footprint_histories((response.history,), "candidate",scope="curved Q4 points")
             beam_candidates.append(response.history)
-            if owner._bl5_material or owner._curved_material or owner._distributing_material or native_point_material:
+            if owner._bl5_material or owner._bl5_native_material or owner._curved_material or owner._distributing_material or native_point_material:
                 from ._ge_beam3_retained_generalized import RetainedGeneralizedOperator
                 if type(element.operator) is RetainedGeneralizedOperator:
                     generalized_material.append((i,response.material))
@@ -848,7 +848,7 @@ class FinitePointDriver:
         return residual, matrix, relative, constraint, tuple(shell_candidates), tuple(beam_candidates)
 
     def _generalized_records(self,state,origins,accepted,*,include_native=False):
-        if not (self.owner._bl5_material or self.owner._curved_material or self.owner._distributing_material or
+        if not (self.owner._bl5_material or self.owner._bl5_native_material or self.owner._curved_material or self.owner._distributing_material or
                 include_native):return ()
         cached=self._generalized_trial_recovery
         if cached is None or cached[0] is not state or cached[1] is not origins:

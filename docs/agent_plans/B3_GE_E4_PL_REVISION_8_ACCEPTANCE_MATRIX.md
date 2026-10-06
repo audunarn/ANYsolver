@@ -3077,3 +3077,25 @@ Native BL5 material candidate remains unqualified: same-law failed continuation
 retains .284375 prefix with fibre activity/shell elastic; fixed-predecessor
 actual-update tangent is next discriminator. No simultaneous yielding or aggregate
 acceptance follows. No F03 authority consumed, criteria changed or release.
+
+
+## 6 October 2026 - native BL5 material lifecycle, partial DEV preservation
+
+IMPLEMENTED_NOT_QUALIFIED: separate Q4 native-fibre material identity, real fibre
+plasticity/recovery and atomic prefix/restart/cancellation/refusal behavior. Four
+restore admission gaps repaired. Installed partial route and final-report
+regression verified against wheel ca2503e2178aa536b79d556a2c105faef29977f6d7a1442e989bddde077cd849;
+424 source/site/wheel module identities and244 actual imports. Historical impact
+coverage remains scoped to executed controls. Original760 raw paths preserved;
+V2 has779. Exact source, reviews, failures and checks: material-dev-20261006-v1
+root-preservation-manifest-v3.json and root-integration-disposition-v3.md.
+
+OPEN/FAILED: strict full .5/1 histories remain visible and unpassed; corrected-CI
+continuation accepts through.284375, then fails.3125 before shell yielding.
+Whole-free-KKT failed-trial directional errors do not meet1e-5. Safeguarded
+quadratic candidate failed and was removed; original dyadic dispatch restored.
+No simultaneous shell/fibre, physical-limit, convergence or aggregate G3 claim.
+Final partial example.25625/gen4 reports actual fibre alpha1.2678570601992559e-6,
+shell alpha0. No qualification, main change, merge, publication or F03 consumption.
+Next: saved rejected-trial work/chart/branch/precision interpretation, no automatic
+continuation, fixture, strength, globalization or refinement sweep.

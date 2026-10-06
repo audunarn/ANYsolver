@@ -80,6 +80,7 @@ BL5_GENERALIZED_MATERIAL_V1 = "BL5_GENERALIZED_MATERIAL_V1_DEV"
 BL5_COUPLED_J2_MATERIAL_V1 = "BL5_COUPLED_J2_MATERIAL_V1_DEV"
 BL5_ELASTIC_NATIVE_FIBRE_V1 = "BL5_ELASTIC_NATIVE_FIBRE_V1_DEV"
 BL5_ELASTIC_NATIVE_FIBRE_MIXED_SHELL_V1 = "BL5_ELASTIC_NATIVE_FIBRE_MIXED_SHELL_V1_DEV"
+BL5_NATIVE_FIBRE_MATERIAL_V1 = "BL5_NATIVE_FIBRE_MATERIAL_V1_DEV"
 GE_FINITE_DISTRIBUTING_GENERALIZED_MATERIAL_V1 = "GE_FINITE_DISTRIBUTING_GENERALIZED_MATERIAL_V1_DEV"
 GE_FINITE_DISTRIBUTING_COUPLED_J2_MATERIAL_V1 = "GE_FINITE_DISTRIBUTING_COUPLED_J2_MATERIAL_V1_DEV"
 GE_FINITE_DISTRIBUTING_GENERALIZED_CYCLIC_MATERIAL_V1 = "GE_FINITE_DISTRIBUTING_GENERALIZED_CYCLIC_MATERIAL_V1_DEV"
@@ -618,11 +619,12 @@ class ExperimentalGEAnalysis:
         if self._modal_only and (definition.fixed or definition.lines or definition.footprints):
             raise ValueError("free-free modal-only policy requires empty supports and six-pose points only")
         if (type(definition.bl5_material_policy) is not str or
-                definition.bl5_material_policy not in ("elastic", BL5_GENERALIZED_MATERIAL_V1, BL5_COUPLED_J2_MATERIAL_V1, BL5_ELASTIC_NATIVE_FIBRE_V1, BL5_ELASTIC_NATIVE_FIBRE_MIXED_SHELL_V1)):
+                definition.bl5_material_policy not in ("elastic", BL5_GENERALIZED_MATERIAL_V1, BL5_COUPLED_J2_MATERIAL_V1, BL5_ELASTIC_NATIVE_FIBRE_V1, BL5_ELASTIC_NATIVE_FIBRE_MIXED_SHELL_V1, BL5_NATIVE_FIBRE_MATERIAL_V1)):
             raise ValueError("explicit admitted BL5 material policy required")
         self._bl5_shell_material = definition.bl5_material_policy == BL5_COUPLED_J2_MATERIAL_V1
         self._bl5_native_mixed_shell = definition.bl5_material_policy == BL5_ELASTIC_NATIVE_FIBRE_MIXED_SHELL_V1
-        self._bl5_native_fibre = definition.bl5_material_policy in (BL5_ELASTIC_NATIVE_FIBRE_V1, BL5_ELASTIC_NATIVE_FIBRE_MIXED_SHELL_V1)
+        self._bl5_native_material = definition.bl5_material_policy == BL5_NATIVE_FIBRE_MATERIAL_V1
+        self._bl5_native_fibre = definition.bl5_material_policy in (BL5_ELASTIC_NATIVE_FIBRE_V1, BL5_ELASTIC_NATIVE_FIBRE_MIXED_SHELL_V1, BL5_NATIVE_FIBRE_MATERIAL_V1)
         self._bl5_material = definition.bl5_material_policy in (BL5_GENERALIZED_MATERIAL_V1, BL5_COUPLED_J2_MATERIAL_V1)
         if self._bl5_material and (not definition.lines or definition.footprints or
                 definition.q4_pullback_policy != Q4_ALGORITHMIC_PULLBACK_V1):
@@ -665,7 +667,7 @@ class ExperimentalGEAnalysis:
             raise ValueError("experimental nodal rigid footprints require point-owner-only attachment scope")
         if definition.q4_pullback_policy == Q4_ALGORITHMIC_PULLBACK_V1 and (
                 (not panel.q4_elements and not self._bl5_native_mixed_shell) or (definition.lines and (
-                    (panel.s3_elements and not self._bl5_native_mixed_shell) or (panel.j2_curve is not None and not self._bl5_shell_material) or
+                    (panel.s3_elements and not self._bl5_native_mixed_shell) or (panel.j2_curve is not None and not (self._bl5_shell_material or self._bl5_native_material)) or
                     any(type(line) is not ExperimentalBL5Line for line in definition.lines)))):
             raise ValueError("algorithmic Q4 pullback requires a Q4-containing point or explicitly admitted Q4 BL5 model")
         shell_model, shell_ids, shell_xyz, shell_index, shell_parts = _shell_reference(panel,curved=self._curved_reference)
@@ -726,19 +728,19 @@ class ExperimentalGEAnalysis:
             else "RESULTANT_ELLIPSOID" for element, _, _ in beam_parts))
         if self._bl5_native_fibre and (not self._has_physical_fibre or not definition.lines or
                 (not panel.s3_elements if self._bl5_native_mixed_shell else
-                 not panel.q4_elements or bool(panel.s3_elements)) or panel.j2_curve is not None or
+                 not panel.q4_elements or bool(panel.s3_elements)) or (panel.j2_curve is not None and not self._bl5_native_material) or
                 definition.shell_reference_policy != "flat" or definition.footprints or groups or
                 (bool(panel.q4_elements) and definition.q4_pullback_policy != Q4_ALGORITHMIC_PULLBACK_V1) or
                 any(type(line) is not ExperimentalBL5Line or line.basis not in
                     ("p0", "continuous_p1_coarse") for line in definition.lines)):
-            raise ValueError("native-fibre BL5 requires its explicit flat elastic shell domain, objective Q4 when present, supported director-bond lines and physical fibres")
+            raise ValueError("native-fibre BL5 requires its explicit flat shell material domain, objective Q4 when present, supported director-bond lines and physical fibres")
         if self._has_physical_fibre and definition.lines and not self._bl5_native_fibre:
             raise ValueError("physical-fibre mixed owner currently admits point attachments only")
         shell_count = 6*len(shell_ids)
         reference_length, shell_scale, beam_scale = _reference_scales(
             shell_xyz, beam_nodes, beam_parts, shell_count, beam_count,
             footprint_retained_roles=(self._finite_elastic_footprint or self._bl5_shell_material
-                                      or self._native_retained_scale or self._finite_distributing))
+                                      or self._bl5_native_material or self._native_retained_scale or self._finite_distributing))
         shell_r, shell_k, shell_local_error = _assemble_shell(
             shell_model, shell_parts, shell_count, shell_scale,
             definition.q4_pullback_policy)
@@ -800,7 +802,7 @@ class ExperimentalGEAnalysis:
             raise ValueError("typed experimental weak lines required")
         self._finite_bl5 = bool(definition.lines) and all(
             type(line) is ExperimentalBL5Line for line in definition.lines
-        ) and (panel.j2_curve is None or self._bl5_shell_material) and (not self._has_physical_fibre or self._bl5_native_fibre)
+        ) and (panel.j2_curve is None or self._bl5_shell_material or self._bl5_native_material) and (not self._has_physical_fibre or self._bl5_native_fibre)
         if definition.lines and definition.q4_pullback_policy == Q4_ALGORITHMIC_PULLBACK_V1 and not self._finite_bl5:
             raise ValueError("algorithmic Q4 line pullback requires admitted generalized BL5 beams")
         if self._bl5_material and not self._finite_bl5:
@@ -849,6 +851,8 @@ class ExperimentalGEAnalysis:
             identity_payload["retained_scale_policy"] = definition.retained_scale_policy
         if self._bl5_material or self._bl5_native_fibre:
             identity_payload["bl5_material_policy"] = definition.bl5_material_policy
+        if self._bl5_native_material:
+            identity_payload["bl5_native_material_retained_scales"] = "native_force_moment_roles_v1"
         if panel.j2_curve is not None:
             identity_payload["shell_j2_curve"] = panel.j2_curve.as_dict()
             if panel.s3_elements:
@@ -1189,6 +1193,16 @@ class ExperimentalGEAnalysis:
                 capabilities.update(analysis=("reference_linear", "experimental_elastic_native_fibre_mixed_shell_bl5"),
                     native_bl5_checkpoint="existing stable native-material binary schema; explicit mixed-shell model/line/material-policy identity",
                     open_domains=("plastic native BL5", "plastic S3 native BL5", "consumer integration", "scale qualification"))
+            if self._bl5_native_material:
+                capabilities.update(analysis=("reference_linear", "experimental_native_fibre_material_bl5"),
+                    retained_coordinate_scale_policy="native_force_moment_roles_v1",
+                    native_bl5_material_domain="existing physical-fibre and generalized constitutive histories; elastic or isotropic Q4 J2 shell",
+                    native_bl5_checkpoint="existing native-material/native-shell binary schema; explicit model/line/material-policy identity",
+                    excluded=tuple(v for v in capabilities["excluded"] if v not in ("shell J2 plastic", "generalized B3 plastic finite BL5")) +
+                        ("native material BL5 staged/external loads", "native material BL5 displacement/arc control", "native material BL5 spectra", "native material BL5 chart rebase"),
+                    open_domains=("plastic S3 native BL5", "native material BL5 chart rebase", "consumer integration", "scale qualification"))
+                for key in ("body_acceleration", "beam_distributed_loads", "staged_beam_distributed_loads", "shell_pressure_loads", "staged_dead_loads"):
+                    capabilities[key] = ()
         if self._definition.footprints:
             capabilities["attachment"] = (
                 (("reference point pose",) if self._definition.points else ())+
@@ -1339,12 +1353,16 @@ class ExperimentalGEAnalysis:
     @_state_writer
     def buckling(self, request, *, cancellation_token=None):
         """Typed point-only, BL5 or mixed-shell/native accepted-state prestress factors."""
+        if self._bl5_native_material:
+            raise ValueError("native material BL5 spectra are not admitted")
         from ._stiffened_shell_ge_point_buckling import solve
         return solve(self, request, cancellation_token=cancellation_token)
 
     @_state_writer
     def modes(self, request, *, cancellation_token=None):
         """Supported virgin Q4/native-GE point modes with explicit physical mass."""
+        if self._bl5_native_material:
+            raise ValueError("native material BL5 spectra are not admitted")
         self._require_distributing_reference_only("spectral operations")
         self._require_finite_distributing_scope("spectral operations")
         if self._curved_reference:raise ValueError("curved reference spectra are not admitted")
@@ -1361,6 +1379,9 @@ class ExperimentalGEAnalysis:
     def solve_linear(self, actions: tuple[NodalAction, ...], *,
                      cancellation_token=None) -> LinearResult:
         self._require_open()
+        if self._bl5_native_material and (type(actions) is not tuple or
+                any(type(a) is not NodalAction or any(a.wrench[3:]) for a in actions)):
+            raise ValueError("native material BL5 admits nodal dead translations only")
         self._require_finite_distributing_scope("reference-linear solve; select a reference-only record instead")
         if self._distributing_reference and (type(actions) is not tuple or any(type(a) is not NodalAction for a in actions)):
             raise ValueError("distributing reference footprints require a typed tuple of nodal dead actions; load wrappers are unsupported")
@@ -1485,6 +1506,9 @@ class ExperimentalGEAnalysis:
         """
         self._require_open()
         self._require_distributing_reference_only("finite solve and its controllers")
+        if self._bl5_native_material and (displacement_control is not None or
+                type(actions) is not tuple or any(type(a) is not NodalAction or any(a.wrench[3:]) for a in actions)):
+            raise ValueError("native material BL5 admits force-controlled nodal dead translations only")
         if self._finite_distributing:
             if self._distributing_cyclic and increment_control is not None:
                 raise ValueError("cyclic distributing material histories admit fixed increments only")
@@ -1560,6 +1584,10 @@ class ExperimentalGEAnalysis:
     def rebase_rotations(self, expected_generation: int, *, cancellation_token=None):
         """Issue an experimental physical shell-anchor reset at the same load."""
         self._require_open()
+        if self._bl5_native_material:
+            if type(expected_generation) is not int or expected_generation != self._generation:
+                raise ValueError("stale or invalid accepted rebase predecessor")
+            raise ValueError("native material BL5 chart rebase is not admitted")
         self._require_distributing_reference_only("chart rebase")
         self._require_finite_distributing_scope("chart rebase")
         if getattr(self,"_arc_snapshot",None) is not None:
@@ -1620,6 +1648,8 @@ class ExperimentalGEAnalysis:
     def continue_arc_length(self, actions, control, *, steps=1,
                             cancellation_token=None, on_accepted=None):
         self._require_open()
+        if self._bl5_native_material:
+            raise ValueError("native material BL5 admits force-controlled nodal dead translations only")
         self._require_distributing_reference_only("arc-length continuation")
         self._require_finite_distributing_scope("arc-length continuation")
         self._require_stateful_scope()
@@ -1675,6 +1705,8 @@ class ExperimentalGEAnalysis:
         from ._stiffened_shell_ge_pressure_load import MAGIC as PRESSURE_MAGIC
         from ._stiffened_shell_ge_distributed_programme import MAGIC as DISTRIBUTED_PROGRAMME_MAGIC
         if raw.startswith((BODY_MAGIC, DISTRIBUTED_MAGIC, PRESSURE_MAGIC, DISTRIBUTED_PROGRAMME_MAGIC)):
+            if self._bl5_native_material:
+                raise ValueError("native material BL5 force-controlled scope excludes external load checkpoints")
             if self._curved_reference:raise ValueError("curved reference excludes external load checkpoints")
             if getattr(self, "_external_context", None) is not None or getattr(self, "_staged_context", None) is not None:
                 raise ValueError("nested external-load checkpoint is unsupported")
@@ -1719,6 +1751,8 @@ class ExperimentalGEAnalysis:
             MAGIC as STAGED_MAGIC, decode_checkpoint,
         )
         if raw.startswith(STAGED_MAGIC):
+            if self._bl5_native_material:
+                raise ValueError("native material BL5 force-controlled scope excludes staged load checkpoints")
             if self._curved_reference and not self._curved_material:
                 raise ValueError("curved reference excludes staged load checkpoints")
             if ((self._line_samples and not (self._finite_bl5 and
@@ -1766,6 +1800,8 @@ class ExperimentalGEAnalysis:
         if self._has_physical_fibre and raw.startswith(S3_BINARY_CHECKPOINT_MAGIC):
             raise ValueError("physical-fibre mixed owner admits reference-linear checkpoints only")
         if raw.startswith(CHART_CHECKPOINT_MAGIC):
+            if self._bl5_native_material:
+                raise ValueError("native material BL5 force-controlled scope excludes chart checkpoints")
             if self._definition.footprints:
                 if not self._footprint_increment_chart:
                     raise ValueError("experimental nodal footprint chart checkpoint restore is unsupported: continuation parity not established")
@@ -1891,7 +1927,7 @@ class ExperimentalGEAnalysis:
             if kind in ("finite", "finite_distributing", "finite_bl5", "finite_bl5_material", "finite_bl5_coupled", "finite_material", "finite_shell_material", "finite_native_material", "finite_native_material_stable") + CURVED_POINT_MATERIAL_KINDS + FINITE_DISTRIBUTING_MATERIAL_KINDS:
                 value["accepted_factors"] = arrays["accepted_factors"].tolist()
         elif raw.startswith(NATIVE_SHELL_MAGIC):
-            if (self._line_samples or not self._has_physical_fibre or
+            if ((self._line_samples and not self._bl5_native_material) or not self._has_physical_fibre or
                     self._definition.shell.j2_curve is None):
                 raise ValueError("native shell J2 checkpoint requires matching fibre point model")
             from ._stiffened_shell_ge_finite_experimental import native_shell_checkpoint_shapes
@@ -1999,6 +2035,10 @@ class ExperimentalGEAnalysis:
         q = _owned(value["q"], (self._K.shape[0],))
         lam = _owned(value["multipliers"], (self._C.shape[0],))
         load = _owned(value["load"], (self._K.shape[0],))
+        if self._bl5_native_material:
+            nodal = self._shell_count+6*len(self._beam_ids)
+            if np.any(load[nodal:]) or np.any(load[:nodal].reshape(-1, 6)[:, 3:]):
+                raise ValueError("native material BL5 force-controlled checkpoints require nodal dead translations")
         if self._distributing_reference and np.any(load[self._shell_count+6*len(self._beam_ids):]):
             raise ValueError("distributing reference checkpoint requires nodal dead actions; retained-coordinate loads are unsupported")
         self._require_curved_load(load)
