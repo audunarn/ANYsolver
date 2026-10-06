@@ -3,76 +3,70 @@
 ## Scope and ownership
 
 Work ONLY C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001; inspect HEAD/status. Parent97b2bb9c
-holds installed loaded impact; successor holds independent whole-path evidence.
+branch codex/contact-main-reconcile-20261001. Parent7729fe2b; inspect HEAD/status.
 Full C0-C9 ACTIVE/incomplete: [goal](GENERAL_CONTACT_GOAL.md),
 [plan](GENERAL_CONTACT_PLAN.md), [ledger](docs/GENERAL_CONTACT_CAPABILITIES.md).
 No protected-original access, siblings, other-chat messages, push/merge/release
-or historical defaults. Local checkpoints authorized. Mistral/local cached
-unavailable; sustained OpenAI fallback author plus supporting Read reviewer.
-Both workers and all jobs terminal. Same-family scrutiny is not independent
-engineering acceptance. Ledger append ASCII BYTES ONLY, preserving separate
-working-CRLF/Git-LF prefixes. Global AGENTS hash89f5b1ae... remains applicable.
+or historical-default changes. Local checkpoints authorized. Mistral/local
+cached unavailable; sustained OpenAI fallback author and supporting Read review.
+No numerical process remains owned/live after final worker handoff. Same-family
+scrutiny is not independent engineering acceptance. Ledger append ASCII BYTES
+ONLY, preserving working-CRLF and Git-LF prefixes. Global AGENTS89f5b1ae... applies.
 
-## Current delivery
+## Current production slice
 
-V20 opt-in acceleration-unknown Newmark reaches opening on81/161states at10/5us.
-Independent energy defects .238204%->.0473241%; exact active/open restarts,
-complete equilibrium, body-work wrenches, independent mass/gradient/gap and
-transactions pass. Defaults/history remain unchanged at97b2bb9c.
+Explicit multiple B2/B3 round-centreline -> physical fixed-director S3 pairs
+compose on shared coordinates through ordinary Newmark. V21 opt-in, zero
+target rotations/rates, actual SPD reduced mass<=512. Existing line laws/maps
+and complete Hermite proof kernels retained; structural/mass/commit once,
+all per-pair gates conjunct, shared finite path-work budget, canonical complete
+identity and actual cached beam operator/branch mutation/restart guard.
 
-Independent fixture-specific Fraction/interval oracle now certifies ALL240
-represented cubic-Hermite/Q2/affine-skin segments, including time/space interior.
-Gap bounds >=-1.422um versus10um; rims>=.999999768m versus.02m, orientation
-and cross floors positive. Hidden tensor-interior -44.822693um with four safe
-boundaries refuses; reversed/degenerate faces and finite budget also refuse.
-Source review found compound subtraction rounding unsafe (-5e-324 > exact
--2^-59); per-operation repair and exact regression pass. Earlier test PASS is
-retained at its original hash, not promoted after this defect. Repaired installed
-producer check PASS5.770191400079057s/180027392B; prior5.300097199971788s included
-in purse. Runtime229imports/errors0/JIT0/Numba1/all native pools1. Coarse/fine
-NPZ times/u/v saved and hashed; reuse these for affected path checks.
-
-Oracle scope: mathematical Hermite through binary endpoints of the fixed
-top-skin h=1/128/Z fixture, no production geometry/work/path calls. Not a
-continuous nonlinear DAE lift, arbitrary finite rotation or public admission.
-Default fine-step/Newmark split failures and h1e-9 NONPASS remain preserved.
-[Loaded impact](docs/d1_review_support/contact_c6_beam_s3_20261006/loaded_impact_development.md)
-and [path evidence](docs/d1_review_support/contact_c6_beam_s3_20261006/represented_path_development.md).
+Source impact TIMEOUT6.674182900111191s retained51states/32active/OPEN,
+independent three-mode response<=7.2e-13, energy0.0463843%, exact complete
+split restart/pair paths and per-body balances<=5.6e-15. Not pytest PASS.
+Build TIMEOUT3.2175815999507904s; no new wheel/install. Guard/work job
+1PASS1FAIL5.015348799992353s: mechanical mutation controls PASS, dimensional
+FD gates NONPASS despite relative H<=3.03e-9. Failed source bytes/logs retained.
+Unit-correct prospective5um chart with dimensionless h(.01,.001,.0001)
+preparedUNEXECUTED. Same dimensionless criteria, new absolute per-metre
+chart; no regrade/product mechanics change. Safety/full terminal/installed
+checks and new archive codec remain open.
+[Current evidence](docs/d1_review_support/contact_c6_beam_s3_20261006/multiple_pair_development.md).
 
 ## Execution authority
 
 | Scope | Used/total seconds | Remaining seconds |
 |---|---:|---:|
-| C6 beam/S3 |343.0953081998741/360|16.904691800125875|
-| C5 arc |186.042572499835/240|53.957427500165|
-| C4 triangulated/connected S3 |172.931528899935/180|7.068471100065|
-| C9 archives |177.698497499572/180|2.301502500428|
+| C6 beam/S3 |358.00242149992846/360|1.9975785000715405|
+| C5 arc |186.04257249983493/240|53.95742750016507|
+| C4 triangulated/connected S3 |172.93152889993507/180|7.068471100064926|
+| C9 archives |177.6984974995721/180|2.301502500427895|
 | Automatic domains |174.026839300175/180|5.973160699825|
 | Native connected spatial |177.357927799691/180|2.642072200309|
 
-Terminal C6/C5/C4/C9 jobs60/28/33/34. Onejob/953MiB/JIT0/Numba1/pools1,
-max60s or stricter frozen cap, actual remaining and handoff reserve. Original120h
-consumed432011s. Explicit C6+180/C5+60 retain scoped meanings; domain180s
-request remains UNANSWERED. No borrowing, replay or authority renewal.
+Terminal C6/C5/C4/C9 jobs63/28/33/34. Onejob/953MiB/JIT0/Numba1/pools1,
+max60s or stricter frozen cap and actual remaining/reserve. Original120h
+consumed432011s. C6+180/C5+60 retain scoped meanings; no borrowing/replay.
+Latest generic authorization allowed prepared multiple-pair checks within
+existing purse; it did not renew seconds. Additional60C6 request is PENDING
+through asynchronous question. Domain180request remains unanswered.
 
-## Artifact, next action and preserved history
+## Next action and retained history
 
-Held wheelb5c7910d474ec202ab42d5049e5f89bdbcf22bddf3df385b4a406c0fb115fca3;
-private raw/tilted_impact_installed1. All543 source/wheel/installed payloads still
-match; only verification helper/test/guide and task records change this slice.
-Raw C:/ANYworkspaceWork/contact_c6_beam_s3_20261006 contains tilted_path_*
-frozen/derivation/outward-repair/installed-final-manifest/handoff/NPZ and root
-reconciliation. Exact source hashes bind each attempted check independently.
+Do not launch tests/builds from spent authority. If explicit additional60C6
+arrives, record it prospectively, continue same owner, execute corrected local
+work/H check plus missing safety/restart controls, then private build/install
+and installed integrated example with exact process-wall/import/runtime audit.
+Retain every failed attempt; no mechanical-criteria relaxation or archive
+scope expansion. If not granted, hold this candidate and unmet execution gates.
+Full programme remains active and required; no acceptance/release claim.
 
-Choose the next required production capability by dependencies and valid
-authority. Remaining C6 work includes general pairings/materials/tools/free
-bodies and independent acceptance; C7 precedes native/coupled impact. Source
-implementation may proceed without unauthorized numerical runs; no repeat of
-passed fixtures solely for a new aggregate. C5 reserve is scoped to its frozen
-opening/reference/restart work, not a new campaign. No V20 DATA-codec admission
-or native dynamics follows from this slice. Broader C0-C9 remains required.
-
-Earlier notes preserved at raw/tilted_path_root_prior_restart.md,
-tilted_impact_root_prior_restart.md and linked history/evidence. Full programme
-incomplete; implementation/testing/independent acceptance/release stay distinct.
+Raw C:/ANYworkspaceWork/contact_c6_beam_s3_20261006: multiple_s3_source_final_
+manifest/handoff, unit_repair_manifest, root_checkpoint_audit and original
+attempt dirs. Prior restart at multiple_s3_root_prior_restart.md. Loaded
+impact at97b2bb9c and independent represented-path evidence at7729fe2b
+retain original scope/hashes; old wheelb5c7910d... is NOT current-slice parity.
+Saved coarse/fine NPZ endpoints may be reused; do not repeat old impact for
+aggregation. Default fine-step/split failures, h1e-9NONPASS and repaired
+outward-rounding counterexample remain in earlier linked history.

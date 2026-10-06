@@ -337,3 +337,39 @@ recorded separately in `tilted_path_installed_repaired1`. This verification
 helper is fixture-specific development evidence, not a new public admission
 service or engineering acceptance. See `tilted_path_final_manifest.json` and
 `tilted_path_worker_handoff.md` for exact hashes/runtime/resources.
+
+## Explicit multiple fixed-director Beam/S3 source candidate
+
+`ContactTransientSolverControls(allow_multiple_deformable_beam_s3_dev=True)`
+selects the separate V21 development profile and checkpoint family. This
+source candidate is **not numerically verified or accepted**. The prepared
+example `general_contact_multiple_beam_s3_transient.py` uses a B2 and a B3
+against one shared deformable S3 with actual three-mode physical mass.
+
+Each explicit interaction retains its own radius, line stiffness, gap budget,
+physical skin and complete cubic Hermite proof. The global residual/tangent
+sums child work on shared coordinates; structural and mass assembly remain
+once per shared driver evaluation. Target rotations/rates must be exactly
+zero under actual model constraints; reduced physical mass must be positive
+definite with at most 512 coordinates. No hidden inertia or constraint is
+added. Pair order is canonical by stable interaction name. Aliases, duplicated
+physical pairs, unselected elements, unsupported materials and resource
+exhaustion refuse. Candidate pairs use the declared finite settings cap; all
+path proofs share one finite visited-interval budget. Per-pair gap bounds and
+tolerances remain visible; there is no aggregate tolerance substitution.
+
+The reused chart allowance is per mapped position: one reference plus at most
+four CSR products, with coordinatewise Hermite arithmetic, independent of
+global vector width. Child maps and the complete model/DOF configuration are
+guarded. New result records have no admitted archive consumer yet. The old
+flags/defaults/checkpoint families are unchanged by inactive selection.
+The first 6.5-second bounded integrated source attempt saved active/open,
+reference, exact split and body-balance metrics, then timed out before pytest
+completion. Those metrics belong to its executed hashes. Final guard repairs
+and separate work/safety checks remain unverified; no installed-package
+parity or engineering acceptance follows from the source attempt.
+
+Final cached-operator/model-routing refusals passed; old dimensional FD failed.
+New physical5um direction/dimensionless h chart keeps1e-5 and relative H
+thresholds but changes absolute per-metre allowance; repair UNEXECUTED.
+Hidden path refused correctly; private build timed out, no verified artifact.

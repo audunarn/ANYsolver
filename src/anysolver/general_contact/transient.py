@@ -209,8 +209,14 @@ class ContactTransientSolverControls:
     allow_equilibrated_directional_beam_s3_dev: bool = False
 
     equilibrated_newmark_acceleration_unknown_dev: bool = False
+    allow_multiple_deformable_beam_s3_dev: bool = False
 
     def __post_init__(self) -> None:
+        if type(self.allow_multiple_deformable_beam_s3_dev) is not bool:
+            raise ValueError('multiple deformable beam-S3 selection must be boolean')
+        if self.allow_multiple_deformable_beam_s3_dev and any(value for name,value in vars(self).items()
+                if name.endswith('_dev') and name not in ('allow_multiple_deformable_beam_s3_dev','save_constraint_reactions_dev')):
+            raise ValueError('multiple deformable beam-S3 requires its separate fixed-director profile')
         if type(self.equilibrated_newmark_acceleration_unknown_dev) is not bool:
             raise ValueError("equilibrated acceleration selection must be boolean")
         if self.equilibrated_newmark_acceleration_unknown_dev and not self.allow_equilibrated_directional_beam_s3_dev:
@@ -538,6 +544,11 @@ def _restart_analysis_contract(transient, controls, manager, profile,
                 'maximum_event_localizations'):
             contract['controls'][name]=getattr(controls,name)
         contract['controls']['pressure_sweep_maximum_cells']=manager.settings.maximum_gap_triangles
+    if controls.allow_multiple_deformable_beam_s3_dev:
+        contract['controls'].update(allow_multiple_deformable_beam_s3_dev=True,
+            physical_path_policy='ALL_PAIR_COMPLETE_CUBIC_HULL_FIXED_DIRECTOR_V1',
+            maximum_path_intervals=controls.maximum_beam_swept_subdivisions,
+            maximum_path_depth=manager.settings.maximum_swept_subdivisions)
     if controls.allow_deformable_beam_s3_dev:
         contract['controls'].update(allow_deformable_beam_s3_dev=True,
             physical_path_policy='both_body_complete_cubic_hull_moving_normal_v1',
@@ -607,7 +618,7 @@ def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
                             plane_pressure_features=None,guided_shell_pair=False,
                             fixed_projection_s3_target=False,normal_s3_skin_hermite=False,
                             normal_s3_polygon_pressure=False,beam_s3=False,rotational_beam_s3=False,
-                            rotational_previous_velocity=None,rotational_last_dt=0.,directional_beam_s3=False,equilibrated_directional=False) -> dict:
+                            rotational_previous_velocity=None,rotational_last_dt=0.,directional_beam_s3=False,equilibrated_directional=False,multiple_beam_s3=False) -> dict:
     payload = {
         "schema": (_HISTORY_RESTART_SCHEMA if external_work_j is not None
                    else _RESTART_SCHEMA),
@@ -671,6 +682,9 @@ def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
     if equilibrated_directional:
         from .beam_s3_directional_rates import EQUILIBRATED_RESTART_SCHEMA
         payload['schema'],payload['version']=EQUILIBRATED_RESTART_SCHEMA,20
+    if multiple_beam_s3:
+        from .multiple_beam_s3_transient import RESTART_SCHEMA
+        payload['schema'],payload['version']=RESTART_SCHEMA,21
     payload["checkpoint_sha256"] = analysis_configuration_fingerprint(payload)
     return payload
 
@@ -713,7 +727,7 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
                              q4_material_state=False,plane_event_state=False,
                              plane_pressure_features=None,guided_shell_pair=False,
                              fixed_projection_s3_target=False,normal_s3_skin_hermite=False,
-                             normal_s3_polygon_pressure=False,beam_s3=False,rotational_beam_s3=False,directional_beam_s3=False,equilibrated_directional=False):
+                             normal_s3_polygon_pressure=False,beam_s3=False,rotational_beam_s3=False,directional_beam_s3=False,equilibrated_directional=False,multiple_beam_s3=False):
     if not isinstance(value, Mapping) or set(value) != {
         "schema", "version", "model_fingerprint", "analysis_fingerprint",
         "state", "checkpoint_sha256",
@@ -762,6 +776,9 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
     if equilibrated_directional:
         from .beam_s3_directional_rates import EQUILIBRATED_RESTART_SCHEMA
         expected_schema,expected_version=EQUILIBRATED_RESTART_SCHEMA,20
+    if multiple_beam_s3:
+        from .multiple_beam_s3_transient import RESTART_SCHEMA
+        expected_schema,expected_version=RESTART_SCHEMA,21
     if payload["schema"] != expected_schema or payload["version"] != expected_version:
         raise ValueError("transient contact checkpoint version is incompatible")
     if payload["model_fingerprint"] != model_fingerprint:
@@ -1187,6 +1204,10 @@ def _admit_free_shell_coordinates(model, transformation, prescribed):
 
 def _admit(model, definition: ContactDefinition, settings: ContactSolverSettings,
            controls: ContactTransientSolverControls) -> str:
+    if controls.allow_multiple_deformable_beam_s3_dev:
+        from .multiple_beam_s3_transient import pair_definitions,PROFILE
+        pair_definitions(model,definition,settings)
+        return PROFILE
     if controls.allow_deformable_beam_s3_dev or controls.allow_rotational_beam_s3_dev or _directional_selected(controls):
         from .beam_s3_transient import PROFILE
         if controls.allow_rotational_beam_s3_dev:
@@ -1567,8 +1588,10 @@ def solve_transient_contact(
     Mred = (T.T @ M @ T).tocsr()
     if Mred.shape[0] > 512:
         raise ValueError("transient development profile admits at most 512 free coordinates")
+    if controls.allow_multiple_deformable_beam_s3_dev and not np.isfinite(Mred.data).all():
+        raise ValueError('multiple beam-S3 requires finite positive physical reduced mass')
     descriptor_basis = None
-    if controls.allow_deformable_beam_s3_dev or profile in (_PROFILE,_BEAM_PROFILE,_BEAM_HISTORY_PROFILE,_MULTIPLE_Q4_EVENT_PROFILE,_GUIDED_SHELL_PAIR_EVENT_PROFILE,_FIXED_PROJECTION_S3_EVENT_PROFILE,_NORMAL_S3_SKIN_PROFILE,_NORMAL_S3_POLYGON_PROFILE,
+    if controls.allow_deformable_beam_s3_dev or controls.allow_multiple_deformable_beam_s3_dev or profile in (_PROFILE,_BEAM_PROFILE,_BEAM_HISTORY_PROFILE,_MULTIPLE_Q4_EVENT_PROFILE,_GUIDED_SHELL_PAIR_EVENT_PROFILE,_FIXED_PROJECTION_S3_EVENT_PROFILE,_NORMAL_S3_SKIN_PROFILE,_NORMAL_S3_POLYGON_PROFILE,
                    _Q4_PLASTIC_PROFILE,_Q4_EVENT_PROFILE,_Q4_PLASTIC_EVENT_PROFILE,
                    _MULTIPLE_BEAM_PROFILE,_MULTIPLE_BEAM_HISTORY_PROFILE,_BEAM_TOOL_PROFILE,_BEAM_TOOL_HISTORY_PROFILE,
                    FREE_SPHERE_PROFILE,FREE_SPHERE_HISTORY_PROFILE,
@@ -1658,6 +1681,9 @@ def solve_transient_contact(
     if controls.allow_deformable_beam_s3_dev:
         from .beam_s3_transient import beam_s3_scope
         selected_scope=beam_s3_scope
+    if controls.allow_multiple_deformable_beam_s3_dev:
+        from .multiple_beam_s3_transient import multiple_beam_s3_scope
+        selected_scope=multiple_beam_s3_scope
     with selected_scope(model, definition, settings,
                        initial_displacement=(np.zeros(size) if controls.allow_normal_s3_skin_hermite_dev
                                              else full_initial[:size])) as manager:
@@ -1681,9 +1707,12 @@ def solve_transient_contact(
                     raise ValueError('rotational descriptor currently requires unforced impact')
                 if np.any(initial_displacement != 0.):
                     raise ValueError('rotational descriptor requires a virgin zero initial pose')
-        elif controls.allow_deformable_beam_s3_dev:
+        elif controls.allow_deformable_beam_s3_dev or controls.allow_multiple_deformable_beam_s3_dev:
             from .beam_s3_transient import BeamS3TransientManager
             expected_manager=BeamS3TransientManager
+            if controls.allow_multiple_deformable_beam_s3_dev:
+                from .multiple_beam_s3_transient import MultipleBeamS3TransientManager
+                expected_manager=MultipleBeamS3TransientManager
             if (np.any(initial_velocity[manager.shell_dofs[:,3:]]!=0.)
                     or np.any(initial_displacement[manager.shell_dofs[:,3:]]!=0.)):
                 raise ValueError('beam-S3 initial target rotations and rates must be exactly zero')
@@ -1789,6 +1818,7 @@ def solve_transient_contact(
                     rotational_beam_s3=rotational_descriptor,
                     directional_beam_s3=_directional_selected(controls),
                     equilibrated_directional=controls.allow_equilibrated_directional_beam_s3_dev,
+                    multiple_beam_s3=controls.allow_multiple_deformable_beam_s3_dev,
                 )
             current_time, accepted_steps, q, vred, resumed_acceleration, resumed_work, last_path_active = resumed[:7]
             if rotational_descriptor:
@@ -2003,9 +2033,9 @@ def solve_transient_contact(
         material_history=[committed_states] if controls.save_q4_material_history_dev else []
         swept_gaps = [contact0.minimum_gap]
         pair_swept_history=([{name:result.minimum_gap for name,result in contact0.pairs}]
-                            if controls.allow_multiple_shell_planes_dev else [])
+                            if controls.allow_multiple_shell_planes_dev or controls.allow_multiple_deformable_beam_s3_dev else [])
         pending_pair_gaps=({name:float('inf') for name,_ in manager.pairs}
-                           if controls.allow_multiple_shell_planes_dev else {})
+                           if controls.allow_multiple_shell_planes_dev or controls.allow_multiple_deformable_beam_s3_dev else {})
         residuals = [float(np.linalg.norm(Mred @ acceleration + force0))]
         iterations = []
         path_transitions = []
@@ -2202,7 +2232,14 @@ def solve_transient_contact(
                                 candidate_acceleration,vred,step,contact_result)
                         full_velocity = np.asarray(T @ candidate_velocity).reshape(-1)
                         if path_adapter is None:
-                            if controls.allow_deformable_beam_s3_dev or rotational_descriptor:
+                            if controls.allow_multiple_deformable_beam_s3_dev:
+                                from .multiple_beam_s3_transient import multiple_hermite_gap_bounds
+                                swept_gap,beam_path_admissible,_visited,pair_swept_gaps=multiple_hermite_gap_bounds(manager,
+                                    previous_full,full,previous_velocity,full_velocity,step,
+                                    maximum_intervals=controls.maximum_beam_swept_subdivisions,
+                                    maximum_depth=settings.maximum_swept_subdivisions,
+                                    check_cancel=lambda:check_cancel('multiple beam-S3 complete physical paths'))
+                            elif controls.allow_deformable_beam_s3_dev or rotational_descriptor:
                                 from .beam_s3_transient import hermite_gap_bounds
                                 swept_gap,beam_path_admissible,_visited=hermite_gap_bounds(manager,
                                     previous_full,full,previous_velocity,full_velocity,step,
@@ -2487,7 +2524,7 @@ def solve_transient_contact(
                                 event_targets=tuple(int(i) for i in np.flatnonzero(
                                     (np.abs(g_end)<=tolerance)&(np.abs(g_start)>tolerance)))
                         if (contact_result.gap_tolerance_met
-                                and (beam_path_admissible if rotational_descriptor or controls.allow_deformable_beam_s3_dev or controls.allow_classical_beam_dev or controls.allow_free_shell_sphere_dev or controls.allow_multiple_shell_planes_dev
+                                and (beam_path_admissible if rotational_descriptor or controls.allow_deformable_beam_s3_dev or controls.allow_multiple_deformable_beam_s3_dev or controls.allow_classical_beam_dev or controls.allow_free_shell_sphere_dev or controls.allow_multiple_shell_planes_dev
                                      else swept_gap >= -manager.gap_tolerance)):
                             converged = True
                         break
@@ -2598,7 +2635,7 @@ def solve_transient_contact(
                     previous_velocity = np.asarray(T @ vred).reshape(-1)
                     accepted_steps += 1
                     pending_swept_gap = min(pending_swept_gap, swept_gap)
-                    if controls.allow_multiple_shell_planes_dev:
+                    if controls.allow_multiple_shell_planes_dev or controls.allow_multiple_deformable_beam_s3_dev:
                         pending_pair_gaps={name:min(value,pair_swept_gaps[name])
                                            for name,value in pending_pair_gaps.items()}
                     pending_residual = max(pending_residual,
@@ -2626,7 +2663,7 @@ def solve_transient_contact(
                         if controls.save_q4_material_history_dev:
                             material_history.append(committed_states)
                         swept_gaps.append(pending_swept_gap)
-                        if controls.allow_multiple_shell_planes_dev:
+                        if controls.allow_multiple_shell_planes_dev or controls.allow_multiple_deformable_beam_s3_dev:
                             pair_swept_history.append(pending_pair_gaps.copy())
                             pending_pair_gaps={name:float('inf') for name in pending_pair_gaps}
                         residuals.append(pending_residual)
@@ -2682,6 +2719,7 @@ def solve_transient_contact(
             rotational_last_dt if rotational_descriptor else 0.,
             _directional_selected(controls),
             controls.allow_equilibrated_directional_beam_s3_dev,
+            controls.allow_multiple_deformable_beam_s3_dev,
         ) if emit_restart_checkpoint else None
     )
     return TransientContactResults(
