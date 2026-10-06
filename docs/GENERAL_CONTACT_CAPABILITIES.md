@@ -2476,3 +2476,22 @@ Implemented/source + private-installed development-tested, not independently acc
 ## C9 ordinary-static result export development - 6 October 2026
 
 Implemented/source and private-installed development-tested, not independently accepted or released. ContactStaticArchive + serialize/read_static_contact_results and additive NonlinearStaticResult.to_contact_archive_bytes preserve all8producer fields, complete steps/snapshots/committed material data/info/full checkpoint as inert data. Existing exact-bit bounded codec/material preflight shared through small private schema/registry/role interface; transient defaults/schema/wire/caps unchanged. No class construction, malicious copy or active-state materialization on read; explicit no-contact/arbitrary object/resource/schema/nonfinite refusal. Installed16PASS3.055145399994s/181743616B; actual2steps/2snapshots/74798bytes. Final changed preservation2PASS3.386929499917s/181596160B uses independent raw producer/record/container inventories and ndarray/NumPy/Python float bytes, with deliberate-defect controls; replaces codec-against-codec comparison. Full8fields/checkpoint equal. Explicit legacy wire1PASS2.227819300024s/180486144B against SAME artifact; required protected installed3 path/hash recorded,6692bytes identical (SHA28bba5feb7536a3fc8cfce195dffb801784c9ec6047259262ce8f9147e4c6711). Root independently hashed537source/wheel/installed payloads, zero mismatches, seven held hashes; actual producer235installed imports/errors[],JIT0/Numba1/all3pools1. Wheel0c477e4bd8399812523df2ed15aac9062fb17a6dce72b19204f0afc9d70bfd32. Separate supporting Read findings repaired; same-family review is not independent engineering acceptance. Five new NONPASS selector/recordrole/summary/reference-provenance runs and prior successful artifacts/testhashes preserved. Eleven extra jobs41.609207399888s; SAME archive total25jobs137.750178399612/180s,42.249821600388s remain. No budget renewal/borrowing, frozen mechanics replay, release/default/physics/admission or speed claim. Actual elastic producer does not qualify nonlinear materials/impact/lifecycle or applications. Source/model admission, application persistence/visualization/installed workflows, scale and fullC0-C9 remain open. Evidence docs/d1_review_support/contact_transient_archive_20261006/static_development.md; raw C:/ANYworkspaceWork/contact_transient_archive_20261006/static_worker_handoff.md.
+
+
+## 6 October 2026: ordinary contact-aware arc length
+
+| Profile / route | Implemented and tested scope | Acceptance and remaining limits |
+|---|---|---|
+| `S3_FIXED_TRIANGULATED_RIGID_ARC_PENALTY_DEV_V1` | Ordinary `solve_static_arc_length` with explicit contact/settings, existing fixed planar finite tool and elastic physical S3/connected shared-P1 penalty contributor; full GENERAL tangent, spherical constraint, reactions, swept proposals and accepted-history restart | Installed7+1controls plus actual4point example PASS; independent response2.904e-11, sphere1.221e-10, physical force/moment balance3.596e-15 on declared scales, work/H1e-5, exact prefix restart, in-flight cancel/retry/exception and intact incompatible settings refusal. Root verified538source/wheel/installed payloads and runtime. Development verified, NOT independently engineering accepted/released/application admitted. General shell/deformable target, augmentation/friction/material, prescribed tool, native/finite rotation, preload and broader C5 remain required. Dedicated affine-support mechanical fixture not executed. |
+
+Source parent134277a2; exact candidate hashes/raw controls retained under
+C:/ANYworkspaceWork/contact_arc_length_20261006. One artifact, wheel SHA256
+ea93880bbfc226488c96ac55f57cf226493cb73e8edbf0340d111cdbf75e2885.
+Seven source NONPASS jobs preserved; one dimensional input repair, no mechanics,
+tolerance/default/cap change. Existing no-contact helpers AST exact, one actual
+compatibility case; no new whole-route5% regression or speedup claim.
+Supporting same-family review closed named findings; it is not formal acceptance.
+All13jobs76.432764199679/180s, remaining103.567235800321s with this C5 milestone;
+other purses/frozen authority are unchanged. See
+[arc evidence](d1_review_support/contact_arc_length_20261006/development.md) and
+[usage](GENERAL_CONTACT_ARC_LENGTH_DEV.md). Full C0-C9 remains incomplete.

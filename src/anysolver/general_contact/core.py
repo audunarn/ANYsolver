@@ -588,6 +588,9 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         return ContactValidationReport("invalid", ("ContactDefinition required",))
     if settings is not None and type(settings) is not ContactSolverSettings:
         return ContactValidationReport("invalid", ("ContactSolverSettings required",))
+    if analysis_control == 'arc_length':
+        from .arc_contact import validate_arc_contact
+        return validate_arc_contact(model, definition, settings)
     from .triangulated_rigid import TriangulatedRigidContactBody
     if any(type(body) is TriangulatedRigidContactBody for body in definition.rigid_bodies):
         from .triangulated_rigid_static import validate_triangulated_rigid

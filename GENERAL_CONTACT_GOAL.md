@@ -62,6 +62,15 @@ All537 package payloads match. This closes the solver-side static export gap,
 not application admission, model persistence, physical qualification or C9.
 [Static export evidence](docs/d1_review_support/contact_transient_archive_20261006/static_development.md).
 
+C5 ordinary contact-aware arc length now executes against the existing fixed
+planar triangulated-tool elastic S3/connected shared-P1 profiles. Installed7+1
+controls and the public four-point example pass: independent response, spherical
+constraint, support/load/contact balance, exact split restart, in-flight/retry
+state and valid incompatible-checkpoint rejection. Root independently verified
+all538package payloads. This adds the ordinary continuation route; augmentation,
+friction/native/moving tools, finite rotation and broader C5 acceptance remain
+required. [Arc development evidence](docs/d1_review_support/contact_arc_length_20261006/development.md).
+
 ## Preserved history and decisions
 
 The [unaltered prior goal](GENERAL_CONTACT_GOAL_HISTORY_20261005.md) and [prior plan](GENERAL_CONTACT_PLAN_HISTORY_20261005.md) retain all development decisions, counterexamples, failures, references and source identities. Unaffected scientific contracts, registered criteria, frozen/consumed authorities and assessed capability boundaries remain binding. Historical chronological next actions are superseded by this live goal/plan; this consolidation changes no mechanics or acceptance target and authorizes no repeated campaign.

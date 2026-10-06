@@ -837,6 +837,7 @@ def _solve_static_arc_length_under_lease(
     restart_checkpoint: Optional[Any] = None,
     emit_restart_checkpoint: bool = False,
     _qualified_runtime_guard: Any = None,
+    _arc_contact: Any = None,
 ) -> ArcLengthResult:
     """Trace the first nonlinear limit point with spherical arc-length control.
 
@@ -993,13 +994,15 @@ def _solve_static_arc_length_under_lease(
                 "Follower pressure with corotational kinematics requires "
                 "corotational_tangent='consistent'."
             )
-    general_tangent = follower_active or (
+    general_tangent = _arc_contact is not None or follower_active or (
         kinematics == "corotational"
         and resolved_corotational_tangent == "consistent"
     )
     start_time = time.time()
     working_model = _copy_model_with_imperfection(model, imperfection)
     exact_guard(working_model, context="arc-length imperfection observation")
+    if _arc_contact is not None and _arc_contact.manager.model is not working_model:
+        raise ValueError("arc contact contributor must bind the actual working model")
     restart_analysis_contract = _arc_restart_analysis_contract(
         load_case=load_case,
         constant_load_case=constant_load_case,
@@ -1012,6 +1015,9 @@ def _solve_static_arc_length_under_lease(
         kinematics=kinematics,
         resolved_corotational_tangent=resolved_corotational_tangent,
     )
+    if _arc_contact is not None:
+        restart_analysis_contract["schema"] = "ANYSOLVER_ARC_CONTACT_RESTART_CONTRACT_V1"
+        restart_analysis_contract["general_contact"] = _arc_contact.restart_contract()
     validated_restart = None
     restored_arc_path: Optional[Dict[str, Any]] = None
     if parsed_restart_checkpoint is not None:
@@ -1023,8 +1029,14 @@ def _solve_static_arc_length_under_lease(
             num_layers=num_layers,
         )
         exact_guard(working_model, context="arc-length checkpoint validation")
+        contact_path = dict(validated_restart.path_state)
+        if _arc_contact is not None:
+            if "contact_state" not in contact_path:
+                raise ValueError("arc contact checkpoint history missing")
+            _arc_contact.restore(contact_path.pop("contact_state"), contact_path,
+                                 validated_restart.displacements)
         restored_arc_path = _restore_arc_path_state(
-            validated_restart.path_state,
+            contact_path,
             total_dofs=int(working_model.mesh.dof_manager.total_dofs),
         )
         if restored_arc_path["terminal_status"] != "maximum_steps_reached":
@@ -1062,7 +1074,7 @@ def _solve_static_arc_length_under_lease(
     n_red = int(T.shape[1])
     if restored_arc_path is not None:
         restored_arc_path = _restore_arc_path_state(
-            validated_restart.path_state,
+            contact_path,
             n_red=n_red,
             total_dofs=int(working_model.mesh.dof_manager.total_dofs),
         )
@@ -1572,6 +1584,12 @@ def _solve_static_arc_length_under_lease(
             max(path_metric_dot(tangent_direction, 1.0, tangent_direction, 1.0), 0.0)
         )
     )
+    if _arc_contact is not None and restored_arc_path is not None:
+        def reduce_contact_pose(pose, path_factor):
+            offset = exact_base_offset + float(path_factor)*prescribed_offset
+            return _recover_reduced_coordinates(T, offset, pose)
+        _arc_contact.validate_path(validated_restart.path_state, reduce_contact_pose,
+                                   full_displacement, path_metric_dot, arc_tolerance)
     if restored_arc_path is not None:
         radius = float(restored_arc_path["radius"])
         min_radius = float(restored_arc_path["minimum_radius"])
@@ -1775,6 +1793,7 @@ def _solve_static_arc_length_under_lease(
             dq_total = dlambda_total * load_direction
             q_trial = q_base + dq_total
             lambda_trial = lambda_base + dlambda_total
+            contact_previous_trial = full_displacement(q_base, lambda_base)
             residual_norm = float("inf")
             arc_residual = float("inf")
             trial_states = states_base
@@ -1790,6 +1809,13 @@ def _solve_static_arc_length_under_lease(
                 )
                 total_iterations += 1
                 u_trial = full_displacement(q_trial, lambda_trial)
+                if _arc_contact is not None:
+                    origin = full_displacement(q_base, lambda_base)
+                    if (not _arc_contact.admissible(origin, u_trial) or
+                            not _arc_contact.admissible(contact_previous_trial, u_trial)):
+                        step_failure = "uncertified_contact_swept_path"
+                        break
+                    contact_previous_trial = u_trial.copy()
                 F_internal, K_trial, states_candidate = _assemble_nonlinear_system(
                     working_model,
                     u_trial,
@@ -1851,6 +1877,9 @@ def _solve_static_arc_length_under_lease(
                     residual_norm <= tolerance * force_reference
                     and abs(arc_residual) <= arc_tolerance * arc_reference
                 ):
+                    if _arc_contact is not None:
+                        contact_candidate = _arc_contact.prepare(u_trial, step_index, lambda_trial)
+                        cancellation_safe_point(cancellation_token,"arc_length.contact_before_commit")
                     trial_states = states_candidate
                     accepted = True
                     break
@@ -1947,6 +1976,8 @@ def _solve_static_arc_length_under_lease(
                     working_model,
                     context="arc-length committed-state observation",
                 )
+                if _arc_contact is not None:
+                    _arc_contact.commit(contact_candidate)
                 u = full_displacement(q, lam)
                 path_increment_norm = float(
                     np.sqrt(
@@ -2195,14 +2226,19 @@ def _solve_static_arc_length_under_lease(
     if not track_step_translation and steps:
         max_translation = _max_nodal_translation(working_model, u_final)
         exact_guard(working_model, context="arc-length final translation observation")
-    committed_states = _finalize_arc_element_states(
-        working_model,
-        u_final,
-        committed_states,
-        num_layers,
-        info,
-        kinematics=kinematics,
-    )
+    if _arc_contact is not None and failure_reason is not None:
+        committed_states = _finalize_failed_arc_element_states(
+            working_model,u_final,committed_states,num_layers,info,
+            kinematics=kinematics,failure_reason=failure_reason)
+    else:
+        committed_states = _finalize_arc_element_states(
+            working_model,
+            u_final,
+            committed_states,
+            num_layers,
+            info,
+            kinematics=kinematics,
+        )
     exact_guard(working_model, context="arc-length final state recovery")
     info["failure_reason"] = failure_reason
     info["last_converged_load_factor"] = float(lam)
@@ -2262,8 +2298,18 @@ def _solve_static_arc_length_under_lease(
         },
     ).to_dict()
 
+    if _arc_contact is not None:
+        info["general_contact_profile"] = _arc_contact.restart_contract()["profile"]
+        info["general_contact_history"] = copy.deepcopy(_arc_contact.history)
+        if _arc_contact.history:
+            info["general_contact"] = copy.deepcopy(_arc_contact.history[-1]["contact"])
     restart_payload = None
     if emit_restart_checkpoint:
+        def arc_path_payload(**kwargs):
+            payload = _arc_restart_path_payload(**kwargs)
+            if _arc_contact is not None:
+                payload['contact_state'] = _arc_contact.encoded_state()
+            return payload
         restart_payload = create_nonlinear_checkpoint(
             analysis_kind="arc_length",
             model=working_model,
@@ -2271,7 +2317,7 @@ def _solve_static_arc_length_under_lease(
             displacements=u_final,
             element_states=committed_states,
             deleted_element_ids=(),
-            path_state=_arc_restart_path_payload(
+            path_state=arc_path_payload(
                 load_factor=float(lam),
                 steps=steps,
                 reduced_coordinates=q,
@@ -2341,9 +2387,22 @@ def solve_static_arc_length(
     record_increment_snapshots: bool = False,
     restart_checkpoint: Optional[Any] = None,
     emit_restart_checkpoint: bool = False,
+    contact: Any = None,
+    contact_settings: Any = None,
 ) -> ArcLengthResult:
     """Run arc-length analysis under one non-renewable family lease."""
 
+    if contact is None and contact_settings is not None:
+        raise ValueError('contact_settings requires contact')
+    if contact is not None:
+        if kinematics != 'von_karman' or corotational_tangent != 'auto':
+            raise ValueError('arc contact requires von_karman/auto physical skin chart')
+        if imperfection is not None or constant_load_case is not None or initial_element_states is not None:
+            raise ValueError('arc contact preload/imperfection/seeded history is not integrated')
+        if _has_follower_pressure(load_case, model=model):
+            raise ValueError('arc fixed-tool profile requires dead proportional load')
+        if getattr(model,'initial_fields',None):
+            raise ValueError('arc contact initial fields are unsupported')
     exact_guard = _EXACT_QUALIFIED_LIFECYCLE_GUARD
     run_under_lease = _run_with_qualified_assembly_runtime_lease
     own_resource_config = _owned_resource_config_snapshot
@@ -2368,28 +2427,36 @@ def solve_static_arc_length(
             resource_config,
             post_observation=post_observation,
         )
-        return _run_with_nonlinear_state_cleanup(
-            solve_under_lease,
-            model,
-            load_case,
-            constant_load_case=constant_load_case,
-            control=control,
-            max_iterations=max_iterations,
-            tolerance=tolerance,
-            arc_tolerance=arc_tolerance,
-            num_layers=num_layers,
-            imperfection=imperfection,
-            initial_element_states=initial_element_states,
-            kinematics=kinematics,
-            corotational_tangent=corotational_tangent,
-            progress_callback=progress_callback,
-            resource_config=owned_resource_config,
-            cancellation_token=cancellation_token,
-            record_increment_snapshots=record_increment_snapshots,
-            restart_checkpoint=restart_checkpoint,
-            emit_restart_checkpoint=emit_restart_checkpoint,
-            _qualified_runtime_guard=lease,
-        )
+        def run_adapter(adapter=None):
+            return _run_with_nonlinear_state_cleanup(
+                solve_under_lease,
+                model,
+                load_case,
+                constant_load_case=constant_load_case,
+                control=control,
+                max_iterations=max_iterations,
+                tolerance=tolerance,
+                arc_tolerance=arc_tolerance,
+                num_layers=num_layers,
+                imperfection=imperfection,
+                initial_element_states=initial_element_states,
+                kinematics=kinematics,
+                corotational_tangent=corotational_tangent,
+                progress_callback=progress_callback,
+                resource_config=owned_resource_config,
+                cancellation_token=cancellation_token,
+                record_increment_snapshots=record_increment_snapshots,
+                restart_checkpoint=restart_checkpoint,
+                emit_restart_checkpoint=emit_restart_checkpoint,
+                _qualified_runtime_guard=lease,
+                _arc_contact=adapter,
+            )
+        if contact is None:
+            return run_adapter()
+        from .general_contact.arc_contact import arc_contact_scope
+        cancellation_safe_point(cancellation_token, 'arc_length.contact_preflight')
+        with arc_contact_scope(model, contact, contact_settings) as adapter:
+            return run_adapter(adapter)
 
     return run_under_lease(
         model,

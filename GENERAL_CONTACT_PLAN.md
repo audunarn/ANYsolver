@@ -229,6 +229,43 @@ that total and existing per-job caps. Otherwise advance a genuinely separate
 required row; preserve this candidate. No native or frozen authority is renewed.
 ## Programme disposition and subsequent order
 
+### Delivered C5 continuation: ordinary contact-aware arc length
+
+From134277a2, the ordinary arc solver now accepts explicit contact/settings and
+uses existing fixed planar triangulated-tool physical S3/shared-P1 contributors.
+The spherical continuation, full contact/structural tangent, prescribed-path
+direction T.T@(Fref-K@offset), constraints and reaction recovery remain shared.
+Swept proposals, endpoint gap and bounded history prepare before physical commit.
+Opt-in ARC_CONTACT_V1 identity and exact inert history replay preserve the
+historical no-contact contract/path; incompatible settings and altered accepted
+path metrics refuse. No law, tolerance or default changed.
+
+Installed7+1controls and actual four-point public example pass. Independent
+response2.904e-11, spherical error1.221e-10, physical support/load/contact wrench
+3.596e-15 against retained1e-6targets; exact full/prefix restart, work/tangent,
+in-flight cancellation, retry and explicit zero-accepted failure pass. Root
+independently verified538source/wheel/installed payloads, actual installed routing
+and effective runtime. Supporting Read scrutiny closed named findings; this is
+development verification, not C5 engineering acceptance or release.
+[Evidence](docs/d1_review_support/contact_arc_length_20261006/development.md).
+
+Seven source NONPASS jobs remain. The original.25fixture exceeded the dimensional
+gap domain through every bounded retry; one prospective dimensional control
+repair preserved all mechanics/gates/caps. Other failures distinguish oracle API/
+checksum/moment mistakes from the opt-in zero-accepted state repair. One product
+artifact only. All13jobs used76.432764199679/180s,103.567235800321s remaining with
+this C5 route. Perjob watchdog<=60s/remaining-1,953MiB, onejob,JIT0/pools1.
+No archive/C4/domain/native/frozen authority is renewed.
+
+Next close the explicitly unexecuted prescribed-affine-support fixture, then
+extend toward required general shell/deformable-target, augmented/friction,
+nonlinear-material and parameter-dependent tool continuation through existing
+owners. Preload/imperfection/native/finite-rotation remain required but unsupported
+in this first profile. Retain all C5 breadth and C0-C9 completion; do not turn this
+successful subset into the programme endpoint. Root owns governing decisions,
+records/Git/acceptance; reuse the sustained owner by delta. Select a bounded
+discriminating check and preflight the actual remaining purse before execution.
+
 ### Independent current slice: transient result archive
 
 #### Delivered continuation: static contact result export
