@@ -17,17 +17,66 @@ from .s3_patch_static import GeneralS3PatchManager, _unique_work_map
 from .s3_overlap_derivatives import s3_overlap_derivatives
 
 PROFILE = 'S3_PLANAR_TRIANGULATED_RIGID_SHARED_PENALTY_STATIC_DEV_V1'
+PATCH_PROFILE = 'S3_PATCH_PLANAR_TRIANGULATED_RIGID_SHARED_PENALTY_STATIC_DEV_V1'
+LOCAL_DERIVATIVE_WORK_LIMIT_BYTES = 128*1024**2
+
+def derivative_work_storage_bound(n,m,pairs):
+    if any(type(v) is not int or v<1 for v in (n,m,pairs)):
+        raise ValueError('positive integer derivative-work inventory required')
+    # Js/Jw/Hs/Hw + returned H/residual + twelve dense matrix temporaries,
+    # pressure gram, pair state/coordinate scratch, and sequential 18D Jets.
+    return 8*(2*n*m*m+2*n*m+13*m*m+16*m+n*n+512*pairs)+4*1024**2
+
+def _storage_guard(n,m,pairs):
+    estimate=derivative_work_storage_bound(n,m,pairs)
+    if estimate>LOCAL_DERIVATIVE_WORK_LIMIT_BYTES:
+        raise ValueError('128MiB local derivative-work budget exceeded before dense allocation')
+    return estimate
+
+
+def _source_overlap_guard(points,faces):
+    """Exact projected positive overlap refuses duplicate source ownership."""
+    def sub(a,b): return [x-y for x,y in zip(a,b)]
+    def dot(a,b): return sum(x*y for x,y in zip(a,b))
+    def cross(a,b): return [a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]]
+    def orient(a,b,c): return (b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])
+    triangles=[[[Fraction(float(x)) for x in points[int(j)]] for j in ids] for ids in faces]
+    for i,a in enumerate(triangles):
+        n=cross(sub(a[1],a[0]),sub(a[2],a[0]));square=dot(n,n)
+        if square<=0: raise ValueError('source patch contains degenerate geometry')
+        drop=max(range(3),key=lambda j:abs(n[j]));axes=[j for j in range(3) if j!=drop]
+        first=[tuple(p[j] for j in axes) for p in a]
+        if orient(*first)<0: first.reverse()
+        for b in triangles[i+1:]:
+            projected=[[x-nj*dot(n,sub(p,a[0]))/square for x,nj in zip(p,n)] for p in b]
+            second=[tuple(p[j] for j in axes) for p in projected]
+            if orient(*second)==0: raise ValueError('source patch projection ownership is unresolved')
+            if orient(*second)<0: second.reverse()
+            poly=list(first)
+            for x,y in zip(second,second[1:]+second[:1]):
+                if not poly: break
+                out=[];old=poly[-1];od=orient(x,y,old)
+                for current in poly:
+                    d=orient(x,y,current)
+                    if (od>=0)!=(d>=0):
+                        f=od/(od-d);out.append(tuple(u+f*(v-u) for u,v in zip(old,current)))
+                    if d>=0: out.append(current)
+                    old,od=current,d
+                poly=out
+            area=sum(x[0]*y[1]-x[1]*y[0] for x,y in zip(poly,poly[1:]+poly[:1])) if poly else 0
+            if area>0: raise ValueError('source reference/current faces have overlapping projected interiors')
 
 
 class _JetPenalty(MovingS3PatchPrimalMortarPenalty):
     def work(self, source, target, *, tangent=True):
-        state = self.evaluate(source, target)
         n, m = len(self.source_node_ids), self.n_coordinates
+        _storage_guard(n,m,len(self.pair_laws))
+        state = self.evaluate(source, target)
         js, jw = np.zeros((n,m)), np.zeros((n,m))
         hs, hw = np.zeros((n,m,m)), np.zeros((n,m,m))
         count = 0
         for index, pair in enumerate(state.pair_states):
-            if pair.overlap_vertices == 0:
+            if pair is None or pair.overlap_vertices == 0:
                 continue
             si = self.source_face_indices[index//len(self.target_faces)]
             ti = self.target_face_indices[index%len(self.target_faces)]
@@ -75,12 +124,45 @@ def _prepare(model, definition, settings):
         if 0 < float(getattr(material,'yield_stress',0.)) < float('inf'):
             raise ValueError('rigid mesh profile currently requires elastic material')
         adapters.append(S3SkinWorkAdapter.from_model(model, 1, eid, surface.side))
-    if len(surface.element_ids)!=1 or settings.enforcement_solver!='nested_augmented':
-        raise ValueError('first rigid mesh profile supports one S3 source and staggered enforcement')
+    if settings.enforcement_solver!='nested_augmented':
+        raise ValueError('rigid mesh profile requires nested_augmented enforcement')
+    if len(adapters)>1:
+        traces={}
+        for adapter in adapters:
+            for local,node in enumerate(adapter.node_ids):
+                position=adapter.reference_positions[local]
+                row=adapter.work_map[3*local:3*local+3]
+                if node in traces:
+                    old_position,old_row=traces[node]
+                    if not np.array_equal(position,old_position) or (row-old_row).nnz:
+                        raise ValueError('source shared physical trace/work rows must agree exactly')
+                else:traces[node]=(position,row)
+        neighbours={i:set() for i in range(len(adapters))};edges={}
+        for i,a in enumerate(adapters):
+            for first,last in zip(a.node_ids,a.node_ids[1:]+a.node_ids[:1]):
+                key=tuple(sorted((first,last)));entries=edges.setdefault(key,[])
+                if len(entries)==2 or any((first,last)==e[1:] for e in entries):
+                    raise ValueError('source patch has nonmanifold or inverted shared edges')
+                entries.append((i,first,last))
+        for entries in edges.values():
+            if len(entries)==2:
+                i,j=entries[0][0],entries[1][0];neighbours[i].add(j);neighbours[j].add(i)
+        reached={0};pending=[0]
+        while pending:
+            for i in neighbours[pending.pop()]-reached:
+                reached.add(i);pending.append(i)
+        if len(reached)!=len(adapters): raise ValueError('source patch must be connected through complete shared edges')
     positions=body.planar_positions()
     source=tuple(S3PatchFace(a.node_ids,a.reference_positions) for a in adapters)
     offset=max(node for a in adapters for node in a.node_ids)+1
     target=tuple(S3PatchFace(tuple(j+offset for j in ids),positions[list(ids)]) for _,ids in body.faces)
+    nsource=len({j for face in source for j in face.node_ids});ntarget=len({j for face in target for j in face.node_ids})
+    if nsource>settings.maximum_patch_normal_dofs: raise ValueError('shared pressure node budget exceeded')
+    _storage_guard(nsource,3*(nsource+ntarget),len(source)*len(target))
+    reference,_=_unique_work_map(adapters,tuple(sorted({j for face in source for j in face.node_ids})))
+    if len(adapters)>1:
+        node_index={node:i for i,node in enumerate(sorted({j for face in source for j in face.node_ids}))}
+        _source_overlap_guard(reference,tuple(tuple(node_index[j] for j in f.node_ids) for f in source))
     law=_JetPenalty(source,target,interaction.normal_stiffness,
         difference_step=settings.general_s3_difference_step,
         maximum_energy_evaluations=settings.maximum_general_s3_energy_evaluations,
@@ -97,15 +179,16 @@ def validate_triangulated_rigid(model, definition, settings=None, **kwargs):
             raise ValueError('rigid mesh static profile requires force/displacement control')
         _prepare(model,definition,settings or ContactSolverSettings())
     except (ValueError,KeyError,TypeError) as exc:
-        return ContactValidationReport('unsupported',(str(exc),),PROFILE)
-    return ContactValidationReport('ok',(),PROFILE)
+        profile=PATCH_PROFILE if len(definition.surfaces)==1 and len(definition.surfaces[0].element_ids)>1 else PROFILE
+        return ContactValidationReport('unsupported',(str(exc),),profile)
+    return ContactValidationReport('ok',(),PATCH_PROFILE if len(definition.surfaces[0].element_ids)>1 else PROFILE)
 
 
 class TriangulatedRigidManager(GeneralS3PatchManager):
     def __init__(self,model,definition,settings=None,initial_displacement=None):
         self.settings=settings or ContactSolverSettings()
         self.adapters,self.law,interaction=_prepare(model,definition,self.settings)
-        self.model,self.definition,self.profile=model,definition,PROFILE
+        self.model,self.definition,self.profile=model,definition,(PATCH_PROFILE if len(self.adapters)>1 else PROFILE)
         source,map_=_unique_work_map(self.adapters,self.law.source_node_ids)
         self.reference=(source,self.law.reference_target)
         self.n_dof=model.mesh.dof_manager.total_dofs
@@ -123,7 +206,7 @@ class TriangulatedRigidManager(GeneralS3PatchManager):
             raise ValueError('initial rigid mesh overclosure is unsupported')
 
     def _contract_bytes(self):
-        return json.dumps({'definition':asdict(self.definition),'settings':asdict(self.settings),
+        contract={'definition':asdict(self.definition),'settings':asdict(self.settings),
             'profile':self.profile,'reference':[a.reference_positions.tolist() for a in self.adapters],
             'model_reference':[S3SkinWorkAdapter.from_model(self.model,a.body_id,a.element_id,a.side).reference_positions.tolist() for a in self.adapters],
             'model_maps':[S3SkinWorkAdapter.from_model(self.model,a.body_id,a.element_id,a.side).work_map.toarray().tolist() for a in self.adapters],
@@ -136,12 +219,18 @@ class TriangulatedRigidManager(GeneralS3PatchManager):
                 [(p.stiffness,p.reference_source.tolist(),p.reference_target.tolist()) for p in self.law.pair_laws],
                 self.law.source_node_ids,self.law.target_node_ids,self.law.n_coordinates,
                 self.law.maximum_candidate_pairs,self.law.maximum_energy_evaluations],
-            'map_data':self.map.data.tolist(),'map_indices':self.map.indices.tolist(),'map_indptr':self.map.indptr.tolist()},sort_keys=True).encode()
+            'map_data':self.map.data.tolist(),'map_indices':self.map.indices.tolist(),'map_indptr':self.map.indptr.tolist()}
+        if self.profile==PATCH_PROFILE:
+            contract['patch_derivative_work']={'policy':'explicit128MiB-v1','limit_bytes':LOCAL_DERIVATIVE_WORK_LIMIT_BYTES,
+                'estimate_bytes':derivative_work_storage_bound(len(self.law.source_node_ids),self.law.n_coordinates,len(self.law.pair_laws))}
+        return json.dumps(contract,sort_keys=True).encode()
 
     def _positions(self,u):
         if self._contract_bytes()!=self._binding:
             raise ValueError('rigid mesh contact binding mutated')
-        return super()._positions(u)
+        positions=super()._positions(u)
+        if self.profile==PATCH_PROFILE: _source_overlap_guard(positions[0],self.law.source_face_indices)
+        return positions
 
     def _gap_lower(self,positions):
         state=self.law.evaluate(*positions)

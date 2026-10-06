@@ -6,7 +6,12 @@ This plan changes the route, not scientific obligations or execution authority.
 ## Current delivered development
 
 Finite planar triangulated rigid obstacles now execute through the ordinary
-static solver against one elastic S3 physical skin. Installed12PASS; actual
+static solver against one elastic S3 physical skin, now extended to a connected
+multi-element S3 patch with an explicit separate profile. Patch installed4PASS;
+independent P1 mass/support + structural-K response, shared-node work, actual
+support/load/contact equilibrium and exact lifecycle restart pass. All536 final
+package payloads match. [Patch evidence](docs/d1_review_support/contact_triangulated_rigid_20261006/patch_development.md).
+The earlier one-S3 installed12PASS still supports unaffected behavior; actual
 force equilibrium, press/open/recontact, exact complete-checkpoint restart,
 partial-footprint work, FE rotational pullback and physical tool wrench pass.
 All536 source/wheel/installed payload files match. This is a development
@@ -32,9 +37,9 @@ Local checkpoint 24b14ff2 completes actual curved native physical-fibre beam-pai
 
 ## C4 development handoff: finite triangulated rigid obstacles
 
-Previous goal turn made concrete progress: archive implementation, installed
-producer/consumer verification and local checkpoint3829f01d. Both held mechanics
-purses remain unchanged. Advance the missing triangulated-obstacle requirement
+The prior goal turn made concrete progress: finite-tool source/installed
+development verification and local checkpoint94122867. Both held mechanics
+purses remain unchanged. Advance the remaining triangulated-obstacle requirement
 through existing physical shell work maps, shared primal mortar/Jet2 integration
 and the ordinary nonlinear static solver, rather than recreate completed friction
 or native components.
@@ -92,6 +97,38 @@ Worker owns new geometry/contributor/test/example/guide and narrow core/lazy-exp
 necessary rigid-path hooks and the new-profile-only static preflight; root owns
 contracts, living records, review and Git. No structural-equation changes,
 sibling/automatic/native/friction edits or other-chat messages.
+
+### Delivered C4 continuation: multi-element S3 source patch
+
+Continued from94122867 through the same owner and existing contributor, removing
+the single-source-element limitation with explicit multi-element profile identity.
+Preserve shared P1 support/gap/derivative aggregation across both source and
+target faces, compatible physical traces at shared nodes, exact finite-footprint
+and rim ownership, complete force/tangent pullback and checkpoint transactions.
+No Q4-to-triangle substitution or independent per-face pressure potentials.
+
+Use an actual two-S3 force-equilibrated patch and nonmatching tool, then path and
+restart. An independently assembled P1 mass/support active-set reference uses
+the accepted no-contact structural stiffness separately from contact production
+kernels. Measured response error1.9524e-11 on the declared10um scale passes1e-6;
+the nonlinear correction is a leading-order estimate, not a rigorous enclosure.
+Shared-node/cross-face work,
+wrench/gap and constant-pressure/H checks are required. The first one-S3 profile
+and its restart binding remain unchanged. Admit dense local derivative work only
+within a documented128MiB storage bound, before allocation, without dropping modes.
+
+This continuation consumed36.614422700019s of the SAME C4 milestone, including
+all source/build/install work. Total30terminal jobs158.646824599826/180s;
+21.353175400174s remain. Do not reset or renew it.
+Onejob120s/953MiB,JIT0/Numba1/pools1/watchdog. Freeze changed-file review before
+one final private artifact. Build6 is retained, superseded by a real shared-trace
+refusal repair before final build7/install7. Installed4PASS5.310245s/181460992B,
+536payloads/234installed imports match; no runtime/import errors. Exact stored
+shared skin/work rows and projected source ownership are explicit admission
+guards. Same-family review closed its named findings; not engineering acceptance.
+Held domain/native authority is unchanged. Broader C0-C9 remains open; next
+geometry/scale work requires a discriminating question within remaining authority,
+not an unchanged replay or an allocation renewal.
 
 ## Held integrated outcome: native spatial refinement
 

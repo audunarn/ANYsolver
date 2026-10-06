@@ -44,6 +44,16 @@ remain represented; unrepresented rim contact refuses rather than appearing open
 Q4, nonplanar, boundary-only mechanics and full C4 acceptance remain required.
 [C4 evidence](docs/d1_review_support/contact_triangulated_rigid_20261006/development.md).
 
+The same C4 contributor now supports a connected multi-element S3 source patch
+under its own profile, preserving the earlier one-S3 identity. Installed4PASS,
+independent discrete pressure/structural response, actual support/contact/load
+wrenches, shared-node tangent and exact lifecycle restart pass. All536 payloads
+match. This closes the single-source development limitation and adds a bounded
+structural-K reference; spatial convergence, pressure-space qualification and
+independent engineering acceptance remain open. The nonlinear correction is an
+estimate, not a rigorous model-error enclosure.
+[Patch evidence](docs/d1_review_support/contact_triangulated_rigid_20261006/patch_development.md).
+
 ## Preserved history and decisions
 
 The [unaltered prior goal](GENERAL_CONTACT_GOAL_HISTORY_20261005.md) and [prior plan](GENERAL_CONTACT_PLAN_HISTORY_20261005.md) retain all development decisions, counterexamples, failures, references and source identities. Unaffected scientific contracts, registered criteria, frozen/consumed authorities and assessed capability boundaries remain binding. Historical chronological next actions are superseded by this live goal/plan; this consolidation changes no mechanics or acceptance target and authorizes no repeated campaign.

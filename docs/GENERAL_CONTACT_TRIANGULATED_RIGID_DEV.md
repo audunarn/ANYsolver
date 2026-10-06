@@ -4,7 +4,7 @@
 mesh declaration. Vertices are xyz metres; faces are `(positive_stable_id,
 (zero_based_vertex_indices))`. Oriented arbitrary mesh data can be declared.
 The first executable profile admits a fixed planar, consistently oriented,
-nonoverlapping finite mesh against **one elastic e4-pl-s3-v2d shell element**.
+nonoverlapping finite mesh against an elastic e4-pl-s3-v2d shell source (one element or an explicitly connected patch).
 Exact stored-coordinate coplanarity and positive-area overlap checks refuse
 unresolved geometry. Shared edges use common geometric vertex labels.
 
@@ -42,8 +42,16 @@ geometry, crossing or gap checks refuse/cut back. Complete descriptor, physical
 skin map, settings and captured operator bind restart and mutation guards.
 
 This is development integration, not C4 qualification or release acceptance.
-Nonplanar geometry, Q4 mechanics, multiple source elements, finite rotations,
+Nonplanar geometry, Q4 mechanics, disconnected source elements, finite rotations,
 free/moving rigid bodies, friction, self-contact and physical edge-only contact
 remain unsupported. No derivative is claimed at unresolved clipping incidence;
 such a trial must refuse, rather than activate a fallback engine. Normal-law,
 resource limits and old profile identities remain unchanged.
+
+## Connected source patch profile
+
+`S3_PATCH_PLANAR_TRIANGULATED_RIGID_SHARED_PENALTY_STATIC_DEV_V1` admits a connected S3 physical patch. Shared edges must have opposite directed topology, shared physical positions and complete work maps must agree, and exact projected positive source-face overlap refuses reference and candidate geometry. Pressure unknowns are global material source nodes; shared support/weighted-gap Jets are summed across every source and target face before the same penalty law. Both source-face and target-face crossblocks survive the global skin pullback. The single-S3 profile and its restart contract are unchanged.
+
+Before dense derivative allocation, the patch profile binds an explicit128MiB local derivative-work cap. For n source nodes, m geometry coordinates, p face pairs the conservative storage allowance is `8*(2*n*m*m+2*n*m+13*m*m+16*m+n*n+512*p)+4MiB`: two gradient/two Hessian arrays, returned Hessian plus twelve dense expression temporaries, vectors/pressure Gram/pair-state scratch, and sequential fixed18-coordinate Jet scratch. The4MiB allowance exceeds the fixed S3 polygon (at most6vertices/four fan triangles) primitive's retained Jets; no AD graph is retained. This is local work storage, not a total-process memory guarantee. Candidate, pressure-node, energy and process budgets retain their existing meanings.
+
+`examples/general_contact_triangulated_rigid_patch.py` provides a connected two-S3/nonmatching finite-tool force press. New focused patch tests also cover press/open/recontact and exact restart, shared-junction skin-rotation work, and an independent P1 M/S active-set reference using a separately assembled no-contact structural K. The nonlinear correction expression is a leading-order estimate, not a rigorous uniform error bound; actual coupled response is measured against the independent reference at the unchanged1e-6 gate. Multi-element admission is development evidence, not spatial convergence or C4 qualification.
