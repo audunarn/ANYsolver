@@ -2623,3 +2623,19 @@ C5 SAME27terminaljobs177.751535299816/180s used,2.248464700184s remaining.
 All failures/protected evidence preserved; no rerun/borrowed/renewed authority.
 Complete release/reference/wrench/split restart and C0-C9 acceptance remain OPEN.
 Evidence: docs/d1_review_support/contact_arc_length_20261006/release_development.md
+
+
+### 6 October 2026 - C5 reverse-load opening: installed DEVELOPMENT PASS
+
+Explicit useradditional60s raises C5 cumulative180->240s; other scopes unchanged.
+Frozen repaired484dfe08 test PASS1/8.291037200019s/167657472B on matching existing
+installed solver. Actual active preload-1.7450066um -> inactive pressure AND
+positive final physical gap7.598713707817um. Independent response1.641e-11,
+spherical3.008e-7, wrench3.710e-12 at unchanged1e-6/separate dimensional scales;
+exact full6/prefix3+resume3 checkpoint passes. Prior writer NONPASS retained.
+Root543payload/224actualimport/protected hash agreement; errors0/JIT0/Numba1/
+native pools1. No solver/physics/tolerance/build change. Supporting Read scrutiny
+only, not independent engineering acceptance/general continuation admission.
+SAME28terminaljobs186.042572499835/240s spent,53.957427500165s remains within
+approved check/repair scope. Full C0-C9 and broader C5 required profiles OPEN.
+Evidence: docs/d1_review_support/contact_arc_length_20261006/release_development.md

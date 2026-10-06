@@ -13,7 +13,29 @@ Work only in C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001 on co
 
 ## Current position
 
-## C5 preload-to-opening candidate: partial, repairs UNEXECUTED
+## C5 preload-to-opening workflow: installed development check PASS
+
+The unchanged frozen reverse-load candidate now passes the complete installed
+test: actual active physical preload, positive final gap7.598713707817um,
+independent structural/P1 response, spherical path, support/load/contact and
+both-body wrench gates, exact full6/prefix3+resume3 checkpoint. Maximum response
+1.641e-11, sphere3.008e-7 and wrench3.710e-12 satisfy unchanged1e-6 gates;
+separate .15N/.15Nm/10um scales remain. The earlier writer failure is preserved,
+not retrospectively passed. Inactive pressure plus positive physical gap is
+required for opening; no load/regularization/tolerance/solver changes were made.
+
+One installed test PASS8.291037200019s/167657472B; actual224installed imports,
+errors0/JIT0/Numba1/pools1. Root543payload/source agreement and protected hashes
+match. Supporting source/evidence review found no remaining consequential defect
+in this fixture; it is not independent engineering acceptance or broader C5
+admission. No product changes/build; unaffected prior evidence is reused.
+
+User approved an additional60s for this C5 check/repair scope: total240s,
+28terminaljobs186.042572499835s used,53.957427500165s remains. All other
+authorities unchanged; no borrowing or fresh campaign implied. Author/reviewer
+terminal, no process live. [Evidence](docs/d1_review_support/contact_arc_length_20261006/release_development.md).
+
+### Historical C5 candidate at6ecc5d19: partial, repairs then UNEXECUTED
 
 The distinct reversed-load fixture reached six accepted ordinary arc steps;
 the six physical 50um gap assertions passed. The consumer report then failed

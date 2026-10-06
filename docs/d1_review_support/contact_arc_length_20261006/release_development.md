@@ -1,6 +1,7 @@
 # C5 reverse-load arc opening: partial development evidence
 
-**Disposition:** partial implementation; repaired assertions UNEXECUTED.
+**Latest disposition:** complete frozen fixture installed-development PASS.
+Earlier partial/writer-failed candidate and its unexecuted repair status below are historical.
 No solver changes, engineering acceptance or release.
 
 ## Frozen candidate and actual execution
@@ -48,3 +49,31 @@ release_held_inputs.json, release_final_manifest.json, release_worker_handoff.md
 release_harness_preparation_delta.json, release_root_initial_capture.json,
 release_root_reconciliation.json and original ledger/prior-record snapshots.
 Keep implemented/tested/independently accepted/released distinct. C0-C9 incomplete.
+
+## Authorized continuation and actual installed PASS
+
+User explicitly approved60 additional C5 seconds (180->240 cumulative), without
+other-scope renewal. Frozen test484dfe082e9ac68e532461fa733d1e271ff755e0a64d1da8fea00f9231b1f14a
+executed unchanged. Installed2 exit0/PASS1,8.291037200018764s process wall,
+167657472B peak. Actual active preload minimum gap-1.7450066um; final pressure
+inactive ANDphysical gap+7.598713707817um. Full6 steps/prefix3+resume3 exact
+complete capsule equality passed; full50593B/prefix38744B capsules saved.
+
+Maximum independent response1.640847343749e-11, sphere3.007358976933e-7,
+preload/step equilibrium3.7094e-12, pairwrench2.312964634752e-17, all<=1e-6.
+Separate0.15N/0.15Nm/10um scales unchanged; six physical50um gap checks pass.
+224actual installed imports/errors0/JIT0/Numba1/three native pools1; root543
+source/installed payloads and seven protected implementation/fixture hashes
+match. No solver edits/build/install and no tuning after the writer failure.
+
+28terminaljobs186.04257249983494/240s used,53.95742750016506s remains.
+First jobcap50.248464700184s retained12s integration reserve and953MiB cap.
+Root data/AST/provenance audit errors0, no additional numerical execution.
+Supporting same-family Read review finds no consequential remaining defect for
+this fixed-profile fixture; not independent engineering acceptance, deformable
+target/general shell/native/friction/material/finite-rotation continuation.
+
+New immutable raw: release_extension_authority.json, held_inputs/final_manifest,
+worker_handoff, root_reconciliation; release_installed2/{inputs,resource,runtime,
+imports,actual_result}.json,run.log,accepted_full.checkpoint,accepted_prefix.checkpoint.
+Original failed attempt remains failed. Broader C5 and C0-C9 remain incomplete.

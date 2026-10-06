@@ -4,53 +4,53 @@
 
 Work ONLY in C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
 branch codex/contact-main-reconcile-20261001. Inspect current HEAD/status;
-parent5e722d3dce2b9fbd2430504cdddb9b035df7d989 holds installed C4 controls.
+parent6ecc5d19fe657229aa0efa80c1c4e1565778f0b0 holds the preserved C5 candidate;
+installed C4 controls remain at5e722d3d.
 Full C0-C9 stays ACTIVE/incomplete: [goal](GENERAL_CONTACT_GOAL.md),
 [plan](GENERAL_CONTACT_PLAN.md), [ledger](docs/GENERAL_CONTACT_CAPABILITIES.md).
 No protected-original access, sibling edits, other-chat messaging, publication,
 push/merge/release or default changes. Local Git checkpoints authorized.
 Global AGENTS reread; apply current worker ownership, early checkpoints and
-precise resource accounting. No renewed execution authority. Mistral/local
+precise resource accounting. Only the explicit C5 extension below changes
+execution authority. Mistral/local
 cached unavailable; OpenAI fallback. Author/reviewer terminal, no job live.
 Same-family scrutiny is not independent engineering acceptance.
 Ledger append ASCII BYTES ONLY; preserve working and Git prefixes separately.
 
-## C5 preload-to-opening candidate: partial, repairs UNEXECUTED
+## C5 preload-to-opening workflow: installed development check PASS
 
-The distinct reversed-load fixture reached six accepted ordinary arc steps;
-the six physical 50um gap assertions passed. The consumer report then failed
-on a NumPy Boolean before opening, independent response/path/wrench gates and
-split restart were asserted. No machine numerical result or checkpoint was saved
-by that version. This is a report-writer failure, not established mechanics
-failure and not a successful opening workflow.
+The unchanged frozen reverse-load candidate now passes the complete installed
+test: actual active physical preload, positive final gap7.598713707817um,
+independent structural/P1 response, spherical path, support/load/contact and
+both-body wrench gates, exact full6/prefix3+resume3 checkpoint. Maximum response
+1.641e-11, sphere3.008e-7 and wrench3.710e-12 satisfy unchanged1e-6 gates;
+separate .15N/.15Nm/10um scales remain. The earlier writer failure is preserved,
+not retrospectively passed. Inactive pressure plus positive physical gap is
+required for opening; no load/regularization/tolerance/solver changes were made.
 
-Test-only repairs use strict NumPy scalar conversion, preserve actual full and
-prefix checkpoints before consumer checks, and require inactive pressure AND
-positive final physical minimum gap. Zero active pressure alone does not prove
-pointwise opening. Supporting source review found the latter coverage defect;
-the same owner repaired it. AST/bytes checks only: all repairs and complete
-release/reference/wrench/restart assertions remain UNEXECUTED.
+One installed test PASS8.291037200019s/167657472B; actual224installed imports,
+errors0/JIT0/Numba1/pools1. Root543payload/source agreement and protected hashes
+match. Supporting source/evidence review found no remaining consequential defect
+in this fixture; it is not independent engineering acceptance or broader C5
+admission. No product changes/build; unaffected prior evidence is reused.
 
-No solver/API/physics/tolerance changes or new build. Existing C9 installed
-artifact matches all543source payloads; actual failed-job224installed imports
-match, errors0/JIT0/Numba1/pools1. Failed process6.905068299966s,
-peak167473152B. SAME C5 purse:27terminaljobs,177.751535299816/180s used,
-2.248464700184s remains. A complete rerun does not fit; do not borrow or renew
-authority. All previous successful and failed evidence retains its original scope.
-[Evidence](docs/d1_review_support/contact_arc_length_20261006/release_development.md).
+User approved an additional60s for this C5 check/repair scope: total240s,
+28terminaljobs186.042572499835s used,53.957427500165s remains. All other
+authorities unchanged; no borrowing or fresh campaign implied. Author/reviewer
+terminal, no process live. [Evidence](docs/d1_review_support/contact_arc_length_20261006/release_development.md).
 
 ## Held authorities
 
-| Milestone | Used /180s | Remaining seconds |
+| Milestone | Used / allowance (seconds) | Remaining seconds |
 |---|---:|---:|
-| C6 beam/S3 |178.223450299818|1.776549700182|
-| C5 arc |177.751535299816|2.248464700184|
-| C4 triangulated/connected S3 |172.931528899935|7.068471100065|
-| C9 archives |177.698497499572|2.301502500428|
-| Automatic domains |174.026839300175|5.973160699825|
-| Native connected spatial |177.357927799691|2.642072200309|
+| C6 beam/S3 |178.223450299818 /180|1.776549700182|
+| C5 arc |186.042572499835 /240|53.957427500165|
+| C4 triangulated/connected S3 |172.931528899935 /180|7.068471100065|
+| C9 archives |177.698497499572 /180|2.301502500428|
+| Automatic domains |174.026839300175 /180|5.973160699825|
+| Native connected spatial |177.357927799691 /180|2.642072200309|
 
-C6/C5/C4/C9 terminal jobs:29/27/33/34. Onejob/953MiB/JIT0/Numba1/pools1;
+C6/C5/C4/C9 terminal jobs:29/28/33/34. Onejob/953MiB/JIT0/Numba1/pools1;
 watchdog<=min60s,remaining-1; stricter frozen limits prevail. Original120h
 consumed432011s. Additional C6 180s and domain180s requests remain UNANSWERED.
 No borrowing/renewal from elapsed time, preselection, policy or goal continuation.
@@ -59,11 +59,14 @@ Domain refined writer NONPASS/FD100.161s timeout; nativeV8 NONPASS/V9 full
 
 ## Next mechanics gates and retained deliveries
 
-C5 repaired complete release check needs sufficient explicit execution authority;
-no complete numerical rerun fits its residue. Raw release_held_inputs.json binds
-the frozen fixture; release_installed1 retains failed command/source/runtime/log.
-release_final_manifest.json binds repaired test; release_root_reconciliation.json
-is filesystem/AST only. Never claim absent numerical assertions passed.
+C5 frozen complete opening/reference/wrench/split-restart check is now PASS.
+Raw release_installed2 preserves actual_result.json and full/prefix capsules;
+release_extension_authority.json, release_extension_final_manifest.json and
+release_extension_worker_handoff.md bind source/inputs/limits. Root
+release_extension_root_reconciliation.json verifies actual evidence, imports,
+payloads and cumulative accounting without another numerical job. Prior failed
+release_installed1 and repaired preparation remain immutable. Broader C5
+acceptance is OPEN; the extra allowance covers this check and focused repairs.
 
 C6 V19 nonzero B*Z tilted-chart test at1888 remains UNEXECUTED and local
 off-equilibrium adapter evidence, not an admitted dynamic state. With additional
@@ -85,7 +88,7 @@ private C:/ANYworkspaceWork/contact_transient_archive_20261006/native_reader_ins
 Incidental V19 packaging supplies no C6 numerical verification.
 
 Complete prior restart/history remains immutable at
-C:/ANYworkspaceWork/contact_arc_length_20261006/release_root_pre_disposition_GENERAL_CONTACT_RESTART.md
-and release_root_prior_restart.md. Raw release_worker_handoff.md includes original
+C:/ANYworkspaceWork/contact_arc_length_20261006/release_extension_prior_restart.md
+and earlier release_root_prior_restart.md. Raw release_worker_handoff.md includes original
 writer failure, no-launch preparation error, repaired source hashes and limits.
 No new numerical job planned. Full programme completion/acceptance remains open.

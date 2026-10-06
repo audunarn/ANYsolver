@@ -56,11 +56,22 @@ decided from production histories and gaps, not assumed from lambda0.2.
 Final opening requires both inactive pressure and a strictly positive production
 minimum physical gap; inactive weighted pressure alone is insufficient.
 
-The bounded installed attempt reached six accepted public arc steps, then failed
-in the test evidence writer on a NumPy boolean. The active/open, numerical
-response/wrench and complete-restart assertions were not reached. The local
-writer is repaired to preserve NumPy scalar values and save accepted capsules
-before postchecks, but this repaired candidate has NOT been run. This is an open
-development verification obligation, not release evidence or a passed lifecycle.
-No production solver/physics/parameters were changed, no failed input was tuned,
-and no new resource authority is implied.
+The first bounded installed attempt reached six accepted public arc steps, then
+failed in the test evidence writer on a NumPy boolean before the remaining
+assertions. That failed evidence is retained. The test-only writer repair
+preserves NumPy scalar values and saves accepted capsules before postchecks.
+
+Under the explicitly approved C5 authority extension, the unchanged frozen
+release candidate passed the installed public route: actual preload gap-1.745um,
+final inactive pressure and positive physical gap+7.599um, all six accepted
+response/path/wrench/gap checks and exact full6 versus prefix3/resume3 checkpoint
+bytes. Response error was at most1.641e-11 on10um scale, spherical error3.008e-7,
+and separate force/moment equilibrium error3.710e-12; the1e-6 gates were retained.
+Effective installed imports/JIT/thread settings and capsule hashes are recorded
+in release_extension_final_manifest.json under the arc evidence directory.
+
+No production solver, physics or frozen fixture parameters were changed. This
+is bounded development release/restart evidence for the existing elastic,
+affine-support/fixed-tool profile. It neither changes historical no-contact/V1
+contracts nor establishes broader augmented/friction/moving-tool arc admission,
+formal qualification, engineering acceptance or an automatic authority renewal.
