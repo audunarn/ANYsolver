@@ -4049,3 +4049,25 @@ PENDING fresh bounded authority; previous600 has one physical screen consumed,
 Bindings/proposal: native-proportional-capacity-dev/source-readiness-v1.json.
 G4D/first limit point/descending branch, F03, external/scale/platform/different-family
 and full programme obligations remain OPEN. No body/closed/main/push/release action.
+
+## 2026-10-06 — proportional native arc installed development result
+
+Source151cb3d4/wheel6464174e; fresh600s APPROVED, not a transfer of old budgets.
+Source34PASS/3full-routeDESELECTED. Installed ONE screen12arcsteps/13durable
+prefixes completed; every accepted equilibrium/gap/globalwrench check PASS.
+Factor g13=.80810168567, g14=.80897012545, g15=.80840929709 with increasingtipz:
+UNVALIDATED turning candidate; no materialhistory/update activity observed.
+Full recovery/checkpoint restore,refusals,corruption,precancel,acceptedcancel and
+replay of observed early endpoints PASS. Separate savedg14->g15 ONEstep replay
+PASS near turning; full publicstate and checkpointbytes match exactly, with
+precancel and wrongdirection/controller refusals preserving actual acceptedstate.
+Root13durablebyte/state bindings and independent OpenAI Read review checked.
+CPU0/pools1/JIToff/2GiB verified;430 source/wheel/site modules identical.
+Exact processwall20.3669359+198.5712466+29.1011479=248.0393304s of600;
+351.9606696s remaining scoped verification ONLY, ONE primaryscreen CONSUMED.
+Supervisor cleanup/accounting/hash findings repaired before runs; olderrecords
+preserved. Raw native-proportional-capacity-dev/root-result-v1.json and ledgers.
+Implementation/test evidence advanced; G4D/validatedfirstlimitpoint/descending
+branch, physicalconnection,F03,external/scale/platform/differentfamily and full
+G0-G6 programme acceptance remain OPEN. No capacity/stability qualification.
+No force-seedrerun,tuning,extra primaryscreen,body,closed,main,push or release.
