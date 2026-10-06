@@ -23,4 +23,3 @@ No eigenvalues, modes, costs, errors or candidate passes were evaluated here. Al
 - examples/native_connected_bending_dev.py: 43f984835ab5cc7fa8bcc44541c987aa4a8d469f674830e2e9c456af4b7d5118
 - tests/test_ge_beam3_native_connected_bending.py: a7207022c88b8043502dc24d400c5397275324f598ab29b3e8b861b1ce46a4e2
 - docs/GENERAL_CONTACT_NATIVE_CONNECTED_BENDING_DEV.md: 5bbe2446e20f19c100b11ca86fd765705c998d957eb3e062d0d14ffa850147f3
-
