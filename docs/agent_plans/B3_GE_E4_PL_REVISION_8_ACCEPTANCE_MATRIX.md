@@ -3210,3 +3210,28 @@ strict test/example hashes. Non-author reviews v1/v2 preserved; finaldelta SHA
 source defect identified within their declared scope; different-family acceptance
 remains unmet. All4 jobs terminal/processes0/leaseRELEASED. Historical failures,
 raw sources, ca2503 old wheel and full scientific/release obligations retained.
+
+
+## 6 October 2026 - installed native BL5 material displacement development
+
+Installed DEVELOPMENT selection PASSED, not a full suite or qualification pass.
+Fresh anysolver0.4.7 wheel SHA02f3506ce28cfed4029b6c8895d99d14571253a4be2f11bfd23101187d32d425
+binds product source a5c7dec15a3db6de8c128dd188bf4701f8f6ad26; original ca2503 wheel unchanged.
+Root independently matches all425 source/wheel/installed Python payloads and all245
+actual solver imports to the isolated installed site. Exact CI NumPy2.5.3/SciPy1.18.1/
+Numba.68.0/llvmlite.50.0; affinity[0], all3 loaded pools1, JIT-off/unforced backend.
+Public biaxial/Q4J2 axial load-unload-restoration-continuation completes with source-
+identical observables/checkpoint behavior. Selected tests6PASS/1DESELECT49.68s;
+known failed same-origin force/control parity explicitly excluded, remainsFAILED.
+Supervisor67.716s/192122880B sampled peak. No repeat original force/POINT cohort,
+sdist, consumer changes, external/physical acceptance, scale or release claim.
+
+Ordinary build-monitor process-exit race after successful pip build/install is
+preserved; both pip returncodes0, verified artifact finalized without rebuild or
+reinstall. Numerical leaseRELEASED; owned processes0. Root independently verifies
+1333 retained noncache artifact paths;425 cache files explicitly excluded.
+Raw .qualification/b3-ge-e4-pl/r8-native-fibre-bl5-displacement-installed-dev-20261006-v1/:
+handoff.json SHA7f0bd47ac6ca98878bc23c98fbcbf999635349639eff198bf4111f2cf3489139;
+manifest SHA7394c024f8010abbda43a82886d1f18566149df78a6eb6a4c76edad644dcd243.
+All prior source/review/failure dispositions and full G0-G6/F/V/B remain open as
+previously recorded; different-family scientific acceptance remains unmet.

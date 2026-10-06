@@ -43,17 +43,30 @@ passed; do not claim the entire new test file/full regressions passed.
 Non-author source/delta reviews find no consequential defect in bounded scope;
 independent-source-review-v2.md SHA16024be9507d73c1a92b8206b38cb61b0c651bc16b1d88c5e108c019d261616c.
 Different-family acceptance remains unmet (Mistral/local cached unavailable).
-No wheel/installed gate or consumer change yet for this new slice.
+Installed DEVELOPMENT completed from source a5c7dec, fresh wheel02f3506ce28cfed4029b6c8895d99d14571253a4be2f11bfd23101187d32d425.
+Root verifies425 source/wheel/site payloads,245 actual installed imports and1333
+raw paths. Public example and6 selected checks pass; known failed parity1DESELECT.
+Supervisor67.716s/192122880B/pools1/JIT-off. Build-monitor exit race preserved;
+pipbuild/install both exit0, no rebuild. No consumer or qualification claim.
+Installed raw r8-native-fibre-bl5-displacement-installed-dev-20261006-v1/;
+handoff SHA7f0bd47ac6ca98878bc23c98fbcbf999635349639eff198bf4111f2cf3489139;
+manifest SHA7394c024f8010abbda43a82886d1f18566149df78a6eb6a4c76edad644dcd243.
 
 ## Next outcome and ownership
 
-Complete an installed DEVELOPMENT verification of this source-only workflow,
-with actual import/wheel identities and explicit exclusion of known failed force
-parity from any selected-check summary. Do not repeat closed scientific force,
-event, rounding, compound or reference campaigns. Root owns contracts/Git/note/
-matrix; same author /root/native_bl5_material finished source assignment and is
-available for bounded installed follow-through. No numerical activity live now.
-
+Resolve the physical-reference blocker before accumulating further native scope.
+Same author owns a bounded SOURCE-ONLY two-part body solution candidate: NEW
+r8_bl5_body_port_twofold script/test/doc and raw r8-bl5-body-port-twofold-dev-20261006-v1/.
+Question: can retaining low physical corrections resolve the prior tiny loaded-
+row failure without changing K/load/gauge or scientific gates? Original binary64
+body V1/V2 remain failed. qHi/qLo and gauge etaHi/etaLo, represented physical work
+and residuals required; joint KKT convergence cannot replace original physical
+Kq-load equilibrium. No load projection, artificial floor/support/stiffness.
+25 active-minute development bound/final7 reserved; manufactured microchecks
+only. No specimen RHS, CCX/calibration/F03 or closed campaign run authorized.
+Independent mathematical review and explicit next authority decision precede any
+saved-case evaluation. Root owns contracts/Git/note/matrix; cached optional workers
+unavailable. Installed job finished/processes0; only new author microchecks permitted.
 Existing GE/B2/footprint/POINT routes and their source-bound installed evidence
 remain; do not rebuild delivered owners. Mandatory physical/connection/interface,
 material, load/stability/capacity, scale, external/platform and consumer acceptance
