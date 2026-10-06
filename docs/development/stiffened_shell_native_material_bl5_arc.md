@@ -1,6 +1,6 @@
 # Native material BL5 arc continuation candidate
 
-Status: IMPLEMENTED_BUT_UNVERIFIED source candidate; no execution authority. Neither
+Initial source-only status: IMPLEMENTED_BUT_UNVERIFIED; no execution authority then. Neither
 source tests, an installed artifact nor scientific acceptance have been established.
 OpenAI owns this slice because Mistral/local availability is already exhausted.
 
@@ -102,7 +102,7 @@ the existing POINT arc/selection/chart and generalized coupled arc regressions.
 Source/installed artifact binding, independent acceptance, different-family review,
 physical mesh/unit/stability G4D obligations and scientific/release gates remain open.
 
-## Final source handoff
+## Historical source-only handoff
 
 The candidate is connected through the existing public controller, isolated
 endpoint validation and atomic publication services. Source inspection found no
@@ -142,3 +142,56 @@ all physical/scientific/release obligations. Zero test pass claims are made here
 | src/anysolver/_stiffened_shell_ge_experimental.py | fbc26f1c95f432928c423ebc3886d12f2d33e6f86b9229a28676cde07b2491b2 |
 | tests/test_stiffened_shell_native_material_bl5_arc.py | 0fc2f4c4814d01db847140d5a1d6fffdbc397184468998b23c846f4317352c74 |
 | examples/stiffened_shell_native_material_bl5_arc.py | 2e1e92a33b67fadfa531ea8e9603e7c11e5fdb7fd941161fb1c16bf68bb071ea |
+
+
+## Bounded development verification (2026-10-06)
+
+The user subsequently approved a separate 300-second DEV allowance. Its authority,
+ledger, native whole-launch supervisor and versioned inputs are under
+`.qualification/b3-ge-e4-pl/r8-native-material-bl5-arc-dev-20261006-v1`. The earlier
+600-second accounting uncertainty was not reset or reused.
+
+The mixed/biaxial/continuous-P1-coarse fixed-translation arc workflow passed once
+against source and once against the single newly built isolated wheel. These checks
+assert actual yielded predecessor fibre/S3 histories, native checkpoint identity,
+complete recovery equality, retained state, fresh restoration and continued bytes.
+Root's native byte audit matched all 430 solver modules from source to wheel to site.
+The installed run bound example/test snapshot origins and all loaded solver imports,
+recorded readonly dependency bytes, and verified affinity[0], pools1, Numba1 and JIT
+disabled before/after. This supports only that experimental core workflow.
+
+The broader source impact attempt timed out after 135.224522 seconds. Its eight
+progress dots are not bound case passes; no terminal JUnit or post-runtime report
+exists. Its sampled RSS peak was not persisted before the tree kill and is UNKNOWN.
+The startup affinity harness failure and malformed-selector attempt are retained.
+No mechanical product repair or second wheel build was needed. Lifecycle, remaining
+source/installed selectors, independent/scientific acceptance and publication gates
+remain incomplete unless a later versioned handoff explicitly supplies their evidence.
+See the raw handoff for terminal receipts, costs, exact scope and any final checks.
+
+### Final installed controls, 2026-10-06
+
+Terminal installed controls: three passed — atomic failure/cancellation and
+accepted-prefix preservation, explicit admission refusal, and full-frame metric
+normal-spin/objectivity. Combined with the installed core, four unique impact cases
+have terminal installed evidence across two jobs. The source core has one terminal
+pass; the broader source timeout has no bound pass count. Total exact new allowance
+use is 268.2379262 / 300 seconds, remaining 31.7620738. The single candidate wheel
+SHA256 is 4c027af197b7d8337e9ceb1d106e2b77befbb493179a7e6528ba9fb6e6cbf98a.
+Root approved final-stage use of the existing reserve after presenting original
+approval and ledger proof to approval review. No additional job or authority reset.
+Final handoff and manifest are in the authorized raw directory. This establishes
+limited DEV behavior only; incomplete regressions and all listed scientific,
+different-family, independent acceptance and publication obligations remain open.
+
+### Installed actual-update regression, 2026-10-06
+
+One new installed actual-update path-row central difference and assembled full
+retained border/manufactured-RHS test passed (8.4307776s whole measured wall).
+There are now five distinct terminal installed impact cases across three jobs,
+with source still one terminal core case and an incomplete timed-out campaign.
+Exact allowance use is 276.6687038 / 300s; 23.3312962s remain. All runtime pins and
+byte-origin checks passed for this new job. This is not a whole equilibrium
+Jacobian finite difference, real cutback, turning point or capacity reference.
+Numerical work stopped. Versioned final handoff: raw/handoff-v2.md and
+raw/final-manifest-v2.json; prior four-case files preserved unchanged.

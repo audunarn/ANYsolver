@@ -1537,3 +1537,35 @@ and affected legacy checks, then one installed artifact verification/repair with
 that allowance. Historical 600s compliance stays UNPROVEN; zero checks remain.
 No closed campaign, F03, body retry, contact communication, main/push or release
 is renewed. Aggregate G4D and full programme remain open.
+
+### 6 October — native material BL5 arc: limited installed development evidence
+
+Candidate9bc30096/wheel4c027af197b7 now completes the mixed Q4/S3, physical-fibre
+and generalized-material loaded endpoint, arc, physical recovery, exact fresh
+checkpoint restoration and continued stepping. One source core and five distinct
+installed cases pass. Installed controls establish atomic cancellation/prefix,
+admission refusal, full-frame metric behavior, actual-update path-row derivatives
+and manufactured full retained-border algebra. These are separate from a smooth
+whole-equilibrium Jacobian, real cutback, first limit point or descending branch.
+No element/material/attachment equations, tolerances, API or defaults changed.
+
+The source impact campaign timed out; eight progress dots are UNBOUND and its
+peak RSS is UNKNOWN. No broader source/legacy campaign acceptance is inferred.
+New approved300s accounting:276.6687038s used/23.3312962s remain; all jobs terminal.
+The reserve was used for final verification. Earlier rejection, startup/selector
+failures and timeout remain preserved. Historical600s compliance remains unproven.
+
+Root verified430 source/wheel/site payloads, actual wheel/dependency imports,
+frozen test/example inputs and effective runtime. Independent source/runtime
+review d383855f found no blocking defect in tested scope; different-family and
+scientific acceptance remain open. Evidence: r8-native-material-bl5-arc-dev-20261006-v1,
+latest handoff-v2.md/final-manifest-v2.json and root byte/import/receipt proofs.
+
+Next connected outcome: exercise the existing ANYfem v6 panel/Project owner with
+native BL5 arc and fresh checkpoint continuation, and close missing checkpoint/
+legacy coverage by impact. Prepare source/input work first; use only remaining
+eligible allowance or obtain fresh explicit bounded verification for work that
+cannot fit it. Do not rerun the timed-out source campaign to reconstruct evidence.
+Then undertake the still-required equilibrium-Jacobian and physical capacity
+assessment under their actual prerequisites and authority. No replacement API,
+new qualification packages, weaker gates or intermediate production release.

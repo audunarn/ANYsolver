@@ -3846,3 +3846,33 @@ its new checks require explicit bounded authority, not this exhausted allowance.
   legacy contracts, physical capacity/mesh/unit/reference evidence, independent
   scientific/different-family acceptance and all unfinished programme gates.
 - No F03/body/closed-campaign renewal, main/push/release or sibling authority.
+
+## 2026-10-06 — native material BL5 arc limited installed DEV evidence
+
+- Candidate9bc30096728ec535bf197e66c548f18295c173db; wheel0.4.7 SHA256:
+  4c027af197b7d8337e9ceb1d106e2b77befbb493179a7e6528ba9fb6e6cbf98a.
+- Implementation: IMPLEMENTED_NOT_QUALIFIED. LIMITED_INSTALLED_DEV_VERIFIED:
+  source core1PASS; installed5 distinct cases across3 successful jobs. Loaded
+  mixed/P1 physical-fibre/S3 history, fresh restart/continue; atomic cancel/prefix,
+  explicit admission refusal, full-frame metric, actual-update PATH ROW and full
+  retained manufactured bordered algebra. Not whole-Jacobian/real capacity proof.
+- Roots:430 source/wheel/site payloads;250 core/control and249 derivative actual
+  wheel imports;748 dependency imports per installed job;6 snapshot input files;
+ 5 example origins and pre/post affinity0,pools1,NumBa1,JIT-off checked.
+- Raw: .qualification/b3-ge-e4-pl/r8-native-material-bl5-arc-dev-20261006-v1/.
+  Latest handoff-v2.md SHA658e5eeb; final-manifest-v2.json SHAf306dfdb.
+  Root artifact/core/control/derivative proof files retain exact evidence scope.
+  Independent source/runtime report SHAd383855f4cf96784eb1d67da465d0feb0356b92dae6d508ca2ccb7c91961c97e.
+- Resource: approved NEW300s; exact whole-process276.6687038s used,
+ 23.3312962s remaining. Successful installed walls34.1895612/38.5294439/8.4307776s.
+  No running jobs. Historical600s remains unproven, not reused. Final reserve used
+  for final verification under original approval; earlier84s rejection preserved.
+- Failures: startup conhost guard exit15/.1857954s; selector collection exit4/
+ 6.8620253s; source impact timeout135.224522s. Timeout dots UNBOUND; peakRSS UNKNOWN,
+  no terminal/post-runtime/import binding. Do not infer full campaign/memory pass.
+- Open: remaining parameter/checkpoint/legacy checks, smooth whole-equilibrium
+  Jacobian, real cutback/turning/descending branch, consumer arc exercise,
+  mesh/unit/physical/reference/different-family and all unfinished aggregate gates.
+- Earlier source-only records remain historical. Source/test/example unchanged
+  after single build/install; no new API/equations/tolerances/defaults/versions.
+  No F03/body/closed-campaign/main/push/publication authority follows.
