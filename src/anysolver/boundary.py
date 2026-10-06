@@ -8,10 +8,22 @@ for the FE model.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from abc import ABCMeta
 from contextlib import ExitStack
+import io
+import codecs
+from encodings import ascii as _ASCII_CODEC, cp1252 as _CP1252_CODEC
+from encodings import latin_1 as _LATIN1_CODEC, utf_8 as _UTF8_CODEC
+from gc import get_referents as _GET_REFERENTS
+import linecache
+import re
+import sys
+import types
+import warnings
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
+from numpy._core import _ufunc_config as _NUMPY_ERROR_MODULE
 
 from .matrix_assembly import (
     _CAPTURE_QUALIFIED_ASSEMBLY_RUNTIME_LEASE as _CAPTURE_QUALIFIED_LOAD_RUNTIME_LEASE,
@@ -23,6 +35,16 @@ from .e4_pl_element import (
 from .e4_pl_s3_element import (
     QualifiedE4PLS3ShellElement as _QualifiedE4PLS3ShellElement,
     _s3_trusted_operation_scope as _S3_TRUSTED_OPERATION_SCOPE,
+)
+
+from ._qualified_authority_epoch import _AuthorityEpochManager
+from . import elements as _element_module
+from .elements import BeamElement as _BeamElement, Element as _Element, ShellElement as _ShellElement
+from anymaterial import IsotropicMaterial as _IsotropicMaterial
+
+from .fe_core import (
+    DOFManager as _DOFManager, FEModel as _FEModel, FEMesh as _FEMesh, Node as _Node,
+    _QualifiedStateMapping,
 )
 
 if TYPE_CHECKING:
@@ -640,6 +662,26 @@ class LoadCase:
                 self, mesh, dof_manager, guard=qualified_runtime_guard,
                 activity=element_activity,
             )
+        return self._get_load_vector_core(
+            mesh,
+            dof_manager,
+            material_getter,
+            displacements,
+            element_activity,
+            qualified_runtime_guard=qualified_runtime_guard,
+        )
+
+    def _get_load_vector_core(
+        self,
+        mesh: "FEMesh",
+        dof_manager: "DOFManager",
+        material_getter: Optional[Callable[[str], "Material"]] = None,
+        displacements: Optional[np.ndarray] = None,
+        element_activity: Optional[object] = None,
+        *,
+        qualified_runtime_guard: Callable[..., None],
+    ) -> np.ndarray:
+        """Assemble the global load vector once the element-family route is chosen."""
         total_dofs = dof_manager.total_dofs
         F = np.zeros(total_dofs)
 
@@ -752,6 +794,689 @@ class LoadCase:
                 qualified_runtime_guard=guard,
             ),
         )
+
+
+def _callable_authority(member: Any, seen: tuple = ()) -> tuple:
+    """Snapshot executable metadata, including descriptor accessors."""
+    if type(member) is types.FunctionType:
+        if any(member is prior for prior in seen):
+            return (member,)
+        closure = tuple(cell.cell_contents for cell in member.__closure__ or ())
+        return (member, member.__code__, member.__defaults__,
+                None if member.__kwdefaults__ is None else tuple(member.__kwdefaults__.items()),
+                tuple((value, _callable_authority(value, seen + (member,)),
+                       name == "accepted_generation" and type(value) is int
+                       and member.__globals__.get("__name__") == "anysolver._qualified_authority_epoch"
+                       and member.__qualname__ in (
+                           "_AuthorityEpochManager.bind.<locals>.require",
+                           "_AuthorityEpochManager.bind_context.<locals>.require",
+                           "_AuthorityEpochManager.bind_argument.<locals>.require"))
+                      for name, value in zip(member.__code__.co_freevars, closure)))
+    if type(member) is property:
+        return tuple(_callable_authority(f) for f in (member.fget, member.fset, member.fdel))
+    if type(member) in (staticmethod, classmethod):
+        return (_callable_authority(member.__func__),)
+    return ()
+
+
+def _callable_authority_matches(member: Any, authority: tuple) -> bool:
+    if type(member) is types.FunctionType:
+        if len(authority) == 1:
+            return member is authority[0]
+        if not authority or member is not authority[0] or member.__code__ is not authority[1] or member.__defaults__ is not authority[2]:
+            return False
+        closure = member.__closure__ or ()
+        if len(closure) != len(authority[4]):
+            return False
+        try:
+            if any((type(cell.cell_contents) is not int if generation_counter else
+                    cell.cell_contents is not value or not _callable_authority_matches(value, captured))
+                   for cell, (value, captured, generation_counter) in zip(closure, authority[4])):
+                return False
+        except ValueError:  # An emptied closure cell is no longer authoritative.
+            return False
+        expected = authority[3]
+        current = member.__kwdefaults__
+        return (current is None if expected is None else
+                type(current) is dict and all(type(key) is str for key in current) and len(current) == len(expected) and
+                all(current.get(key, _MISSING) is value for key, value in expected))
+    if type(member) is property:
+        return len(authority) == 3 and all(
+            _callable_authority_matches(f, a)
+            for f, a in zip((member.fget, member.fset, member.fdel), authority))
+    if type(member) in (staticmethod, classmethod):
+        return len(authority) == 1 and _callable_authority_matches(member.__func__, authority[0])
+    return not authority
+
+
+_MISSING = object()
+_EXACT_LOAD_CASE_NAMESPACE = dict(type.__getattribute__(LoadCase, "__dict__"))
+_EXACT_LOAD_CASE_GET_VECTOR_CORE = _EXACT_LOAD_CASE_NAMESPACE[
+    "_get_load_vector_core"
+]
+_EXACT_FE_MESH_PROVIDERS = tuple(
+    (name, type.__getattribute__(_FEMesh, "__dict__")[name])
+    for name in ("get_node", "get_element")
+)
+_NATIVE_FIBRE_STATIC_MODULE = "anysolver._ge_beam3_native_fibre_static_element"
+_EXACT_LOAD_CASE_FIELDS = frozenset(LoadCase.__dataclass_fields__)
+_EXACT_LOAD_ROUTING_CLASSES = tuple(
+    (owner, type.__getattribute__(owner, "__mro__"),
+     dict(type.__getattribute__(owner, "__dict__")))
+    for owner in (_FEModel, _FEMesh, _Node, _DOFManager, _QualifiedStateMapping, ABCMeta)
+)
+
+_EXACT_LOAD_CALLABLE_METADATA = {
+    owner: {name: _callable_authority(member) for name, member in namespace.items()}
+    for owner, _mro, namespace in _EXACT_LOAD_ROUTING_CLASSES
+}
+_EXACT_LOAD_CASE_CALLABLE_METADATA = {
+    name: _callable_authority(member) for name, member in _EXACT_LOAD_CASE_NAMESPACE.items()
+}
+_EXACT_MASS_CLASSES = tuple(
+    (owner, type.__getattribute__(owner, "__mro__"),
+     dict(type.__getattribute__(owner, "__dict__")))
+    for owner in (_BeamElement, _Element, _ShellElement, _IsotropicMaterial, _AuthorityEpochManager,
+                  _QualifiedE4PLShellElement, _QualifiedE4PLS3ShellElement)
+)
+_EXACT_MASS_METADATA = {
+    owner: {name: _callable_authority(member) for name, member in namespace.items()}
+    for owner, _mro, namespace in _EXACT_MASS_CLASSES
+}
+_WARNING_FUNCTIONS = tuple(
+    (name, getattr(warnings, name), _callable_authority(getattr(warnings, name)))
+    for name in ("showwarning", "formatwarning", "_showwarnmsg", "_showwarnmsg_impl",
+                 "_formatwarnmsg", "_formatwarnmsg_impl")
+)
+
+
+_WARNING_MESSAGE_CLASS = warnings.WarningMessage
+_WARNING_MESSAGE_NAMESPACE = dict(vars(_WARNING_MESSAGE_CLASS))
+_NUMPY_GETERR = _NUMPY_ERROR_MODULE.geterr
+_NUMPY_GETERR_AUTHORITY = _callable_authority(_NUMPY_GETERR)
+_WARNING_CANONICAL_ORIGIN = {
+    name: (type(function) is types.FunctionType
+           and function.__globals__ is vars(warnings)
+           and function.__code__.co_filename == warnings.__file__
+           and function.__code__.co_name == name)
+    for name, function, _authority in _WARNING_FUNCTIONS
+}
+_WARNING_MESSAGE_METADATA = {name: _callable_authority(member)
+                             for name, member in _WARNING_MESSAGE_NAMESPACE.items()}
+_MASS_HELPERS = tuple((name, getattr(_element_module, name),
+                       _callable_authority(getattr(_element_module, name)))
+                      for name in ("_beam_rotation_matrix", "_cross3"))
+_CODECS_LOOKUP_ERROR = codecs.lookup_error
+_CHARMAP_BUILD = codecs.charmap_build
+_WARNING_CHARMAP_TYPE = (
+    type(_CHARMAP_BUILD("".join(chr(value) for value in range(256))))
+    if type(_CHARMAP_BUILD) is types.BuiltinFunctionType and _CHARMAP_BUILD.__name__ == "charmap_build"
+    else None
+)
+_BUILTIN_WARNING_ERROR_HANDLERS = {
+    "strict": codecs.strict_errors,
+    "backslashreplace": codecs.backslashreplace_errors,
+}
+_LINECACHE_FUNCTIONS = tuple((name, getattr(linecache, name),
+                            _callable_authority(getattr(linecache, name)))
+                           for name in ("getline", "getlines", "updatecache"))
+
+
+def _canonical_python_function(function: Any, module: Any, name: str) -> bool:
+    return (type(function) is types.FunctionType and function.__globals__ is vars(module)
+            and (function.__code__.co_filename == module.__file__ or
+                 (module.__spec__.origin == "frozen" and
+                  function.__code__.co_filename == "<frozen " + module.__name__ + ">"))
+            and function.__code__.co_name == name)
+
+
+_WARNING_CODECS = {
+    "utf8": (_UTF8_CODEC, "utf_8_encode"),
+    "ascii": (_ASCII_CODEC, "ascii_encode"),
+    "latin1": (_LATIN1_CODEC, "latin_1_encode"),
+    "iso88591": (_LATIN1_CODEC, "latin_1_encode"),
+    "cp1252": (_CP1252_CODEC, "charmap_encode"),
+}
+_WARNING_ENCODER_AUTHORITY = {
+    module: (
+        module.IncrementalEncoder,
+        tuple((owner, type.__getattribute__(owner, "__mro__"),
+               dict(type.__getattribute__(owner, "__dict__")),
+               {name: _callable_authority(member)
+                for name, member in type.__getattribute__(owner, "__dict__").items()})
+              for owner in (module.IncrementalEncoder, codecs.IncrementalEncoder)),
+        getattr(codecs, helper),
+        getattr(module, "encoding_table", None),
+    )
+    for module, helper in _WARNING_CODECS.values()
+}
+
+
+def _referent_provider_is_builtin() -> bool:
+    return (type(_GET_REFERENTS) is types.BuiltinFunctionType
+            and _GET_REFERENTS.__module__ == "gc" and _GET_REFERENTS.__name__ == "get_referents")
+
+
+def _builtin_warning_encoder(stream: Any) -> bool:
+    if not _referent_provider_is_builtin():
+        return False
+    encoding = stream.encoding.lower().replace("-", "")
+    if encoding not in _WARNING_CODECS:
+        return False
+    module, helper = _WARNING_CODECS[encoding]
+    encoder_class, classes, native, encoding_table = _WARNING_ENCODER_AUTHORITY[module]
+    base = classes[1][0]
+    bases = type.__getattribute__(encoder_class, "__bases__")
+    if (module.IncrementalEncoder is not encoder_class
+            or codecs.IncrementalEncoder is not base or len(bases) != 1 or bases[0] is not base
+            or not _canonical_python_function(vars(base).get("__init__"), codecs, "__init__")
+            or not _canonical_python_function(vars(encoder_class).get("encode"), module, "encode")
+            or type(native) is not types.BuiltinFunctionType
+            or native.__name__ != helper
+            or getattr(codecs, helper) is not native
+            or getattr(module, "encoding_table", None) is not encoding_table
+            or (module is _CP1252_CODEC and type(encoding_table) is not _WARNING_CHARMAP_TYPE)):
+        return False
+    for owner, mro, namespace, metadata in classes:
+        current = type.__getattribute__(owner, "__dict__")
+        if (type.__getattribute__(owner, "__mro__") != mro or len(current) != len(namespace)
+                or any(current.get(name, _MISSING) is not value or
+                       not _callable_authority_matches(value, metadata[name])
+                       for name, value in namespace.items())):
+            return False
+    # Inspect the actual encoder retained by TextIOWrapper; looking up a codec
+    # by name could run a registered foreign search function and prove a
+    # different encoder from the one this stream will actually call.
+    encoders = [value for value in _GET_REFERENTS(stream) if type(value) is encoder_class]
+    if len(encoders) != 1:
+        return False
+    state = object.__getattribute__(encoders[0], "__dict__")
+    return (type(state) is dict and all(type(key) is str for key in state)
+            and set(state).issubset({"errors", "buffer"})
+            and type(state.get("errors")) is str and state["errors"] == stream.errors
+            and ("buffer" not in state or type(state["buffer"]) is str))
+
+
+def _builtin_warning_stream(stream: Any) -> bool:
+    if type(stream) is not io.TextIOWrapper or any(name in vars(stream) for name in ("write", "flush")):
+        return False
+    if not _builtin_warning_encoder(stream) or stream.errors not in _BUILTIN_WARNING_ERROR_HANDLERS:
+        return False
+    handler = _BUILTIN_WARNING_ERROR_HANDLERS[stream.errors]
+    if (type(_CODECS_LOOKUP_ERROR) is not types.BuiltinFunctionType
+            or _CODECS_LOOKUP_ERROR.__module__ != "_codecs"
+            or _CODECS_LOOKUP_ERROR.__name__ != "lookup_error"
+            or type(handler) is not types.BuiltinFunctionType
+            or handler.__name__ != stream.errors + "_errors"
+            or _CODECS_LOOKUP_ERROR(stream.errors) is not handler):
+        return False
+    buffer = stream.buffer
+    if type(buffer) is io.FileIO:
+        return not any(name in vars(buffer) for name in ("write", "flush"))
+    if type(buffer) not in (io.BufferedWriter, io.BufferedRandom):
+        return False
+    raw = buffer.raw
+    return (not any(name in vars(buffer) for name in ("write", "flush"))
+            and type(raw) is io.FileIO
+            and not any(name in vars(raw) for name in ("write", "flush")))
+
+
+def _numpy_error_routes_are_builtin() -> bool:
+    """Do not enter an owned span that can dispatch to foreign error handlers.
+
+    No error policy is changed. Warn/print remain eligible only with the
+    standard warning machinery, plain filters, and builtin output streams.
+    Capture/custom handlers fall back to the public guarded route.
+    """
+    if (np.geterr is not _NUMPY_GETERR
+            or type(_NUMPY_GETERR) is not types.FunctionType
+            or _NUMPY_GETERR.__globals__ is not vars(_NUMPY_ERROR_MODULE)
+            or _NUMPY_GETERR.__code__.co_filename != _NUMPY_ERROR_MODULE.__file__
+            or _NUMPY_GETERR.__code__.co_name != "geterr"
+            or not _callable_authority_matches(_NUMPY_GETERR, _NUMPY_GETERR_AUTHORITY)):
+        return False
+    modes = tuple(_NUMPY_GETERR().values())
+    if any(mode in ("call", "log") for mode in modes):
+        return False
+    if "print" in modes and not _builtin_warning_stream(sys.stderr):
+        return False
+    if "warn" not in modes:
+        return True
+    # Pytest and catch_warnings(record=True) use an exact builtin list.append.
+    # This captures a builtin WarningMessage without formatting/output hooks.
+    if warnings.showwarning is not warnings._showwarning_orig:
+        return False
+    implementation = warnings._showwarnmsg_impl
+    captured = (type(implementation) is types.BuiltinMethodType
+                and type(implementation.__self__) is list
+                and implementation.__name__ == "append")
+    for name, function, authority in _WARNING_FUNCTIONS:
+        if captured and name in ("_showwarnmsg_impl", "_formatwarnmsg", "_formatwarnmsg_impl", "formatwarning"):
+            continue
+        if not _WARNING_CANONICAL_ORIGIN[name] or getattr(warnings, name) is not function or not _callable_authority_matches(function, authority):
+            return False
+    if warnings.WarningMessage is not _WARNING_MESSAGE_CLASS or type(warnings.WarningMessage) is not type:
+        return False
+    if not _canonical_python_function(_WARNING_MESSAGE_NAMESPACE.get("__init__"), warnings, "__init__"):
+        return False
+    if not _canonical_python_function(_WARNING_MESSAGE_NAMESPACE.get("__str__"), warnings, "__str__"):
+        return False
+    message_namespace = vars(_WARNING_MESSAGE_CLASS)
+    if len(message_namespace) != len(_WARNING_MESSAGE_NAMESPACE) or any(
+        message_namespace.get(name, _MISSING) is not member or
+        not _callable_authority_matches(member, _WARNING_MESSAGE_METADATA[name])
+        for name, member in _WARNING_MESSAGE_NAMESPACE.items()
+    ):
+        return False
+    if not captured:
+        if warnings.formatwarning is not warnings._formatwarning_orig or not _builtin_warning_stream(sys.stderr):
+            return False
+        if any(not _canonical_python_function(function, linecache, name)
+               or getattr(linecache, name) is not function
+               or not _callable_authority_matches(function, authority)
+               for name, function, authority in _LINECACHE_FUNCTIONS):
+            return False
+    if type(warnings.filters) is not list:
+        return False
+    for entry in warnings.filters:
+        if type(entry) is not tuple or len(entry) != 5:
+            return False
+        action, message, category, module, lineno = entry
+        if (type(action) is not str or type(lineno) is not int
+                or (message is not None and type(message) not in (str, re.Pattern))
+                or (module is not None and type(module) not in (str, re.Pattern))
+                or type(category) is not type):
+            return False
+    return True
+
+
+def _plain_mass_input(value: Any, depth: int = 0) -> bool:
+    """Fail closed on foreign values, including nested section/cache data."""
+    if depth > 12:
+        return False
+    if value is None or type(value) in (bool, int, float, str, bytes, np.float64, np.float32, np.int64, np.int32):
+        return True
+    if _plain_numeric_array(value):
+        return True
+    if type(value) in (list, tuple):
+        return all(_plain_mass_input(item, depth + 1) for item in value)
+    if type(value) is types.MappingProxyType:
+        if not _referent_provider_is_builtin():
+            return False
+        # A proxy can wrap a foreign Mapping; never call its mapping methods.
+        referents = _GET_REFERENTS(value)
+        if len(referents) != 1 or type(referents[0]) is not dict:
+            return False
+        value = referents[0]
+    if type(value) is dict:
+        return all(type(key) in (str, int) and _plain_mass_input(item, depth + 1)
+                   for key, item in dict.items(value))
+    return False
+
+
+def _capture_mass_function_dependencies() -> tuple:
+    pending = [owner.__dict__[name] for owner, name in (
+        (_BeamElement, "compute_mass_matrix"), (_BeamElement, "_beam_frame_and_transform"),
+        (_QualifiedE4PLShellElement, "compute_mass_matrix"),
+        (_QualifiedE4PLS3ShellElement, "compute_mass_matrix"),
+        (_QualifiedE4PLS3ShellElement, "_compute_mass_components"),
+        (_QualifiedE4PLS3ShellElement, "_compute_stiffness_components"))]
+    seen = set()
+    dependencies = []
+    methods = {}
+    for owner in (_BeamElement, _Element, _ShellElement, _IsotropicMaterial,
+                  _QualifiedE4PLShellElement, _QualifiedE4PLS3ShellElement,
+                  _AuthorityEpochManager, _Node, _FEMesh, _DOFManager):
+        for name, member in type.__getattribute__(owner, "__dict__").items():
+            functions = ((member.fget, member.fset, member.fdel) if type(member) is property else
+                         (member.__func__,) if type(member) in (classmethod, staticmethod) else (member,))
+            methods.setdefault(name, []).extend(function for function in functions
+                                                if type(function) is types.FunctionType)
+    while pending:
+        function = pending.pop()
+        if type(function) is not types.FunctionType or id(function) in seen:
+            continue
+        seen.add(id(function))
+        for cell in function.__closure__ or ():
+            value = cell.cell_contents
+            if type(value) is types.FunctionType:
+                pending.append(value)
+        codes = [function.__code__]
+        names = set()
+        while codes:
+            code = codes.pop()
+            names.update(code.co_names)
+            codes.extend(value for value in code.co_consts if type(value) is types.CodeType)
+        namespace = function.__globals__
+        for name in names:
+            pending.extend(methods.get(name, ()))
+            value = namespace.get(name)
+            if (type(value) is types.FunctionType and
+                    value.__globals__.get("__name__", "").startswith(("anysolver.", "anymaterial."))):
+                dependencies.append((namespace, name, value, _callable_authority(value)))
+                pending.append(value)
+    return tuple(dependencies)
+
+
+_EXACT_MASS_FUNCTION_DEPENDENCIES = _capture_mass_function_dependencies()
+
+
+def _mass_classes_are_untouched() -> bool:
+    if any(namespace.get(name, _MISSING) is not function or
+           not _callable_authority_matches(function, authority)
+           for namespace, name, function, authority in _EXACT_MASS_FUNCTION_DEPENDENCIES):
+        return False
+    if any(getattr(_element_module, name) is not function or
+           not _callable_authority_matches(function, authority)
+           for name, function, authority in _MASS_HELPERS):
+        return False
+    for owner, mro, expected in _EXACT_MASS_CLASSES:
+        if type.__getattribute__(owner, "__mro__") != mro:
+            return False
+        current = type.__getattribute__(owner, "__dict__")
+        extra = 1 if "__slotnames__" in current and "__slotnames__" not in expected else 0
+        if len(current) - extra != len(expected):
+            return False
+        if any(current.get(name, _MISSING) is not member or
+               not _callable_authority_matches(member, _EXACT_MASS_METADATA[owner][name])
+               for name, member in expected.items()):
+            return False
+    return True
+
+
+def _builtin_acceleration_inputs(state: dict, mesh_state: dict, material_getter: Any,
+                                 elements: Any, loaded_nodes: set) -> bool:
+    acceleration = state.get("gravity")
+    if not _plain_numeric_array(acceleration) or not _mass_classes_are_untouched():
+        return False
+    # Only the ordinary FEModel provider and exact canonical isotropic material
+    # are admitted. Generalized/laminate sections retain their public route.
+    if (type(material_getter) is not types.MethodType
+            or material_getter.__func__ is not _FEModel.get_material
+            or not _load_model_access_is_builtin(material_getter.__self__)
+            or object.__getattribute__(object.__getattribute__(material_getter.__self__, "__dict__")["mesh"], "__dict__") is not mesh_state):
+        return False
+    model_state = object.__getattribute__(material_getter.__self__, "__dict__")
+    if type(model_state.get("materials")) is not dict or type(model_state.get("current_material")) not in (str, type(None)):
+        return False
+    materials = model_state["materials"]
+    if not all(type(key) is str for key in materials) or "default" not in materials:
+        return False
+    for material in materials.values():
+        if type(material) is not _IsotropicMaterial or not _plain_mass_input(object.__getattribute__(material, "__dict__")):
+            return False
+    for mapping in (mesh_state.get("point_masses", {}), state.get("added_node_masses")):
+        if type(mapping) is not dict or not all(type(key) is int and type(mass) in (float, int) for key, mass in mapping.items()):
+            return False
+        loaded_nodes.update(mapping)
+    # Epoch tokens/component guards are checked by the full lease before this
+    # span; they are package-owned authority objects, never numerical inputs.
+    authority_fields = {"_qualified_direct_state_tokens", "_qualified_direct_state_token",
+                        "_qualified_component_guard"}
+    mass_class_names = {
+        kind: {name for owner in type.__getattribute__(kind, "__mro__")
+               for name in type.__getattribute__(owner, "__dict__")}
+        for kind in (_BeamElement, _QualifiedE4PLShellElement, _QualifiedE4PLS3ShellElement)
+    }
+    for element in dict.values(elements):
+        if type(element) not in (_BeamElement, _QualifiedE4PLShellElement, _QualifiedE4PLS3ShellElement):
+            return False
+        data = object.__getattribute__(element, "__dict__")
+        if type(data) is not dict or not all(type(key) is str for key in data):
+            return False
+        if any(key in mass_class_names[type(element)] for key in data):
+            return False
+        if data.get("shell_section") is not None or data.get("generalized_section") is not None:
+            return False
+        if not all(key in authority_fields or _plain_mass_input(value) for key, value in data.items()):
+            return False
+        ids = data.get("node_ids")
+        if type(ids) not in (list, tuple) or not all(type(node_id) is int for node_id in ids) or type(data.get("material_name")) is not str:
+            return False
+        loaded_nodes.update(ids)
+    return True
+
+
+def _plain_numeric_array(value: Any) -> bool:
+    """Exact arrays with builtin numeric scalars cannot invoke object hooks."""
+    return (type(value) is np.ndarray and value.dtype.kind in "biuf"
+            and (value.dtype.kind != "f" or value.dtype.itemsize <= 8))
+
+
+def _load_routing_classes_are_untouched() -> bool:
+    for owner, mro, expected in _EXACT_LOAD_ROUTING_CLASSES:
+        if type(owner) is not type or type.__getattribute__(owner, "__mro__") != mro:
+            return False
+        current = type.__getattribute__(owner, "__dict__")
+        extra = 1 if "__slotnames__" in current and "__slotnames__" not in expected else 0
+        if len(current) - extra != len(expected) or any(
+            current.get(name, _MISSING) is not member or
+            not _callable_authority_matches(member, _EXACT_LOAD_CALLABLE_METADATA[owner][name])
+            for name, member in expected.items()
+        ):
+            return False
+    return True
+
+
+def _load_model_access_is_builtin(model: Any) -> bool:
+    """Prove the ordinary model/mesh/DOF reads surrounding the kernel are owned."""
+    if type(model) is not _FEModel or not _load_routing_classes_are_untouched():
+        return False
+    state = object.__getattribute__(model, "__dict__")
+    if type(state) is not dict or not all(type(key) is str for key in state):
+        return False
+    mesh = state.get("mesh")
+    if "get_material" in state or type(mesh) is not _FEMesh:
+        return False
+    mesh_state = object.__getattribute__(mesh, "__dict__")
+    if type(mesh_state) is not dict or not all(type(key) is str for key in mesh_state):
+        return False
+    manager = mesh_state.get("dof_manager")
+    if (
+        type(manager) is not _DOFManager
+        or mesh_state.get("element_activity") is not None
+        or "num_nodes" in mesh_state
+        or not _mapping_reads_are_builtin(mesh_state.get("nodes"))
+    ):
+        return False
+    manager_state = object.__getattribute__(manager, "__dict__")
+    return (
+        type(manager_state) is dict
+        and all(type(key) is str for key in manager_state)
+        and type(manager_state.get("_total_dofs")) is int
+    )
+
+
+def _exact_load_case_instance_namespace(load_case: Any) -> Optional[dict]:
+    """Return the plain instance namespace of an untouched ``LoadCase``.
+
+    ``None`` means attribute observation could run foreign code: the object is
+    not exactly a ``LoadCase``, its class namespace differs from the one this
+    module defined (a replaced method, a data descriptor shadowing a field, a
+    ``__getattr__``), or its instance state is not the plain dataclass state.
+    Nothing here executes user code.
+    """
+
+    if type(load_case) is not LoadCase or type(LoadCase) is not type:
+        return None
+    mro = type.__getattribute__(LoadCase, "__mro__")
+    if len(mro) != 2 or mro[1] is not object:
+        return None
+    namespace = type.__getattribute__(LoadCase, "__dict__")
+    exact = _EXACT_LOAD_CASE_NAMESPACE
+    # ``copy``/``pickle`` cache ``__slotnames__`` on the class; it is data only
+    # and can never shadow a field or hook attribute access.
+    extra = 1 if "__slotnames__" in namespace and "__slotnames__" not in exact else 0
+    if len(namespace) - extra != len(exact):
+        return None
+    for key, expected in exact.items():
+        if (namespace.get(key, _MISSING) is not expected or
+                not _callable_authority_matches(expected, _EXACT_LOAD_CASE_CALLABLE_METADATA[key])):
+            return None
+    state = object.__getattribute__(load_case, "__dict__")
+    if (
+        type(state) is not dict
+        or not all(type(key) is str for key in state)
+        or not set(state).issubset(_EXACT_LOAD_CASE_FIELDS)
+        or type(state.get("name")) is not str
+        or type(state.get("follower_pressure")) is not bool
+        or type(state.get("nodal_loads")) is not dict
+        or type(state.get("element_loads")) is not dict
+        or type(state.get("pressure_loads")) is not dict
+    ):
+        return None
+    return state
+
+
+def _mapping_reads_are_builtin(mapping: Any) -> bool:
+    """True for a plain dict or the package's state mapping with ``dict.get``."""
+
+    kind = type(mapping)
+    if kind is dict:
+        return True
+    if kind is not _QualifiedStateMapping:
+        return False
+    if (
+        type.__getattribute__(_QualifiedStateMapping, "__dict__").get("get")
+        is not None
+        or type.__getattribute__(_QualifiedStateMapping, "__mro__")[1] is not dict
+    ):
+        return False
+    state = object.__getattribute__(mapping, "__dict__")
+    return type(state) is dict and all(type(key) is str for key in state) and "get" not in state
+
+
+def _run_foreign_code_free_load_vector(
+    load_case: Any,
+    mesh: Any,
+    dof_manager: Any,
+    material_getter: Optional[Callable[[str], "Material"]],
+    displacements: Optional[np.ndarray],
+    element_activity: Optional[object],
+    *,
+    stage_guard: Callable[..., None],
+) -> Optional[np.ndarray]:
+    """Assemble a load vector whose whole evaluation runs only owned code.
+
+    Returns ``None`` when that cannot be established, and the caller then uses
+    the ordinary public path.  The evaluation is foreign-code-free when the
+    load case is an untouched ``LoadCase`` with only nodal, element and
+    pressure/acceleration loads (no activity provider), every loaded element is
+    an exact qualified Q4/S3 element (their class authority is epoch-tracked by
+    the lease), the mesh is an exact ``FEMesh`` with its providers unchanged,
+    every value read is a plain ``float``/``int``/``tuple``/``ndarray`` and no
+    mesh element belongs to the native fibre family that takes a different
+    route. Cheap builtin family/key scans and loaded-entry checks avoid repeated
+    model-wide lifecycle/lease validation; a span it admits
+    can then be bracketed by the lease's constant-time trusted guard because
+    no code that could change model state runs inside it.
+    """
+
+    if element_activity is not None or not _numpy_error_routes_are_builtin():
+        return None
+    state = _exact_load_case_instance_namespace(load_case)
+    if state is None:
+        return None
+    if displacements is not None and not _plain_numeric_array(displacements):
+        return None
+    if type(mesh) is not _FEMesh or not _load_routing_classes_are_untouched():
+        return None
+    mesh_class = type.__getattribute__(_FEMesh, "__dict__")
+    for name, expected in _EXACT_FE_MESH_PROVIDERS:
+        if mesh_class.get(name, _MISSING) is not expected:
+            return None
+    mesh_state = object.__getattribute__(mesh, "__dict__")
+    if type(mesh_state) is not dict or not all(type(key) is str for key in mesh_state):
+        return None
+    elements = mesh_state.get("elements")
+    nodes = mesh_state.get("nodes")
+    if (
+        not _mapping_reads_are_builtin(elements)
+        or not _mapping_reads_are_builtin(nodes)
+        or "get_node" in mesh_state
+        or "get_element" in mesh_state
+        or type(dof_manager) is not _DOFManager
+    ):
+        return None
+    if not all(type(key) is int for mapping in (nodes, elements) for key in dict.keys(mapping)):
+        return None
+    loaded_nodes = set()
+    if state.get("gravity") is not None and not _builtin_acceleration_inputs(
+        state, mesh_state, material_getter, elements, loaded_nodes
+    ):
+        return None
+    for element in dict.values(elements):
+        if type(element) in (_QualifiedE4PLShellElement, _QualifiedE4PLS3ShellElement):
+            continue  # Owned epoch-tracked metaclasses; never the fibre family.
+        if type(type(element)) not in (type, ABCMeta):
+            return None
+        module = type.__getattribute__(type(element), "__dict__").get("__module__")
+        if (
+            type(module) is not str or module == _NATIVE_FIBRE_STATIC_MODULE
+        ):
+            return None
+    for load in state["nodal_loads"].values():
+        if not _plain_numeric_array(load):
+            return None
+    for load in state["element_loads"].values():
+        if not _plain_numeric_array(load):
+            return None
+    for source in (state["element_loads"], state["pressure_loads"]):
+        for element_id in source:
+            if type(element_id) is not int:
+                return None
+            element = dict.get(elements, element_id)
+            if element is not None and type(element) not in (
+                _QualifiedE4PLShellElement,
+                _QualifiedE4PLS3ShellElement,
+            ):
+                return None
+            if element is not None:
+                element_state = object.__getattribute__(element, "__dict__")
+                node_ids = dict.get(element_state, "node_ids")
+                if type(node_ids) not in (list, tuple) or not all(
+                    type(node_id) is int for node_id in node_ids
+                ):
+                    return None
+                loaded_nodes.update(node_ids)
+    for pressure in state["pressure_loads"].values():
+        if type(pressure) in (float, int):
+            continue
+        if type(pressure) is not tuple or not all(
+            type(value) is float for value in pressure
+        ):
+            return None
+    for node_id in state["nodal_loads"]:
+        if type(node_id) is not int:
+            return None
+        loaded_nodes.add(node_id)
+    for node_id in loaded_nodes:
+        node = dict.get(nodes, node_id)
+        if node is None:
+            continue
+        if type(node) is not _Node:
+            return None
+        node_state = object.__getattribute__(node, "__dict__")
+        if type(node_state) is not dict or not all(type(key) is str for key in node_state):
+            return None
+        dofs = node_state.get("dofs")
+        if (
+            "coords" in node_state
+            or type(dofs) is not list
+            or not all(type(dof) is int for dof in dofs)
+            or not all(type(node_state.get(axis)) in (float, int) for axis in ("x", "y", "z"))
+        ):
+            return None
+    stage_guard(stage="load-vector preflight")
+    return _EXACT_LOAD_CASE_GET_VECTOR_CORE(
+        load_case,
+        mesh,
+        dof_manager,
+        material_getter,
+        displacements,
+        element_activity,
+        qualified_runtime_guard=stage_guard,
+    )
 
 
 @dataclass

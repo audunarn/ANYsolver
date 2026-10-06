@@ -6474,8 +6474,15 @@ def _qualified_s3_pressure_surface_records(
     load_case: Optional["LoadCase"],
     *,
     qualified_runtime_guard: Any,
+    foreign_code_free_preamble: bool = False,
 ) -> list[Dict[str, Any]]:
     """Identify the exact surface carrying qualified-S3 pressure work.
+
+    ``foreign_code_free_preamble`` is the caller's attestation that nothing
+    outside owned code ran since the last guard (an untouched ``LoadCase``, no
+    activity provider); the opening observation guard is then the lease's
+    constant-time trusted guard rather than a complete scan.  A lease without
+    that capability keeps the complete guard.
 
     The S3 section origin may be offset from its nodal interpolation surface.
     Pressure is intentionally conjugate to the latter; reporting that choice
@@ -6518,9 +6525,15 @@ def _qualified_s3_pressure_surface_records(
         trusted_input_guard(model, context=context)
 
     pressure_ids = tuple(getattr(load_case, "pressure_loads", {}))
-    exact_qualified_guard(
-        context="qualified S3 pressure-surface mapping observation",
-    )
+    if foreign_code_free_preamble and trusted_input_guard is not None:
+        trusted_input_guard(
+            model,
+            context="qualified S3 pressure-surface mapping observation",
+        )
+    else:
+        exact_qualified_guard(
+            context="qualified S3 pressure-surface mapping observation",
+        )
     records: list[Dict[str, Any]] = []
     for raw_element_id in pressure_ids:
         element_id = int(raw_element_id)
@@ -6562,24 +6575,64 @@ def _qualified_s3_pressure_surface_records(
     return records
 
 
+def _qualified_trusted_state_guard(qualified_runtime_guard: Any) -> Any:
+    """Return the lease's constant-time trusted-state guard, or ``None``.
+
+    The guard exists only for an exact qualified model.  It checks the owned
+    inputs, the mesh mutation token and the Q4/S3/assembly epochs, and says
+    nothing about other element families or about class facts outside those
+    epochs.  A caller may therefore substitute it for a complete guard only
+    across a span in which no code outside this package's owned kernels ran;
+    where it is absent the complete guard stays in force.
+    """
+
+    try:
+        namespace = object.__getattribute__(qualified_runtime_guard, "__dict__")
+    except AttributeError:
+        return None
+    if type(namespace) is not dict:
+        return None
+    return dict.get(namespace, "_qualified_trusted_state_require")
+
+
 def _assemble_load_vector_under_lease(
     model: "FEModel",
     load_case: Optional["LoadCase"] = None,
     displacements: Optional[np.ndarray] = None,
     *,
     qualified_runtime_guard: Any,
+    preflight_verified: bool = False,
 ) -> Tuple[np.ndarray, Dict[str, Any]]:
     """Assemble the global external load vector ``F_external``.
 
     ``displacements`` is ignored by ordinary dead loads.  A load case with
     ``follower_pressure=True`` uses it to evaluate pressure on the current
     shell nodal interpolation surface.
+
+    Every point where code outside this package's owned kernels may have run
+    (a ``LoadCase`` subclass or replaced method, a generic element, an
+    activity provider, an array-like) keeps the complete lifecycle-plus-lease
+    guard.  A point reached with provably no such code since the previous
+    complete guard uses the lease's constant-time trusted guard instead, so
+    the cost of an unchanged model is paid once per lease and not once per
+    observation.  ``preflight_verified`` is the caller's attestation that a
+    complete guard has passed since the last foreign code ran.
     """
+    from .boundary import (
+        _exact_load_case_instance_namespace,
+        _load_model_access_is_builtin,
+        _plain_numeric_array,
+        _numpy_error_routes_are_builtin,
+        _run_foreign_code_free_load_vector,
+    )
     from .current_state_tangent import (
         require_exact_qualified_component_lifecycle_api,
     )
 
     lifecycle_guard = require_exact_qualified_component_lifecycle_api
+    trusted_state_guard = _qualified_trusted_state_guard(qualified_runtime_guard)
+    routing_foreign_code_free = (_load_model_access_is_builtin(model)
+                                 and _numpy_error_routes_are_builtin())
 
     def exact_qualified_guard(
         expected_model: "FEModel",
@@ -6589,13 +6642,45 @@ def _assemble_load_vector_under_lease(
         lifecycle_guard(expected_model, context=context)
         qualified_runtime_guard(expected_model, context=context)
 
-    exact_qualified_guard(model, context="load-vector assembly preflight")
+    def observation_guard(*, context: str, foreign_code_free: bool) -> None:
+        nonlocal routing_foreign_code_free
+        # Once a callback could have run, a class/instance fact may have
+        # changed outside the mesh epochs. Never revive a prior routing proof.
+        if not foreign_code_free:
+            routing_foreign_code_free = False
+        if routing_foreign_code_free and foreign_code_free and trusted_state_guard is not None:
+            trusted_state_guard(model, context=context)
+        else:
+            exact_qualified_guard(model, context=context)
+
+    if not preflight_verified:
+        exact_qualified_guard(model, context="load-vector assembly preflight")
     total_dofs = model.mesh.dof_manager.total_dofs
+    if not routing_foreign_code_free:
+        exact_qualified_guard(model, context="load-vector DOF observation")
     start_time = time.time()
+    case_state = (
+        None
+        if load_case is None
+        else _exact_load_case_instance_namespace(load_case)
+    )
     if load_case is None:
         load_name = None
         follower_pressure = False
+    elif case_state is not None:
+        # An untouched LoadCase: both reads are plain dictionary reads.
+        load_name = case_state["name"]
+        observation_guard(
+            context="load-vector LoadCase name observation",
+            foreign_code_free=True,
+        )
+        follower_pressure = case_state["follower_pressure"]
+        observation_guard(
+            context="load-vector LoadCase pressure-policy observation",
+            foreign_code_free=True,
+        )
     else:
+        routing_foreign_code_free = False
         load_name = load_case.name
         exact_qualified_guard(
             model,
@@ -6609,10 +6694,11 @@ def _assemble_load_vector_under_lease(
             context="load-vector LoadCase pressure-policy observation",
         )
     if displacements is not None:
+        displacements_exact = _plain_numeric_array(displacements)
         displacements = np.asarray(displacements, dtype=float)
-        exact_qualified_guard(
-            model,
+        observation_guard(
             context="load-vector displacement observation",
+            foreign_code_free=displacements_exact,
         )
         displacements = displacements.reshape(-1)
         if displacements.shape != (total_dofs,):
@@ -6621,24 +6707,44 @@ def _assemble_load_vector_under_lease(
             )
         if not np.all(np.isfinite(displacements)):
             raise AssemblyError("Displacement vector contains non-finite values.")
+    owned_kernel = False
     if load_case is None:
         load_vector = np.zeros(total_dofs, dtype=float)
     else:
-        load_vector = load_case.get_load_vector(
-            model.mesh,
-            model.mesh.dof_manager,
-            model.get_material,
-            displacements=displacements,
-            element_activity=_element_activity(model),
-        )
-        exact_qualified_guard(
-            model,
+        load_vector = None
+        if routing_foreign_code_free and case_state is not None and trusted_state_guard is not None:
+
+            def owned_stage_guard(*, stage: str) -> None:
+                trusted_state_guard(model, context=stage)
+
+            load_vector = _run_foreign_code_free_load_vector(
+                load_case,
+                model.mesh,
+                model.mesh.dof_manager,
+                model.get_material,
+                displacements,
+                _element_activity(model),
+                stage_guard=owned_stage_guard,
+            )
+            owned_kernel = load_vector is not None
+        if load_vector is None:
+            routing_foreign_code_free = False
+            load_vector = load_case.get_load_vector(
+                model.mesh,
+                model.mesh.dof_manager,
+                model.get_material,
+                displacements=displacements,
+                element_activity=_element_activity(model),
+            )
+        observation_guard(
             context="load-vector LoadCase observation",
+            foreign_code_free=owned_kernel,
         )
+        array_exact = _plain_numeric_array(load_vector)
         load_vector = np.asarray(load_vector, dtype=float)
-        exact_qualified_guard(
-            model,
+        observation_guard(
             context="load-vector array observation",
+            foreign_code_free=array_exact,
         )
         load_vector = load_vector.reshape(-1)
 
@@ -6669,14 +6775,28 @@ def _assemble_load_vector_under_lease(
             }
         ),
     }
+    # No foreign code has run since the previous guard when the load case is
+    # untouched and no activity provider was consulted for the info record.
+    preamble_foreign_code_free = (
+        load_case is None or (case_state is not None and activity is None)
+    )
     pressure_surfaces = _qualified_s3_pressure_surface_records(
         model,
         load_case,
-        qualified_runtime_guard=qualified_runtime_guard,
+        # Suppress all trusted metadata capabilities when ordinary routing
+        # observations could have invoked foreign code.
+        qualified_runtime_guard=(qualified_runtime_guard if routing_foreign_code_free else exact_qualified_guard),
+        foreign_code_free_preamble=preamble_foreign_code_free,
     )
     if pressure_surfaces:
         info["qualified_s3_pressure_surfaces"] = pressure_surfaces
-    exact_qualified_guard(model, context="load-vector assembly output")
+    # The pressure-surface walk touches only elements the owned kernel already
+    # admitted as exact qualified shells; for any other route it may read
+    # generic elements, so the complete guard closes the vector.
+    observation_guard(
+        context="load-vector assembly output",
+        foreign_code_free=owned_kernel or load_case is None,
+    )
     return load_vector, info
 
 
@@ -6951,19 +7071,39 @@ def _assemble_load_matrix_under_lease(
     qualified_runtime_guard: Any,
 ) -> Tuple[np.ndarray, Dict[str, Any]]:
     """Assemble a dense load matrix with one column per load case."""
+    from .current_state_tangent import (
+        require_exact_qualified_component_lifecycle_api,
+    )
+
     start = time.time()
     vectors = []
     infos = []
     names = []
-    for load_case in load_cases:
+    for index, load_case in enumerate(load_cases):
+        # One complete preflight covers the whole batch.  Every case closes
+        # with a guard that is complete after any foreign code it ran, and
+        # the loop between cases runs none, so a later case needs no second
+        # preflight.  The column name is the one the case itself reported;
+        # re-reading ``load_case.name`` here would run another unguarded
+        # attribute observation on arbitrary objects.
+        if index == 0 or type(load_cases) not in (list, tuple):
+            require_exact_qualified_component_lifecycle_api(
+                model,
+                context="load-matrix assembly preflight",
+            )
+            qualified_runtime_guard(
+                model,
+                context="load-matrix assembly preflight",
+            )
         vector, info = _assemble_load_vector_under_lease(
             model,
             load_case,
             qualified_runtime_guard=qualified_runtime_guard,
+            preflight_verified=True,
         )
         vectors.append(vector)
         infos.append(info)
-        names.append(None if load_case is None else load_case.name)
+        names.append(info["load_case"])
     total_dofs = model.mesh.dof_manager.total_dofs
     matrix = np.column_stack(vectors) if vectors else np.zeros((total_dofs, 0), dtype=float)
     return matrix, {
