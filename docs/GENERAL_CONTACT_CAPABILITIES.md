@@ -2591,3 +2591,8 @@ Implemented/tested: separate opt-in/V18, total-tangent algebraic velocity, physi
 - No new installed artifact or full-impact/engineering acceptance. Flat public fixture can have B*Z=0; local oracle does not qualify general production rotational coupling. V18 installed evidence retains its recorded scope at de32f139.
 - All29terminal C6 jobs total178.223450299818/180s,1.776549700182s remains. Additional C6 180s request UNANSWERED; no renewal/borrowing/publication. Full C0-C9 remains incomplete.
 - Evidence: docs/d1_review_support/contact_c6_beam_s3_20261006/directional_development.md; raw C:/ANYworkspaceWork/contact_c6_beam_s3_20261006/directional_worker_handoff.md, original/final manifests, two source jobs and root_directional_final_reconciliation.json. Supporting source review closes both findings, not engineering independence.
+
+
+### 2026-10-06 - V19 coupling verification preparation (UNEXECUTED)
+
+One prepared local production-adapter discriminator uses an exactly representable tilted chart, actual tied mass-null ry, independent geometric/rate/mass references, connected recovery and trial cleanup. No product source changed and no numerical job/import/build/install ran. Same-family source scrutiny supports the preparation only; local off-equilibrium kinematics do not qualify an admitted dynamic state. All29C6 jobs remain178.223450299818/180s; additional authority remains unanswered. Installed V19, real dynamic coupling and full C0-C9 acceptance remain open. See docs/d1_review_support/contact_c6_beam_s3_20261006/directional_coupling_preparation.md and unique raw directional_coupling_* / root_directional_coupling_* records.

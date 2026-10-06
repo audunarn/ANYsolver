@@ -63,6 +63,11 @@ coupling and impact accounting. Reuse unaffected V18 evidence by impact analysis
 do not replay entire passed campaigns. General initial-state contracts remain
 required. Reuse descriptor infrastructure; preserve physical inertia and the
 declared endpoint-Hermite trajectory, without claiming a nonlinear DAE lift.
+The single local nonzero-B*Z discriminator is prepared but UNEXECUTED in
+tests/test_general_contact_beam_s3_directional_coupling.py. It checks actual maps,
+mass-null work and the connected recovery caller against separate references;
+its off-equilibrium pose does not substitute for the dynamic coupling gate.
+[Prepared scope](docs/d1_review_support/contact_c6_beam_s3_20261006/directional_coupling_preparation.md).
 The SAME180s C6 purse records178.223450299818s used,1.776549700182s remaining
 across29terminaljobs. Additional C6 180s request is UNANSWERED; no renewal,
 borrowing or build within an inadequate residue. Keep onejob/953MiB/JIT0/Numba1/

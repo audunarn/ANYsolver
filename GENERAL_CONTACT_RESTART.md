@@ -4,8 +4,8 @@
 
 Work ONLY in C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
 branch codex/contact-main-reconcile-20261001. Inspect HEAD/status; parent
- de32f139c79dd4dc94bbc5cd5d216fda3b83bf05 holds installed V18. The next local
-checkpoint adds source-only V19 and root reconciliation records.
+9eb7446d054351ba85565ad30fe00f80163a0445 holds source-only V19; de32f139 holds
+installed V18. The next checkpoint adds its UNEXECUTED local coupling check.
 Full C0-C9 remains ACTIVE/incomplete: [goal](GENERAL_CONTACT_GOAL.md),
 [plan](GENERAL_CONTACT_PLAN.md), [ledger](docs/GENERAL_CONTACT_CAPABILITIES.md).
 No protected-original access, sibling edits, other-chat messaging, push/merge/
@@ -82,6 +82,11 @@ borrowed or used for a broad campaign in residual time.
 
 Previous goal turn: PROGRESS through V19 implementation, two source checks,
 review repairs and exact evidence checkpoint. Full programme not achieved.
+Prepared local discriminator: tests/test_general_contact_beam_s3_directional_coupling.py,
+exact tilted chart, actual mass-null ry, independent rate reference, connected
+recovery and cleanup. UNEXECUTED; does not establish a dynamic state. Raw unique
+directional_coupling_* manifests/handoff and root_directional_coupling_* audits
+preserve the source-only scope; prior restart root_directional_coupling_prior_restart.md.
 With explicit additional C6 authority: privately build/install held V19, check
 public first-touch/restart, meaningful production rotational coupling and affected
 impact/work/energy/refusal contracts. Reuse unaffected V18 evidence by impact
