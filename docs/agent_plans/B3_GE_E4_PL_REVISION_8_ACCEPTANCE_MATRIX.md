@@ -3626,3 +3626,39 @@ scientific acceptance. root-source-verification-v1.json binds the exact scope.
 Installed new-batch workflow, broader external/refinement/drilling/attachment/
 consumer/platform and aggregate B05-B07/F04/F12/F13/G4/G6 remain unfinished.
 No bodyretry/F03/closedcampaign/sibling/contact/main/push/release authority.
+
+
+## 2026-10-06 physical B2 footprint selected-batch installed development
+
+Installed DEVELOPMENT verified at sourceb6ef85cff28513bdbdb078054decd9d80842dc8e,
+version0.4.7 unchanged. Wheel SHA4084e711c086a0ce935def85004694422960d7c36c9bcd6
+494f28e5e6213ae6c. Fresh29PASS0failure/error/skip exactly cover all29 final source
+IDs, including1/10/100, selected recovery/global rows20..39, mutation/lifetime/
+failure controls and public dimensional/frame/reversal cases. Final selector
+annotations are tested as installed bytes; no source annotation-impact reuse.
+Public batch10 completed/1factor/10solves/chunk1 and physical staticcompleted/
+bucklingok/factor0.16324601652203263 pass; all production_qualified=False.
+Root independently verifies429source/stage/wheel/target payloads,434source+build
+metadata bindings,7explicit inputs,246actualinstalled module SHA records at each
+phase and117readonly sibling module SHA records with no drift. Source fallback
+guarded; no staged src, explicit -o pythonpath=; no full sibling artifactgraph
+qualification. ANYmesher module0.5.1/distribution0.5.0 stays explicitly distinct.
+Pretest pinned CI versions/origins verified. Pre/post affinity0/allpools1/Numba1/
+JIT-off and actual module/dependency bytes recorded. Post numerical version/
+origin fields were NOT separately recorded: preserve this guard limitation; no
+retrospective post-pin or complete G6/platform acceptance claim.
+BuildPID33060 terminal5.789677399909124s129114112B sampled tree; numerical
+PID132128/session46129 terminal17.221964800031856s221421568B. Both600s/2GiB
+limits, serial/unforced; RSS sampling is not peak-memory qualification. No
+rebuild/retest. Sandbox postprocessing read failure retained and resolved with
+HOST reads only; no ACL mutation. Root first expected pytest_override as argv
+list but actual metadata is scalar '-o pythonpath='; failed premise retained,
+corrected without numerical rerun.
+Raw r8-b2-physical-footprint-batch-installed-dev-20261006-v1/ manifestSHA
+d4ad39127e362e19eff1af46707a313fa2d3fea3676691e4d9a7b63ff1d8c2f3, handoff and
+root-installed-verification-v1.json bind scope. Source non-author code review
+remains supporting evidence, not different-family scientific acceptance.
+Complete B05-B07/F04/F12/F13/G4/G6 and external/refinement/consumer/platform/
+scale/release obligations remainOPEN. Next return to native GE S3 material/
+admission integration; preserve existing elastic guard and original force/parity
+failures. No bodyretry/F03/closedcampaign/sibling/contact/main/push/release.
