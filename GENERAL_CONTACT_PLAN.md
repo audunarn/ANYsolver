@@ -72,22 +72,14 @@ one affected regression selector passes. The integrated check predates these
 repairs; no final complete-suite or installed parity claim is made.
 [Directional evidence](docs/d1_review_support/contact_c6_beam_s3_20261006/directional_development.md).
 
-Next connected gate: after explicit additional authority, privately build/install
-the held V19 source and check actual activation/restart plus meaningful rotational
-coupling and impact accounting. Reuse unaffected V18 evidence by impact analysis;
-do not replay entire passed campaigns. General initial-state contracts remain
-required. Reuse descriptor infrastructure; preserve physical inertia and the
-declared endpoint-Hermite trajectory, without claiming a nonlinear DAE lift.
-The single local nonzero-B*Z discriminator is prepared but UNEXECUTED in
-tests/test_general_contact_beam_s3_directional_coupling.py. It checks actual maps,
-mass-null work and the connected recovery caller against separate references;
-its off-equilibrium pose does not substitute for the dynamic coupling gate.
-[Prepared scope](docs/d1_review_support/contact_c6_beam_s3_20261006/directional_coupling_preparation.md).
-The SAME180s C6 purse records178.223450299818s used,1.776549700182s remaining
-across29terminaljobs. Additional C6 180s request is UNANSWERED; no renewal,
-borrowing or build within an inadequate residue. Keep onejob/953MiB/JIT0/Numba1/
-pools1/watchdog<=min60s,remaining-1. No held C5/C4/domain/native/archive or frozen
-authority is renewed. General rotation/friction, multiple faces, materials, other
+The former held V19 local/first-touch/impact gate is now development-tested
+in the matching installed artifact, as recorded below; no redundant rebuild.
+Its178.223450/180s source-phase figures and unanswered C6 request are historical:
+user explicitly granted180additional seconds, current224.269414/360s. Dynamic
+equilibrated nonzero full-touch coupling remains the next mechanics gate; local
+off-equilibrium data cannot substitute for it. Descriptor/secant/Hermite semantics
+and all existing legacy/frozen boundaries remain unchanged.
+General rotation/friction, multiple faces, materials, other
 impact pairings and full C6 acceptance remain separate obligations.
 
 The solver-side ordinary arc result archive joins the existing static/transient
@@ -351,6 +343,46 @@ retain fixed inputs/gates, reuse the matching wheel, and complete actual press,
 both-body gap/wrench/target motion, then lifecycle/parity/split restart within
 that total and existing per-job caps. Otherwise advance a genuinely separate
 required row; preserve this candidate. No native or frozen authority is renewed.
+## C6 V19 coupling and impact: installed development evidence
+
+The prepared nonzero production B*Z discriminator now passes against the
+independent moving-normal/mass/rate oracle. Nullity2, contact-null rank1 at
+the tilted local pose; uniformry coupling6.103422494164e-5m/rad, force-rate
+error<=1.10e-9 at three perturbations versus1e-5. Connected velocity/secant
+recovery preserves physical mass action. It is off equilibrium, NOT an admitted
+dynamic state or proof that both null modes couple at the touch event.
+
+The public V19 flat-first-touch impact has81states/32active, minimumgap-5.374um
+within10um, final OPEN+24.293um, exact accepted-time split restart. Independent
+line-potential error<=3.595e-19J; energy defect0.0315729%->0.00772189% at
+10->5us, below1% and improving. Algebraic<=1.787e-16, sampled per-body work
+wrench<=5.552e-17 at separate0.5N/0.25Nm and1e-6 gates. Target rotations
+<=3.29e-7rad; no broad finite-rotation or dynamic nonzero full-touch B*Z claim.
+
+Final6installed controls and5env-absent portable controls PASS; public installed
+example, cancellation/exception, retry prefix and re-signed secant-corruption
+refusal pass. Three failed fixture checks remain retained: nominal split-time
+roundoff, truncated-step checkpoint request, wrong fingerprint import. Repairs
+preserve physics/gates and exact restart. Historical local installed_route=False
+was hardcoded; actual installed imports prove routing and final metadata is fixed.
+
+No product changes/build; all543source payloads match the reused private wheel.
+Actual203-229installed imports, errors0/JIT0/Numba1/pools1. Nine new jobs cost
+46.045963600045s including failures. Explicit user+180C6 allowance:38terminal
+jobs224.269413899863/360s used,135.730586100137s remains. Other limits unchanged.
+Supporting Read scrutiny is development evidence, not independent engineering
+acceptance. [Evidence](docs/d1_review_support/contact_c6_beam_s3_20261006/directional_coupling_development.md).
+
+Next bounded mechanics question: can an equilibrated tilted full-touch event
+with actual nonzero contact-null coupling be initialized and stepped through
+the public V19 route? Use the SAME135.730586s remaining C6 allowance, existing
+physics/identity and independent work/rate/mass references. Freeze a small
+discriminating fixture before its run. A guard/exact-representation conflict
+requires a concrete counterexample or compatible repair, not snapping, hidden
+mass, tolerance relaxation or an off-equilibrium state relabelled as admissible.
+Retain one implementation owner and reserve verification/handoff; root adopts
+any genuine profile/physics/architecture change. Broader C0-C9 remains required.
+
 ## C5 preload-to-opening workflow: installed development check PASS
 
 The unchanged frozen reverse-load candidate now passes the complete installed

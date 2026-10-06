@@ -1,13 +1,14 @@
 # Directional coupling preparation
 
-Status: prepared, UNEXECUTED local production-adapter discriminator. No product
-edits, imports, numerical checks, build or install were performed for this slice.
-The current V19 product and all earlier evidence are unchanged.
+Status: the frozen local production-adapter discriminator was executed against
+the matching installed payload in coupling_extension_local1: 1 PASS, 3.193165 s.
+No product change or artifact rebuild was required. Original preparation and
+execution evidence remain separate. This is not transient-initial admission.
 
 Owned candidate:
 `tests/test_general_contact_beam_s3_directional_coupling.py`
 
-Future single selector:
+Single local selector:
 `tests/test_general_contact_beam_s3_directional_coupling.py::test_production_nonzero_null_directional_coupling`
 
 ## Exact stored construction
@@ -111,3 +112,20 @@ represented-path checks, transactional restart and the existing mechanical
 criteria. This preparation and the previous flat first-touch result do not close
 that gate. Installed V18 remains prior artifact evidence; no installed V19 or
 new dynamic-result evidence is supplied here.
+
+
+## Approved coupling extension evidence
+
+The local tilted pose has mass-nullity two and contact-null coupling rank one:
+uniform ry gives 6.103422494163602e-5 m/rad; uniform rx has zero gap rate for
+this x-tilted plane. The local force-rate oracle passed h=1e-6, 3e-7, 1e-7
+with separate 0.5 N / 0.25 Nm scales and 1e-5 gate. Connected recovery velocity,
+null secant and physical mass action matched exactly. The old raw result's
+installed_route=False was a hardcoded report label; 203 installed imports and
+byte parity prove the execution route. New test metadata follows the selected
+installed target; the old raw record is preserved unchanged.
+
+The separate public V19 axis-aligned first-touch fixture reaches active impact
+and physical opening through the ordinary driver. Its initial flat full touch
+can have B*Z=0: it does not establish a dynamically equilibrated tilted full-touch
+state with nonzero B*Z. That remaining generality is explicitly open.

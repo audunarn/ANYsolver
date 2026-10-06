@@ -190,3 +190,29 @@ The flat virgin assembled fixture can have B*Z=0; its public execution cannot
 prove general rotational coupling. A separate nontrivial scalar quadratic-rate
 oracle tests that coupling. Source-only checks do not replace installed or full
 impact verification, temporal acceptance, finite rotations or a C2 DAE lift.
+
+
+### Approved V19 installed coupling and first-touch extension
+
+The frozen tilted local production adapter now has executed nonzero B*Z evidence
+against a byte-matched installed package. Its mass-nullity is two, contact-null
+rank one (uniform ry); it is off equilibrium and is not a dynamic initial state.
+The ordinary public V19 fixture starts at exact flat full-line touch, then has
+81 saved states to 0.8 ms, 32 active states and final physical gap +24.2928 um.
+The minimum gap is -5.37376 um, within the unchanged 10 um gate. Actual target
+rotation and rate are nonzero (max 3.28933e-7 rad / 4.37810e-4 rad/s), with
+nonzero rotational contact couple. This is a small-motion development exercise.
+
+Independent B3/defined MIN3/line/mass energy defect is 0.0315729% at 10 us and
+0.00772189% at 5 us: both pass 1% and refinement improves the defect. Independent
+Q2 polynomial line-potential discrepancy at selected states is <=3.60e-19 J.
+Actual endpoint algebraic and per-body inertia/support/structural/contact work
+wrenches pass the unchanged 1e-6 gates at separate 0.5 N / 0.25 Nm scales.
+Fresh full/prefix/resume checkpoints are exact when the split uses the actual
+accepted timestamp. A decimal split slightly before that timestamp changes the
+physical final truncated step; the preserved failed comparison is not regraded.
+
+First-touch and installed public example execution complement the local tilted
+oracle. They do not establish nonzero null coupling at an equilibrated tilted
+full-touch event, a C2 DAE acceleration, finite rotations or engineering acceptance.
+No product changes, mass modifications, branch snapping or new wheel were needed.

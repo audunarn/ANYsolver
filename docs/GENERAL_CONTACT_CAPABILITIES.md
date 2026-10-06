@@ -2639,3 +2639,22 @@ only, not independent engineering acceptance/general continuation admission.
 SAME28terminaljobs186.042572499835/240s spent,53.957427500165s remains within
 approved check/repair scope. Full C0-C9 and broader C5 required profiles OPEN.
 Evidence: docs/d1_review_support/contact_arc_length_20261006/release_development.md
+
+
+### 6 October 2026 - V19 coupling/impact installed DEVELOPMENT evidence
+
+Nonzero production B*Z local oracle PASS: nullity2/contactrank1, off-equilibrium
+pose not admitted transient state. Public flat-first-touch impact81states/32
+active, gap-5.374um->OPEN+24.293um; exact accepted-time split restart.
+Energy0.0315729%->0.00772189% under10->5us vs1%; line-energy3.595e-19J,
+sampled algebraic1.787e-16/body-work wrench5.552e-17 at retained dimensional
+gates. Final6installed controls/5env-absent portable controls and public example
+PASS; cancel/exception/retry/history refusal covered. Three fixture failures
+and historical hardcoded installed_route=False remain retained; metadata fixed.
+No product/law/profile/schema/default/build changes,543payload agreement,
+203-229actualinstalled imports/errors0/JIT0/Numba1/pools1. User+C6180s solely
+raises C6 total360:38jobs224.269413899863s used,135.730586100137s remains.
+Same-family supporting scrutiny only; no independent engineering acceptance.
+Equilibrated tilted dynamic full-touch nonzeroB*Z, general finite rotation/DAE
+lift/native/friction/multiple-face impact and C0-C9 completion remain OPEN.
+Evidence: docs/d1_review_support/contact_c6_beam_s3_20261006/directional_coupling_development.md

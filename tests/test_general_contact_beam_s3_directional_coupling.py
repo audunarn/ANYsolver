@@ -1,7 +1,7 @@
-"""UNEXECUTED preparation: local, non-equilibrated V19 adapter discriminator.
+"""Local, non-equilibrated V19 production-adapter discriminator.
 
 This pose is not a transient initial state. The test does not call a time
-integrator or commit material history. Execution needs fresh explicit authority.
+integrator or commit material history. Execution is distinct from transient initial admission.
 """
 from fractions import Fraction as Q
 from decimal import Decimal, localcontext
@@ -289,7 +289,7 @@ def test_production_nonzero_null_directional_coupling():
         connected_recovery_velocity_error=float(np.linalg.norm(recovered_v-solved)),
         connected_recovery_acceleration_error=float(np.linalg.norm(recovered_a-expected_a)),
         physical_acceleration_mass_action_error=float(inertia_error),
-        structural_trial_discarded=True, material_commit=False, installed_route=False)
+        structural_trial_discarded=True, material_commit=False, contact_null_rank=1, installed_route=bool(os.environ.get('CONTACT_INSTALLED_TARGET')))
     destination = os.environ.get("DIRECTIONAL_COUPLING_RESULT")
     if destination:
         Path(destination).write_text(json.dumps(report, indent=2)+"\n", encoding="utf-8")
