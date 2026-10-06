@@ -7,6 +7,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 from anysolver.control import CancellationToken, SolveCancelled
+from anysolver._ge_beam3_mixed_ad import Jet2, so3_exp, so3_log
 from examples import stiffened_shell_native_fold_local_diagnostic as local
 
 
@@ -53,6 +54,9 @@ def test_original_calls_return_identity_and_owned_captures(seam):
         returned = local.finite.q4_algorithmic_response(seam.model,seam.elements[0],
             np.zeros(24),seam.origin,3,capture_material_trial=True)
         assert returned is seam.returns[0]
+        assert capture.selected_deformation is seam.deformation
+        assert capture.records[0]['numerical_candidate'] == local.BASELINE_NUMERICS
+        assert capture.records[0]['candidate_log_calls'] == 0
         assert returned[0] is seam.force and returned[1] is seam.stiffness
         assert seam.seen[0][3] is seam.origin
         saved = deepcopy(capture.records)
@@ -260,7 +264,9 @@ def test_callback_mutation_is_detached_from_retained_capture_and_input():
 
 
 @pytest.mark.parametrize('exception_type',(OSError,local.fold.AssessmentRefusal))
-def test_callback_failure_after_actual_baseline_restores_seam_and_closes(seam,monkeypatch,exception_type):
+@pytest.mark.parametrize('numerical_candidate',(local.BASELINE_NUMERICS,local.LOG_ONLY_CANDIDATE))
+def test_callback_failure_after_actual_baseline_restores_seam_and_closes(log_seam,monkeypatch,exception_type,numerical_candidate):
+    seam=log_seam.seam
     @dataclass
     class Recovery:
         generation: int
@@ -292,13 +298,14 @@ def test_callback_failure_after_actual_baseline_restores_seam_and_closes(seam,mo
     def failing_writer(observation):
         streamed.append(deepcopy(observation)); raise exception_type('writer failed after baseline')
     with pytest.raises(exception_type,match='writer failed after baseline'):
-        local.diagnose_saved_g13('fixture',on_evaluation=failing_writer)
+        local.diagnose_saved_g13('fixture',on_evaluation=failing_writer,numerical_candidate=numerical_candidate)
     assert len(seam.seen) == 16 and closed == [True]
     assert streamed[0]['label'] == 'baseline'
     assert streamed[0]['status'] == 'COMPLETED_EVALUATION'
     assert streamed[0]['diagnostic_completion'] == 'PARTIAL'
+    assert streamed[0]['numerical_candidate'] == numerical_candidate
     assert local.finite.q4_algorithmic_response is seam.response
-    assert local.q4.deformation is seam.deformation and local.q4.spatial_response is seam.spatial
+    assert local.q4.deformation is log_seam.kernel and local.q4.spatial_response is seam.spatial
     assert local.case._plain(owner.recover()) == packet['observation']['state']
     assert owner.checkpoint() == raw
 
@@ -311,4 +318,126 @@ def test_changed_predecessor_and_foreign_thread_refuse_without_evaluation(seam,m
         with pytest.raises(RuntimeError,match='foreign or asynchronous'):
             local.finite.q4_algorithmic_response(seam.model,seam.elements[0],np.zeros(24),seam.origin,3)
     assert seam.seen == []
+    assert local.finite.q4_algorithmic_response is seam.response
+
+
+def test_candidate_reuses_exact_real_code_context_without_global_changes(seam,monkeypatch):
+    original = local.shell_map.deformation
+    monkeypatch.setattr(local.q4,'deformation',original)
+    bindings = dict(original.__globals__)
+    with local.Q4LocalCapture(seam.owner,numerical_candidate=local.LOG_ONLY_CANDIDATE) as capture:
+        selected = capture.selected_deformation
+        assert selected.__code__ is original.__code__
+        assert selected.__closure__ is original.__closure__
+        assert selected.__defaults__ is original.__defaults__
+        assert selected.__kwdefaults__ == original.__kwdefaults__
+        assert set(selected.__globals__) == set(bindings)
+        changed = [key for key in bindings if selected.__globals__[key] is not bindings[key]]
+        assert changed == ['so3_log']
+        assert selected.__globals__['so3_exp'] is bindings['so3_exp']
+        assert selected.__globals__['_quaternion_jets'] is bindings['_quaternion_jets']
+        assert all(original.__globals__[key] is value for key,value in bindings.items())
+        with pytest.raises(RuntimeError,match='outside actual owned Q4 deformation'):
+            capture._candidate_log(None)
+    assert local.q4.deformation is original
+    assert local.finite.q4_algorithmic_response is seam.response
+    assert local.q4.spatial_response is seam.spatial
+    assert all(original.__globals__[key] is value for key,value in bindings.items())
+
+
+@pytest.fixture
+def log_seam(seam,monkeypatch):
+    calls = dict(exp=0,original_log=0,candidate_log=0)
+    original_exp = so3_exp; original_log = so3_log; candidate_log = local.stable_log.so3_log
+    def exp_spy(vector):
+        calls['exp'] += 1; return original_exp(vector)
+    def original_log_spy(matrix):
+        calls['original_log'] += 1; return original_log(matrix)
+    def candidate_log_spy(matrix):
+        calls['candidate_log'] += 1; return candidate_log(matrix)
+    def kernel(reference,u,*,stable_translation=False,rotation_anchors=None,stable_rotation=False):
+        values=np.zeros(24); differential=np.zeros((24,24)); second=np.zeros((24,24,24))
+        for node in range(4):
+            vector=[Jet2.variable(.011 if axis == 0 else 0.,6*node+3+axis,24) for axis in range(3)]
+            # These global bindings are the selection discriminator. Only Log
+            # may change in the owned shallow function context.
+            logarithm=so3_log(so3_exp(vector))
+            for axis,jet in enumerate(logarithm):
+                slot=6*node+3+axis
+                values[slot]=jet.value; differential[slot]=jet.gradient; second[slot]=jet.hessian
+        return values,differential,second
+    monkeypatch.setitem(kernel.__globals__,'so3_exp',exp_spy)
+    monkeypatch.setitem(kernel.__globals__,'so3_log',original_log_spy)
+    monkeypatch.setattr(local.shell_map,'so3_exp',exp_spy)
+    monkeypatch.setattr(local.shell_map,'so3_log',original_log_spy)
+    monkeypatch.setattr(local.shell_map,'deformation',kernel)
+    monkeypatch.setattr(local.q4,'deformation',kernel)
+    monkeypatch.setattr(local.stable_log,'so3_log',candidate_log_spy)
+    return SimpleNamespace(seam=seam,calls=calls,kernel=kernel)
+
+
+def test_only_actual_candidate_Q4_calls_select_stable_Log_and_keep_Exp_chart(log_seam):
+    seam=log_seam.seam
+    with local.Q4LocalCapture(seam.owner) as baseline:
+        returned=local.finite.q4_algorithmic_response(seam.model,seam.elements[0],np.zeros(24),seam.origin,3)
+        assert returned is seam.returns[-1]
+        assert baseline.selected_deformation is log_seam.kernel
+        assert log_seam.calls == dict(exp=4,original_log=4,candidate_log=0)
+    bindings=dict(log_seam.kernel.__globals__)
+    with local.Q4LocalCapture(seam.owner,numerical_candidate=local.LOG_ONLY_CANDIDATE) as capture:
+        returned=local.finite.q4_algorithmic_response(seam.model,seam.elements[0],np.zeros(24),seam.origin,3)
+        assert returned is seam.returns[-1]
+        assert log_seam.calls == dict(exp=8,original_log=4,candidate_log=4)
+        assert capture.records[0]['candidate_log_calls'] == 4
+        assert capture.records[0]['stable_rotation'] is False
+        assert capture.records[0]['original_exp_and_spatial_chart'] is True
+        np.testing.assert_allclose(capture.records[0]['local_coordinates'][3::6],.011,rtol=0.,atol=1e-12)
+        saved=deepcopy(capture.records)
+        capture.records[0]['local_coordinates'][:]=-1.
+        assert saved[0]['local_coordinates'][3] > 0.
+        assert all(log_seam.kernel.__globals__[key] is value for key,value in bindings.items())
+    assert local.q4.deformation is log_seam.kernel and local.q4.spatial_response is seam.spatial
+
+
+@pytest.mark.parametrize('kind',('refusal','cancel','programming'))
+def test_candidate_failures_propagate_and_restore_all_aliases(log_seam,monkeypatch,kind):
+    seam=log_seam.seam
+    failure = local.fold.AssessmentRefusal('candidate local domain') if kind == 'refusal' else (
+        SolveCancelled('candidate cancelled') if kind == 'cancel' else ValueError('candidate evaluator defect'))
+    def broken(matrix): raise failure
+    monkeypatch.setattr(local.stable_log,'so3_log',broken)
+    with pytest.raises(type(failure)) as caught:
+        with local.Q4LocalCapture(seam.owner,numerical_candidate=local.LOG_ONLY_CANDIDATE):
+            local.finite.q4_algorithmic_response(seam.model,seam.elements[0],np.zeros(24),seam.origin,3)
+    assert caught.value is failure
+    assert local.q4.deformation is log_seam.kernel
+    assert local.finite.q4_algorithmic_response is seam.response
+    assert local.q4.spatial_response is seam.spatial
+
+
+def test_candidate_foreign_nested_and_stable_route_refuse(log_seam):
+    seam=log_seam.seam
+    with local.Q4LocalCapture(seam.owner,numerical_candidate=local.LOG_ONLY_CANDIDATE) as capture:
+        with pytest.raises(RuntimeError,match='nested or concurrent'):
+            with local.Q4LocalCapture(seam.owner,numerical_candidate=local.LOG_ONLY_CANDIDATE): pass
+        with pytest.raises(RuntimeError,match='foreign or reentrant'):
+            local.finite.q4_algorithmic_response(object(),seam.elements[0],np.zeros(24),seam.origin,3)
+        capture.current=dict(candidate_log_calls=0)
+        with pytest.raises(RuntimeError,match='original Exp and chart'):
+            capture._deformation(np.zeros((4,3)),np.zeros(24),stable_rotation=True)
+        with pytest.raises(RuntimeError,match='original spatial chart'):
+            capture._spatial(np.zeros(24),np.zeros(24),np.eye(24),np.eye(24),np.zeros((24,24,24)),stable_rotation=True)
+        capture.current=None
+    assert local.q4.deformation is log_seam.kernel
+    assert log_seam.calls == dict(exp=0,original_log=0,candidate_log=0)
+
+
+def test_unknown_candidate_identity_refuses_before_model_or_alias_change(seam,monkeypatch):
+    with pytest.raises(ValueError,match='known private Q4 numerical identity'):
+        local.Q4LocalCapture(seam.owner,numerical_candidate='implicit fallback')
+    def forbidden(*args,**kwargs): raise AssertionError('fixture/model must not be opened')
+    monkeypatch.setattr(local.fold,'load_saved',forbidden)
+    monkeypatch.setattr(local.ss,'create_analysis',forbidden)
+    with pytest.raises(ValueError,match='known private Q4 numerical identity'):
+        local.diagnose_saved_g13('fixture',numerical_candidate='implicit fallback')
     assert local.finite.q4_algorithmic_response is seam.response

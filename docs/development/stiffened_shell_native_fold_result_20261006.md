@@ -91,3 +91,12 @@ Directional criteria remain1e-6 and unmet. No first/simplefold, branchmargin,
 stability/capacity, G4D/F03 or complete programme acceptance follows.
 Raw root-result-v3.json, root-local-attribution-v2.json and independent-local-
 evidence-review-v1.json bind this interpretation and preserved failed execution.
+## Private Log-only source candidate
+The isolated candidate keeps original Exp/chart and changes only principal-Log
+evaluation.32source controls passed in15.1801944s; these use fake/scalar seams and
+do not establish physical accuracy. Independent source/harness review found no
+consequential blocker (same-family supporting evidence only).
+Same300s allowance now124.315537used/175.684463remaining,60sreserved.
+ONE new installedsaved-g13 physical comparison remains UNRUN and scope-v3PENDING.
+No product module,law,tolerance,default,checkpoint or accepted capability changed.
+Exact source/control/review bindings are in root-result-v4.json.

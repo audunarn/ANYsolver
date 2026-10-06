@@ -5,11 +5,14 @@ This adds no execution authority and never validates a fold or repairs physics.
 from copy import deepcopy
 from math import fsum
 from threading import get_ident
+from types import FunctionType
 
 import numpy as np
 from anysolver import stiffened_shell as ss
 from anysolver import _stiffened_shell_ge_finite_experimental as finite
 from anysolver import _stiffened_shell_q4_algorithmic_pullback as q4
+from anysolver import _ge_beam3_variational_shell as shell_map
+from anysolver import _ge_beam3_g3c_so3_numerics as stable_log
 from anysolver.control import cancellation_safe_point
 from examples import stiffened_shell_native_capacity as case
 from examples import stiffened_shell_native_fold_assessment as fold
@@ -18,6 +21,8 @@ from examples import stiffened_shell_native_fold_assessment as fold
 Q4_COUNT = 16
 SHELL_ROWS = 162
 MIXED_ROWS = 552
+BASELINE_NUMERICS = 'Q4_LOCAL_ORIGINAL_EXP_LOG_CHART_V2'
+LOG_ONLY_CANDIDATE = 'PRIVATE_Q4_SAVED_G13_STABLE_PRINCIPAL_LOG_ONLY_V1'
 _active_capture = None
 
 
@@ -34,7 +39,10 @@ class Q4LocalCapture:
     Only a single synchronous owner in an isolated process is supported. No
     profile/trace hook, evaluator replay, cache replacement or product edit.
     """
-    def __init__(self,owner):
+    def __init__(self,owner,*,numerical_candidate=BASELINE_NUMERICS):
+        if numerical_candidate not in (BASELINE_NUMERICS,LOG_ONLY_CANDIDATE):
+            raise ValueError('explicit known private Q4 numerical identity required')
+        self.numerical_candidate = numerical_candidate
         self.owner = owner
         self.parts = {id(part[1]):(part[0],part[2]) for part in owner._shell_parts}
         self.origins = {id(part[1]):origin for part,origin in
@@ -46,6 +54,7 @@ class Q4LocalCapture:
         self.records = []
         self.current = None
         self.entered = False
+        self.in_deformation = False
 
     def __enter__(self):
         global _active_capture
@@ -54,6 +63,21 @@ class Q4LocalCapture:
         if finite.q4_algorithmic_response is not q4.response:
             raise RuntimeError('Q4 driver alias already replaced or incompatible')
         self.original = (finite.q4_algorithmic_response,q4.deformation,q4.spatial_response)
+        self.selected_deformation = self.original[1]
+        if self.numerical_candidate == LOG_ONLY_CANDIDATE:
+            original = self.original[1]
+            if (original is not shell_map.deformation or not isinstance(original,FunctionType) or
+                original.__globals__.get('so3_log') is not shell_map.so3_log or
+                original.__globals__.get('so3_exp') is not shell_map.so3_exp):
+                raise RuntimeError('known unchanged Q4 deformation kernel required for Log-only candidate')
+            # Reuse the exact existing code/closure/defaults. Only this private
+            # function's global context selects Log; no product global changes.
+            context = dict(original.__globals__)
+            context['so3_log'] = self._candidate_log
+            selected = FunctionType(original.__code__,context,original.__name__,
+                                    original.__defaults__,original.__closure__)
+            selected.__kwdefaults__ = None if original.__kwdefaults__ is None else dict(original.__kwdefaults__)
+            self.selected_deformation = selected
         self.thread = get_ident()
         self.wrappers = (self._response,self._deformation,self._spatial)
         _active_capture = self
@@ -91,6 +115,9 @@ class Q4LocalCapture:
             material_capture_requested=options.get('capture_material_trial',False),
             same_accepted_predecessor_identity=True,
             predecessor_capture='identity witness only; constitutive branch and margin unestablished')
+        record.update(numerical_candidate=self.numerical_candidate,baseline_numerics=BASELINE_NUMERICS,
+            candidate_log_calls=0,original_exp_and_spatial_chart=True,
+            mechanical_operator_compatibility_proved=False)
         self.current = record
         try:
             result = self.original[0](model,element,displacement,origin,layers,**options)
@@ -108,7 +135,15 @@ class Q4LocalCapture:
         self._require_call()
         if self.current is None or 'local_coordinates' in self.current:
             raise RuntimeError('foreign or repeated Q4 deformation call')
-        result = self.original[1](*args,**options)
+        if self.numerical_candidate == LOG_ONLY_CANDIDATE and options.get('stable_rotation',False) is not False:
+            raise RuntimeError('Log-only candidate requires original Exp and chart numerical route')
+        self.in_deformation = True
+        try:
+            result = self.selected_deformation(*args,**options)
+        finally:
+            self.in_deformation = False
+        if self.numerical_candidate == LOG_ONLY_CANDIDATE and self.current['candidate_log_calls'] != 4:
+            raise RuntimeError('exact four actual Q4 principal Log calls required')
         self.current.update(local_coordinates=_copy_array(result[0],(24,)),
             deformation_differential=_copy_array(result[1],(24,24)),
             deformation_second=_copy_array(result[2],(24,24,24)),
@@ -118,10 +153,21 @@ class Q4LocalCapture:
                 _copy_array(options['rotation_anchors'],(4,3,3)))
         return result
 
+    def _candidate_log(self,matrix):
+        self._require_call()
+        if self.current is None or not self.in_deformation:
+            raise RuntimeError('Log-only candidate outside actual owned Q4 deformation')
+        self.current['candidate_log_calls'] += 1
+        if self.current['candidate_log_calls'] > 4:
+            raise RuntimeError('bounded Q4 candidate Log call count exceeded')
+        return stable_log.so3_log(matrix)  # Existing value/first/second helper only.
+
     def _spatial(self,displacement,force,tangent,differential,second,**options):
         self._require_call()
         if self.current is None or 'local_force' in self.current:
             raise RuntimeError('foreign or repeated Q4 spatial pullback call')
+        if self.numerical_candidate == LOG_ONLY_CANDIDATE and options.get('stable_rotation',False) is not False:
+            raise RuntimeError('Log-only candidate requires the original spatial chart route')
         local_force = _copy_array(force,(24,))
         local_tangent = _copy_array(tangent,(24,24))
         derivative = _copy_array(differential,(24,24))
@@ -276,8 +322,11 @@ def q4_difference_witness(baseline,minus,plus,tangent,h,rows,free,n,direction):
         operator_defect_proved=False,criterion=fold.ELASTIC_FD_LIMIT)
 
 
-def diagnose_saved_g13(folder,*,cancellation_token=None,on_evaluation=None):
+def diagnose_saved_g13(folder,*,cancellation_token=None,on_evaluation=None,
+                      numerical_candidate=BASELINE_NUMERICS):
     """Exactly one bound restore, one border, baseline+four actual assemblies."""
+    if numerical_candidate not in (BASELINE_NUMERICS,LOG_ONLY_CANDIDATE):
+        raise ValueError('explicit known private Q4 numerical identity required')
     raw,packet = fold.load_saved(folder,13)
     cancellation_safe_point(cancellation_token,'before fresh saved-g13 diagnostic owner')
     owner = ss.create_analysis(definition=case.definition())
@@ -294,6 +343,13 @@ def diagnose_saved_g13(folder,*,cancellation_token=None,on_evaluation=None):
         scientific_acceptance=False,simple_fold_proved=False,capacity_proved=False,
         yield_branch_margin='UNESTABLISHED',G4D='OPEN',same_law_external_and_refinement='OPEN',F03='OPEN',
         registered_relative_criterion=fold.ELASTIC_FD_LIMIT)
+    result.update(numerical_candidate=numerical_candidate,baseline_numerics=BASELINE_NUMERICS,
+        numerical_provenance=dict(principal_log='original' if numerical_candidate == BASELINE_NUMERICS else
+            '_ge_beam3_g3c_so3_numerics.so3_log value/first/second; private Q4 function context',
+            Exp='original _ge_beam3_mixed_ad.so3_exp',spatial_chart='original _ge_beam3_pose_joint._exp_terms',
+            candidate_is_public_or_owner_dispatch=False),
+        checkpoint_preservation_proves_operator_compatibility=False,
+        mechanical_operator_compatibility_proved=False)
     try:
         restored = owner.restore(raw)
         before = deepcopy(case._plain(owner.recover()))
@@ -330,13 +386,15 @@ def diagnose_saved_g13(folder,*,cancellation_token=None,on_evaluation=None):
         direction = np.r_[full,np.zeros(size-n)]
         nodal = SHELL_ROWS+6*len(owner._beam_ids)
         physical = np.array([i for i in range(nodal) if i%6 < 3])
-        with Q4LocalCapture(owner) as capture:
+        with Q4LocalCapture(owner,numerical_candidate=numerical_candidate) as capture:
             def evaluate(label,trial):
                 assembled,records = capture.assemble(trial,*origins,applied,cancellation_token)
                 if not np.isfinite(assembled[0]).all() or any(v != 0. for row in fold._material_observables(assembled[5]) for v in row):
                     raise fold.AssessmentRefusal('nonfinite_or_active_trial_material')
                 captured = dict(label=label,generation=13,status='COMPLETED_EVALUATION',
                     diagnostic_completion='PARTIAL',accepted_checkpoint_sha256=fold.SAVED[13][1],
+                    numerical_candidate=numerical_candidate,baseline_numerics=BASELINE_NUMERICS,
+                    mechanical_operator_compatibility_proved=False,
                     accepted_public_state=deepcopy(before),assembled_residual=np.array(assembled[0],copy=True),
                     Q4=records,actual_mixed_state=dict(q=trial.q.copy(),frames=trial.frames.copy(),
                         cells=trial.cells.copy(),resultants=trial.resultants.copy(),multipliers=trial.multipliers.copy(),

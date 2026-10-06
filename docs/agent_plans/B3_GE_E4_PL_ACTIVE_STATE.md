@@ -28,7 +28,7 @@ Authoritative host used unchangedCI, no ACL/DLL/dependency/criteria modification
 completed29.9137462s:1border/5actualassemblies/16Q4records each. Public recovery
 and checkpoint bytes unchanged. CPU0/pools1/JIToff/2GiB;430source/wheel/site
 and5durablecapture hashes verified. Peakcapture291770368B. Supporting reviewclean.
-Same300ledger109.1353426used/190.8646574remaining;60sreserve.
+Original capture ledger109.1353426used/190.8646574remaining; see latest below.
 Original3endpointassessment andONElocalcapture CONSUMED. Remainder only within
 existingverification/repair scope; no newcandidate run or scope renewal inferred.
 
@@ -46,9 +46,16 @@ Next decision: isolated Log-only numerical candidate, original Exp/chart and law
 Author /root/native_capacity_candidate owns ONLY3local-diagnostic example/test/doc
 files, source-only. Exactoriginal deformation code reused through private owned
 function globals differing only atso3_log; no product/globalownerdispatch change.
-Baseline route preserved. Candidate must restore seams and label operator/restart
-compatibility UNPROVEN. All newcandidatecontrols UNRUN; no numerical authority.
-Next: complete source/review, then concrete scope amendment before candidate run.
+Baseline route preserved; operator/restart compatibility UNPROVEN. Candidate
+source/example/test hashes18fd0d3b/10838bbf unchanged after32focused controlsPASS
+(15.1801944s; CPU0/pools1/JIToff; fake/scalar seams only). Independent source and
+harness review found no consequential blocker; supporting OpenAI only.
+Product430modules unchanged. Candidatephysical UNRUN; authority-v3 PENDING.
+Latest SAME300ledger124.315537used/175.684463remaining;60sreserve, no reset.
+Next: ONE installedsavedg13 Log-only comparison needs concrete scope amendment:
+1border/5assemblies, fixedh1e-5/1e-6, unchanged1e-6criterion,90s cap.
+Previous capture/evidence archivedf5a34d1c. Rawroot-result-v4.json and
+independent-log-candidate-source-review-v1.json; no live numericaljob.
 No automatic smallersteps, 3state rerun, tolerance/norm change or campaign.
 No owned numericaljob remainslive; no accepted firstfold/descendingbranch/G4D.
 

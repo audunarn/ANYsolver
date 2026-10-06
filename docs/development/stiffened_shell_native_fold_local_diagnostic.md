@@ -1,9 +1,10 @@
 # Passive saved-g13 Q4 local diagnostic
 
-Status: **implemented source candidate, UNRUN**. Neither model construction,
-assembly, finite differences, collection, tests, build nor interpreter execution
-has been performed for this slice. The consumed saved-prefix assessment and its
-244.3197409 s verification remainder provide no authority for this discriminator.
+Status: **source controls verified; Log-only numerical comparison UNRUN and not
+authorized**. The focused source controls ran as recorded below. No physical
+Log-only model/assembly/finite-difference comparison has run. Both previous
+physical primaries are CONSUMED; remaining verification allowance provides no
+authority for this new numerical comparison.
 The example's main entry refuses execution; a separately authorized supervisor
 may call `diagnose_saved_g13(folder,on_evaluation=writer)` and save its detached
 structured result. After every complete baseline/signed evaluation, and before
@@ -13,6 +14,16 @@ the seam restores and the owner closes. The caller supplies durable storage;
 this example creates no output files or archiving framework. A streamed
 `COMPLETED_EVALUATION` remains part of a `PARTIAL` diagnostic, not a completed
 assessment; only the final bounded result marks diagnostic completion.
+
+The original v2 capture numerical route remains the default, explicitly named
+`Q4_LOCAL_ORIGINAL_EXP_LOG_CHART_V2`. The new candidate must be requested with
+`numerical_candidate=LOG_ONLY_CANDIDATE`, whose private identity is
+`PRIVATE_Q4_SAVED_G13_STABLE_PRINCIPAL_LOG_ONLY_V1`. Unknown identities refuse
+before opening a fixture or owner. Each invocation still performs only one
+selected route's one border and five assemblies. A future comparison uses the
+existing frozen original-route observations; there is no automatic original/
+candidate double run, fallback, or extra h. The consumed original assessment
+and installed local diagnostic do not authorize executing this new candidate.
 
 ## Question and bound
 
@@ -49,6 +60,37 @@ requires **one synchronous fresh owner in an isolated process**, with no paralle
 solver observations. It is private verification tooling, not a supported API or
 a concurrency service. All three exact original callables restore in `finally`,
 including cancellation and programming failures; unexpected errors propagate.
+
+## Explicit private Log-only selection
+
+For the original route, the exact original deformation callable is invoked.
+For the candidate, `FunctionType` reuses that callable's **identical code object,
+closure and defaults**, preserving keyword defaults, with an owned shallow
+global context differing only at `so3_log`. The replacement calls the existing
+`_ge_beam3_g3c_so3_numerics.so3_log`, including its existing stable scalar value,
+first and second derivatives. No kernel source is copied. The original function
+globals and all product module bindings remain untouched by this selection.
+The three temporary capture aliases retain their existing restoration contract.
+
+The candidate is callable only inside the known owner's actual Q4 deformation
+observation, requires exactly four principal Log calls per element, and refuses
+`stable_rotation=True`. The original Exp, quaternion fit, deformation code,
+spatial-row chart and owner/beam/multiplier dispatch remain their original
+bindings. In particular, enabling the existing combined `stable_rotation`
+selection would also change Exp/chart arithmetic and is not this candidate.
+The principal Log map, domain, physical equations, scientific tolerances,
+materials and checkpoint/public contracts are unchanged. This is a private
+numerical comparison, with no new public option or default.
+
+Original and candidate numerical identities accompany every retained/streamed
+evaluation. Captures count actual candidate Log calls; returned response objects
+retain exact identity. The selected math may change their numeric contents.
+Full accepted public recovery and checkpoint bytes must remain unchanged, but
+that preservation **does not prove mechanical operator compatibility** under
+the candidate arithmetic. Compatibility, branch/margin, forward slope accuracy
+and all fold/capacity acceptance remain unproved even if directional witnesses
+later meet the unchanged criterion. Candidate refusal or failure is retained
+honestly; no arithmetic-policy qualification follows from source controls.
 
 Original evaluator scratch and material-predecessor lifecycles remain ordinary.
 Trial caches are not artificially restored, replaced or reused as acceptance
@@ -143,4 +185,22 @@ discrepancies. Exact Fraction controls cover positive outward operations,
 cancellation and central envelopes; subnormal/underflow domains are refused.
 Callback mutation/failure controls cover detached retained witnesses, partial
 labels, actual baseline delivery, seam restoration and fresh-owner closure.
-All controls are **UNRUN**; no source-only pass is claimed.
+New Log-only controls verify actual Q4 selection and call counts, unchanged Exp
+and chart routing, identical real deformation code/closure/defaults, untouched
+original globals, owned observations, unknown/foreign/nested/stable-route refusal
+and alias restoration after cancellation, typed refusal and programming failure.
+The complete focused source controls ran in `source-log-controls-v1`: **32 passed,
+0 failed, 0 errors, 0 skipped**, process-wall 15.1801944 s. Effective settings
+were CPU 0, numerical pools 1 and JIT off; peak memory was 256270336 B.
+Exact raw evidence directory:
+`C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001/.qualification/b3-ge-e4-pl/r8-native-fold-assessment-dev-20261006-v1/source-log-controls-v1`.
+
+Executed source SHA256 identities:
+
+- Example: `18fd0d3b2e2e0f416a5195c43e364d43fd2de6a21375bccd62ddb0da9331ea4f`.
+- Tests: `10838bbf2e1e73c61c26d20bb3993185e5d82e107e4adff0d55db7b3430e1b69`.
+
+These fake-owner, spy and analytic source controls verify the observation and
+selection contracts; they do **not** establish actual mechanical directional
+derivative accuracy, operator compatibility or scientific acceptance. The new
+saved-g13 Log-only numerical comparison remains **UNRUN and not authorized**.

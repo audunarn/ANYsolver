@@ -4130,3 +4130,12 @@ Private isolated Log-only candidate source preparation adopted; no owner/default
 checkpoint change and no newcandidate numerical run without scope amendment.
 Raw fold-assessment-dev/root-result-v3.json; supporting reviewclean, not
 scientific/differentfamily acceptance. G4D/F03/fullprogramme remain OPEN.
+## 6 October2026: private Log-only source candidate
+32focused source/scalar/fake-seam controlsPASS,15.1801944s; no physicalcandidate
+evaluation. Original Exp/chart,laws and430productmodules unchanged.
+Supporting independent source/harness review clean; numericalaccuracy and
+operator/restart compatibility UNPROVEN. Original failed evidence retainedf5a34d1c.
+Same300ledger124.315537used/175.684463remaining,60sreserve. v3 physicalscopePENDING:
+ONEsavedg13,1border/5assemblies,fixedh1e-5/1e-6,unchangedcriterion1e-6.
+No acceptance,authority renewal,continuation,F03 or completeprogramme closure.
+Rawfold-assessment-dev/root-result-v4.json and independent-log-candidate-source-review-v1.json.
