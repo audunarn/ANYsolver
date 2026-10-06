@@ -85,52 +85,41 @@ computed material fields are recorded CALCULATED_NOT_VALIDATED. Material stage
 not reached. No coupled calibration/refinement/external/F03 job permitted here.
 Same author owns NEW workflow/test/doc/raw; root owns note/matrix/Git/contracts.
 
-## Independent next slice: physical reference modes
+## Delivered mixed reference modes and current B2 buckling slice
 
-Mandatory M4/F07/V20: extend the existing full descriptor route to flat mixed
-Q4/S3, generalized/virgin native-fibre families and admitted POINT/BL5 attachments
-through an explicit new request/policy. Preserve historical request meanings.
-Question: do the actual shell/director and native retained coordinates support
-the existing physical kinetic law? Derive/check local kinetic work and actual
-public sparse modes against a small independent dense QZ oracle; no invented
-algebraic inertia or static mass reduction. Reject unsupported family histories.
-If coordinate/mass compatibility fails, report the specific law/lift obstruction
-rather than inserting a floor. Body retry remains independently blocked.
-OpenAI author/reviewer fallback: Mistral/local cached unavailable, no new probe.
-Modal author/reviewer separate; root owns contracts/note/matrix/Git.
-New raw r8-ge-mixed-reference-modal-dev-20261006-v1/. Root adopts experimental
-V2D linear nodal mid-surface/director kinetics only: triangleG=A/12(ones+I),
-rhoh translation and rho*h**3/12 tangential rotation. This is a declared approximation,
-not full MIN3 displacement-correction inertia or legacy S3 mass. Actual V2D has
-18 corner coordinates; the separate bubble-S3 family is NOT admitted. No physical
-bubble static/dynamic reduction. Distinct request/mass policy; no qualification.
-Native kinetic lift/inertia remains explicit captured geometry+spatial inertia.
-Installed source c3950ae6/wheel9e6ab8a4: flatQ4/S3/mixed, generalized/virgin
-axial-biaxial/mixed native families, supportedPOINT/BL5 reference modes. POINT
-free-free verifies six canonical rigid fields; full singular pencil preserved.
-SourceV1 73PASS/3FAIL; repaired full-pencilQZ/curved-frameV3 affected3PASS.
-76 unique source passes by impact reuse; rootlauncherCI error preserved,0tests.
-Root later caught generic modal-only capabilities selecting legacy ineligible
-scope. Same owner repaired metadata/assertions; prior reviews missed that seam.
-InstalledV4 FULL76PASS/0fail/error/skip8.702s, including actual generic capability
-and preflight/legacy assertions. Default public mixed/nativeBL5 example passes
-at117.6519074/253.5976933Hz, explicitly experimental/nonqualified. Root verifies
-427source/stage/wheel/host-site bytes,244actual imports,45raw/6source bindings,
-pinnedCI/affinity0/pools1/Numba1/JIToff/unforced. Supervisor14.2558s232947712B
-sampled,terminal. TwoQZ infinity warnings retained; no criteria change.
-Wheel5639b79b superseded/unexecuted; installedV2/V3 access guards FAILED BEFORE
-tests. Samewheelhost-install recovery preserved, no ACL/source changes. Raw
-r8-ge-mixed-reference-modal-installed-dev-20261006-v1/: finalhandoff/manifest-v2
-and root-integrated-verification-v1.json. Scientific2% convergence/external/
-different-family and aggregateF07/G4B remainOPEN. NEXT B2point reference-buckling:
-root adopts objective beam midframe/shell polar-fit port curvatures and fullGreen
-section work from EXPLICIT source-bound traction quadrature, no inferredWagner.
-Independent firstwork review agrees, requiring factor2shear/chartHessian once.
-Initial zero-u0/deadtranslation/endpoint-only domain. NativeQ4stress kernel; S3
-frozen uniformmembrane approximation openly omits directorsecondmoment; broader
-shell/attachment/prestress F12/B14 remainsMANDATORY OPEN. Sustained OpenAI author,
-no numerics until actual kernel-state/check contract inspected. Body approval
-pending; no F03/closedcampaign restart. Modal jobs terminal.
+Native full descriptor reference modes are installed DEVELOPMENT verified at
+6342a504/sourcec3950ae6/wheel9e6ab8a4: Q4/S3/mixed, generalized/virgin native
+axial-biaxial/mixed families and supported POINT/BL5. POINT free-free checks
+six physical rigid fields. New S3 kinetics are the declared linear nodal
+mid-surface/director approximation, not full MIN3/bubble inertia. Installed
+76PASS8.702s plus public mixed example117.6519074/253.5976933Hz; root verifies
+427payloads/244imports/pinnedCI/affinity0/pools1/JIToff/unforced. Earlier source
+and installation guard failures preserved. Two QZ infinity warnings retained.
+Scientific2%/external/different-family and aggregateF07/G4B remainOPEN.
+
+B2 endpoint POINT reference-buckling candidate now SOURCE DEVELOPMENT VERIFIED:
+19unique cases by V4/V5/V6 impact reuse; not a full-suite or installed claim.
+Member fullGreen S11/S12/S13 work uses owned explicit source-bound traction
+quadrature; no inferredWagner. Objective geodesic beam/polar shell port Hessians
+and joint chart curvature enter once. General shifted full sparse KKT uses
+reference K/C scaling; static success is completed, failed preloads retained.
+Public Q4/all-S3/mixed solve, independent full-pencilQZ, crossing shift, scalar/
+coupled sectional work, finite actual rigid path and midassembly cancellation
+pass. Default two-member Q4 public factor24.60872920125391, nonqualified.
+Final product7b6e6454/testsf6713f3d; 245actualsourceimports/run and frozen bytes
+verified. V2 12FAIL/V3 11FAIL/V4 5FAIL preserved; V5affected6PASS23.180s;
+V6new2PASS3.022s. No scientific criteria changed. Distinct-author OpenAI code
+review defects closed, not different-family scientific acceptance. Raw
+r8-b2-reference-buckling-dev-20261006-v1/root-source-verification-v1.json.
+Initial domain zero-u0/Cartesian deadforces/endpointPOINT only; Q4 native N/M/
+homogeneous secondmoment, strict zeroQ. S3 thin uniformmembrane approximation
+openly OMITS physical director secondmoment and rejects M/Q/nonuniformity.
+General S3/Q4shear, loaded interior/lines/footprints, prescribed prestress,
+reversal/units/datum controls and fullF12/B14 external/refinement remainOPEN.
+NEXT: installed B2 whole-route verification from exact source; reuse passed
+mechanics by unchanged inputs. Body approval remains pending; no body/F03 or
+closedcampaign restart. Mistral/local cached unavailable; same OpenAI author
+owns B2 slice, separate non-author review; root owns contracts/note/matrix/Git.
 
 ## Preserved restrictions and history
 

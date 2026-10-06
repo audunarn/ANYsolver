@@ -410,3 +410,8 @@ tests/data/native_s3_fibre_history/** -text
 /.qualification/b3-ge-e4-pl/r8-ge-mixed-reference-modal-dev-20261006-v1/** -text -whitespace
 /.qualification/b3-ge-e4-pl/r8-ge-mixed-reference-modal-installed-dev-20261006-v1/** -text -whitespace
 .qualification/b3-ge-e4-pl/r8-b2-reference-buckling-dev-20261006-v1/** -text -whitespace
+/src/anysolver/_stiffened_shell_b2_reference_buckling.py -text whitespace=cr-at-eol,-blank-at-eof
+/src/anysolver/_stiffened_shell_b2_q4_panel_experimental.py -text whitespace=cr-at-eol,-blank-at-eof
+/tests/test_stiffened_shell_b2_reference_buckling.py -text whitespace=cr-at-eol,-blank-at-eof
+/examples/stiffened_shell_b2_reference_buckling.py -text whitespace=cr-at-eol,-blank-at-eof
+/docs/reference_cases/stiffened_shell_b2_reference_buckling.md -text whitespace=cr-at-eol,-blank-at-eof

@@ -6,6 +6,11 @@ release are separate decisions tied to final installed artifacts.
 
 from __future__ import annotations
 
+from ._stiffened_shell_b2_reference_buckling import (
+    B2ReferenceBucklingRequest, B2ReferenceBucklingResult,
+    B2ReferenceBucklingCapabilities, B2SectionTractionQuadrature,
+)
+
 from dataclasses import dataclass
 from ._stiffened_shell_selected_recovery import GERecoverySelection, SelectedGERecovery
 from ._stiffened_shell_ge_distributed_load import GEBeamLineAction, GEBeamDistributedLoad, GEDistributedRecovery
@@ -277,6 +282,8 @@ __all__ = [
     "Q4_DIRECTOR_MASS_POLICY",
     "PhysicalB2Member", "LinearSection", "Q4PanelShell", "Q4B2Point",
     "MassMetadata", "B2ReferenceModesRequest", "B2ReferenceModesResult",
+    "B2ReferenceBucklingRequest", "B2ReferenceBucklingResult",
+    "B2ReferenceBucklingCapabilities", "B2SectionTractionQuadrature",
     "B2ReferenceBodyLoad",
     "B2LoadedMemberSections", "B2BodyLoadedPanelResult", "B2BodyLoadedFootprintResult",
     "B2LoadedMemberPoses", "B2LoadedPointPanelResult", "B2LoadedPointPanelSelectedCase",

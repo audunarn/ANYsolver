@@ -900,6 +900,7 @@ class ExperimentalB2Q4PanelAnalysis:
         constraint_rows, constraint_cols, constraint_values = [], [], []
         point_reference_frames = []
         point_laws = []
+        buckling_points = []
         section_point_actions = {}
         loaded_point_entries = {}
         for point_index, point in enumerate(points):
@@ -912,6 +913,8 @@ class ExperimentalB2Q4PanelAnalysis:
                 member.definition, vertices, station=point.station,
                 offset_local_m=point.offset_local_m)
             point_laws.append((point.point_id, law.law_id))
+            buckling_points.append((point, law, vertices.copy(), member,
+                                    np.r_[shell_slots, beam_slots]))
             if point_trace_policy is not None:
                 port_constraint = (law.beam_constraint_differential @
                     np.kron(np.eye(2), member.definition.local_frame_rows().T))
@@ -1027,6 +1030,12 @@ class ExperimentalB2Q4PanelAnalysis:
         self._H = H
         self._abs_H = None if H is None else abs(H)
         self._K = K
+        # Spectral-only captures reuse the exact prepared reference operators;
+        # no accepted state or nonlinear material history is manufactured.
+        self._buckling_model = model
+        self._buckling_shells = tuple((shell, element, material_id,
+            shell_lookup[shell.shell_id][1]) for shell, _, element, material_id, _ in pieces)
+        self._buckling_points = tuple(buckling_points)
         if body_map is not None and not np.isfinite(body_map).all():
             raise RepresentabilityError("reference body-load map is not representable")
         self._body_map = body_map
@@ -1317,6 +1326,16 @@ class ExperimentalB2Q4PanelAnalysis:
             factorization_count, solve_count, failure_reason,
             footprint_ids=self.footprint_ids,
             constraint_multiplier_modes=multipliers, constraint_rows=tuple(provenance))
+
+    @property
+    def reference_buckling_capabilities(self):
+        from ._stiffened_shell_b2_reference_buckling import capabilities
+        return capabilities(self)
+
+    def buckling(self, request, *, cancellation=None):
+        """Explicit experimental reference-preload conservative spectral route."""
+        from ._stiffened_shell_b2_reference_buckling import solve
+        return solve(self, request, cancellation=cancellation)
 
     def modes(self, request: B2ReferenceModesRequest, *,
               cancellation: CancellationToken | None = None

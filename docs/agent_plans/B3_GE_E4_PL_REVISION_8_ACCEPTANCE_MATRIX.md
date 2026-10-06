@@ -3440,3 +3440,31 @@ OpenAI distinct-author supporting review cannot satisfy different-family gate.
 Single slice doc docs/reference_cases/stiffened_shell_b2_reference_buckling.md;
 raw r8-b2-reference-buckling-dev-20261006-v1/, independent-contract-review-v1.md.
 FormalF03/bodyretry/closed campaigns/release/main/sibling/contact unchanged.
+
+
+## 2026-10-06 B2 physical endpoint reference-buckling source development
+
+Implementation: IMPLEMENTED_NOT_QUALIFIED. F12/B14 and aggregate G4B remain OPEN.
+Candidate module SHA256 7b6e645475c40aca91dfd14b600e4b12eac2b3334b6c52cf35619a2045fcb17c;
+final tests f6713f3d (full source bindings in raw root-source-verification-v1.json).
+19 unique source cases PASS by unchanged-body impact reuse: V4 eleven passes,
+V5 six affected/new passes, V6 two new passes. Earlier V2/V3/V4 failures retained.
+Public two-member Q4/all-S3/mixed buckling, full constrained QZ/crossing shift,
+scalar/generalized full sectional Green work, physical port curvature, actual
+finite rigid-path gradient/acceleration work and midassembly cancellation tested.
+Default public Q4 factor 24.60872920125391, production_qualified=False.
+Frozen snapshots,245 actual source imports/run, pinned CI pools1/affinity0/JIToff
+and bounded resource receipts independently verified. V5 23.180s/V6 3.022s tests;
+sampled memory is not peak-memory qualification. Distinct-author OpenAI reviews
+closed shifted-scaling and successful-preload caller defects; required different-
+family, installed, external and refinement acceptance remains unmet.
+Domain zero prescribed u0, Cartesian dead forces, endpoint POINT only. Explicit
+physical traction quadrature about member constitutive reference datum; no
+stiffness-derived stress/Wagner. Q4 uses native N/M/homogeneous secondmoment;
+S3 is declared thin/uniform membrane approximation omitting director secondmoment.
+Strict exact-zero forbidden shell resultants; no arithmetic-zero allowance.
+Mandatory broader S3/Q4shear, loaded ports/lines/footprints, prescribed prestress,
+reversal/units/datum controls and complete F12/B14 remain unfinished.
+Evidence: .qualification/b3-ge-e4-pl/r8-b2-reference-buckling-dev-20261006-v1/.
+No body retry, formal F03, closed campaign, sibling edit, main/push/release authority
+consumed or granted. Next action: installed exact-source B2 integration check.
