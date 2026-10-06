@@ -5,6 +5,22 @@ This plan changes the route, not scientific obligations or execution authority.
 
 ## Current delivered development
 
+The solver-side ordinary arc result archive joins the existing static/transient
+archive services. All10producer fields, peak/path records, snapshots/material and
+complete V2 checkpoint survive inert export/read. Source4 and installed4 controls
+pass with an independent raw-value oracle and protected legacy wire parity.
+Root539payload/sixhash parity and237installed imports/errors0 pass. Only an
+additive result method/lazy exports touch the arc module; driver AST is unchanged.
+This advances C9 persistence, not mechanical/application admission or acceptance.
+[Arc export evidence](docs/d1_review_support/contact_transient_archive_20261006/arc_development.md).
+
+The SAME archive purse now records157.759157099645/180s spent,22.240842900355s
+remaining across29terminaljobs. Earlier42.2498s remainder is historical; no other
+authority was consumed or renewed. Broader application adapters, persistence,
+visualization, admission and package completion remain required. Select the next
+unblocked complete programme outcome by dependency and valid authority; no new
+mechanical campaign fits the held native/domain/C5 residues.
+
 Ordinary-static contact results now use the same bounded archive infrastructure
 as transient results. Installed16controls, then changed preservation2controls and
 explicit byte-compatibility1control pass; all537 payloads match. Actual two-step/

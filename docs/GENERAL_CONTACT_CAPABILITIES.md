@@ -2517,3 +2517,22 @@ raw C:/ANYworkspaceWork/contact_arc_length_20261006/root_affine_repaired_audit.j
 Same C5 purse170.846466999850/180s used,9.153533000150s remaining,26terminaljobs;
 all prior artifacts/failures retained. General nonlinear/friction/native/moving
 and finite-rotation continuation, independent acceptance and full C0-C9 remain.
+
+
+## 2026-10-06 C9 ordinary arc contact result archive
+
+Parenta0df5c55. Public serialize/read_arc_contact_results, ContactArcArchive,
+ArcContactArchiveError and additive ArcLengthResult convenience method retain
+all10producer fields, peak/path records, snapshots/material, contact histories
+and full physical-preload V2checkpoint as bounded inert detached data.
+Existing static/transient codecs and ordinary arc driver are unchanged.
+Implemented/source4PASS/installed4PASS, NOT independently accepted or released.
+Actual2points/2snapshots/186490bytes pass independent producer/raw-bit oracle;
+protected static/transient sample wire bytes EXACT. No mechanics/admission change.
+Root539payload/sixhash parity,237installed imports/errors0,JIT0/Numba1/pools1.
+Wheel c28d44093c00eb8487db4b68f93b7cc1026dfd22d51536810a0184c055ed4a65.
+Evidence docs/d1_review_support/contact_transient_archive_20261006/arc_development.md;
+raw C:/ANYworkspaceWork/contact_transient_archive_20261006/root_arc_payload_audit.json.
+Same archive157.759157099645/180s spent,22.240842900355s remaining,29terminaljobs.
+Every prior artifact/failure/authority retained. Applications/admission and full
+C0-C9 engineering acceptance remain open. Archive grants no restart authority.

@@ -324,6 +324,11 @@ class ArcLengthResult:
             }
         return payload
 
+    def to_contact_archive_bytes(self, *, max_bytes=16 * 1024 * 1024) -> bytes:
+        """Export detached contact data; this grants no restart or admission."""
+        from .general_contact.arc_results_archive import serialize_arc_contact_results
+        return serialize_arc_contact_results(self, max_bytes=max_bytes)
+
     def to_restart_checkpoint(self) -> Dict[str, Any]:
         if self.restart_checkpoint is None:
             raise ValueError("this result does not contain an arc-length restart checkpoint")

@@ -81,6 +81,15 @@ Independent response/wrench and exact full/split restart pass. This closes these
 bounded development gaps, not nonlinear-material or general continuation acceptance.
 [Affine/preload evidence](docs/d1_review_support/contact_arc_length_20261006/affine_development.md).
 
+C9 arc-result export now preserves all ten actual producer fields, peak/path
+records, snapshots/material data and the full preload V2 checkpoint as bounded
+inert data. Source4 and installed4 controls pass, including an independent
+producer/raw-bit comparison and unchanged static/transient sample wire bytes.
+Root verified all539payloads and237installed imports. This completes the
+solver-side archive family for these three ordinary analysis results; application
+adapters, admission and C9 engineering acceptance remain open.
+[Arc export evidence](docs/d1_review_support/contact_transient_archive_20261006/arc_development.md).
+
 ## Preserved history and decisions
 
 The [unaltered prior goal](GENERAL_CONTACT_GOAL_HISTORY_20261005.md) and [prior plan](GENERAL_CONTACT_PLAN_HISTORY_20261005.md) retain all development decisions, counterexamples, failures, references and source identities. Unaffected scientific contracts, registered criteria, frozen/consumed authorities and assessed capability boundaries remain binding. Historical chronological next actions are superseded by this live goal/plan; this consolidation changes no mechanics or acceptance target and authorizes no repeated campaign.
