@@ -34,48 +34,37 @@ JIT disabled/Numba1/observed pools1. Source equations and historical scientific
 gates are unchanged. This closes the bounded controller safety gap, not full C7
 engineering acceptance. No more optional repeats on this slice.
 
-Next C7 slice: independent manufactured finite-rotation loading through the
-existing public native trajectory owner. Reuse the completed N192 finite-angle
-and N162/N216 temporal evidence; preserve the older N16 NONPASS. Do not repeat
-those trajectories. Derive a straight, centered, principal-axis invariant with
-uniform force and longitudinal couple from the actual physical load work maps.
-The reference uses declared geometric mass/inertia and elementary mechanics,
-not production kernels. Distinguish exact continuum endpoints from discrete
-midpoint stage poses; constant acceleration gives a*h^2/8 and alpha*h^2/8 offsets.
+The independent manufactured finite-rotation loading slice is now development
+verified: five installed checks and the actual four-step public CLI pass.
+Force/cell-couple work, analytical endpoints, discrete stage offsets, energy and
+linear/angular impulse agree with the independent primitive-ellipse reference;
+worst normalized error 2.602647347139155e-13. Exact full/fresh-split results and
+checkpoint bytes match. This is the free centered principal-axis invariant only.
+Two runs used 63.12627979996614/100 approved seconds, with peaks 166686720 and
+147337216 bytes; 36.87372020003386 seconds remains only in this loading scope.
+All 545 held installed payloads and 194 imported modules per run match wheel
+6252c0f6/source candidate fdbae395; JIT disabled, Numba/pools one thread.
+[Evidence](docs/d1_review_support/contact_native_transient_20261006/manufactured_loading_development.md).
+Reuse N192 and N162/N216 evidence; retain older N16 NONPASS and withdrawn
+energy-field source finding. No broader C7 acceptance or C8 claim follows.
 
-Question: does the current DistributedPattern physical work support this exact
-loaded motion without strain? Source scrutiny confirms it only for zero lift,
-centered inertia, a principal longitudinal axis, common directors and free ends;
-nodal moment loads are not equivalent. Implement one integrated reference/example
-and focused checks before requesting a separate bounded numerical allowance.
-Reuse the held installed package if product code is unchanged. No remaining
-safety allowance is borrowed and no mandatory gate is weakened. This case does
-not replace independent deforming/spatial accuracy, broader native sections/
-connected dynamics or common-stage coupled impact. Full C0-C9 remains required.
+### Connected native dynamics: shared-controller source candidate
 
-Current source candidate: independent helper, public example and five focused
-checks implemented and source-reviewed; numerical execution remains UNEXECUTED.
-Separate100s loading allowance requested. All545 production payloads match the
-held verified installed package, so no rebuild is needed. Preserve the original
-source snapshot and withdrawn energy-field review finding; actual constructor
-semantics confirm the mechanical energy checks. No product equations changed.
-
-### Connected native dynamics: source candidate
-
-The new explicit connected owner assembles shared nodal coordinates and retained
-cell motion in one 6N+24E midpoint system. Atomic trial/commit/discard, strict
-fresh-owner restart, a two-element example and focused derivative/refusal checks
-are implemented and source-reviewed. Numerical tests and installed verification
-remain UNEXECUTED; this is not C7 acceptance. The existing single-element profile
-and all545 old package payloads are unchanged. New connected modules are absent
-from the held loading/safety wheel.
-
-Next integrate this owner with the existing shared TransientConfig transaction
-and reporting route, then verify the coupled equations and state controls under
-their own execution allowance. Retain independent deforming, finite-angle,
-clamped reaction/impulse, section and broad C7/C8 obligations. Source evidence:
-raw contact_native_connected_dynamic_20261006/worker_handoff_v2.md and
-[guide](docs/GENERAL_CONTACT_NATIVE_CONNECTED_DYNAMIC_DEVELOPMENT.md).
+The explicit connected owner now joins one 6N+24E retained midpoint system to
+TransientConfig through a shared coordinate-free transaction/cutback controller.
+The old 17 functions/classes and expanded advancement loop are AST-equivalent
+to the held original source; this is source evidence, not runtime compatibility.
+Separate connected schema, physical 3N+6E initial data, authentic endpoint
+publication and native-owned receipts are implemented. Final source review found
+restart controller-history, replay lease/cancellation and fixed-slot validation
+gaps; the sustained author is repairing them before verification.
+All new connected/shared numerical tests, build and installed checks remain
+UNEXECUTED, with no execution allowance. The frozen loading artifact does not
+contain this candidate. Next finish source review, then verify coupled equations,
+state controls and affected legacy behavior under a separate bounded allowance.
+Independent deformation, finite-angle, support wrench/impulse, section and C7/C8
+obligations remain. Source evidence: raw contact_native_connected_transient_20261006
+and [guide](docs/GENERAL_CONTACT_NATIVE_CONNECTED_DYNAMIC_DEVELOPMENT.md).
 
 ### Independent represented-path gap: development verified
 

@@ -2894,3 +2894,8 @@ native dynamics and common-stage native/shell impact remain open; full C0-C9 inc
   worker_handoff_v2.md, assembly_source_review.md, root_source_audit.json and guide
   docs/GENERAL_CONTACT_NATIVE_CONNECTED_DYNAMIC_DEVELOPMENT.md.
 - Status implemented/source-reviewed only; NOT tested/accepted/released. Full C0-C9 OPEN.
+
+
+## 2026-10-06 native manufactured loading: tested development
+
+Five installed checks and actual four-step CLI PASS at fdbae395/held wheel6252c0f6. Independent primitive-ellipse reference: worst normalized error2.602647347139155e-13, finite-angle increment0.2512091543634712rad, exact full/fresh-split results and checkpoint bytes. Scope: free straight centered zero-lift common translation/principal-axis spin only. Two jobs63.12627979996614/100s, reserve36.87372020003386s loading-only; private194imports each,545held payloads match, measured JITdisabled/Numba1/pools1. No connected/shared execution, independent engineering acceptance, C7 completion or release. Evidence: docs/d1_review_support/contact_native_transient_20261006/manufactured_loading_development.md. Historical failures and authority unchanged.

@@ -5,7 +5,7 @@
 Full C0-C9 ACTIVE/incomplete: [goal](GENERAL_CONTACT_GOAL.md),
 [plan](GENERAL_CONTACT_PLAN.md), [ledger](docs/GENERAL_CONTACT_CAPABILITIES.md).
 ONLY C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001;
-branch codex/contact-main-reconcile-20261001, source-startfdbae395.
+branch codex/contact-main-reconcile-20261001, source-start1adb78e8.
 No protected-original access, sibling edits, other-chat messages, publication,
 merge/release/default changes. Local checkpoints authorized. Ledger ASCII-byte
 append only; preserve historical prefixes. Mistral/local cached unavailable;
@@ -14,40 +14,31 @@ reviewercurved_switch_review. Same-family scrutiny is not engineering acceptance
 
 ## Current work and next action
 
-1. Native loading reference source candidate checkpointfdbae395: independent
-primitive ellipse/integrals, actual force+cell-couple work, five cases/eight
-advances and exact fresh split restart. All new tests/CLI UNEXECUTED. Separate
-100s loading execution request PENDING; no authority exists. Prior38.0563633s
-safety residue cannot cover it. Raw contact_native_transient_20261006 holds
-native_transient_manufactured_loading_preparation_v2.json and matching prefixed
-worker_handoff_v2.md, independent_source_review.md and root checkpoint/package
-audits.
-Original reference sources and withdrawn energy-field finding retained. Constructor
-mapping confirms raw mechanical energy checks; derived conservative quantities
-subtract verified line work. Prepared native_manufactured_loading_run.py fails
-closed without exact separate approved scope, and uses its own job accounting.
+1. Native loading reference candidate fdbae395 now TESTED DEVELOPMENT: five
+installed checks and actual four-step CLI PASS; exact full/fresh-split results
+and checkpoint bytes. Worst normalized error2.602647347139155e-13, angle
+increment.2512091543634712rad. Free centered zero-lift principal-spin invariant
+only. Held wheel6252c0f6, all545 installed payloads and194imports per job exact;
+JITdisabled/Numba1/pools1. No full C7 acceptance. Evidence:
+[loading delivery](docs/d1_review_support/contact_native_transient_20261006/manufactured_loading_development.md).
+Raw contact_native_transient_20261006 retains approved authority, preparation_v2,
+root_execution_audit, two terminal job directories and four exact executed input
+snapshots in manufactured_loading_executed_inputs. Separate loading100s used
+63.12627979996614s;36.87372020003386s remains loading-only. No optional repeat.
 
-2. Connected-native C7 owner is implemented SOURCE ONLY; workers now terminal.
-Five new files held by source_preparation_v2.json/worker_handoff_v2.md in raw
-contact_native_connected_dynamic_20261006; root independently checked hashes,
-four ASTs, all545 unchanged old product payloads, and five preserved V1 snapshots.
-No numerical checks/build/install ran. Existing single-beam profile/codec unchanged.
-Adopted architecture: explicit
-DEVELOPMENT profile/schema, 6N+24E global chart, Boolean local42 restrictions;
-unique nodal translations physical, nodal frames algebraic, independent retained
-cell spins physical and resultants algebraic. Sum complete work/inertia derivatives,
-solve shared-junction algebraic equations GLOBALLY, check assembled rank/physical
-mass, then apply actual global midpoint acceleration/exp-map chart. No independent
-beam stepping, hidden inertia or physical condensation. New512 coordinate preflight,
-existing canonical2MiB bound/construction120s lifetime are resource controls only.
-Actual nonlinear-stage directional and in-flight rollback checks are prepared,
-unexecuted. Shape finding withdrawn as stale; root verified heldV1 already guards
-shape before reshape. Next integrate shared TransientConfig controller/reporting;
-global mechanics/installed/clamped impulse/independent deformation gates remain.
-
-Loading uses the unchanged HELD installed3 artifact/source binding, not an assertion
-that later connected modules are installed. The old545 payloads+6metadata matched
-wheel6252c0f69bc3f621755216c694c2bf6d3e608f0e032938b4eafa3047e3cdc3cb atfdbae395.
+2. Connected native owner/shared TransientConfig controller implemented SOURCE
+ONLY. Eight files held by raw contact_native_connected_transient_20261006/
+source_preparation.json and worker_handoff.md. Old17 functions/classes and
+expanded loop exact AST-equivalent to frozen75c68132; runtime compatibility
+UNEXECUTED. Separate connected schema, 6N+24E coupled assembly, physical3N+6E
+initial map, full stage support wrench, exact endpoint publication and native
+receipts. No loads admitted. Final source reviewer found adaptive history,
+replay lease/cancellation and fixed-slot refusal gaps; same author is repairing.
+Next inspect repaired held source, reassess findings, then request a separate
+bounded connected/shared allowance for mechanics, state/restart, affected legacy
+checks and private artifact. No connected/shared numerical authority exists.
+Old loading wheel does NOT contain the new shared driver/connected modules.
+Independent deforming/spatial/section and broad C7/C8 gates remain open.
 
 ## Completed evidence to reuse
 
@@ -67,6 +58,7 @@ retains6source/6installedPASS,0.0463843%energy, exact split restart; wider C6 op
 
 |Scope|Used/total seconds|Remaining seconds|
 |---|---:|---:|
+|C7 manufactured loading|63.12627979996614/100|36.87372020003386|
 |C7 trajectory/safety|231.94363670004532/270|38.05636329995468|
 |C6 beam/S3|409.0956022000173/420|10.90439779998269|
 |C5 arc|186.04257249983493/240|53.95742750016507|
@@ -78,7 +70,7 @@ retains6source/6installedPASS,0.0463843%energy, exact split restart; wider C6 op
 C7 twelve terminal jobs; original authority and approved90extension immutable.
 C6/C5/C4/C9 terminal counts70/28/33/34. Original120h consumed432011s.
 One job,60s,953MiB,JIT0/Numba1/pools1; exact process-wall including failed work.
-No borrowing, replay or renewal. Loading100s request and domain180 request pending.
+No borrowing, replay or renewal. Loading100s is approved/scoped above; domain180 remains pending.
 Connected source is authorized implementation, not a numerical campaign allowance.
 
 ## Retained history

@@ -286,7 +286,7 @@ force/moment scales; old finite-spin NONPASS is not regraded. Updated private
 installed commit/receipt5cases and impacted cancellation1case pass; the original
 12s source timeout stays retained. Twelve jobs used231.943637/270s; C7 stays open.
 
-## Manufactured principal-axis loading candidate (source only)
+## Manufactured principal-axis loading: installed development verified
 
 `examples/native_manufactured_dynamic_loading_dev.py` prepares the existing public
 `solve_transient` route with simultaneous constant distributed force and longitudinal
@@ -315,9 +315,13 @@ The five prepared tests share one observed four-step public trajectory plus
 fresh two-step prefix and two-step resume owners: eight native advances total.
 Stage observation calls the authentic audit then copies data; it does not
 modify mechanics. Exact checkpoint/results restart equality is separate from
-tolerance-based analytic comparison. AST/whitespace checks only have run.
-All new numerical tests and the CLI remain UNEXECUTED pending separate authority.
-The earlier trajectory/safety residue is not loading-reference authority.
+tolerance-based analytic comparison. Five installed checks and the actual CLI
+now pass at candidate fdbae395 on the held receipt artifact. Worst normalized
+reference error is 2.602647347139155e-13; angle increment is .2512091543634712rad.
+Full/fresh-split results and complete checkpoint bytes match exactly. Runs used
+63.12627979996614/100 separately approved seconds; 36.87372020003386 remains
+only for loading. The later connected/shared source is not tested by this artifact.
+[Measured evidence](d1_review_support/contact_native_transient_20261006/manufactured_loading_development.md).
 Deforming/nonprincipal/spatial/continuum validation and full C7 acceptance remain
 open; this invariant candidate supplies no engineering qualification.
 
