@@ -55,18 +55,24 @@ manifest SHA7394c024f8010abbda43a82886d1f18566149df78a6eb6a4c76edad644dcd243.
 ## Next outcome and ownership
 
 Resolve the physical-reference blocker before accumulating further native scope.
-Same author owns a bounded SOURCE-ONLY two-part body solution candidate: NEW
-r8_bl5_body_port_twofold script/test/doc and raw r8-bl5-body-port-twofold-dev-20261006-v1/.
-Question: can retaining low physical corrections resolve the prior tiny loaded-
-row failure without changing K/load/gauge or scientific gates? Original binary64
-body V1/V2 remain failed. qHi/qLo and gauge etaHi/etaLo, represented physical work
-and residuals required; joint KKT convergence cannot replace original physical
-Kq-load equilibrium. No load projection, artificial floor/support/stiffness.
-25 active-minute development bound/final7 reserved; manufactured microchecks
-only. No specimen RHS, CCX/calibration/F03 or closed campaign run authorized.
-Independent mathematical review and explicit next authority decision precede any
-saved-case evaluation. Root owns contracts/Git/note/matrix; cached optional workers
-unavailable. Installed job finished/processes0; only new author microchecks permitted.
+Two-part body solution candidate is source-reviewed and manufactured-core checked.
+New script/test/doc; raw r8-bl5-body-port-twofold-dev-20261006-v1/.
+Exact dyadic contractions preserve both physical q and gauge eta parts; same
+K/load/gauge/criteria. Joint KKT convergence cannot replace physical Kq-load.
+Manufactured ten instances pass by impact reuse: micro-v2 ninePASS/one assertion
+FAIL plus micro-v3 affected support assertionPASS. Initial micro-v1 threeFAIL/
+fourPASS preserved. Subnormal false-pass, gauge/physical separation and finite
+representation-limit negatives fail honestly. Final d/dg-positive refusal is
+syntax/source-reviewed only, not numerically executed. No specimen RHS evaluated.
+Final source d13911a8; handoff SHA8332a747bc9849f42baa79a8fa125d0b25dd3497394991d4e179091994f9c61c;
+55-path manifest SHA773700069212f25cf7778322a7156dedca8c24b34a7c36e29774d18510afb915.
+Root verifies55 raw/three final source/four protected paths and three run bindings.
+Non-author review SHA995fe368850659b8d54dacb3967900736959df63da0a3fdae3cff90075c80e87;
+no consequential source defect identified in bounded scope; scientific acceptance
+and different-family requirement remain open. No original body V1/V2 authority
+renewed. Next root decision: one prospective same-shell representation evaluation,
+without automatic beam/material/coupled continuation or formal F03 consumption.
+Root owns contracts/Git/note/matrix; optional workers cached unavailable.
 Existing GE/B2/footprint/POINT routes and their source-bound installed evidence
 remain; do not rebuild delivered owners. Mandatory physical/connection/interface,
 material, load/stability/capacity, scale, external/platform and consumer acceptance

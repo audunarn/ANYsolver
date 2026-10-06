@@ -3235,3 +3235,29 @@ handoff.json SHA7f0bd47ac6ca98878bc23c98fbcbf999635349639eff198bf4111f2cf3489139
 manifest SHA7394c024f8010abbda43a82886d1f18566149df78a6eb6a4c76edad644dcd243.
 All prior source/review/failure dispositions and full G0-G6/F/V/B remain open as
 previously recorded; different-family scientific acceptance remains unmet.
+
+
+## 6 October 2026 - two-part body solution source candidate
+
+IMPLEMENTED_SOURCE_CANDIDATE; MANUFACTURED_CORE_CHECKED; FINAL_RANGE_GUARD_SYNTAX_ONLY.
+Same original sparse K/load/support/gauge and mathematical equilibrium/work limits.
+Physical q and gauge eta keep binary64 high/low parts; exact dyadic contractions
+check physical Kq-load separately from joint KKT. No specimen RHS, beam/material
+continuation, external/calibration/F03 execution, correspondence or accuracy claim.
+Ten manufactured instances pass by impact reuse: micro-v2 ninePASS/oneFAIL, micro-v3
+affected support assertionPASS. Initial micro-v1 threeFAIL/fourPASS preserved.
+Exact support sign-reversal repairs the assertion; no scientific tolerance relaxed.
+Quiet 1e-20/1e-200 physical/retained controls pass; subnormal false-pass, permitted
+tiny gauge-load imbalance and three-scale resolution-limit controls refuse honestly.
+Final positive-congruence refusal source/AST reviewed only, numerically unexecuted.
+Micro-v2 2.577626s/181264384B; micro-v3 4.016811s/179871744B sampled tree; exact CI,
+affinity[0]/pools1/JIT-off/unforced backend. Owned numerical processes terminal.
+Root verifies55 raw paths, three final source/doc paths, four protected references
+and all three executed snapshots/bindings. Original body V1/V2 failures unchanged.
+Raw .qualification/b3-ge-e4-pl/r8-bl5-body-port-twofold-dev-20261006-v1/:
+handoff SHA8332a747bc9849f42baa79a8fa125d0b25dd3497394991d4e179091994f9c61c;
+manifest SHA773700069212f25cf7778322a7156dedca8c24b34a7c36e29774d18510afb915;
+non-author Read review SHA995fe368850659b8d54dacb3967900736959df63da0a3fdae3cff90075c80e87.
+No consequential defect identified in bounded source scope; actual specimen and
+Lo-preserving downstream material/trace consumers untested. Different-family
+scientific acceptance and all aggregate G0-G6/F/V/B duties remain open.
