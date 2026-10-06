@@ -13,6 +13,15 @@ Work only in C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001 on co
 
 ## Current position
 
+The connected V19 development candidate adds exact one-sided full-line activation
+to the beam/affine-S3 descriptor route. Source checks cover an independent
+quadratic rate oracle, actual first touch and exact split restart; focused repair
+checks restore legacy load-history construction and bound multi-coordinate
+velocity errors. It has no new installed artifact or full-impact qualification.
+The recorded C6 purse is now178.223450299818/180s;1.776549700182s remains.
+Additional C6 runtime was requested and is UNANSWERED; no renewal is inferred.
+[Directional evidence](docs/d1_review_support/contact_c6_beam_s3_20261006/directional_development.md).
+
 Latest C6 development now includes actual affine S3 rotations and eccentric work
 in shared beam/S3 Newmark impact, with declared algebraic velocity and numerical
 null acceleration, public wrench/rate/path semantics and V18 secant-bound restart.

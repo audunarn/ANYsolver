@@ -46,15 +46,29 @@ corrupt secant refusal and protected V17 continuation pass. Actual target rotati
 are tiny (<=6.670e-7rad); no broad finite-rotation or DAE-lift acceptance follows.
 [Rotational evidence](docs/d1_review_support/contact_c6_beam_s3_20261006/rotational_development.md).
 
-Next: resolve remaining one-sided full-line activation and general descriptor
-initial-state contracts from the existing equations, then select the next complete
-outcome with valid execution authority. Do not repeat whole passed impact cases.
-Reuse existing descriptor infrastructure rather than adding artificial mass or
-another driver. Retain the SAME180s C6 purse:169.8124641997274s used,
-10.1875358002726s remaining across27terminaljobs. Keep onejob/953MiB/JIT0/
-Numba1/pools1/watchdog<=min60s,remaining-1. No held C5/C4/domain/native/archive or
-frozen authority is renewed. General rotation/friction, multiple faces, materials,
-other impact pairings and full C6 acceptance remain separate obligations.
+The connected V19 source candidate resolves exact full-line directional velocity
+using the existing work law, exact binary-chart classification, moving-normal
+maps, polynomial interval integrals and a safeguarded mass-null solve. Separate
+control/profile/restart identity preserves V17/V18. One consolidated source check
+covers an independent quadratic oracle, actual first touch, exact split restart,
+non-exact refusal and isolated-touch classification. Review found and repaired a
+legacy constructor regression and a multi-coordinate error-enclosure defect;
+one affected regression selector passes. The integrated check predates these
+repairs; no final complete-suite or installed parity claim is made.
+[Directional evidence](docs/d1_review_support/contact_c6_beam_s3_20261006/directional_development.md).
+
+Next connected gate: after explicit additional authority, privately build/install
+the held V19 source and check actual activation/restart plus meaningful rotational
+coupling and impact accounting. Reuse unaffected V18 evidence by impact analysis;
+do not replay entire passed campaigns. General initial-state contracts remain
+required. Reuse descriptor infrastructure; preserve physical inertia and the
+declared endpoint-Hermite trajectory, without claiming a nonlinear DAE lift.
+The SAME180s C6 purse records178.223450299818s used,1.776549700182s remaining
+across29terminaljobs. Additional C6 180s request is UNANSWERED; no renewal,
+borrowing or build within an inadequate residue. Keep onejob/953MiB/JIT0/Numba1/
+pools1/watchdog<=min60s,remaining-1. No held C5/C4/domain/native/archive or frozen
+authority is renewed. General rotation/friction, multiple faces, materials, other
+impact pairings and full C6 acceptance remain separate obligations.
 
 The solver-side ordinary arc result archive joins the existing static/transient
 archive services. All10producer fields, peak/path records, snapshots/material and

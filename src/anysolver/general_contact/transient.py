@@ -205,8 +205,15 @@ class ContactTransientSolverControls:
 
     allow_deformable_beam_s3_dev: bool = False
     allow_rotational_beam_s3_dev: bool = False
+    allow_directional_beam_s3_dev: bool = False
 
     def __post_init__(self) -> None:
+        if type(self.allow_directional_beam_s3_dev) is not bool:
+            raise ValueError('directional beam-S3 selection must be boolean')
+        if self.allow_directional_beam_s3_dev and any(value for name,value in vars(self).items()
+                if name.endswith('_dev') and name.startswith(('allow_', 's3_', 'q4_'))
+                and name!='allow_directional_beam_s3_dev'):
+            raise ValueError('directional beam-S3 requires its separate descriptor profile')
         if type(self.allow_rotational_beam_s3_dev) is not bool:
             raise ValueError('rotational beam-S3 selection must be boolean')
         if self.allow_rotational_beam_s3_dev and any(
@@ -519,6 +526,13 @@ def _restart_analysis_contract(transient, controls, manager, profile,
             physical_path_policy='both_body_complete_cubic_hull_moving_normal_v1',
             maximum_path_intervals=controls.maximum_beam_swept_subdivisions,
             maximum_path_depth=manager.settings.maximum_swept_subdivisions)
+    if controls.allow_directional_beam_s3_dev:
+        contract['controls'].update(allow_directional_beam_s3_dev=True,
+            directional_policy='EXACT_FULL_LINE_RATIONAL_WORK_V1',
+            descriptor_rate_policy='DIRECTIONAL_VELOCITY_NULL_SECANT_ACCELERATION_V1',
+            represented_path='COMPLETE_AFFINE_SKIN_ENDPOINT_HERMITE_V1',
+            maximum_path_intervals=controls.maximum_beam_swept_subdivisions,
+            maximum_path_depth=manager.settings.maximum_swept_subdivisions)
     if controls.allow_rotational_beam_s3_dev:
         contract['controls'].update(allow_rotational_beam_s3_dev=True,
             descriptor_rate_policy='TOTAL_TANGENT_VELOCITY_NULL_SECANT_ACCELERATION_V1',
@@ -573,7 +587,7 @@ def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
                             plane_pressure_features=None,guided_shell_pair=False,
                             fixed_projection_s3_target=False,normal_s3_skin_hermite=False,
                             normal_s3_polygon_pressure=False,beam_s3=False,rotational_beam_s3=False,
-                            rotational_previous_velocity=None,rotational_last_dt=0.) -> dict:
+                            rotational_previous_velocity=None,rotational_last_dt=0.,directional_beam_s3=False) -> dict:
     payload = {
         "schema": (_HISTORY_RESTART_SCHEMA if external_work_j is not None
                    else _RESTART_SCHEMA),
@@ -631,6 +645,9 @@ def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
         payload['schema'],payload['version']=RESTART_SCHEMA,18
         payload['state']['previous_velocity']=np.asarray(rotational_previous_velocity).tolist()
         payload['state']['last_dt']=float(rotational_last_dt)
+    if directional_beam_s3:
+        from .beam_s3_directional_rates import RESTART_SCHEMA
+        payload['schema'],payload['version']=RESTART_SCHEMA,19
     payload["checkpoint_sha256"] = analysis_configuration_fingerprint(payload)
     return payload
 
@@ -673,7 +690,7 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
                              q4_material_state=False,plane_event_state=False,
                              plane_pressure_features=None,guided_shell_pair=False,
                              fixed_projection_s3_target=False,normal_s3_skin_hermite=False,
-                             normal_s3_polygon_pressure=False,beam_s3=False,rotational_beam_s3=False):
+                             normal_s3_polygon_pressure=False,beam_s3=False,rotational_beam_s3=False,directional_beam_s3=False):
     if not isinstance(value, Mapping) or set(value) != {
         "schema", "version", "model_fingerprint", "analysis_fingerprint",
         "state", "checkpoint_sha256",
@@ -716,6 +733,9 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
     if rotational_beam_s3:
         from .beam_s3_rotational_transient import RESTART_SCHEMA
         expected_schema,expected_version=RESTART_SCHEMA,18
+    if directional_beam_s3:
+        from .beam_s3_directional_rates import RESTART_SCHEMA
+        expected_schema,expected_version=RESTART_SCHEMA,19
     if payload["schema"] != expected_schema or payload["version"] != expected_version:
         raise ValueError("transient contact checkpoint version is incompatible")
     if payload["model_fingerprint"] != model_fingerprint:
@@ -1137,10 +1157,12 @@ def _admit_free_shell_coordinates(model, transformation, prescribed):
 
 def _admit(model, definition: ContactDefinition, settings: ContactSolverSettings,
            controls: ContactTransientSolverControls) -> str:
-    if controls.allow_deformable_beam_s3_dev or controls.allow_rotational_beam_s3_dev:
+    if controls.allow_deformable_beam_s3_dev or controls.allow_rotational_beam_s3_dev or controls.allow_directional_beam_s3_dev:
         from .beam_s3_transient import PROFILE
         if controls.allow_rotational_beam_s3_dev:
             from .beam_s3_rotational_transient import PROFILE
+        if controls.allow_directional_beam_s3_dev:
+            from .beam_s3_directional_rates import PROFILE
         from .deformable_beam_s3_static import PROFILE as STATIC_PROFILE
         report=validate_general_contact(model,definition,settings)
         elements=tuple(model.mesh.elements.values())
@@ -1437,7 +1459,7 @@ def solve_transient_contact(
             count = max(1, int(np.ceil(max(0., b-a-roundoff)/transient.dt)))
             if (b-a)/count < controls.minimum_dt-roundoff:
                 raise ValueError("tool/load knot intervals cannot fit dt and minimum_dt")
-    rotational_descriptor = controls.allow_rotational_beam_s3_dev
+    rotational_descriptor = controls.allow_rotational_beam_s3_dev or controls.allow_directional_beam_s3_dev
     s3_descriptor = profile in (_S3_PROFILE, _S3_HISTORY_PROFILE)
     if controls.s3_one_sided_rates_dev:
         profile = (_S3_DIRECTIONAL_HISTORY_PROFILE if nodal_load_history is not None
@@ -1595,6 +1617,9 @@ def solve_transient_contact(
     if rotational_descriptor:
         from .beam_s3_rotational_transient import rotational_scope
         selected_scope=rotational_scope
+        if controls.allow_directional_beam_s3_dev:
+            from .beam_s3_directional_rates import directional_scope
+            selected_scope=directional_scope
     if controls.allow_deformable_beam_s3_dev:
         from .beam_s3_transient import beam_s3_scope
         selected_scope=beam_s3_scope
@@ -1604,6 +1629,9 @@ def solve_transient_contact(
         if rotational_descriptor:
             from .beam_s3_rotational_transient import RotationalBeamS3Manager, recover_rates
             expected_manager=RotationalBeamS3Manager
+            if controls.allow_directional_beam_s3_dev:
+                from .beam_s3_directional_rates import DirectionalBeamS3Manager,recover_directional_rates
+                expected_manager=DirectionalBeamS3Manager
             if base_load_case is not None or nodal_load_history is not None:
                 raise ValueError('rotational descriptor currently requires unforced impact')
             if np.any(initial_displacement != 0.):
@@ -1714,6 +1742,7 @@ def solve_transient_contact(
                     normal_s3_polygon_pressure=controls.normal_s3_polygon_pressure_bounds_dev,
                     beam_s3=controls.allow_deformable_beam_s3_dev,
                     rotational_beam_s3=rotational_descriptor,
+                    directional_beam_s3=controls.allow_directional_beam_s3_dev,
                 )
             current_time, accepted_steps, q, vred, resumed_acceleration, resumed_work, last_path_active = resumed[:7]
             if rotational_descriptor:
@@ -1831,8 +1860,12 @@ def solve_transient_contact(
         if rotational_descriptor:
             # Check total algebraic equilibrium and supplied velocity, including
             # on resume. Null acceleration is a numerical endpoint-rate record.
-            recovered,_ = recover_rates(T,Mred,descriptor_basis,initial_tangent,
-                vred,np.zeros_like(vred),vred,1.,contact0)
+            if controls.allow_directional_beam_s3_dev:
+                recovered,_=recover_directional_rates(manager,full0,T,Mred,descriptor_basis,
+                    initial_tangent,vred,np.zeros_like(vred),vred,1.,contact0)
+            else:
+                recovered,_ = recover_rates(T,Mred,descriptor_basis,initial_tangent,
+                    vred,np.zeros_like(vred),vred,1.,contact0)
             Z=descriptor_basis.reduced_basis
             if np.linalg.norm(Z.T@force0)>controls.equilibrium_tolerance:
                 raise ValueError('rotational descriptor initial algebraic force is inconsistent')
@@ -2106,7 +2139,11 @@ def solve_transient_contact(
                                     event_gap_tolerance=controls.s3_event_gap_tolerance_m,
                                 )
                             )
-                        if rotational_descriptor:
+                        if controls.allow_directional_beam_s3_dev:
+                            candidate_velocity,candidate_acceleration=recover_directional_rates(
+                                manager,full,T,Mred,descriptor_basis,tangent,candidate_velocity,
+                                candidate_acceleration,vred,step,contact_result)
+                        elif rotational_descriptor:
                             candidate_velocity,candidate_acceleration=recover_rates(
                                 T,Mred,descriptor_basis,tangent,candidate_velocity,
                                 candidate_acceleration,vred,step,contact_result)
@@ -2590,6 +2627,7 @@ def solve_transient_contact(
             rotational_descriptor,
             rotational_previous_velocity if rotational_descriptor else None,
             rotational_last_dt if rotational_descriptor else 0.,
+            controls.allow_directional_beam_s3_dev,
         ) if emit_restart_checkpoint else None
     )
     return TransientContactResults(

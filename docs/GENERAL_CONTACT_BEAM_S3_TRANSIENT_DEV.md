@@ -162,3 +162,31 @@ finite-rotation, friction and true-rim impact remain unsupported.
 V18 stores the preceding accepted reduced velocity and actual last duration;
 resume cross-checks the null acceleration against that secant before assembly.
 The zero-step initialization uses the declared zero null-rate seed.
+
+
+## Directional full-line source development candidate V19
+
+`allow_directional_beam_s3_dev=True` selects a separate profile and V19
+checkpoint. V17/V18 control identities and summary fields remain unchanged.
+At genuinely exact full-line zero gap, velocity is selected from
+`Z.T (K_struct*v + epsilon*L*integral B(s).T min(B(s)*v,0) ds)=0`.
+Physical velocity modulo the actual mass-null basis is fixed. Stored binary
+chart data are tested exactly as rational numbers: oriented C dot e is positive,
+constant on the line, and its square equals radius squared times C dot C.
+No positive/negative nearzero geometry is snapped to touch. Exact isolated
+minimum point touch uses the continuous distributed tangent; unresolved
+floating ties retain explicit refusal.
+
+B includes moving-face normal variation and the actual affine skin A. Its
+rational numerator is quadratic; the common normal-length square root cancels
+from directional work/Jacobian. Complete quadratic rate-root inventory uses
+finite exact sign brackets. Degree-four polynomial integrals are evaluated on
+all negative-rate intervals, with root-strip/conversion bounds. The null solve
+uses safeguarded Newton and finite iteration/halving limits. Supplied floating
+contact H is removed before directional H is introduced, avoiding double count.
+Numerical null acceleration remains the labelled endpoint secant with V18
+history validation; represented Hermite and affine wrench semantics are unchanged.
+The flat virgin assembled fixture can have B*Z=0; its public execution cannot
+prove general rotational coupling. A separate nontrivial scalar quadratic-rate
+oracle tests that coupling. Source-only checks do not replace installed or full
+impact verification, temporal acceptance, finite rotations or a C2 DAE lift.
