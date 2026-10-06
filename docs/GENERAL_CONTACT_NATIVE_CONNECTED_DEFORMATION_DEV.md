@@ -1,7 +1,10 @@
 # Connected native axial deformation reference — DEVELOPMENT
 
-**Source candidate only; all numerical and installed checks UNEXECUTED.**
-No new execution authority is inferred from earlier connected/controller work.
+**TESTED DEVELOPMENT:** three focused installed tests and actual four-step CLI
+PASS under the separately approved 180-second scope. Source candidate15d34aa;
+unchanged product7986c5bd/private wheel a9febab4c77c. Exact full4=fresh2+2
+restart passed. [Evidence and limits](d1_review_support/contact_native_connected_deformation_20261006/deformation_development.md).
+No execution authority is inferred from earlier connected/controller work.
 This does not establish D6/C7 acceptance, general bending, finite-angle dynamics,
 spatial convergence, contact, loads or support-motion admission.
 
@@ -88,7 +91,7 @@ reject or alter a native step. The raw retained potential agrees with U only
 on this compatible elastic axial invariant; this is no generic mixed-potential
 or constitutive-energy reinterpretation.
 
-## Prepared checks and usage
+## Checks and usage
 
 - tests/test_ge_beam3_native_connected_deformation.py checks endpoint and stage
   positions/rates/accelerations, actual retained forces/zero rotational fields,
@@ -99,15 +102,23 @@ or constitutive-energy reinterpretation.
   not condensed in the production trajectory. Its direction has physical length
   components; work is normalized in J, force-rate in N and moment-rate in Nm.
 - `python -m examples.native_connected_deformation_dev --steps 4` calls existing public
-  solve_transient with existing TransientConfig; it is a runnable candidate only.
+  solve_transient with existing TransientConfig; its actual four-step run passed.
 - examples/native_connected_deformation_reference.py is the independent helper.
 
-Numerical/import/build/installed work requires a separate bounded scope. Prior
-9.1034228s connected/shared residue is not available to this new reference slice.
+The separate C7_CONNECTED_DEFORMATION_DEV scope charged73.2605144001406/180s;
+106.7394855998594s remains only for this candidate's scoped repair/recheck.
+Four jobs measured73.05236680014059s; initial no-child path refusal is retained
+with conservative0.2081476s outer-wall charge and exact helper-wall uncertainty.
+Prior9.1034228s connected/shared residue was not borrowed. No build/reinstall.
+All549 source/wheel/installed payloads+6metadata and196 imports per run match;
+JITdisabled/Numba1/pools1. No numerical job remains live.
 
 The prepared response control checks initial displacement/rate/acceleration and
 full translational acceleration vectors at initial, stage and endpoint states;
 axis projection alone is insufficient. With NATIVE_TRANSIENT_RESULT_RECORD set
 by an authorized runner, tests save separately named actual public result JSON,
 exact checkpoint bytes and SHA256 before assertions. Ordinary pytest requires
-no recording environment. These prospective captures are not executed evidence.
+no recording environment. Actual full-response4, restart4 full/prefix/resumed,
+and work2 captures are retained in the linked raw evidence. Optional response/
+restart[2] variants remain unexecuted. Historical source-preparation headers are
+not pass claims. Frozen physical inputs and numerical criteria above are unchanged.

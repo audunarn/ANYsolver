@@ -75,23 +75,33 @@ seconds remain only for C7_CONNECTED_SHARED_DEV. Peak tree169820160 bytes.
 No live job or optional repeat. Full C7/C8 and independent acceptance remain open.
 [Delivery evidence](docs/d1_review_support/contact_native_connected_transient_20261006/connected_shared_development.md).
 
-Next close independent connected deformation/finite-angle and support work/
-impulse evidence through the existing owner/controller. Use one bounded
-implementation outcome and a discriminating reference; retain all coordinates,
-inertial work, state safety and current admission limits. No new time-driver
-stack, unaffected-test replay or automatic budget renewal. New numerical scope
-requires its own sufficient authority; the9.1s balance is not a completion estimate.
+### Connected deformation/support: installed development verified
 
-Prepared connected deformation/support slice (all numerical checks UNEXECUTED):
-[derivation and usage](docs/GENERAL_CONTACT_NATIVE_CONNECTED_DEFORMATION_DEV.md).
-The actual native fields give four affine P1 half-cells, not a generic Q2 bar.
-Offset clamped initial strain, independent response/mass/work/support impulse and
-full4=2+2 tests are implemented; direct initial/full acceleration review gap is
-repaired. Product bytes unchanged; reuse verified549-payload wheel. A separate
-180s request covers mass/work, full4-step response,4=2+2 and actualCLI4, with no
-extra2-step screen or weakened gates. Source review is supporting only; approval
-and numerical results remain absent. Raw contact_native_connected_deformation_20261006
-binds exact hashes, reference limits and prospective caps/reserve.
+Approved separate180s scope now closes the bounded independent axial gap:
+three installed tests and actualCLI4 PASS, full4=fresh2+2 results/checkpoint exact.
+Independent primitive mass/work/algebraic Schur tangent, full initial/stage/endpoint
+response and nonzero offset-support force/moment/impulses pass frozen criteria.
+Actual native fields give four affine P1 half-cells, not generic Q2 bars.
+Product7986c5bd unchanged; all549 source/wheel/installed payloads and6metadata
+match. Each run verifies196 private imports, JITdisabled/Numba1/pools1.
+
+Four terminal jobs measured73.05236680014059s. Retain initial path-only runner
+refusal before solver launch; conservative0.2081476s outer-wall charge preserves
+the missing exact helper-wall uncertainty. Charged73.2605144001406/180s;
+106.7394855998594s remains only in C7_CONNECTED_DEFORMATION_DEV. No optional
+repeat, budget borrowing or broader numerical authority. Supporting same-family
+review is not engineering acceptance. Source candidate15d34aa, frozen inputs,
+all failures, commands and raw results are retained.
+[Evidence](docs/d1_review_support/contact_native_connected_deformation_20261006/deformation_development.md).
+[Derivation and usage](docs/GENERAL_CONTACT_NATIVE_CONNECTED_DEFORMATION_DEV.md).
+
+Next select a required connected bending/finite-angle or nonprincipal dynamic
+discriminator through the existing retained owner/controller, with independent
+reference and sufficient scoped execution authority. Retain full physical inertia,
+algebraic work, state safety and admission limits. This short axial invariant is
+not continuum/spatial convergence, general bending, section breadth or fullC7.
+C8 common-stage native/shell impact and fullC0-C9 completion remain open.
+No new driver stack or unaffected-test replay.
 
 ### Independent represented-path gap: development verified
 

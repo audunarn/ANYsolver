@@ -2929,3 +2929,17 @@ All numerical checks UNEXECUTED, new180s approval absent. Product unchanged,
 verified549-payload artifact reusable. No continuum, finite-angle or fullC7 claim.
 See GENERAL_CONTACT_NATIVE_CONNECTED_DEFORMATION_DEV.md and raw
 contact_native_connected_deformation_20261006; old authorities unchanged.
+
+
+### 2026-10-06: connected axial deformation/support - TESTED DEVELOPMENT
+
+Source15d34aa; product7986c5bd unchanged. Three installed tests + actualCLI4 PASS:
+independent P1 primitive mass/work/algebraic Schur tangent, initial/stage/endpoint
+response and offset support wrench/impulses, exact full4=fresh2+2 result/capsule.
+549 product payloads+6metadata verified;196 imports/run, JITdisabled/Numba1/pools1.
+Charged73.2605144001406/180s (includes conservative0.2081476s no-child startup
+refusal; exact helper wall unavailable);106.7394855998594s remains in this scope.
+All jobs terminal. Supporting same-family review only; no independent acceptance
+or release. Fixed-orientation elastic axial invariant, not bending/finite-angle,
+continuum/spatial/section breadth or fullC7/C8. Historical failures unchanged.
+Evidence: d1_review_support/contact_native_connected_deformation_20261006/deformation_development.md.

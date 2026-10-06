@@ -1,0 +1,107 @@
+{
+  "status": "DEVELOPMENT_VERIFIED_FOR_DECLARED_AXIAL_COVERAGE",
+  "source_candidate": "15d34aa340a7af1f8819fa9f40a5ddf9d3384b46",
+  "product_candidate": "7986c5bdf04843dd403421e5f42bf399536ab7ab",
+  "wheel_sha256": "a9febab4c77ce607c00afe77dd04781b5f6c82e6f53232ec20284d8d1ef516b6",
+  "payload_count": 549,
+  "metadata_count": 6,
+  "successful_cases": [
+    "tests/test_ge_beam3_native_connected_deformation.py::test_deforming_fresh_split_restart_preserves_full_journal[4]",
+    "tests/test_ge_beam3_native_connected_deformation.py::test_independent_axial_mass_virtual_work_and_condensed_tangent",
+    "tests/test_ge_beam3_native_connected_deformation.py::test_public_axial_deformation_endpoint_stage_support_and_analytic_reference[4]"
+  ],
+  "successful_case_count": 3,
+  "cli": {
+    "status": "completed",
+    "steps": 4,
+    "time": 6.103515625e-05,
+    "elastic_energy": 9.993557848354072e-06,
+    "shared_nodes": 5,
+    "reference": "FOUR_AFFINE_P1_HALF_CELLS; UNQUALIFIED"
+  },
+  "jobs": [
+    {
+      "tag": "deformation_cli1",
+      "mode": "EXAMPLE",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_s": 14.77752290002536,
+      "peak_tree_bytes": 146407424,
+      "cap_s": 20.0,
+      "spent_before_s": 58.27484390011523,
+      "total_spent_s": 73.05236980016343,
+      "imported_modules": 196,
+      "successful_calls": [],
+      "runner_sha256": "d3d16a14a035a5c5688aaea01b5e0fdf52f99b95d5b5077c5732bfd722b9c258"
+    },
+    {
+      "tag": "deformation_response1",
+      "mode": "TEST",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_s": 14.319503600010648,
+      "peak_tree_bytes": 168710144,
+      "cap_s": 50.0,
+      "spent_before_s": 17.264534100075252,
+      "total_spent_s": 31.584039999987,
+      "imported_modules": 196,
+      "successful_calls": [
+        "tests/test_ge_beam3_native_connected_deformation.py::test_public_axial_deformation_endpoint_stage_support_and_analytic_reference[4]"
+      ],
+      "runner_sha256": "d3d16a14a035a5c5688aaea01b5e0fdf52f99b95d5b5077c5732bfd722b9c258"
+    },
+    {
+      "tag": "deformation_restart1",
+      "mode": "TEST",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_s": 26.69080620002933,
+      "peak_tree_bytes": 168054784,
+      "cap_s": 60.0,
+      "spent_before_s": 31.5840377000859,
+      "total_spent_s": 58.27484660013579,
+      "imported_modules": 196,
+      "successful_calls": [
+        "tests/test_ge_beam3_native_connected_deformation.py::test_deforming_fresh_split_restart_preserves_full_journal[4]"
+      ],
+      "runner_sha256": "d3d16a14a035a5c5688aaea01b5e0fdf52f99b95d5b5077c5732bfd722b9c258"
+    },
+    {
+      "tag": "deformation_work1",
+      "mode": "TEST",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_s": 17.264534100075252,
+      "peak_tree_bytes": 167325696,
+      "cap_s": 30.0,
+      "spent_before_s": 0,
+      "total_spent_s": 17.26453730009962,
+      "imported_modules": 196,
+      "successful_calls": [
+        "tests/test_ge_beam3_native_connected_deformation.py::test_independent_axial_mass_virtual_work_and_condensed_tangent"
+      ],
+      "runner_sha256": "d3d16a14a035a5c5688aaea01b5e0fdf52f99b95d5b5077c5732bfd722b9c258"
+    }
+  ],
+  "total_authorized_s": 180.0,
+  "measured_numerical_job_wall_s": 73.05236680014059,
+  "conservative_preflight_charge_s": 0.2081476,
+  "charged_total_s": 73.2605144001406,
+  "remaining_s": 106.7394855998594,
+  "accounting_note": "Exact four-job resource elapsed_s retained. Initial helper had no child/resource record; observed outer command wall0.2081476s conservatively charged, exact helper process-wall unavailable. No reconstruction rerun.",
+  "retained_preflight_failure": "runner_root_repair.json and deformation_run_before_root_repair.py; no solver launched",
+  "peak_tree_bytes": 168710144,
+  "effective_runtime": "private installed origins196; JIT disabled; Numba1; observed pools1",
+  "maximum_normalized_energy_defect": 1.6940658945086004e-16,
+  "maximum_normalized_linear_impulse_defect": 5.551115123125783e-16,
+  "maximum_normalized_angular_impulse_defect": 1.3877787807814457e-16,
+  "maximum_support_force_n": 0.9898152834832071,
+  "maximum_support_moment_nm": 0.2766617823795845,
+  "exact_split_checkpoint_sha256": "0aede56a5f5e494e80239d8774e2d4d4f3263a3fb6ec94728bc4fa3871564de5",
+  "exact_split_checkpoint_bytes": 95975,
+  "source_review": "supporting only; final_execution_review.md",
+  "scientific_accepted": false,
+  "full_C7_complete": false,
+  "released": false,
+  "limits": "exact straight centered elastic axial invariant, fixed orientation/zero spins; semidiscrete reference and short4-step horizon, not spatial continuum/finite-angle/general bending qualification"
+}
