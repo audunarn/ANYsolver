@@ -55,9 +55,61 @@ examples/native_connected_dynamic_dev.py advances two elements sharing node30
 in one owner. Prepared tests cover map/shared mass and rigid reference, complete
 shared-work/tangent, discard/fresh restart, mutation/cancellation, corrupt
 restore, singular mass and unrepresentable dt. They are all UNEXECUTED.
-The example is a bounded owner workflow; shared TransientConfig trajectory
-controller integration remains a subsequent connected requirement, using the
-existing infrastructure rather than a second continuation stack. Actual
+The original example is a bounded owner workflow. The following source-only
+shared TransientConfig adapter now prepares that integration. Actual
 clamped reaction/impulse balance, independent deforming response, finite-angle
 energy/momentum/work, installed execution and broader C7 acceptance remain
 open. No numerical pass, release or engineering acceptance is claimed.
+
+## Shared trajectory controller candidate
+
+Public connected solve_transient accepts the existing TransientConfig. Initial
+displacement/velocity order is physical3*N+6*E: sorted-node translations, then
+element/cell spatial rotations/rates. Initial displacement uses compensated
+reference increments and left SO3 multiplication; algebraic guesses/history
+are never caller inputs. Only native midpoint-compatible default placeholders
+are accepted; Newmark/HHT/damping/recovery/subsets/resource overrides refuse.
+Applied loads/contact remain unsupported in this named connected profile.
+
+The existing native time/cutback/cadence/cancellation/commit-prefix loop is now
+a shared private transaction engine. Legacy settings/schema/results/validators
+and literal step preparation remain unchanged. AST expansion of the common
+loop plus legacy preparation exactly matches the original loop;17 other old
+functions/classes and constants/imports have identical AST. This is source
+equivalence, not an executed old/new byte or numerical regression claim.
+
+Connected candidate endpoint publication now uses the exact authenticated
+issued object after complete validation; its mechanical bytes are unchanged.
+Trusted prepared origin/restore closures and trial receipts stay inside native
+atomic operations. Every journal/result/capsule byte prepares before commit;
+authentic owner.current identity determines whether an interrupted commit
+accepted the new prefix. Uncommitted receipts alone are discarded.
+
+A distinct connected trajectory capsule binds origin/topology/settings and
+retains full accepted stages/endpoints/reactions/support impulse/work/history
+plus output cadence. Fresh restore cross-binds native and controller endpoints
+before publication and replays complete stored stage/physical increment/rate,
+accounting/support and equilibrium checks. Actual full-clamp force and fixed
+frame couple use the assembled stage residual about compensated global zero;
+homogeneous support work is zero. No algebraic inertia is invented.
+
+examples/native_connected_transient_dev.py is the public workflow candidate.
+New tests prepare full/split equality, physical SO3 origin, pre/post issuance
+commit/cancellation/control interruptions, cutback, corrupted journal and
+legacy smoke controls. ALL remain UNEXECUTED; numerical/installed compatibility,
+independent physical energy/momentum/clamp balance and full C7 acceptance stay
+open. The pending loading scope binds its old545-payload wheel; these new
+connected/controller files are not covered by that artifact or authority.
+
+
+### Connected restart replay source repair
+
+The connected adapter replays planned step sizes, permitted Newton reasons,
+contiguous halving, cutback floors and the final next-step plan. Horizon-clipped
+rows retain their plan and remain valid interior history after horizon extension.
+Saved fixed midpoint coordinates must be exactly zero. Complete mechanical journal
+replay, cancellation checks, native restore and publication preparation now share
+one native-owned exclusive atomic lease; no nested lock or early visible origin
+is introduced. Forged cadence/fixed-coordinate capsules, clipped-prefix extension
+and in-replay cancellation controls are prepared but UNEXECUTED. Old single
+adapter/schema/formula equivalence remains source evidence only.

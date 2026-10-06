@@ -208,119 +208,50 @@ def solve_native_transient(analysis, config, *, checkpoint=None,
 
 
 def _advance(analysis, state, t_end, identity, contract, controller, native, token, published):
-    settings = contract['settings']
-    while state.time < t_end:
-        candidate = None
-        commit_endpoint = None
-        commit_attempted = False
-        try:
-            cancellation_safe_point(token, 'native_transient.before_step')
-            if controller['accepted_steps'] >= settings['max_steps']:
-                raise NativeTransientError('native trajectory accepted step budget exhausted')
-            planned = controller['next_dt']
-            remaining = float(t_end-state.time)
-            dt = min(planned, remaining)
-            truncated = remaining < planned
-            if not dt > 0 or not state.time+dt > state.time or state.time+dt > t_end:
-                raise NativeTransientError('requested native endpoint is not representable without overshoot')
-            failures = []
-            def receive_candidate(issued):
-                nonlocal candidate
-                candidate = issued
-            for cut in range(settings['max_cutbacks']+1):
-                candidate = None
-                try:
-                    analysis._prepare_trial(state, dt=dt, cancellation_token=token,
-                                            prepare=receive_candidate)
-                    if candidate is None:
-                        raise NativeTransientError('native trial did not provide its issued receipt')
-                    break
-                except ValueError as error:
-                    if candidate is not None:
-                        analysis._discard_prepared_trial(candidate)
-                        candidate = None
-                    if str(error) not in _RETRYABLE:
-                        raise
-                    failures.append(dict(dt=dt, reason=str(error)))
-                    if cut == settings['max_cutbacks'] or .5*dt < settings['minimum_dt']:
-                        raise NativeTransientError('native trajectory cutback budget/floor exhausted') from error
-                    dt *= .5
-            # Prepare ALL disposable work, accounting, controller/result bytes
-            # and native capsule before the one native commit. None of these
-            # objects is published as an accepted step until commit succeeds.
-            audit = analysis.candidate_stage_audit(candidate, cancellation_token=token)
-            account = analysis.candidate_endpoint_accounting(candidate, cancellation_token=token)
-            endpoint_load = analysis.physical_load_accounting(candidate.endpoint.mechanical)
-            stage_load = analysis.physical_load_accounting(candidate.stage.mechanical)
-            support = _support_journal(analysis, candidate, stage_load, audit.increment42)
-            next_native = analysis.prepare_candidate_checkpoint(candidate, cancellation_token=token)
-            endpoint = _record(candidate.endpoint, account, endpoint_load)
-            work = float(np.dot(stage_load.external_load42, audit.increment42))
-            if not math.isfinite(work):
-                raise NativeTransientError('nonfinite midpoint load work journal')
-            step = dict(index=controller['accepted_steps']+1, dt=candidate.dt,
-                start_time=state.time, end_time=candidate.endpoint.time,
-                truncated=bool(truncated and not failures), cutbacks=failures,
-                iterations=candidate.iterations, backtracks=candidate.backtracks,
-                stage_residual_norm=candidate.stage_residual_norm,
-                endpoint_algebraic_norm=candidate.endpoint_algebraic_norm,
-                endpoint_reaction42=candidate.endpoint_reaction42,
-                predecessor_sha256=sha(state), endpoint=endpoint,
-                stage_material_sha256=candidate.stage.material_sha256,
-                midpoint_physical_increment42=audit.increment42,
-                midpoint_external_load42=stage_load.external_load42,
-                midpoint_load_work_j=work,
-                midpoint_force_impulse_ns=stage_load.force*candidate.dt,
-                midpoint_moment_impulse_nms=stage_load.moment_about_origin*candidate.dt,
-                midpoint_support=support)
-            step = _load(_check_size(step).decode('ascii'))
-            next_count = controller['accepted_steps']+1
-            next_controller = dict(time=candidate.endpoint.time, accepted_steps=next_count,
-                next_dt=(dt if failures else planned), initial=controller['initial'],
-                steps=controller['steps']+[step], outputs=controller['outputs']+
-                    ([endpoint] if next_count % settings['save_every'] == 0 else []))
-            prepared = _result(identity, contract, next_controller, next_native,
-                'completed' if candidate.endpoint.time == t_end else 'running')
-            cancellation_safe_point(token, 'native_transient.before_commit')
-            commit_endpoint = candidate.endpoint
-            commit_attempted = True
-            analysis.commit(candidate, cancellation_token=token)
-            # The native owner's visible endpoint, rather than a return value,
-            # is authoritative after its atomic commit has completed.
-            if analysis.current is not commit_endpoint:
-                raise NativeTransientError('native commit did not publish its issued endpoint')
-            state = commit_endpoint
-            controller, native, published = next_controller, next_native, prepared
-            candidate = None
-        except BaseException as error:
-            if commit_attempted and analysis.current is commit_endpoint:
-                # Commit may have completed before its caller is interrupted.
-                # Publish only bytes fully prepared before that authentic commit;
-                # never discard or roll back an already accepted native endpoint.
-                state = commit_endpoint
-                controller, native, published = next_controller, next_native, prepared
-                candidate = None
-            if candidate is not None:
-                try:
-                    analysis._discard_prepared_trial(candidate)
-                except BaseException as discard_error:
-                    if isinstance(error, Exception) and not isinstance(error, SolveCancelled):
-                        raise NativeTransientError('native candidate cleanup failed: '+str(discard_error),
-                            partial=published, native_checkpoint=native, accepted_state=state) from error
-                    error.cleanup_error = discard_error
-            if isinstance(error, SolveCancelled):
-                error.partial = published
-                error.native_checkpoint = native
-                error.accepted_state = state
-                raise
-            if not isinstance(error, Exception):
-                error.partial = published
-                error.native_checkpoint = native
-                error.accepted_state = state
-                raise
-            raise NativeTransientError(str(error), partial=published,
-                native_checkpoint=native, accepted_state=state) from error
-    return published
+    from types import SimpleNamespace
+    from ._native_midpoint_controller import advance
+    adapter = SimpleNamespace(error=NativeTransientError, retryable=_RETRYABLE,
+                              result=_result, prepare_step=_prepare_step)
+    return advance(analysis, state, t_end, identity, contract, controller, native,
+                   token, published, adapter)
+
+
+def _prepare_step(analysis, state, t_end, identity, contract, controller, candidate,
+                  dt, failures, planned, truncated, settings, token):
+    audit = analysis.candidate_stage_audit(candidate, cancellation_token=token)
+    account = analysis.candidate_endpoint_accounting(candidate, cancellation_token=token)
+    endpoint_load = analysis.physical_load_accounting(candidate.endpoint.mechanical)
+    stage_load = analysis.physical_load_accounting(candidate.stage.mechanical)
+    support = _support_journal(analysis, candidate, stage_load, audit.increment42)
+    next_native = analysis.prepare_candidate_checkpoint(candidate, cancellation_token=token)
+    endpoint = _record(candidate.endpoint, account, endpoint_load)
+    work = float(np.dot(stage_load.external_load42, audit.increment42))
+    if not math.isfinite(work):
+        raise NativeTransientError('nonfinite midpoint load work journal')
+    step = dict(index=controller['accepted_steps']+1, dt=candidate.dt,
+        start_time=state.time, end_time=candidate.endpoint.time,
+        truncated=bool(truncated and not failures), cutbacks=failures,
+        iterations=candidate.iterations, backtracks=candidate.backtracks,
+        stage_residual_norm=candidate.stage_residual_norm,
+        endpoint_algebraic_norm=candidate.endpoint_algebraic_norm,
+        endpoint_reaction42=candidate.endpoint_reaction42,
+        predecessor_sha256=sha(state), endpoint=endpoint,
+        stage_material_sha256=candidate.stage.material_sha256,
+        midpoint_physical_increment42=audit.increment42,
+        midpoint_external_load42=stage_load.external_load42,
+        midpoint_load_work_j=work,
+        midpoint_force_impulse_ns=stage_load.force*candidate.dt,
+        midpoint_moment_impulse_nms=stage_load.moment_about_origin*candidate.dt,
+        midpoint_support=support)
+    step = _load(_check_size(step).decode('ascii'))
+    next_count = controller['accepted_steps']+1
+    next_controller = dict(time=candidate.endpoint.time, accepted_steps=next_count,
+        next_dt=(dt if failures else planned), initial=controller['initial'],
+        steps=controller['steps']+[step], outputs=controller['outputs']+
+            ([endpoint] if next_count % settings['save_every'] == 0 else []))
+    prepared = _result(identity, contract, next_controller, next_native,
+        'completed' if candidate.endpoint.time == t_end else 'running')
+    return next_controller, next_native, prepared
 
 
 def _support_journal(analysis, candidate, load, increment42):

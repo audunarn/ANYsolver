@@ -55,13 +55,17 @@ TransientConfig through a shared coordinate-free transaction/cutback controller.
 The old 17 functions/classes and expanded advancement loop are AST-equivalent
 to the held original source; this is source evidence, not runtime compatibility.
 Separate connected schema, physical 3N+6E initial data, authentic endpoint
-publication and native-owned receipts are implemented. Final source review found
-restart controller-history, replay lease/cancellation and fixed-slot validation
-gaps; the sustained author is repairing them before verification.
+publication and native-owned receipts are implemented. Source review findings
+on controller history, replay lease/cancellation and fixed-slot validation are
+repaired, including historical clipped-prefix continuation. Seven AST/eight
+hash/whitespace checks pass; supporting review identifies no remaining blocker.
 All new connected/shared numerical tests, build and installed checks remain
 UNEXECUTED, with no execution allowance. The frozen loading artifact does not
-contain this candidate. Next finish source review, then verify coupled equations,
-state controls and affected legacy behavior under a separate bounded allowance.
+contain this candidate. Next build a private artifact and execute the affected
+mechanics, workflow, state/restart and legacy checks once against its exact
+verified payloads, under a separately requested 240-second allowance. This
+installed-first order avoids duplicate source/installed mechanical runs; source
+AST equivalence and all numerical/compatibility gates retain their scope.
 Independent deformation, finite-angle, support wrench/impulse, section and C7/C8
 obligations remain. Source evidence: raw contact_native_connected_transient_20261006
 and [guide](docs/GENERAL_CONTACT_NATIVE_CONNECTED_DYNAMIC_DEVELOPMENT.md).

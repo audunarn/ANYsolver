@@ -54,6 +54,10 @@ class ConnectedCandidate:
     residual: np.ndarray
     jacobian: np.ndarray
     accounting: dict
+    dt: float
+    unknown: np.ndarray
+    iterations: int
+    backtracks: int
 
 
 class ConnectedDynamicAnalysis:
@@ -265,13 +269,19 @@ class ConnectedDynamicAnalysis:
 
     def initialize(self, *, physical_velocity=None, cancellation_token=None):
         with self._operation(cancellation_token):
-            if self._current is not None:raise ValueError('fresh connected owner required')
-            v=np.zeros(self.size)
-            if physical_velocity is not None:v[list(self.physical)]=_array(physical_velocity,(len(self.physical),),'connected physical velocity')
-            state=self._state(dict(positions=self.reference_positions,position_low=np.zeros((self.n,3)),
-                nodal_frames=self.reference_frames,cell_rotations=np.tile(np.eye(3),(self.e,2,1,1)),resultants=np.zeros((self.e,18)),
-                velocity=v,acceleration=np.zeros(self.size),time=0.,epoch=0,identity=self.identity,histories=self.histories))
-            state,_=self._endpoint(state,cancellation_token);canonical(state);return self._issue(state)
+            return self._initialize_state(physical_velocity,cancellation_token)
+
+    def _initialize_state(self,physical_velocity,cancellation_token,physical_displacement=None):
+        if self._current is not None:raise ValueError('fresh connected owner required')
+        v=np.zeros(self.size)
+        if physical_velocity is not None:v[list(self.physical)]=_array(physical_velocity,(len(self.physical),),'connected physical velocity')
+        state=self._state(dict(positions=self.reference_positions,position_low=np.zeros((self.n,3)),
+            nodal_frames=self.reference_frames,cell_rotations=np.tile(np.eye(3),(self.e,2,1,1)),resultants=np.zeros((self.e,18)),
+            velocity=v,acceleration=np.zeros(self.size),time=0.,epoch=0,identity=self.identity,histories=self.histories))
+        if physical_displacement is not None:
+            step=np.zeros(self.size);step[list(self.physical)]=_array(physical_displacement,(len(self.physical),),'connected physical reference displacement')
+            state=self._advance(state,step)
+        state,_=self._endpoint(state,cancellation_token);canonical(state);return self._issue(state)
 
     def _stage(self,accepted,u,dt,token):
         p=list(self.p);increment=np.zeros(self.size);increment[p]=dt*accepted.velocity[p]+.5*dt*dt*u[p]
@@ -296,31 +306,34 @@ class ConnectedDynamicAnalysis:
 
     def trial(self,accepted, *, dt,cancellation_token=None):
         with self._operation(cancellation_token):
-            previous=self._require(accepted)
-            if type(dt) is not float or not np.isfinite(dt) or dt<=0 or dt*dt==0. or not np.isfinite(dt*dt) or not np.isfinite(2/(dt*dt)):
-                raise ValueError('finite positive representable midpoint dt required')
-            if not np.isfinite(accepted.time+dt) or accepted.time+dt<=accepted.time:
-                raise ValueError('connected endpoint time increment not representable')
-            if self._candidates:raise ValueError('discard or commit pending candidate first')
-            p=list(self.p);free=list(self.free);u=np.zeros(self.size);u[p]=accepted.acceleration[p]
-            for iteration in range(self.max_iterations+1):
-                stage,r,j,_=self._stage(accepted,u,dt,cancellation_token)
-                step=np.zeros(self.size);step[free]=np.linalg.solve(j[np.ix_(free,free)],-r[free])
-                correction=step.copy();correction[p]*=.5*dt*dt
-                if self._norm(r,free)<=1e-11 and np.linalg.norm(correction/self.scale)<=1e-11:break
-                if iteration==self.max_iterations:raise ValueError('connected midpoint iteration limit')
-                for cut in range(self.max_backtracks+1):
-                    next_u=u+step*2.**(-cut);_,rt,_,_=self._stage(accepted,next_u,dt,cancellation_token)
-                    if self._norm(rt,free)<self._norm(r,free):u=next_u;break
-                else:raise ValueError('connected midpoint backtracking failed')
-            increment=np.zeros(self.size);increment[p]=dt*accepted.velocity[p]+.5*dt*dt*u[p]
-            endpoint=self._advance(accepted,increment);data=self._data(endpoint)
-            velocity=np.zeros(self.size);velocity[p]=accepted.velocity[p]+dt*u[p]
-            data.update(velocity=velocity,acceleration=np.zeros(self.size),time=float(accepted.time+dt),epoch=accepted.epoch+1,
-                nodal_frames=stage.nodal_frames,resultants=stage.resultants)
-            endpoint,account=self._endpoint(self._state(data),cancellation_token)
-            candidate=ConnectedCandidate(previous,endpoint,stage,_owned(r),_owned(j),account)
-            self._candidates[id(candidate)]=(candidate,canonical(candidate));return candidate
+            return self._trial_state(accepted,dt,cancellation_token)
+
+    def _trial_state(self,accepted,dt,cancellation_token):
+        previous=self._require(accepted)
+        if type(dt) is not float or not np.isfinite(dt) or dt<=0 or dt*dt==0. or not np.isfinite(dt*dt) or not np.isfinite(2/(dt*dt)):
+            raise ValueError('finite positive representable midpoint dt required')
+        if not np.isfinite(accepted.time+dt) or accepted.time+dt<=accepted.time:
+            raise ValueError('connected endpoint time increment not representable')
+        if self._candidates:raise ValueError('discard or commit pending candidate first')
+        p=list(self.p);free=list(self.free);u=np.zeros(self.size);u[p]=accepted.acceleration[p];backtracks=0
+        for iteration in range(self.max_iterations+1):
+            stage,r,j,_=self._stage(accepted,u,dt,cancellation_token)
+            step=np.zeros(self.size);step[free]=np.linalg.solve(j[np.ix_(free,free)],-r[free])
+            correction=step.copy();correction[p]*=.5*dt*dt
+            if self._norm(r,free)<=1e-11 and np.linalg.norm(correction/self.scale)<=1e-11:break
+            if iteration==self.max_iterations:raise ValueError('connected midpoint iteration limit')
+            for cut in range(self.max_backtracks+1):
+                next_u=u+step*2.**(-cut);_,rt,_,_=self._stage(accepted,next_u,dt,cancellation_token)
+                if self._norm(rt,free)<self._norm(r,free):u=next_u;backtracks+=int(cut>0);break
+            else:raise ValueError('connected midpoint backtracking failed')
+        increment=np.zeros(self.size);increment[p]=dt*accepted.velocity[p]+.5*dt*dt*u[p]
+        endpoint=self._advance(accepted,increment);data=self._data(endpoint)
+        velocity=np.zeros(self.size);velocity[p]=accepted.velocity[p]+dt*u[p]
+        data.update(velocity=velocity,acceleration=np.zeros(self.size),time=float(accepted.time+dt),epoch=accepted.epoch+1,
+            nodal_frames=stage.nodal_frames,resultants=stage.resultants)
+        endpoint,account=self._endpoint(self._state(data),cancellation_token)
+        candidate=ConnectedCandidate(previous,endpoint,stage,_owned(r),_owned(j),account,dt,_owned(u),iteration,backtracks)
+        self._candidates[id(candidate)]=(candidate,canonical(candidate));return candidate
 
     def _candidate(self,candidate):
         record=self._candidates.get(id(candidate))
@@ -330,7 +343,7 @@ class ConnectedDynamicAnalysis:
     def commit(self,candidate, *, cancellation_token=None):
         with self._operation(cancellation_token):
             self._candidate(candidate);state=self._state(self._data(candidate.endpoint))
-            self._issue(state);self._candidates.clear();return state
+            self._issue(candidate.endpoint);self._candidates.clear();return candidate.endpoint
 
     def discard(self,candidate):
         with self._operation():self._candidate(candidate);del self._candidates[id(candidate)]
@@ -339,42 +352,95 @@ class ConnectedDynamicAnalysis:
         with self._operation():
             self._require(self._current)
             if self._candidates:raise ValueError('pending candidate cannot be checkpointed')
-            body=dict(schema=SCHEMA,profile=PROFILE,identity=self.identity,state=self._current)
-            raw=canonical(dict(body=body,sha256=sha(body)))
-            if len(raw)>MAX_BYTES:raise ValueError('connected checkpoint byte cap')
-            return raw
+            return self._encode_state(self._current)
+
+    def _encode_state(self,state):
+        body=dict(schema=SCHEMA,profile=PROFILE,identity=self.identity,state=state)
+        raw=canonical(dict(body=body,sha256=sha(body)))
+        if len(raw)>MAX_BYTES:raise ValueError('connected checkpoint byte cap')
+        return raw
 
     def restore_checkpoint(self,raw, *, expected_sha256,cancellation_token=None):
         with self._operation(cancellation_token):
-            if self._current is not None:raise ValueError('fresh connected restore owner required')
-            if type(raw) is not bytes or len(raw)>MAX_BYTES or sha256(raw).hexdigest()!=expected_sha256:
-                raise ValueError('bounded trusted connected capsule required')
-            # Bound lexical nesting before JSON; duplicate keys are never repaired.
-            depth=0;quoted=False;escape=False
-            for byte in raw:
-                if quoted:
-                    if escape:escape=False
-                    elif byte==92:escape=True
-                    elif byte==34:quoted=False
-                elif byte==34:quoted=True
-                elif byte in (91,123):
-                    depth+=1
-                    if depth>32:raise ValueError('connected capsule nesting cap')
-                elif byte in (93,125):depth-=1
-            def pairs(rows):
-                result={}
-                for key,value in rows:
-                    if key in result:raise ValueError('duplicate connected JSON key')
-                    result[key]=value
-                return result
-            data=json.loads(raw,object_pairs_hook=pairs,parse_constant=lambda x:(_ for _ in ()).throw(ValueError('nonfinite capsule')))
-            if canonical(data)!=raw or set(data)!= {'body','sha256'}:raise ValueError('exact canonical connected envelope required')
-            body=data['body']
-            if set(body)!= {'schema','profile','identity','state'} or body['schema']!=SCHEMA or body['profile']!=PROFILE or body['identity']!=self.identity or data['sha256']!=sha(body):
-                raise ValueError('connected checkpoint identity/integrity mismatch')
-            if type(body['state']) is not dict or set(body['state'])!=set(ConnectedState.__dataclass_fields__):raise ValueError('complete state inventory required')
-            state=self._state(body['state']);r,j,fi,m,_,_,_=self._evaluate(state,cancellation_token)
-            self._block_admission(j,m)
-            if canonical(self._data(state))!=canonical(body['state']):raise ValueError('restore must preserve exact stored numeric inventory')
-            if self._norm(r,self.z)>1e-11 or self._norm(r+fi,self.p)>1e-11:raise ValueError('restored complete connected equilibrium invalid')
-            return self._issue(state)
+            return self._restore_state(raw,expected_sha256,cancellation_token)
+
+    def _restore_state(self,raw,expected_sha256,cancellation_token):
+        if self._current is not None:raise ValueError('fresh connected restore owner required')
+        if type(raw) is not bytes or len(raw)>MAX_BYTES or sha256(raw).hexdigest()!=expected_sha256:
+            raise ValueError('bounded trusted connected capsule required')
+        # Bound lexical nesting before JSON; duplicate keys are never repaired.
+        depth=0;quoted=False;escape=False
+        for byte in raw:
+            if quoted:
+                if escape:escape=False
+                elif byte==92:escape=True
+                elif byte==34:quoted=False
+            elif byte==34:quoted=True
+            elif byte in (91,123):
+                depth+=1
+                if depth>32:raise ValueError('connected capsule nesting cap')
+            elif byte in (93,125):depth-=1
+        def pairs(rows):
+            result={}
+            for key,value in rows:
+                if key in result:raise ValueError('duplicate connected JSON key')
+                result[key]=value
+            return result
+        data=json.loads(raw,object_pairs_hook=pairs,parse_constant=lambda x:(_ for _ in ()).throw(ValueError('nonfinite capsule')))
+        if canonical(data)!=raw or set(data)!= {'body','sha256'}:raise ValueError('exact canonical connected envelope required')
+        body=data['body']
+        if set(body)!= {'schema','profile','identity','state'} or body['schema']!=SCHEMA or body['profile']!=PROFILE or body['identity']!=self.identity or data['sha256']!=sha(body):
+            raise ValueError('connected checkpoint identity/integrity mismatch')
+        if type(body['state']) is not dict or set(body['state'])!=set(ConnectedState.__dataclass_fields__):raise ValueError('complete state inventory required')
+        state=self._state(body['state']);r,j,fi,m,_,_,_=self._evaluate(state,cancellation_token)
+        self._block_admission(j,m)
+        if canonical(self._data(state))!=canonical(body['state']):raise ValueError('restore must preserve exact stored numeric inventory')
+        if self._norm(r,self.z)>1e-11 or self._norm(r+fi,self.p)>1e-11:raise ValueError('restored complete connected equilibrium invalid')
+        return self._issue(state)
+
+    def _prepare_initial(self,displacement,velocity, *, cancellation_token,prepare):
+        with self._operation(cancellation_token):
+            state=self._initialize_state(velocity,cancellation_token,displacement)
+            _,_,_,_,_,_,account=self._evaluate(state,cancellation_token)
+            native=self._encode_state(state);prepared=prepare(state,account,native)
+            self._require(state);self._guard(cancellation_token,'connected.origin.ready')
+            return state,prepared
+
+    def _prepare_restore(self,raw, *, expected_sha256,cancellation_token,prepare):
+        with self._operation(cancellation_token):
+            state=self._restore_state(raw,expected_sha256,cancellation_token)
+            _,_,_,_,_,_,account=self._evaluate(state,cancellation_token)
+            prepared=prepare(state,account,raw)
+            self._require(state);self._guard(cancellation_token,'connected.restore.ready')
+            return state,prepared
+
+    def _prepare_replayed_restore(self, *, cancellation_token,replay,prepare):
+        """Trusted trajectory replay and native restoration share one atomic lease."""
+        with self._operation(cancellation_token):
+            controller,raw=replay()
+            state=self._restore_state(raw,sha256(raw).hexdigest(),cancellation_token)
+            _,_,_,_,_,_,account=self._evaluate(state,cancellation_token)
+            prepared=prepare(state,account,raw,controller)
+            self._require(state);self._guard(cancellation_token,'connected.restore.ready')
+            return state,prepared
+
+    def _prepare_trial(self,state, *, dt,cancellation_token,prepare):
+        with self._operation(cancellation_token):
+            candidate=self._trial_state(state,dt,cancellation_token)
+            prepare(candidate);self._candidate(candidate)
+            self._guard(cancellation_token,'connected.receipt.ready')
+            return candidate
+
+    def _discard_prepared_trial(self,candidate):
+        with self._operation():
+            if type(candidate) is not ConnectedCandidate:raise ValueError('exact connected receipt required')
+            if id(candidate) not in self._candidates:return
+            self._candidate(candidate);del self._candidates[id(candidate)]
+
+    def _prepare_candidate(self,candidate, *, cancellation_token):
+        with self._operation(cancellation_token):
+            self._candidate(candidate)
+            state=self._state(self._data(candidate.endpoint))
+            native=self._encode_state(state)
+            self._candidate(candidate);self._guard(cancellation_token,'connected.candidate.ready')
+            return native

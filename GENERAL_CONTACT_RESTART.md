@@ -5,7 +5,7 @@
 Full C0-C9 ACTIVE/incomplete: [goal](GENERAL_CONTACT_GOAL.md),
 [plan](GENERAL_CONTACT_PLAN.md), [ledger](docs/GENERAL_CONTACT_CAPABILITIES.md).
 ONLY C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001;
-branch codex/contact-main-reconcile-20261001, source-start1adb78e8.
+branch codex/contact-main-reconcile-20261001, source-start9face034; shared source checkpoint recorded by Git below.
 No protected-original access, sibling edits, other-chat messages, publication,
 merge/release/default changes. Local checkpoints authorized. Ledger ASCII-byte
 append only; preserve historical prefixes. Mistral/local cached unavailable;
@@ -28,15 +28,19 @@ snapshots in manufactured_loading_executed_inputs. Separate loading100s used
 
 2. Connected native owner/shared TransientConfig controller implemented SOURCE
 ONLY. Eight files held by raw contact_native_connected_transient_20261006/
-source_preparation.json and worker_handoff.md. Old17 functions/classes and
+source_preparation_v2.json and worker_handoff_v2.md; exact eight V2 snapshots.
+Root source audit errors0; protected six source files and four executed loading
+inputs preserved. Supporting source review is closed, not scientific acceptance. Old17 functions/classes and
 expanded loop exact AST-equivalent to frozen75c68132; runtime compatibility
 UNEXECUTED. Separate connected schema, 6N+24E coupled assembly, physical3N+6E
 initial map, full stage support wrench, exact endpoint publication and native
-receipts. No loads admitted. Final source reviewer found adaptive history,
-replay lease/cancellation and fixed-slot refusal gaps; same author is repairing.
-Next inspect repaired held source, reassess findings, then request a separate
-bounded connected/shared allowance for mechanics, state/restart, affected legacy
-checks and private artifact. No connected/shared numerical authority exists.
+receipts. No loads admitted. Adaptive-history/final-next_dt, cancellable single-
+lease replay and fixed-slot validation repairs are source-reviewed; clipped
+request-history continuation stays valid. Source-only checks reuse unchanged
+old equivalence proofs. Workers terminal. Next request separate240s for build/
+private install, then impacted mechanics/workflow/restart/safety/legacy tests
+once against verified installed payloads. Full relevant gates remain required;
+resource caps are not completion forecasts. No connected/shared authority exists.
 Old loading wheel does NOT contain the new shared driver/connected modules.
 Independent deforming/spatial/section and broad C7/C8 gates remain open.
 
