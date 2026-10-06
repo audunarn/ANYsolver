@@ -97,7 +97,7 @@ mid-surface/director approximation, not full MIN3/bubble inertia. Installed
 and installation guard failures preserved. Two QZ infinity warnings retained.
 Scientific2%/external/different-family and aggregateF07/G4B remainOPEN.
 
-B2 endpoint POINT reference-buckling candidate now SOURCE DEVELOPMENT VERIFIED:
+B2 endpoint POINT reference-buckling at71dfeddb SOURCE DEVELOPMENT VERIFIED:
 19unique cases by V4/V5/V6 impact reuse; not a full-suite or installed claim.
 Member fullGreen S11/S12/S13 work uses owned explicit source-bound traction
 quadrature; no inferredWagner. Objective geodesic beam/polar shell port Hessians
@@ -116,10 +116,19 @@ homogeneous secondmoment, strict zeroQ. S3 thin uniformmembrane approximation
 openly OMITS physical director secondmoment and rejects M/Q/nonuniformity.
 General S3/Q4shear, loaded interior/lines/footprints, prescribed prestress,
 reversal/units/datum controls and fullF12/B14 external/refinement remainOPEN.
-NEXT: installed B2 whole-route verification from exact source; reuse passed
-mechanics by unchanged inputs. Body approval remains pending; no body/F03 or
-closedcampaign restart. Mistral/local cached unavailable; same OpenAI author
-owns B2 slice, separate non-author review; root owns contracts/note/matrix/Git.
+Installed DEVELOPMENT verified: source71dfeddb/wheel4c7e38ab,428source/stage/
+wheel/hostsite bytes,245actualsiteimports and117readonlydependency modules
+verified. FULLfresh19PASS32.305s/defaultfactor24.60872920125391; source matches.
+V1 extra sibling-origin guard FAILED BEFOREtests,0tests; V2 samewheel/site passes.
+PinnedCI/affinity0/pools1/Numba1/JIToff/unforced before/after;37.6709s222101504B
+sampled process-tree RSS, terminal. ANYmesher module0.5.1/distribution0.5.0 both
+recorded; sibling origins/init bytes match previous installed development.
+Raw r8-b2-reference-buckling-installed-dev-20261006-v1/: finalmanifest/handoff
+and root-installed-verification-v1.json. No full package-graph/qualification claim.
+NEXT: B2 physical covariance/remaining prestress and attachment obligations;
+use current complete programme, reuse passed scopes. Body approval PENDING;
+no body/F03/closedcampaign restart. No live owned job. Same sustained author,
+non-author review and root integration; Mistral/local cached unavailable.
 
 ## Preserved restrictions and history
 

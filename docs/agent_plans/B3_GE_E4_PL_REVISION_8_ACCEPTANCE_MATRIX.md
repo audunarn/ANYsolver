@@ -3468,3 +3468,29 @@ reversal/units/datum controls and complete F12/B14 remain unfinished.
 Evidence: .qualification/b3-ge-e4-pl/r8-b2-reference-buckling-dev-20261006-v1/.
 No body retry, formal F03, closed campaign, sibling edit, main/push/release authority
 consumed or granted. Next action: installed exact-source B2 integration check.
+
+
+## 2026-10-06 B2 endpoint buckling installed development verification
+
+Implementation and installed DEVELOPMENT verified; full F12/B14/G4B still OPEN.
+Source71dfeddbcc2d4328b251220ffeb8779ee5f93408, unchangedversion0.4.7,
+wheel SHA2564c7e38ab320c25efbabaacdc739e600b14504c34801d4546fbe0032c622d9762.
+FULL19 cases PASS0fail/error/skip32.305s:17new mechanics/lifecycle/public cases
+and2existing actual static dense oracles. Exact source-case inventory matches.
+Public example factor24.60872920125391 exactly matches source, nonqualified.
+Root independently verified428source/stage/wheel/host-installed package payloads,
+245actual target-only ANYsolver module imports,7frozen explicit inputs and117
+readonly sibling modules with no pre/post drift. Four numerical dependencies
+exact pinned CI; effective affinity0/pools1/Numba1/JIToff/unforced before/after.
+ANYmesher module0.5.1/distribution0.5.0 both recorded; prior imported sibling
+origins/init hashes unchanged. This is not a fully installed sibling-artifact graph.
+V1 extra anymaterial-CI-origin guard failed BEFOREpytest,0tests; preserved.
+V2 corrected only that harness premise and used same immutablewheel/site;
+no product/ACL/sibling change, rebuild or physical criteria change.
+Installed child128388/session2785 terminalexit0,37.6708723s222101504B sampled
+process-tree RSS. Sampling is not peak-memory qualification. Build child119460
+terminalexit0. Broader physical covariance, shell/attachment prestress, external,
+refinement/different-family, scale/platform/consumer and release duties remain.
+Evidence .qualification/b3-ge-e4-pl/r8-b2-reference-buckling-installed-dev-20261006-v1/,
+worker-installed-manifest-v1.json and root-installed-verification-v1.json.
+No body retry/formalF03/closedcampaign/sibling edits/main push/publication authority.
