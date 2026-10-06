@@ -55,3 +55,31 @@ resource limits and old profile identities remain unchanged.
 Before dense derivative allocation, the patch profile binds an explicit128MiB local derivative-work cap. For n source nodes, m geometry coordinates, p face pairs the conservative storage allowance is `8*(2*n*m*m+2*n*m+13*m*m+16*m+n*n+512*p)+4MiB`: two gradient/two Hessian arrays, returned Hessian plus twelve dense expression temporaries, vectors/pressure Gram/pair-state scratch, and sequential fixed18-coordinate Jet scratch. The4MiB allowance exceeds the fixed S3 polygon (at most6vertices/four fan triangles) primitive's retained Jets; no AD graph is retained. This is local work storage, not a total-process memory guarantee. Candidate, pressure-node, energy and process budgets retain their existing meanings.
 
 `examples/general_contact_triangulated_rigid_patch.py` provides a connected two-S3/nonmatching finite-tool force press. New focused patch tests also cover press/open/recontact and exact restart, shared-junction skin-rotation work, and an independent P1 M/S active-set reference using a separately assembled no-contact structural K. The nonlinear correction expression is a leading-order estimate, not a rigorous uniform error bound; actual coupled response is measured against the independent reference at the unchanged1e-6 gate. Multi-element admission is development evidence, not spatial convergence or C4 qualification.
+# Connected-patch reference invariance development control
+
+The focused `test_general_contact_triangulated_rigid_invariance.py` rebuilds the
+established connected two-S3/fixed nonmatching planar-tool fixture in four cases:
+baseline, reference-frame change only, arbitrary stable material-node numbering
+only, and their composition. The proper cyclic axis permutation sends z to x;
+the translation is the exact dyadic vector (1/8,-1/4,1/2)m. Physical source skins,
+reference directors, loads, supports and all six work coordinates per node are
+transformed consistently. The actual constraint subspaces agree under that map.
+
+Actual ordinary force equilibria compare mapped displacement at a fixed10um
+clearance scale, each source/tool wrench separately, and support/load/contact
+equilibrium. Aggregate moments use M'=R*M+t cross(R*F), about global origin0;
+nodal couples rotate by R without a translation lever arm. Force/moment scales
+are separately0.15N and0.15N*m, with unchanged1e-6 gates and50um physical-gap
+gate. The local contact-work/H control is at a distinct active partial footprint,
+with the real manager boundary guard intact. It tests the complete FE skin-map
+pullback and all force/moment versus translation/rotation H blocks. Length/angle
+chart scales are1m/1rad; directional force/moment-rate scales are0.15N and0.15N*m
+per unit declared path parameter, and scalar work-rate scale is0.3J per parameter.
+Two perturbations1e-7 and1e-8 retain1e-5 work/tangent gates. These absolute row
+checks also imply the prior relative checks with denominators max(1,norm).
+
+This reference-coordinate/node-inventory control does not extend admission to
+finite-motion rotation, warped/moving tools or unrepresented physical rims.
+Its local derivative pose is not a solved lifecycle state or a new rim law.
+Source mechanics were unchanged; installed evidence uses the matching private
+payload. It is development evidence, not formal qualification or acceptance.

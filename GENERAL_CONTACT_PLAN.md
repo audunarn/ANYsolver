@@ -144,6 +144,26 @@ Local checkpoint 24b14ff2 completes actual curved native physical-fibre beam-pai
 
 [Lifecycle guide](docs/GENERAL_CONTACT_NATIVE_CURVED_PAIR_LIFECYCLE_DEV.md), [curated evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/curved_pair_lifecycle.json), [restart/ownership](GENERAL_CONTACT_RESTART.md).
 
+## Delivered C4 reference-frame and numbering controls
+
+The existing connected two-S3/fixed nonmatching planar-tool profile now passes
+four installed actual force-equilibrium cases: baseline, cyclic reference-frame
+change plus dyadic translation, node numbering only, and both. Normal z becomes x;
+complete six-DOF constraints/directors/loads and individual shifted-origin
+wrenches transform. Actual displacement error<=2.722e-12; source/tool wrench
+<=1.585e-11; independent virtual-work/directional tangent<=6.695e-7 at retained
+1e-6/1e-5 gates with explicit separate force/moment scales. Local partial-footprint
+work/H is not a solved lifecycle or rim/finite-motion admission.
+
+No product change/rebuild: reused the source-matching C9 private installed payload,
+without consuming C9 or testing incidental V19 mechanics. Final PASS6.337499s;
+initial harness NONPASS and superseded relative-reporting PASS retained.
+All222imports/effective runtime and543package payloads verified. SAME C4 purse
+now172.931528899935/180s across33terminaljobs,7.068471100065s remains. No repeat
+campaign, borrowed allowance or engineering acceptance. Broader Q4/nonplanar/
+moving/rim/search/self-contact and spatial/acceptance obligations remain.
+[Evidence](docs/d1_review_support/contact_triangulated_rigid_20261006/invariance_development.md).
+
 ## C4 development handoff: finite triangulated rigid obstacles
 
 The prior goal turn made concrete progress: finite-tool source/installed
@@ -226,9 +246,11 @@ wrench/gap and constant-pressure/H checks are required. The first one-S3 profile
 and its restart binding remain unchanged. Admit dense local derivative work only
 within a documented128MiB storage bound, before allocation, without dropping modes.
 
-This continuation consumed36.614422700019s of the SAME C4 milestone, including
-all source/build/install work. Total30terminal jobs158.646824599826/180s;
-21.353175400174s remain. Do not reset or renew it.
+The connected-patch delivery consumed36.614422700019s of the SAME C4 milestone,
+including all source/build/install work (30terminal jobs158.646824599826/180s).
+The subsequent invariance controls above bring it to33terminaljobs,
+172.931528899935/180s;7.068471100065s remains. Earlier residues are historical;
+do not reset or renew it.
 Onejob120s/953MiB,JIT0/Numba1/pools1/watchdog. Freeze changed-file review before
 one final private artifact. Build6 is retained, superseded by a real shared-trace
 refusal repair before final build7/install7. Installed4PASS5.310245s/181460992B,

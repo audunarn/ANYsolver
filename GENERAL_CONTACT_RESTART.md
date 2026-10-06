@@ -4,12 +4,18 @@
 
 Work ONLY in C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
 branch codex/contact-main-reconcile-20261001. Inspect HEAD/status; parent
-1888bb877d4277c67e24d26211332787a8080f08 prepared the UNEXECUTED V19 coupling
-check; this checkpoint adds the bounded C9 native DATA reader. Full C0-C9 stays
+aa1bd7a9f8cf4b305493cd961df378fd862cb5a6 holds the bounded C9 reader;
+this checkpoint adds installed C4 reference/numbering controls. V19 coupling
+test at1888 remains UNEXECUTED. Full C0-C9 stays
 ACTIVE/incomplete: [goal](GENERAL_CONTACT_GOAL.md), [plan](GENERAL_CONTACT_PLAN.md),
 [ledger](docs/GENERAL_CONTACT_CAPABILITIES.md). No protected-original access,
 sibling edits, other-chat messaging, push/merge/publication/release/default changes.
-Local Git checkpoints authorized. Global AGENTS reread in full; Mistral/local
+Local Git checkpoints authorized. Global AGENTS updated/reread in full (hash
+89f5b1ae6e94001b120d6ce619147731fbf5e96fb394cb8e5d4a0e04337778e1).
+Prospectively give Edit workers an explicit early checkpoint deadline; preserve
+precise process-wall/cumulative evidence and classify service/interruption/turn/
+product/harness/verification gaps separately. No new execution authority.
+Mistral/local
 cached unavailable, OpenAI fallback. Implementer/reviewer completed; no job live.
 Root owns contracts/integration/records/Git/acceptance. Same-family source review
 is NOT independent engineering acceptance. Ledger append ASCII BYTES ONLY;
@@ -41,17 +47,35 @@ root_native_reader_prior_restart.md retains complete historical pointers.
 |---|---:|---:|
 | C6 beam/S3 |178.223450299818|1.776549700182|
 | C5 arc |170.846466999850|9.153533000150|
-| C4 triangulated/connected S3 |158.646824599826|21.353175400174|
+| C4 triangulated/connected S3 |172.931528899935|7.068471100065|
 | C9 archives |177.698497499572|2.301502500428|
 | Automatic domains |174.026839300175|5.973160699825|
 | Native connected spatial |177.357927799691|2.642072200309|
 
-C9 has34terminaljobs; C6 has29. Onejob/953MiB/JIT0/Numba1/pools1;
+C9 has34terminaljobs; C6 has29; C4 has33. Onejob/953MiB/JIT0/Numba1/pools1;
 watchdog<=min60s,remaining-1, stricter frozen limits prevail. Original120h consumed
 432011s. Additional C6 180s and prior domain180s requests remain UNANSWERED;
 no preselection/elapsed time/resumption renews them. No borrowing between scopes.
 Domain refined shell-shell writer NONPASS/FD100.161s timeout; native V8 NONPASS/
 V9 full156-coordinate R/H/gap/wrench/solve/restart UNVERIFIED.
+
+## Latest C4 required control delivered
+
+Four installed force-equilibrium cases: baseline, frame only, numbering only,
+combined. Normal z rotates to x by exact cyclic reference transformation;
+shift(1/8,-1/4,1/2)m. Response<=2.722e-12, each-body wrench<=1.585e-11,
+local skin-map H covariance<=2.619e-10, directional tangent<=6.695e-7.
+Retained1e-6/1e-5/gap gates with separate N/Nm and work scales. Partial-footprint
+local derivative pose is not a solved lifecycle/rim/finite-motion admission.
+Final installed PASS6.337499s;222imports/errors0/JIT0/Numba1/pools[1,1,1].
+Product unchanged,543payloads still match reused C9 artifact; no new build or
+incidental V19/C6 verification. Initial abs(tuple) harness NONPASS and intermediate
+relative-reporting PASS preserved. Same-family final source scrutiny only.
+[Evidence](docs/d1_review_support/contact_triangulated_rigid_20261006/invariance_development.md).
+Raw C:/ANYworkspaceWork/contact_triangulated_rigid_20261006/invariance_*:
+worker_handoff/final_manifest, three job dirs, root reconciliation/provenance.
+Prior restart invariance_root_prior_restart.md retains complete previous state.
+Implementation/reviewer completed; no process live. No further job planned.
 
 ## Principal next mechanics gate
 
@@ -75,5 +99,5 @@ General initial/preload, finite rotation, materials/friction, boundaries/multipl
 faces, native spatial/dynamic/coupled impact, application/package completion and
 independent acceptance remain required. Do not narrow C0-C9 to these prototypes.
 
-Latest goal turn: PROGRESS (bounded C9 consumer, source/installed checks, review
-repair and evidence reconciliation). Full programme not achieved.
+Latest goal turn: PROGRESS (C4 actual frame/numbering/work invariance checks,
+retained failures and verified installed evidence). Full programme not achieved.

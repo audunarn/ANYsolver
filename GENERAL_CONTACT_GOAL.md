@@ -122,6 +122,15 @@ Incidental V19 packaging supplies no C6 mechanics evidence. Broader native,
 application and C9 acceptance remains open.
 [Native DATA evidence](docs/d1_review_support/contact_transient_archive_20261006/native_reader_development.md).
 
+C4 connected S3/tool reference-frame and numbering development controls now pass
+four actual installed force equilibria, each-body shifted-origin wrenches and
+complete local work/H at unchanged1e-6/1e-5 gates with separate dimensional scales.
+No product changes/rebuild;222installed imports and543payloads match. This tests
+one proper cyclic reference transformation and node renumbering, not arbitrary
+oblique frames, finite motion, rims or C4 engineering acceptance. SAME C4 purse
+172.931528899935/180s spent;7.068471100065s remains across33terminaljobs.
+[Invariance evidence](docs/d1_review_support/contact_triangulated_rigid_20261006/invariance_development.md).
+
 ## Preserved history and decisions
 
 The [unaltered prior goal](GENERAL_CONTACT_GOAL_HISTORY_20261005.md) and [prior plan](GENERAL_CONTACT_PLAN_HISTORY_20261005.md) retain all development decisions, counterexamples, failures, references and source identities. Unaffected scientific contracts, registered criteria, frozen/consumed authorities and assessed capability boundaries remain binding. Historical chronological next actions are superseded by this live goal/plan; this consolidation changes no mechanics or acceptance target and authorizes no repeated campaign.
