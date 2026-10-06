@@ -151,8 +151,8 @@ def correct(driver, *, load_direction, metric, radius, predictor_dof,
     from ._stiffened_shell_branch_event_trial import trial_fraction
     owner=driver.owner
     n=owner._K.shape[0]; nodal=owner._shell_count+6*len(owner._beam_ids)
-    from ._stiffened_shell_affine_endpoint import is_native_point_material
-    native=is_native_point_material(owner)
+    from ._stiffened_shell_affine_endpoint import is_native_point_material,is_native_material_bl5_arc
+    native=is_native_point_material(owner) or is_native_material_bl5_arc(owner)
     if native:
         from ._stiffened_shell_arc_checkpoint import require_native_seed
         require_native_seed(owner,driver)

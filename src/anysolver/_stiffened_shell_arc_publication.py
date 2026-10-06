@@ -7,7 +7,7 @@ from scipy.spatial.transform import Rotation
 from .control import cancellation_safe_point
 from ._stiffened_shell_arc_checkpoint import validate_endpoint
 from ._stiffened_shell_arc_trial import ArcAttempt
-from ._stiffened_shell_affine_endpoint import has_shell_material,is_native_point_material,has_native_s3_material
+from ._stiffened_shell_affine_endpoint import has_shell_material,uses_native_material_history,has_native_s3_material
 
 
 @dataclass(frozen=True)
@@ -50,7 +50,7 @@ def prepare(owner,raw):
         _material_observables,_material_histories)
     m,a,driver,state,evaluation,shell_parent,beam_parent=validate_endpoint(owner,raw)
     residual,_,relative,gap,shell_next,beam_next=evaluation
-    native=is_native_point_material(owner);s3=has_native_s3_material(owner)
+    native=uses_native_material_history(owner);s3=has_native_s3_material(owner)
     count=len(owner._definition.shell.q4_elements)
     if has_shell_material(owner):
         q4_next=tuple({**candidate,'plastic_strain':a['shell_plastic'][i],
@@ -97,7 +97,7 @@ def _bind_predecessor(owner,m,a,live,expected_generation):
             or m['predecessor_sha256']!=sha256(owner.checkpoint()).hexdigest()):
         raise ValueError('arc endpoint has a different accepted predecessor')
     nodes=len(owner._shell_ids)+len(owner._beam_ids)
-    native=is_native_point_material(owner);s3=has_native_s3_material(owner)
+    native=uses_native_material_history(owner);s3=has_native_s3_material(owner)
     count=len(owner._definition.shell.q4_elements)
     shell=(_shell_material_arrays(live._shell_origins[:count] if s3 else live._shell_origins) if has_shell_material(owner) else ())
     frames=np.concatenate((physical_frames(live._state.q[:owner._shell_count],

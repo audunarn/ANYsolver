@@ -437,3 +437,8 @@ tests/test_stiffened_shell_b2_physical_footprint_batch.py -text whitespace=cr-at
 /docs/stiffened_shell_native_bl5_mixed_j2_development.md -text whitespace=cr-at-eol,-blank-at-eof
 /.qualification/b3-ge-e4-pl/r8-native-fibre-bl5-mixed-j2-dev-20261006-v1/** -text -whitespace
 /.qualification/b3-ge-e4-pl/r8-native-fibre-bl5-mixed-j2-installed-dev-20261006-v1/** -text -whitespace
+
+/tests/test_stiffened_shell_native_material_bl5_arc.py -text whitespace=cr-at-eol,-blank-at-eof
+/examples/stiffened_shell_native_material_bl5_arc.py -text whitespace=cr-at-eol,-blank-at-eof
+/docs/development/stiffened_shell_native_material_bl5_arc.md -text whitespace=cr-at-eol,-blank-at-eof
+/docs/development/stiffened_shell_native_material_bl5_arc_independent_review.md -text whitespace=cr-at-eol,-blank-at-eof

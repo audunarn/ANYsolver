@@ -1211,7 +1211,7 @@ class ExperimentalGEAnalysis:
                     native_bl5_material_domain="existing physical-fibre and generalized constitutive histories; elastic or isotropic Q4 J2 shell",
                     native_bl5_checkpoint="existing native-material/native-shell binary schema; explicit model/line/material-policy identity",
                     excluded=tuple(v for v in capabilities["excluded"] if v not in ("shell J2 plastic", "generalized B3 plastic finite BL5")) +
-                        ("native material BL5 staged/external loads", "native material BL5 adaptive displacement/arc control", "native material BL5 spectra", "native material BL5 chart rebase"),
+                        ("native material BL5 staged/external loads", "native material BL5 adaptive displacement control", "native material BL5 spectra", "native material BL5 chart rebase"),
                     open_domains=("plastic S3 native BL5", "native material BL5 chart rebase", "consumer integration", "scale qualification"))
                 for key in ("body_acceleration", "beam_distributed_loads", "staged_beam_distributed_loads", "shell_pressure_loads", "staged_dead_loads"):
                     capabilities[key] = ()
@@ -1242,6 +1242,16 @@ class ExperimentalGEAnalysis:
             if self._bl5_native_mixed_material:
                 capabilities["displacement_control"] = "experimental_native_fibre_bl5_mixed_shell_j2_fixed_translation_v1"
             capabilities["displacement_control_seed"] = "ordinary nonadaptive accepted force endpoint; no chart/event/adaptive controller"
+            from ._stiffened_shell_affine_endpoint import is_native_material_bl5_arc
+            if is_native_material_bl5_arc(self) and getattr(self,"_external_context",None) is None:
+                capabilities["arc_length"] = "experimental_native_fibre_bl5_material_tangent_plane_v1"
+                capabilities["arc_metric"] = (
+                    "full-frame PhysicalChordMetric; shell normal spin contributes 2*w*(1-cos(theta)); "
+                    "not a position/director quotient metric; retained variables and multipliers excluded from metric only")
+                capabilities["arc_length_limits"] = (
+                    "source candidate; fixed unrebased ordinary/fixed-translation seed; affine nodal dead translations; "
+                    "fixed physical metric and free translation orientation; accepted-prefix restart; "
+                    "no adaptive/event/staged/external seed, chart rebase, branch switching or capacity qualification")
         from ._stiffened_shell_affine_endpoint import is_native_point_material
         if is_native_point_material(self):
             capabilities["displacement_control"] = (
@@ -1332,7 +1342,8 @@ class ExperimentalGEAnalysis:
         if self._modal_only:
             details["modal_boundary_policy"] = self._definition.modal_boundary_policy
         from ._stiffened_shell_affine_endpoint import is_native_point_material
-        if self._bl5_shell_material or self._curved_reference or is_native_point_material(self):
+        from ._stiffened_shell_affine_endpoint import is_native_material_bl5_arc
+        if self._bl5_shell_material or self._curved_reference or is_native_point_material(self) or is_native_material_bl5_arc(self):
             details["arc_metric_node_order"] = (tuple(("shell",int(i)) for i in self._shell_ids)
                 +tuple(("beam",int(i)) for i in self._beam_ids))
         return details
@@ -1679,8 +1690,9 @@ class ExperimentalGEAnalysis:
     def continue_arc_length(self, actions, control, *, steps=1,
                             cancellation_token=None, on_accepted=None):
         self._require_open()
-        if self._bl5_native_material:
-            raise ValueError("native material BL5 admits force-controlled nodal dead translations only")
+        from ._stiffened_shell_affine_endpoint import is_native_material_bl5_arc
+        if self._bl5_native_material and not is_native_material_bl5_arc(self):
+            raise ValueError("native material BL5 arc requires its explicit admitted material domain")
         self._require_distributing_reference_only("arc-length continuation")
         self._require_finite_distributing_scope("arc-length continuation")
         self._require_stateful_scope()

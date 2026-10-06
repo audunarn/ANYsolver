@@ -34,6 +34,16 @@ def uses_native_material_history(owner):
     return is_native_point_material(owner) or bool(getattr(owner,"_bl5_native_material",False))
 
 
+def is_native_material_bl5_arc(owner):
+    """Explicit constructed native BL5 material domain; not a history predicate."""
+    definition=getattr(owner,"_definition",None)
+    return bool(definition is not None and getattr(owner,"_bl5_native_material",False)
+        and getattr(owner,"_finite_bl5",False) and definition.lines
+        and definition.bl5_material_policy in (
+            "BL5_NATIVE_FIBRE_MATERIAL_V1_DEV",
+            "BL5_NATIVE_FIBRE_MIXED_SHELL_MATERIAL_V1_DEV"))
+
+
 def require_native_displacement_policy(owner,driver):
     """Never upgrade legacy S3 force-seed arithmetic during replay."""
     if (is_native_point_material(owner) and owner._definition.shell.s3_elements and

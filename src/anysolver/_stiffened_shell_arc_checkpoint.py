@@ -15,16 +15,51 @@ MAGIC=b'ANYSSARC1'
 KIND='finite_arc_bl5_coupled'
 POLICY='B3_GE_BL5_PHYSICAL_TANGENT_PLANE_V1_DEV'
 NATIVE_CHART_POLICY='B3_GE_NATIVE_POINT_ARC_FIXED_SHELL_CHART_V1_DEV'
+NATIVE_BL5_CHART_POLICY='B3_GE_NATIVE_FIBRE_BL5_ARC_UNREBASED_SHELL_CHART_V1_DEV'
+
+
+def _native_owner(owner):
+    from ._stiffened_shell_affine_endpoint import is_native_point_material,is_native_material_bl5_arc
+    return is_native_point_material(owner) or is_native_material_bl5_arc(owner)
+
+
+def _chart_policy(owner):
+    from ._stiffened_shell_affine_endpoint import is_native_material_bl5_arc
+    return NATIVE_BL5_CHART_POLICY if is_native_material_bl5_arc(owner) else NATIVE_CHART_POLICY
 
 
 def require_native_seed(owner,driver):
     """Admit ordinary/displacement seeds or this controller's validated prefix."""
     from ._stiffened_shell_affine_endpoint import require_native_displacement_policy
     require_native_displacement_policy(owner,driver)
+    from ._stiffened_shell_affine_endpoint import is_native_material_bl5_arc
+    bl5=is_native_material_bl5_arc(owner)
+    if bl5:
+        if driver._programme is not None or driver._external is not None or driver._adaptive_state is not None:
+            raise ValueError('native material BL5 arc excludes staged/external/adaptive seeds')
+        anchors=driver._state.shell_anchors
+        saved=getattr(owner,'_displacement_snapshot',None)
+        if (anchors is not None and not np.array_equal(
+                anchors,np.tile(np.eye(3),(len(owner._shell_ids),1,1)))) or (
+                saved is not None and (saved[1].get('chart_events',0)!=0
+                                       or saved[1].get('trial_policy') is not None)):
+            raise ValueError('native material BL5 arc requires an unrebased fixed-translation seed')
     snapshot=getattr(owner,'_arc_snapshot',None)
     if snapshot is None:
-        from ._stiffened_shell_displacement_adaptive import require_native_seed as displacement_seed
-        displacement_seed(owner,driver)
+        if bl5:
+            saved=getattr(owner,'_displacement_snapshot',None)
+            if saved is not None:
+                from ._stiffened_shell_displacement_checkpoint import identities as displacement_identities
+                if saved[1]['policy']!=displacement_identities(owner)[1]:
+                    raise ValueError('native material BL5 arc fixed-translation seed policy mismatch')
+            else:
+                applied=driver._load_factor*driver._pattern
+                nodal=owner._shell_count+6*len(owner._beam_ids)
+                if np.any(applied[nodal:]) or np.any(applied[:nodal].reshape(-1,6)[:,3:]):
+                    raise ValueError('native material BL5 arc requires nodal dead translations')
+        else:
+            from ._stiffened_shell_displacement_adaptive import require_native_seed as displacement_seed
+            displacement_seed(owner,driver)
         saved=getattr(owner,'_displacement_snapshot',None)
         if saved is not None and saved[1].get('trial_policy') is not None:
             raise ValueError('native arc excludes branch event seeds')
@@ -39,7 +74,12 @@ def require_native_seed(owner,driver):
 
 
 def identities(owner, *, native_version=2):
-    from ._stiffened_shell_affine_endpoint import is_native_point_material
+    from ._stiffened_shell_affine_endpoint import is_native_point_material,is_native_material_bl5_arc
+    if is_native_material_bl5_arc(owner):
+        from ._stiffened_shell_displacement_checkpoint import identities as displacement_identities
+        kind,policy,_,_=displacement_identities(owner)
+        return (kind.replace('finite_displacement_','finite_arc_'),
+                policy.replace('DISPLACEMENT_','TANGENT_PLANE_'))
     if is_native_point_material(owner):
         from ._stiffened_shell_displacement_checkpoint import identities as displacement_identities
         kind,policy,_,_=displacement_identities(owner)
@@ -56,14 +96,13 @@ def identities(owner, *, native_version=2):
 
 
 def active_policy(owner):
-    """Fresh seeds select V2; accepted V1 arc prefixes retain their semantics."""
+    """Fresh POINT seeds select V2; historical POINT prefixes keep their policy."""
     saved=getattr(owner,'_arc_snapshot',None)
     return identities(owner)[1] if saved is None else saved[1]['policy']
 
 
 def requires_coordinate_progress(owner):
-    from ._stiffened_shell_affine_endpoint import is_native_point_material
-    return is_native_point_material(owner) and active_policy(owner)==identities(owner)[1]
+    return _native_owner(owner) and active_policy(owner)==identities(owner)[1]
 
 
 CONTROL_LIMITS=(('max_cutbacks',0,8),('max_attempts',1,64),
@@ -134,7 +173,7 @@ def encode_snapshot(owner,metadata,arrays):
     # The native mechanical payload reuses the existing displacement codec;
     # the outer arc policy binds its distinct controller identity and layout.
     kind=identities(owner)[0]
-    if is_native_point_material(owner):
+    if _native_owner(owner):
         from ._stiffened_shell_displacement_checkpoint import identities as displacement_identities
         kind=displacement_identities(owner)[0]
     inner=(encode_s3(owner._identity,metadata['generation'],numeric,arrays['s3_states'],
@@ -149,7 +188,7 @@ def encode_snapshot(owner,metadata,arrays):
 
 def decode_snapshot(owner,raw):
     from ._stiffened_shell_affine_endpoint import is_native_point_material,has_native_s3_material
-    native=is_native_point_material(owner);s3=has_native_s3_material(owner)
+    native=_native_owner(owner);point=is_native_point_material(owner);s3=has_native_s3_material(owner)
     identities(owner)
     if (type(raw) is not bytes
             or not raw.startswith(MAGIC) or not len(MAGIC)+36<len(raw)<=MAX_CHECKPOINT_BYTES):
@@ -168,8 +207,8 @@ def decode_snapshot(owner,raw):
     if native:keys.add('native_chart_policy')
     if (type(m) is not dict or set(m)!=keys or canonical(m)!=header
             or m['policy'] not in ((identities(owner,native_version=1)[1],identities(owner)[1])
-                if native else (identities(owner)[1],)) or m['model']!=owner._identity
-            or (native and m['native_chart_policy']!=NATIVE_CHART_POLICY)):
+                if point else (identities(owner)[1],)) or m['model']!=owner._identity
+            or (native and m['native_chart_policy']!=_chart_policy(owner))):
         raise ValueError('incompatible arc metadata')
     if (any(type(m[k]) is not int for k in ('generation','seed_generation','steps','predictor_dof','orientation'))
             or not 1<=m['steps']<=1024 or not 1<=m['seed_generation']<m['generation']
@@ -262,7 +301,7 @@ def from_selection(owner,selection,*,seed_generation,seed_sha256,history=(),atte
         metric_weights=trial.metric.weights,normal_translations=trial.normal_translations,
         normal_spins=trial.normal_spins,origin_translations=parent.q[:nodes*6].reshape(-1,6)[:,:3],
         origin_frames=np.concatenate((physical_frames(parent.q[:owner._shell_count],parent.shell_anchors),parent.frames)))
-    native=is_native_point_material(owner);s3=has_native_s3_material(owner)
+    native=_native_owner(owner);s3=has_native_s3_material(owner)
     if native:
         from ._stiffened_shell_beam_history import arrays as native_arrays
         arrays.update(native_arrays(owner._beam_parts,trial.evaluation[5],'beam'))
@@ -293,7 +332,7 @@ def from_selection(owner,selection,*,seed_generation,seed_sha256,history=(),atte
         metric_length=trial.metric.length,predictor_dof=trial.predictor_dof,orientation=trial.orientation,
         predecessor_sha256=predecessor_sha256,
         attempt_history=list(attempt_history)+[group],**group)
-    if native:m['native_chart_policy']=NATIVE_CHART_POLICY
+    if native:m['native_chart_policy']=_chart_policy(owner)
     return encode_snapshot(owner,m,arrays)
 
 
