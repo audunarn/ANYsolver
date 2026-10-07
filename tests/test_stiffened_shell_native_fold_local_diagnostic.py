@@ -1,4 +1,4 @@
-"""UNRUN source controls: passive seam mechanics, ownership and restoration."""
+"""Source controls: passive seam mechanics, ownership and restoration."""
 from copy import deepcopy
 from dataclasses import dataclass
 from fractions import Fraction
@@ -502,3 +502,86 @@ def test_historical_g13_facade_preserves_options_and_owned_result(monkeypatch):
         numerical_candidate=local.LOG_ONLY_CANDIDATE,difference_pair=local.INTERMEDIATE_PAIR) is marker
     assert calls.pop() == ('fixture',dict(generation=13,cancellation_token=token,on_evaluation=observer,
         numerical_candidate=local.LOG_ONLY_CANDIDATE,difference_pair=local.INTERMEDIATE_PAIR))
+
+
+def _sampling_inputs():
+    size = local.MIXED_ROWS
+    tangent = np.zeros(size); tangent[0] = .3; tangent[3] = .7
+    minus = np.zeros(local.SHELL_ROWS); plus = minus.copy()
+    h = 1e-6
+    minus[0] = -.25*h; plus[0] = .25*h
+    minus[3] = -9*h; plus[3] = 9*h  # rotation sampling intentionally excluded
+    difference = np.zeros(size); difference[0] = -.08; difference[3] = .04
+    load = np.ones(size)
+    return [minus,plus,tangent,h,np.eye(size)*2,np.ones(size),
+            np.array([0,3,500]),462,load,difference]
+
+
+def test_sampling_witness_identity_rows_and_preserved_failure():
+    args = _sampling_inputs()
+    result = local.shell_translation_sampling_witness(*args)
+    delta = result['translation_direction_sampling_difference']
+    assert delta[0] == pytest.approx(-.05)
+    assert np.count_nonzero(delta) == 1 and delta[3] == 0
+    np.testing.assert_allclose(result['first_order_baseline_J_contribution'],args[4]@delta)
+    np.testing.assert_allclose(result['first_order_represented_translation_remainder'],
+                               args[-1]-args[4]@delta)
+    original = local.fold.directional_error_witness(args[-1],args[5],np.array([0,3]),462,args[8])
+    assert result['original_witness'] == original
+    assert result['diagnostic_only']
+    for name in ('is_exact_error_bound','operator_defect_excluded',
+                 'changes_registered_acceptance','original_failures_superseded'):
+        assert result[name] is False
+
+
+def test_sampling_witness_arrays_owned_and_mutation_isolated():
+    args = _sampling_inputs()
+    saved = [value.copy() if isinstance(value,np.ndarray) else value for value in args]
+    result = local.shell_translation_sampling_witness(*args)
+    for value in result.values():
+        if isinstance(value,np.ndarray):
+            assert value.flags.owndata
+            for source in args:
+                if isinstance(source,np.ndarray): assert not np.shares_memory(value,source)
+    for original,copy in zip(args,saved):
+        if isinstance(original,np.ndarray): np.testing.assert_array_equal(original,copy)
+    remembered = result['first_order_baseline_J_contribution'].copy()
+    for source in args:
+        if isinstance(source,np.ndarray): source.fill(99)
+    np.testing.assert_array_equal(result['first_order_baseline_J_contribution'],remembered)
+
+
+def test_sampling_zero_and_intermediate_pair_sparse_operator():
+    from scipy.sparse import eye
+    args = _sampling_inputs()
+    args[0].fill(0); args[1].fill(0); args[2].fill(0)
+    args[3] = 3e-6; args[4] = eye(local.MIXED_ROWS,format='csr')
+    result = local.shell_translation_sampling_witness(*args,difference_pair=local.INTERMEDIATE_PAIR)
+    assert not result['translation_direction_sampling_difference'].any()
+    assert result['first_order_remainder_witness'] == result['original_witness']
+
+
+@pytest.mark.parametrize('position,bad',[
+    (0,np.zeros(local.SHELL_ROWS-1)),(1,np.full(local.SHELL_ROWS,np.nan)),
+    (2,np.zeros(local.MIXED_ROWS-1)),(3,2e-6),(5,np.full(local.MIXED_ROWS,np.inf)),
+    (6,np.array([-1])),(6,np.array([0.,3.])),(6,np.array([0,0])),
+    (6,np.array([local.MIXED_ROWS])),(7,True),
+    (8,np.zeros(local.MIXED_ROWS-1)),(9,np.full(local.MIXED_ROWS,np.nan))])
+def test_sampling_refuses_bad_inputs_before_operator_copy(position,bad):
+    class MustNotCopy:
+        shape = (local.MIXED_ROWS,local.MIXED_ROWS)
+        def copy(self): raise AssertionError('invalid sampling inputs reached operator')
+    args = _sampling_inputs(); args[4] = MustNotCopy(); args[position] = bad
+    with pytest.raises(ValueError): local.shell_translation_sampling_witness(*args)
+
+
+@pytest.mark.parametrize('operator',[np.eye(2),np.full((local.MIXED_ROWS,local.MIXED_ROWS),np.inf)])
+def test_sampling_refuses_wrong_or_nonfinite_baseline(operator):
+    args = _sampling_inputs(); args[4] = operator
+    with pytest.raises(ValueError): local.shell_translation_sampling_witness(*args)
+
+
+def test_sampling_zero_load_reference_refused():
+    args = _sampling_inputs(); args[8].fill(0)
+    with pytest.raises(local.fold.AssessmentRefusal):
+        local.shell_translation_sampling_witness(*args)

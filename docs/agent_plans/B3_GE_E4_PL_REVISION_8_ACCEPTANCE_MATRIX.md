@@ -4195,3 +4195,15 @@ Offlineinspectionv1 used wrong fullfree-row norm; correctedv2mechanicalrows
 preservesfailedv1 andhasnoeffectonvalidoriginalbatchcriterion.
 G13scopedpasspreserved;completeJacobian/slope/fold/capacity/G4D/F03 remainOPEN.
 Rawroot-result-v7.json,root-endpoints-bindings-v1.json andindependentendpointsreview.
+
+### 7 October2026 — g14 saved-record diagnosis and source-only sampling witness
+Original g14FAIL/g15NOTRUN and consumed primary retained; no physical replay.
+Exact saved-number decomposition distinguishes dominant additive translation
+input sampling from smaller rotation/force terms. Rotation-centering and force
+reassociation proposals withdrawn. Diagnostic-only J*translation-delta payload
+does not replace original witness/plateau/criteria or exclude operator defects.
+61focusedsourcecontrolsPASS0fail/error/skip14.6832456s; CPU0/thread1/JIToff,
+260923392B. Full signed caller source-inspected, not re-executed. Same-family
+supporting review only; complete scientific acceptance and G4D/F03 remainOPEN.
+Fresh150used65.2573387/remaining84.7426613,reserve60,primaryCONSUMED.
+Root-sampling-source-pass-v1 binds source, controls, runtime and limitations.

@@ -159,3 +159,30 @@ Rootretained-contributions-v2 restricts to mechanical equation rows; incorrect
 v1 including compatibility rows is retained/superseded. Neither alters the valid
 raw criterion or establishes a numerical floor. FullJacobian/fold/G4D/F03OPEN.
 Evidence:fold-assessment-dev/root-result-v7.json and root-endpoints-bindings-v1.json.
+
+## 7 October — represented shell-translation sampling diagnostic
+
+The g14 raw failure remains unchanged. Exact arithmetic on fixed saved binary64
+captures attributes most of the fine coordinate-chain contribution to additive
+translation input sampling:8.6840952773e-7 versus1.6345105562e-8 from rotation
+input sampling. Remaining coordinate-chain contribution2.1899341843e-7 and
+local-force chain1.0702601131e-8 do not establish an internal error bound or
+exclude a true derivative defect. Force reassociation and rotation centering are
+withdrawn; no new endpoint/evaluator calls were made.
+
+A private helper now reports copied-baseline-J times the actual-minus-requested
+shell translation direction, alongside the unchanged original witness. Its
+first-order remainder excludes only that sampling contribution. Native/beam
+translations, rotations, finite-step curvature and internal arithmetic remain.
+Original FD/plateau/status/criteria are unchanged; this is not an acceptance
+correction. Copied CSR/signed q and returned arrays avoid borrowed scratch buffers.
+
+61 source controls passed0fail/error/skip in14.6832456s, CPU0/thread1/JIToff,
+peak260923392B. Source/snapshot/runtime and JUnit verified. Signed-caller placement
+was source-inspected, not re-executed. Supporting same-family review found no
+concrete defect; it does not supply scientific acceptance.
+The parent shell incorrectly tested stale LASTEXITCODE after child success;
+preserved separately, with no rerun. Fresh150ledger65.2573387used/
+84.7426613remaining,reserve60; primaryCONSUMED,g15NOTRUN.
+Evidence:fold-assessment-dev/root-sampling-source-pass-v1.json,
+saved-chain-inspection-v1/v2/v3 and source-sampling-v1.

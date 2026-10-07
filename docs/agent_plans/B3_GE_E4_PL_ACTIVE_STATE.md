@@ -3,68 +3,65 @@
 Revision8 complete programme remains OPEN: G0–G6/F01–F13/V01–V28/B01–B18,
 external, scale, platform, consumers, independent acceptance and coordinated release.
 Canonical worktree: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001
-Branch codex/stiffened-main-reconcile-20261001. Actual host Git is authoritative.
-Living goal/plan and append-only acceptance matrix beside this note remain binding.
+Branch codex/stiffened-main-reconcile-20261001; authoritative host Git.
+Living goal/plan and append-only acceptance matrix remain binding.
 No contact-worker communication, sibling edits, main, push or release.
-Mistral/local cached unavailable; OpenAI fallback is not different-family acceptance.
+Mistral/local cached unavailable; root continues the connected repair.
+OpenAI supporting review is not different-family scientific acceptance.
 ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1 applies prospectively.
 
-## Decision, established facts, uncertainty, discriminator and action
+## Decision, facts, uncertainty, discriminator and next action
 
-Decision: retain or reject the PRIVATE Log-only numerical candidate over the three
-frozen native endpoints. STOP further g13 refinement; no new loading history.
-Product modules, original Exp/chart, constitutive law and criteria remain unchanged.
-The original three-endpoint assessment failed its 1e-6 directional/plateau criterion;
-all original failures and consumed authorities remain preserved.
+Decision: preserve g14 failure; retain the PRIVATE Log-only source diagnostic,
+with additional translation-sampling attribution. No new physics or numerical
+acceptance correction. Force reassociation and rotation centering are withdrawn.
 
-Established g13 result at f1c519ad: source79da73e1,37controlsPASS before ONE approved
-installed Log-only comparison at fixed3e-6/1e-6. Directional errors2.6530378e-7/
-7.3479236e-7, plateau7.4778159e-7: SCOPED1e-6PASS. One border/five assemblies,
-16Q4/four Log calls each; complete public recovery/checkpoint unchanged.
-430source/wheel/site and810loadedmodule bindings checked; CPU0/thread1/JIToff,
-peak294375424B. Source18.5852736s, comparison26.020703s. Supporting review clean.
-Raw scientific status remains INCONCLUSIVE_LOCAL_Q4_DIAGNOSTIC.
+Established: g13 fixed3e-6/1e-6 scoped PASS at f1c519ad; g14 at bbf4c85a FAIL
+(2.6626205044e-7 / 1.00904614988e-6; plateau1.14229461890e-6 against1e-6).
+ONE remaining-endpoint batch is CONSUMED; g15 NOT RUN. Complete public recovery
+and checkpoint bytes unchanged. Evidence/result archived at1e7ebd6c.
+The old pair and all historical failures remain unchanged.
 
-Approved remaining-endpoint candidate bbf4c85a:43sourcecontrolsPASS0fail/error/skip
-in15.0910144s, actual source/runtime inspected before ONE installed batch.
-Fresh authority-v5 approved by direct human reply. G14 completed five captures
-but FAILED: h3e-6 error2.6626205044e-7,h1e-6 error1.00904614988e-6,plateau
-1.14229461890e-6 against unchanged1e-6. Batch stopped at g14; g15 NOT RUN.
-Exit2 is intentional criterion failure, not timeout/programming error.
-Checkpoint/public state unchanged; 430source/wheel/site,810loaded,5inputs/6refs/
-5captures match. CPU0/thread1/JIToff;peak293621760B;batch30.3534823s.
-Supporting evidence review found no discrepancy; not scientific acceptance.
+New fixed-record discriminator: exact saved-binary64 Decimal work decomposition
+uses only free mechanical shell-translation rows and zero evaluator calls.
+Fine g14 input-translation contribution8.6840952773e-7; input-rotation1.6345105562e-8;
+combined sampling8.6766235186e-7, remaining coordinate-chain2.1899341843e-7.
+Local-force chain1.0702601131e-8 is much smaller. These signed/scattered norms
+are not additive, an internal error bound, or proof excluding an operator defect.
+The result withdraws force-reassociation and centered-rotation priorities.
 
-Combined interpretation: g13 numerical window PASS does not generalize to g14.
-Saved-vector inspection identifies reconstructed Q4 error9.7597412e-7 at fine h;
-conditional scatter bound8.63956e-9 is much smaller. Combined-minus-Q4 remainder
-2.56199e-7 includes scatter/reconstruction/combined-J arithmetic, not an isolated
-beam contribution. Offline attribution v1 accidentally included compatibility
-rows; v2 corrects to free_rows<constraint_start and retains failed v1 unchanged.
-No effect on the original valid batch witness. Remaining uncertainty is local
-value/force/pullback arithmetic versus a true derivative defect; internal-arithmetic
-bounds and independent operator accuracy remain missing.
+Delivered source repair: copied baseline CSR before signed evaluations, detached
+signed shell-q, and a shell-translation-only delta with J*delta and first-order
+represented-translation remainder. Original errors, plateau, status and criteria
+unchanged. Native/beam translations, multiplicative rotations, finite-step
+curvature and internal arithmetic remain unallocated.
+61 source controls PASS0fail/error/skip in14.6832456s; CPU0/thread1/JIToff,
+peak260923392B. Source/snapshot and actual runtime verified. Full signed caller
+was source-inspected, not re-executed. Supporting review found no source defect.
+The parent inline LASTEXITCODE check falsely threw after child success; actual
+receipt/JUnit establish PASS. Preserve that wrapper failure; no repeated check.
 
-Decision: STOP this primary and preserve the near-threshold failure. No g15 retry,
-new h, automatic refinement or tolerance relaxation. Next permitted action is
-source/saved-evidence investigation of that concrete numerical contribution;
-any new endpoint/physical comparison needs its own applicable authority.
-Complete Jacobian/forward slope/sign/first-simple-fold/yield margin/capacity,
-operator/restart compatibility, G4D and F03 remain unproved/open. A scoped diagnostic
-pass neither qualifies the product nor certifies the reported g14 factor peak.
+Uncertainty: complete Jacobian and slope accuracy, yield margin, first-simple-fold,
+operator compatibility, capacity, G4D and F03 remain open. A scoped numerical
+window or diagnostic sampling subtraction cannot establish equilibrium accuracy
+or certify the reported factor peak.
+
+Next action: use the retained attribution to design a specific representability
+check if needed; any new endpoint/evaluator comparison requires applicable
+unconsumed authority. No g14 rerun, g15, new h, loading history or automatic sweep.
+Remaining v5 authority is verification/compatible repair only with60s reserve.
+No owned numerical job remains live. Product modules/defaults/versions unchanged.
 
 Evidence: .qualification/b3-ge-e4-pl/r8-native-fold-assessment-dev-20261006-v1/
-root-result-v7.json,root-endpoints-source-pass-v1.json,root-endpoints-bindings-v1.json,
-root-g14-retained-contributions-v2.json,independent-endpoints-evidence-review-v1.json.
-Earlier complete active notes preserved byte-for-byte in the same raw directory.
-Compact scientific result: ../development/stiffened_shell_native_fold_result_20261006.md.
-No owned numerical job remains live. No product/default/version/checkpoint change.
-
+saved-chain-inspection-v1/v2/v3,root-sampling-source-pass-v1.json,
+source-sampling-v1,inputs-manifest-sampling-v1.json.
+Earlier active notes preserved byte-for-byte; compact result:
+../development/stiffened_shell_native_fold_result_20261006.md.
 ## Preserved authority and restrictions
 
 Old300:200.3074764used/99.6925236remaining,60reserve,g13 verification/repair only.
 FOURprimaries consumed: original3endpoint,baselinecapture,Logoldpair,Logintermediate.
-No old allowance transfer to v5. Fresh150approved:45.4444967used/104.5555033remaining,
+No old allowance transfer to v5. Fresh150approved:65.2573387used/84.7426613remaining,
 60reserve. ONEg14/g15primary CONSUMED by g14failure; verification/repair only,
 no automatic newendpoint or retry.
 Proportional600:248.0393304/351.9606696,ONEscreenCONSUMED,verificationonly.

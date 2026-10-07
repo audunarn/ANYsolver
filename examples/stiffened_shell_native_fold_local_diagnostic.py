@@ -336,6 +336,54 @@ def q4_difference_witness(baseline,minus,plus,tangent,h,rows,free,n,direction,*,
         operator_defect_proved=False,criterion=fold.ELASTIC_FD_LIMIT)
 
 
+def shell_translation_sampling_witness(minus_q,plus_q,tangent,h,jacobian,rows,free,n,direction,
+                                       original_difference,*,difference_pair=REGISTERED_PAIR):
+    """Detached first-order sampling diagnostic; never an acceptance correction.
+
+    Only additive shell translations are measured. Native translations, rotation
+    updates, finite-step curvature and internal arithmetic remain unallocated.
+    """
+    if h not in _fd_steps(difference_pair):
+        raise ValueError('registered fixed difference step required')
+    minus = _copy_array(minus_q,(SHELL_ROWS,))
+    plus = _copy_array(plus_q,(SHELL_ROWS,))
+    requested = _copy_array(tangent,(MIXED_ROWS,))
+    scales = _copy_array(rows,(MIXED_ROWS,))
+    load = _copy_array(direction,(MIXED_ROWS,))
+    difference = _copy_array(original_difference,(MIXED_ROWS,))
+    indices = np.array(free,copy=True)
+    if (type(n) is not int or not 0 < n < MIXED_ROWS or indices.ndim != 1
+            or indices.dtype.kind not in 'iu' or np.any(indices < 0)
+            or np.any(indices >= MIXED_ROWS) or len(np.unique(indices)) != len(indices)):
+        raise ValueError('bounded mechanical row selection required')
+    if getattr(jacobian,'shape',None) != (MIXED_ROWS,MIXED_ROWS):
+        raise ValueError('bounded baseline operator required')
+    operator = jacobian.copy()
+    values = operator.data if hasattr(operator,'tocsr') else operator
+    if not np.isfinite(values).all():
+        raise ValueError('finite baseline operator required')
+    translation = np.arange(SHELL_ROWS)[np.arange(SHELL_ROWS)%6 < 3]
+    represented = (plus[translation]-minus[translation])/(2*h)
+    delta = np.zeros(MIXED_ROWS)
+    delta[translation] = represented-requested[translation]
+    contribution = _copy_array(operator@delta,(MIXED_ROWS,))
+    remainder = difference-contribution
+    mechanical = indices[indices<n]
+    return dict(diagnostic_only=True,is_exact_error_bound=False,
+        operator_defect_excluded=False,changes_registered_acceptance=False,
+        original_failures_superseded=False,
+        scope='additive shell translations only; first-order baseline-J contribution; not all input rounding or finite-step curvature',
+        shell_translation_indices=translation.copy(),
+        requested_translation_direction=requested[translation].copy(),
+        represented_translation_direction=represented.copy(),
+        translation_direction_sampling_difference=delta.copy(),
+        first_order_baseline_J_contribution=contribution.copy(),
+        first_order_represented_translation_remainder=remainder.copy(),
+        original_witness=fold.directional_error_witness(difference,scales,mechanical,n,load),
+        contribution_witness=fold.directional_error_witness(contribution,scales,mechanical,n,load),
+        first_order_remainder_witness=fold.directional_error_witness(remainder,scales,mechanical,n,load))
+
+
 def diagnose_saved_g13(folder,*,cancellation_token=None,on_evaluation=None,
                       numerical_candidate=BASELINE_NUMERICS,
                       difference_pair=REGISTERED_PAIR):
@@ -442,7 +490,8 @@ def diagnose_saved_endpoint(folder,*,generation,cancellation_token=None,on_evalu
                 length=metric.length,column_scales=columns,row_scales=rows,constraint_start=n)
             actual_tangent = tangent.pop('tangent')
             poses,norm = fold._poses_and_directions(owner,state,actual_tangent,metric)
-            expected = base[1]@actual_tangent
+            baseline_jacobian = base[1].copy()  # own before signed evaluations invalidate scratch
+            expected = baseline_jacobian@actual_tangent
             result.update(actual_mixed_tangent=_sparse_owned(base[1]),signed_branch_tangent=tangent,
                 actual_mixed_direction=actual_tangent.copy(),full_unit_factor_load=direction.copy(),
                 actual_applied_load=applied.copy(),reference_work_nm=energy,row_scales=rows.copy(),
@@ -456,7 +505,8 @@ def diagnose_saved_endpoint(folder,*,generation,cancellation_token=None,on_evalu
                     fold.require_director_chart(moved.q[:SHELL_ROWS])
                     moved_poses = np.concatenate((fold.physical_frames(moved.q[:SHELL_ROWS],moved.shell_anchors),moved.frames))
                     metric.evaluate((moved.q[:nodal]-state.q[:nodal]).reshape(-1,6)[:,:3],moved_poses,poses)
-                    signed.append(evaluate(f'h={h:.0e},sign={sign:+d}',moved))
+                    signed.append((*evaluate(f'h={h:.0e},sign={sign:+d}',moved),
+                                   np.array(moved.q[:SHELL_ROWS],copy=True)))
                 observed = (signed[1][0][0]-signed[0][0][0])/(2*h)
                 witness = q4_difference_witness(base_records,signed[0][1],signed[1][1],actual_tangent,h,rows,free,n,direction,
                     difference_pair=difference_pair)
@@ -466,6 +516,9 @@ def diagnose_saved_endpoint(folder,*,generation,cancellation_token=None,on_evalu
                     assembled_minus_Q4_reconstruction_remainder=(observed-expected)-witness['Q4_only_original_difference'],
                     reconstruction_remainder_provenance='assembled FD-minus-Jt difference less separately reconstructed Q4 FD-minus-elementwise-Jt difference; includes scatter/reconstruction and combined-J arithmetic; no non-Q4 attribution',
                     assembled_witness=fold.directional_error_witness(observed-expected,rows,free[free<n],n,direction))
+                witness['shell_translation_sampling'] = shell_translation_sampling_witness(
+                    signed[0][2],signed[1][2],actual_tangent,h,baseline_jacobian,rows,free,n,direction,
+                    observed-expected,difference_pair=difference_pair)
                 result['checks'].append(witness); derivatives.append(observed)
             result['plateau'] = dict(original_difference=derivatives[0]-derivatives[1],
                 witness=fold.directional_error_witness(derivatives[0]-derivatives[1],rows,free[free<n],n,direction))
