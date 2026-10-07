@@ -28,6 +28,20 @@ existing frozen original-route observations; there is no automatic original/
 candidate double run, fallback, or extra h. The original assessment, local diagnostic and Log-only comparison are consumed;
 no additional primary is authorized.
 
+## Remaining endpoint preparation — UNRUN
+
+The private diagnose_saved_endpoint adapter admits only exact frozen generations
+13/14/15; the historical diagnose_saved_g13 facade and defaults remain intact.
+The prospective v5 supervisor selects g14 then g15 only, with the SAME Log kernel
+and explicit3e-6/1e-6 pair. It saves each capture/result before advancing and stops
+on the first failed fixed criterion. All43 focused controls and both endpoints
+remain UNRUN; the preceding37-pass claim applies to source79da73e1 only.
+A fresh150-second allowance is proposed: source30, one batch60, reserve60,
+CPU0/thread1/JIToff/2GiB. Authority and ledger stay PENDING_USER_APPROVAL.
+The old99.6925236-second g13 remainder is not transferred. No g13 rerun or sweep.
+The batch distinguishes endpoint generality of the numerical repair; it does not
+certify a fold, forward slope, material margin, operator compatibility or F03.
+
 ## Question and bound
 
 The previous assessment failed its unchanged 1e-6 relative directional and

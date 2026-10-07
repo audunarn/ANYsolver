@@ -4170,3 +4170,13 @@ Alloldfailures preserved. Stopg13refinement;nextsourcepreparesremainingfrozen
 endpoints,whoseexecution needsboundedauthority. SAME300ledger200.3074764used/
 99.6925236remaining,60reserve;FOURprimariesCONSUMED. Noproductionadoption.
 Rawfold-assessment-dev/root-result-v6.json and independent-pair-evidence-review-v1.json.
+
+## 7 October2026: remaining frozen endpoints prepared, execution pending
+Private source-only adapter preserves g13/defaults and admits exact13/14/15;
+v5batch chooses14then15, sameLogkernel/pair3e-6/1e-6, unchanged1e-6criteria.
+43newsourcecontrolsUNRUN; old37PASS belongs79da. SourcePASS-before-physical guard,
+partial capture persistence and stop-on-first-failure are prepared, not executed.
+ProposedFRESH150s:sourcecap30,batchcap60,reserve60,CPU0/thread1/JIToff/2GiB.
+Authority-v5/ledger-v5PENDING,0used. Old300ledgerunchanged200.3074764/99.6925236,
+g13verificationonly; no authority transfer. No g13/sweep/continuation/F03/body/release.
+No new physical capability or aggregate gate accepted; prior failures preserved.

@@ -478,3 +478,27 @@ def test_intermediate_witness_requires_explicit_pair_and_keeps_criterion():
     assert witnessed['operator_defect_excluded'] is False
     with pytest.raises(ValueError,match='fixed registered step'):
         local.q4_difference_witness(*args[:4],1e-5,*args[5:],difference_pair=local.INTERMEDIATE_PAIR)
+
+
+@pytest.mark.parametrize('generation',(None,True,12,16,'14'))
+def test_saved_endpoint_generation_refuses_before_loading_or_owner(monkeypatch,generation):
+    def forbidden(*args,**kwargs): raise AssertionError('fixture/model must not be opened')
+    monkeypatch.setattr(local.fold,'load_saved',forbidden)
+    monkeypatch.setattr(local.ss,'create_analysis',forbidden)
+    with pytest.raises(ValueError,match='exact frozen saved generation'):
+        local.diagnose_saved_endpoint('fixture',generation=generation,
+            numerical_candidate=local.LOG_ONLY_CANDIDATE,difference_pair=local.INTERMEDIATE_PAIR)
+
+
+def test_historical_g13_facade_preserves_options_and_owned_result(monkeypatch):
+    marker=object();token=object();observer=object();calls=[]
+    def saved(folder,**options):
+        calls.append((folder,options));return marker
+    monkeypatch.setattr(local,'diagnose_saved_endpoint',saved)
+    assert local.diagnose_saved_g13('fixture') is marker
+    assert calls.pop() == ('fixture',dict(generation=13,cancellation_token=None,on_evaluation=None,
+        numerical_candidate=local.BASELINE_NUMERICS,difference_pair=local.REGISTERED_PAIR))
+    assert local.diagnose_saved_g13('fixture',cancellation_token=token,on_evaluation=observer,
+        numerical_candidate=local.LOG_ONLY_CANDIDATE,difference_pair=local.INTERMEDIATE_PAIR) is marker
+    assert calls.pop() == ('fixture',dict(generation=13,cancellation_token=token,on_evaluation=observer,
+        numerical_candidate=local.LOG_ONLY_CANDIDATE,difference_pair=local.INTERMEDIATE_PAIR))

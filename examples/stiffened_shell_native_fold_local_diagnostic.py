@@ -1,4 +1,4 @@
-"""UNRUN source candidate: passive, single-owner Q4 diagnostic at saved g13.
+"""Passive single-owner Q4 diagnostic at a frozen saved endpoint.
 
 This adds no execution authority and never validates a fold or repairs physics.
 """
@@ -339,14 +339,25 @@ def q4_difference_witness(baseline,minus,plus,tangent,h,rows,free,n,direction,*,
 def diagnose_saved_g13(folder,*,cancellation_token=None,on_evaluation=None,
                       numerical_candidate=BASELINE_NUMERICS,
                       difference_pair=REGISTERED_PAIR):
+    """Historical g13 facade; original defaults and numerical path are preserved."""
+    return diagnose_saved_endpoint(folder,generation=13,cancellation_token=cancellation_token,
+        on_evaluation=on_evaluation,numerical_candidate=numerical_candidate,
+        difference_pair=difference_pair)
+
+
+def diagnose_saved_endpoint(folder,*,generation,cancellation_token=None,on_evaluation=None,
+                            numerical_candidate=BASELINE_NUMERICS,
+                            difference_pair=REGISTERED_PAIR):
     """Exactly one bound restore, one border, baseline+four actual assemblies."""
+    if type(generation) is not int or generation not in (13,14,15):
+        raise ValueError('exact frozen saved generation 13/14/15 required')
     if numerical_candidate not in (BASELINE_NUMERICS,LOG_ONLY_CANDIDATE):
         raise ValueError('explicit known private Q4 numerical identity required')
     steps = _fd_steps(difference_pair)
     if difference_pair == INTERMEDIATE_PAIR and numerical_candidate != LOG_ONLY_CANDIDATE:
         raise ValueError('prospective intermediate pair requires explicit Log-only candidate')
-    raw,packet = fold.load_saved(folder,13)
-    cancellation_safe_point(cancellation_token,'before fresh saved-g13 diagnostic owner')
+    raw,packet = fold.load_saved(folder,generation)
+    cancellation_safe_point(cancellation_token,'before fresh saved-endpoint diagnostic owner')
     owner = ss.create_analysis(definition=case.definition())
     before = None
     observer_failure = [None]
@@ -356,7 +367,7 @@ def diagnose_saved_g13(folder,*,cancellation_token=None,on_evaluation=None,
         except BaseException as error:
             observer_failure[0] = error
             raise
-    result = dict(status='INCONCLUSIVE_LOCAL_Q4_DIAGNOSTIC',generation=13,evaluations=[],checks=[],
+    result = dict(status='INCONCLUSIVE_LOCAL_Q4_DIAGNOSTIC',generation=generation,evaluations=[],checks=[],
         diagnostic_completion='PARTIAL',
         scientific_acceptance=False,simple_fold_proved=False,capacity_proved=False,
         yield_branch_margin='UNESTABLISHED',G4D='OPEN',same_law_external_and_refinement='OPEN',F03='OPEN',
@@ -373,14 +384,14 @@ def diagnose_saved_g13(folder,*,cancellation_token=None,on_evaluation=None,
         restored = owner.restore(raw)
         before = deepcopy(case._plain(owner.recover()))
         if restored.status != 'accepted_prefix' or before != packet['observation']['state'] or owner.checkpoint() != raw:
-            raise ValueError('saved g13 restore differs from complete bound public state/bytes')
+            raise ValueError(f'saved g{generation} restore differs from complete bound public state/bytes')
         driver = owner._finite_driver
         if (owner.preflight()['identity'] != case.VERIFIED_FORCE_PREFIX_MODEL or
             driver._external is not None or driver._programme is not None or driver._adaptive_state is not None or
             owner._definition.shell.j2_curve is not None or owner._definition.shell_reference_policy != 'flat' or
             owner._footprint_increment_chart or owner._shell_count != SHELL_ROWS or
             owner._definition.q4_pullback_policy != q4.POLICY):
-            raise fold.AssessmentRefusal('unsupported_local_g13_diagnostic_domain')
+            raise fold.AssessmentRefusal(f'unsupported_local_g{generation}_diagnostic_domain')
         if not case.material_activity(owner.recover())['elastic_fold_interpretation_eligible']:
             raise fold.AssessmentRefusal('active_saved_material_history')
         state = driver._increment_origin(driver._state)
@@ -393,7 +404,7 @@ def diagnose_saved_g13(folder,*,cancellation_token=None,on_evaluation=None,
         amplitude = owner.recover().amplitude
         if (not np.array_equal(applied,.5*full+amplitude*full) or
             packet['observation']['proportional_factor'] != .5+amplitude):
-            raise ValueError('actual g13 load differs from frozen proportional law')
+            raise ValueError(f'actual g{generation} load differs from frozen proportional law')
         fold.require_director_chart(state.q[:SHELL_ROWS])
         metric = case.metric_for(tuple(owner.preflight()['arc_metric_node_order']),case.Specimen())
         fold.require_metric_owner(owner,metric)
@@ -410,8 +421,8 @@ def diagnose_saved_g13(folder,*,cancellation_token=None,on_evaluation=None,
                 assembled,records = capture.assemble(trial,*origins,applied,cancellation_token)
                 if not np.isfinite(assembled[0]).all() or any(v != 0. for row in fold._material_observables(assembled[5]) for v in row):
                     raise fold.AssessmentRefusal('nonfinite_or_active_trial_material')
-                captured = dict(label=label,generation=13,status='COMPLETED_EVALUATION',
-                    diagnostic_completion='PARTIAL',accepted_checkpoint_sha256=fold.SAVED[13][1],
+                captured = dict(label=label,generation=generation,status='COMPLETED_EVALUATION',
+                    diagnostic_completion='PARTIAL',accepted_checkpoint_sha256=fold.SAVED[generation][1],
                     numerical_candidate=numerical_candidate,baseline_numerics=BASELINE_NUMERICS,
                     mechanical_operator_compatibility_proved=False,
                     accepted_public_state=deepcopy(before),assembled_residual=np.array(assembled[0],copy=True),
@@ -477,9 +488,9 @@ def diagnose_saved_g13(folder,*,cancellation_token=None,on_evaluation=None,
                 result.update(complete_public_recovery_unchanged=True,checkpoint_bytes_unchanged=True)
         finally:
             owner.close()
-    repeated_raw,repeated_packet = fold.load_saved(folder,13)
+    repeated_raw,repeated_packet = fold.load_saved(folder,generation)
     if repeated_raw != raw or repeated_packet != packet:
-        raise ValueError('bound saved-g13 inputs changed during local diagnostic')
+        raise ValueError('bound saved-endpoint inputs changed during local diagnostic')
     return deepcopy(case._plain(result))
 
 
