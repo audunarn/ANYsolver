@@ -57,14 +57,14 @@ requested only for a concrete, source-reviewed candidate.
 
 ## Current source handoff
 
-Native-S3 source candidate implemented; 14 AST/whitespace checks pass and all
+Native-S3 source checkpoint 5c403caf implemented; 14 AST/whitespace checks pass and all
 15 held file hashes match. Supporting source review has no confirmed remaining
 blocker, but eight numerical selectors and installed/compatibility checks have
 NOT run. Author is idle, no live process. Source report v2 SHA
 25a42ee5c82ee5b3ab92c7c1b993643248b94a61f7a7742e9a1b7ece4cde8a85.
 [Candidate and prospective scope](docs/d1_review_support/contact_native_shell_c8_20261007/source_candidate.md).
 
-Next: request separately scoped 480 measured seconds for the concrete candidate,
+Pending human reply: separately scoped 480 measured seconds was requested for the concrete candidate,
 focused mechanics/restart/refusal/path tests, affected shared-route compatibility,
 CLI, private build/install and scoped repairs. One job <=60s, 953MiB; retain60s
 reserve. This request is not authority. Zero numerical execution for new fixture.
