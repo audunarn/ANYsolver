@@ -4276,3 +4276,16 @@ Raw execution/JUnit/per-case/runtime/import/resource evidence and root result:
 No native/CCX physical execution or bridge controls. FullE03, physical idealization,
 convergence, independent mechanics acceptance and aggregate gates remainOPEN.
 Next: prepare ONE coarse B2/CCX feasibility screen, with separate execution scope.
+## 2026-10-07 — E03 coarse feasibility, external balance rejected
+
+Source c6cc3dba/product535390ef:33 nonphysical controls PASS; installed native
+level0/+offset route and finalization complete. CCX2.23 exits0 but unchanged
+force/moment parser FAILS: normalized3.990588429916812 versus1e-8. Saved probe
+retains failure; no external accuracy or E03 acceptance. ROOT-only forces cannot
+identify equation-side/SPC recovery versus actual disequilibrium. Primary native
+and external authorities CONSUMED;45.6937621/240s used,194.3062379s verification
+remainder,60s reserve.12 runtime records checked; no physical retry/refinement.
+Additive complete-force recovery tooling is being prepared, not qualified.
+[Measured results and next discriminator](../reference_cases/stiffened_shell_e03_coarse_results_20261007.md).
+Raw: .qualification/b3-ge-e4-pl/r8-e03-coarse-dev-20261007-v1/root-result-v1.json.
+Aggregate E03/G0 and complete programme remain OPEN; no tolerance or scope change.

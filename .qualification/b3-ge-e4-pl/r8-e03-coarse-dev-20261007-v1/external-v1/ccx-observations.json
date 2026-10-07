@@ -1,0 +1,16 @@
+[
+  {
+    "pid": 47260,
+    "affinity": [
+      0
+    ],
+    "threads": 2
+  },
+  {
+    "pid": 47260,
+    "affinity": [
+      0
+    ],
+    "threads": 5
+  }
+]
