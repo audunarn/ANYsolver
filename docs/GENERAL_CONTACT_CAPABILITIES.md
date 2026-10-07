@@ -3030,3 +3030,21 @@ d1_review_support/contact_native_nonprincipal_20261006/nonprincipal_corrective_d
 Status: IMPLEMENTED SOURCE CANDIDATE; NUMERICALLY UNVERIFIED; no independent acceptance or release. Profile NATIVE_B3_GE_WHOLE_ROUND_PAIR_MIDPOINT_DEV_V1. Two free disjoint centered elastic native bodies, straight zero-lift physical curves and explicit round-centreline line penalty, enter one full84 retained midpoint system through the shared transient controller. Both-body cross blocks, separate contact storage, rounded/exact swept-path enclosure, captured radius and direct-capsule penetration admission are source implemented. Historical connected graph/default/profile/schema identities remain required compatibility checks.
 
 [Source guide](GENERAL_CONTACT_NATIVE_TRANSIENT_DEV.md). Raw source/review context: C:/ANYworkspaceWork/contact_native_c8_pair_20261007. Prospective eight focused checks plus legacy admission/compatibility and installed workflow remain unexecuted; no old allowance funds this fixture. Broader C7 qualification precedes C8 promotion. Curved/internal-lift contact, true endpoint accuracy, friction, native-shell common-stage and wider programme rows remain open.
+
+
+## 2026-10-07 C8 native beam-beam development delivery (V3k)
+
+Profile NATIVE_B3_GE_WHOLE_ROUND_PAIR_MIDPOINT_DEV_V1: two disjoint free,
+centered elastic zero-lift native beams, explicit round-centreline radii,
+full84 retained common-midpoint/contact system. Implemented YES; tested
+FOCUSED_DEVELOPMENT_AND_PRIVATE_INSTALLED; independently accepted NO;
+released NO. Five current focused selectors and two portability selectors PASS.
+Original full-direction derivative/work, actual impact, exact endpoint inventory,
+fixed winning projection feature and complete split restart/tamper are verified.
+V3h legacy/safety/CLI evidence reused only by impact analysis; historical failures
+and V3j proof-gap/restart timeout retain original non-success meanings.
+Wheel487af877...; sourceV20/manifest21, final tests/guideV24/manifest23.
+53attempts739.9227660997963/840s, remaining100.07723390020374 including60reserve.
+Different-family acceptance, temporal/spatial/section, curved physical lift,
+native friction/shell common-stage coupling and programme acceptance remain open.
+Evidence: d1_review_support/contact_native_c8_pair_20261007/native_pair_development.md.

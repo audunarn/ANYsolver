@@ -40,7 +40,8 @@ def create_native_transient_pair_analysis(formulation, definitions, boundaries, 
         maximum_search_depth=maximum_search_depth, maximum_search_cells=maximum_search_cells,
         energy_tolerance_j=energy_tolerance_j, force_tolerance_n=force_tolerance_n,
         tangent_tolerance_n_per_m=tangent_tolerance_n_per_m,
-        maximum_integration_intervals=maximum_integration_intervals)
+        maximum_integration_intervals=maximum_integration_intervals,
+        certify_curved_ownership=True, pooled_quadrature_budget=True)
     return NativePairContactAnalysis(definitions, boundaries, contact,
         endpoint_policy=endpoint_policy, maximum_penetration_m=maximum_penetration_m,
         maximum_swept_intervals=maximum_swept_intervals, inertia_order=inertia_order,

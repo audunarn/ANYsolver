@@ -1,0 +1,99 @@
+{
+  "state": "VERIFIED_ASSIGNED_V3K_FOCUSED_CRITERIA_AND_PORTABLE_ORACLES",
+  "inventory": [
+    {
+      "path": "src/anysolver/_ge_beam3_connected_dynamic.py",
+      "sha256": "2a0f006b353d22a679b29f45046f557807ed5c7fad0832dbe1a9633976193fa0",
+      "bytes": 30051,
+      "ast": "PASS",
+      "whitespace": "PASS"
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_connected_trajectory.py",
+      "sha256": "61ac48ce5485144f2ac2f46e6c41cd477f0b573f936a1ac890e7e8841a7be84c",
+      "bytes": 20844,
+      "ast": "PASS",
+      "whitespace": "PASS"
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_native_pair_contact.py",
+      "sha256": "68c7d09deea102915c721819a459389a6063149e04345cc0d69e8d4e5a5dcdc3",
+      "bytes": 13807,
+      "ast": "PASS",
+      "whitespace": "PASS"
+    },
+    {
+      "path": "src/anysolver/general_contact/native_transient_pair.py",
+      "sha256": "420a62600eeb34ab8e920d14951ef4f53033719393622fb9ead4d41b87e66f04",
+      "bytes": 3630,
+      "ast": "PASS",
+      "whitespace": "PASS"
+    },
+    {
+      "path": "src/anysolver/general_contact/__init__.py",
+      "sha256": "4159a3d921f1794d79a22f813bfd8d14de76ab5725633e12075c80952d4dc291",
+      "bytes": 5122,
+      "ast": "PASS",
+      "whitespace": "PASS"
+    },
+    {
+      "path": "src/anysolver/__init__.py",
+      "sha256": "6791af8fd0d3d0155fcca299e62d0fca0ed869da982cdac21841918f1a9ad0d8",
+      "bytes": 32454,
+      "ast": "PASS",
+      "whitespace": "PASS"
+    },
+    {
+      "path": "tests/test_general_contact_native_transient_pair.py",
+      "sha256": "34eedce3d2e2b140e80afee06c1f5a479092347ce71f012e28e06ccd53f02623",
+      "bytes": 16775,
+      "ast": "PASS",
+      "whitespace": "PASS"
+    },
+    {
+      "path": "tests/test_general_contact_native_transient_legacy.py",
+      "sha256": "ed044196b376888929099e5315ff54bd2c7a634eb774a9ecbe7f999c06d5a6c1",
+      "bytes": 1616,
+      "ast": "PASS",
+      "whitespace": "PASS"
+    },
+    {
+      "path": "examples/general_contact_native_pair_impact_dev.py",
+      "sha256": "028b4fa1b497737c51941e2b474d0fddae477efe8220fca9c2cc89b1cc8230d2",
+      "bytes": 3564,
+      "ast": "PASS",
+      "whitespace": "PASS"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_NATIVE_TRANSIENT_DEV.md",
+      "sha256": "7c056a5d2343d7956cbd48a25401f0cc1ae8c55686155ec0ec9a0c48929d458c",
+      "bytes": 19862,
+      "ast": "NOT_APPLICABLE",
+      "whitespace": "PASS"
+    },
+    {
+      "path": "src/anysolver/general_contact/native_retained_whole_pair.py",
+      "sha256": "1315ed7d4ceb72ab386eb89c24d7f86d61a1d2f6034ca12a5f7a86ffec177346",
+      "bytes": 119082,
+      "ast": "PASS",
+      "whitespace": "PASS"
+    },
+    {
+      "path": "src/anysolver/general_contact/native_pair_error_budget.py",
+      "sha256": "9ee8b7a5d9f46b7673b5c4e93fe0e7b38b5a0282730c64729c8266d399a029f8",
+      "bytes": 2395,
+      "ast": "PASS",
+      "whitespace": "PASS"
+    },
+    {
+      "path": "tests/test_general_contact_native_pooled_budget.py",
+      "sha256": "9bc41b67886635eb5f0465f29dfc1bfc3d5ac6ca7891afba57419eb55582420d",
+      "bytes": 21518,
+      "ast": "PASS",
+      "whitespace": "PASS"
+    }
+  ],
+  "numerical_jobs_in_sourcecheck": 0,
+  "solver_imports_in_sourcecheck": 0,
+  "product_unchanged_from_tested_V20": true
+}

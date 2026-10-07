@@ -1,10 +1,14 @@
-"""C8 common-stage candidate checks: SOURCE ONLY, numerical execution prohibited.
+"""C8 common-stage candidate gates; recorded execution outcomes remain separate.
 
 These are prospective gates, not recorded passes or engineering acceptance.
 """
 from dataclasses import replace
 from hashlib import sha256
 import json
+import os
+import faulthandler
+import time
+from pathlib import Path
 import numpy as np
 import pytest
 from anysolver._ge_beam3_connected_dynamic import _RetainedMidpointAssembly
@@ -58,7 +62,60 @@ def test_common_stage_contact_cross_blocks_and_complete_directional_tangent():
 
 
 def test_public_two_body_impact_genuine_stages_storage_and_path():
-    owner, result = run(); data = result.to_dict()
+    owner = build(); evaluate = owner.contact.evaluate
+    timing = None; stack = None; restore = []
+    if os.environ.get('C8_JOB_DIR'):
+        timing = Path(os.environ['C8_JOB_DIR'])/'call_timing.ndjson'
+        stack = (Path(os.environ['C8_JOB_DIR'])/'active_stacks.log').open('w')
+        faulthandler.dump_traceback_later(12.,repeat=True,file=stack)
+        def stamp(name,phase,args):
+            record = dict(name=name,phase=phase,monotonic=time.monotonic())
+            for value in args:
+                if hasattr(value,'epoch'):record.update(epoch=value.epoch,state_time=value.time)
+            if name == 'stage':record['unknown_norm'] = float(np.linalg.norm(args[1])); record['dt'] = args[2]
+            with timing.open('a') as stream:stream.write(json.dumps(record)+'\n')
+        def timed(name,original):
+            def call(*args,**kwargs):
+                stamp(name,'start',args)
+                try:return original(*args,**kwargs)
+                finally:stamp(name,'end',args)
+            return call
+        for name in ('_stage','_endpoint','_gap','_swept','_evaluate'):
+            original = getattr(owner,name);restore.append((owner,name,original));setattr(owner,name,timed(name[1:],original))
+        original = _RetainedMidpointAssembly._evaluate
+        restore.append((_RetainedMidpointAssembly,'_evaluate',original))
+        _RetainedMidpointAssembly._evaluate = timed('structural_evaluate',original)
+    def observed(*poses,**kwargs):
+        diagnostics = {}; kwargs['_diagnostics'] = diagnostics
+        if timing is not None:stamp('contact_evaluate','start',())
+        try:
+            return evaluate(*poses,**kwargs)
+        except Exception as failure:
+            if os.environ.get('C8_JOB_DIR'):
+                from anysolver.general_contact.native_retained_whole_pair import _private_interval_open, _private_factored_gap
+                if 'source_curve' in diagnostics:
+                    source,target = diagnostics['source_curve'],diagnostics['target_curve']
+                    left,right = diagnostics['interval']
+                    diagnostics['exact_private_open'] = _private_interval_open(source,target,left,right,owner.contact.radius)
+                    diagnostics['exact_gap_brackets'] = tuple(_private_factored_gap(source,target,t,owner.contact.radius) for t in (left,.5*(left+right),right))
+                def convert(value):
+                    if isinstance(value,np.ndarray):return value.tolist()
+                    if isinstance(value,np.generic):return value.item()
+                    raise TypeError(type(value).__name__)
+                (Path(os.environ['C8_JOB_DIR'])/'contact_failure_diagnostic.json').write_text(json.dumps(dict(
+                    failure=str(failure),poses=poses,diagnostics=diagnostics),default=convert,indent=2)+'\n')
+            raise
+        finally:
+            if timing is not None:stamp('contact_evaluate','end',())
+    owner.contact.evaluate = observed
+    try:
+        result = solve_native_transient_pair(owner,config(owner),max_steps=64,max_cutbacks=8,minimum_dt=.003/256)
+    finally:
+        owner.contact.evaluate = evaluate
+        for target,name,original in reversed(restore):setattr(target,name,original)
+        if stack is not None:
+            faulthandler.cancel_dump_traceback_later(); stack.close()
+    data = result.to_dict()
     assert result.success and data['accepted_steps'] >= 2
     assert data['profile'] == owner.trajectory_profile and data['production_qualified'] is False
     assert len(owner.physical) == 30 and owner.size == 84
@@ -75,6 +132,9 @@ def test_public_two_body_impact_genuine_stages_storage_and_path():
             account = record['accounting']
             assert account['total_energy'] == account['elastic_energy']+account['kinetic_energy']+account['contact_regularization_storage']
             contact = account['native_contact']
+            assert contact['contact_kernel_identity'] == owner.contact.identity
+            assert contact['contact_kernel_service'] == 'NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V14_POOLED_PHYSICAL_GAP_QUADRATURE'
+            assert contact['derivative_error_chart'] == '30_UNIQUE_PHYSICAL_CONTROL_POINT_COORDINATES_IN_METRES'
             assert contact['moment_origin_m'] == [0.,0.,0.]
             assert contact['force_semantics'] == 'PHYSICAL_CONTACT_FORCE_ON_BODY_NEGATIVE_POTENTIAL_GRADIENT'
             assert contact['assembled_residual_semantics'] == 'INTERNAL_POTENTIAL_GRADIENT_ADDED_TO_NATIVE_EQUILIBRIUM'
@@ -198,7 +258,8 @@ def test_native_contact_identity_change_and_event_budget_refuse():
         feature_tolerance_m=c.feature_tolerance,search_parameter_tolerance=c.search_parameter_tolerance,
         maximum_search_depth=c.maximum_search_depth,maximum_search_cells=c.maximum_search_cells,
         energy_tolerance_j=c.energy_tolerance,force_tolerance_n=c.force_tolerance,
-        tangent_tolerance_n_per_m=c.tangent_tolerance,maximum_integration_intervals=c.maximum_integration_intervals)
+        tangent_tolerance_n_per_m=c.tangent_tolerance,maximum_integration_intervals=c.maximum_integration_intervals,
+        certify_curved_ownership=True,pooled_quadrature_budget=True)
     assert any(np.any(a.operator.reference.half_cell_lift(k,.5)) for k in (0,1))
     with pytest.raises(ValueError,match='straight zero-lift'):
         NativePairContactAnalysis(curved,(),pair,endpoint_policy=ENDPOINT_POLICY,

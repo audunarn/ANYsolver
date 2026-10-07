@@ -514,3 +514,15 @@ D2 method selection remains delegated: pressure agglomeration, dual mortar with 
 Use focused development checks, one affected integrated route, and one installed verification per coherent claim-bearing delivery. Repeat checks when their implementation, inputs or assumptions change or a concrete concern remains. Freeze acceptance inputs before formal execution; routine helper edits do not require a new dossier or wheel. Keep source-tested, installed-tested, independently accepted and released status explicit.
 
 Pending choices are resolved in the plan: retain impact hidden-point safeguards; park restricted native grazing retries; keep normal application admission disabled without the required source/model evidence; do not replay the timed-out application fixture unchanged. These are deferred dependencies, not waived requirements. No publication, merge or release is authorized.
+
+### C8 beam-beam impact: verified bounded development candidate
+
+Private V3k passes complete84 derivative/virtual-work, real impact, exact endpoint
+inventory, fixed winning-feature regression and authentic split restart/tamper.
+Two test portability checks pass on unchanged product. Earlier scoped legacy,
+safety and CLI evidence is reused. Complete work/path/state contracts are intact;
+all failures, consumed authority and qualification boundaries remain preserved.
+This closes the bounded development slice, not engineering acceptance or C8/full
+programme completion. Next source work addresses native-shell common-midpoint
+coupling; its numerical fixture needs separate execution authority.
+[Evidence](docs/d1_review_support/contact_native_c8_pair_20261007/native_pair_development.md).

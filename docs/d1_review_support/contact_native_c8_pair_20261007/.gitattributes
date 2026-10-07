@@ -1,0 +1,2 @@
+# Preserve evidence bytes and recorded hashes across checkout platforms.
+* -text whitespace=cr-at-eol

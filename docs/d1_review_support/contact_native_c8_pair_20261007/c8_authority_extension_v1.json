@@ -1,0 +1,18 @@
+{
+  "scope": "C8_NATIVE_PAIR_DEV",
+  "status": "USER_AUTHORIZED_ADDITIONAL",
+  "user_question": "call_0090d6b76a35403490c9a00a0e4436ab",
+  "user_answer": "Authorize90additional",
+  "authorization_provenance": "TRUSTED_LEAD_TASK_2026_10_07_HUMAN_EXPLICIT_90_ADDITIONAL",
+  "original_authority_sha256": "ae0e0178df0ec8d09d2c94a590f56e6341e8450d5c5c35eee55fbcbebf4a5813",
+  "additional_measured_seconds": 90,
+  "aggregate_authorized_measured_seconds": 840,
+  "prior_consumed_s": 685.8659501997963,
+  "initial_remaining_aggregate_s": 154.13404980020368,
+  "reserve_s": 60,
+  "maximum_process_tree_s": 60,
+  "memory_mib": 953,
+  "concurrent_jobs": 1,
+  "source_inventory_sha256": "5cbfb5102b6bd5d97cdd0ced3ce3effbcab68f21b319862fe4cf79be692bbb4b",
+  "scope_details": "FrozenV20 projectionfeature safety repair: freshprivatebuild/install, featurecounterexample+exactinventory+fulloriginal84FD/work+impact, full/fresh1plus1restart/tamper and scopedrepairs; no pooling/default/gate/physics changes"
+}

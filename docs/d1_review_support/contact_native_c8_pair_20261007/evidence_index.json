@@ -1,0 +1,17 @@
+{
+  "c8_authority_v1.json": "ae0e0178df0ec8d09d2c94a590f56e6341e8450d5c5c35eee55fbcbebf4a5813",
+  "c8_authority_extension_v1.json": "fe5829cc3b64c24620143ea01cdf4bcae12de91144186617a371784a4f2a51c9",
+  "source_checks_v20.json": "5cbfb5102b6bd5d97cdd0ced3ce3effbcab68f21b319862fe4cf79be692bbb4b",
+  "source_checks_v24.json": "93d0092fad061cb66159e842941b1032cb5aa6ddfef3fb03b10ccfcdaee6f34f",
+  "execution_manifest_v21.json": "be25269726b1321d838e166633c05135f961734dcb0fc942828af03987419e51",
+  "execution_manifest_v23.json": "c798232bd12985b50ddde79d8709378d8d33b0536e980fb1b6ba21307144c0fe",
+  "author_final_handoff_v12.json": "248dbb893f989017edf9fecd53a829e83573eda59ffb38b9830aaab64b3ec0d9",
+  "author_final_handoff_v12.md": "b7faa1fa94b56e1f323e2c53af4f1d4b84b79285a552cea78ad7ef4054243d45",
+  "author_all_attempts_v11.json": "b58a288f645dfe976d0d3f495e59c3b1bec4f9768df34018055b086dffaf4db6",
+  "author_source_installed_v3k.json": "9201afa4ac8905205556ce41f83cf53b38ba4f4066e6aac8f921369edbfb105d",
+  "supporting_execution_review_v1.md": "3ba62c911ec6f0b244fed61ccaa5de331eca4dc00e82e35ee54ec2eab17c1845",
+  "supporting_execution_review_v1_identity.json": "582e3072f3eb5e769ca24553208d109ac79e24ffaea546b7fcfbb3c2a0e07afb",
+  "endpoint_kkt_equations_v2.md": "947a8fae1597032e1fe8349ad6442312f50f829fcd514f0cf47982e0677644c2",
+  "lead_artifact_audit_v3k.json": "23b86a31cb605ae87826fb3351b9712d6603e0c89ffe2fae2bfd08024584accb",
+  "lead_final_execution_audit.json": "7e577ec476c3a2d546df5e7e5ac9ca0cd2f949057e54fac52aacb3e25f7f0e32"
+}

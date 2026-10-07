@@ -1,6 +1,8 @@
 # General contact - current delivery plan
 
 **Updated:** 7 October 2026. **Goal:** [complete C0-C9](GENERAL_CONTACT_GOAL.md).
+**Execution:** RESUMED by user request, using the remaining scoped allowance and
+[the checkpoint](GENERAL_CONTACT_RESTART.md).
 This plan changes the route, not scientific obligations or execution authority.
 The restart note holds current execution balances. Older milestone counts below
 are historical evidence, not renewed or additional execution authority.
@@ -27,10 +29,53 @@ of240s consumed,37.10232409986202s remains only in the resolved nonprincipal sco
 The C8 pair source slice is now implemented and source-reviewed: one full84
 retained system, shared controller/replay, both-body work and conservative path
 checks. Restore penetration and derived-radius identity findings are repaired.
-Nine AST checks and ten held hashes match; no numerical tests/build/install ran.
-The next action is the bounded new-scope installed verification in the
+Nine AST checks and ten held hashes matched the initial candidate. The user
+granted750 measured seconds; private build/install and open-contact checks pass.
+The original tangent refuses unresolved ownership; the V13 correction exhausts
+integration in tangent and impact, before a passing derivative or impact claim.
+Preserve these failures and their exact artifact identities. Continue one opt-in
+V14 correction: a shared nonrenewable quadrature budget, separate boundary reserve,
+and strict certified-owner projection arithmetic, without changing error limits,
+integration caps, old identities or physics. Verify the independent analytical
+line-contact/budget discriminator before repeating the complete FD/impact checks.
+If changed discriminators pass, prioritize the actual impact trajectory before
+renewed full FD: repeated conservative perturbation refusals are classified, but
+the actual coupled delivery behavior needs its own integration discriminator.
+Full arbitrary-direction FD/work checks remain required; impact alone is no pass
+for the complete slice. Preserve exact connected-junction proof conditions and
+its search-cap guards when reusing that existing service in the opted-in owner.
+The bounded timing diagnostic identifies contact preparation as the current
+principal cost: six contact calls24.525s versus seven structural calls1.546s.
+Use one pooled-only full-source-domain candidate for the explicit two-beam row:
+all four curves over[0,1], both target cells, complete ownership/activation/work
+and unchanged error/resource gates. This replaces pruning with complete-domain
+processing; it must not delete features or invent certified gap diagnostics.
+Preserve historical scan defaults. Verify affected oracles, then the actual
+impact and remaining focused checks; no further open-ended profiling campaign.
+Finish actual trajectory, safety, restart, legacy and installed CLI checks within
+the same allowance; the restart note binds current spent/remaining values.
+The original source checkpoint and execution scope are in the
 [source checkpoint and execution proposal](docs/d1_review_support/contact_native_c8_pair_20261007/source_candidate.md).
-The 750-second proposal is not granted authority; preserve old scope balances.
+Preserve old scope balances. Development passes do not establish C7/C8 acceptance.
+
+## Current C8 result and next delivery
+
+The native beam-beam V3k component is development verified: five fresh focused
+checks and two portability checks pass, including complete84 derivative/work,
+actual impact and authentic restart/tamper. Exact endpoint inventories and fixed
+winning-feature proof resolve the previous geometry obstruction; all visited work
+and full E/R/H strip bounds are charged. Existing laws/gates/defaults remain intact.
+[Delivery evidence](docs/d1_review_support/contact_native_c8_pair_20261007/native_pair_development.md).
+
+Stop repeated diagnosis of this passed fixture. Reuse its common-stage retained
+assembly, controller, work maps and replay/rollback infrastructure for the next
+native-shell component. Develop a bounded source slice before requesting its new
+fixture execution. The shell midpoint adapter must preserve its actual mass and
+algebraic rotational equations, native internal inertia/SO3 work and complete
+both-body contact derivatives. No lagged coupling or independent child steppers.
+Temporal/spatial/section qualification and independent acceptance remain separate.
+Current pair840s scope cannot authorize a new shell fixture. Restart binds exact
+balances and protected history. No programme completion, publication or release.
 
 ## Current delivered development
 

@@ -866,6 +866,295 @@ class NativeRetainedWholePairResult:
     unresolved_search_intervals: int
 
 
+def _pooled_interval_open(source, target, left, right, radius):
+    """Exact Q2 hull-box separation, then the unchanged convex-distance proof."""
+    a = _exact_controls(source,left,right); b = _exact_controls(target,0.,1.)
+    square = Fraction(0)
+    for axis in range(3):
+        al,ah = min(p[axis] for p in a),max(p[axis] for p in a)
+        bl,bh = min(p[axis] for p in b),max(p[axis] for p in b)
+        separation = max(Fraction(0),bl-ah,al-bh)
+        square += separation*separation
+    return square >= Fraction(float(radius))**2 or _private_interval_open(source,target,left,right,radius)
+
+
+def _pooled_connected_junction_partition(search, left, right, *, remaining_cells):
+    """Opt-in caller preserves the cap even for the shared proof's fast path."""
+    if remaining_cells < 1:
+        raise MemoryError('pooled connected-junction search cell budget exhausted')
+    from .native_retained_body_junction import connected_junction_partition
+    partition = connected_junction_partition(search,left,right,remaining_cells=remaining_cells)
+    if partition is not None and partition.visited > remaining_cells:
+        raise MemoryError('pooled connected-junction search cell budget exhausted')
+    return partition
+
+
+from math import inf, nextafter
+
+def _vertex_endpoint_bands(source, target, left, right, *, maximum_cells):
+    """Enclose all simple endpoint-phi roots; refuse tangency and plateaus.
+
+    Phi(s)=(q_endpoint-p(s)).q'_endpoint is quadratic. Exact derivative
+    critical points partition its domain into monotone intervals, so exact
+    endpoint signs enumerate every root. Rational bisection terminates only
+    once an outward binary64 bracket is at most four adjacent-float steps.
+    Domain-edge roots retain a one-sided uncertainty strip.
+    """
+    rows = lambda data: tuple(tuple(Fraction(float(x)) for x in row) for row in data)
+    p, q = rows(source), rows(target)
+    linear = lambda a: tuple(-3*x+4*y-z for x,y,z in zip(*a))
+    quadratic = lambda a: tuple(2*x-4*y+2*z for x,y,z in zip(*a))
+    pb, pc, qb, qc = linear(p), quadratic(p), linear(q), quadratic(q)
+    dot = lambda a,b: sum(x*y for x,y in zip(a,b))
+    low, high = Fraction(float(left)), Fraction(float(right))
+    if not 0 <= low < high <= 1:
+        raise ValueError('native body projection domain must lie in [0,1]')
+    visited, bands = 0, []
+
+    def outward(value, direction):
+        result = float(value)
+        if (direction < 0 and Fraction(result) > value) or (direction > 0 and Fraction(result) < value):
+            result = nextafter(result, -inf if direction < 0 else inf)
+        return result
+
+    def strip(a,b):
+        # One additional representable step covers an exactly representable
+        # root too; no rounded scalar root is used as a zero-width cut.
+        return (max(left,nextafter(outward(a,-1),-inf)),
+                min(right,nextafter(outward(b,1),inf)))
+
+    for endpoint in (0,1):
+        point = q[0] if endpoint == 0 else q[2]
+        tangent = qb if endpoint == 0 else tuple(x+2*y for x,y in zip(qb,qc))
+        a = dot(tuple(x-y for x,y in zip(point,p[0])),tangent)
+        b, c = -dot(pb,tangent), -dot(pc,tangent)
+        value = lambda s: a+s*(b+s*c)
+        if a == b == c == 0:
+            return None,visited
+        stations = [low,high]
+        if c:
+            critical = -b/(2*c)
+            if low <= critical <= high:
+                if value(critical) == 0:
+                    return None,visited
+                if low < critical < high:
+                    stations.insert(1,critical)
+        for station in stations:
+            if value(station) == 0:
+                bands.append(strip(station,station))
+        for begin,stop in zip(stations[:-1],stations[1:]):
+            first,last = value(begin),value(stop)
+            if first*last >= 0:
+                continue
+            for _ in range(128):
+                visited += 1
+                if visited > maximum_cells:
+                    raise MemoryError('native body endpoint projection inventory cell budget exhausted')
+                band = strip(begin,stop)
+                edge = band[0]
+                for _ in range(4):
+                    edge = nextafter(edge,inf)
+                if edge >= band[1]:
+                    bands.append(band)
+                    break
+                middle = (begin+stop)/2
+                sample = value(middle)
+                if sample == 0:
+                    bands.append(strip(middle,middle))
+                    break
+                if first*sample > 0:
+                    begin,first = middle,sample
+                else:
+                    stop = middle
+            else:
+                return None,visited
+    merged = []
+    for begin,stop in sorted(bands):
+        if begin >= stop:
+            return None,visited
+        if merged and begin <= merged[-1][1]:
+            merged[-1] = (merged[-1][0],max(stop,merged[-1][1]))
+        else:
+            merged.append((begin,stop))
+    return tuple(merged),visited
+
+
+def _vertex_rows(curve):
+    return tuple(tuple(Fraction(float(value)) for value in row) for row in curve)
+def _vertex_dot(a,b):
+    return sum(x*y for x,y in zip(a,b))
+def _vertex_sub(a,b):
+    return tuple(x-y for x,y in zip(a,b))
+def _vertex_coefficients(curve):
+    p=_vertex_rows(curve)
+    return p[0],tuple(-3*x+4*y-z for x,y,z in zip(*p)),tuple(2*x-4*y+2*z for x,y,z in zip(*p))
+def _vertex_at(polynomial,s):
+    a,b,c=polynomial
+    return a+b*s+c*s*s
+def _vertex_extrema(polynomial,left,right):
+    a,b,c=polynomial; lo,hi=Fraction(float(left)),Fraction(float(right))
+    values=[_vertex_at(polynomial,lo),_vertex_at(polynomial,hi)]
+    if c and lo < -b/(2*c) < hi:
+        values.append(_vertex_at(polynomial,-b/(2*c)))
+    return min(values),max(values)
+def _vertex_source_hull(curve,left,right):
+    a,b,c=_vertex_coefficients(curve); l,r=Fraction(float(left)),Fraction(float(right))
+    p0=tuple(x+y*l+z*l*l for x,y,z in zip(a,b,c))
+    p1=tuple(x+y*r+z*r*r for x,y,z in zip(a,b,c))
+    middle=tuple(x+(r-l)*(y+2*z*l)/2 for x,y,z in zip(p0,b,c))
+    return p0,middle,p1
+
+def _vertex_fixed_projection_feature(source,target,left,right):
+    """Strict exact BOTH endpoint KKT ranges; zero/root stays on inventory.
+
+    Positive target stationarity convexity is separately required by caller.
+    No whole-owner dominance claim certifies its winning projection feature.
+    """
+    p,b,c=_vertex_coefficients(source)
+    q,qb,qc=_vertex_coefficients(target)
+    last=_vertex_rows(target)[2]
+    phis=[]
+    for point,tangent in ((q,qb),(last,tuple(x+2*y for x,y in zip(qb,qc)))):
+        phis.append((_vertex_dot(_vertex_sub(point,p),tangent),
+                     -_vertex_dot(b,tangent),-_vertex_dot(c,tangent)))
+    (first_min,first_max),(last_min,last_max)=(_vertex_extrema(phi,left,right) for phi in phis)
+    if first_min > 0:
+        return 'FIXED_START'
+    if last_max < 0:
+        return 'FIXED_END'
+    if first_max < 0 < last_min:
+        return 'FIXED_INTERIOR'
+    return None
+
+
+def _vertex_inventory(search,endpoint_bands,*,maximum_cells):
+    """Return every root-free/uncertainty interval and exact visited debit.
+
+    Classification uses exact full-interval _vertex_extrema, never midpoint signs.
+    The complete target endpoint-root _vertex_inventory is charged before any None.
+    This diagnostic does not return a mechanical partition or omit strips.
+    """
+    if maximum_cells < 1:
+        raise MemoryError('endpoint _vertex_inventory search cell budget exhausted')
+    targets=search.targets; source=search.source
+    shared=_vertex_rows(targets[0])[2]==_vertex_rows(targets[1])[0]
+    result=dict(shared_vertex=shared,visited=1,root_free=[],root_strips=[],convexity=[])
+    if not shared:
+        result['status']='UNSHARED_VERTEX'; return result
+    hull=_vertex_source_hull(source,0.,1.)
+    for target in targets:
+        q,b,c=_vertex_coefficients(target); acc=tuple(2*x for x in c)
+        aa=_vertex_dot(acc,acc); va=_vertex_dot(b,acc)
+        t=max(Fraction(0),min(Fraction(1),-va/aa)) if aa else Fraction(0)
+        bound=min(_vertex_dot(b,b)+_vertex_dot(_vertex_sub(q,p),acc)+3*va*t+Fraction(3,2)*aa*t*t for p in hull)
+        result['convexity'].append(str(bound))
+        if bound <= 0:
+            result['status']='NONCONVEX'; return result
+    p,b,c=_vertex_coefficients(source); j=_vertex_rows(targets[0])[2]
+    left_b,left_c=_vertex_coefficients(targets[0])[1:]
+    left_t=tuple(x+2*y for x,y in zip(left_b,left_c))
+    right_t=_vertex_coefficients(targets[1])[1]
+    phis=tuple((_vertex_dot(_vertex_sub(j,p),t),-_vertex_dot(b,t),-_vertex_dot(c,t)) for t in (left_t,right_t))
+    result['phi_coefficients']=[[str(value) for value in phi] for phi in phis]
+    # Complete material vertex containment gives global one-sided dominance.
+    # Fast return additionally requires a fixed winning projection feature.
+    # Zero or endpoint-root uncertainty keeps complete accounted inventory.
+    lmin,lmax=_vertex_extrema(phis[0],0.,1.)
+    rmin,rmax=_vertex_extrema(phis[1],0.,1.)
+    if (rmin > 0 and any(phis[0])) or (lmax < 0 and any(phis[1])):
+        winner=0 if rmin > 0 else 1
+        feature=_vertex_fixed_projection_feature(source,targets[winner],0.,1.)
+        if feature is not None:
+            kind='LEFT_DOMINATES_RIGHT_VERTEX' if winner==0 else 'RIGHT_DOMINATES_LEFT_VERTEX'
+            result['root_free']=[dict(interval=[0.,1.],label=kind,
+                phi_left_range=[str(lmin),str(lmax)],phi_right_range=[str(rmin),str(rmax)],
+                endpoint_transition_only=True,winning_projection_feature=feature)]
+            result['status']='COMPLETE_EXACT_KKT_INVENTORY';return result
+    bands=[]
+    for target in targets:
+        remaining=maximum_cells-result['visited']
+        if remaining < 1:
+            raise MemoryError('endpoint _vertex_inventory search cell budget exhausted')
+        found,visited=endpoint_bands(source,target,0.,1.,maximum_cells=remaining)
+        if visited > remaining:
+            raise MemoryError('endpoint _vertex_inventory returned excess search cells')
+        result['visited']+=visited
+        if found is None:
+            result['status']='NONCLASSICAL_ENDPOINT_KKT'; return result
+        bands.extend(found)
+    merged=[]
+    for lo,hi in sorted(bands):
+        if merged and lo <= merged[-1][1]:
+            merged[-1]=(merged[-1][0],max(hi,merged[-1][1]))
+        else:
+            merged.append((lo,hi))
+    def label(lo,hi):
+        (lmin,lmax),(rmin,rmax)=[_vertex_extrema(phi,lo,hi) for phi in phis]
+        if lmax < 0 < rmin:
+            kind='SHARED_VERTEX_CONE_PLATEAU'
+        elif lmin > 0 and rmin > 0:
+            kind='LEFT_DOMINATES_RIGHT_VERTEX'
+        elif lmax < 0 and rmax < 0:
+            kind='RIGHT_DOMINATES_LEFT_VERTEX'
+        elif lmin > 0 > rmax:
+            kind='GENUINE_TWO_INTERIOR'
+        else:
+            kind='UNCERTAIN_OR_ZERO_KKT'
+        return dict(interval=[lo,hi],label=kind,phi_left_range=[str(lmin),str(lmax)],
+            phi_right_range=[str(rmin),str(rmax)],endpoint_transition_only=(lmax<=0 or rmin>=0))
+    position=0.
+    for lo,hi in merged:
+        if lo > position:
+            result['root_free'].append(label(position,lo))
+        result['root_strips'].append(label(lo,hi)); position=hi
+    if position < 1.:
+        result['root_free'].append(label(position,1.))
+    result['status']='COMPLETE_EXACT_KKT_INVENTORY'
+    return result
+
+
+
+def _pooled_endpoint_feature_inventory(search,left,right,*,remaining_cells,
+        reference,radius,stiffness,shared_workmap):
+    """Exact endpoint KKT partition or complete fallback with visited debit.
+
+    Endpoint transitions share the exact physical point/work map, hence have
+    continuous E/R and no distinct-interior root-H term. Full bulk H includes
+    its jump. Every root strip bounds BOTH branches in half-weighted physical30.
+    Genuine two-interior or uncertain KKT is sent to the mature complete route.
+    """
+    from .native_curved_pair_partition import CurvedOwnershipPartition
+    if remaining_cells < 1:
+        raise MemoryError('pooled endpoint inventory search cell budget exhausted')
+    if not shared_workmap or left != 0. or right != 1.:
+        return None,1,('UNADMITTED_ENDPOINT_WORKMAP_OR_DOMAIN',)
+    result=_vertex_inventory(search,_vertex_endpoint_bands,maximum_cells=remaining_cells)
+    used=result['visited'];labels=tuple(row['label'] for row in result['root_free'])
+    if result['status'] != 'COMPLETE_EXACT_KKT_INVENTORY':
+        return None,used,(result['status'],)
+    owners={'SHARED_VERTEX_CONE_PLATEAU':0,'LEFT_DOMINATES_RIGHT_VERTEX':0,
+            'RIGHT_DOMINATES_LEFT_VERTEX':1}
+    if any(label not in owners for label in labels):
+        return None,used,labels
+    if any(not row['endpoint_transition_only'] for row in result['root_strips']):
+        return None,used,labels+('UNCERTAIN_ROOT_STRIP_COMPETITION',)
+    pieces=tuple((*row['interval'],owners[row['label']]) for row in result['root_free'])
+    charged=[]
+    for row in result['root_strips']:
+        lo,hi=row['interval'];bounds=[]
+        for target in search.targets:
+            bound=_exact_tiny_cell_omission_bound(search.source,target,reference,radius,stiffness,lo,hi)
+            if bound is None or not np.all(np.isfinite(bound)) or np.any(bound<0):
+                return None,used,labels+('UNBOUNDED_ROOT_STRIP',)
+            bounds.append(bound)
+        # Half weight times complete 18->30 amplification [1,2,4].
+        # Sum both potential branches once, conservatively, with exact rounding.
+        bulk=np.array([_up((Fraction(float(a))+Fraction(float(b)))*factor)
+                       for a,b,factor in zip(bounds[0],bounds[1],(Fraction(1,2),Fraction(1),Fraction(2)))])
+        charged.append((lo,hi,bulk,0.))
+    return CurvedOwnershipPartition(pieces,(),0,tuple(charged)),used,labels
+
+
 class NativeRetainedWholeCurvePair:
     """Symmetric distributed line contact over both cells of two native beams.
 
@@ -893,7 +1182,11 @@ class NativeRetainedWholeCurvePair:
                  tangent_tolerance_n_per_m: float,
                  maximum_integration_intervals: int,
                  certify_open_intervals: bool = False,
-                 certify_curved_ownership: bool = False):
+                 certify_curved_ownership: bool = False,
+                 pooled_quadrature_budget: bool = False):
+        if type(pooled_quadrature_budget) is not bool or (pooled_quadrature_budget and not certify_curved_ownership):
+            raise ValueError('pooled quadrature requires explicit resolved ownership')
+        self.pooled_quadrature_budget = pooled_quadrature_budget
         if type(certify_open_intervals) is not bool:
             raise ValueError('native whole pair open certificate selection must be bool')
         self.certify_open_intervals = certify_open_intervals
@@ -952,12 +1245,21 @@ class NativeRetainedWholeCurvePair:
 
     def _fingerprint(self) -> str:
         return sha(dict(
-            profile=(("NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V13_RESOLVED_PHYSICAL_GAP_GLOBAL_CHORD"
+            profile=("NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V14_POOLED_PHYSICAL_GAP_QUADRATURE" if self.pooled_quadrature_budget else (("NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V13_RESOLVED_PHYSICAL_GAP_GLOBAL_CHORD"
                       if self.certify_open_intervals else
                       "NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V13_RESOLVED_PHYSICAL_GAP")
                      if self.certify_curved_ownership else
                      ("NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V6_GLOBAL_CHORD"
-                      if self.certify_open_intervals else "NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V4")),
+                      if self.certify_open_intervals else "NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V4"))),
+            **(dict(pooled_quadrature_budget=True,
+                    exact_endpoint_kkt_inventory_all_visited=True,
+                    exact_global_endpoint_dominance_and_precision_fallback=True,
+                    fast_global_owner_requires_fixed_winning_projection_feature=True,
+                    exact_owned_interval_open=True,
+                    complete_material_source_domains=True,
+                    certify_curved_ownership=self.certify_curved_ownership,
+                    certify_open_intervals=self.certify_open_intervals)
+               if self.pooled_quadrature_budget else {}),
             cells_a=[(cell.element_id, cell.cell,
                       cell.reference.canonical_data()) for cell in self.cells_a],
             cells_b=[(cell.element_id, cell.cell,
@@ -1094,6 +1396,10 @@ class NativeRetainedWholeCurvePair:
         total = np.zeros(1+36+36*36)
         error = np.zeros(3)
         boundary_error = np.zeros(3)
+        pooled = None
+        if self.pooled_quadrature_budget:
+            from .native_pair_error_budget import PooledQuadratureBudget, within_reserve
+            pooled = PooledQuadratureBudget((self.energy_tolerance,self.force_tolerance,self.tangent_tolerance))
         search_cells = intervals = evaluations = unresolved = visited = omissions = 0
         minimum_sampled = conservative_lower = float("inf")
 
@@ -1124,14 +1430,14 @@ class NativeRetainedWholeCurvePair:
                     maximum_cells=self.maximum_search_cells,
                     certify_open_intervals=self.certify_open_intervals,
                 )
-                if _source_domains is None:
+                if _source_domains is None and pooled is None:
                     scan = search.scan()
                 else:
                     # Fixed material domain: ownership is completely inventoried
                     # by the existing curved partition below. Avoid a redundant
                     # Lipschitz detection tessellation; unresolved is never open.
                     from .native_curve_union import NativeUnionScan, NativeUnionInterval
-                    left, right = _source_domains[source_cell]
+                    left, right = (0.,1.) if _source_domains is None else _source_domains[source_cell]
                     lower = min(_source_interval_target_gap_lower(
                         current[source_index], left, right, target, self.radius)
                         for target in target_positions)
@@ -1148,7 +1454,7 @@ class NativeRetainedWholeCurvePair:
                 def integrand(station: float, owner: int | None,
                               certified_active: bool = False) -> tuple[np.ndarray, bool]:
                     nonlocal evaluations
-                    if _source_domains is not None:
+                    if _source_domains is not None or (pooled is not None and owner is not None):
                         if type(owner) is not int or owner not in (0,1):
                             raise ValueError('native body integration requires an explicit target owner')
                         chosen = owner
@@ -1157,7 +1463,7 @@ class NativeRetainedWholeCurvePair:
                                   if owner is None or self.certify_curved_ownership
                                   else owner)
                     target_index = target_base+chosen
-                    if _source_domains is not None:
+                    if _source_domains is not None or pooled is not None:
                         from .native_retained_body_projection import strict_projection_station
                         from .beam_curve_pair import _b3_distance_jet_at_station
                         target_station = strict_projection_station(
@@ -1171,7 +1477,7 @@ class NativeRetainedWholeCurvePair:
                             station, self.radius, source_is_a=True,
                         )
                     evaluations += 1
-                    if _source_domains is not None:
+                    if _source_domains is not None or pooled is not None:
                         lo,hi,gap=_private_factored_gap(current[source_index],current[target_index],station,self.radius,jet.target_parameter)
                         if lo<0.0<hi:
                             raise MemoryError('native whole pair integration parameter resolution exhausted: floating activation sign contradicts certified-active interval')
@@ -1220,7 +1526,10 @@ class NativeRetainedWholeCurvePair:
                     if _diagnostics is not None:
                         _diagnostics.update(error=error.copy(),boundary_error=boundary_error.copy(),
                             half_reserve=.5*np.array((self.energy_tolerance,self.force_tolerance,self.tangent_tolerance)),
-                            visited=visited,omissions=omissions,interval=(left,right),owner=owner)
+                            visited=visited,omissions=omissions,interval=(left,right),owner=owner,
+                            source_cell=source_index,target_cell=target_base+owner,
+                            source_curve=current[source_index].copy(),target_curve=current[target_base+owner].copy(),
+                            pooled_quadrature=None if pooled is None else pooled.report())
                     if visited > self.maximum_integration_intervals:
                         raise MemoryError(
                             "native whole pair integration interval budget exhausted: "
@@ -1230,7 +1539,21 @@ class NativeRetainedWholeCurvePair:
                             f"{budget.tolist()}"
                         )
                     middle = 0.5*(left+right)
-                    if (_source_domains is not None and all(_private_interval_open(
+                    if pooled is not None and type(owner) is int:
+                        # Full absolute physical30 strip bound, charged once.
+                        bound = _exact_tiny_cell_omission_bound(
+                            current[source_index],current[target_base+owner],
+                            reference_curves[source_index],self.radius,self.stiffness,left,right)
+                        if bound is not None:
+                            bound = bound*np.array((1.,2.,4.))
+                            limits = np.array((self.energy_tolerance,self.force_tolerance,self.tangent_tolerance))
+                            if pooled.admits(bound) and within_reserve(error,bound,limits):
+                                pooled.charge(bound)
+                                error[:] = np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(error,bound)])
+                                omissions += 1
+                                return np.zeros_like(total)
+                    if ((_source_domains is not None or pooled is not None) and all(
+                            (_private_interval_open if pooled is None else _pooled_interval_open)(
                             current[source_index],target,left,right,self.radius) for target in target_positions)):
                         return np.zeros_like(total)
                     if middle == left or middle == right:
@@ -1256,10 +1579,10 @@ class NativeRetainedWholeCurvePair:
                                                        self.tangent_tolerance))
                                 if ((_source_domains is None and np.any(bound > 0.5*tolerances/self.maximum_integration_intervals))
                                         or np.any(bound > remaining)
-                                        or np.any(boundary_error+bound > 0.5*tolerances)):
+                                        or (np.any(boundary_error+bound > 0.5*tolerances) if pooled is None else not within_reserve(boundary_error,bound,tolerances,half=True))):
                                     raise MemoryError("curved pair physical-point omission budget exhausted")
-                                boundary_error[:] = boundary_error+bound if _source_domains is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(boundary_error,bound)])
-                            error[:] = error+bound if _source_domains is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(error,bound)])
+                                boundary_error[:] = boundary_error+bound if _source_domains is None and pooled is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(boundary_error,bound)])
+                            error[:] = error+bound if _source_domains is None and pooled is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(error,bound)])
                             omissions += 1
                             return np.zeros_like(total)
                         raise MemoryError(
@@ -1294,6 +1617,10 @@ class NativeRetainedWholeCurvePair:
                         ) < 0.0)
                     if _source_domains is not None and not certified_active:
                         certified_active = _private_active_correspondence(current[source_index],current[target_base+owner],left,right,self.radius)
+                    if _diagnostics is not None:
+                        _diagnostics['last_activation'] = dict(interval=(left,right),source=source_index,target=target_base+owner,
+                            certified_active=bool(certified_active),nominal_midpoint_gap=projected.distance-self.radius,
+                            conservative_gap_lower=lower_gap)
                     support = (None if certified_active else _monotone_gap_endpoints(
                         current[source_index], current[target_base+owner],
                         left, right, search.roundoff,
@@ -1358,10 +1685,10 @@ class NativeRetainedWholeCurvePair:
                             # early strip to consume the whole reserve and
                             # starve a later one-ulp boundary.
                             if ((_source_domains is not None or np.all(bound <= 0.5*tolerances/self.maximum_integration_intervals))
-                                    and np.all(boundary_error+bound <= 0.5*tolerances)
-                                    and np.all(error+bound <= tolerances)):
-                                boundary_error[:] = boundary_error+bound if _source_domains is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(boundary_error,bound)])
-                                error[:] = error+bound if _source_domains is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(error,bound)])
+                                    and (np.all(boundary_error+bound <= 0.5*tolerances) if pooled is None else within_reserve(boundary_error,bound,tolerances,half=True))
+                                    and (np.all(error+bound <= tolerances) if pooled is None else within_reserve(error,bound,tolerances))):
+                                boundary_error[:] = boundary_error+bound if _source_domains is None and pooled is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(boundary_error,bound)])
+                                error[:] = error+bound if _source_domains is None and pooled is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(error,bound)])
                                 omissions += 1
                                 return np.zeros_like(total)
                         return (integrate(left, middle, owner, 0.5*budget)
@@ -1389,10 +1716,10 @@ class NativeRetainedWholeCurvePair:
                         if bound is not None and _source_domains is None:
                             bound *= np.array((1.0, 2.0, 4.0))
                             if ((_source_domains is not None or np.all(bound <= 0.5*tolerances/self.maximum_integration_intervals))
-                                    and np.all(boundary_error+bound <= 0.5*tolerances)
-                                    and np.all(error+bound <= tolerances)):
-                                boundary_error[:] = boundary_error+bound if _source_domains is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(boundary_error,bound)])
-                                error[:] = error+bound if _source_domains is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(error,bound)])
+                                    and (np.all(boundary_error+bound <= 0.5*tolerances) if pooled is None else within_reserve(boundary_error,bound,tolerances,half=True))
+                                    and (np.all(error+bound <= tolerances) if pooled is None else within_reserve(error,bound,tolerances))):
+                                boundary_error[:] = boundary_error+bound if _source_domains is None and pooled is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(boundary_error,bound)])
+                                error[:] = error+bound if _source_domains is None and pooled is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(error,bound)])
                                 omissions += 1
                                 return np.zeros_like(total)
                         return (integrate(left, middle, owner, 0.5*budget, certified_active)
@@ -1411,9 +1738,15 @@ class NativeRetainedWholeCurvePair:
                             difference[0], float(np.max(difference[1:37])),
                             float(np.max(difference[37:])),
                         ))
-                    if (coarse_active or refined_active) and np.all(measured <= budget):
+                    admitted = (np.all(measured <= budget) if pooled is None else
+                        pooled.admits(measured) and within_reserve(error,measured,(self.energy_tolerance,self.force_tolerance,self.tangent_tolerance)))
+                    if _diagnostics is not None:
+                        _diagnostics['last_rule'] = dict(interval=(left,right),source=source_index,target=target_base+owner,
+                            coarse_active=coarse_active,refined_active=refined_active,measured=measured.copy(),admitted=bool(admitted))
+                    if (coarse_active or refined_active) and admitted:
+                        if pooled is not None:pooled.charge(measured)
                         intervals += 1
-                        error[:] = error+measured if _source_domains is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(error,measured)])
+                        error[:] = error+measured if _source_domains is None and pooled is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(error,measured)])
                         return refined
                     if certified_active and not (coarse_active or refined_active):
                         raise MemoryError("certified native whole-pair contact absent at quadrature")
@@ -1452,14 +1785,30 @@ class NativeRetainedWholeCurvePair:
                             continue
                         if self.certify_curved_ownership:
                             partition = None
-                            if _source_domains is not None:
+                            if pooled is not None:
+                                shared_workmap = (target_ids[0][1] == target_ids[1][0]
+                                    and np.array_equal(states[target_base].geometric_jacobian[6:9],
+                                                       states[target_base+1].geometric_jacobian[:3])
+                                    and np.array_equal(point_map[9*target_base+6:9*target_base+9],
+                                                       point_map[9*(target_base+1):9*(target_base+1)+3]))
+                                partition,debited,labels = _pooled_endpoint_feature_inventory(
+                                    search,interval.left,interval.right,
+                                    remaining_cells=self.maximum_search_cells-search_cells-ownership_cells,
+                                    reference=reference_curves[source_index],radius=self.radius,
+                                    stiffness=self.stiffness,shared_workmap=shared_workmap)
+                                ownership_cells += debited
+                                if _diagnostics is not None:
+                                    _diagnostics.setdefault('endpoint_kkt_inventory',[]).append(
+                                        dict(source=source_index,visited=debited,labels=labels,
+                                             adopted=partition is not None))
+                            elif _source_domains is not None:
                                 from .native_retained_body_junction import connected_junction_partition
                                 partition = connected_junction_partition(search,interval.left,interval.right,
                                     remaining_cells=self.maximum_search_cells-scan.visited_cells-ownership_cells)
                             partition = partition or curved_ownership_partition(
                                 search, interval.left, interval.right,
                                 remaining_cells=(self.maximum_search_cells
-                                                 -scan.visited_cells
+                                                 -(search_cells if pooled is not None else scan.visited_cells)
                                                  -ownership_cells),
                                 reference=reference_curves[source_index],
                                 stiffness=self.stiffness,
@@ -1605,7 +1954,7 @@ class NativeRetainedWholeCurvePair:
                     visited += 1
                     if visited > self.maximum_integration_intervals:
                         raise MemoryError("curved junction band integration budget exhausted")
-                    if _source_domains is not None:
+                    if _source_domains is not None or pooled is not None:
                         from .native_retained_body_projection import charged_junction_omission
                         limits = np.array((self.energy_tolerance,self.force_tolerance,self.tangent_tolerance))
                         bound,charged,boundary_charged = charged_junction_omission(
@@ -1643,16 +1992,16 @@ class NativeRetainedWholeCurvePair:
                     bound[2] += root_h_bound
                     tolerances = np.array((self.energy_tolerance, self.force_tolerance,
                                            self.tangent_tolerance))
-                    if (np.any(boundary_error+bound > 0.5*tolerances)
-                            or np.any(error+bound > tolerances)):
+                    if ((np.any(boundary_error+bound > 0.5*tolerances) if pooled is None else not within_reserve(boundary_error,bound,tolerances,half=True))
+                            or (np.any(error+bound > tolerances) if pooled is None else not within_reserve(error,bound,tolerances))):
                         raise MemoryError(
                             "curved junction band error budget exhausted: "
                             f"source {source_index}, band [{begin}, {stop}], "
                             f"bound {bound.tolist()}"
                         )
                     total += approximation
-                    boundary_error[:] = boundary_error+bound if _source_domains is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(boundary_error,bound)])
-                    error[:] = error+bound if _source_domains is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(error,bound)])
+                    boundary_error[:] = boundary_error+bound if _source_domains is None and pooled is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(boundary_error,bound)])
+                    error[:] = error+bound if _source_domains is None and pooled is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(error,bound)])
                     intervals += 1
 
                 for (station, left_owner, right_owner, uncertainty,
@@ -1716,22 +2065,27 @@ class NativeRetainedWholeCurvePair:
                     )
                     tolerances = np.array((self.energy_tolerance, self.force_tolerance,
                                            self.tangent_tolerance))
-                    if (np.any(boundary_error+bound > 0.5*tolerances)
-                            or np.any(error+bound > tolerances)):
+                    if ((np.any(boundary_error+bound > 0.5*tolerances) if pooled is None else not within_reserve(boundary_error,bound,tolerances,half=True))
+                            or (np.any(error+bound > tolerances) if pooled is None else not within_reserve(error,bound,tolerances))):
                         raise MemoryError(
                             "curved pair moving-boundary error budget exhausted: "
                             f"source {source_index}, root {station}, bound {bound.tolist()}, "
                             f"root uncertainty {uncertainty}, slope {slope}, "
                             f"slope lower {slope_lower}"
                         )
-                    boundary_error[:] = boundary_error+bound if _source_domains is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(boundary_error,bound)])
-                    error[:] = error+bound if _source_domains is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(error,bound)])
+                    boundary_error[:] = boundary_error+bound if _source_domains is None and pooled is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(boundary_error,bound)])
+                    error[:] = error+bound if _source_domains is None and pooled is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(error,bound)])
         if self.certify_curved_ownership and np.any(error > np.array((
                 self.energy_tolerance, self.force_tolerance, self.tangent_tolerance))):
             raise MemoryError("curved pair aggregate error budget exhausted")
+        if pooled is not None:
+            limits = (self.energy_tolerance,self.force_tolerance,self.tangent_tolerance)
+            if not within_reserve(boundary_error,(0.,0.,0.),limits,half=True):
+                raise MemoryError("pooled whole-pair boundary reserve exhausted")
         gradient = total[1:37]
         hessian = total[37:].reshape(36, 36)
         if _diagnostics is not None:
+            if pooled is not None:_diagnostics['pooled_quadrature'] = pooled.report()
             _diagnostics.update(error=error.copy(),boundary_error=boundary_error.copy(),
                 half_reserve=.5*np.array((self.energy_tolerance,self.force_tolerance,self.tangent_tolerance)),
                 visited=visited,omissions=omissions,search_cells=search_cells,evaluations=evaluations)

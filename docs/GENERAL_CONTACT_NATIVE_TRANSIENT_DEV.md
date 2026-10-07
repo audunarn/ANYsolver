@@ -1,8 +1,8 @@
 # Native beam–beam common-stage contact development candidate
 
-Status: **implemented source candidate; numerical execution prohibited and
-unverified**. This additive profile has no engineering acceptance or release
-claim. Prior nonprincipal execution authority does not apply here.
+Status: **working development fixture; focused installed V3k projection-feature
+repair checks PASS**. Broader programme qualification, independent engineering
+acceptance and release remain open. Prior nonprincipal authority does not apply.
 
 ## Public workflow and admission
 
@@ -26,7 +26,7 @@ The new example prospectively selects the existing optional
 `GE_BEAM3_CENTERED_STABLE_SO3_AND_PRECISE_WORK_DEV_V1` definition arithmetic
 policy to retain small-deformation work precision. The factory preserves the
 definition's supported policy; no legacy arithmetic default is changed. The
-unexecuted smoke fixture uses two `.003 s` steps over `.006 s`, with two moving
+executed smoke fixture uses two `.003 s` steps over `.006 s`, with two moving
 bodies and an actual active second stage. This is development verification,
 not temporal-convergence or impact acceptance.
 
@@ -42,6 +42,43 @@ distributed line penalty uses nearest points on the closed physical centrelines,
 including endpoints. It adds no cap-area force and establishes no dedicated
 endpoint-force accuracy or admission. The static whole-curve pair service covers
 both retained physical cells on each side and retains its geometry/error refusals.
+The factory explicitly opts into V14 pooled physical-gap quadrature, built on
+resolved ownership/moving-boundary admission (`certify_curved_ownership=True`,
+`pooled_quadrature_budget=True`). The normal potential and native pullback remain
+unchanged. Results bind the exact kernel fingerprint and service
+`NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V14_POOLED_PHYSICAL_GAP_QUADRATURE`.
+Error components use 30 unique physical control-point coordinates in metres
+(five three-coordinate points per body), with force/tangent limits in that chart.
+
+One exact nonrenewable quadrature ledger reserves Q <= T/2 componentwise;
+boundary contributions separately satisfy B <= T/2 and aggregate E <= T.
+Accepted quadrature differences or complete absolute omission bounds charge Q
+exactly once. Boundary and aggregate sums use outward arithmetic and exact
+prospective reserve comparisons, including sub-ulp charges. Certified owner
+branches use exact constrained projection KKT and strict convexity, then the
+existing envelope derivatives and a factored gap with an outward station-residual
+certificate. This changes neither the normal law nor any explicit error/search/
+integration cap. The V4/V13 historical default paths remain unchanged.
+
+The new owner still requires exact straight reference and zero physical lift.
+No curved native reference is admitted by these service flags. Earlier V4
+ownership and V13 integration-cap failures and their private artifacts remain
+preserved; this opt-in repair requires its own analytic and complete-direction
+checks before a working development claim. Certified unresolved junction bands
+use the existing complete half-weighted physical30 bulk plus moving-root Hessian
+omission enclosure, charged once to B/E before zero approximation; no rounded
+midpoint projection is required for an already enclosed band. Pooled ownership
+first uses an exact endpoint/cone/strict-convexity inventory with explicit all-visited
+debit; unsupported cases retain the mature ownership engine and refusals.
+This service selection is explicitly bound in the kernel fingerprint. Entire
+open intervals require certificates for both represented target cells: exact
+Q2 Bernstein hull-box separation, or the existing exact strict-convexity distance
+floor. All-inactive Gauss samples alone never admit an open interval. Each complete
+native source cell uses the existing fixed material-domain inventory on [0,1];
+all four source/target curves remain present. Independent complete ownership,
+activation, moving-boundary and quadrature proofs replace redundant detection
+tessellation. This opt-in service is explicitly fingerprinted; old scan defaults
+remain unchanged.
 
 The analysis profile is `NATIVE_B3_GE_WHOLE_ROUND_PAIR_MIDPOINT_DEV_V1`; native
 state and trajectory schemas are separately bound V1 identities. Radius,
@@ -156,24 +193,111 @@ certificate and contact work are reconstructed and checked before publication.
 There is no custom restart callback or external stage oracle. Altered contact
 settings require a new identity and cannot resume this journal.
 
-## Prospective focused checks and remaining programme work
+## Development evidence and remaining programme work
 
-`tests/test_general_contact_native_transient_pair.py` covers the real stage
-directional derivative and both-body cross blocks; algebraic zero mass; open
-contact structural equivalence; moving two-body impact; storage/forces/moments;
-actual path certificates; exact prefix restart; journal tampering; initial
-penetration/config refusal; clear-endpoint through-crossing; bounded event
-failure; cutback replay and cancellation cleanup. These tests have **not run**.
-`examples/general_contact_native_pair_impact_dev.py` is the public CLI candidate.
+The separately authorized `C8_NATIVE_PAIR_DEV` development run used 750 measured
+seconds, at most 60 seconds and 953 MiB per process tree, one job at a time,
+JIT disabled, Numba one thread and observed BLAS/OpenMP pools one thread. All
+attempts, failures and timeout output remain preserved. Accounting conservatively
+charges measured wrapper wall time including preflight/postprocessing and also
+records exact child launch-to-wait time. No old numerical allowance was reused.
 
-Proposed execution order after separate lead authorization: installed-artifact
-provenance/build as required; legacy connected selectors/guard/identity and
-native no-contact regressions; common-stage tangent/open case; impact/restart/
-refusal/transaction tests; public CLI. Use one bounded process at a time with
-effective JIT/thread/memory settings, exact inputs, full failure logs and precise
-process-wall accounting. Preserve failures and scientific criteria. Numerical
-caps and total allowance require a prospective decision; no historical allowance
-is reused and no numerical result is asserted here.
+Preserved v3h baseline evidence (2026-10-07):
+
+| Check | Outcome |
+| --- | --- |
+| Public two-body impact, two steps dt .003 to .006 s | PASS |
+| Open-contact structural/inertia equivalence | PASS |
+| Exact fresh two-step versus authentic prefix1 + resumed1 restart, tamper refusal | PASS |
+| Initial penetration, incompatible config, native-capsule endpoint admission/rollback | PASS |
+| Clear-endpoint through-crossing refusal | PASS |
+| Contact/radius identity mutation, curved/lift admission, finite event limits | PASS |
+| Bounded cutback replay, actual in-flight cancellation/receipt cleanup | PASS |
+| Complete 84-coordinate arbitrary-direction tangent, eps 1e-6 and 1e-7 | **NONPASS: conservative ownership-depth refusal before derivative comparison** |
+| Analytic parallel-line energy/force/stiffness, exact reserve and physical30 strip bound | PASS |
+| Saved perturbation connected-junction inventory and zero/one-cell cap checks | PASS; unsupported source remains on mature fallback |
+| Saved full open-span certificate, rational box oracle and near-threshold/bowed refusals | PASS |
+| Six legacy work/mass/graph/controller/public-route checks | PASS |
+| Matched legacy axial producer full result and checkpoint | PASS; canonical saved-result bytes and original capsule bytes identical |
+| Actual public example CLI (`--steps 2 --dt .003`) | PASS |
+
+The genuine second stage stores 1.5992802429271303e-5 J of normal contact energy.
+Maximum stage equilibrium norm is 5.630560744459157e-16; maximum endpoint algebraic
+norm is 4.830641798752094e-23. Both bodies respond. Final kinetic energy is
+.039952025191092734 J, contact storage 4.897480890726621e-5 J, and reported total
+.040001 J. Momentum, exact stage work, forces/moments and path bounds are recorded;
+no exact angular-momentum or energy conservation claim follows from this fixture.
+
+The v3h full tangent gate retained its 1e-5 criterion and both original arbitrary
+perturbations, failing closed at a slightly kinked near-endpoint target union.
+No expected-failure mask, uniform-only substitute, cap increase or tolerance
+waiver was applied. The subsequent exact endpoint-KKT discriminator used both
+signs and both original epsilons, complete quadratic endpoint/critical extrema,
+positive target stationarity convexity and identical native/physical30 shared
+endpoint work maps. It found a shared-vertex cone plateau or one-sided dominance,
+with no genuine two-interior competition in those source3 curves.
+
+The pooled-only v3i/v3j endpoint inventory debits all consumed root-search work
+before mature fallback, including optional nonclassical/precision refusal. Tiny
+root strips bound both targets' full half-weighted physical30 energy, force and
+Hessian contributions and charge B/E once. The old optional connected helper,
+whose failed call did not expose visited work, is not invoked by this identity.
+Historical default profiles remain unchanged.
+
+Fresh privately installed V3k evidence:
+
+| Affected check | Outcome |
+| --- | --- |
+| Fixed start/end/interior feature, zero/root refusal and strict winner with its own endpoint-root counterexample | PASS |
+| Exact endpoint inventory, complete root-strip bounds and work-map refusal | PASS |
+| Original complete84 arbitrary-direction work/tangent, eps 1e-6 and 1e-7, unchanged1e-5 criterion | PASS |
+| Actual two-step impact, both-body response, storage and certified path | PASS |
+| New-identity full2 versus genuine prefix1/resumed1 restart, exact capsule/state equality and tamper refusal | PASS |
+
+Review identified a generic V3j proof gap after its derivative/impact passes:
+the fast whole-owner dominance branch could skip the winning cell's own
+endpoint/interior root strips. V3k now requires exact complete BOTH winning
+endpoint-KKT ranges to prove fixed start/end/interior projection feature before
+that fast return. Any zero/root/uncertainty uses complete accounted endpoint
+inventory or mature fallback. The new strict-dominance counterexample has a
+horizontal winner whose endpoint phi crosses zero while the vertical loser's
+shared-vertex KKT is strictly positive; bounded root strips or fallback are
+required. No winning-root bypass, root limit increase or gate change is used.
+
+V3k genuine impact stage/endpoint norms are 5.710376640021784e-16 and
+5.518952735445791e-23. Reported endpoint energy/force/tangent error bounds in the
+physical30 chart are [1.8989823203627635e-20 J,3.189871482947048e-16 N,
+9.613949174130494e-13 N/m]. Certified path minima are
+[-.00040000000506164356,-.0009997300658258028] m, within the explicit-.003m
+penetration budget. Final kinetic .039952025191092734J, structural elastic
+-7.383792047029578e-42J (roundoff) and contact4.897480890726621e-5J sum to
+.040001J. These diagnostics do not imply exact energy/angular-momentum conservation.
+
+The original V3j restart18s timeout and seven prepared records are preserved.
+The later V3k selector completed setup/call/teardown, genuine resumed/full capsule
+and state equality, and tamper refusal. Earlier V1/V2b/V3/V3b/V3d/V3e conservative
+failures, V3f timeouts and V3i optional-root precision failure also remain intact.
+The unchanged legacy/CLI/admission/cancellation rows above are historical evidence;
+they were not reexecuted on V3k. The scoped repair changes only the opt-in contact
+ownership/feature proof and fingerprint, preserving historical defaults/shared
+controller/product contracts. It does not establish wider qualification.
+
+Evidence root: `C:/ANYworkspaceWork/contact_native_c8_pair_20261007`.
+Tested source V20 and `execution_manifest_v21.json` bind unchanged V3k product;
+wheel `dist_v3k/anysolver-0.4.7-py3-none-any.whl`, SHA-256
+`487af8778274b5fcf8efaf082e8d57299bdf67af1ef7ef52409000fef01cb88e`.
+Kernel identity `9b64e06251e9931522de41470b63ba330d2da28eb8b40bd9f3b785a4cf60b60f`.
+Both completed groups verified207 actual private module imports with zero
+hash/path errors, JITdisabled, Numba1 and pools[1,1,1]. Final source/installed
+comparison and all53 attempts are recorded in the author handoff.
+
+The explicit90s extension preserves the original750s grant/history and provides
+840 aggregate measuredseconds. Exact conservative wrapper charge is
+739.9227660997963 seconds;100.07723390020374 seconds remain, including the held
+60s reserve. All original grants/runners/manifests remain immutable. The exact-KKT oracle is test-local and requires no external raw directory in an
+ordinary checkout; its two affected selectors passed after that portability repair.
+No further numerical job is proposed. Guide edits after execution do not change
+tested product.
 
 Required broader rows remain open: curved native physical lift/path admission,
 dedicated true endpoint/cap treatment, native friction, native/shell common-stage

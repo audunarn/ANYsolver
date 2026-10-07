@@ -34,6 +34,8 @@ class NativePairContactAnalysis(_RetainedMidpointAssembly):
                  inertia_order=24, max_iterations=12, max_backtracks=8):
         if type(contact) is not NativeRetainedWholeCurvePair:
             raise TypeError('exact complete two-cell whole native pair required')
+        if not contact.certify_curved_ownership or not contact.pooled_quadrature_budget:
+            raise ValueError('resolved pooled V14 whole-pair ownership service required')
         if not isfinite(contact.radius) or contact.radius != contact.radius_a+contact.radius_b:
             raise ValueError('finite exact derived native radius sum required')
         if endpoint_policy != ENDPOINT_POLICY:
@@ -110,6 +112,9 @@ class NativePairContactAnalysis(_RetainedMidpointAssembly):
         account = dict(account, contact_regularization_storage=contact.potential_j,
                        total_energy=account['total_energy']+contact.potential_j,
                        native_contact=dict(profile=PROFILE,
+            contact_kernel_identity=self.contact.identity,
+            contact_kernel_service='NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V14_POOLED_PHYSICAL_GAP_QUADRATURE',
+            derivative_error_chart='30_UNIQUE_PHYSICAL_CONTROL_POINT_COORDINATES_IN_METRES',
             endpoint_policy=self.endpoint_policy, potential_j=contact.potential_j,
             moment_origin_m=(0.,0.,0.),
             force_semantics='PHYSICAL_CONTACT_FORCE_ON_BODY_NEGATIVE_POTENTIAL_GRADIENT',
