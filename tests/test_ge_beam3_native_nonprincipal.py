@@ -4,10 +4,13 @@ import json
 import os
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 import numpy as np
 import pytest
 from examples import native_nonprincipal_reference as ref
-from examples.native_nonprincipal_dev import run
+from examples.native_nonprincipal_dev import run,build,solve_transient
+from anysolver._ge_beam3_p5.algebra import rotation as native_rotation
+from anysolver._ge_beam3_p5.compensated_coordinates import split_sum
 
 PHYSICAL=[0,1,2,6,7,8,12,13,14,18,19,20,21,22,23]
 ENERGY_SCALE=ref.account(*ref.initial()[:3])['total_energy']
@@ -64,6 +67,93 @@ def _physics(record):
         linear_momentum=float(np.max(np.abs(np.asarray(stored['linear_momentum'])+np.asarray(stored['linear_momentum_low'])-accounted['linear_momentum'])))/MOMENTUM_SCALE,
         angular_momentum=float(np.max(np.abs(np.asarray(stored['angular_momentum'])+np.asarray(stored['angular_momentum_low'])-accounted['angular_momentum'])))/ANGULAR_SCALE,
         algebraic_trace=float(np.max(np.abs(ref.full_trace_work(x,u,frames)[1])))/ref.MOMENT_SCALE)
+
+
+def _native_stage_record(owner,mechanical,velocity,acceleration,inertia=None):
+    context=owner._owner();cells=np.asarray(mechanical.cell_rotations).reshape(2,3,3)
+    resultants=np.asarray(mechanical.resultants).reshape(18)
+    work=context._dynamic.element.operator.evaluate(mechanical.positions,mechanical.position_low,
+        mechanical.nodal_frames,cells,resultants)
+    if inertia is None:inertia=context._inertia(mechanical,velocity,acceleration)
+    fields={key:getattr(inertia,key) for key in ('linear_momentum','linear_momentum_low','angular_momentum','angular_momentum_low')}
+    fields.update(kinetic_energy=inertia.kinetic_energy,elastic_energy=work.potential,
+                  total_energy=inertia.kinetic_energy+work.potential)
+    state=dict(mechanical=dict(positions=mechanical.positions,position_low=mechanical.position_low,
+        nodal_frames=mechanical.nodal_frames,cell_rotations=cells,resultants=resultants),
+        physical_velocity24=velocity,physical_acceleration24=acceleration)
+    return json.loads(json.dumps(dict(state=state,accounting=fields),default=lambda value:value.tolist(),allow_nan=False))
+
+
+def _run_captured(**kwargs):
+    """Observe authentic issued audits; return every original audit unchanged."""
+    steps=kwargs.pop('steps',ref.STEPS);dt=kwargs.pop('dt',ref.DT)
+    owner,config=build(steps=steps,dt=dt);captures={};original=type(owner).candidate_stage_audit
+    def observe(self,candidate,**audit_kwargs):
+        audit=original(self,candidate,**audit_kwargs)
+        if self is owner:
+            stage=audit.stage
+            record=_native_stage_record(owner,stage.mechanical,stage.physical_velocity24,
+                                        stage.physical_acceleration24,stage.inertia)
+            record.update(evidence_kind='CAPTURED_AUTHENTIC_NATIVE_STAGE_REEVALUATED_ACCOUNTING',
+                stage_sha256=audit.stage_sha256,candidate_sha256=audit.candidate_sha256,
+                predecessor_sha256=audit.predecessor_sha256,stage_material_sha256=stage.material_sha256,
+                dt=audit.dt,endpoint_epoch=audit.endpoint_epoch,
+                unknown42=audit.unknown42.tolist(),increment42=audit.increment42.tolist())
+            captures[audit.endpoint_epoch]=record
+        return audit
+    with patch.object(type(owner),'candidate_stage_audit',observe):
+        result=solve_transient(owner,config,**kwargs)
+    return owner,result,captures
+
+
+def _reconstructed_stage(owner,previous,row):
+    """Reevaluate a native stage from the full saved mixed increment.
+
+    This is reconstructed evidence, not a saved original stage. Physical alpha
+    has a conservative binary64 rounding bound; algebraic data never uses ref.
+    """
+    old=previous['state'];m=old['mechanical'];h=row['dt']
+    d=np.asarray(row['midpoint_physical_increment42']);v0=np.asarray(old['physical_velocity24'])
+    velocity=np.zeros(24);acceleration=np.zeros(24)
+    velocity[PHYSICAL]=d[PHYSICAL]/h
+    acceleration[PHYSICAL]=2*(d[PHYSICAL]-h*v0[PHYSICAL])/h**2
+    unit=2.**-53
+    alpha_bound=4*unit*(np.abs(d[PHYSICAL])+np.abs(h*v0[PHYSICAL]))/h**2
+    high=np.asarray(m['positions']).copy();low=np.asarray(m['position_low']).copy()
+    for node in range(3):
+        for axis in range(3):
+            k=6*node+axis
+            high[node,axis],low[node,axis]=split_sum((float(high[node,axis]),float(low[node,axis]),
+                .5*h*float(v0[k]),.25*h*h*float(acceleration[k])))
+    frames=np.array([native_rotation(d[6*n+3:6*n+6])@np.asarray(m['nodal_frames'])[n] for n in range(3)])
+    oldcells=np.asarray(m['cell_rotations']).reshape(2,3,3)
+    cells=np.array([native_rotation(.5*d[18+3*c:21+3*c])@oldcells[c] for c in (0,1)])
+    resultants=np.asarray(m['resultants']).reshape(18)+d[24:]
+    mechanical=SimpleNamespace(positions=high,position_low=low,nodal_frames=frames,
+                              cell_rotations=cells[np.newaxis],resultants=resultants[np.newaxis])
+    stage=_native_stage_record(owner,mechanical,velocity,acceleration)
+    bound=dict(cell_alpha=float(np.max(alpha_bound[9:]))/ref.ACC_SCALE,
+               nodal_acceleration=float(np.max(alpha_bound[:9]))/(ref.LENGTH*ref.ACC_SCALE),
+               position=float(np.max(.25*h*h*alpha_bound[:9]))/ref.LENGTH)
+    stage.update(evidence_kind='RECONSTRUCTED_REEVALUATED_NATIVE_STAGE',rounding_bound=bound,
+                 alpha_rounding_bounds=alpha_bound.tolist())
+    # Materialized JSON-compatible evidence retains all native algebraic fields.
+    return json.loads(json.dumps(stage,default=lambda value:value.tolist(),allow_nan=False))
+
+
+def _saved_coarse():
+    path=os.environ.get('C7_NONPRINCIPAL_COARSE_RECORD')
+    if not path:return run()
+    raw=Path(path).read_bytes()
+    assert sha256(raw).hexdigest()==os.environ['C7_NONPRINCIPAL_COARSE_SHA256']
+    saved=json.loads(raw);capsule=Path(saved['checkpoint_path']).read_bytes()
+    assert sha256(capsule).hexdigest()==saved['checkpoint_sha256']
+    owner=run(steps=0)[0]  # Initialize a matching native operator; no step replay.
+    data=saved['result']
+    assert data['status']=='completed' and data['accepted_steps']==ref.STEPS
+    assert len(data['steps'])==ref.STEPS and all(row['dt']==ref.DT for row in data['steps'])
+    result=SimpleNamespace(to_dict=lambda:data,checkpoint=capsule,success=True)
+    return owner,result
 
 
 def test_nonprincipal_closed_spatial_work_inertia_and_geodesic_trace():
@@ -131,23 +221,44 @@ def test_nonprincipal_closed_spatial_work_inertia_and_geodesic_trace():
 
 @pytest.fixture(scope="module")
 def coarse_result():
-    result=run()[1];_save('coarse',result,None)
-    return result
+    owner,result=_saved_coarse();_save('coarse',result,None)
+    return owner,result
 
 
-def _trajectory_metrics(result):
+def _trajectory_metrics(owner,result,captures=None):
     data=result.to_dict();initial=ref.initial();x,u,v=initial[:3]
     errors=[_errors(data['initial'],dict(x=x,u=u,v=v,a=initial[3]))];balances=[_physics(data['initial'])]
     energy=[];pdefect=[];hdefect=[];strain=[];angles=[];gyros=[];relative=[];moments=[];commutators=[];discrete_impulse_error=[];impulse_rows=[]
     initial_cells=u.copy();actual_initial=_unpack(data['initial']);previous_h=ref.account(*actual_initial[:3])['angular_momentum']
     actual_initial_h=previous_h.copy();cumulative_impulse=np.zeros(3);cumulative_defect=np.zeros(3)
-    initial_account=ref.account(x,u,v)
+    initial_account=ref.account(x,u,v);previous_record=data['initial'];stage_bounds=[];reconstructed_stages=[];capture_checks=[]
     for row in data['steps']:
+        stage=_reconstructed_stage(owner,previous_record,row)
+        stage_bounds.append(stage['rounding_bound']);reconstructed_stages.append(stage)
+        if captures is not None:
+            actual=captures[row['endpoint']['epoch']]
+            reconstructed=_unpack(stage);captured=_unpack(actual)
+            scales=(ref.LENGTH,1.,ref.SPIN_SCALE,ref.ACC_SCALE,1.)
+            check={str(index):float(np.max(np.abs(a-b)))/scale
+                   for index,(a,b,scale) in enumerate(zip(reconstructed,captured,scales))}
+            check['saved_increment_match']=0. if np.array_equal(np.asarray(actual['increment42']),np.asarray(row['midpoint_physical_increment42'])) else 1.
+            check['dt_match']=0. if actual['dt']==row['dt'] else 1.
+            check['endpoint_epoch_match']=0. if actual['endpoint_epoch']==row['endpoint']['epoch'] else 1.
+            check['stage_material_match']=0. if actual['stage_material_sha256']==row['stage_material_sha256'] else 1.
+            check['predecessor_match']=0. if actual['predecessor_sha256']==row['predecessor_sha256'] else 1.
+            check['retained_force']=float(np.max(np.abs(reconstructed[5][:6]-captured[5][:6])))/ref.FORCE_SCALE
+            check['retained_moment']=float(np.max(np.abs(reconstructed[5][6:]-captured[5][6:])))/ref.MOMENT_SCALE
+            alpha_error=np.abs(reconstructed[3]-captured[3])
+            alpha_enclosure=np.asarray(stage['alpha_rounding_bounds'])+8*2.**-53*np.abs(captured[3])
+            check['alpha_rounding_bound_match']=0. if np.all(alpha_error<=alpha_enclosure) else 1.
+            check['position_low']=float(np.max(np.abs(np.asarray(stage['state']['mechanical']['position_low'])-
+                np.asarray(actual['state']['mechanical']['position_low']))))/ref.LENGTH
+            capture_checks.append(check);stage=actual
         expected=ref.step(x,u,v,row['dt'])
-        errors.append(_errors(row['stage'],dict(x=expected['stage_x'],u=expected['stage_u'],v=expected['stage_v'],a=expected['stage_a'])))
-        errors.append(_errors(row['endpoint'],expected));balances.extend((_physics(row['stage']),_physics(row['endpoint'])))
+        errors.append(_errors(stage,dict(x=expected['stage_x'],u=expected['stage_u'],v=expected['stage_v'],a=expected['stage_a'])))
+        errors.append(_errors(row['endpoint'],expected));balances.extend((_physics(stage),_physics(row['endpoint'])))
         x,u,v,a,_,_= _unpack(row['endpoint']);value=ref.account(x,u,v)
-        xs,us,vs,as_,_,_= _unpack(row['stage'])
+        xs,us,vs,as_,_,_= _unpack(stage)
         predicted=ref.discrete_angular_increment(xs,us,vs,as_,row['dt'])
         orbital=np.sum(np.cross(xs,(ref.translation_mass()@as_[:9]).reshape(3,3)),axis=0)
         spin=(ref.physical_mass(us)@as_+ref.gyro(us,vs))[9:].reshape(2,3).sum(axis=0)
@@ -170,15 +281,19 @@ def _trajectory_metrics(result):
         angles.append(max(ref.rotation_angle(r) for r in u))
         # Continue the independent recurrence, not reseeded from actual state.
         x,u,v=expected['x'],expected['u'],expected['v']
+        previous_record=row['endpoint']
     return dict(errors=errors,balances=balances,energy_defect=energy,linear_defect=pdefect,angular_defect=hdefect,
         strain_energy=strain,angles=angles,gyro_norm=gyros,relative_angle=relative,retained_moment=moments,
         accumulated_rotation_commutator=commutators,discrete_angular_impulse_error=discrete_impulse_error,
-        angular_impulse_rows=impulse_rows)
+        angular_impulse_rows=impulse_rows,reconstructed_stages=reconstructed_stages,stage_rounding_bounds=stage_bounds,
+        captured_stages=captures,capture_reconstruction_errors=capture_checks)
 
 
 def _assert_trajectory(result,metrics,steps):
     assert result.success and result.to_dict()['accepted_steps']==steps
     assert len(metrics['angular_impulse_rows'])==steps
+    assert max(max(row.values()) for row in metrics['stage_rounding_bounds'])<=1.e-9
+    assert all(max(row.values())<=1.e-9 for row in metrics['capture_reconstruction_errors'])
     assert max(max(e.values()) for e in metrics['errors'])<=1.e-6
     assert max(max(e.values()) for e in metrics['balances'])<=1.e-6
     assert max(metrics['angles'])>=.2 and max(metrics['strain_energy'])>0 and min(metrics['gyro_norm'])>0
@@ -190,13 +305,13 @@ def _assert_trajectory(result,metrics,steps):
 
 
 def test_public_nonprincipal_nonlinear_midpoint_and_finite_angle(coarse_result):
-    metrics=_trajectory_metrics(coarse_result);_save('coarse',coarse_result,metrics)
-    _assert_trajectory(coarse_result,metrics,ref.STEPS)
+    owner,result=coarse_result;metrics=_trajectory_metrics(owner,result);_save('coarse',result,metrics)
+    _assert_trajectory(result,metrics,ref.STEPS)
 
 
 def test_public_nonprincipal_temporal_reference_and_refinement(coarse_result):
-    coarse=coarse_result;_,fine=run(steps=2*ref.STEPS,dt=ref.DT/2)
-    _save('fine',fine,None)
+    _,coarse=coarse_result;fine_owner,fine,captures=_run_captured(steps=2*ref.STEPS,dt=ref.DT/2)
+    _save('fine',fine,dict(captured_stages=captures))
     exact=ref.semidiscrete(subdivisions=64);finer=ref.semidiscrete(subdivisions=128)
     reference_rows=[ref.temporal_errors(a['x'],a['u'],a['v'],b) for a,b in zip(exact,finer)]
     reference_error=max(max(e.values()) for e in reference_rows)
@@ -209,7 +324,7 @@ def test_public_nonprincipal_temporal_reference_and_refinement(coarse_result):
         x,u,v,_,_,_= _unpack(result.to_dict()['final'])
         defect=abs(ref.account(x,u,v)['total_energy']-ENERGY_SCALE)/ENERGY_SCALE
         return response,defect,rows
-    c=comparison(coarse,1);f=comparison(fine,2);fine_metrics=_trajectory_metrics(fine)
+    c=comparison(coarse,1);f=comparison(fine,2);fine_metrics=_trajectory_metrics(fine_owner,fine,captures)
     metrics=dict(reference_refinement=reference_error,reference_response_rows=reference_rows,coarse=c,fine=f,
         fine_trajectory=fine_metrics,temporal_scales=dict(position_m=ref.LENGTH,rotation_rad=ref.ANGLE_SCALE,
             nodal_velocity_m_per_s=ref.TRANSLATION_VELOCITY_SCALE,cell_omega_rad_per_s=ref.SPIN_SCALE))
@@ -221,9 +336,9 @@ def test_public_nonprincipal_temporal_reference_and_refinement(coarse_result):
 
 
 def test_public_nonprincipal_fresh_four_equals_two_plus_two(coarse_result):
-    full=coarse_result;_save('restart_full',full,None)
-    _,prefix=run(steps=ref.STEPS//2);_save('restart_prefix',prefix,None)
-    _,resumed=run(checkpoint=prefix.checkpoint,expected_sha256=sha256(prefix.checkpoint).hexdigest())
-    _save('restart_resumed',resumed,None)
+    _,full=coarse_result;_save('restart_full',full,None)
+    _,prefix,captures=_run_captured(steps=ref.STEPS//2);_save('restart_prefix',prefix,dict(captured_stages=captures))
+    _,resumed,captures=_run_captured(checkpoint=prefix.checkpoint,expected_sha256=sha256(prefix.checkpoint).hexdigest())
+    _save('restart_resumed',resumed,dict(captured_stages=captures))
     assert full.success and prefix.success and resumed.success
     assert full.to_dict()==resumed.to_dict() and full.checkpoint==resumed.checkpoint

@@ -2990,3 +2990,19 @@ separate scope is NOT APPROVED; no tests, CLI or numerical jobs launched.
 Prior bending and other balances unchanged and unavailable to this new fixture.
 Evidence: d1_review_support/contact_native_nonprincipal_20261006/source_readiness.md.
 Full C7/C8 and C0-C9 incomplete.
+
+
+## 2026-10-07 native nonprincipal - TESTED DEVELOPMENT NONPASS
+
+Separate240s user authority granted. Local mechanics/inertia, exact fresh restart
+and actualCLI4 PASS; registered4/8 trajectories fail strictH1e-6 at8.141714e-6
+and2.041661e-6. Exact finiteSO3 impulse accounting supports second-order time error.
+Saved response/energy inequalities pass their limits but pytest assertions were
+unreached; no retroactive trajectory PASS. OriginalV2 schema KeyError preserved.
+Five terminal attempts119.1498137001181s;120.8501862998819s remains same scope only.
+Peak171405312B,196 private imports/run, JITdisabled/Numba1/pools1. Product unchanged;
+550 payloads/six metadata verified. One prospective16step source correction next,
+same physical model/horizon and gates; no assumedPASS or automatic refinement.
+Same-family supporting assessment only, no independent acceptance/release.
+Evidence: d1_review_support/contact_native_nonprincipal_20261006/nonprincipal_development.md.
+FullC7/C8 and C0-C9 remain open. Earlier source-ready entry is historical.

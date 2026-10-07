@@ -13,12 +13,14 @@ Work only in C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001 on co
 
 ## Current position
 
-Native nonprincipal dynamics: the existing public owner now has a complete
-independent elastic reference/example/check candidate, source-reviewed but
-numerically unverified. Product code is unchanged; strict scientific gates and
-the angular-impulse method question remain open. A separately scoped240s
-execution request is prepared; prior fixture balances cannot cover it.
-[Current readiness](docs/d1_review_support/contact_native_nonprincipal_20261006/source_readiness.md).
+Native nonprincipal dynamics: local independent mechanics, exact fresh restart
+and the actual public example pass. The registered four/eight-step trajectories
+remain NONPASS at strict totalH1e-6 (8.141714e-6 /2.041661e-6); saved exact impulse
+accounting identifies a second-order time defect. Product equations are unchanged.
+One prospective16-step same-model/horizon correction is being prepared; no assumed
+pass or relaxed criterion.119.1498137001181/240s consumed;120.8501862998819s remains
+only in the granted nonprincipal scope. Broader C7 acceptance remains open.
+[Measured disposition](docs/d1_review_support/contact_native_nonprincipal_20261006/nonprincipal_development.md).
 
 ### Latest production progress and next slice
 

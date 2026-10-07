@@ -1,45 +1,42 @@
 # General contact - restart (7 October 2026)
 
-## Goal and ownership
+## Goal, ownership and current outcome
 
-Full C0-C9 ACTIVE/incomplete: [goal](GENERAL_CONTACT_GOAL.md),
+FullC0-C9 ACTIVE/incomplete: [goal](GENERAL_CONTACT_GOAL.md),
 [plan](GENERAL_CONTACT_PLAN.md), [ledger](docs/GENERAL_CONTACT_CAPABILITIES.md).
 Only C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001, branch
-codex/contact-main-reconcile-20261001. Product checkpoint e166100c unchanged.
-Protected original inaccessible; no sibling edits/other-chat communication,
-publication, merge, release or historical default changes. Local checkpoints
-authorized. Ledger ASCII append only. Mistral/local cached unavailable.
-OpenAI author native_nonprincipal_author and supporting reviewer
-native_nonprincipal_review completed source-only work; no live numerical job.
+codex/contact-main-reconcile-20261001. Product e166100c unchanged. Protected
+original inaccessible; no siblings/other chats/publication/merge/release/default
+changes. Local checkpoints authorized. Ledger ASCII append only. Mistral/local
+cached unavailable; same OpenAI author retained, separate supporting reviewer.
 Same-family review does not establish independent engineering acceptance.
 
-## Current outcome and next authorized action
+Native nonprincipal V3b: TESTED DEVELOPMENT NONPASS strictH. Independent local
+work/tangent/inertia, exact full4=fresh2+2 restart and actualCLI4 PASS. Registered
+4dt1/64 and8dt1/128 trajectories FAIL totalH1e-6:8.141714e-6 /2.041661e-6.
+Exact finiteSO3 impulse accounting and3.9878 refinement ratio identify time error.
+Response/energy inequalities supported by saved metrics; later pytest assertions
+unreached. Preserve V2 KeyError stage and all4/8 failed evidence.
+[Disposition](docs/d1_review_support/contact_native_nonprincipal_20261006/nonprincipal_development.md).
 
-User resumed development on7 October. Nonprincipal elastic native candidate V2
-is IMPLEMENTED, NUMERICALLY UNVERIFIED: four reference/example/test/guide files.
-No product changes. Source scrutiny closed separate energy partition, full
-rotated mass block and fine complete-state coverage gaps. Three AST/four source
-whitespace checks pass. All550 product payloads/six metadata still match the
-verified private wheel6074e261ba7287b244b7b6f1cc15e81fe909a49702d128d0160847a58ed212cc.
+## Next authorized action and exact resource state
 
-Raw C:/ANYworkspaceWork/contact_native_nonprincipal_20261006 preserves V1/pause
-and V2 source snapshots, reviews, source hashes and held execution_preparation.json.
-ManifestSHA63bc0be4f8cd1ed4718a07700e65c89989a94de55b2d7fae6110332179a7c5b2;
-runnerSHAe90d8c0f42a988e241b329707bf0fe63bad6787a9b01bd735ad04a393d4210dc.
-Proposed separate240s C7_NATIVE_NONPRINCIPAL_DEV is NOT APPROVED. No tests, solver
-imports, CLI, build or numerical run occurred. Prior balances cannot fund it.
-Request the separate allowance before numerical execution; use the held runner
-with unique attempts, exact process-wall/cumulative accounting,<=60s/job,953MiB,
-one job, JITdisabled/Numba1/pools1. Preserve40s repair/integration reserve.
+User granted240s C7_NATIVE_NONPRINCIPAL_DEV; five terminal attempts consumed
+119.1498137001181s, leaving120.8501862998819s only in this scope. Peak171405312B.
+Raw C:/ANYworkspaceWork/contact_native_nonprincipal_20261006 retains authority,
+original/revised held manifests, unique process/resource/runtime/import records,
+failures, source snapshots and lead_numerical_disposition_v3b.json. No live
+numerical job. Do not reset/borrow or rerun unaffected passed checks/builds.
 
-Fixture: free single-native elastic beam, nonparallel cell velocities, all15
-physical/42 mixed coordinates,4dt1/64 and8dt1/128 at horizon1/16s; not a rigid
-Euler top. Independent closed work/midpoint/ODE checks remain prospective.
-Keep strict totalH1e-6: exact finiteSO3 impulse has generic O(h^3) local defect.
-Local wrench1e-6 does not imply endpoint momentum conservation. Saved exact
-impulse separates method time error from equation error; NONPASS remains
-NONPASS. One discriminating next action, no automatic refinement or gate waiver.
-[Current readiness](docs/d1_review_support/contact_native_nonprincipal_20261006/source_readiness.md).
+Prepare ONE prospective16-step dt1/256 same-model/horizon correction using two
+checkpointed8-step segments. Source preparation only until exact revised inputs,
+gates/provenance and cumulative allowance are bound and reviewed; initially55s
+per job, retaining>=10.85s reserve. Existing strictH1e-6 and all scientific gates
+unchanged; no assumedPASS, automatic further refinement or method/default change.
+native_nonprincipal_author owns connected source/harness repair; lead owns
+contracts, evidence integration and disposition. All550 product payloads/six
+metadata match private wheel6074e261ba7287b244b7b6f1cc15e81fe909a49702d128d0160847a58ed212cc.
+Use held runner/revision only; one job,<=60s/job,953MiB, JITdisabled/Numba1/pools1.
 
 ## Completed evidence and protected balances
 

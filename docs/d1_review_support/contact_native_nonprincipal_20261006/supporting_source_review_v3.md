@@ -1,0 +1,29 @@
+# Supporting V3 review: actual single-owner stage evidence repair
+
+Scope: source-only review in C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001. No imports, numerical evaluation, tests, solver jobs, builds, product edits or Git mutations. The V2 supporting report and the original KeyError('stage') failed evidence remain unchanged. This reviewer missed the single-owner result schema in V2: matching native equations did not prove that the public result exposed the stage fields the tests consumed.
+
+## Confirmed cause and repair boundary
+
+`_ge_beam3_native_transient.py`:231-245 saves endpoint, dt, stage residual/material diagnostics and `midpoint_physical_increment42`; it does not save a stage record. `_ge_beam3_native_midpoint.py`:809-813 copies full unknown42, replacing physical slots only by d=h*v0+.5*h^2*am. Algebraic frame/resultant slots remain their actual full increments. Thus V2 `row['stage']` was unsupported and raised KeyError after the native four-step solve completed. The local work PASS reported by the lead does not resolve that test integration failure or establish momentum acceptance.
+
+V3 recovers the saved coarse stage only as explicitly labelled `RECONSTRUCTED_REEVALUATED_NATIVE_STAGE`; it does not claim original stage bytes. Physical acceleration is 2*(d-h*v0)/h^2 and stage velocity d/h. Position high/low uses native split_sum on the original-style four terms. Nodal frames use Exp(full algebraic increment)*Q0, cell rotations use Exp(.5*physical increment)*U0, and retained resultants use p0+d[24:]. All inputs come from the previous actual record and saved full increment, never the independent expected stage. Native operator potential and native inertia/momentum compute accounting; ref.account remains a separate oracle.
+
+For the frozen dyadic dt inventory (1/64,1/128 and halving), multiplication by h and .5*h^2 is exact for normal finite values. The lost binary64 rounding in d yields acceleration error no greater than approximately 2*u*|d|/h^2; the implemented 4*u*(|d|+|h*v0|)/h^2 safely covers it under this declared inventory. Recovered position error has the corresponding .25*h^2 factor. This bound is not an exact recovery claim, and does not extend to arbitrary underflowing/nondyadic data. Source guards hold the dimensional acceleration/position bound below 1e-9 before interpreting unchanged 1e-6 mechanics assertions.
+
+## Forward actual-stage evidence
+
+The reversible test-only `_run_captured` spy wraps the existing public `candidate_stage_audit` call during the already-authorized solve. It calls the original method, snapshots authentic StageEvaluation mechanical/velocity/acceleration/inertia and native-reevaluated accounting, then returns the original audit unchanged. The patch scope restores the original method on normal or exceptional exit. No extra solve, candidate advance or production result-schema change is introduced. Fine trajectory mechanics use this captured actual stage; fine recovery-versus-capture comparisons include complete physical vectors, nodal frames, retained fields and position low parts. Restart solves capture their actual audits while full public dictionary/capsule equality remains the existing criterion.
+
+Source finding at the initial V3 checkpoint: epoch lookup alone did not bind a capture to the accepted saved journal. Required repair is exact captured increment42 equality with the accepted row's saved increment, plus matching predecessor SHA256, dt and endpoint epoch. This prevents a rejected/overwritten trial at the same epoch from being silently treated as the accepted stage. The recovery comparison must retain separate force/moment and translation/spin scales, rather than divide a mixed force/moment vector by one moment scale. Final repair disposition and hashes will be added below after the held author delta.
+
+## Preserved evidence and limits
+
+The original V2 source review, failed test evidence and consumed numerical time are preserved; this source repair does not regrade that FAIL or fund new jobs. Exact discrete angular impulse compatibility remains separate from strict H=1e-6. Numerical recovery/capture consistency, coarse/fine scientific criteria and restart remain unverified by this reviewer. Same-family supporting review is not independent engineering acceptance.
+
+## Held V3b final disposition
+
+The held repair closes the capture binding finding at tests/test_ge_beam3_native_nonprincipal.py:244-248: exact full accepted increment, dt, endpoint epoch, material SHA and predecessor SHA are compared, with mismatches encoded as 1 and rejected by the existing <=1e-9 capture-consistency gate. Captured unknown42 is retained alongside the original increment. The spy returns the original audit object unchanged at :103, and capture material/inertia/mechanical data comes from its authentic StageEvaluation, not from the independent reference.
+
+Retained force and moment consistency use separate frozen scales at :249-250. Componentwise recovered-vs-captured acceleration is checked against the retained alpha bound plus an explicit 8*u*|captured alpha| arithmetic allowance at :251-253. Position low parts are separately compared at :254-255. The held source therefore supplies both a prospective rounding enclosure and a discriminating captured-stage consistency check on the authorized fine solve. Their numerical satisfaction remains unverified by this reviewer.
+
+Final source review status: no remaining source-critical defect identified in the assigned V3b repair. Current test SHA256 and the held test_source_snapshot_v3b.py SHA256 independently match 9b3e727538dae82cb61d1b62c165558ae249201a02efee651129fc9042fc6d49. Full reviewed identities are saved in supporting_source_review_v3_identity.json. V2 KeyError failure, earlier review miss and numerical budget accounting remain preserved; this is source review, not a rerun or acceptance claim.

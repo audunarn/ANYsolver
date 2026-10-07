@@ -1,6 +1,9 @@
 # Genuine nonprincipal native dynamics DEVELOPMENT candidate
 
-**Implemented, numerically UNVERIFIED.** This candidate uses the existing public
+**Executed development candidate; strict total angular momentum NONPASS.**
+Local mechanics, exact restart and actual CLI checks passed; the fixed coarse
+and fine trajectories failed the retained normalized totalH1e-6 criterion.
+This candidate uses the existing public
 single-native `solve_transient` and `TransientConfig`. No production module,
 profile, defaults, controller, load admission or checkpoint schema changed.
 The primitive independent reference imports only NumPy and elementary math;
@@ -139,15 +142,67 @@ or scientific assertions, preserving them if a later check raises. The CLI
 limits dt to1/64 or1/128 and the horizon to1/16s, emits a status record, and
 returns a nonzero exit on a solver non-success.
 
-No tests, CLI, builds or solver imports have run for this slice. A separately
-scoped240s allowance is recommended for three focused processes<=60s each
+The original unexecuted preparation recommended a separately
+scoped240s allowance for three focused processes<=60s each
 (local work+coarse response; temporal refinement; fresh restart), a<=20s public
-CLI and40s repair/integration reserve. This is a resource proposal, not a cost
-claim or authority. Reuse a verified matching current artifact if all existing
+CLI and40s repair/integration reserve. That historical proposal was subsequently
+authorized for this fixture; its pre-measurement20s CLI recommendation was
+prospectively changed to40s within the same approved60s/job and240s total.
+Reuse a verified matching current artifact if all existing
 package bytes match; these new example/test files need no product rebuild.
 Lead must bind command/input/source/import/runtime evidence before executing.
 The strict momentum-method question should be adjudicated before claiming a
 passing full route; optional past scope residues cannot fund this fixture.
+
+## Executed development disposition (7 October 2026)
+
+Raw evidence is in C:/ANYworkspaceWork/contact_native_nonprincipal_20261006.
+The five terminal attempts consumed exactly119.1498137001181 process-wall
+seconds, leaving120.8501862998819 of the separately authorized240s. The40s
+integration reserve was retained. No timeout, memory refusal, guard refusal,
+product edit or rebuild occurred; the verified installed product was reused.
+All executions recorded196 installed imports, JITdisabled, Numba1 and all
+observed numerical pools1, with no runtime/import errors.
+
+The original V2 local mechanics test passed. Its coarse trajectory completed
+all4 steps, but the V2 check failed with KeyError('stage'): single-native public
+rows store the full42 mixed increment and endpoint, rather than an original
+stage record. That failed evidence remains nonprincipal_local_coarse_v2.
+The V3b test repair reuses the SHA-bound completed4 result/capsule, reconstructs
+all stage algebraics from the saved native increments, and reevaluates native
+stage work/inertia. It uses production rotation/split_sum and a declared
+binary64 acceleration rounding enclosure; no independent-reference fields
+substitute for actual native stage data. Ordinary pytest still runs fresh.
+
+New fine/restart solves observe the existing authenticated candidate_stage_audit
+with a reversible test-only spy, returning each original audit unchanged. Saved
+increment, predecessor, material, dt and epoch bind each captured stage to the
+accepted public row. Fine captured/reconstructed consistency was1.80698e-15;
+the explicit acceleration enclosure checks passed. Captured original stage
+coordinates are distinguished from reevaluated native stage accounting.
+
+Repaired coarse full-state and equilibrium/accounting maxima were9.67441e-13
+and1.00658e-12. Fine maxima were2.00238e-13 and2.22189e-13. Local work/tangent
+maxima were2.45379e-6 and1.91029e-6 against1e-5. Native rotated mass error was
+1.38778e-16, with exactly zero cross/algebraic blocks. Exact public4=2+2
+dictionary/capsule restart passed; the actual public CLI completed4 steps at
+1/16s with total energy3.9361646555235783J.
+
+Strict normalized totalH failed: coarse8.141713955288152e-6 and
+fine2.0416609389404326e-6 against1e-6. Exact finite-SO3 impulse accounting
+errors were at most1.67764e-16 per stage and1.67199e-16 cumulatively. The
+observed angular change matches the finite-SO3 method defect while the linear
+stage impulses remain at rounding scale. The approximately fourfold reduction
+at half dt supports the predicted fixed-horizon second-order time defect for
+this pair; it does not waive conservation or prove a universal convergence law.
+
+Saved temporal metrics show reference convergence3.45445e-12; response maximum
+0.0019808154324603903 decreases to0.0005022594954832697; energy drift
+0.0007198276754856106 decreases to0.0001803555517275904. These measured metrics
+meet their respective targets, but later temporal assertions were not reached
+because the strictH assertion failed first. Both scientific tests remain FAIL.
+No automatic refinement, altered physics/profile/default, scientific acceptance
+or release is inferred. The next method decision belongs to the lead.
 
 Remaining C7 obligations include general sections, connected/nonprincipal
 multi-element deformation, nonzero lifts/eccentricity, load/contact coupling,
