@@ -1,6 +1,6 @@
 # General contact - goal
 
-**Status:** ACTIVE; full C0-C9 incomplete. Updated 7 October 2026.
+**Status:** BLOCKED awaiting scoped numerical execution approval; full C0-C9 incomplete. Updated 7 October 2026.
 **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1,2026-09-24.2.
 
 ## Required outcome and authority

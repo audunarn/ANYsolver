@@ -1,6 +1,6 @@
 # General contact - restart point
 
-Updated7 October2026. Full C0-C9 goal ACTIVE and incomplete.
+Updated7 October2026. Full C0-C9 goal incomplete; execution blocked awaiting the separate600s grant.
 Only C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
 branch codex/contact-main-reconcile-20261001. Never access protected original
 general-contact checkout or sibling work. No other-chat communication,
@@ -32,7 +32,7 @@ Old native-pair allowance remains100.07723390020374/840 including60reserve;
 its53attempts charged739.9227660997963. Every other old purse remains separate.
 Do not repeat passed checks without an affected input/implementation/assumption.
 
-Sustained author active on the source extension; lead owns contracts/records/Git. Mistral/local cached
+Source author/reviewer assignments completed; no live numerical job. Lead owns contracts/records/Git. Mistral/local cached
 unavailable; OpenAI fallback review is same-family, not engineering acceptance.
 Next source milestone extends this integrated owner to multiple declared native
 beams/S3 patches using global native assembly, local both-body work and shared
@@ -88,4 +88,13 @@ Raw binder native_multi_shell_bind_restart_v1.py SHA9f1b249e3a9dd6b4d99e7a0a0e41
 Create actual authority only from the human answer; pendingmanifest3 refuses
 children. Follow source binder/handoff records for future authentic prefix/full/
 resumed production and immutable restart binding. Publication/acceptance remains
-unauthorized. Goal ACTIVE and incomplete.
+unauthorized. Goal blocked pending the new scope; full programme incomplete.
+
+## Blocked audit
+
+The same absent C8_NATIVE_MULTI_SHELL_DEV grant was revalidated on three
+consecutive goal turns, counting the source-delivery/request turn. The next
+required mechanics/installed checks need human execution authority. Source
+checkpoint6362bdfb and binder614d17e6 are complete; no numerical jobs or new
+authority file exist. Raw lead_blocked_audit_v1.json records the disposition.
+On human approval, resume this exact fixture/scope and preserve every old balance.
