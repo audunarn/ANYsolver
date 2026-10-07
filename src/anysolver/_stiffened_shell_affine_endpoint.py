@@ -71,6 +71,19 @@ def validate_arrays(owner,a,*,native_chart=False):
         raise ValueError("bounded coupled affine endpoint required")
     prepared=copy(owner);prepared._commit_lock=RLock();prepared._writing=False
     prepared._finite_driver=None;prepared._accepted=None
+    if getattr(owner,"_finite_distributing",False):
+        from ._stiffened_shell_ge_distributing_finite import PreparedFiniteDistributingAttachment
+        # Bind scratch operators to this isolated owner. Immutable geometry,
+        # pose and multiplier row starts are reused; live bindings stay intact.
+        generation=prepared._generation
+        prepared._generation=0
+        try:
+            prepared._finite_distributing_bindings=tuple((
+                PreparedFiniteDistributingAttachment._from_compiled(
+                    prepared,adapter.reference,adapter.pose),start)
+                for adapter,start in owner._finite_distributing_bindings)
+        finally:
+            prepared._generation=generation
     if getattr(owner,"_external_context",None) is not None:
         raise ValueError("displacement snapshot excludes external load contexts")
     driver=FinitePointDriver(prepared)
