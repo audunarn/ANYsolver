@@ -34,7 +34,7 @@ def test_public_force_route_and_physical_wrenches(completed):
     model,owner,result=completed
     assert result.status=="completed" and result.accepted_factors==(.25,.5,1.)
     assert result.free_equilibrium_ratio<=1e-8 and result.constraint_max<=1e-9
-    assert owner.capabilities["checkpoints"]==("finite_distributing",)
+    assert owner.capabilities["checkpoints"]==("finite_distributing", "finite_distributing_displacement")
     record,=owner.recover().distributing_footprint_wrenches
     assert isinstance(record,ss.GEFiniteDistributingFootprintWrench)
     assert record.configuration=="current" and record.generation==result.generation

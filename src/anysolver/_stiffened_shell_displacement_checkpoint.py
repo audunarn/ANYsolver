@@ -15,11 +15,15 @@ POLICY="B3_GE_BL5_COUPLED_DISPLACEMENT_CONTROL_V1_DEV"
 EVENT_POLICY="B3_GE_BL5_COUPLED_DISPLACEMENT_CONTROL_EVENT_V3_DEV"
 from ._stiffened_shell_branch_event_trial import POLICY as EVENT_TRIAL_POLICY
 CHART_POLICY="B3_GE_BL5_COUPLED_DISPLACEMENT_CONTROL_CHART_V2_DEV"
+DISTRIBUTING_KIND="finite_distributing_displacement"
+DISTRIBUTING_POLICY="B3_GE_DISTRIBUTING_DISPLACEMENT_V1_DEV"
 
 
 def identities(owner):
     """Bind the controller and mechanical payload to their admitted profile."""
     from ._stiffened_shell_affine_endpoint import is_native_point_material
+    if getattr(owner,"_finite_distributing",False):
+        return DISTRIBUTING_KIND,DISTRIBUTING_POLICY,None,None
     if getattr(owner,"_bl5_native_mixed_material",False):
         return ("finite_displacement_native_fibre_bl5_mixed_shell",
                 "B3_GE_NATIVE_FIBRE_BL5_MIXED_SHELL_J2_DISPLACEMENT_V1_DEV",None,None)
@@ -77,10 +81,14 @@ def _layout(owner,steps):
         if has_native_s3_material(owner):
             result += (("shell_origin_q",(owner._shell_count,)),
                        ("shell_origin_anchors",(len(owner._shell_ids),3,3)))
+        if getattr(owner,"_finite_distributing",False) and owner._distributing_cyclic:
+            result += (("cyclic_seed_factor",(1,)),)
         return result
-    if getattr(owner,"_curved_material",False) and not has_shell_material(owner):
+    if (getattr(owner,"_curved_material",False) or getattr(owner,"_finite_distributing",False)) and not has_shell_material(owner):
         layout=tuple(item for item in layout if item[0] not in (
             "shell_plastic","shell_alpha","shell_origin_plastic","shell_origin_alpha"))
+    if getattr(owner,"_finite_distributing",False) and owner._distributing_cyclic:
+        layout += (("cyclic_seed_factor",(1,)),)
     return layout
 
 

@@ -852,7 +852,7 @@ class FinitePointDriver:
         # At zero load the selected cyclic policy uses its owned unit-factor
         # pattern for normalization only; external force stays exactly zero.
         norm_load = applied_load
-        if owner._distributing_cyclic and factor == 0.:
+        if owner._distributing_cyclic and factor == 0. and not np.any(applied_load != 0.):
             norm_load = owner._cyclic_reference_pattern
         elif programme is not None:
             norm_load = programme.equilibrium_load(applied_load)

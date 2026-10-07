@@ -63,6 +63,7 @@ class DisplacementResult:
     beam_fibre_material: tuple = ()
     beam_fibre_energy: tuple = ()
     shell_s3_material: tuple = ()
+    distributing_footprint_wrenches: tuple = ()
 
 
 def prepare(owner,raw):
@@ -115,6 +116,9 @@ def prepare(owner,raw):
         from ._stiffened_shell_ge_finite_experimental import _shell_s3_recovery
         result=replace(result,shell_s3_material=_shell_s3_recovery(
             owner._shell_parts[q4_count:],shell_next[q4_count:]))
+    if getattr(owner,"_finite_distributing",False):
+        result=replace(result,distributing_footprint_wrenches=
+            driver._distributing_records(state,metadata["generation"]))
     driver._state=state;driver._shell_predecessors=shell_parent
     driver._beam_predecessors=beam_parent
     driver._shell_origins=(shell_next if s3_material else
@@ -152,10 +156,13 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
     from ._stiffened_shell_rotation_charts import physical_frames
     from ._stiffened_shell_affine_endpoint import uses_native_material_history
     native=uses_native_material_history(owner)
+    distributing=getattr(owner,"_finite_distributing",False)
+    if distributing and (type(control) is not DisplacementControl or control.trial_policy is not None or _adaptive is not None):
+        raise ValueError("finite distributing displacement admits fixed targets without event/adaptive policies only")
     if native and type(control) is DisplacementControl and control.trial_policy is not None:
         raise ValueError("native material displacement excludes branch event policy")
     if type(control) is not DisplacementControl or not (
-            owner._bl5_shell_material or getattr(owner,"_curved_material",False) or native):
+            owner._bl5_shell_material or getattr(owner,"_curved_material",False) or native or distributing):
         raise ValueError("coupled BL5 or curved material displacement control required")
     pending=getattr(owner,"_displacement_adaptive",None)
     if _adaptive is None and pending is not None and not pending[0].state.completed:
@@ -163,6 +170,11 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
     driver=owner._finite_driver
     if driver is None or driver._accepted is None:
         raise ValueError("displacement control requires an accepted force-controlled seed")
+    if distributing and (driver._external is not None or driver._programme is not None or
+            driver._adaptive_state is not None or
+            (driver._state.shell_anchors is not None and not np.array_equal(
+                driver._state.shell_anchors,np.tile(np.eye(3),(len(owner._shell_ids),1,1))))):
+        raise ValueError("finite distributing displacement requires an ordinary unrebased fixed-force seed")
     from ._stiffened_shell_affine_endpoint import require_native_displacement_policy
     require_native_displacement_policy(owner,driver)
     if native:
@@ -171,6 +183,9 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
     if type(targets) is not tuple or not targets or any(not isinstance(v,(float,int,np.floating,np.integer)) or isinstance(v,(bool,np.bool_)) or not np.isfinite(v) for v in targets):
         raise ValueError("finite displacement targets required")
     dof=control.dof(owner);direction=driver._load(actions)
+    if distributing and owner._distributing_cyclic and not np.array_equal(
+            direction,owner._cyclic_reference_pattern):
+        raise ValueError("cyclic distributing displacement requires the model-bound reference load direction")
     existing=getattr(owner,"_displacement_snapshot",None)
     if existing is None:
         raw=owner.checkpoint();generation=owner._generation
@@ -178,6 +193,7 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
         metadata=dict(seed_generation=generation,seed_sha256=sha256(raw).hexdigest(),control_dof=dof,
                       trial_policy=control.trial_policy,event_cell_evaluations=0)
         seed=np.array([driver._state.q[dof],0.]);history=();amplitude=0.
+        cyclic_seed_factor=driver._load_factor if distributing and owner._distributing_cyclic else None
     else:
         _,m,a=existing
         if (dof!=m["control_dof"] or not np.array_equal(direction,a["load_direction"]) or
@@ -189,6 +205,7 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
         metadata["event_cell_evaluations"]=m.get("event_cell_evaluations",0)
         base=a["base_load"];seed=a["seed"];history=tuple(map(tuple,a["history"]))
         amplitude=float(history[-1][1] if history else seed[1])
+        cyclic_seed_factor=float(a["cyclic_seed_factor"][0]) if distributing and owner._distributing_cyclic else None
     if any(float(x)==float(y) for x,y in zip((driver._state.q[dof],)+targets,targets)):
         raise ValueError("displacement targets must change")
     for target in targets:
@@ -204,6 +221,8 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
         arrays.update(shell_anchors=anchors,shell_frames=physical_frames(state.q[:owner._shell_count],anchors),
             base_load=base,load_direction=direction,applied_load=base+trial.amplitude*direction,
             seed=seed,history=np.asarray(next_history))
+        if cyclic_seed_factor is not None:
+            arrays["cyclic_seed_factor"]=np.asarray([cyclic_seed_factor])
         if native:
             from ._stiffened_shell_beam_history import arrays as native_arrays
             arrays.update(native_arrays(owner._beam_parts,trial.evaluation[5],"beam"))

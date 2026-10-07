@@ -98,12 +98,16 @@ def correct(driver, *, base_load, load_direction, amplitude, control_dof,
     """
     from ._stiffened_shell_ge_finite_experimental import _RotationStepTooLarge
     from ._stiffened_shell_bl5_local_experimental import BL5TrialDomainError
+    from ._stiffened_shell_distributing_pose import DistributingPoseDomainError
     owner=driver.owner
     from ._stiffened_shell_branch_event_trial import POLICY as EVENT_POLICY
     if trial_policy not in (None,EVENT_POLICY):
         raise ValueError("explicit supported private displacement trial policy required")
     from ._stiffened_shell_affine_endpoint import uses_native_material_history
     native=uses_native_material_history(owner)
+    distributing=getattr(owner,"_finite_distributing",False)
+    if distributing and trial_policy is not None:
+        raise ValueError("finite distributing displacement excludes branch event policy")
     from ._stiffened_shell_affine_endpoint import require_native_displacement_policy
     require_native_displacement_policy(owner,driver)
     if native and trial_policy is not None:
@@ -112,7 +116,7 @@ def correct(driver, *, base_load, load_direction, amplitude, control_dof,
         from ._stiffened_shell_displacement_adaptive import require_native_seed
         require_native_seed(owner,driver)
     if driver._accepted is None or not (
-            owner._bl5_shell_material or getattr(owner,"_curved_material",False) or native):
+            owner._bl5_shell_material or getattr(owner,"_curved_material",False) or native or distributing):
         raise ValueError("accepted coupled-J2 BL5 predecessor required")
     n=owner._K.shape[0];size=n+len(driver._state.multipliers)
     nodal=owner._shell_count+6*len(owner._beam_ids)
@@ -192,7 +196,7 @@ def correct(driver, *, base_load, load_direction, amplitude, control_dof,
             value=amplitude+delta
             changed=evaluate(candidate,value)
             state,amplitude,evaluation=candidate,value,changed
-        except (_RotationStepTooLarge,BL5TrialDomainError) as error:
+        except (_RotationStepTooLarge,BL5TrialDomainError,DistributingPoseDomainError) as error:
             raise failure("displacement predictor outside domain",0) from error
     for iteration in range(max_iterations+1):
         control_gap=state.q[control_dof]-target
@@ -238,7 +242,7 @@ def correct(driver, *, base_load, load_direction, amplitude, control_dof,
                 candidate=driver._advance(state,step,amount)
                 value=amplitude+amount*delta
                 changed=evaluate(candidate,value)
-            except (_RotationStepTooLarge,BL5TrialDomainError):
+            except (_RotationStepTooLarge,BL5TrialDomainError,DistributingPoseDomainError):
                 rejected+=1;continue
             if merit(candidate,changed)<old:
                 state,amplitude,evaluation=candidate,value,changed

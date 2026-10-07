@@ -31,7 +31,7 @@ def is_native_point_material(owner):
 
 def uses_native_material_history(owner):
     """Native station histories, without broadening POINT profile admission."""
-    return is_native_point_material(owner) or bool(getattr(owner,"_bl5_native_material",False))
+    return is_native_point_material(owner) or bool(getattr(owner,"_bl5_native_material",False)) or bool(getattr(owner,"_distributing_native",False))
 
 
 def is_native_material_bl5_arc(owner):
@@ -59,7 +59,7 @@ def has_native_s3_material(owner):
 
 def has_shell_material(owner):
     """Only admitted algorithmic shell histories belong in affine endpoints."""
-    return owner._bl5_shell_material or (uses_native_material_history(owner) and
+    return owner._bl5_shell_material or bool(getattr(owner,"_distributing_shell_material",False)) or (uses_native_material_history(owner) and
         owner._definition.shell.j2_curve is not None) or (
         getattr(owner, "_curved_material", False)
         and owner._definition.shell.j2_curve is not None)
@@ -67,7 +67,7 @@ def has_shell_material(owner):
 
 def validate_arrays(owner,a,*,native_chart=False):
     """Replay decoded fixed-affine translation arrays in isolated mechanics."""
-    if not (owner._bl5_shell_material or getattr(owner,"_curved_reference",False) or uses_native_material_history(owner)):
+    if not (owner._bl5_shell_material or getattr(owner,"_curved_reference",False) or uses_native_material_history(owner) or getattr(owner,"_finite_distributing",False)):
         raise ValueError("bounded coupled affine endpoint required")
     prepared=copy(owner);prepared._commit_lock=RLock();prepared._writing=False
     prepared._finite_driver=None;prepared._accepted=None
@@ -84,7 +84,16 @@ def validate_arrays(owner,a,*,native_chart=False):
             raise ValueError("displacement snapshot requires nodal dead translations")
     if not np.any(a["load_direction"][owner._free]):
         raise ValueError("nonzero free displacement load direction required")
+    if (getattr(owner,"_finite_distributing",False) and owner._distributing_cyclic and
+            not np.array_equal(a["load_direction"],owner._cyclic_reference_pattern)):
+        raise ValueError("cyclic distributing displacement requires the model-bound reference load direction")
+    if (getattr(owner,"_finite_distributing",False) and owner._distributing_cyclic and
+            not np.array_equal(a["base_load"],float(a["cyclic_seed_factor"][0])*owner._cyclic_reference_pattern)):
+        raise ValueError("cyclic distributing displacement base must match its stored seed force factor")
     anchors=owned_anchors(a["shell_anchors"],len(owner._shell_ids))
+    if getattr(owner,"_finite_distributing",False) and (native_chart or not np.array_equal(
+            anchors,np.tile(np.eye(3),(len(owner._shell_ids),1,1)))):
+        raise ValueError("finite distributing displacement excludes rebased shell charts")
     if uses_native_material_history(owner) and not native_chart and not np.array_equal(
             anchors,np.tile(np.eye(3),(len(owner._shell_ids),1,1))):
         raise ValueError("native point displacement excludes rebased shell charts")
@@ -125,7 +134,11 @@ def validate_arrays(owner,a,*,native_chart=False):
     else:
         beam_parent=_material_histories(prepared,a["beam_origin_plastic"],a["beam_origin_accumulated"])
         # Validate accepted beam history admissibility before replay comparison.
-        _material_histories(prepared,a["beam_plastic"],a["beam_accumulated"])
+        beam_accepted=_material_histories(prepared,a["beam_plastic"],a["beam_accumulated"])
+        if getattr(owner,"_finite_distributing",False) and not owner._distributing_material:
+            from ._stiffened_shell_ge_finite_experimental import _require_elastic_footprint_histories
+            _require_elastic_footprint_histories(beam_parent,"displacement predecessor",scope="finite distributing footprints")
+            _require_elastic_footprint_histories(beam_accepted,"displacement accepted",scope="finite distributing footprints")
     state=_State(q,_owned(a["frames"]),_owned(a["cells"]),
                  _owned(a["resultants"]),_owned(a["multipliers"]),anchors)
     evaluation=driver._assemble(state,0.,shell_parent,beam_parent,applied_load=a["applied_load"])

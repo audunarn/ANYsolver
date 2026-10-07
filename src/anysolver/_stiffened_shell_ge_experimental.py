@@ -1066,7 +1066,9 @@ class ExperimentalGEAnalysis:
                     distributing_footprint_law=DISTRIBUTING_FINITE_LAW,
                     material_policy=self._definition.finite_distributing_material_policy,
                     shell_rotation_numerics="GE_BEAM3_G3C_ISOLATED_SO3_NUMERICS_V1",
-                    analysis=("nonlinear_force",), loads=("nodal dead translation forces",),
+                    analysis=("nonlinear_force", "experimental_fixed_displacement"), loads=("nodal dead translation forces",),
+                    displacement_control="fixed signed physical translational targets from accepted fixed-force seed",
+                    displacement_checkpoint="finite_distributing_displacement",
                     fixed_step_max_backtracks=16,
                     increment_control=(("fixed",) if self._distributing_cyclic else
                         ("fixed", "experimental_adaptive_halving")),
@@ -1077,9 +1079,9 @@ class ExperimentalGEAnalysis:
                         "strictly increasing positive force factors"),
                     zero_load_normalization=("immutable unit-factor reference pattern" if self._distributing_cyclic else
                         "actual applied force"),
-                    checkpoints=(self._distributing_checkpoint_kind,),
+                    checkpoints=(self._distributing_checkpoint_kind, "finite_distributing_displacement"),
                     recovery="accepted constitutive states and evaluated spatial connection actions",
-                    excluded=("reference-linear solve", "chart rebase", "displacement/arc controllers",
+                    excluded=("reference-linear solve", "chart rebase", "adaptive/event displacement", "arc controllers",
                         "external/staged loads") + (() if self._distributing_native else ("physical fibres",)) +
                         ("S3", "modes", "buckling", "qualified distributing footprint"))
             return dict(profile=PROFILE, status="EXPERIMENTAL_NOT_QUALIFIED",
@@ -1087,13 +1089,15 @@ class ExperimentalGEAnalysis:
                 beam_section_families=self._beam_families,
                 attachment=("objective finite area-mean/director/projected-polar distributing pose",),
                 distributing_footprint_law=DISTRIBUTING_FINITE_LAW,
-                analysis=("nonlinear_force",), loads=("nodal dead translation forces",),
+                analysis=("nonlinear_force", "experimental_fixed_displacement"), loads=("nodal dead translation forces",),
+                displacement_control="fixed signed physical translational targets from accepted fixed-force seed",
+                displacement_checkpoint="finite_distributing_displacement",
                 increment_control=("fixed", "experimental_adaptive_halving"),
                 adaptive_max_backtracks=12,
                 adaptive_targets="strictly increasing positive force factors",
-                checkpoints=("finite_distributing",),
+                checkpoints=("finite_distributing", "finite_distributing_displacement"),
                 recovery="cached evaluated exerted spatial actions at current physical origins",
-                excluded=("reference-linear solve", "chart rebase", "displacement/arc controllers",
+                excluded=("reference-linear solve", "chart rebase", "adaptive/event displacement", "arc controllers",
                     "external/staged loads", "material yielding", "modes", "buckling", "qualified distributing footprint"))
         if self._distributing_reference:
             return dict(profile=PROFILE, status="EXPERIMENTAL_NOT_QUALIFIED",
@@ -1557,8 +1561,8 @@ class ExperimentalGEAnalysis:
         if self._finite_distributing:
             if self._distributing_cyclic and increment_control is not None:
                 raise ValueError("cyclic distributing material histories admit fixed increments only")
-            if displacement_control is not None:
-                raise ValueError("finite distributing footprints do not yet admit displacement control")
+            if displacement_control is not None and increment_control is not None:
+                raise ValueError("finite distributing displacement excludes adaptive control")
             if type(actions) is not tuple or any(type(a) is not NodalAction for a in actions):
                 raise ValueError("finite distributing footprints admit nodal translation forces only")
         from ._stiffened_shell_staged_load_experimental import StagedDeadLoadProgramme
@@ -1654,7 +1658,7 @@ class ExperimentalGEAnalysis:
     def checkpoint(self) -> bytes:
         self._require_open()
         if self._finite_distributing and any(getattr(self, name, None) is not None for name in
-                ("_arc_snapshot", "_displacement_adaptive", "_displacement_snapshot", "_external_context")):
+                ("_arc_snapshot", "_displacement_adaptive", "_external_context")):
             raise ValueError("finite distributing checkpoint excludes wrapper/controller state")
         if getattr(self,"_arc_snapshot",None) is not None:
             return self._arc_snapshot[0]
@@ -1718,7 +1722,8 @@ class ExperimentalGEAnalysis:
             raise RuntimeError("restore requires a fresh experimental GE analysis")
         if type(raw) is not bytes:
             raise ValueError("bounded mixed linear checkpoint required")
-        if self._finite_distributing and not raw.startswith((BINARY_CHECKPOINT_MAGIC, INCREMENT_CONTROL_MAGIC)):
+        from ._stiffened_shell_displacement_checkpoint import MAGIC as DISPLACEMENT_MAGIC
+        if self._finite_distributing and not raw.startswith((BINARY_CHECKPOINT_MAGIC, INCREMENT_CONTROL_MAGIC, DISPLACEMENT_MAGIC)):
             raise ValueError("finite distributing checkpoints require dedicated binary state or adaptive envelope")
         self._require_distributing_linear_checkpoint(raw)
         from ._stiffened_shell_arc_checkpoint import MAGIC as ARC_MAGIC
