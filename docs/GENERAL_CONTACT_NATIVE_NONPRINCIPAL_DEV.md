@@ -1,8 +1,10 @@
 # Genuine nonprincipal native dynamics DEVELOPMENT candidate
 
-**Executed development candidate; strict total angular momentum NONPASS.**
-Local mechanics, exact restart and actual CLI checks passed; the fixed coarse
-and fine trajectories failed the retained normalized totalH1e-6 criterion.
+**TESTED DEVELOPMENT at16dt1/256; retained4/8 totalH NONPASS.**
+The corrective16 trajectory passed the unchanged normalized totalH1e-6 and
+complete development gates through actual public8+8 segments. Local mechanics,
+the prior exact4=2+2 restart and actual CLI checks passed. The original coarse
+and fine trajectories remain NONPASS against totalH1e-6.
 This candidate uses the existing public
 single-native `solve_transient` and `TransientConfig`. No production module,
 profile, defaults, controller, load admission or checkpoint schema changed.
@@ -139,7 +141,8 @@ with exact public result dictionaries and capsule bytes, not displacement only.
 capsules; ordinary pytest needs no environment path.
 Completed public results/capsules are saved before independent-reference work
 or scientific assertions, preserving them if a later check raises. The CLI
-limits dt to1/64 or1/128 and the horizon to1/16s, emits a status record, and
+limits dt to1/64,1/128 or the explicit corrective1/256 and the horizon to1/16s,
+emits a status record, and
 returns a nonzero exit on a solver non-success.
 
 The original unexecuted preparation recommended a separately
@@ -203,6 +206,72 @@ meet their respective targets, but later temporal assertions were not reached
 because the strictH assertion failed first. Both scientific tests remain FAIL.
 No automatic refinement, altered physics/profile/default, scientific acceptance
 or release is inferred. The next method decision belongs to the lead.
+
+## One temporal correction V4
+
+Following the measured finite-SO3 defect and approximately second-order H
+reduction, the lead adopted one same-model, same-horizon correction:16 steps
+at dt1/256, executed as an actual public prefix8 and checkpoint-resumed8. This
+was prospectively source-bound and then executed as exactly two approved jobs.
+The4/8 NONPASS fixtures and their original test meanings remain unchanged.
+The example adds only this explicit timestep/count inventory; its default
+request remains4dt1/64. No product/method/physics/default law was altered.
+
+Prepared selectors are test_public_nonprincipal_corrective_prefix_eight and
+test_public_nonprincipal_corrective_resumed_sixteen. The prefix tests full state,
+equilibrium, accounting, strictP/H, energy, impulse and authentic capture
+integrity at its half horizon. Full-horizon excitation floors apply to completed
+16, including angle.2, relative angle.01 and accumulated commutator1e-5;
+the half-horizon prefix is not reported as complete-fixture qualification.
+Completed16 also must improve the measured8-step response and energy while
+retaining every original meaningful gate. No expected-failure masking is used.
+
+The original saved8-step record includes response/convergence metrics but not
+full ODE state rows. The first segment regenerates only the unchanged128
+subdivision ODE states once, reuses the bound64/128 convergence evidence, and
+saves those states with its prefix. The second segment reuses that saved
+reference and authentic prefix capture records; it does not repeat the4/8
+native trajectories, the64 reference, local work or CLI checks. Ordinary tests
+remain fresh and self-contained unless explicitly supplied authenticated saved
+records. Deserialized ODE rows convert to arrays at the reference boundary.
+
+Each segment is initially capped55s, inside the remaining120.8501862998819s
+of the existing240s allowance, with at least10.8501862998819s held reserve.
+Every previous charge is retained. Source/runner/manifests require exact review
+and binding before launch. After a terminal prefix PASS, its result, capsule,
+producer inputs/resource/runtime/imports are immutably bound before the second
+segment. Captured stage increments/dt/epoch/material/predecessor and preserved
+prefix journals prove the actual8+8 chain; no separate fresh16 equality run is
+claimed. A failure or timeout remains evidence and authorizes no automatic
+repeat, finer inventory or allowance renewal.
+
+The prefix8 passed in44.87309310003184 process-wall seconds; the resumed8
+completed16 and passed every final assertion in38.87476909998804s. All seven
+terminal attempts now sum202.89767590013798s of240, leaving37.10232409986202s;
+the held10.8501862998819s reserve was retained. No timeout, memory refusal,
+guard refusal, additional fixture or numerical process is pending.
+
+At full16, normalized totalH is5.108152488863217e-7 against1e-6;P is
+3.607856700170062e-17. Complete state/equilibrium-accounting maxima are
+3.312599237060881e-13/2.8573269290198036e-13. Exact finite-SO3 impulse errors
+are2.1276671813119586e-16 per stage and3.4422005628812953e-16 cumulatively.
+Response maximum0.00012603624368333867 improves the saved8 maximum
+0.0005022594954832697; energy drift4.5115691231816134e-5 improves
+0.0001803555517275904. All exposure floors pass, including angle.327565,
+relative angle.194491,commutator.0746713 and nonzero strain/gyro work.
+
+All16 genuine accepted stage captures bind the public journal and source.
+Prefix genesis, first8 step/output dictionaries and restored predecessor are
+preserved exactly;8 resumed captures have no overlap with the first8. Prefix
+capsuleSHAc56142aa416b7abbbc949843b70a9e3e25e1d7d18710d0ea534452a6a819e889
+and finalSHA daf10a3cfacdf439b8beb63635bc4b98a6c201e545d5e5840fc79bf147de1ced
+are recorded with the immutable prefix binding. This establishes the actual8+8
+chain, without claiming a separate fresh16 equality run. Both jobs recorded196
+matching private imports, JITdisabled,Numba1,pools1 and no runtime/import errors.
+Raw directories are nonprincipal_corrective_prefix_v4 and
+nonprincipal_corrective_resumed_v4; frozen source/manifests and prior failures
+remain preserved. This is bounded development evidence, with engineering
+acceptance, widerC7 admission and release still open.
 
 Remaining C7 obligations include general sections, connected/nonprincipal
 multi-element deformation, nonzero lifts/eccentricity, load/contact coupling,

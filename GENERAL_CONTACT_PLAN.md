@@ -7,14 +7,16 @@ are historical evidence, not renewed or additional execution authority.
 
 The separately opted-in equilibrated V20 slice is implemented and tested below.
 
-Next bounded C7 action: one prospective16-step dt1/256 refinement of the same
-nonprincipal model/horizon, prepared as checkpointed8+8 segments. Measured4/8-step
-angular errors exceed strictH1e-6 but improve by3.9878; exact impulse accounting
-separates method time error from local equilibrium. Mechanics/restart/CLI checks
-pass; historical trajectory failures remain NONPASS. Preserve all gates and bind
-new inputs/resource caps before execution. Reuse unaffected saved evidence and
-the verified private package. No automatic further refinement or new integrator.
-[Measured development and remaining scope](docs/d1_review_support/contact_native_nonprincipal_20261006/nonprincipal_development.md).
+The bounded nonprincipal C7 development check is closed at16dt1/256: strictH
+5.108152488863217e-7, complete mechanics/accounting and authenticated8+8 chain
+PASS. Product unchanged;4/8 NONPASS and all failed evidence preserved. No further
+time refinement, fixture repeat or build is needed. Reuse this trajectory substrate
+for remaining native qualification and common-stage contact integration; C7
+spatial/section admission and independent acceptance still precede C8 promotion.
+Choose the next coherent source slice from those open rows; this result grants
+no new fixture execution authority or blanket native admission.202.89767590013798
+of240s consumed,37.10232409986202s remains only in the resolved nonprincipal scope.
+[Measured development outcome](docs/d1_review_support/contact_native_nonprincipal_20261006/nonprincipal_corrective_development.md).
 
 ## Current delivered development
 

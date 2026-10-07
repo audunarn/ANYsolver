@@ -1,6 +1,6 @@
 # General contact - restart (7 October 2026)
 
-## Goal, ownership and current outcome
+## Objective and ownership
 
 FullC0-C9 ACTIVE/incomplete: [goal](GENERAL_CONTACT_GOAL.md),
 [plan](GENERAL_CONTACT_PLAN.md), [ledger](docs/GENERAL_CONTACT_CAPABILITIES.md).
@@ -8,35 +8,34 @@ Only C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001, branch
 codex/contact-main-reconcile-20261001. Product e166100c unchanged. Protected
 original inaccessible; no siblings/other chats/publication/merge/release/default
 changes. Local checkpoints authorized. Ledger ASCII append only. Mistral/local
-cached unavailable; same OpenAI author retained, separate supporting reviewer.
-Same-family review does not establish independent engineering acceptance.
+cached unavailable; same-family supporting reviews are not independent acceptance.
 
-Native nonprincipal V3b: TESTED DEVELOPMENT NONPASS strictH. Independent local
-work/tangent/inertia, exact full4=fresh2+2 restart and actualCLI4 PASS. Registered
-4dt1/64 and8dt1/128 trajectories FAIL totalH1e-6:8.141714e-6 /2.041661e-6.
-Exact finiteSO3 impulse accounting and3.9878 refinement ratio identify time error.
-Response/energy inequalities supported by saved metrics; later pytest assertions
-unreached. Preserve V2 KeyError stage and all4/8 failed evidence.
-[Disposition](docs/d1_review_support/contact_native_nonprincipal_20261006/nonprincipal_development.md).
+## Current integrated outcome and next action
 
-## Next authorized action and exact resource state
+Native nonprincipal corrective16 atdt1/256 PASS: strictH5.108152488863217e-7,
+full physical/algebraic state3.3126e-13/equilibrium2.8573e-13, response.0126036%,
+energy defect.00451157%, exact impulse accounting. Actual public8+8 prefix/genesis/
+journal/output/predecessor consistency,16 authentic stages PASS. No fresh16 equality
+run claimed; unchanged earlier full4=fresh2+2 evidence reused. Original4/8 strictH
+NONPASS and V2 KeyError stage remain. Product/defaults/gates unchanged.
+[Evidence](docs/d1_review_support/contact_native_nonprincipal_20261006/nonprincipal_corrective_development.md).
 
-User granted240s C7_NATIVE_NONPRINCIPAL_DEV; five terminal attempts consumed
-119.1498137001181s, leaving120.8501862998819s only in this scope. Peak171405312B.
-Raw C:/ANYworkspaceWork/contact_native_nonprincipal_20261006 retains authority,
-original/revised held manifests, unique process/resource/runtime/import records,
-failures, source snapshots and lead_numerical_disposition_v3b.json. No live
-numerical job. Do not reset/borrow or rerun unaffected passed checks/builds.
+Seven terminal jobs consumed202.89767590013798/240s C7_NATIVE_NONPRINCIPAL_DEV;
+37.10232409986202s remains ONLY in this scope. No live job or further optional
+repeat/refinement/build. Peak173232128B;196 verified private imports/run,
+JITdisabled/Numba1/pools1. All550 product payloads/six metadata match private
+wheel6074e261ba7287b244b7b6f1cc15e81fe909a49702d128d0160847a58ed212cc.
+Raw C:/ANYworkspaceWork/contact_native_nonprincipal_20261006 binds original and
+revised authorities, exact source snapshots/manifests/runner/adoption, immutable
+prefix binding and complete process/runtime/import/failure evidence. Source held
+for execution differs only from post-execution documentation; use exact hashes.
 
-Prepare ONE prospective16-step dt1/256 same-model/horizon correction using two
-checkpointed8-step segments. Source preparation only until exact revised inputs,
-gates/provenance and cumulative allowance are bound and reviewed; initially55s
-per job, retaining>=10.85s reserve. Existing strictH1e-6 and all scientific gates
-unchanged; no assumedPASS, automatic further refinement or method/default change.
-native_nonprincipal_author owns connected source/harness repair; lead owns
-contracts, evidence integration and disposition. All550 product payloads/six
-metadata match private wheel6074e261ba7287b244b7b6f1cc15e81fe909a49702d128d0160847a58ed212cc.
-Use held runner/revision only; one job,<=60s/job,953MiB, JITdisabled/Numba1/pools1.
+Next: select a coherent remaining C7 spatial/section or C8 common-stage contact
+source slice using current contracts and ledger. Reuse resolved mechanics and
+state evidence. Full native admission/independent acceptance remains open; C7
+qualification precedes C8 promotion. No new numerical fixture allowance follows
+from this result; never borrow/reset consumed scopes. Author and reviewer finished
+this bounded slice; no active numerical ownership remains.
 
 ## Completed evidence and protected balances
 

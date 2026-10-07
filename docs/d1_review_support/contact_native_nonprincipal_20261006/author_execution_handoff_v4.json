@@ -1,0 +1,493 @@
+{
+  "status": "TESTED_DEVELOPMENT_CORRECTIVE16_PASS; ORIGINAL4_8_NONPASS_RETAINED",
+  "jobs": [
+    {
+      "tag": "nonprincipal_local_coarse_v2",
+      "resource": {
+        "status": "completed",
+        "exit_code": 1,
+        "elapsed_s": 29.178968400112353,
+        "peak_tree_bytes": 169783296,
+        "cap_s": 60.0,
+        "spent_before_s": 0,
+        "total_spent_s": 29.178968400112353
+      },
+      "command": [
+        "C:\\Python\\Python314\\python.exe",
+        "-X",
+        "utf8",
+        "-c",
+        "import sys,os,json,hashlib\nfrom pathlib import Path\nimport anysolver, pytest\ntry:\n class CaseRecord:\n  def pytest_runtest_logreport(self, report):\n   directory=Path(os.environ['C7_CASES']);directory.mkdir(exist_ok=True)\n   key=hashlib.sha256((report.nodeid+report.when).encode()).hexdigest()[:20]\n   row={'nodeid':report.nodeid,'phase':report.when,'outcome':report.outcome,'pytest_duration_s':report.duration,'failure':str(report.longrepr) if report.failed else None}\n   (directory/(key+'.json')).write_text(json.dumps(row,indent=2))\n rc=pytest.main(sys.argv[1:],plugins=[CaseRecord()])\nfinally:\n rows={n:{'path':str(Path(m.__file__).resolve()),'sha256':hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()} for n,m in list(sys.modules.items()) if (n=='anysolver' or n.startswith('anysolver.')) and getattr(m,'__file__',None)}\n errors=[n for n,r in rows.items() if not Path(r['path']).is_relative_to(Path(os.environ['C7_EXPECTED_ROOT']))]\n Path(os.environ['C7_IMPORTS']).write_text(json.dumps({'modules':rows,'errors':errors},indent=2))\nraise SystemExit(rc or bool(errors))\n",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "-p",
+        "scripts.development_test_runtime",
+        "--durations=3",
+        "--basetemp=C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_local_coarse_v2\\temp",
+        "tests/test_ge_beam3_native_nonprincipal.py::test_nonprincipal_closed_spatial_work_inertia_and_geodesic_trace",
+        "tests/test_ge_beam3_native_nonprincipal.py::test_public_nonprincipal_nonlinear_midpoint_and_finite_angle",
+        "-o",
+        "pythonpath="
+      ],
+      "input_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_local_coarse_v2\\inputs.json",
+      "runtime_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_local_coarse_v2\\runtime.json",
+      "imports_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_local_coarse_v2\\imports.json",
+      "log_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_local_coarse_v2\\run.log",
+      "runtime": {
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "errors": []
+      },
+      "import_count": 196,
+      "import_errors": []
+    },
+    {
+      "tag": "nonprincipal_coarse_replay_v3b",
+      "resource": {
+        "status": "completed",
+        "exit_code": 1,
+        "elapsed_s": 5.143309099948965,
+        "peak_tree_bytes": 171102208,
+        "cap_s": 60.0,
+        "spent_before_s": 29.178968400112353,
+        "total_spent_s": 34.32227750006132
+      },
+      "command": [
+        "C:\\Python\\Python314\\python.exe",
+        "-X",
+        "utf8",
+        "-c",
+        "import sys,os,json,hashlib\nfrom pathlib import Path\nimport anysolver, pytest\ntry:\n class CaseRecord:\n  def pytest_runtest_logreport(self, report):\n   directory=Path(os.environ['C7_CASES']);directory.mkdir(exist_ok=True)\n   key=hashlib.sha256((report.nodeid+report.when).encode()).hexdigest()[:20]\n   row={'nodeid':report.nodeid,'phase':report.when,'outcome':report.outcome,'pytest_duration_s':report.duration,'failure':str(report.longrepr) if report.failed else None}\n   (directory/(key+'.json')).write_text(json.dumps(row,indent=2))\n rc=pytest.main(sys.argv[1:],plugins=[CaseRecord()])\nfinally:\n rows={n:{'path':str(Path(m.__file__).resolve()),'sha256':hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()} for n,m in list(sys.modules.items()) if (n=='anysolver' or n.startswith('anysolver.')) and getattr(m,'__file__',None)}\n errors=[n for n,r in rows.items() if not Path(r['path']).is_relative_to(Path(os.environ['C7_EXPECTED_ROOT']))]\n Path(os.environ['C7_IMPORTS']).write_text(json.dumps({'modules':rows,'errors':errors},indent=2))\nraise SystemExit(rc or bool(errors))\n",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "-p",
+        "scripts.development_test_runtime",
+        "--durations=3",
+        "--basetemp=C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_coarse_replay_v3b\\temp",
+        "tests/test_ge_beam3_native_nonprincipal.py::test_public_nonprincipal_nonlinear_midpoint_and_finite_angle",
+        "-o",
+        "pythonpath="
+      ],
+      "input_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_coarse_replay_v3b\\inputs.json",
+      "runtime_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_coarse_replay_v3b\\runtime.json",
+      "imports_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_coarse_replay_v3b\\imports.json",
+      "log_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_coarse_replay_v3b\\run.log",
+      "runtime": {
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "errors": []
+      },
+      "import_count": 196,
+      "import_errors": []
+    },
+    {
+      "tag": "nonprincipal_temporal_v3b",
+      "resource": {
+        "status": "completed",
+        "exit_code": 1,
+        "elapsed_s": 39.95086780004203,
+        "peak_tree_bytes": 171397120,
+        "cap_s": 60.0,
+        "spent_before_s": 34.32227750006132,
+        "total_spent_s": 74.27314530010335
+      },
+      "command": [
+        "C:\\Python\\Python314\\python.exe",
+        "-X",
+        "utf8",
+        "-c",
+        "import sys,os,json,hashlib\nfrom pathlib import Path\nimport anysolver, pytest\ntry:\n class CaseRecord:\n  def pytest_runtest_logreport(self, report):\n   directory=Path(os.environ['C7_CASES']);directory.mkdir(exist_ok=True)\n   key=hashlib.sha256((report.nodeid+report.when).encode()).hexdigest()[:20]\n   row={'nodeid':report.nodeid,'phase':report.when,'outcome':report.outcome,'pytest_duration_s':report.duration,'failure':str(report.longrepr) if report.failed else None}\n   (directory/(key+'.json')).write_text(json.dumps(row,indent=2))\n rc=pytest.main(sys.argv[1:],plugins=[CaseRecord()])\nfinally:\n rows={n:{'path':str(Path(m.__file__).resolve()),'sha256':hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()} for n,m in list(sys.modules.items()) if (n=='anysolver' or n.startswith('anysolver.')) and getattr(m,'__file__',None)}\n errors=[n for n,r in rows.items() if not Path(r['path']).is_relative_to(Path(os.environ['C7_EXPECTED_ROOT']))]\n Path(os.environ['C7_IMPORTS']).write_text(json.dumps({'modules':rows,'errors':errors},indent=2))\nraise SystemExit(rc or bool(errors))\n",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "-p",
+        "scripts.development_test_runtime",
+        "--durations=3",
+        "--basetemp=C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_temporal_v3b\\temp",
+        "tests/test_ge_beam3_native_nonprincipal.py::test_public_nonprincipal_temporal_reference_and_refinement",
+        "-o",
+        "pythonpath="
+      ],
+      "input_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_temporal_v3b\\inputs.json",
+      "runtime_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_temporal_v3b\\runtime.json",
+      "imports_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_temporal_v3b\\imports.json",
+      "log_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_temporal_v3b\\run.log",
+      "runtime": {
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "errors": []
+      },
+      "import_count": 196,
+      "import_errors": []
+    },
+    {
+      "tag": "nonprincipal_restart_v3b",
+      "resource": {
+        "status": "completed",
+        "exit_code": 0,
+        "elapsed_s": 24.747751099988818,
+        "peak_tree_bytes": 171405312,
+        "cap_s": 60.0,
+        "spent_before_s": 74.27314530010335,
+        "total_spent_s": 99.02089640009217
+      },
+      "command": [
+        "C:\\Python\\Python314\\python.exe",
+        "-X",
+        "utf8",
+        "-c",
+        "import sys,os,json,hashlib\nfrom pathlib import Path\nimport anysolver, pytest\ntry:\n class CaseRecord:\n  def pytest_runtest_logreport(self, report):\n   directory=Path(os.environ['C7_CASES']);directory.mkdir(exist_ok=True)\n   key=hashlib.sha256((report.nodeid+report.when).encode()).hexdigest()[:20]\n   row={'nodeid':report.nodeid,'phase':report.when,'outcome':report.outcome,'pytest_duration_s':report.duration,'failure':str(report.longrepr) if report.failed else None}\n   (directory/(key+'.json')).write_text(json.dumps(row,indent=2))\n rc=pytest.main(sys.argv[1:],plugins=[CaseRecord()])\nfinally:\n rows={n:{'path':str(Path(m.__file__).resolve()),'sha256':hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()} for n,m in list(sys.modules.items()) if (n=='anysolver' or n.startswith('anysolver.')) and getattr(m,'__file__',None)}\n errors=[n for n,r in rows.items() if not Path(r['path']).is_relative_to(Path(os.environ['C7_EXPECTED_ROOT']))]\n Path(os.environ['C7_IMPORTS']).write_text(json.dumps({'modules':rows,'errors':errors},indent=2))\nraise SystemExit(rc or bool(errors))\n",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "-p",
+        "scripts.development_test_runtime",
+        "--durations=3",
+        "--basetemp=C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_restart_v3b\\temp",
+        "tests/test_ge_beam3_native_nonprincipal.py::test_public_nonprincipal_fresh_four_equals_two_plus_two",
+        "-o",
+        "pythonpath="
+      ],
+      "input_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_restart_v3b\\inputs.json",
+      "runtime_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_restart_v3b\\runtime.json",
+      "imports_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_restart_v3b\\imports.json",
+      "log_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_restart_v3b\\run.log",
+      "runtime": {
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "errors": []
+      },
+      "import_count": 196,
+      "import_errors": []
+    },
+    {
+      "tag": "nonprincipal_cli_v3b",
+      "resource": {
+        "status": "completed",
+        "exit_code": 0,
+        "elapsed_s": 20.128917300025932,
+        "peak_tree_bytes": 151244800,
+        "cap_s": 40.0,
+        "spent_before_s": 99.02089640009217,
+        "total_spent_s": 119.1498137001181
+      },
+      "command": [
+        "C:\\Python\\Python314\\python.exe",
+        "-X",
+        "utf8",
+        "-c",
+        "import os,runpy,json,sys,hashlib\nfrom pathlib import Path\nfrom threadpoolctl import threadpool_limits,threadpool_info\nimport numba\nnumba.set_num_threads(1)\nwith threadpool_limits(limits=1):\n try:\n  runpy.run_module('examples.native_nonprincipal_dev',run_name='__main__')\n finally:\n  rows={n:{'path':str(Path(m.__file__).resolve()),'sha256':hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()} for n,m in list(sys.modules.items()) if (n=='anysolver' or n.startswith('anysolver.')) and getattr(m,'__file__',None)}\n  errors=[n for n,r in rows.items() if not Path(r['path']).is_relative_to(Path(os.environ['C7_EXPECTED_ROOT']))]\n  pools=threadpool_info()\n  if not numba.config.DISABLE_JIT or numba.get_num_threads()!=1 or any(p['num_threads']!=1 for p in pools):\n   errors.append('effective numerical settings differ from held runtime')\n  Path(os.environ['C7_IMPORTS']).write_text(json.dumps({'modules':rows,'errors':errors},indent=2))\n  Path(os.environ['ANYSOLVER_DEVELOPMENT_RECORD']).write_text(json.dumps({'jit_disabled':bool(numba.config.DISABLE_JIT),'numba_threads':numba.get_num_threads(),'pools':pools,'errors':errors},indent=2))\n if errors:raise SystemExit(1)\n",
+        "--steps",
+        "4"
+      ],
+      "input_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_cli_v3b\\inputs.json",
+      "runtime_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_cli_v3b\\runtime.json",
+      "imports_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_cli_v3b\\imports.json",
+      "log_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_cli_v3b\\run.log",
+      "runtime": {
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1,
+          1
+        ],
+        "errors": []
+      },
+      "import_count": 196,
+      "import_errors": []
+    },
+    {
+      "tag": "nonprincipal_corrective_prefix_v4",
+      "resource": {
+        "status": "completed",
+        "exit_code": 0,
+        "elapsed_s": 44.87309310003184,
+        "peak_tree_bytes": 172503040,
+        "cap_s": 55.0,
+        "spent_before_s": 119.1498137001181,
+        "total_spent_s": 164.02290680014994
+      },
+      "command": [
+        "C:\\Python\\Python314\\python.exe",
+        "-X",
+        "utf8",
+        "-c",
+        "import sys,os,json,hashlib\nfrom pathlib import Path\nimport anysolver, pytest\ntry:\n class CaseRecord:\n  def pytest_runtest_logreport(self, report):\n   directory=Path(os.environ['C7_CASES']);directory.mkdir(exist_ok=True)\n   key=hashlib.sha256((report.nodeid+report.when).encode()).hexdigest()[:20]\n   row={'nodeid':report.nodeid,'phase':report.when,'outcome':report.outcome,'pytest_duration_s':report.duration,'failure':str(report.longrepr) if report.failed else None}\n   (directory/(key+'.json')).write_text(json.dumps(row,indent=2))\n rc=pytest.main(sys.argv[1:],plugins=[CaseRecord()])\nfinally:\n rows={n:{'path':str(Path(m.__file__).resolve()),'sha256':hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()} for n,m in list(sys.modules.items()) if (n=='anysolver' or n.startswith('anysolver.')) and getattr(m,'__file__',None)}\n errors=[n for n,r in rows.items() if not Path(r['path']).is_relative_to(Path(os.environ['C7_EXPECTED_ROOT']))]\n Path(os.environ['C7_IMPORTS']).write_text(json.dumps({'modules':rows,'errors':errors},indent=2))\nraise SystemExit(rc or bool(errors))\n",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "-p",
+        "scripts.development_test_runtime",
+        "--durations=3",
+        "--basetemp=C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_corrective_prefix_v4\\temp",
+        "tests/test_ge_beam3_native_nonprincipal.py::test_public_nonprincipal_corrective_prefix_eight",
+        "-o",
+        "pythonpath="
+      ],
+      "input_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_corrective_prefix_v4\\inputs.json",
+      "runtime_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_corrective_prefix_v4\\runtime.json",
+      "imports_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_corrective_prefix_v4\\imports.json",
+      "log_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_corrective_prefix_v4\\run.log",
+      "runtime": {
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "errors": []
+      },
+      "import_count": 196,
+      "import_errors": []
+    },
+    {
+      "tag": "nonprincipal_corrective_resumed_v4",
+      "resource": {
+        "status": "completed",
+        "exit_code": 0,
+        "elapsed_s": 38.87476909998804,
+        "peak_tree_bytes": 173232128,
+        "cap_s": 55.0,
+        "spent_before_s": 164.02290680014994,
+        "total_spent_s": 202.89767590013798
+      },
+      "command": [
+        "C:\\Python\\Python314\\python.exe",
+        "-X",
+        "utf8",
+        "-c",
+        "import sys,os,json,hashlib\nfrom pathlib import Path\nimport anysolver, pytest\ntry:\n class CaseRecord:\n  def pytest_runtest_logreport(self, report):\n   directory=Path(os.environ['C7_CASES']);directory.mkdir(exist_ok=True)\n   key=hashlib.sha256((report.nodeid+report.when).encode()).hexdigest()[:20]\n   row={'nodeid':report.nodeid,'phase':report.when,'outcome':report.outcome,'pytest_duration_s':report.duration,'failure':str(report.longrepr) if report.failed else None}\n   (directory/(key+'.json')).write_text(json.dumps(row,indent=2))\n rc=pytest.main(sys.argv[1:],plugins=[CaseRecord()])\nfinally:\n rows={n:{'path':str(Path(m.__file__).resolve()),'sha256':hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()} for n,m in list(sys.modules.items()) if (n=='anysolver' or n.startswith('anysolver.')) and getattr(m,'__file__',None)}\n errors=[n for n,r in rows.items() if not Path(r['path']).is_relative_to(Path(os.environ['C7_EXPECTED_ROOT']))]\n Path(os.environ['C7_IMPORTS']).write_text(json.dumps({'modules':rows,'errors':errors},indent=2))\nraise SystemExit(rc or bool(errors))\n",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "-p",
+        "scripts.development_test_runtime",
+        "--durations=3",
+        "--basetemp=C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_corrective_resumed_v4\\temp",
+        "tests/test_ge_beam3_native_nonprincipal.py::test_public_nonprincipal_corrective_resumed_sixteen",
+        "-o",
+        "pythonpath="
+      ],
+      "input_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_corrective_resumed_v4\\inputs.json",
+      "runtime_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_corrective_resumed_v4\\runtime.json",
+      "imports_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_corrective_resumed_v4\\imports.json",
+      "log_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_corrective_resumed_v4\\run.log",
+      "runtime": {
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "errors": []
+      },
+      "import_count": 196,
+      "import_errors": []
+    }
+  ],
+  "total_authorized_s": 240,
+  "total_spent_s": 202.89767590013798,
+  "remaining_s": 37.10232409986202,
+  "guard_attempts": 0,
+  "product_changed": false,
+  "numerical_job_live": false,
+  "additional_runs_planned": false,
+  "source": [
+    {
+      "path": "examples/native_nonprincipal_reference.py",
+      "sha256": "6cd821b3ccc49aa73892b9704e541627511fc25b5c4f9f8fe4688ad96ffb8bfb",
+      "bytes": 9461,
+      "whitespace": "PASS",
+      "EOF": "PASS",
+      "AST": "REUSED_PREPARATION_PASS_UNCHANGED_SHA"
+    },
+    {
+      "path": "examples/native_nonprincipal_dev.py",
+      "sha256": "36a9ea971bb58da46c6fd2ce2fd3a5f343c29e7c997b31a3ec60c5fb1da1f3cc",
+      "bytes": 2412,
+      "whitespace": "PASS",
+      "EOF": "PASS",
+      "AST": "REUSED_PREPARATION_PASS_UNCHANGED_SHA"
+    },
+    {
+      "path": "tests/test_ge_beam3_native_nonprincipal.py",
+      "sha256": "2bef9e7f3152869a0a282c3b3834aa48736d9dea4b954445785e2800867528b1",
+      "bytes": 30057,
+      "whitespace": "PASS",
+      "EOF": "PASS",
+      "AST": "REUSED_PREPARATION_PASS_UNCHANGED_SHA"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_NATIVE_NONPRINCIPAL_DEV.md",
+      "sha256": "b5e37b0adb8b6875d0fa3d928a0851fab2bcdefe05fc40f371341c2b53d63a7d",
+      "bytes": 17530,
+      "whitespace": "PASS",
+      "EOF": "PASS"
+    }
+  ],
+  "final_capsule_sha256": "daf10a3cfacdf439b8beb63635bc4b98a6c201e545d5e5840fc79bf147de1ced",
+  "checkpoint_chain": {
+    "capture_overlap": false,
+    "initial_equal": true,
+    "new_steps": 8,
+    "prefix_capsule_sha256": "c56142aa416b7abbbc949843b70a9e3e25e1d7d18710d0ea534452a6a819e889",
+    "prefix_outputs_equal": true,
+    "prefix_steps": 8,
+    "prefix_steps_equal": true,
+    "restored_predecessor_equal": true
+  },
+  "native_initial_context_sha256": "aecd40468aedb70b4db501706354a25d397cae8c71fb0deb589e6d4d5f1eebc7",
+  "captured_candidates": {
+    "1": {
+      "candidate_sha256": "a027229831b07122b1e58039d71f9c2b8615c9e8c40fd6465fd5c18941c9cd77",
+      "stage_sha256": "2086e1789ba7e3bac3a24eba2d92ef025d9a10f12a96ad5f144781a6dc9dc78f",
+      "predecessor_sha256": "72ccc4d6797217690b53fa88f11a362f3ef51dfd160a8438b80d41a3fcedd34c",
+      "stage_material_sha256": "1f3ab9c347cfbf4edf34b8990987cd8b4368881896b2b34da5da49f2a94e30d7"
+    },
+    "2": {
+      "candidate_sha256": "c81c88ea89817cc45d55caaf26fd34121b2e8f0e682a397a2e7e7d1e54bafcd2",
+      "stage_sha256": "4c4fd8cb3f5ae55d32f48000936c355527c2ac2313c493e2bf9b6efbe1c218c1",
+      "predecessor_sha256": "4eecb0f142c454bc58935fa3ff495afca86786ed3ef585ca9fb29b8a36a9ebb1",
+      "stage_material_sha256": "efcacba68d8b8e8f3ccac96de9e39b7fb7e56169a07f6a750786e18fe866bc43"
+    },
+    "3": {
+      "candidate_sha256": "639e607a34bdfc0494707a7a8f7cb918aa4fb0d0ef5fba8f5268aad0ebdf6826",
+      "stage_sha256": "670f9def6af58a3c4135b3dd40ce50f20872a096e70c2887d8f4a60c432f575f",
+      "predecessor_sha256": "34eeebf0e624a937e627af12b50c0539f2033905d1f13246e7afd62f944c8d97",
+      "stage_material_sha256": "1da4221f4d117f2bac83b2734706b048706370e8e8e76d92f5fda07755129494"
+    },
+    "4": {
+      "candidate_sha256": "4f8920d9226f9fcf3c40f59928f82c7c2a1b10d975ec51062a8f34f29d8dbf04",
+      "stage_sha256": "27dc16631c0a5b17d08baef1ac44d3f43001d91e36c58565a3ecd7bde5d99463",
+      "predecessor_sha256": "0768e2a4071e901ce21558e56fe2f562ca9a7d93fd18da1d5e39c3a4a4374c1e",
+      "stage_material_sha256": "dfaaa98d68c2c1217bdb888e92b53da3e5c1c3fdf8371a9bff6cd8fc39a99c4f"
+    },
+    "5": {
+      "candidate_sha256": "323d6e8799a09579b8ba3eece3e047b22a8ce6a64c6b966c296cf32044302f22",
+      "stage_sha256": "15cabe2811071de8ad01802e9aecc9c205e1b7a752630dc1e47458fb969ec6a5",
+      "predecessor_sha256": "6f391dba6f1226e5b11c518ac4f5358c54643366cbc10d60456b9e52b78ffd42",
+      "stage_material_sha256": "613dd6f9d4be9a6bcb55085a307d0d0b86acd7de1bcba0ec05417e6462cbc38d"
+    },
+    "6": {
+      "candidate_sha256": "c05d3427780f9626d95f12603c9f59591acf6a5ef14eaa0878186629df9cc3f4",
+      "stage_sha256": "fa406f3f397001baf35528009d01c26835de8ba140a2b685356ed057ae11947e",
+      "predecessor_sha256": "47ac7afd49b04389c8269d65c31f104bcb875932474c1dac855a33ae44d609d2",
+      "stage_material_sha256": "d6c7531bf0df76edd01be667d6b65a94402f94d9cbd08038e21509f1ae68ea02"
+    },
+    "7": {
+      "candidate_sha256": "c2b24a033102fecf69bd46c60ad24709fa2adf58d5cceda504183c33b596648f",
+      "stage_sha256": "edc01ebb2a46da3d2a011a897e46baae12539f9ecf09432990ffc4cc683075ba",
+      "predecessor_sha256": "b3f988917de69ed4bb19300f9e5aacea63cadfb0f1ac5716589202db7ad78146",
+      "stage_material_sha256": "e2c3def1e77c63bae79058676d654410e2ed4f9b5bb7b6bbd27125b806ee2a18"
+    },
+    "8": {
+      "candidate_sha256": "86c4753d038db707206fca39eeac20703b13d5acbb254cbd573adc0496aa5e10",
+      "stage_sha256": "a876c29669b10316db4e29e542e31b32bf691d833cc1aa2927b8afc4ff2083a6",
+      "predecessor_sha256": "17d11a723246c8f1f0c3e77f05731b12dd0b8e8c2f7955af523ebf7ca79f46af",
+      "stage_material_sha256": "6f88cf46b89e391c7d607200706648bca98ca96068fbd941ef40ff25f6cc8252"
+    },
+    "9": {
+      "candidate_sha256": "b242b8700b118d16603b4cf7af5eb644b5e8b3e5835989f5de2661de2e2990eb",
+      "stage_sha256": "b563f403a575ecefb2650c3e83d40e74ca27e3bc166f3124041bc2ea06d5d676",
+      "predecessor_sha256": "722c937cae70e7760be0a7053b66ffbfb3f70b428ba95393dd679cc80994e720",
+      "stage_material_sha256": "59bf67fd357598d3a65fbb57b5aade2019bfae4606f829d0942f7bbbae7ee8b2"
+    },
+    "10": {
+      "candidate_sha256": "39fd2d52437b50fd06e269f44c1b77d14b738436ba325ef69242cad53ed43959",
+      "stage_sha256": "da04a79e3a2fb2f9c3d6c320aa6437200459db8f11e7afa2abd82e4376ea6f1f",
+      "predecessor_sha256": "61b3af165ba4133889788f7b1ed1c63a21121b1c933cabc7bae874f78abd602d",
+      "stage_material_sha256": "f3ec5f88232c71e0154633d126463b771e4b06816665f053e59c6fac45518599"
+    },
+    "11": {
+      "candidate_sha256": "7b7232eee52ef86a5fa19750efc51ab13646e800f7cd3b9aadbad43ae5b77f60",
+      "stage_sha256": "01feb474815c1f4650f382cbf7f0b2f2182feeee7fe83bdc2f8d8e75d09af804",
+      "predecessor_sha256": "a165e2e9fe87342988e2b90d5ba27921068a6f90a994f735c68e9e3a3f076f91",
+      "stage_material_sha256": "4716cda6dd6cec34370d11a48fe2e0deb02ddc6668e0d149e87ac45ebaa63900"
+    },
+    "12": {
+      "candidate_sha256": "ac53fdb1267365af7a0b841bb11ec19bf4fe759b0ba947db1ee3becf2bb7f6e4",
+      "stage_sha256": "5afd874e4e0aa292d57b025a1161b6cc0424f36228bb11b692c2401fda32bb03",
+      "predecessor_sha256": "763041f7332f05494fa3b6e9061556cb67b97fffcb780c0466ef17a075fa86b1",
+      "stage_material_sha256": "24ac588a2425018ef72337b98df495c9a0bb84a7f68ecc5d04429e860ce16abd"
+    },
+    "13": {
+      "candidate_sha256": "723dea927fc7a3f3ecafa5c1bb41c69c9005c517ef9a5649096941c4e509404c",
+      "stage_sha256": "4b6567e8f1867fc5dfc139e7462c05f565ec904d1c2e9238f39d525db33c476c",
+      "predecessor_sha256": "5948fcf344df4077e6e148d1584ebdafeaddbab9502cf577d89d448a08eb3b17",
+      "stage_material_sha256": "8b9976b99b672a60d049bee5b9091c766f104f95abbb15eca606258de09ead27"
+    },
+    "14": {
+      "candidate_sha256": "0aa5c5d1755776187bc27d90ad1f749fc7a4193843ad7a1987f68cb550fb49dc",
+      "stage_sha256": "b32918a8ad579f2020499a64b23bcdfecb5b07742700a53fade430f698081652",
+      "predecessor_sha256": "f447a82a1286084d6daee89bd0de18d88cc3b22f7546e15349add32456529e35",
+      "stage_material_sha256": "2d70887a642a822bb91f18df823b40560b7ff321b8a605c8a3a07bbacd5263ba"
+    },
+    "15": {
+      "candidate_sha256": "c31d1bdc99eb6286e00a28a53761c957dfc48086d0d700081040d1639ecb9ac0",
+      "stage_sha256": "3703f1440b0757627befc77c868f020b038564f2c1d4dfa28d68278c5b0dc2b1",
+      "predecessor_sha256": "11ec26cc03baaeb4ba6b9c7ae2c9fda9a2f2634451eb5ba0d7b65854a6be38ab",
+      "stage_material_sha256": "f6e7a2868e2a4d89495ecb883d7c02e6c2787829db44a1f56535c9328d92dea4"
+    },
+    "16": {
+      "candidate_sha256": "698c2638730988d8e27c8e2723a987d4571c8baeb7fb6145605412846c9d21ef",
+      "stage_sha256": "f597073de93530bce46146007d7888ddde625fbc9eea1427e7f5eacda6e10ed4",
+      "predecessor_sha256": "36068894b23f058b71a58bc537c7d3b0800c3f7fbb4acea89c92d3a00d5ebd4f",
+      "stage_material_sha256": "5eb74fb6d052a3f438c6a421f642eaa9e7ec33259fc2a2a4848a08f4d51e653f"
+    }
+  },
+  "final_metrics_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_corrective_resumed_v4\\compact_metrics.json",
+  "prefix_binding_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\corrective_prefix_binding_v4.json",
+  "numerical_execution_source_sha256": [
+    {
+      "path": "examples/native_nonprincipal_reference.py",
+      "sha256": "6cd821b3ccc49aa73892b9704e541627511fc25b5c4f9f8fe4688ad96ffb8bfb",
+      "bytes": 9461,
+      "whitespace": "PASS",
+      "EOF": "PASS",
+      "AST": "PASS_SOURCE_PARSE_ONLY"
+    },
+    {
+      "path": "examples/native_nonprincipal_dev.py",
+      "sha256": "36a9ea971bb58da46c6fd2ce2fd3a5f343c29e7c997b31a3ec60c5fb1da1f3cc",
+      "bytes": 2412,
+      "whitespace": "PASS",
+      "EOF": "PASS",
+      "AST": "PASS_SOURCE_PARSE_ONLY"
+    },
+    {
+      "path": "tests/test_ge_beam3_native_nonprincipal.py",
+      "sha256": "2bef9e7f3152869a0a282c3b3834aa48736d9dea4b954445785e2800867528b1",
+      "bytes": 30057,
+      "whitespace": "PASS",
+      "EOF": "PASS",
+      "AST": "PASS_SOURCE_PARSE_ONLY"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_NATIVE_NONPRINCIPAL_DEV.md",
+      "sha256": "27cdcb207dcc3ab24a414adadb2af0acdeec5421211accf8832285b5401fcdf3",
+      "bytes": 15578,
+      "whitespace": "PASS",
+      "EOF": "PASS"
+    }
+  ],
+  "postexecution_guide_changed": true
+}

@@ -1,4 +1,4 @@
-"""Prospective genuine nonprincipal elastic native checks; UNEXECUTED."""
+"""Retained executed4/8 NONPASS checks and prospective corrected16 checks."""
 from hashlib import sha256
 import json
 import os
@@ -19,7 +19,7 @@ ANGULAR_SCALE=(ref.RHO*ref.LENGTH**3/12+ref.LENGTH*max(ref.JDENSITY))*ref.SPIN_S
 
 
 def _save(tag,result,metrics):
-    assert tag in {'work','coarse','fine','restart_full','restart_prefix','restart_resumed'}
+    assert tag in {'work','coarse','fine','restart_full','restart_prefix','restart_resumed','corrective_prefix','corrective_full'}
     path=os.environ.get('NATIVE_TRANSIENT_RESULT_RECORD')
     if not path:return
     base=Path(path);base.parent.mkdir(parents=True,exist_ok=True)
@@ -289,16 +289,17 @@ def _trajectory_metrics(owner,result,captures=None):
         captured_stages=captures,capture_reconstruction_errors=capture_checks)
 
 
-def _assert_trajectory(result,metrics,steps):
+def _assert_trajectory(result,metrics,steps,*,require_full_exposure=True):
     assert result.success and result.to_dict()['accepted_steps']==steps
     assert len(metrics['angular_impulse_rows'])==steps
     assert max(max(row.values()) for row in metrics['stage_rounding_bounds'])<=1.e-9
     assert all(max(row.values())<=1.e-9 for row in metrics['capture_reconstruction_errors'])
     assert max(max(e.values()) for e in metrics['errors'])<=1.e-6
     assert max(max(e.values()) for e in metrics['balances'])<=1.e-6
-    assert max(metrics['angles'])>=.2 and max(metrics['strain_energy'])>0 and min(metrics['gyro_norm'])>0
-    assert max(metrics['relative_angle'])>=.01 and max(metrics['retained_moment'])>=ref.EI*.01/ref.ELL
-    assert max(metrics['accumulated_rotation_commutator'])>=1.e-5
+    if require_full_exposure:
+        assert max(metrics['angles'])>=.2 and max(metrics['strain_energy'])>0 and min(metrics['gyro_norm'])>0
+        assert max(metrics['relative_angle'])>=.01 and max(metrics['retained_moment'])>=ref.EI*.01/ref.ELL
+        assert max(metrics['accumulated_rotation_commutator'])>=1.e-5
     assert max(metrics['discrete_angular_impulse_error'])<=1.e-6
     assert max(r['cumulative_accounting_error'] for r in metrics['angular_impulse_rows'])<=1.e-6
     assert max(metrics['energy_defect'])<=.01 and max(metrics['linear_defect'])<=1.e-6 and max(metrics['angular_defect'])<=1.e-6
@@ -342,3 +343,98 @@ def test_public_nonprincipal_fresh_four_equals_two_plus_two(coarse_result):
     _save('restart_resumed',resumed,dict(captured_stages=captures))
     assert full.success and prefix.success and resumed.success
     assert full.to_dict()==resumed.to_dict() and full.checkpoint==resumed.checkpoint
+
+
+def _bound_record(environment):
+    path=os.environ.get(environment)
+    if not path:return None
+    raw=Path(path).read_bytes()
+    assert sha256(raw).hexdigest()==os.environ[environment+'_SHA256']
+    record=json.loads(raw);capsule=Path(record['checkpoint_path']).read_bytes()
+    assert sha256(capsule).hexdigest()==record['checkpoint_sha256']
+    return record,capsule
+
+
+def _common_response(data,references,stride):
+    references=[{key:np.asarray(value) for key,value in row.items()} for row in references]
+    rows=[ref.temporal_errors(*_unpack(row['endpoint'])[:3],references[index//stride+1])
+          for index,row in enumerate(data['steps']) if (index+1)%stride==0]
+    return {key:max(row[key] for row in rows) for key in rows[0]},rows
+
+
+def _correction_baseline():
+    # V3b saved errors and convergence but omitted full ODE state fields.
+    # Regenerate only its unchanged128 reference once; never replay its8 solve
+    # in the held execution. Ordinary tests remain self-contained and fresh.
+    references=ref.semidiscrete(subdivisions=128)
+    saved=_bound_record('C7_NONPRINCIPAL_FINE_RECORD')
+    if saved:
+        record,_=saved;data=record['result'];old=record['metrics']
+        assert data['status']=='completed' and data['accepted_steps']==2*ref.STEPS
+        assert all(row['dt']==ref.DT/2 for row in data['steps'])
+        response=old['fine'][0];energy=old['fine'][1];convergence=old['reference_refinement']
+        provenance=dict(source='BOUND_EXECUTED8_NONPASS; REFERENCE128_STATES_REGENERATED_ONCE',
+                        record_sha256=os.environ['C7_NONPRINCIPAL_FINE_RECORD_SHA256'])
+    else:
+        _,fine=run(steps=2*ref.STEPS,dt=ref.DT/2);data=fine.to_dict();assert fine.success
+        response,_=_common_response(data,references,2)
+        x,u,v,_,_,_=_unpack(data['final']);energy=abs(ref.account(x,u,v)['total_energy']-ENERGY_SCALE)/ENERGY_SCALE
+        lower=ref.semidiscrete(subdivisions=64)
+        convergence=max(max(ref.temporal_errors(a['x'],a['u'],a['v'],b).values()) for a,b in zip(lower,references))
+        provenance=dict(source='ORDINARY_FRESH_PUBLIC8_BASELINE')
+    assert convergence<=1.e-7
+    rows=[{key:value.tolist() for key,value in row.items()} for row in references]
+    return dict(reference128=rows,reference_refinement=convergence,baseline8_response=response,
+                baseline8_energy=energy,baseline8_initial=data['initial'],provenance=provenance)
+
+
+def _prepare_corrective_prefix():
+    owner,result,captures=_run_captured(steps=2*ref.STEPS,dt=ref.DT/4)
+    _save('corrective_prefix',result,dict(captured_stages=captures))
+    trajectory=_trajectory_metrics(owner,result,captures);baseline=_correction_baseline()
+    metrics=dict(trajectory=trajectory,baseline=baseline,segment='PREFIX8_OF_CORRECTED16',
+                 dt=ref.DT/4,full_horizon=ref.STEPS*ref.DT,prefix_horizon=2*ref.STEPS*(ref.DT/4))
+    _save('corrective_prefix',result,metrics)
+    _assert_trajectory(result,trajectory,2*ref.STEPS,require_full_exposure=False)
+    assert len(captures)==2*ref.STEPS
+    assert result.to_dict()['initial']==baseline['baseline8_initial']
+    return result,metrics
+
+
+def test_public_nonprincipal_corrective_prefix_eight():
+    _prepare_corrective_prefix()
+
+
+def test_public_nonprincipal_corrective_resumed_sixteen():
+    bound=_bound_record('C7_NONPRINCIPAL_CORRECTIVE_PREFIX_RECORD')
+    if bound:
+        record,capsule=bound;prefix_data=record['result'];prefix_metrics=record['metrics']
+    else:
+        prefix,prefix_metrics=_prepare_corrective_prefix();capsule=prefix.checkpoint;prefix_data=prefix.to_dict()
+    assert prefix_data['status']=='completed' and prefix_data['accepted_steps']==2*ref.STEPS
+    assert prefix_metrics['segment']=='PREFIX8_OF_CORRECTED16'
+    assert prefix_metrics['dt']==ref.DT/4 and all(row['dt']==ref.DT/4 for row in prefix_data['steps'])
+    owner,result,captures=_run_captured(steps=4*ref.STEPS,dt=ref.DT/4,
+        checkpoint=capsule,expected_sha256=sha256(capsule).hexdigest())
+    _save('corrective_full',result,dict(new_captured_stages=captures))
+    data=result.to_dict();previous_captures={int(key):value for key,value in prefix_metrics['trajectory']['captured_stages'].items()}
+    overlap=bool(set(previous_captures)&set(captures));combined={**previous_captures,**captures}
+    trajectory=_trajectory_metrics(owner,result,combined)
+    baseline=prefix_metrics['baseline'];response,response_rows=_common_response(data,baseline['reference128'],4)
+    energy=max(trajectory['energy_defect'])
+    chain=dict(prefix_capsule_sha256=sha256(capsule).hexdigest(),prefix_steps=2*ref.STEPS,
+        new_steps=len(captures),capture_overlap=overlap,
+        initial_equal=data['initial']==prefix_data['initial'],
+        prefix_steps_equal=data['steps'][:2*ref.STEPS]==prefix_data['steps'],
+        prefix_outputs_equal=data['outputs'][:len(prefix_data['outputs'])]==prefix_data['outputs'],
+        restored_predecessor_equal=data['steps'][2*ref.STEPS]['predecessor_sha256']==prefix_data['final']['state_sha256'])
+    metrics=dict(trajectory=trajectory,baseline=baseline,response=response,response_rows=response_rows,
+                 maximum_energy_defect=energy,checkpoint_chain=chain,
+                 claim='ACTUAL_PUBLIC8_PLUS8_PREFIX_CONSISTENCY; NO_SEPARATE_FRESH16_RUN')
+    _save('corrective_full',result,metrics)
+    _assert_trajectory(result,trajectory,4*ref.STEPS)
+    assert len(captures)==2*ref.STEPS and len(combined)==4*ref.STEPS and not overlap
+    assert all(chain[key] for key in ('initial_equal','prefix_steps_equal','prefix_outputs_equal','restored_predecessor_equal'))
+    assert baseline['reference_refinement']<=1.e-7
+    assert max(response.values())<=.02 and max(response.values())<max(baseline['baseline8_response'].values())
+    assert energy<=.01 and energy<baseline['baseline8_energy']

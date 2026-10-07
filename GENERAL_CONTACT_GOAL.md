@@ -13,14 +13,14 @@ Work only in C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001 on co
 
 ## Current position
 
-Native nonprincipal dynamics: local independent mechanics, exact fresh restart
-and the actual public example pass. The registered four/eight-step trajectories
-remain NONPASS at strict totalH1e-6 (8.141714e-6 /2.041661e-6); saved exact impulse
-accounting identifies a second-order time defect. Product equations are unchanged.
-One prospective16-step same-model/horizon correction is being prepared; no assumed
-pass or relaxed criterion.119.1498137001181/240s consumed;120.8501862998819s remains
-only in the granted nonprincipal scope. Broader C7 acceptance remains open.
-[Measured disposition](docs/d1_review_support/contact_native_nonprincipal_20261006/nonprincipal_development.md).
+Native nonprincipal dynamics: the same physical fixture now passes the complete
+16-step dt1/256 development check. Strict totalH error5.108152488863217e-7 meets
+1e-6; complete state, equilibrium, impulse accounting, response/energy refinement
+and authenticated8+8 restart chain pass. Earlier4/8 NONPASS remains unchanged.
+Product equations/defaults are unchanged.202.89767590013798/240s consumed;
+37.10232409986202s remains only in this resolved fixture's scope, with no repeat
+planned. FullC7 spatial/section admission and independent acceptance remain open.
+[Measured corrective disposition](docs/d1_review_support/contact_native_nonprincipal_20261006/nonprincipal_corrective_development.md).
 
 ### Latest production progress and next slice
 

@@ -11,8 +11,8 @@ from examples import native_nonprincipal_reference as ref
 
 
 def build(*,steps=ref.STEPS,dt=ref.DT):
-    if type(steps) is not int or not 0<=steps<=2*ref.STEPS:raise ValueError('example step inventory')
-    if not math.isfinite(dt) or dt not in (ref.DT,ref.DT/2):raise ValueError('example frozen timestep inventory')
+    if type(steps) is not int or not 0<=steps<=4*ref.STEPS:raise ValueError('example step inventory')
+    if not math.isfinite(dt) or dt not in (ref.DT,ref.DT/2,ref.DT/4):raise ValueError('example frozen timestep inventory')
     if steps*dt>ref.STEPS*ref.DT:raise ValueError('example frozen horizon')
     section=EllipsoidalGeneralizedSection(np.diag((ref.EA,ref.GA,ref.GA,ref.EI,ref.EI,ref.EI)),np.eye(6),1.e6,1.)
     inertia=np.diag((ref.RHO,ref.RHO,ref.RHO,*ref.JDENSITY))

@@ -3006,3 +3006,20 @@ same physical model/horizon and gates; no assumedPASS or automatic refinement.
 Same-family supporting assessment only, no independent acceptance/release.
 Evidence: d1_review_support/contact_native_nonprincipal_20261006/nonprincipal_development.md.
 FullC7/C8 and C0-C9 remain open. Earlier source-ready entry is historical.
+
+
+## 2026-10-07 native nonprincipal corrective16 - DEVELOPMENT PASS
+
+Same model/horizon, prospective16dt1/256 candidate; public8+8 chain/captures PASS.
+StrictH5.108152488863217e-7<=1e-6, state3.3126e-13/equilibrium2.8573e-13,
+response0.00012603624 and energy4.511569e-5 improve saved8. All full exposure,
+physical/algebraic/work/impulse/accounting gates pass. Actual prefix preservation,
+16 genuine captured stages; no separate fresh16 equality claim. Reused unchanged
+local/restart/CLI and saved64/128 reference convergence; regenerated missing128
+ODE states once. Earlier4/8 strictH NONPASS and V2 schema failure remain unchanged.
+Seven jobs202.89767590013798/240s;37.10232409986202s remains this scope only,
+peak173232128B,196 held imports/run,JITdisabled/Numba1/pools1, no live job/repeat.
+Product/defaults/gates unchanged;550 payloads/six metadata verified. Development
+tested; not independently accepted/released. FullC7 spatial/section qualification,
+C8 and C0-C9 open. Evidence:
+d1_review_support/contact_native_nonprincipal_20261006/nonprincipal_corrective_development.md.
