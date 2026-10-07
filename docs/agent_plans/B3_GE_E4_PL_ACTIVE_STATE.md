@@ -25,8 +25,9 @@ No external accuracy accepted. Saved-output probe preserves the same refusal.
 
 Remaining uncertainty: physical SPC recovery versus equation-force bookkeeping
 or actual disequilibrium. Some supported shell nodes are independent terms of
-attachment equations. Author master source exports nodal fn after restoring MPC
-actions; it is not yet bound to the pinned2.23 binary. ROOT-only FORC cannot
+attachment equations. Official2.23 source confirms exported nodal fn after restoring
+MPC actions; archive/file hashes are retained. Runtime binary correspondence still
+needs independent observed control evidence. ROOT-only FORC cannot
 independently recover missing equation-side forces. Do not fit them to the deficit.
 
 Next discriminator: additive bounded equation-force audit from complete declared
