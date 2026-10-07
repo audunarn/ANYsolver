@@ -258,6 +258,8 @@ def main():
     parser.add_argument('--fixture',type=Path,help='Trusted local frozen project/neutral mesh for identical A/B inputs')
     parser.add_argument('--prepare-only',action='store_true')
     parser.add_argument('--limit-cases',type=int,help='Diagnostic subset only; never a primary/holdout result')
+    parser.add_argument('--sample-cases',type=int,
+                        help='Evenly spaced subset of the frozen history for bounded checks; not a full primary/holdout campaign')
     args=parser.parse_args()
     driver_start=time.perf_counter()
     import anysolver
@@ -268,6 +270,10 @@ def main():
     import psutil
     counts,instrumentation=install_backend_counters(solver_linalg)
     indices=positions(args.history)
+    if args.sample_cases is not None:
+        if args.limit_cases is not None or not 1 <= args.sample_cases <= len(indices):
+            raise ValueError('sample-cases must fit the frozen history and cannot combine with limit-cases')
+        indices=[indices[index] for index in np.linspace(0,len(indices)-1,args.sample_cases,dtype=int)]
     if args.limit_cases is not None: indices=indices[:args.limit_cases]
     prepare_start=time.perf_counter()
     print(json.dumps({'phase':'prepare','family':args.family,'route':args.route}),flush=True)
@@ -491,6 +497,7 @@ def main():
                        'peak_note':'process-lifetime peak; includes the warmup run when --warmup'},
              'selected_nodes':selected_nodes,'selected_elements':selected_elements,
              'block_size':args.block_size,'limit_cases':args.limit_cases,
+             'sample_cases':args.sample_cases,
              'fixture':str(args.fixture) if args.fixture is not None else None,
              'resource_config':{'solver_threads':1,'assembly_threads':1,'recovery_threads':1},
              'runtime':{'python':sys.executable,'solver':anysolver.__file__,
