@@ -27,7 +27,7 @@ Supporting same-family source review found no blocking local fit/pivot defect;
 it found rib-identity matching and nested receipt-ownership gaps. Same owner
 repaired these and added refusal/mutation controls; root inspected the final delta.
 No imports, tests, native/CCX jobs or builds have run for this source slice.
-Owner /root/mandatory_consumer_gap: four new E03 source/test/document files only.
+Owner /root/mandatory_consumer_gap completed four E03 source/test/document files.
 Mistral/local unavailable; supporting review does not satisfy family independence.
 
 Next discriminator: focused source controls, then the same controls against the
@@ -38,6 +38,8 @@ JIToff/2GiB/onejob. Compatible repairs preserve failures within that scope.
 Controls pass -> prepare one bounded physically matched native/CCX coarse screen.
 Mapping/serialization defect -> same owner repairs the exact failing contract.
 No physical solves, CCX, F03/body retry, sibling, main/push/release in this proposal.
+Candidate628bbff5; seven input snapshots frozen;431 package hashes unchanged.
+Root and supporting reader inspected repairs; no remaining source finding.
 Source, frozen inputs and pending runner live at
 .qualification/b3-ge-e4-pl/r8-e03-curved-source-dev-20261007-v1/.
 
