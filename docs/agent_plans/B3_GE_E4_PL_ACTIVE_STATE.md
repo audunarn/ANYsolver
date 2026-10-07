@@ -4,54 +4,47 @@ Full Revision8 programme remainsOPEN: G0–G6/F01–F13/V01–V28/B01–B18,
 external/scale/platform/consumers/reviews/artifacts/authorized complete release.
 Canonical worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
 branch codex/stiffened-main-reconcile-20261001. Host Git is authoritative.
-Candidate535390ef9e876a412b633942b4b410b2d998d100; no main/push/release,
+Package535390ef9e876a412b633942b4b410b2d998d100; no main/push/release,
 contact-worker communication or sibling edits. Living goal/plan stay unchanged.
 Mistral/local cached unavailable; OpenAI fallback not different-family acceptance.
 ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1 applies prospectively.
 
 ## Current deliverable and next action
 
-Decision: park the unresolved capacity-accuracy ticket, keeping G4D mandatory and
-its failure visible; advance the actual G6B consumer-contract implementation gap.
-Existing public capabilities are GE dictionaries and differing B2 dataclasses.
-The additive facade capabilities_record(analysis) now provides one owned primitive
-JSON record under STIFFENED_SHELL_CONSUMER_CAPABILITIES_V1. It preserves raw fields,
-profile/law/policy/operations and B2 footprint descriptors, refuses conflicting or
-unrepresentable claims, and reports missing evidence/platform/resources honestly.
-It reads only owner.capabilities; no new solver/preflight/compile/checkpoint path.
-No model identity, admitted operation union or qualification is fabricated.
-Existing accessors, dispatch, mechanics, defaults and checkpoint meanings unchanged.
+Decision sought: execute a physically declared E03 curved elastic comparison
+without conflating GE independent nodal rotations and B2 translation-fit ports.
+Consumer slice is verified:41 source/41 installed PASS, one wheel build/install;
+product535390ef, fixture0acbef03, evidence7b4e27b2. G6B acceptance staysOPEN.
 
-Candidate state SOURCE_AND_INSTALLED_VERIFIED within assigned consumer criteria.
-Source candidate535390ef; fixture repair0acbef03. First source40/41 failed solely
-from a transitive legacy-test import. Same author replaced that fixture with the
-same self-contained B2 panel; product unchanged. Failed v1 evidence preserved.
-Then41 source and41 installed controls passed; one isolated wheel build/install
-passed. Actual imported solver paths/hashes checked,431 package modules; wheel
-SHA fa5507fe14cc09949743adb7d5ae340a2499d9b813d6b80a1b7d4ea414267e82.
-CPU0/thread1/JIToff/2GiB verified. Four attempts57.9778161s total; peak209440768B.
-Fresh180 approved by human reply call_vlNEmdqV8t7XonfSAFBVvJx2/question0;
-122.0221839s remains with60s reserve, this consumer verification/repair scope only.
-No physics requests, new scientific acceptance, ANYworkspaceAI integration, main,
-push, sibling edit or release. Public defaults/checkpoint meanings unchanged.
-Full G6B, external/scale/platform and different-family review obligations remainOPEN.
+Delivered source: three-level polygonal roof with two straight longitudinal ribs,
+both eccentric signs, existing public GE/B2 adapters, six-row independent B2
+solid fitted-port deck, strict DOUBLE parser and explicitly partial comparisons.
+GE external scoring refuses unresolved independent rotation/drill correspondence.
+The solid/B2 fit transpose preserves local work; bulk idealization, actual CCX
+compatibility and physical convergence remain unverified. Full E03 staysOPEN.
 
-Next: retain the verified consumer-record slice and select a concrete remaining
-programme obligation under its actual ownership/prerequisites/authority. No new
-milestone draws from this remainder. Parked capacity finding stays unresolved;
-do not substitute corrected diagnostic values for the frozen accuracy criterion.
-OpenAI author handoff and separate supporting completion review complete;
-one stale documentation statement corrected, no unresolved slice finding.
-Raw receipts,original failure,new frozen snapshots and root-verification-result-v1
-are at consumer-capabilities-dev. Normal recovery needs no campaign replay.
-Source/tests/doc:
-src/anysolver/_stiffened_shell_consumer_capabilities.py
-src/anysolver/stiffened_shell.py (additive facade only)
-tests/test_stiffened_shell_consumer_capabilities.py
-docs/development/stiffened_shell_consumer_capabilities.md
-Verified runner/431source-module/3v2-input snapshot; original4v1 inputs preserved:
-.qualification/b3-ge-e4-pl/r8-consumer-capabilities-dev-20261007-v1/
+Supporting same-family source review found no blocking local fit/pivot defect;
+it found rib-identity matching and nested receipt-ownership gaps. Same owner
+repaired these and added refusal/mutation controls; root inspected the final delta.
+No imports, tests, native/CCX jobs or builds have run for this source slice.
+Owner /root/mandatory_consumer_gap: four new E03 source/test/document files only.
+Mistral/local unavailable; supporting review does not satisfy family independence.
 
+Next discriminator: focused source controls, then the same controls against the
+existing installed wheel only after source PASS and all431 package hashes match.
+A fresh150-second proposal is PENDING; each processcap30,reserve60,CPU0/thread1,
+JIToff/2GiB/onejob. Compatible repairs preserve failures within that scope.
+56 controls expected by static parametrization, not executed/collected.
+Controls pass -> prepare one bounded physically matched native/CCX coarse screen.
+Mapping/serialization defect -> same owner repairs the exact failing contract.
+No physical solves, CCX, F03/body retry, sibling, main/push/release in this proposal.
+Source, frozen inputs and pending runner live at
+.qualification/b3-ge-e4-pl/r8-e03-curved-source-dev-20261007-v1/.
+
+Consumer allowance57.9778161used/122.0221839remaining,reserve60: that completed
+slice's verification/repair only, never E03. Wheel431modules SHA
+fa5507fe14cc09949743adb7d5ae340a2499d9b813d6b80a1b7d4ea414267e82,
+CPU0/thread1/JIToff/2GiB verified, original failed fixture evidence retained.
 ## Parked physical-accuracy finding
 
 g13 scoped fixed3e-6/1e-6 PASS; original g14 fine1.00904614988e-6 and

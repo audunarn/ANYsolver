@@ -4239,3 +4239,18 @@ Wheel fa5507fe14cc09949743adb7d5ae340a2499d9b813d6b80a1b7d4ea414267e82.
 Scope: additive primitive record, ownership/refusal and actual GE/B2 facade reports.
 No physics/capacity qualification, consumer application acceptance or G6B closure.
 Evidence: r8-consumer-capabilities-dev-20261007-v1/root-verification-result-v1.json.
+
+### 2026-10-07 — E03 profile-specific curved reference source candidate
+IMPLEMENTED_UNVERIFIED: three-level polygonal roof/two straight ribs, signed
+eccentricity, public GE/B2 adapters, independent B2 translation-fit solid port,
+strict DOUBLE/provenance parser and partial physical comparisons. GE external
+scoring REFUSED until independent shell rotation/drill work correspondence exists.
+Supporting same-family review found rib-ID matching and nested-receipt ownership
+gaps; same owner repaired both and prepared controls. No source/installed/native
+or external execution occurred.56 controls expected from static parametrization.
+Fresh150 source/installed-only allowance PENDING;cap30,reserve60,CPU0/thread1,
+JIToff/2GiB/onejob. Same431-module wheel may be reused only after exact binding.
+No physical solves/CCX/F03/body/sibling/main/push/release; consumer remainder
+is not transferable. E03/full programme physical acceptance remainsOPEN.
+Source contract: docs/reference_cases/stiffened_shell_e03_curved.md.
+Pending runner: r8-e03-curved-source-dev-20261007-v1/supervise-v1.ps1.
