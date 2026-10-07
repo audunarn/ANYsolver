@@ -188,3 +188,23 @@ into a new manifest and `NMS8_RESTART_REPLAY`/binding digest. This binder remain
 **unimplemented preparation work**; the verification group refuses dispatch
 without that raw binding. Ordinary pytest continues to perform three fresh solves.
 No saved record can establish a new solve or erase a failed attempt.
+
+
+### Repeated guard repair
+
+Measured restart diagnosis found repeated shell matrix reconstruction inside
+native element cancellation/definition callbacks. The new owner retains complete
+per-callback shell admission, quadrature/configuration validation, deterministic
+geometry/material/slots/topology binding, inherited implementation descriptor
+identities and immutable cached matrix hashes. It assembles the full matrix
+witness at construction and on both sides of every atomic operation, before
+publication. No historical owner guard or mechanical/profile byte identity changes.
+The first artifact's full CLI and resumed timeouts remain recorded failures;
+this repaired artifact requires fresh installed verification and restart producers.
+
+The direct repeated guard binds all authoritative skin/topology/matrix inputs,
+including complete nodal coordinates/DOF slots, actual quadrature arrays and
+reference director/offset. It does not reconstruct derived sparse skin maps or
+topology during element callbacks. Full matrix witnesses remain inside every
+atomic operation. The first descriptor-only candidate impact timeout is retained;
+no speedup is claimed without measured matched evidence.

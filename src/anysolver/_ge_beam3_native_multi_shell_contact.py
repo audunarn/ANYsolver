@@ -1,4 +1,4 @@
-"""UNEXECUTED global native/S3 common-midpoint descriptor development owner.
+"""Development global native/S3 common-midpoint descriptor development owner.
 
 Bodies share one retained solve. Shell structural triangles assemble once;
 selected interior contact contributors never own independent states/steppers.
@@ -142,6 +142,13 @@ class NativeMultiShellContactAnalysis(_RetainedMidpointAssembly):
         self._captured_models=tuple(b.model for b in shell_bodies)
         self._captured_shell_elements=tuple(tuple(b.model.mesh.elements.items()) for b in shell_bodies)
         self.shell_stiffness,self.shell_mass,self._shell_binding,self.shell_topologies=self._shell_contract()
+        # Bind every inherited implementation descriptor, including helpers used
+        # by the exact shell matrix routines; instance overrides are refused.
+        self._shell_methods=tuple((cls,name,value) for cls in NativeParityE4PLS3V2DShellElement.__mro__
+            for name,value in vars(cls).items() if callable(value) or isinstance(value,(staticmethod,classmethod,property)))
+        self._shell_method_names=frozenset(name for _,name,_ in self._shell_methods)
+        self._shell_class_keys=tuple((cls,frozenset(vars(cls))) for cls in NativeParityE4PLS3V2DShellElement.__mro__)
+        self._shell_extra_binding=self._shell_configuration()
         definitions=tuple(d for body in native_bodies for d in body.definitions)
         super().__init__(definitions,(),inertia_order=inertia_order,max_iterations=max_iterations,max_backtracks=max_backtracks)
         self.native_size=self.size
@@ -195,14 +202,14 @@ class NativeMultiShellContactAnalysis(_RetainedMidpointAssembly):
             if seen.intersection(held):raise ValueError('native node alias between bodies')
             held.update(seen)
 
-    def _shell_contract(self):
+    def _shell_contract(self, *, assemble=True):
         matrices=[];masses=[];bindings=[];topologies=[]
         for body,(o,size,p,z) in zip(self.shell_bodies,self.shell_layout):
             model=body.model
             if (model.boundary_conditions or model.constraint_equations or model.load_cases or
                     model.mesh.point_masses or model.mesh.element_activity is not None or not model.mesh.elements):
                 raise ValueError('free elastic shell body without loads/pointmass/activity required')
-            used=set();k=np.zeros((size,size));m=np.zeros_like(k);rows=[];skins=[]
+            used=set();k=np.zeros((size,size)) if assemble else None;m=np.zeros_like(k) if assemble else None;rows=[];skins=[]
             for eid,e in sorted(model.mesh.elements.items()):
                 if (type(e) is not NativeParityE4PLS3V2DShellElement or e.shell_section is not None or
                         e.reference_surface_offset!=0. or e.director_polarity!=1):
@@ -211,25 +218,28 @@ class NativeMultiShellContactAnalysis(_RetainedMidpointAssembly):
                 if (type(material) is not IsotropicMaterial or material.yield_stress!=0. or
                         material.hardening_curve is not None or material.density<=0.):
                     raise ValueError('elastic positive-density shell material required')
+                e.validate_quadrature_authority();e._validate_configuration()
                 skin=S3SkinWorkAdapter.from_model(model,body.body_id,eid,'top');skins.append(skin)
                 normal=np.cross(skin.reference_positions[1]-skin.reference_positions[0],skin.reference_positions[2]-skin.reference_positions[0])
                 if skin.physical_offset<=0. or normal@skin.director<=0.:raise ValueError('oriented top skin required')
                 slots=tuple(int(i) for i in e.get_dof_mapping(model.mesh));used.update(e.node_ids)
-                k[np.ix_(slots,slots)]+=e.compute_stiffness_matrix(model.mesh,material)
-                m[np.ix_(slots,slots)]+=e.compute_mass_matrix(model.mesh,material)
+                if assemble:
+                    k[np.ix_(slots,slots)]+=e.compute_stiffness_matrix(model.mesh,material)
+                    m[np.ix_(slots,slots)]+=e.compute_mass_matrix(model.mesh,material)
                 rows.append(dict(element=eid,nodes=e.node_ids,slots=slots,formulation=e.formulation_id,
                     coordinates=[model.mesh.nodes[n].coords() for n in e.node_ids],thickness=e.thickness,
                     reference_offset=e.reference_surface_offset,polarity=e.director_polarity,
                     director=skin.director,offset=skin.physical_offset,
                     material=dict(name=material.name,E=material.elastic_modulus,nu=material.poisson_ratio,density=material.density)))
             if used!=set(model.mesh.nodes):raise ValueError('all shell nodes must belong to structural S3 elements')
-            if (not np.isfinite(k).all() or not np.isfinite(m).all() or not np.array_equal(m,m.T) or
+            if assemble and (not np.isfinite(k).all() or not np.isfinite(m).all() or not np.array_equal(m,m.T) or
                     np.any(m[list(z),:]) or np.any(m[:,list(z)]) or
                     np.linalg.norm(k-k.T)>1e-10*max(1.,np.linalg.norm(k))):
                 raise ValueError('actual shell stiffness/mass witness invalid')
-            np.linalg.cholesky(m[np.ix_(p,p)])
+            if assemble:np.linalg.cholesky(m[np.ix_(p,p)])
             topology=_topology(model,skins);topologies.append(topology)
             matrices.append(k);masses.append(m);bindings.append(dict(body=body.body_id,size=size,p=p,z=z,rows=rows,topology=topology))
+        if not assemble:return None,None,canonical(bindings),tuple(topologies)
         total=sum(x[1] for x in self.shell_layout);k=np.zeros((total,total));m=np.zeros_like(k)
         for (o,size,_,_),kk,mm in zip(self.shell_layout,matrices,masses):
             k[o:o+size,o:o+size]=kk;m[o:o+size,o:o+size]=mm
@@ -254,6 +264,41 @@ class NativeMultiShellContactAnalysis(_RetainedMidpointAssembly):
             path='NATIVE_AFFINE_EXP_SHELL_ACTUAL_STAGE_AND_PROJECTED_ENDPOINT_TWO_LEGS')
         return data
 
+    def _shell_configuration(self):
+        # Bind the complete authoritative inputs of skin/map/topology/K/M
+        # preparation. No sparse work-map or derived topology is rebuilt here.
+        bodies=[]
+        for body,(offset,size,p,z) in zip(self.shell_bodies,self.shell_layout):
+            model=body.model
+            if (model.boundary_conditions or model.constraint_equations or model.load_cases or
+                    model.mesh.point_masses or model.mesh.element_activity is not None or not model.mesh.elements):
+                raise ValueError('free elastic shell body without loads/pointmass/activity required')
+            nodes=[(n,model.mesh.nodes[n].coords(),tuple(model.mesh.dof_manager.get_node_dofs(n)))
+                for n in sorted(model.mesh.nodes)]
+            elements=[]
+            for eid,e in sorted(model.mesh.elements.items()):
+                if (type(e) is not NativeParityE4PLS3V2DShellElement or e.shell_section is not None or
+                        e.reference_surface_offset!=0. or e.director_polarity!=1):
+                    raise ValueError('exact centered positive-polarity elastic S3 V2D body required')
+                e.validate_quadrature_authority();e._validate_configuration()
+                material=model.materials.get(e.material_name)
+                if (type(material) is not IsotropicMaterial or material.yield_stress!=0. or
+                        material.hardening_curve is not None or material.density<=0.):
+                    raise ValueError('elastic positive-density shell material required')
+                elements.append(dict(id=eid,element_id=e.element_id,nodes=e.node_ids,
+                    slots=tuple(int(i) for i in e.get_dof_mapping(model.mesh)),
+                    formulation=e.formulation_id,thickness=e.thickness,reference_normal=e.reference_normal,
+                    reference_offset=e.reference_surface_offset,polarity=e.director_polarity,
+                    director=e.physical_reference_director,offset=e.material_surface_offset_from_reference(1.),
+                    material_name=e.material_name,material_direction=e.material_direction,material_angle=e.material_angle_deg,
+                    drilling=e.drilling_stabilization,hourglass=e.hourglass_stabilization,reduced=e.reduced_integration,
+                    quadrature_authority=e.quadrature_authority_id,gauss_points=e.gauss_points,gauss_weights=e.gauss_weights,
+                    shear_points=e.shear_gauss_points,shear_weights=e.shear_gauss_weights,
+                    material=(material.name,material.elastic_modulus,material.poisson_ratio,material.density,
+                        material.yield_stress,material.hardening_curve)))
+            bodies.append((body.body_id,offset,size,p,z,model.mesh.dof_manager.total_dofs,nodes,elements))
+        return canonical(bodies)
+
     def _guard(self,token=None,stage='native_multi_shell.guard'):
         super()._guard(token,stage)
         if any(b.model is not held for b,held in zip(self.shell_bodies,self._captured_models)):
@@ -261,10 +306,21 @@ class NativeMultiShellContactAnalysis(_RetainedMidpointAssembly):
         if any(len(b.model.mesh.elements)!=len(held) or any(b.model.mesh.elements.get(eid) is not e for eid,e in held)
                for b,held in zip(self.shell_bodies,self._captured_shell_elements)):
             raise ValueError('exact shell structural object inventory changed')
-        k,m,binding,_=self._shell_contract()
-        if binding!=self._shell_binding or not np.array_equal(k,self.shell_stiffness) or not np.array_equal(m,self.shell_mass):raise ValueError('shell body structural definition changed')
+        if any(vars(cls).keys()!=keys for cls,keys in self._shell_class_keys) or any(vars(cls).get(name) is not value for cls,name,value in self._shell_methods):
+            raise ValueError('shell assembly implementation changed')
+        if any(self._shell_method_names.intersection(vars(e)) for held in self._captured_shell_elements for _,e in held):
+            raise ValueError('shell instance assembly implementation changed')
+        if self._shell_configuration()!=self._shell_extra_binding:
+            raise ValueError('shell matrix-dependent configuration changed')
+        if self.shell_stiffness.flags.writeable or self.shell_mass.flags.writeable:
+            raise ValueError('shell cached matrix immutability changed')
         if any(w._fingerprint()!=w.identity or w.contact._fingerprint()!=w.contact.identity for w in self.works):
             raise ValueError('selected contact definition changed')
+
+    def _matrix_witness(self):
+        k,m,binding,_=self._shell_contract()
+        if binding!=self._shell_binding or not np.array_equal(k,self.shell_stiffness) or not np.array_equal(m,self.shell_mass):
+            raise ValueError('shell body assembled matrix witness changed')
 
     def _new_budget(self):
         return AggregateWorkBudget(self.maximum_geometry_evaluations,self.maximum_integration_intervals,self.maximum_swept_intervals)
@@ -275,7 +331,10 @@ class NativeMultiShellContactAnalysis(_RetainedMidpointAssembly):
         # Set only after the inherited lock is held; no second independent transaction.
         with super()._operation(token):
             self._active_budget=budget
-            try:yield
+            try:
+                self._matrix_witness()
+                yield
+                self._matrix_witness()
             finally:
                 self.last_operation_work=dict(budget.used);self._active_budget=None
     @contextmanager

@@ -277,3 +277,53 @@ def test_default_none_kernel_compatibility_and_old_exact_owner_identity():
     assert canonical(a.contact)==canonical(c.contact) and ledger.used['geometry']==1
     assert owner.identity==identity and owner.contact.contact.identity==kernel
     assert owner.size==60 and owner.route_profile!=PROFILE
+
+
+def test_repeated_guard_retains_shell_configuration_methods_and_matrix_mutation_refusals():
+    owner=build();state=_initial(owner);before=canonical(state)
+    element=owner.shell_bodies[0].model.mesh.elements[21]
+    def refused():
+        with pytest.raises((ValueError,RuntimeError)):
+            owner.trial(state,dt=.003)
+        assert canonical(owner.current)==before and not owner._candidates
+    calls=[];original=owner._shell_contract
+    def counted(*args,**kwargs):
+        calls.append(kwargs.get('assemble',True));return original(*args,**kwargs)
+    owner._shell_contract=counted
+    for _ in range(3):owner._guard()
+    assert calls==[]
+    old_angle=element.material_angle_deg
+    object.__setattr__(element,'material_angle_deg',old_angle+1.)
+    try:refused()
+    finally:object.__setattr__(element,'material_angle_deg',old_angle)
+    old=element.hourglass_stabilization
+    object.__setattr__(element,'hourglass_stabilization',1.)
+    try:refused()
+    finally:object.__setattr__(element,'hourglass_stabilization',old)
+    cls=type(element);old=vars(cls)['gauss_weights']
+    type.__setattr__(cls,'gauss_weights',property(lambda self:np.array((1.,1.,1.))))
+    try:refused()
+    finally:type.__setattr__(cls,'gauss_weights',old)
+    object.__setattr__(element,'compute_mass_matrix',lambda *args:np.zeros((18,18)))
+    try:refused()
+    finally:object.__delattr__(element,'compute_mass_matrix')
+    cls=type(element);old=cls.compute_stiffness_matrix
+    type.__setattr__(cls,'compute_stiffness_matrix',lambda *args:np.zeros((18,18)))
+    try:refused()
+    finally:type.__setattr__(cls,'compute_stiffness_matrix',old)
+    old_flag=vars(cls)['legacy_stiffness_batch_eligible']
+    assert 'get_dof_mapping' not in vars(cls)
+    type.__delattr__(cls,'legacy_stiffness_batch_eligible')
+    type.__setattr__(cls,'get_dof_mapping',lambda *args:())
+    try:refused()
+    finally:
+        type.__delattr__(cls,'get_dof_mapping')
+        type.__setattr__(cls,'legacy_stiffness_batch_eligible',old_flag)
+    matrix=owner.shell_mass;owner.shell_mass=np.array(matrix,copy=True)
+    try:refused()
+    finally:owner.shell_mass=matrix
+    changed=np.array(matrix,copy=True);changed[0,0]+=1.;changed.flags.writeable=False
+    owner.shell_mass=changed
+    try:refused()
+    finally:owner.shell_mass=matrix
+    owner._guard();owner._matrix_witness()

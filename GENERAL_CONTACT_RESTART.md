@@ -1,75 +1,82 @@
 # General contact - restart point
 
-7 October2026. Full C0-C9 ACTIVE and incomplete.
+7 October 2026. USER PAUSED implementation. Full C0-C9 incomplete.
+Launch no work until the user resumes. Goal tool is paused; no live owned
+processes, execution lock or unaccounted attempt. Workers have handed off.
 Only C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001. Protected original/sibling work
-stays excluded. No other-chat messaging, publication, merge, release or default
-changes. Local checkpoints authorized. Mistral/local cached unavailable;
-sustained OpenAI fallback author and supporting reviewer, not independent acceptance.
+branch codex/contact-main-reconcile-20261001. Never access the protected original
+checkout; no sibling edits, other-chat messaging, publication, merge or release.
+Local checkpoints authorized. Mistral/local cached unavailable; sustained OpenAI
+fallback author and same-family supporting review do not establish acceptance.
 
-## Current milestone
+## Current candidate and actual outcome
 
-C8_NATIVE_MULTI_SHELL_DEV at source6362bdfb; binder614d17e6; prior missing-grant
-checkpoint3468d3c8 is superseded prospectively by explicit human approval.
-One210-coordinate retained midpoint owner:4 native beams,2 S3 bodies,81 physical,
-129 algebraic. Shared shell nodes/elements assemble once. Both-body contact work,
-real shell mass/algebraic rotations and all crossblocks retained. Explicit
-straight zero-lift/planar small-motion frictionless interior admission; physical
-rims and internal patch transitions retain distinct identities, both unresolved.
-No child steppers or lagged forces. Native retained driver/replay reused.
+C8_NATIVE_MULTI_SHELL_DEV: one210-coordinate midpoint system,4 native beams,
+2 S3 bodies,81 physical/129 algebraic, shared shell K/M once and both-body work.
+Straight zero-lift, planar small-motion frictionless interior admission only.
+Physical rims/internal patch transitions remain explicitly unadmitted.
+Source base6362bdfb; final guard repair is preserved in this pause checkpoint.
+Owner SHA68e3b6eb65e3ba4180a775c47744b94da17fd469205a6b50f5dcf398e6417882.
+Final manifest native_multi_shell_guard_manifest_v5.json:
+SHA689ee70952e0a4ac3a9d003c1974a880fa12b95592f3e6af056456766898edbf.
+Wheel native_multi_shell_dist_v5/anysolver-0.4.7-py3-none-any.whl:
+SHA9f6c9565ec3cc71489fbea9e854cdd406776452f35cd17704ebc2c62ec08a5a8,
+private site native_multi_shell_site_v5. Raw root:
+C:/ANYworkspaceWork/contact_native_multi_shell_c8_20261007.
 
-Source AST/hash/supporting review PASS,10 numerical selectors prepared. Initial
-held565/build560; all12 held interface/source hashes match. Source-only results
-are not numerical/engineering acceptance. The sustained author now executes
-private build/install, mechanics, actual impact, compatibility, state safety,
-authentic full2=fresh1+1 restart/tamper and public CLI, with repairs in owned scope.
-Root owns contracts/records/namespace/Git. Do not compete with numeric jobs.
-Raw: C:/ANYworkspaceWork/contact_native_multi_shell_c8_20261007.
-Actual resource.json files and newest author handoff govern measured progress.
+Original9/10 selectors and old single-S3 compatibility passed. Final guard's
+3 mutation/rollback selectors pass. Actual V5 IMPACT returns2 steps at.006;
+public result AND checkpoint exactly match original successful impact bytes.
+V4 full210 FD/work at both original perturbations passes; root AST comparison
+shows only guard/configuration methods changed in V5, supporting affected-evidence
+reuse. Actual V5 prefix CLI returns1 step at.003 and is ready for binding.
+Fresh resumed solve, authentic split/tamper verification and default/full2 CLI
+remain UNMET. The module/programme is not fully verified or accepted.
 
-## Execution approval and controls
+Measured blocker: thousands of K/M and derived S3 adapter/topology preparations
+inside the native operator guard. Final repair compares all authoritative input
+snapshots and exact implementation identities; full K/M witnesses remain at
+construction and atomic operation boundaries. No law/profile/gate changed.
+Four TIMEOUTs (original full CLI, resumed, timing diagnostic, V4 impact) remain
+non-success. Static test-fixture defects were repaired before dispatch; superseded
+builds are preserved. V5 impact27.8512208s is one observation, not a reliable
+complete-route speed-up claim. Supporting review found no confirmed source
+omission; final terminal evidence audit is pending. Root direct site reads are
+OS-denied; author/framework private payload/import checks are separate evidence.
 
-Human: I approve executions needed to finish the plan/goal defined.
-GENERAL_CONTACT_EXECUTION_AUTHORITY.md records prospective full-goal authority.
-Necessary scopes/extensions derive from that approval without another fixture
-permission request. Preserve scientific gates/frozen inputs, historical failed
-results and all spent authority; issue fresh prospective records, never rewrite
-old grants or pool their remaining balances. Publication/acceptance separate.
+## Execution authority and next resume action
 
-Current native_multi_shell_authority_v1.json:600 measured seconds initially,
-<=60s/job,953MiB,serial numerical jobs,60s protected reserve. Authorizedmanifest1
-SHA84f73e30106cb4f219a1d3d049cb1a29e08a35eb6e6d5feed57a31d7e802bb56;
-grantSHA29a48f3466fc9953e12e3c3f86e241183f7a7bc60ddd828469510ed4bf5d30b1.
-Held source/runner/Python/build/raw hashes, actual private imports,JITdisabled,
-Numba1,observed pools1 and exact process-wall accounting must pass.
-No dropped contacts, loosened mechanics or waived failing checks.
+Human approved executions needed to finish the plan/goal. Approval persists
+within scope after resume; do not request another fixture allowance unnecessarily.
+Fresh bounded scopes/extensions may derive prospectively; preserve old grants,
+failed/frozen evidence and exact spent charges. Never pool historical balances.
+Current native_multi_shell_authority_v2.json:840 total=600+240;
+SHAfc2f444ba4c943d41827160f65cca789146a9b469a9c68e159854d6e8b6ea5e6.
+26 terminal attempts charge673.7089404000108s;166.29105959998924 remains,
+including60s protected reserve (106.29105959998924 usable).
+Keep<=60s/job,953MiB,serial jobs,JITdisabled/Numba1/observed pools1, actual
+private import hashes and precise process-wall accounting. Old grants unchanged.
 
-Binder native_multi_shell_bind_restart_v1.py SHA9f1b249e3a9dd6b4d99e7a0a0e4106ae8069e9e02b265c2f2d6ec36889f259e3.
-Actual successful PREFIX/FULL public jobs precede immutable prefix binding;
-RESUMED uses that authentic capsule; final binder compares exact public/capsule
-bytes before guarded RESTART_VERIFY. Pending manifests are historical, not grants.
-Source/binder/authority/handoff records and their raw hashes govern details.
+On explicit resume, reuse the frozen V5 package. Use raw binder V3 to bind the
+actual successful nms8_restart_prefix_v5, then fresh RESUMED. Full reference may
+be ONLY the exact terminal-successful nms8_impact_v5 publicfull2 selector, with
+all phases/source/runtime/resource/capture checks. Require exact result/capsule
+and predecessor chain, then guarded RESTART_VERIFY authenticated tamper checks.
+Default/full2 CLI remains a separate actual job. If remaining<115s before CLI,
+issue a fresh bounded extension from existing full-goal approval, preserving
+charges; no extension was issued at pause. Do not shorten that job into a likely
+timeout. No more open-ended guard optimization; finish the remaining delivery.
+Author owns connected checks/repair/handoff; root owns contracts/Git/disposition.
 
-## Preserved previous components and balances
+## Evidence and programme
 
-Single native/S3 installed development:8 shell+8 compatibility selectors and
-actual2-stepCLI PASS,555 payload hashes match, product5c403caf unchanged.
-13 attempts261.4690997000034/480s; remaining218.53090029999657 incl60reserve.
-Test-control NONPASS and compatibility TIMEOUT preserved. Prior native-pair
-53attempts739.9227660997963/840s; remaining100.07723390020374 incl60reserve.
-Every historical purse remains separately scoped; none funds the new fixture.
-Prior source/numerical failures and acceptance boundaries stay unchanged.
-
-## Evidence and remaining programme
-
-[Current source](docs/d1_review_support/contact_native_multi_shell_c8_20261007/source_candidate.md),
-[usage](docs/GENERAL_CONTACT_NATIVE_MULTI_SHELL_TRANSIENT_DEV.md),
-[prior installed result](docs/d1_review_support/contact_native_shell_c8_20261007/installed_development.md),
+[Author pause](docs/d1_review_support/contact_native_multi_shell_c8_20261007/author_paused_handoff_v1.md)
+contains exact rows, files and next commands; its JSON binds26 outcomes.
+[Supporting review](docs/d1_review_support/contact_native_multi_shell_c8_20261007/supporting_paused_handoff_v2.md),
+[paused outcome](docs/d1_review_support/contact_native_multi_shell_c8_20261007/paused_development_v5.md),
 [plan](GENERAL_CONTACT_PLAN.md),[goal](GENERAL_CONTACT_GOAL.md),
-[capability ledger](docs/GENERAL_CONTACT_CAPABILITIES.md),
-[preserved pre-approval restart](docs/d1_review_support/contact_native_multi_shell_c8_20261007/restart_history_pre_blanket_execution_approval.md).
-
-Temporal/spatial/section qualification and independent C7/C8 acceptance, curved
-native/contact friction/feature-union boundaries, broader shell/search, mixed
-contributors and application/package completion remain OPEN. Full programme
-completion cannot be inferred from this development slice.
+[ledger](docs/GENERAL_CONTACT_CAPABILITIES.md). Prior note and old purse balances
+are preserved in restart_history_before_20261007_implementation_pause.md.
+Temporal/spatial/section qualification, independent C7/C8 acceptance, curved
+native geometry/friction/patch-union, broader shell/search/mixed contributors,
+application/package/scale completion remain OPEN. No full-programme claim.

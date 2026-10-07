@@ -1,6 +1,6 @@
 # General contact - goal
 
-**Status:** ACTIVE; full C0-C9 incomplete. Required prospective executions approved7 October2026. Updated 7 October 2026.
+**Status:** PAUSED by user; full C0-C9 incomplete. Required prospective executions approved7 October2026. Updated 7 October 2026.
 **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1,2026-09-24.2.
 
 ## Required outcome and authority
@@ -33,10 +33,16 @@ component to multiple beams and S3 patches/bodies in one authoritative retained
 system. Shared-node stiffness/mass and both-body work assemble once. The prepared
 210-coordinate case includes a genuinely shared deformable two-triangle target.
 Conservative geometry, physical rim identity, aggregate error/resource caps,
-atomic state and authenticated restart remain obligations. Implementation and
-source checks are authorized; no numerical execution allowance covers this new
-fixture. Historical balances cannot be pooled. Broader geometry/friction and
-independent C7/C8 acceptance remain open.
+atomic state and authenticated restart remain obligations. Implementation is
+paused by the user. The final guarded V5 package passes mutation/rollback and
+actual two-step impact, with exact original public result/checkpoint bytes;
+V4 full210 derivative/work evidence is reused through inspected unchanged math.
+The running V5 prefix CLI completed successfully. Fresh resumed restart,
+authenticated tamper verification and default full2 CLI remain unmet.26 attempts
+charge673.7089404000108/840s;166.29105959998924 remains including60s reserve.
+The full-goal execution approval persists prospectively after resume; old grants,
+four timeouts and all scientific boundaries remain preserved. No acceptance,
+release or reliable complete-route speed-up claim follows.
 
 Native nonprincipal dynamics: the same physical fixture now passes the complete
 16-step dt1/256 development check. Strict totalH error5.108152488863217e-7 meets
