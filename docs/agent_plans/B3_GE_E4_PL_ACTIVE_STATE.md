@@ -61,7 +61,7 @@ Earlier active notes preserved byte-for-byte; compact result:
 
 Old300:200.3074764used/99.6925236remaining,60reserve,g13 verification/repair only.
 FOURprimaries consumed: original3endpoint,baselinecapture,Logoldpair,Logintermediate.
-No old allowance transfer to v5. Fresh150approved:65.2573387used/84.7426613remaining,
+No old allowance transfer to v5. Fresh150approved:76.3142816used/73.6857184remaining,
 60reserve. ONEg14/g15primary CONSUMED by g14failure; verification/repair only,
 no automatic newendpoint or retry.
 Proportional600:248.0393304/351.9606696,ONEscreenCONSUMED,verificationonly.
@@ -76,3 +76,18 @@ NEVER inspect/traverse/copy/archive us3-modal-canary. No WMI/ACL/env bypass.
 Closed Fy/pressure/native80/material/turning/adaptive1.01/event/compound/parity/
 refinement campaigns remain closed. PortableS3 STOPPED/NOT_DELIVERED;
 PR62NONPASS/local02ca395e unpushed. Equations/defaults/versions unchanged.
+
+Saved-input exit met: verified helper on existing g14 CSC/signed q, original
+witness equality, zero owners/evaluators. Fine sampling8.6950094271e-7 and
+unallocated first-order remainder3.2677315470e-7; coarse remainder2.1838890398e-7.
+Original g14FAIL/plateau preserved; g15NOTRUN. No threshold or acceptance change.
+11.0569429s/254025728B/CPU0/thread1/JIToff; fresh150used76.3142816,
+remaining73.6857184,reserve60,primaryCONSUMED. No owned job remains live.
+Decision reviewed: sampling subtraction is diagnostic only. An anisotropic bad
+tangent can conceal ideal-direction error; midpoint/curvature/evaluation bounds
+are absent. Do not adopt adjusted acceptance or request another endpoint replay.
+Capacity-accuracy ticket is PARKED, mandatory G4D remainsOPEN. Next implementation
+lane: Read-only identify the actual ANYsolver machine-readable commercial-consumer
+contract gap. /root/mandatory_consumer_gap owns that bounded Read investigation;
+no numerical authority or sibling ownership granted. Preserve existing APIs.
+Raw root-saved-sampling-result-v1.json binds the actual result and six inputs.

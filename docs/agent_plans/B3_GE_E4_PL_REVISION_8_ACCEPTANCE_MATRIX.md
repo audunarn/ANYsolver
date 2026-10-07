@@ -4207,3 +4207,14 @@ does not replace original witness/plateau/criteria or exclude operator defects.
 supporting review only; complete scientific acceptance and G4D/F03 remainOPEN.
 Fresh150used65.2573387/remaining84.7426613,reserve60,primaryCONSUMED.
 Root-sampling-source-pass-v1 binds source, controls, runtime and limitations.
+### 7 October2026 — real saved-input diagnostic; capacity accuracy parked
+New arithmetic helper verified on original saved g14 CSC and signed states.
+Zero owners/evaluators; original witnesses exactly match. Fine J*sampling
+8.6950094271e-7, diagnostic remainder3.2677315470e-7. Originalg14FAIL,
+plateau andg15NOTRUN retained. Actual11.0569429s/254025728B/CPU0/thread1/JIToff.
+Fresh150used76.3142816/remaining73.6857184,reserve60,primaryCONSUMED.
+Mathematical review identifies anisotropic-bad-tangent, midpoint and curvature
+counterexamples; a small adjusted remainder cannot establish tangent accuracy.
+No adjusted criterion adopted. Capacity-accuracy ticket PARKED with missing
+bounds visible;G4D/fullprogramme mandatory obligations remainOPEN.
+Root-saved-sampling-result-v1 and independent-saved-sampling-review-v1 bind scope.

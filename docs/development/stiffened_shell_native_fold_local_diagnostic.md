@@ -277,3 +277,46 @@ preserved separately, with no rerun. Fresh150ledger65.2573387used/
 84.7426613remaining,reserve60; primaryCONSUMED,g15NOTRUN.
 Evidence:fold-assessment-dev/root-sampling-source-pass-v1.json,
 saved-chain-inspection-v1/v2/v3 and source-sampling-v1.
+## Saved real-input verification — 7 October
+
+The source-verified sampling helper now completes on the existing g14 CSC and
+signed states with zero solver evaluations and zero owner constructions.
+Original witnesses match exactly. h3e-6 original2.6626205044e-7, J*delta
+1.7665884913e-7, first-order remainder2.1838890398e-7; h1e-6 original
+1.00904614988e-6, J*delta8.6950094271e-7, remainder3.2677315470e-7.
+These norms are not additive. The remainder is a diagnostic, not a replacement
+PASS; original plateau and g14FAIL/g15NOTRUN remain unchanged. Internal arithmetic,
+native/beam input quantization and finite-step curvature are still unallocated.
+
+This closes the helper's real-saved-input gap without re-running the signed
+evaluator. It suggests a prospective representability-aware derivative measure,
+which needs a reviewed mathematical contract and explicit frozen-assessment
+amendment before it can decide acceptance. No criterion or authority is amended
+by this result, and no automatic refinement or physical replay follows.
+
+The bounded check completed11.0569429s,CPU0/thread1/JIToff,peak254025728B.
+Six saved input hashes unchanged; source/snapshot/runtime bindings verified.
+Fresh150ledger76.3142816used/73.6857184remaining,reserve60;primaryCONSUMED.
+Evidence:fold-assessment-dev/root-saved-sampling-result-v1.json and
+saved-sampling-v1; earlier failed evidence and source checks remain immutable.
+### Decision after mathematical review: keep attribution; park acceptance
+
+No representability-adjusted acceptance contract is adopted. For a differentiable
+fixed-chart residual F and candidate baseline J0, write the actual endpoints
+x±=x0+a±h*b, with b=t+delta_T+delta_U. The diagnostic remainder is
+(DF0-J0)*(t+delta_T)+DF0*delta_U+C+eta_FD. C contains midpoint and finite-step
+curvature; eta_FD contains residual-evaluation error. Under Lipschitz derivative
+and bounded third derivative, C is bounded by
+L*||a||*||b||+(M/6)*h^2*||b||^3. The saved records do not supply these bounds.
+
+A deliberately anisotropic bad tangent can make the adjusted remainder zero
+while its ideal-direction action is wrong: F=0,t=(1,0),delta_T=(0,epsilon),
+J0=(1,-1/epsilon). Midpoint-drift F=x^2 and curvature F=x^3 are additional
+counterexamples to interpreting the remainder alone as tangent accuracy.
+The original g14 failure therefore remains binding. No candidate is promoted,
+no criterion is replaced, and no new endpoint/physical run is requested here.
+
+Park this capacity-accuracy ticket with its exact missing numerical bounds;
+advance a ready mandatory implementation row independently, as Revision8 permits.
+The retained helper remains useful for attribution and future solver diagnosis.
+Supporting source/data/mathematical review is not different-family acceptance.

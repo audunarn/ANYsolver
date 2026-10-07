@@ -186,3 +186,25 @@ preserved separately, with no rerun. Fresh150ledger65.2573387used/
 84.7426613remaining,reserve60; primaryCONSUMED,g15NOTRUN.
 Evidence:fold-assessment-dev/root-sampling-source-pass-v1.json,
 saved-chain-inspection-v1/v2/v3 and source-sampling-v1.
+## Saved real-input verification — 7 October
+
+The source-verified sampling helper now completes on the existing g14 CSC and
+signed states with zero solver evaluations and zero owner constructions.
+Original witnesses match exactly. h3e-6 original2.6626205044e-7, J*delta
+1.7665884913e-7, first-order remainder2.1838890398e-7; h1e-6 original
+1.00904614988e-6, J*delta8.6950094271e-7, remainder3.2677315470e-7.
+These norms are not additive. The remainder is a diagnostic, not a replacement
+PASS; original plateau and g14FAIL/g15NOTRUN remain unchanged. Internal arithmetic,
+native/beam input quantization and finite-step curvature are still unallocated.
+
+This closes the helper's real-saved-input gap without re-running the signed
+evaluator. It suggests a prospective representability-aware derivative measure,
+which needs a reviewed mathematical contract and explicit frozen-assessment
+amendment before it can decide acceptance. No criterion or authority is amended
+by this result, and no automatic refinement or physical replay follows.
+
+The bounded check completed11.0569429s,CPU0/thread1/JIToff,peak254025728B.
+Six saved input hashes unchanged; source/snapshot/runtime bindings verified.
+Fresh150ledger76.3142816used/73.6857184remaining,reserve60;primaryCONSUMED.
+Evidence:fold-assessment-dev/root-saved-sampling-result-v1.json and
+saved-sampling-v1; earlier failed evidence and source checks remain immutable.
