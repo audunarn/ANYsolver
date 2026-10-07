@@ -40,7 +40,7 @@ def _restored(seed):
     return owner
 
 
-def _assert_physical(owner, result):
+def _assert_physical(owner, result, *, observer_copy=False):
     assert isinstance(result, ss.DisplacementResult)
     assert result.production_qualified is False
     assert result.free_equilibrium_ratio <= 1e-8
@@ -50,17 +50,24 @@ def _assert_physical(owner, result):
     assert record.configuration == "current"
     selected, = owner.recover(selection=
         ss.GEReferenceDistributingFootprintSelection((record.footprint_id,)))
-    assert selected is record
+    assert selected.generation == record.generation == owner.recover().generation
+    for name in ("footprint_id", "model_identity", "compiled_identity", "configuration"):
+        assert getattr(selected, name) == getattr(record, name)
+    for name in ("centroid_m", "centroid_low_m", "beam_position_m", "beam_position_low_m",
+                 "shell_node_positions_m", "shell_node_position_low_m", "shell_node_actions",
+                 "shell_action", "beam_action", "gap"):
+        np.testing.assert_array_equal(getattr(selected, name), getattr(record, name))
     np.testing.assert_allclose(record.shell_action[:3]+record.beam_action[:3],
                                0., rtol=0., atol=1e-8)
     arm = ((record.beam_position_m-record.centroid_m)+
            (record.beam_position_low_m-record.centroid_low_m))
     np.testing.assert_allclose(record.shell_action[3:]+record.beam_action[3:]+
         np.cross(arm, record.beam_action[:3]), 0., rtol=0., atol=1e-8)
-    for value in (result.shell_displacement, result.applied_dead_load,
-                  record.shell_node_actions, record.gap):
-        with pytest.raises(ValueError):
-            value.setflags(write=True)
+    if not observer_copy:
+        for value in (result.shell_displacement, result.applied_dead_load,
+                      record.shell_node_actions, record.gap):
+            with pytest.raises(ValueError):
+                value.setflags(write=True)
 
 
 def test_signed_restart_continue_and_physical_recovery(seed):
@@ -105,7 +112,32 @@ def test_cancelled_prefix_observer_failure_and_stale_publication(seed):
     observed = []
     def observe(result):
         observed.append(owner.checkpoint())
-        _assert_physical(owner, result)
+        _assert_physical(owner, result, observer_copy=True)
+        accepted = owner.recover()
+        accepted_record, = accepted.distributing_footprint_wrenches
+        copied_record, = result.distributing_footprint_wrenches
+        # The observer receives deepcopy(result), whose NumPy arrays can be
+        # writable. Mutating that detached copy must leave live recovery and
+        # its complete published checkpoint unchanged.
+        for name in ("shell_displacement", "applied_dead_load", "cell_resultants"):
+            saved = getattr(accepted, name).copy()
+            copied = getattr(result, name)
+            assert not np.shares_memory(copied, getattr(accepted, name))
+            copied.setflags(write=True)
+            copied.flat[0] += 1.
+            np.testing.assert_array_equal(getattr(owner.recover(), name), saved)
+        for name in ("shell_node_actions", "shell_action", "gap"):
+            saved = getattr(accepted_record, name).copy()
+            copied = getattr(copied_record, name)
+            assert not np.shares_memory(copied, getattr(accepted_record, name))
+            copied.setflags(write=True)
+            copied.flat[0] += 1.
+            selected, = owner.recover(selection=
+                ss.GEReferenceDistributingFootprintSelection((accepted_record.footprint_id,)))
+            assert selected.generation == accepted.generation
+            np.testing.assert_array_equal(getattr(selected, name), saved)
+        assert owner.checkpoint() == observed[-1]
+        _assert_physical(owner, owner.recover())
         token.cancel("accepted displacement prefix")
     try:
         with pytest.raises(SolveCancelled):
