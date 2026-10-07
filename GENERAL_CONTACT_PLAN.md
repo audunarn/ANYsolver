@@ -13,10 +13,24 @@ PASS. Product unchanged;4/8 NONPASS and all failed evidence preserved. No furthe
 time refinement, fixture repeat or build is needed. Reuse this trajectory substrate
 for remaining native qualification and common-stage contact integration; C7
 spatial/section admission and independent acceptance still precede C8 promotion.
-Choose the next coherent source slice from those open rows; this result grants
+The next source slice is C8_NATIVE_PAIR_DEV: two disjoint free native beams in
+one uncondensed midpoint/contact system, using the existing transient controller.
+Initial admission is explicitly straight, zero-lift and round-centreline; curved
+geometry, friction, endpoint accuracy and native-shell coupling remain open.
+Preserve the exact legacy connected owner and its identities. Finish source
+review, focused fixtures and the public example before requesting separate
+test/build/install execution authority. This result grants
 no new fixture execution authority or blanket native admission.202.89767590013798
 of240s consumed,37.10232409986202s remains only in the resolved nonprincipal scope.
 [Measured development outcome](docs/d1_review_support/contact_native_nonprincipal_20261006/nonprincipal_corrective_development.md).
+
+The C8 pair source slice is now implemented and source-reviewed: one full84
+retained system, shared controller/replay, both-body work and conservative path
+checks. Restore penetration and derived-radius identity findings are repaired.
+Nine AST checks and ten held hashes match; no numerical tests/build/install ran.
+The next action is the bounded new-scope installed verification in the
+[source checkpoint and execution proposal](docs/d1_review_support/contact_native_c8_pair_20261007/source_candidate.md).
+The 750-second proposal is not granted authority; preserve old scope balances.
 
 ## Current delivered development
 

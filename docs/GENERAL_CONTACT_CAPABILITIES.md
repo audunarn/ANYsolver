@@ -3023,3 +3023,10 @@ Product/defaults/gates unchanged;550 payloads/six metadata verified. Development
 tested; not independently accepted/released. FullC7 spatial/section qualification,
 C8 and C0-C9 open. Evidence:
 d1_review_support/contact_native_nonprincipal_20261006/nonprincipal_corrective_development.md.
+
+
+## C8 native pair common-stage source candidate - 7 October 2026
+
+Status: IMPLEMENTED SOURCE CANDIDATE; NUMERICALLY UNVERIFIED; no independent acceptance or release. Profile NATIVE_B3_GE_WHOLE_ROUND_PAIR_MIDPOINT_DEV_V1. Two free disjoint centered elastic native bodies, straight zero-lift physical curves and explicit round-centreline line penalty, enter one full84 retained midpoint system through the shared transient controller. Both-body cross blocks, separate contact storage, rounded/exact swept-path enclosure, captured radius and direct-capsule penetration admission are source implemented. Historical connected graph/default/profile/schema identities remain required compatibility checks.
+
+[Source guide](GENERAL_CONTACT_NATIVE_TRANSIENT_DEV.md). Raw source/review context: C:/ANYworkspaceWork/contact_native_c8_pair_20261007. Prospective eight focused checks plus legacy admission/compatibility and installed workflow remain unexecuted; no old allowance funds this fixture. Broader C7 qualification precedes C8 promotion. Curved/internal-lift contact, true endpoint accuracy, friction, native-shell common-stage and wider programme rows remain open.

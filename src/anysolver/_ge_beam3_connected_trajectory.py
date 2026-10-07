@@ -35,16 +35,21 @@ def _record(owner,state,account):
 
 
 def _result(identity,contract,controller,native,status):
-    body=dict(schema=SCHEMA,identity=identity,contract=contract,native_checkpoint=native.decode('ascii'),
+    profile=contract['settings']['profile']
+    contact_profile=profile!=PROFILE
+    schema=contract['settings'].get('trajectory_schema',SCHEMA)
+    body=dict(schema=schema,identity=identity,contract=contract,native_checkpoint=native.decode('ascii'),
         native_sha256=sha256(native).hexdigest(),controller=controller,production_qualified=False)
     checkpoint=_bytes(dict(body=body,checkpoint_sha256=sha(body)))
-    data=dict(profile=PROFILE,identity=identity,status=status,production_qualified=False,contact='UNSUPPORTED',
+    data=dict(profile=profile,identity=identity,status=status,production_qualified=False,contact='NATIVE_WHOLE_ROUND_LINE_PENALTY' if contact_profile else 'UNSUPPORTED',
         loads='UNSUPPORTED',integrator='EXISTING_NATIVE_SO3_MIDPOINT',outputs=controller['outputs'],
         steps=controller['steps'],initial=controller['initial'],accepted_time=controller['time'],
         accepted_steps=controller['accepted_steps'],final=controller['steps'][-1]['endpoint'] if controller['steps'] else controller['initial'],
         output_cadence=contract['settings']['save_every'],
         work_semantics='ACTUAL_GLOBAL_MIDPOINT_SUPPORT_WORK; HOMOGENEOUS_CLAMP_ZERO',
         energy_semantics='EXISTING_NATIVE_KINETIC_PLUS_RETAINED_MIXED_POTENTIAL; NO_ENERGY_GATE')
+    if contact_profile:
+        data['energy_semantics']='KINETIC_PLUS_STRUCTURAL_ELASTIC_PLUS_CONTACT_REGULARIZATION_STORAGE; NO_EXACT_ENERGY_CONSERVATION_CLAIM'
     return NativeTransientResult(_bytes(data),checkpoint)
 
 
@@ -85,6 +90,7 @@ def _prepare_step(owner,state,t_end,identity,contract,controller,candidate,dt,fa
             stage_residual_norm=owner._norm(candidate.residual,owner.free),endpoint_algebraic_norm=owner._norm(er,owner.z),
             endpoint_reaction_global=er+ei,midpoint_unknown_global=candidate.unknown,
             midpoint_physical_increment_global=increment,midpoint_support=support)
+        step.update(owner._step_extra(state,candidate.unknown,candidate.dt,candidate.stage,candidate.endpoint,token))
         step=_load(_bytes(step).decode('ascii'));count=controller['accepted_steps']+1
         next_controller=dict(time=candidate.endpoint.time,accepted_steps=count,next_dt=dt if failures else planned,
             initial=controller['initial'],steps=controller['steps']+[step],outputs=controller['outputs']+
@@ -105,7 +111,7 @@ def _replay_planned_dt(step,planned,settings):
         raise NativeTransientError('connected stored step exceeds planned dt')
     if type(step['truncated']) is not bool or type(failures) is not list or len(failures)>settings['max_cutbacks']:
         raise NativeTransientError('bounded exact cutback metadata required')
-    retryable=('connected midpoint iteration limit','connected midpoint backtracking failed')
+    retryable=settings.get('retryable',('connected midpoint iteration limit','connected midpoint backtracking failed'))
     for failure in failures:
         _keys(failure,('dt','reason'))
         value=failure['dt']
@@ -148,7 +154,7 @@ def _restore(owner,raw,expected,identity,contract,token):
     if canonical(data)!=raw:raise NativeTransientError('canonical connected trajectory required')
     _keys(data,('body','checkpoint_sha256'));body=data['body']
     _keys(body,('schema','identity','contract','native_checkpoint','native_sha256','controller','production_qualified'))
-    if body['schema']!=SCHEMA or body['identity']!=identity or canonical(body['contract'])!=canonical(contract) or body['production_qualified'] is not False or data['checkpoint_sha256']!=sha(body):
+    if body['schema']!=contract['settings'].get('trajectory_schema',SCHEMA) or body['identity']!=identity or canonical(body['contract'])!=canonical(contract) or body['production_qualified'] is not False or data['checkpoint_sha256']!=sha(body):
         raise NativeTransientError('connected trajectory identity/integrity mismatch')
     native=body['native_checkpoint'].encode('ascii')
     if len(native)>MAX_BYTES or sha256(native).hexdigest()!=body['native_sha256']:raise NativeTransientError('connected embedded capsule mismatch')
@@ -159,6 +165,7 @@ def _restore(owner,raw,expected,identity,contract,token):
         raise NativeTransientError('connected controller finite time/next_dt required')
     planned=contract['settings']['dt']
     previous=_validate_record(owner,c['initial'],0,0.,token)
+    owner._validate_initial_contact(previous)
     # Physical initial fields are bound to the declared reference contract.
     initial_step=np.zeros(owner.size);initial_step[list(owner.physical)]=contract['initial_displacement_physical']
     reference=owner._data(previous);reference.update(positions=owner.reference_positions,position_low=np.zeros((owner.n,3)),cell_rotations=np.tile(np.eye(3),(owner.e,2,1,1)))
@@ -171,7 +178,7 @@ def _restore(owner,raw,expected,identity,contract,token):
     expected_outputs=[c['initial']]
     for index,step in enumerate(c['steps'],1):
         cancellation_safe_point(token,'connected.trajectory.restore.step')
-        _keys(step,('index','dt','start_time','end_time','truncated','cutbacks','iterations','backtracks','predecessor_sha256','endpoint','stage','stage_residual_norm','endpoint_algebraic_norm','endpoint_reaction_global','midpoint_unknown_global','midpoint_physical_increment_global','midpoint_support'))
+        _keys(step,('index','dt','start_time','end_time','truncated','cutbacks','iterations','backtracks','predecessor_sha256','endpoint','stage','stage_residual_norm','endpoint_algebraic_norm','endpoint_reaction_global','midpoint_unknown_global','midpoint_physical_increment_global','midpoint_support')+owner.extra_step_keys)
         if type(step['dt']) is not float or not math.isfinite(step['dt']) or step['dt']<=0 or step['index']!=index or type(step['index']) is not int or any(type(step[name]) is not float or not math.isfinite(step[name]) for name in ('start_time','end_time')) or step['start_time']!=previous.time or step['end_time']!=previous.time+step['dt'] or step['end_time']<=previous.time or step['predecessor_sha256']!=sha(previous):
             raise NativeTransientError('connected accepted path chain mismatch')
         planned=_replay_planned_dt(step,planned,contract['settings'])
@@ -193,6 +200,9 @@ def _restore(owner,raw,expected,identity,contract,token):
         expected_pose=owner._advance(previous,physical_increment)
         for name in ('positions','position_low','cell_rotations'):
             if canonical(getattr(endpoint,name))!=canonical(getattr(expected_pose,name)):raise NativeTransientError('connected endpoint physical stage mismatch')
+        extra=owner._step_extra(previous,unknown,step['dt'],actual_stage,endpoint,token)
+        if any(canonical(step[key])!=canonical(value) for key,value in extra.items()):
+            raise NativeTransientError('native contact path/work journal mismatch')
         expected_velocity=previous.velocity.copy();expected_velocity[p]+=step['dt']*unknown[p]
         if canonical(endpoint.velocity)!=canonical(expected_velocity):raise NativeTransientError('connected endpoint physical rate mismatch')
         er,_,ei,_,_,_,_=owner._evaluate(endpoint,token)
@@ -216,7 +226,14 @@ def _restore(owner,raw,expected,identity,contract,token):
 
 def solve_connected_transient(owner,config, *, checkpoint=None,expected_sha256=None,max_steps=10000,max_cutbacks=8,minimum_dt=None,cancellation_token=None):
     if type(owner) is not ConnectedDynamicAnalysis:raise NativeTransientError('exact connected development owner required')
+    return _solve_retained_transient(owner,config,checkpoint=checkpoint,expected_sha256=expected_sha256,
+        max_steps=max_steps,max_cutbacks=max_cutbacks,minimum_dt=minimum_dt,cancellation_token=cancellation_token)
+
+
+def _solve_retained_transient(owner,config, *, checkpoint=None,expected_sha256=None,max_steps=10000,max_cutbacks=8,minimum_dt=None,cancellation_token=None):
     settings=_settings(config,max_steps,max_cutbacks,minimum_dt);settings['profile']=PROFILE
+    if type(owner) is not ConnectedDynamicAnalysis:
+        settings.update(profile=owner.trajectory_profile,trajectory_schema=owner.trajectory_schema,retryable=owner.retryable)
     t_end=float(config.t_end);count=len(owner.physical)
     displacement=_vector(config.initial_displacement,count,'initial_displacement');velocity=_vector(config.initial_velocity,count,'initial_velocity')
     contract=dict(analysis_sha256=owner.identity,settings=settings,initial_displacement_physical=displacement,initial_velocity_physical=velocity)
@@ -239,5 +256,5 @@ def solve_connected_transient(owner,config, *, checkpoint=None,expected_sha256=N
             if canonical(_record(owner,state,account))!=canonical(last):raise NativeTransientError('restored connected accounting/endpoint mismatch')
             return controller,raw,_result(identity,contract,controller,raw,'completed' if state.time==t_end else 'initialized')
         state,(controller,native,published)=owner._prepare_replayed_restore(cancellation_token=cancellation_token,replay=replay,prepare=restored)
-    adapter=SimpleNamespace(error=NativeTransientError,retryable=frozenset(('connected midpoint iteration limit','connected midpoint backtracking failed')),result=_result,prepare_step=_prepare_step)
+    adapter=SimpleNamespace(error=NativeTransientError,retryable=frozenset(owner.retryable),result=_result,prepare_step=_prepare_step)
     return advance(owner,state,t_end,identity,contract,controller,native,cancellation_token,published,adapter)

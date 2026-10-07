@@ -5,7 +5,8 @@
 FullC0-C9 ACTIVE/incomplete: [goal](GENERAL_CONTACT_GOAL.md),
 [plan](GENERAL_CONTACT_PLAN.md), [ledger](docs/GENERAL_CONTACT_CAPABILITIES.md).
 Only C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001, branch
-codex/contact-main-reconcile-20261001. Product e166100c unchanged. Protected
+codex/contact-main-reconcile-20261001. Previous product baseline e166100c; the
+new C8 source candidate is in progress and numerically unverified. Protected
 original inaccessible; no siblings/other chats/publication/merge/release/default
 changes. Local checkpoints authorized. Ledger ASCII append only. Mistral/local
 cached unavailable; same-family supporting reviews are not independent acceptance.
@@ -30,12 +31,32 @@ revised authorities, exact source snapshots/manifests/runner/adoption, immutable
 prefix binding and complete process/runtime/import/failure evidence. Source held
 for execution differs only from post-execution documentation; use exact hashes.
 
-Next: select a coherent remaining C7 spatial/section or C8 common-stage contact
-source slice using current contracts and ledger. Reuse resolved mechanics and
-state evidence. Full native admission/independent acceptance remains open; C7
-qualification precedes C8 promotion. No new numerical fixture allowance follows
-from this result; never borrow/reset consumed scopes. Author and reviewer finished
-this bounded slice; no active numerical ownership remains.
+C8_NATIVE_PAIR_DEV source milestone is complete under native_nonprincipal_author:
+actual two-disjoint native beam-beam impact through one retained midpoint system,
+shared controller, both-body work, conservative stage path and atomic restart.
+Lead adopted private shared base preserving old exact connected graph/profile/
+default/checkpoint identities, with a new explicit development contact owner.
+Structural elastic energy and contact regularization storage remain separate.
+Straight zero-lift round-centreline admission first; curved/internal-lift, endpoint,
+friction, common-stage shell and broader qualification rows remain required/open.
+Raw C:/ANYworkspaceWork/contact_native_c8_pair_20261007/lead_contract_adoption.json
+binds source contracts. native_nonprincipal_review provides supporting scrutiny.
+Ten held source files match source_checks_v2.json; nine Python AST and whitespace
+checks pass. Lead and supporting reviewer inspected the coupled route. Direct
+restore penetration and derived-radius mutation findings are repaired. Source
+snapshot V1 and its earlier six-step fixture remain; V2 prospectively uses two
+dt.003 steps and genuine fresh1+1 restart, with existing opt-in stable arithmetic.
+Exact and rounded path families use two explicit arithmetic error envelopes.
+Workers are terminal; no live numerical job. Source review is same-family support.
+[Source checkpoint](docs/d1_review_support/contact_native_c8_pair_20261007/source_candidate.md).
+NO numerical/build/install/solver-import authority for this new fixture. Proposed
+750 measured seconds includes 690 scheduled job caps and60 reserve, at most60s/job,
+one job at a time,953MiB; pending human authorization. It covers private build/
+install, eight focused selectors, changed legacy routes, public example and
+scoped repairs. Start with frozen source identity and one measured harness;
+preserve every failed attempt and actual process-wall charge. No pooling from
+old allowances. FullC7
+qualification still precedes C8 promotion; no independent acceptance/release claim.
 
 ## Completed evidence and protected balances
 

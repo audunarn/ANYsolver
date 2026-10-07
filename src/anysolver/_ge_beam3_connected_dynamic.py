@@ -60,8 +60,12 @@ class ConnectedCandidate:
     backtracks: int
 
 
-class ConnectedDynamicAnalysis:
+class _RetainedMidpointAssembly:
     """One globally coupled physical/algebraic owner, no child time steppers."""
+    route_profile=PROFILE
+    checkpoint_schema=SCHEMA
+    extra_step_keys=()
+    retryable=('connected midpoint iteration limit','connected midpoint backtracking failed')
     def __init__(self, definitions, boundaries, *, inertia_order=24,
                  max_iterations=12, max_backtracks=8):
         self.started=monotonic();self._captured_started=self.started
@@ -99,12 +103,7 @@ class ConnectedDynamicAnalysis:
             maps.append(tuple(6*self.node_index[node]+axis for node in element.node_ids for axis in range(6))+
                 tuple(range(6*self.n+6*k,6*self.n+6*k+6))+
                 tuple(range(6*self.n+6*self.e+18*k,6*self.n+6*self.e+18*k+18)))
-        # Graph closure does not depend on element input traversal ordering.
-        pending=list(self.elements[1:])
-        while pending:
-            found=next((e for e in pending if seen.intersection(e.node_ids)),None)
-            if found is None:raise ValueError('declared element graph is disconnected')
-            seen.update(found.node_ids);pending.remove(found)
+        self._admit_graph()
         self.maps=tuple(maps)
         self.reference_positions=_owned([ref[n] for n in self.nodes]);self.reference_frames=_owned([frames[n] for n in self.nodes])
         self.fixed=self.analysis._admit_boundaries()
@@ -123,13 +122,30 @@ class ConnectedDynamicAnalysis:
         self._binding=canonical(self._definition());self.identity=sha(self._definition())
 
     def _definition(self):
-        return dict(profile=PROFILE,analysis=self.analysis.identity,elements=[e.identity for e in self.elements],
+        return dict(profile=self.route_profile,analysis=self.analysis.identity,elements=[e.identity for e in self.elements],
             maps=self.maps,nodes=self.nodes,node_index=self.node_index,n=self.n,e=self.e,size=self.size,
             fixed=self.fixed,free=self.free,p=self.p,z=self.z,physical=self.physical,algebraic=self.algebraic,
             reference_positions=self.reference_positions,reference_frames=self.reference_frames,
             histories=self.histories,inertia=[self.analysis._inertias[e.element_id] for e in self.elements],
             inertia_order=self.inertia_order,iterations=self.max_iterations,backtracks=self.max_backtracks,
             coordinate_budget=MAX_COORDINATES,runtime_limit_seconds=120.,length=self.length,scale=self.scale)
+
+    def _admit_graph(self):
+        # Legacy graph closure is unchanged and independent of traversal order.
+        seen=set(self.elements[0].node_ids);pending=list(self.elements[1:])
+        while pending:
+            found=next((e for e in pending if seen.intersection(e.node_ids)),None)
+            if found is None:raise ValueError('declared element graph is disconnected')
+            seen.update(found.node_ids);pending.remove(found)
+
+    def _step_extra(self,previous,unknown,dt,stage,endpoint,token):
+        return {}
+
+    def _validate_initial_contact(self,state):
+        pass
+
+    def _admit_saved_state(self,state):
+        pass
 
     def _guard(self,token=None,stage='connected.guard'):
         cancellation_safe_point(token,stage);self.analysis._guard()
@@ -355,7 +371,7 @@ class ConnectedDynamicAnalysis:
             return self._encode_state(self._current)
 
     def _encode_state(self,state):
-        body=dict(schema=SCHEMA,profile=PROFILE,identity=self.identity,state=state)
+        body=dict(schema=self.checkpoint_schema,profile=self.route_profile,identity=self.identity,state=state)
         raw=canonical(dict(body=body,sha256=sha(body)))
         if len(raw)>MAX_BYTES:raise ValueError('connected checkpoint byte cap')
         return raw
@@ -389,13 +405,14 @@ class ConnectedDynamicAnalysis:
         data=json.loads(raw,object_pairs_hook=pairs,parse_constant=lambda x:(_ for _ in ()).throw(ValueError('nonfinite capsule')))
         if canonical(data)!=raw or set(data)!= {'body','sha256'}:raise ValueError('exact canonical connected envelope required')
         body=data['body']
-        if set(body)!= {'schema','profile','identity','state'} or body['schema']!=SCHEMA or body['profile']!=PROFILE or body['identity']!=self.identity or data['sha256']!=sha(body):
+        if set(body)!= {'schema','profile','identity','state'} or body['schema']!=self.checkpoint_schema or body['profile']!=self.route_profile or body['identity']!=self.identity or data['sha256']!=sha(body):
             raise ValueError('connected checkpoint identity/integrity mismatch')
         if type(body['state']) is not dict or set(body['state'])!=set(ConnectedState.__dataclass_fields__):raise ValueError('complete state inventory required')
         state=self._state(body['state']);r,j,fi,m,_,_,_=self._evaluate(state,cancellation_token)
         self._block_admission(j,m)
         if canonical(self._data(state))!=canonical(body['state']):raise ValueError('restore must preserve exact stored numeric inventory')
         if self._norm(r,self.z)>1e-11 or self._norm(r+fi,self.p)>1e-11:raise ValueError('restored complete connected equilibrium invalid')
+        self._admit_saved_state(state)
         return self._issue(state)
 
     def _prepare_initial(self,displacement,velocity, *, cancellation_token,prepare):
@@ -444,3 +461,7 @@ class ConnectedDynamicAnalysis:
             native=self._encode_state(state)
             self._candidate(candidate);self._guard(cancellation_token,'connected.candidate.ready')
             return native
+
+
+class ConnectedDynamicAnalysis(_RetainedMidpointAssembly):
+    """Exact historical connected admission and profile over shared mechanics."""

@@ -13,6 +13,14 @@ Work only in C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001 on co
 
 ## Current position
 
+The active source milestone is C8_NATIVE_PAIR_DEV: two deformable native beams
+at a common midpoint stage, full retained cross-coupling, separate contact
+storage, conservative path checks and shared atomic restart. It is a development
+candidate only; no numerical allowance, independent acceptance or release follows
+from the preceding contact-free result. Broader C7 qualification precedes C8
+promotion. Straight zero-lift admission does not close curved, frictional,
+endpoint or native-shell programme rows.
+
 Native nonprincipal dynamics: the same physical fixture now passes the complete
 16-step dt1/256 development check. Strict totalH error5.108152488863217e-7 meets
 1e-6; complete state, equilibrium, impulse accounting, response/energy refinement
