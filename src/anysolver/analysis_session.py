@@ -17,6 +17,7 @@ from __future__ import annotations
 import threading
 import time
 import weakref
+import uuid
 from collections import Counter, OrderedDict
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, Mapping, Optional, Tuple
@@ -26,6 +27,37 @@ from scipy import sparse
 
 from .constraint_audit import require_valid_constraints
 from .linalg import FactorizationCache
+from .activity import ElementActivity, ElementActivityPolicy
+
+
+def _activity_callable_metadata(function: Any) -> Tuple[Any, ...]:
+    return (function, function.__code__, function.__defaults__,
+            tuple((function.__kwdefaults__ or {}).items()))
+
+
+_ACTIVITY_EPOCH_METHODS = {
+    name: (vars(ElementActivity)[name], _activity_callable_metadata(vars(ElementActivity)[name]))
+    for name in ("scales", "_all_scales", "_indices_for_ids", "set_activity", "hard_delete")
+}
+_ACTIVITY_EPOCH_PROPERTIES = {
+    name: (vars(ElementActivity)[name], _activity_callable_metadata(vars(ElementActivity)[name].fget))
+    for name in ("policy", "sequence")
+}
+
+
+def _has_builtin_activity_epoch(provider: Any) -> bool:
+    if type(provider) is not ElementActivity:
+        return False
+    namespace = vars(provider)
+    for name, (function, metadata) in _ACTIVITY_EPOCH_METHODS.items():
+        if (name in namespace or vars(ElementActivity).get(name) is not function
+                or _activity_callable_metadata(function) != metadata):
+            return False
+    for name, (descriptor, metadata) in _ACTIVITY_EPOCH_PROPERTIES.items():
+        if (vars(ElementActivity).get(name) is not descriptor
+                or _activity_callable_metadata(descriptor.fget) != metadata):
+            return False
+    return type(provider.policy) is ElementActivityPolicy
 
 if TYPE_CHECKING:
     from .boundary import LoadCase
@@ -223,6 +255,9 @@ class AnalysisSession:
         self._rigid_modes: Optional[Tuple[Tuple[Any, ...], np.ndarray, Dict[str, Any]]] = None
         self._load_vectors: "OrderedDict[Tuple[Any, ...], Tuple[np.ndarray, Dict[str, Any]]]" = OrderedDict()
         self._output_plans: "OrderedDict[Tuple[Any, ...], OutputSelectionPlan]" = OrderedDict()
+        self._activity_snapshots: Dict[str, Tuple[Any, Tuple[Any, ...], Tuple[Any, ...], Any]] = {}
+        self._activity_identity = uuid.uuid4().hex
+        self._activity_generation = 0
         self._max_output_plans = int(max_output_plans)
         self.factorization_cache = FactorizationCache(
             name="analysis_session",
@@ -267,16 +302,8 @@ class AnalysisSession:
 
         if matrix_type == "stiffness":
             current = self.stiffness_plan(model)
-            expected_key = _revision_key(model, "topology", "geometry", "material")
         elif matrix_type == "mass":
             current = self.mass_plan(model)
-            expected_key = _revision_key(
-                model,
-                "topology",
-                "geometry",
-                "material",
-                "mass",
-            )
         else:  # pragma: no cover - private API guard
             raise ValueError(f"unsupported structural matrix type: {matrix_type!r}")
         if plan is None:
@@ -284,7 +311,6 @@ class AnalysisSession:
         if (
             plan is not current
             or plan.matrix_type != matrix_type
-            or plan.revision_key != expected_key
             or plan.revision_key != current.revision_key
         ):
             self._counters[f"{matrix_type}_plan_rejections"] += 1
@@ -337,17 +363,52 @@ class AnalysisSession:
             self._rigid_modes = None
             self._load_vectors.clear()
             self._output_plans.clear()
+            self._activity_snapshots.clear()
             self._closed = True
             self._counters["close_count"] += 1
 
     release = close
+
+    def _activity_contribution_key(self, model: "FEModel", quantity: str) -> Any:
+        """Track effective builtin contribution weights, retaining provider identity.
+
+        Sequence alone misses attachment/replacement and needlessly invalidates
+        DELETE_ONLY/RETAIN contributions on softening.  Provider-owned callbacks
+        have no cheap epoch contract, so their effective weights are observed
+        afresh using the assembly provider validation on every lookup.
+        """
+        from .matrix_assembly import _activity_scales
+
+        provider = model.mesh.element_activity
+        if provider is None:
+            self._activity_snapshots.pop(quantity, None)
+            return None
+        epoch = None
+        if _has_builtin_activity_epoch(provider):
+            epoch = (provider.sequence, provider.policy, _revision_key(model, "topology"))
+        previous = self._activity_snapshots.get(quantity)
+        if (epoch is not None and previous is not None and previous[3] is not None
+                and previous[0] is provider
+                and previous[3][0] == epoch[0] and previous[3][1] is epoch[1]
+                and previous[3][2] == epoch[2]):
+            return previous[2]
+        observed, scales, _info = _activity_scales(model, quantity)
+        values = tuple(scales.items())
+        if previous is not None and previous[0] is observed and previous[1] == values:
+            self._activity_snapshots[quantity] = (observed, values, previous[2], epoch)
+            return previous[2]
+        self._activity_generation += 1
+        token = ("activity", self._activity_identity, self._activity_generation)
+        self._activity_snapshots[quantity] = (observed, values, token, epoch)
+        return token
 
     def stiffness_plan(self, model: Optional["FEModel"] = None) -> StructuralMatrixPlan:
         from .matrix_assembly import assemble_stiffness_matrix
 
         with self._lock:
             owned = self._require_model(model)
-            key = _revision_key(owned, "topology", "geometry", "material")
+            key = (*_revision_key(owned, "topology", "geometry", "material"),
+                   self._activity_contribution_key(owned, "stiffness"))
             if self._stiffness is not None and self._stiffness.revision_key == key:
                 self._counters["stiffness_hits"] += 1
                 return self._stiffness
@@ -358,6 +419,7 @@ class AnalysisSession:
                 self._reduced_mass = None
                 self._rigid_modes = None
                 self._load_vectors.clear()
+                self._output_plans.clear()
             start = time.perf_counter()
             matrix, info = assemble_stiffness_matrix(owned)
             plan = StructuralMatrixPlan(matrix.tocsr(), dict(info), key, "stiffness")
@@ -371,19 +433,20 @@ class AnalysisSession:
 
         with self._lock:
             owned = self._require_model(model)
-            key = _revision_key(
+            key = (*_revision_key(
                 owned,
                 "topology",
                 "geometry",
                 "material",
                 "mass",
-            )
+            ), self._activity_contribution_key(owned, "mass"))
             if self._mass is not None and self._mass.revision_key == key:
                 self._counters["mass_hits"] += 1
                 return self._mass
             if self._mass is not None:
                 self._invalidation_reasons["mass_revision"] += 1
                 self._reduced_mass = None
+                self.factorization_cache.clear()
             start = time.perf_counter()
             matrix, info = assemble_mass_matrix(owned)
             plan = StructuralMatrixPlan(matrix.tocsr(), dict(info), key, "mass")
@@ -592,8 +655,8 @@ class AnalysisSession:
                         "geometry",
                         "material",
                         "mass",
-                        "activity",
                     ),
+                    self._activity_contribution_key(owned, "load"),
                     pattern,
                 )
                 cached_load = self._load_vectors.get(load_key)
