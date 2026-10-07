@@ -73,6 +73,20 @@ fixture execution until its concrete source candidate and scope are ready.
 
 ## Current C8 result and next delivery
 
+Native-S3 common-midpoint delivery is now installed-development verified:
+eight shell and eight compatibility selectors plus actualCLI pass. Full60 work,
+two-step impact, actual projected path, exact split restart, tamper and rollback
+are covered. Product5c403caf is unchanged; test-control failure and compatibility
+timeout remain preserved. Thirteen attempts charged261.4690997000034/480s.
+[Evidence](docs/d1_review_support/contact_native_shell_c8_20261007/installed_development.md).
+This supersedes source-only next-action wording above without broader acceptance.
+Next source milestone: extend the same retained common-stage architecture to
+multiple declared native beams and S3 patches, removing the single-patch boundary.
+Reuse global native assembly, local work maps and the shared transaction/replay
+controller; no independent child steppers or new solver stack. Keep the previous
+profile/identity intact. New fixture execution requires its own scoped authority;
+the remaining218.53090029999657s belongs only to the completed one-beam/S3 fixture.
+
 The native beam-beam V3k component is development verified: five fresh focused
 checks and two portability checks pass, including complete84 derivative/work,
 actual impact and authentic restart/tamper. Exact endpoint inventories and fixed

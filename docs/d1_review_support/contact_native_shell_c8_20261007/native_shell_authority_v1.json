@@ -1,0 +1,21 @@
+{
+  "accounting_basis": "MEASURED_WRAPPER_WALL_CONSERVATIVE_WITH_PRECISE_CHILD_LAUNCH_TO_WAIT",
+  "approved_seconds": 480,
+  "candidate": {
+    "notes_checkpoint": "7dc56cb8",
+    "product_checkpoint": "5c403caf",
+    "source_inventory_sha256": "f2fc0638a8ac5713165007a9ab252fa15c5460dd503ca22685d0975bdfecd512",
+    "source_report_sha256": "25a42ee5c82ee5b3ab92c7c1b993643248b94a61f7a7742e9a1b7ece4cde8a85"
+  },
+  "concurrent_jobs": 1,
+  "human_reply": "Approved",
+  "interpreted_request": "Separate 480 measured seconds for native-S3 midpoint candidate 5c403caf: eight mechanics/path/restart/safety tests, affected shared-route compatibility, public example, private build/install and scoped repairs.",
+  "maximum_job_seconds": 60,
+  "memory_limit_mib": 953,
+  "pending_manifest_sha256": "e89ddbfac3a5c2c607395e1452bc11a2a454c8f417c282490bb9f03e24137531",
+  "protected": "Every earlier purse, failed evidence, scientific criterion, source identity, publication and release restriction remains unchanged.",
+  "recorded_utc": "2026-10-07T16:39:58.588601+00:00",
+  "reserve_seconds": 60,
+  "scope": "C8_NATIVE_SHELL_DEV",
+  "status": "USER_AUTHORIZED"
+}

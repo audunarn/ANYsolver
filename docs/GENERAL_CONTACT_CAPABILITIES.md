@@ -3062,3 +3062,23 @@ curved-lift/friction/rim claim.14 AST checks and15 held hashes pass. Eight
 focused selectors, changed shared-route compatibility and installed workflow
 remain unexecuted. Prospective480s request is not authority; old purses intact.
 Evidence: d1_review_support/contact_native_shell_c8_20261007/source_candidate.md.
+
+
+## 2026-10-07 native-S3 common-midpoint installed development
+
+Profile NATIVE_B3_GE_S3_SMALL_MOTION_DESCRIPTOR_MIDPOINT_DEV_V1.
+Implemented YES; tested FOCUSED_DEVELOPMENT_AND_PRIVATE_INSTALLED;
+independently accepted NO; released NO. This supersedes the source-only
+disposition above for the same bounded component, preserving that history.
+Eight shell and eight affected compatibility selectors plus actual public CLI
+PASS. Full60 derivative/work, actual two-step impact, fresh full2=1+1 restart,
+actual journal/initial-translation tamper, geometry and rollback are verified.
+All555 source/wheel/site payloads match; actual private import/runtime guards
+pass. Wheel1383098e...; product5c403caf unchanged, executed manifests1/3/4;
+final comments/docs manifest5 is bound but not numerically dispatched.
+13attempts261.4690997000034/480s;218.53090029999657 remains incl60reserve,
+scoped to this fixture only. Test-control NONPASS and combined compatibility
+TIMEOUT remain non-success; repaired/split checks pass without relaxed gates.
+Broader geometry, multiple components, friction, temporal/spatial/section and
+independent engineering acceptance remain open. No programme/release claim.
+Evidence: d1_review_support/contact_native_shell_c8_20261007/installed_development.md.

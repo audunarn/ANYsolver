@@ -13,6 +13,16 @@ Work only in C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001 on co
 
 ## Current position
 
+Native-S3 common-midpoint component is now installed-development verified:
+eight shell/eight compatibility selectors and actual two-stepCLI pass. Full60
+derivative/work, projected physical skin path, exact split restart, tamper and
+state safety are covered;555 source/wheel/site payloads match. Product5c403caf
+unchanged; source-only statements below are superseded for this bounded component.
+Thirteen attempts261.4690997000034/480s, remaining218.53090029999657 incl60reserve,
+scoped only to this fixture. Both failed attempts remain preserved. Full C7/C8,
+multibody, broader geometry/friction, qualification and acceptance remain open.
+[Evidence](docs/d1_review_support/contact_native_shell_c8_20261007/installed_development.md).
+
 The native beam-beam C8 development component is verified at f201b1e7, with
 byte-preserving evidence correction fd414777. Full derivative/work, actual impact,
 restart/tamper and private-package checks pass within their recorded scope.

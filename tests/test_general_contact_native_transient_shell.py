@@ -1,4 +1,4 @@
-"""UNEXECUTED gates for the bounded native/S3 common-stage source candidate."""
+"""Development gates for the bounded native/S3 common-stage candidate; executed evidence is separately bound."""
 from dataclasses import replace
 from fractions import Fraction as F
 from hashlib import sha256
@@ -121,8 +121,9 @@ def test_fresh_one_plus_one_restart_exact_bytes_and_replay_tamper_refusal():
     changed=json.loads(prefix.checkpoint)
     changed['body']['controller']['steps'][0]['native_shell_contact']['shell_endpoint_projection_increment'][3]+=.001
     changed['checkpoint_sha256']=sha(changed['body']);raw=canonical(changed);fresh=build()
-    with pytest.raises(NativeTransientError):
-        solve_native_transient_shell(fresh,config(fresh),checkpoint=raw,expected_sha256=sha256(raw).hexdigest(),minimum_dt=.003/256)
+    with pytest.raises(NativeTransientError,match='native contact path/work journal mismatch'):
+        solve_native_transient_shell(fresh,config(fresh),checkpoint=raw,expected_sha256=sha256(raw).hexdigest(),
+            max_steps=64,max_cutbacks=8,minimum_dt=.003/256)
     assert fresh.current is None and not fresh._candidates
     # Authentic operators reevaluate a changed initial shell translation; the
     # digest/accounting are repaired, so the declared physical contract must
@@ -134,7 +135,8 @@ def test_fresh_one_plus_one_restart_exact_bytes_and_replay_tamper_refusal():
     record['accounting']=json.loads(canonical(owner._evaluate(candidate)[-1]))
     changed['checkpoint_sha256']=sha(changed['body']);raw=canonical(changed);fresh=build()
     with pytest.raises(NativeTransientError,match='initial physical contract mismatch'):
-        solve_native_transient_shell(fresh,config(fresh),checkpoint=raw,expected_sha256=sha256(raw).hexdigest(),minimum_dt=.003/256)
+        solve_native_transient_shell(fresh,config(fresh),checkpoint=raw,expected_sha256=sha256(raw).hexdigest(),
+            max_steps=64,max_cutbacks=8,minimum_dt=.003/256)
     assert fresh.current is None and not fresh._candidates
 
 

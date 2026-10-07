@@ -2,17 +2,19 @@
 
 ## Status
 
-Implemented source candidate; **UNVERIFIED**. No solver or reference imports,
-pytest, builds, installs, examples or numerical jobs have run for this slice.
-The native–native pair evidence belongs to its separate fixture and authority.
-This guide makes no engineering acceptance or release claim.
+Implemented and **verified against the assigned development criteria** in a
+private installed artifact: eight shell selectors, eight changed-route compatibility
+selectors and the public CLI passed. Engineering acceptance and release remain
+separate. The native–native pair's earlier purse and evidence were not pooled.
+The exact execution disposition is saved in
+`C:/ANYworkspaceWork/contact_native_shell_c8_20261007/author_execution_disposition_v2.json`.
 
 The explicit public selector is `ge_beam3_native_s3_small_motion_transient_dev`.
 Use `anysolver.create_native_transient_shell_analysis` and
 `anysolver.solve_native_transient_shell` with the existing `TransientConfig`.
 The root and `general_contact` namespaces expose the same additive functions.
 The example `examples/general_contact_native_shell_impact_dev.py` declares every
-contact, geometry, integration, path and small-motion control. Its prospective
+contact, geometry, integration, path and small-motion control. Its development
 smoke fixture has two steps of 0.003 s, horizon 0.006 s; restart uses one fresh
 step plus one genuinely additional step. CLI arguments are `--steps 2 --dt .003`.
 
@@ -143,38 +145,72 @@ cannot replace recomputation. Cancellation/refusal rolls back the current state,
 issued receipts and candidates. Existing noncontact identities/schema/default
 results are unchanged by the additive hooks.
 
-## Prepared checks and separate execution proposal
+## Executed development evidence
 
-Eight selectors in `tests/test_general_contact_native_transient_shell.py` cover:
+The separate human-authorized scope was 480 measured seconds, with 60 s protected
+reserve, one process tree at a time, <=60 s/job and 953 MiB. Thirteen attempts
+consumed **261.4690997000034 s** on the declared conservative wrapper basis;
+**218.53090029999657 s** remain including reserve. Precise child launch-to-wait,
+whole-tree duration, peak RSS, commands, input/source identities, stdout/stderr
+and per-selector setup/call/teardown outcomes are retained in unique raw ns8_*
+directories. No process remained alive. No other purse was used.
 
-1. Actual shell mass/open equations and permuted-node momentum.
-2. Complete 60-coordinate stage/contact/work derivative at both 1e-6 and 1e-7,
-   nonzero offset rotational columns and both cross blocks (1e-5 gate).
-3. Two actual accepted impact stages, both-body response, equilibrium 1e-11,
-   declared path, storage/force/moment diagnostics and linear momentum 1e-6.
-4. Exact fresh full2 versus fresh1+1 bytes and trajectory tamper refusal.
-5. Constant-plane touch with P = 1e-3 radius and shared two-leg cap exhaustion.
+All eight selectors in `tests/test_general_contact_native_transient_shell.py`
+have terminal pass evidence:
+
+1. Actual formulation mass/open equations and permuted-node momentum.
+2. Complete60 stage/contact/work derivative at both 1e-6 and 1e-7, offset rotation
+   columns and both cross blocks; original 1e-5 gates retained. Scalar FD error
+   values were not separately logged; the source-bound assertions/phase records
+   establish the measured gate results.
+3. Two accepted impact stages, both-body response, equilibrium, projected two-leg
+   path, storage and force/moment diagnostics.
+4. Exact fresh full2=fresh1+1 bytes, path-journal tamper and physically altered
+   initial-shell-translation refusal with digest/accounting repaired.
+5. Constant-plane touch with P=1e-3 radius and shared total path-cap exhaustion.
 6. Clear-endpoint/intermediate-penetration and wrong-side path refusal.
 7. Trusted direct capsule inversion and shell small-motion refusal.
 8. Side/polarity refusal, changed definition, cancellation and trial rollback.
 
-No selector has been executed. A separately authorized first installed-artifact
-plan should allow up to **480 measured seconds total**, reserve 60 s, with one
-process tree at a time, at most 60 s/job and 953 MiB, JIT disabled, Numba/BLAS pools
-one. This estimate is prospective; shell costs have not been measured. Suggested
-caps: private offline build25/install10; mass/geometry/admission group30;
-derivative50; impact45; restart60; rollback35; CLI45; changed shared-owner legacy
-compatibility60. These job caps total 360 s, with 60 s retained reserve and up to
-60 s for scoped repair inside the prospective 480 s total. Remaining allowance permits concrete scoped diagnosis/repair,
-not automatic sweeps. Every attempt must bind source/wheel/site/tests and record
-precise wall duration, effective runtime/import hashes, full outputs and charges.
-Build/install must use isolated private paths without downloads/global installs.
-Verify public namespaces resolve installed payload, overcoming pytest source-path
-settings. Shared changes need actual default connected historical byte comparison
-where matched saved fixtures exist plus affected controller/refusal regression;
-source AST equivalence alone does not establish byte parity.
+The installed wheel is `native_shell_dist_v2/anysolver-0.4.7-py3-none-any.whl`,
+SHA256 `1383098ea2f4d03e383dfead546201208bd6ed5fc3989666286618c4b65f6709`,
+with 555 package payload files. The private site is `native_shell_site_v2` under
+the raw root. Before/final runtime guards verified actual imported module paths
+and hashes, both public namespaces, JIT disabled, Numba 1 and all observed numerical
+pools 1. Pytest source-path settings were cleared. Product payload remained unchanged
+through the test-only repair; source/wheel/site identities are compared in the
+final handoff. Final source comments/documentation are separate from the exactly
+snapshotted executed test inputs; their executable AST is unchanged.
+
+Preserved nonpasses: `ns8_restart_v1` failed because its tamper calls omitted the
+producer max_steps64 and therefore hit configuration identity first. The repair
+sets max_steps64/max_cutbacks8 explicitly in both calls and asserts the actual
+refusal reasons; `ns8_restart_v2` passed. `ns8_compat_v1` timed out after six
+complete selector phase passes. Its final runtime record was unavailable; one
+bounded connected completion group supplied that evidence, while pair restart
+and axial comparison ran separately. No physics, scientific tolerance, admission,
+fixture or resource cap changed. No failed evidence was overwritten.
+
+Eight affected connected/pair selectors passed. The registered historical connected
+axial public result and capsule bytes match their actual producer baseline; this
+is a matched-fixture comparison, not a universal legacy-byte claim. The actual
+public CLI `--steps 2 --dt .003` completed two steps to 0.006 s. Prepared-result
+captures preserve original returned objects but are labelled prepared records;
+the initial-only capture must not be used as trajectory evidence.
+
+Saved two-step diagnostics: maximum stage residual 3.4705519489074807e-14,
+endpoint algebraic residual 1.1930365038732155e-20; contact force/moment balance
+maxima 1.0408340855860843e-17 N / 8.819878370121108e-18 N m. Each step used two
+certified path intervals total, one per leg. Second-stage gap was
+-0.00018994377190514888 m with storage 2.370820103022937e-6 J. Rotational endpoint
+minus stage norms were 1.234522681988844e-10 and 2.8503623776952006e-8 rad, confirming
+actual algebraic skin projection. Energy 0.0204→0.02040012249944116 J has descriptive
+relative change 6.0048745665099835e-6; these are fixture diagnostics, not temporal,
+energy or engineering qualification.
 
 Full programme rows still open: native curved/lifted contact, finite shell motion,
 other sides/polarity, true rim/endpoint force models, native/shell friction and
-broader multibody common-stage qualification. This source slice admits none of
-those rows and consumes no execution authority.
+broader multibody common-stage qualification. This development slice admits none
+of those rows. Different-family independent engineering assessment remains unmet
+under cached Mistral/local unavailability; supporting review and worker verification
+do not establish engineering acceptance.

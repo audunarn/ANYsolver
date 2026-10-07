@@ -1,7 +1,7 @@
-"""UNEXECUTED source candidate: common-stage free native beam and elastic S3.
+"""Development workflow: common-stage free native beam and elastic S3.
 
 Explicit small-motion shell profile; two bodies and actual offset skin. No
-numerical execution or broader engineering acceptance is implied.
+broader engineering acceptance is implied; scoped installed execution evidence is recorded separately.
 """
 import argparse
 from hashlib import sha256

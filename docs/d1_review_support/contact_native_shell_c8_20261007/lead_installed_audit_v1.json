@@ -1,0 +1,218 @@
+{
+  "attempts": [
+    {
+      "attempt": "ns8_build_v1",
+      "charged": 15.332467400001406,
+      "exit": 0,
+      "peak": 107208704,
+      "status": "completed"
+    },
+    {
+      "attempt": "ns8_cli_v1",
+      "charged": 10.843948000001546,
+      "exit": 0,
+      "peak": 168554496,
+      "status": "completed"
+    },
+    {
+      "attempt": "ns8_compat_axial_v1",
+      "charged": 13.238641099998858,
+      "exit": 0,
+      "peak": 187559936,
+      "status": "completed"
+    },
+    {
+      "attempt": "ns8_compat_connected_v1",
+      "charged": 52.812766699998974,
+      "exit": 0,
+      "peak": 188952576,
+      "status": "completed"
+    },
+    {
+      "attempt": "ns8_compat_pair_v1",
+      "charged": 26.37917180000113,
+      "exit": 0,
+      "peak": 190914560,
+      "status": "completed"
+    },
+    {
+      "attempt": "ns8_compat_v1",
+      "charged": 57.04727249999996,
+      "exit": 15,
+      "peak": 195358720,
+      "status": "timeout"
+    },
+    {
+      "attempt": "ns8_derivative_v1",
+      "charged": 7.35555100000056,
+      "exit": 0,
+      "peak": 189071360,
+      "status": "completed"
+    },
+    {
+      "attempt": "ns8_geometry_v1",
+      "charged": 9.569722700000057,
+      "exit": 0,
+      "peak": 188989440,
+      "status": "completed"
+    },
+    {
+      "attempt": "ns8_impact_v1",
+      "charged": 11.454609599999458,
+      "exit": 0,
+      "peak": 191606784,
+      "status": "completed"
+    },
+    {
+      "attempt": "ns8_install_v1",
+      "charged": 1.4676787000007607,
+      "exit": 0,
+      "peak": 60297216,
+      "status": "completed"
+    },
+    {
+      "attempt": "ns8_restart_v1",
+      "charged": 22.358823200000188,
+      "exit": 1,
+      "peak": 196325376,
+      "status": "completed"
+    },
+    {
+      "attempt": "ns8_restart_v2",
+      "charged": 26.311095200000636,
+      "exit": 0,
+      "peak": 197120000,
+      "status": "completed"
+    },
+    {
+      "attempt": "ns8_rollback_v1",
+      "charged": 7.297351799999888,
+      "exit": 0,
+      "peak": 188739584,
+      "status": "completed"
+    }
+  ],
+  "engineering_acceptance": false,
+  "errors": [],
+  "exact_comparison": "CANONICAL_EXTRACTED_PUBLIC_RESULT_AND_CHECKPOINT_BYTES; NOT_COMPLETE_WRAPPER_FILE_BYTES",
+  "kind": "INDEPENDENT_LEAD_INSPECTION_OF_EXISTING_BYTES_AND_RECORDS",
+  "numerical_runs_launched": 0,
+  "passed_unique_selectors": 16,
+  "peak_bytes": 197120000,
+  "product_payloads": 555,
+  "protected_reserve_seconds": 60,
+  "remaining_seconds": 218.53090029999657,
+  "runtime_sessions": [
+    {
+      "attempt": "ns8_cli_v1",
+      "errors": 0,
+      "imports": 205,
+      "phase": "preflight"
+    },
+    {
+      "attempt": "ns8_cli_v1",
+      "errors": 0,
+      "imports": 206,
+      "phase": "final"
+    },
+    {
+      "attempt": "ns8_compat_axial_v1",
+      "errors": 0,
+      "imports": 205,
+      "phase": "preflight"
+    },
+    {
+      "attempt": "ns8_compat_axial_v1",
+      "errors": 0,
+      "imports": 207,
+      "phase": "final"
+    },
+    {
+      "attempt": "ns8_compat_connected_v1",
+      "errors": 0,
+      "imports": 205,
+      "phase": "preflight"
+    },
+    {
+      "attempt": "ns8_compat_connected_v1",
+      "errors": 0,
+      "imports": 212,
+      "phase": "final"
+    },
+    {
+      "attempt": "ns8_compat_pair_v1",
+      "errors": 0,
+      "imports": 205,
+      "phase": "preflight"
+    },
+    {
+      "attempt": "ns8_compat_pair_v1",
+      "errors": 0,
+      "imports": 213,
+      "phase": "final"
+    },
+    {
+      "attempt": "ns8_derivative_v1",
+      "errors": 0,
+      "imports": 205,
+      "phase": "preflight"
+    },
+    {
+      "attempt": "ns8_derivative_v1",
+      "errors": 0,
+      "imports": 206,
+      "phase": "final"
+    },
+    {
+      "attempt": "ns8_geometry_v1",
+      "errors": 0,
+      "imports": 205,
+      "phase": "preflight"
+    },
+    {
+      "attempt": "ns8_geometry_v1",
+      "errors": 0,
+      "imports": 206,
+      "phase": "final"
+    },
+    {
+      "attempt": "ns8_impact_v1",
+      "errors": 0,
+      "imports": 205,
+      "phase": "preflight"
+    },
+    {
+      "attempt": "ns8_impact_v1",
+      "errors": 0,
+      "imports": 206,
+      "phase": "final"
+    },
+    {
+      "attempt": "ns8_restart_v2",
+      "errors": 0,
+      "imports": 205,
+      "phase": "preflight"
+    },
+    {
+      "attempt": "ns8_restart_v2",
+      "errors": 0,
+      "imports": 206,
+      "phase": "final"
+    },
+    {
+      "attempt": "ns8_rollback_v1",
+      "errors": 0,
+      "imports": 205,
+      "phase": "preflight"
+    },
+    {
+      "attempt": "ns8_rollback_v1",
+      "errors": 0,
+      "imports": 206,
+      "phase": "final"
+    }
+  ],
+  "solver_imports": 0,
+  "spent_seconds": 261.4690997000034,
+  "status": "PASS_DEVELOPMENT_EVIDENCE_ONLY"
+}
