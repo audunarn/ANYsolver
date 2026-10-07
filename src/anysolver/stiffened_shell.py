@@ -365,3 +365,16 @@ __all__ += ["BL5_ELASTIC_NATIVE_FIBRE_MIXED_SHELL_V1"]
 __all__ += ["BL5_NATIVE_FIBRE_MATERIAL_V1"]
 from ._stiffened_shell_ge_experimental import BL5_NATIVE_FIBRE_MIXED_SHELL_MATERIAL_V1
 __all__ += ["BL5_NATIVE_FIBRE_MIXED_SHELL_MATERIAL_V1"]
+
+
+def capabilities_record(analysis):
+    """Return detached JSON capability metadata for an existing GE or B2 owner.
+
+    The owner's original report and typed request admission remain authoritative.
+    This record neither executes requests nor establishes qualification.
+    """
+    from ._stiffened_shell_consumer_capabilities import capabilities_record as record
+    return record(analysis)
+
+
+__all__ += ["capabilities_record"]
