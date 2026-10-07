@@ -1,11 +1,19 @@
 # General contact - current delivery plan
 
-**Updated:** 6 October 2026. **Goal:** [complete C0-C9](GENERAL_CONTACT_GOAL.md).
+**Updated:** 7 October 2026. **Goal:** [complete C0-C9](GENERAL_CONTACT_GOAL.md).
 This plan changes the route, not scientific obligations or execution authority.
 The restart note holds current execution balances. Older milestone counts below
 are historical evidence, not renewed or additional execution authority.
 
 The separately opted-in equilibrated V20 slice is implemented and tested below.
+
+Next bounded C7 action: execute the reviewed nonprincipal elastic candidate once
+under a separate allowance. Reuse the unchanged verified private package.
+Distinguish complete discrete equation/state agreement from the exact finite-SO3
+angular-impulse time defect; preserve strict H1e-6 and every existing target.
+A failure gets one discriminating diagnosis, not an automatic refinement campaign.
+[Source readiness and proposed limits](docs/d1_review_support/contact_native_nonprincipal_20261006/source_readiness.md).
+
 ## Current delivered development
 
 ### Latest production progress and next slice

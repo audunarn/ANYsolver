@@ -1,6 +1,6 @@
 # General contact - goal
 
-**Status:** ACTIVE; full C0-C9 incomplete. Updated 6 October 2026.
+**Status:** ACTIVE; full C0-C9 incomplete. Updated 7 October 2026.
 **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1,2026-09-24.2.
 
 ## Required outcome and authority
@@ -12,6 +12,13 @@ The goal governs scope and acceptance; the [plan](GENERAL_CONTACT_PLAN.md) is an
 Work only in C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001 on codex/contact-main-reconcile-20261001. Never access the protected original general-contact checkout. Concurrent main/application work is separately owned; do not communicate with other chats. Authorized local checkpoints are permitted; no push, merge, publication, release or historical default changes.
 
 ## Current position
+
+Native nonprincipal dynamics: the existing public owner now has a complete
+independent elastic reference/example/check candidate, source-reviewed but
+numerically unverified. Product code is unchanged; strict scientific gates and
+the angular-impulse method question remain open. A separately scoped240s
+execution request is prepared; prior fixture balances cannot cover it.
+[Current readiness](docs/d1_review_support/contact_native_nonprincipal_20261006/source_readiness.md).
 
 ### Latest production progress and next slice
 

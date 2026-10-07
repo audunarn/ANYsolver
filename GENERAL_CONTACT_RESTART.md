@@ -1,68 +1,62 @@
-# General contact — restart (6 October 2026)
+# General contact - restart (7 October 2026)
 
 ## Goal and ownership
 
-Full C0–C9 ACTIVE/incomplete: [goal](GENERAL_CONTACT_GOAL.md),
+Full C0-C9 ACTIVE/incomplete: [goal](GENERAL_CONTACT_GOAL.md),
 [plan](GENERAL_CONTACT_PLAN.md), [ledger](docs/GENERAL_CONTACT_CAPABILITIES.md).
 Only C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001, branch
-codex/contact-main-reconcile-20261001. Executed V4/V4a held source; parent2c8d8f03. Final checkpoint in raw evidence.
-Protected original inaccessible; no siblings/other-chat communication/publication,
-merge/release/default changes. Local checkpoints authorized. Ledger ASCII append
-only. Mistral/local cached unavailable; same OpenAI author pair_geometry_swept and curved_switch_review are terminal.
-Bending implementation and supporting source review are complete.
-Same-family input is supporting, not independent acceptance. No numerical job live.
+codex/contact-main-reconcile-20261001. Product checkpoint e166100c unchanged.
+Protected original inaccessible; no sibling edits/other-chat communication,
+publication, merge, release or historical default changes. Local checkpoints
+authorized. Ledger ASCII append only. Mistral/local cached unavailable.
+OpenAI author native_nonprincipal_author and supporting reviewer
+native_nonprincipal_review completed source-only work; no live numerical job.
+Same-family review does not establish independent engineering acceptance.
 
-## Current outcome and next action
+## Current outcome and next authorized action
 
-Connected axial deformation/support: three installed tests+actualCLI4 PASS,
-exact4=fresh2+2 results/checkpoint. Reuse evidence; no product change.
-[Axial evidence](docs/d1_review_support/contact_native_connected_deformation_20261006/deformation_development.md).
+User resumed development on7 October. Nonprincipal elastic native candidate V2
+is IMPLEMENTED, NUMERICALLY UNVERIFIED: four reference/example/test/guide files.
+No product changes. Source scrutiny closed separate energy partition, full
+rotated mass block and fine complete-state coverage gaps. Three AST/four source
+whitespace checks pass. All550 product payloads/six metadata still match the
+verified private wheel6074e261ba7287b244b7b6f1cc15e81fe909a49702d128d0160847a58ed212cc.
 
-Connected transverse bending TESTED DEVELOPMENT: five repaired-package checks+
-actualCLI4 PASS, unchanged independent phase evidence reused. Complete initial/
-stage/endpoint physical mass/work/tangent, response/support/impulse/energy and
-exact fresh4=2+2 results/checkpoint pass. Worst normalized full state3.745762628620354e-10;
-analytical q/v4.0820989258888435e-5; energy defect1.1204823342714582e-14.
+Raw C:/ANYworkspaceWork/contact_native_nonprincipal_20261006 preserves V1/pause
+and V2 source snapshots, reviews, source hashes and held execution_preparation.json.
+ManifestSHA63bc0be4f8cd1ed4718a07700e65c89989a94de55b2d7fae6110332179a7c5b2;
+runnerSHAe90d8c0f42a988e241b329707bf0fe63bad6787a9b01bd735ad04a393d4210dc.
+Proposed separate240s C7_NATIVE_NONPRINCIPAL_DEV is NOT APPROVED. No tests, solver
+imports, CLI, build or numerical run occurred. Prior balances cannot fund it.
+Request the separate allowance before numerical execution; use the held runner
+with unique attempts, exact process-wall/cumulative accounting,<=60s/job,953MiB,
+one job, JITdisabled/Numba1/pools1. Preserve40s repair/integration reserve.
 
-V3 acceleration NONPASS1.709864632712258e-5 against1e-6 remains retained. One
-saved-state discriminator isolated small-angle SO3 coefficient loss, then the
-same owner delivered an explicit stable-SO3 arithmetic successor with complete
-Jet2 and matching precise scalar work. Distinct definition/policy identity binds
-restart. Old defaults/precise bytes verified; authenticated policy mismatch
-refuses without mutation. Preserve V4 negative-test authentication defect/repair
-and the baseline prelaunch SHA guard refusal; no retrospective pass.
-[Current evidence](docs/d1_review_support/contact_native_connected_bending_20261006/bending_development.md).
-Raw C:/ANYworkspaceWork/contact_native_connected_bending_20261006 contains all
-source snapshots/reviews, original authority/manifests and explicit repair guards,
-commands/runtime/imports, authentic results and checkpoints. Revised private wheel
-6074e261ba7287b244b7b6f1cc15e81fe909a49702d128d0160847a58ed212cc matches550
-source/product payloads and6 hashed metadata; JITdisabled/Numba1/pools1 verified.
-Original artifact preserved. New source checkpoint is recorded externally.
+Fixture: free single-native elastic beam, nonparallel cell velocities, all15
+physical/42 mixed coordinates,4dt1/64 and8dt1/128 at horizon1/16s; not a rigid
+Euler top. Independent closed work/midpoint/ODE checks remain prospective.
+Keep strict totalH1e-6: exact finiteSO3 impulse has generic O(h^3) local defect.
+Local wrench1e-6 does not imply endpoint momentum conservation. Saved exact
+impulse separates method time error from equation error; NONPASS remains
+NONPASS. One discriminating next action, no automatic refinement or gate waiver.
+[Current readiness](docs/d1_review_support/contact_native_nonprincipal_20261006/source_readiness.md).
 
-User260s scope charged124.15613109998988s;135.84386890001014s remains bending only.
-Eleven terminal jobs sum118.73743139998987s plus conservative5.4186997s prelaunch
-refusal (exact helper-wall unavailable; whole observed command charged; no solver
-child). No optional repeats or authority pooling. Next prepare an independently
-referenced remaining C7 finite-angle/nonprincipal dynamics slice under current
-contracts; this bending residue cannot fund a new fixture. Do not replay broad
-qualification or consumed runs. No live worker/numerical job or pending decision
-for the completed bounded bending slice; independent acceptance still open.
+## Completed evidence and protected balances
 
-One job<=60s/953MiB,JITdisabled/Numba1/pools1, exact cumulative accounting; retain
-verification reserve. No automatic budget renewal/borrowing or replay of passed
-unaffected checks. Full C7 finite-angle/nonprincipal/curved/section/spatial admission
-and C8 common-stage native/shell impact remain open. Full programme incomplete.
-[Current source guide](docs/GENERAL_CONTACT_NATIVE_CONNECTED_BENDING_DEV.md).
+Connected axial three installed checks+CLI4 PASS, exact4=fresh2+2; reuse.
+[Axial](docs/d1_review_support/contact_native_connected_deformation_20261006/deformation_development.md).
+Connected bending five installed checks+CLI4 PASS, complete physical response,
+exact4=2+2; unchanged modal reference reused. Explicit stableSO3/precise-work
+policy has distinct restart identity; old defaults/bytes intact. Preserve V3
+acceleration NONPASS, V4 negative-test repair and prelaunch guard refusal.
+[Bending](docs/d1_review_support/contact_native_connected_bending_20261006/bending_development.md).
 
-## Evidence and separate balances
-
-[Pre-bending execution restart/history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261006_PRE_BENDING_EXECUTION.md)
-links source preparation, prior exact evidence, failures and separate scope balances.
-Axial73.2605144001406/180s includes conservative0.2081476s prelaunch-refusal charge;
-106.7394855998594s remains axial only. Connected/shared230.89657720038667/240s;
-manufactured63.12627979996614/100s; safety231.94363670004532/270s; C6beam/S3
-409.0956022000173/420s. Other purses/history unchanged; original120h consumed432011s.
-Domains separate180s pending. No pooling, consumed-authority replay or optional
-repeat. N16 NONPASS and legacy timeout retained; reuse N192/N162/N216 evidence.
-Exact current checkpoint/job audit is in external root_checkpoint.json and
-lead_execution_audit_initial.json; repository docs are updated after disposition.
+Bending charged124.15613109998988/260s;135.84386890001014s remains bending only,
+including conservative5.4186997s prelaunch charge with precise helper uncertainty.
+Axial73.2605144001406/180s; connected/shared230.89657720038667/240s;
+manufactured63.12627979996614/100s; safety231.94363670004532/270s;
+C6beam/S3 409.0956022000173/420s. Other scopes/failures unchanged; original120h
+consumed432011s. No pooling, reset, broad replay or optional passed-check repeat.
+[Pre-pause history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261006_PRE_NONPRINCIPAL_PAUSE.md)
+links earlier exact evidence, balances and protected failures. Full C7/C8,
+spatial/section qualification, applications and programme acceptance remain open.

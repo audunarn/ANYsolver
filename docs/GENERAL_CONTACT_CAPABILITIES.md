@@ -2972,3 +2972,21 @@ V4 test-only authentication failure and baseline prelaunch guard refusal.
 135.84386890001014s remains in this scope only; includes conservative5.4186997s
 prelaunch charge with exact helper-wall uncertainty. Full C7/C8 and C0-C9 open.
 [Evidence](d1_review_support/contact_native_connected_bending_20261006/bending_development.md).
+
+
+## 2026-10-07 native nonprincipal elastic dynamics - SOURCE READY
+
+IMPLEMENTED, NUMERICALLY UNVERIFIED; not independently accepted or released.
+Four reference/example/test/guide files exercise the existing free single-native
+public owner,15 physical/42 mixed coordinates, nonparallel retained cell spin,
+full mass/work/tangent, coarse/fine complete accounting and exact fresh restart.
+Three source coverage findings repaired: separate energy partitions, full rotated
+mass blocks and complete fine-trajectory state. No product or default changes.
+Source-only supporting review is not numerical or engineering acceptance.
+StrictH1e-6 and every scientific gate remain. Generic finiteSO3 midpoint impulse
+defect has an exact discriminator; no assumed pass, gate waiver or hidden impulse.
+550 payloads/six metadata still match the verified private wheel. Proposed240s
+separate scope is NOT APPROVED; no tests, CLI or numerical jobs launched.
+Prior bending and other balances unchanged and unavailable to this new fixture.
+Evidence: d1_review_support/contact_native_nonprincipal_20261006/source_readiness.md.
+Full C7/C8 and C0-C9 incomplete.

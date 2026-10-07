@@ -1,0 +1,31 @@
+{
+  "review_kind": "supporting_source_only",
+  "repository": "C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001",
+  "head": "e166100ca171f54911b4e75e8de2985030fe5cba",
+  "status": "no_remaining_source_finding_identified",
+  "author_evidence": "author_source_checks_v2.json",
+  "author_snapshot": "source_snapshots_v2",
+  "files": [
+    {
+      "path": "examples/native_nonprincipal_reference.py",
+      "sha256": "6cd821b3ccc49aa73892b9704e541627511fc25b5c4f9f8fe4688ad96ffb8bfb"
+    },
+    {
+      "path": "examples/native_nonprincipal_dev.py",
+      "sha256": "93fc94c55c507b0247910d8719d15d48083263e61246d3d560fb29983f4cd480"
+    },
+    {
+      "path": "tests/test_ge_beam3_native_nonprincipal.py",
+      "sha256": "de62e248a354b697222d6642a6544ce5363fdf5cf5d9ea40fa0e1b53976b4e1f"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_NATIVE_NONPRINCIPAL_DEV.md",
+      "sha256": "86fe48f0ecace27aae636933b362fb68b2e2de6e90dae969cd8875fe9b654b41"
+    }
+  ],
+  "numerical_execution": false,
+  "solver_imports": false,
+  "product_edits": false,
+  "engineering_acceptance": false,
+  "review_report": "supporting_source_review_v2.md"
+}
