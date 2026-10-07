@@ -4218,3 +4218,15 @@ counterexamples; a small adjusted remainder cannot establish tangent accuracy.
 No adjusted criterion adopted. Capacity-accuracy ticket PARKED with missing
 bounds visible;G4D/fullprogramme mandatory obligations remainOPEN.
 Root-saved-sampling-result-v1 and independent-saved-sampling-review-v1 bind scope.
+### 7 October2026 — G6B consumer-capability candidate prepared
+Source535390ef implements an additive capabilities_record facade for existing
+GE/B2 owners; original reports/accessors/dispatch preserved. Shared versioned
+primitive record owns values and preserves law/policy/operation/exclusion fields.
+Experimental status, missing accepted evidence and unbound platform/resources
+remain explicit. No pseudo model/artifact identity or new admitted operation.
+41preparedcontrols include actual small GE/B2 facade report fixtures; ALLUNRUN.
+Rootsourceinspection/diffwhitespace passed; candidateIMPLEMENTED_UNVERIFIED,
+G6B/commercial consumer integration/artifact/platform/acceptance remainOPEN.
+Fresh180verification proposalPENDING,0used;source/build/installedcap30,reserve60,
+CPU0/thread1/JIToff/2GiB. No oldfold budgettransfer or numerical/closedcampaign.
+Evidence:consumer-capabilities-dev-20261007-v1/source-preparation-v1.json.

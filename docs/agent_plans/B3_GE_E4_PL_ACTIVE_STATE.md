@@ -1,62 +1,65 @@
-# Current state — 7 October 2026
+# Current state — 7 October2026
 
-Revision8 complete programme remains OPEN: G0–G6/F01–F13/V01–V28/B01–B18,
-external, scale, platform, consumers, independent acceptance and coordinated release.
-Canonical worktree: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001
-Branch codex/stiffened-main-reconcile-20261001; authoritative host Git.
-Living goal/plan and append-only acceptance matrix remain binding.
-No contact-worker communication, sibling edits, main, push or release.
-Mistral/local cached unavailable; root continues the connected repair.
-OpenAI supporting review is not different-family scientific acceptance.
+Full Revision8 programme remainsOPEN: G0–G6/F01–F13/V01–V28/B01–B18,
+external/scale/platform/consumers/reviews/artifacts/authorized complete release.
+Canonical worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
+branch codex/stiffened-main-reconcile-20261001. Host Git is authoritative.
+Candidate535390ef9e876a412b633942b4b410b2d998d100; no main/push/release,
+contact-worker communication or sibling edits. Living goal/plan stay unchanged.
+Mistral/local cached unavailable; OpenAI fallback not different-family acceptance.
 ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1 applies prospectively.
 
-## Decision, facts, uncertainty, discriminator and next action
+## Current deliverable and next action
 
-Decision: preserve g14 failure; retain the PRIVATE Log-only source diagnostic,
-with additional translation-sampling attribution. No new physics or numerical
-acceptance correction. Force reassociation and rotation centering are withdrawn.
+Decision: park the unresolved capacity-accuracy ticket, keeping G4D mandatory and
+its failure visible; advance the actual G6B consumer-contract implementation gap.
+Existing public capabilities are GE dictionaries and differing B2 dataclasses.
+The additive facade capabilities_record(analysis) now provides one owned primitive
+JSON record under STIFFENED_SHELL_CONSUMER_CAPABILITIES_V1. It preserves raw fields,
+profile/law/policy/operations and B2 footprint descriptors, refuses conflicting or
+unrepresentable claims, and reports missing evidence/platform/resources honestly.
+It reads only owner.capabilities; no new solver/preflight/compile/checkpoint path.
+No model identity, admitted operation union or qualification is fabricated.
+Existing accessors, dispatch, mechanics, defaults and checkpoint meanings unchanged.
 
-Established: g13 fixed3e-6/1e-6 scoped PASS at f1c519ad; g14 at bbf4c85a FAIL
-(2.6626205044e-7 / 1.00904614988e-6; plateau1.14229461890e-6 against1e-6).
-ONE remaining-endpoint batch is CONSUMED; g15 NOT RUN. Complete public recovery
-and checkpoint bytes unchanged. Evidence/result archived at1e7ebd6c.
-The old pair and all historical failures remain unchanged.
+Candidate state IMPLEMENTED_UNVERIFIED. Root reviewed all4 owned files and the
+worker repaired Unicode scalar handling before any execution. Git diff whitespace
+passed. 41 source controls are PREPARED, including distinct actual GE/B2 facade
+report fixtures. No imports/pytest/build/install/ANYworkspaceAI checks ran.
+OpenAI author handoff and separate supporting source/harness review complete;
+no consequential finding, no execution or different-family acceptance; no job live.
 
-New fixed-record discriminator: exact saved-binary64 Decimal work decomposition
-uses only free mechanical shell-translation rows and zero evaluator calls.
-Fine g14 input-translation contribution8.6840952773e-7; input-rotation1.6345105562e-8;
-combined sampling8.6766235186e-7, remaining coordinate-chain2.1899341843e-7.
-Local-force chain1.0702601131e-8 is much smaller. These signed/scattered norms
-are not additive, an internal error bound, or proof excluding an operator defect.
-The result withdraws force-reassociation and centered-rotation priorities.
+Next permitted action: fresh bounded source controls -> one isolated wheel
+build/install -> installed controls, each cap30s, cumulative180s,reserve60.
+CPU0/thread1/JIToff/2GiB/one job. Compatible repair within that same allowance;
+preserve failures. This is Level-A consumer verification, not a scientific campaign.
+authority-v1/ledger-v1 PENDING_USER_APPROVAL,0used; supervisor refuses interpreter
+launch before approval. No transfer from fold or other consumed scope.
+No force/displacement/arc/modes/buckling/body solve, closed campaign,F03,sibling,
+main,push or release included. Actual commercial-consumer integration, full
+platform/resource/evidence qualification and aggregate G6B remainOPEN.
 
-Delivered source repair: copied baseline CSR before signed evaluations, detached
-signed shell-q, and a shell-translation-only delta with J*delta and first-order
-represented-translation remainder. Original errors, plateau, status and criteria
-unchanged. Native/beam translations, multiplicative rotations, finite-step
-curvature and internal arithmetic remain unallocated.
-61 source controls PASS0fail/error/skip in14.6832456s; CPU0/thread1/JIToff,
-peak260923392B. Source/snapshot and actual runtime verified. Full signed caller
-was source-inspected, not re-executed. Supporting review found no source defect.
-The parent inline LASTEXITCODE check falsely threw after child success; actual
-receipt/JUnit establish PASS. Preserve that wrapper failure; no repeated check.
+Source/tests/doc:
+src/anysolver/_stiffened_shell_consumer_capabilities.py
+src/anysolver/stiffened_shell.py (additive facade only)
+tests/test_stiffened_shell_consumer_capabilities.py
+docs/development/stiffened_shell_consumer_capabilities.md
+Pending runner/431source-module/4input snapshot:
+.qualification/b3-ge-e4-pl/r8-consumer-capabilities-dev-20261007-v1/
 
-Uncertainty: complete Jacobian and slope accuracy, yield margin, first-simple-fold,
-operator compatibility, capacity, G4D and F03 remain open. A scoped numerical
-window or diagnostic sampling subtraction cannot establish equilibrium accuracy
-or certify the reported factor peak.
+## Parked physical-accuracy finding
 
-Next action: use the retained attribution to design a specific representability
-check if needed; any new endpoint/evaluator comparison requires applicable
-unconsumed authority. No g14 rerun, g15, new h, loading history or automatic sweep.
-Remaining v5 authority is verification/compatible repair only with60s reserve.
-No owned numerical job remains live. Product modules/defaults/versions unchanged.
-
-Evidence: .qualification/b3-ge-e4-pl/r8-native-fold-assessment-dev-20261006-v1/
-saved-chain-inspection-v1/v2/v3,root-sampling-source-pass-v1.json,
-source-sampling-v1,inputs-manifest-sampling-v1.json.
-Earlier active notes preserved byte-for-byte; compact result:
-../development/stiffened_shell_native_fold_result_20261006.md.
+g13 scoped fixed3e-6/1e-6 PASS; original g14 fine1.00904614988e-6 and
+plateau1.14229461890e-6 FAIL against unchanged1e-6;g15NOTRUN.
+ONE batchCONSUMED. Real saved CSC/q sampling helper verified with zero owners/
+evaluators: J*translation-sampling8.6950094271e-7,remainder3.2677315470e-7.
+An anisotropic bad tangent can conceal ideal-direction error after subtraction;
+midpoint/curvature/evaluation bounds absent. No adjusted acceptance adopted.
+FullJacobians/slope/fold/yieldmargin/capacity/operatorcompatibility/G4D/F03OPEN.
+Saved-input11.0569429s/254025728B/CPU0/thread1/JIToff; supporting review clean for
+diagnostic attribution only. Evidence/decision atd34f60d0, fold-assessment-dev/
+root-saved-sampling-result-v1.json and independent-saved-sampling-review-v1.json.
+Earlier failures/notes/criteria preserved byte-for-byte. No automatic replay.
 ## Preserved authority and restrictions
 
 Old300:200.3074764used/99.6925236remaining,60reserve,g13 verification/repair only.
@@ -76,18 +79,3 @@ NEVER inspect/traverse/copy/archive us3-modal-canary. No WMI/ACL/env bypass.
 Closed Fy/pressure/native80/material/turning/adaptive1.01/event/compound/parity/
 refinement campaigns remain closed. PortableS3 STOPPED/NOT_DELIVERED;
 PR62NONPASS/local02ca395e unpushed. Equations/defaults/versions unchanged.
-
-Saved-input exit met: verified helper on existing g14 CSC/signed q, original
-witness equality, zero owners/evaluators. Fine sampling8.6950094271e-7 and
-unallocated first-order remainder3.2677315470e-7; coarse remainder2.1838890398e-7.
-Original g14FAIL/plateau preserved; g15NOTRUN. No threshold or acceptance change.
-11.0569429s/254025728B/CPU0/thread1/JIToff; fresh150used76.3142816,
-remaining73.6857184,reserve60,primaryCONSUMED. No owned job remains live.
-Decision reviewed: sampling subtraction is diagnostic only. An anisotropic bad
-tangent can conceal ideal-direction error; midpoint/curvature/evaluation bounds
-are absent. Do not adopt adjusted acceptance or request another endpoint replay.
-Capacity-accuracy ticket is PARKED, mandatory G4D remainsOPEN. Next implementation
-lane: Read-only identify the actual ANYsolver machine-readable commercial-consumer
-contract gap. /root/mandatory_consumer_gap owns that bounded Read investigation;
-no numerical authority or sibling ownership granted. Preserve existing APIs.
-Raw root-saved-sampling-result-v1.json binds the actual result and six inputs.
