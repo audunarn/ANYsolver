@@ -4158,3 +4158,15 @@ PrivateLog-only3e-6/1e-6 pair prepared,UNVERIFIED. Originaldefault1e-5/1e-6,
 Five addedguardcases UNRUN;old32PASS do notverifychangedsource.
 v4source/candidate scopePENDING beforeinterpreter;30s/54scaps share existing
 144.2985002sremainder,60sreserve. No newbudget,primary,sweep or acceptance.
+
+## 7 October2026: approved g13 intermediate-window criterion met
+Source79da73e1;37controlsPASS0fail/error/skip in18.5852736s,verifiedbeforeprimary.
+ONEinstalledg13Log-only pair3e-6/1e-6 completed26.020703s;five16Q4captures;
+frozenbindings/runtime/publicstate/checkpoint preservationPASS.
+Directional2.6530378e-7/7.3479236e-7,plateau7.4778159e-7:SCOPEDcriterion1e-6MET.
+This is not fullscientificacceptance;rawstatusINCONCLUSIVE,g14/g15unverified under
+thiscandidate/pair,fullJacobian/slope/fold/margin/capacity/F03/G4D remainOPEN.
+Alloldfailures preserved. Stopg13refinement;nextsourcepreparesremainingfrozen
+endpoints,whoseexecution needsboundedauthority. SAME300ledger200.3074764used/
+99.6925236remaining,60reserve;FOURprimariesCONSUMED. Noproductionadoption.
+Rawfold-assessment-dev/root-result-v6.json and independent-pair-evidence-review-v1.json.

@@ -1,13 +1,13 @@
 # Passive saved-g13 Q4 local diagnostic
 
-Status: **approved Log-only comparison completed; registered accuracy criterion
-unmet**. The ONE saved-g13 comparison ran on7October2026 at source036d4975.
-Errors were1.937853e-6(h1e-5),7.347924e-7(h1e-6),plateau2.333619e-6 against
-unchanged1e-6. All32source controls passed; accepted recovery/checkpoint stayed
-unchanged. See stiffened_shell_native_fold_result_20261006.md and raw
-root-result-v5.json for exact bindings,diagnosis and remaining limitations.
-Allthree physical primaries are CONSUMED. Remaining verification allowance
-does not authorize another primary or step campaign.
+Status: **approved g13 intermediate-window directional checks passed; full
+acceptance remains open**. Source79da73e1:37controls passed,then ONELog-only
+3e-6/1e-6 comparison met unchanged1e-6 directional/plateau criteria.
+Errors2.6530378e-7/7.3479236e-7,plateau7.4778159e-7;acceptedpublic/checkpoint unchanged.
+The earlier1e-5/1e-6 Logcomparison failedits criterion and remains preserved.
+Rawscientificstatus staysINCONCLUSIVE;completeJacobian/slope/fold/capacity unproved.
+See stiffened_shell_native_fold_result_20261006.md and rawroot-result-v6.json.
+Allfour physical primaries consumed;no additional endpoint execution authorized.
 The example's main entry refuses execution; a separately authorized supervisor
 may call `diagnose_saved_g13(folder,on_evaluation=writer)` and save its detached
 structured result. After every complete baseline/signed evaluation, and before
@@ -208,7 +208,7 @@ selection contracts; they do **not** establish actual mechanical directional
 derivative accuracy, operator compatibility or scientific acceptance. The source-controls snapshot preceded the physical comparison; its completed
 result and unmet criterion are recorded above.
 
-## Prospective intermediate pair — source prepared, unverified
+## Intermediate-pair preparation record — superseded by executed result below
 The historical default remains SAVED_G13_REGISTERED_1E5_1E6_V1. A separate
 SAVED_G13_PROSPECTIVE_3E6_1E6_V1 option selects exactly3e-6/1e-6 and requires the
 explicit private Log-only candidate. Unknown identities/types and selection on
@@ -227,3 +227,12 @@ The choice3e-6 is a rounded intermediate logarithmic step between the old pair.
 Captured coarse curvature motivates testing a different finite-difference
 window; it does not bound truncation or predict acceptance. If this fixed pair
 still fails,the slice stops with its evidence; no automatic refinement follows.
+
+## Executed intermediate-pair result
+Directhumanapproval permittedv4sourcecontrols(cap30) followedonlyafterPASS by
+ONEcomparison(cap54),using SAME300sledger and60sreserve.
+37controls passed0fail/error/skip in18.5852736s;physicalcomparison26.020703s.
+Scopedg13directional/plateau criterion1e-6 met;rawfullscientificstatus unchanged.
+Sameledger200.3074764used/99.6925236remaining;v4one-use markerCONSUMED.
+Old32PASS stillreferstooldsnapshot;37PASS cover79da73e1 source.
+Stopg13refinement;remainingfrozen g14/g15 requireseparateexecutionauthority.

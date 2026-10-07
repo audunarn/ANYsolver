@@ -127,3 +127,20 @@ Source controls32PASS remain evidence for their own source; supporting review
 found no consequential mismatch. First/simplefold,slopeaccuracy,G4D,F03 and
 complete programme remain open. SAME300s ledger155.7014998used/144.2985002remaining;
 60sreserved,ONEv3primary consumed. Rawroot-result-v5.json binds this result.
+
+## Approved intermediate window — 7 October2026
+The scoped g13 test now meets the unchanged1e-6 directional and plateau criteria:
+errors2.6530378e-7(h3e-6),7.3479236e-7(h1e-6),plateau7.4778159e-7.
+37sourcecontrols passed first(18.5852736s); ONEinstalled comparison completed
+26.020703s,five16Q4captures,originalExp/chart,acceptedpublic/checkpoint unchanged.
+430module/810loaded/5input/6reference/5capture bindings and runtime passed;
+peak294375424B,CPU0,one thread,JIT off. Supportingreview found no mismatch.
+
+Rawstatus remainsINCONCLUSIVE: this bounded direction/window doesnot establish
+completeJacobian/forward-slope accuracy,fold/capacity,yieldmargin,operator
+compatibility,G4D,F03 orfullprogramme qualification. Originalfailed pair and
+alloldfailures remainimmutable. Stopg13refinement. The next coherent slice is
+the samecandidate/pair on remainingfrozen g14/g15,withoutrepeatingg13;
+source preparation is permitted,execution requires its ownboundedauthority.
+SAME300ledger200.3074764used/99.6925236remaining,60reserve;allfourprimariesconsumed.
+Root-result-v6.json and independent-pair-evidence-review-v1.json bind this result.

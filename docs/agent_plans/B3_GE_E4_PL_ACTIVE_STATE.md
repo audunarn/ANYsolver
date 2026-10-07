@@ -55,28 +55,26 @@ human I approve.Resume.,7October2026. ONEinstalledg13 Log-only comparison
 completed31.3859628s,1border/5assemblies/16Q4perassembly/4LogcallsperQ4.
 430source/wheel/site,810loadedmodules,5inputs/6refs/5durablecapture hashesPASS;
 CPU0/pools1/JIToff,peak296767488B. Fullpublic/checkpoint unchanged.
-SAME300ledger155.7014998used/144.2985002remaining;60sreserve,no reset.
-ALLthreeprimaries (original3endpoint,originalcapture,Log-onlycapture) CONSUMED.
-Candidateerrorsh1e-5=1.937853e-6,h1e-6=7.347924e-7,plateau2.333619e-6:
-unchanged1e-6criterion NOTMET. Originalfailures preserved, no slope/fold acceptance.
-SavedQ4endpoint curvature explainscoarseerror:FDminusSimpson6.074768e-8,
-weightedcos.9995488. FineFDminusSimpson7.025194e-7; value/forcechain dominates
-mapchain at elements5/6/14. Estimates/decomposition only,not rigorouserrorbound.
-Supporting independent evidence/mathematical review clean,samefamilyonly.
-Decision:retainprivateLog candidate; no productionadoption,criterionwaiver or
-furtheroperator retuning. Nextboundedaccuracydecision addresses coarse-step
-truncation and finer value/forcechain arithmetic using savedcovectors first;
-additional primary/step-pair amendment requires scope authority,not budget reuse.
-Prospective source prepared:explicitLog-only fixed3e-6/1e-6 difference_pair;
-originaldefault unchanged,unknown/baselinechoices refusebeforeload/owner.
-Newsource/5addedguardcases UNVERIFIED; old32PASS applyonly036d4975snapshot.
-v4source/candidate authority PENDING beforeinterpreter;sourceCap30/candidateCap54,
-same144.2985002remain/60reserve,distinctoneuse. No new numericaljob launched.
-Supporting Readreview foundnoblockingdefect;source/physicalstillUNRUN.
-Next:savecandidate,requestscope;afterapproval inspectsourcecontrolsPASS before
-launching ONEcandidate. Sourcefailure stopsphysicalrun;no baseline rerun.
-Rawroot-result-v5.json,root-log-comparison-v1.json,root-log-endpoint-tangent-v1.json,
-root-log-covector-split-v1.json and independent-log-evidence-review-v1.json.
+Source79da73e1,v4fixedpair3e-6/1e-6 approveddirecthuman7October2026.
+37sourcecontrolsPASS0fail/error/skip,18.5852736s;verifiedbeforephysicallaunch.
+ONEintermediatecomparison completed26.020703s:1border/5assemblies/16Q4 each;
+430module/810loaded/5input/6ref/5capture bindingsPASS,CPU0/pools1/JIToff;
+peak294375424B,complete publicrecovery/checkpoint unchanged.
+Errors2.6530378e-7(h3e-6)/7.3479236e-7(h1e-6),plateau7.4778159e-7:
+SCOPEDg13DIRECTIONALWINDOWPASS againstunchanged1e-6;rawscientificstatusINCONCLUSIVE.
+Originalh1e-5failure andallfailedprimaryevidence preserved. Supportingreviewclean,
+notdifferent-family/fullmechanicsacceptance. No production/default/checkpoint change.
+SAME300ledger200.3074764used/99.6925236remaining,60sreserve,no reset.
+ALLFOURprimaries (original3endpoint,baselinecapture,Logoldpair,Logintermediate)
+CONSUMED;remainderverification/repair only,no newendpoint/primary authority.
+Decision:stopg13refinement. RetainprivateLog candidate;nextcoherentsource-only
+slice applies samecandidate/approvedpair to remainingfrozen g14/g15,withoutg13
+replay. Their newexecution requires explicitboundedauthority;oldfailuresretain.
+CompleteJacobian/forward-slope/sign/first-simplefold/yieldmargin/capacity,
+operatorcompatibility,F03/G4D andcompleteprogramme remain UNPROVEN/OPEN.
+Rawroot-result-v6.json,root-pair-bindings-v1.json and independent-pair-evidence-
+review-v1.json. Previouscoarsecurvature/covector interpretation inroot-result-v5.
+No owned numericaljob remainslive.
 No automatic smallersteps, 3state rerun, tolerance/norm change or campaign.
 No owned numericaljob remainslive; no accepted firstfold/descendingbranch/G4D.
 
