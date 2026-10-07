@@ -144,3 +144,18 @@ the samecandidate/pair on remainingfrozen g14/g15,withoutrepeatingg13;
 source preparation is permitted,execution requires its ownboundedauthority.
 SAME300ledger200.3074764used/99.6925236remaining,60reserve;allfourprimariesconsumed.
 Root-result-v6.json and independent-pair-evidence-review-v1.json bind this result.
+
+## 7 October2026 — remaining-endpoint check stopped at g14
+
+Candidatebbf4c85a:43sourcecontrolsPASS,then ONEapprovedinstalled batch.
+G14 h3e-6:2.6626205044e-7(PASS);h1e-6:1.00904614988e-6(FAIL);
+plateau1.14229461890e-6(FAIL),all against unchanged1e-6. G15NOTRUN.
+Completed individual captures and unchanged public/checkpoint are preserved.
+Intentional criterion-failure exit2;no timeout or unexpected exception.
+Fresh150ledger45.4444967used/104.5555033remaining,reserve60;primaryCONSUMED.
+G13pass preserved but cannot qualify the candidate across endpoints. Stop further
+step selection; internal Q4 arithmetic versus operator error remains unresolved.
+Rootretained-contributions-v2 restricts to mechanical equation rows; incorrect
+v1 including compatibility rows is retained/superseded. Neither alters the valid
+raw criterion or establishes a numerical floor. FullJacobian/fold/G4D/F03OPEN.
+Evidence:fold-assessment-dev/root-result-v7.json and root-endpoints-bindings-v1.json.

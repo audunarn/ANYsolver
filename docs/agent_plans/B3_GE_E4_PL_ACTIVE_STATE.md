@@ -25,37 +25,48 @@ installed Log-only comparison at fixed3e-6/1e-6. Directional errors2.6530378e-7/
 peak294375424B. Source18.5852736s, comparison26.020703s. Supporting review clean.
 Raw scientific status remains INCONCLUSIVE_LOCAL_Q4_DIAGNOSTIC.
 
-Remaining uncertainty: whether the SAME numerical kernel/pair passes frozen g14/g15.
-Prepared source-only private endpoint adapter preserves historical g13 facade/defaults;
-only exact integers13/14/15 admitted before saved-input/owner construction.
-v5 supervisor selects14 then15 only, persists partial captures, stops on first
-criterion failure, and requires43matching source-controlsPASS before physical launch.
-The new43controls and endpoint batch are UNRUN; previous37PASS applies only to79da.
-Authority-v5/ledger-v5 remain PENDING_USER_APPROVAL,0/150s. Proposed fresh allowance:
-source cap30, ONEordered g14/g15 batch cap60,60reserve,CPU0/thread1/JIToff/2GiB.
-No g13 rerun, seed/history rerun, newsteps, continuation, product or checkpoint change.
+Approved remaining-endpoint candidate bbf4c85a:43sourcecontrolsPASS0fail/error/skip
+in15.0910144s, actual source/runtime inspected before ONE installed batch.
+Fresh authority-v5 approved by direct human reply. G14 completed five captures
+but FAILED: h3e-6 error2.6626205044e-7,h1e-6 error1.00904614988e-6,plateau
+1.14229461890e-6 against unchanged1e-6. Batch stopped at g14; g15 NOT RUN.
+Exit2 is intentional criterion failure, not timeout/programming error.
+Checkpoint/public state unchanged; 430source/wheel/site,810loaded,5inputs/6refs/
+5captures match. CPU0/thread1/JIToff;peak293621760B;batch30.3534823s.
+Supporting evidence review found no discrepancy; not scientific acceptance.
 
-Outcomes: if both pass, close this numerical hypothesis at its scoped applicability
-and assess the remaining full-Jacobian/fold obligations; if either fails, preserve
-partial results and identify the concrete remaining contribution—no automatic sweep.
+Combined interpretation: g13 numerical window PASS does not generalize to g14.
+Saved-vector inspection identifies reconstructed Q4 error9.7597412e-7 at fine h;
+conditional scatter bound8.63956e-9 is much smaller. Combined-minus-Q4 remainder
+2.56199e-7 includes scatter/reconstruction/combined-J arithmetic, not an isolated
+beam contribution. Offline attribution v1 accidentally included compatibility
+rows; v2 corrects to free_rows<constraint_start and retains failed v1 unchanged.
+No effect on the original valid batch witness. Remaining uncertainty is local
+value/force/pullback arithmetic versus a true derivative defect; internal-arithmetic
+bounds and independent operator accuracy remain missing.
+
+Decision: STOP this primary and preserve the near-threshold failure. No g15 retry,
+new h, automatic refinement or tolerance relaxation. Next permitted action is
+source/saved-evidence investigation of that concrete numerical contribution;
+any new endpoint/physical comparison needs its own applicable authority.
 Complete Jacobian/forward slope/sign/first-simple-fold/yield margin/capacity,
 operator/restart compatibility, G4D and F03 remain unproved/open. A scoped diagnostic
 pass neither qualifies the product nor certifies the reported g14 factor peak.
 
 Evidence: .qualification/b3-ge-e4-pl/r8-native-fold-assessment-dev-20261006-v1/
-root-result-v6.json, root-pair-bindings-v1.json, independent-pair-evidence-review-v1.json;
-prospective v5 harness/manifest/authority/snapshot and root-endpoints-source-v1.json.
-Earlier complete active note preserved byte-for-byte as root-active-before-endpoints-
-source-v1.md. Compact scientific result: ../development/stiffened_shell_native_fold_result_20261006.md.
-Supporting source review does not supply mandatory different-family acceptance.
-No owned numerical job remains live. Next action is fresh endpoint execution approval,
-then inspect actual source PASS/runtime before the one physical batch.
+root-result-v7.json,root-endpoints-source-pass-v1.json,root-endpoints-bindings-v1.json,
+root-g14-retained-contributions-v2.json,independent-endpoints-evidence-review-v1.json.
+Earlier complete active notes preserved byte-for-byte in the same raw directory.
+Compact scientific result: ../development/stiffened_shell_native_fold_result_20261006.md.
+No owned numerical job remains live. No product/default/version/checkpoint change.
 
 ## Preserved authority and restrictions
 
 Old300:200.3074764used/99.6925236remaining,60reserve,g13 verification/repair only.
 FOURprimaries consumed: original3endpoint,baselinecapture,Logoldpair,Logintermediate.
-No old allowance transfer to v5. Proposed v5 is a distinct fresh allowance, UNAPPROVED.
+No old allowance transfer to v5. Fresh150approved:45.4444967used/104.5555033remaining,
+60reserve. ONEg14/g15primary CONSUMED by g14failure; verification/repair only,
+no automatic newendpoint or retry.
 Proportional600:248.0393304/351.9606696,ONEscreenCONSUMED,verificationonly.
 Capacity600:257.2597296/342.7402704,ONEscreenCONSUMED,.75forceFAILED.
 Metric300:73.2825702/226.7174298,oldmetricverificationonly.

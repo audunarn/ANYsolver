@@ -28,19 +28,19 @@ existing frozen original-route observations; there is no automatic original/
 candidate double run, fallback, or extra h. The original assessment, local diagnostic and Log-only comparison are consumed;
 no additional primary is authorized.
 
-## Remaining endpoint preparation — UNRUN
+## Remaining endpoint check — g14 FAILED, g15 NOT RUN
 
-The private diagnose_saved_endpoint adapter admits only exact frozen generations
-13/14/15; the historical diagnose_saved_g13 facade and defaults remain intact.
-The prospective v5 supervisor selects g14 then g15 only, with the SAME Log kernel
-and explicit3e-6/1e-6 pair. It saves each capture/result before advancing and stops
-on the first failed fixed criterion. All43 focused controls and both endpoints
-remain UNRUN; the preceding37-pass claim applies to source79da73e1 only.
-A fresh150-second allowance is proposed: source30, one batch60, reserve60,
-CPU0/thread1/JIToff/2GiB. Authority and ledger stay PENDING_USER_APPROVAL.
-The old99.6925236-second g13 remainder is not transferred. No g13 rerun or sweep.
-The batch distinguishes endpoint generality of the numerical repair; it does not
-certify a fold, forward slope, material margin, operator compatibility or F03.
+Sourcebbf4c85a:43 focused controls passed before the approved ONE installed
+Log-only3e-6/1e-6 batch. G14 completed, but fine-step1.00904614988e-6 and
+plateau1.14229461890e-6 exceeded the unchanged1e-6 criterion; coarse-step
+2.6626205044e-7 passed. The batch stopped as registered; g15 was not evaluated.
+Public recovery/checkpoint and bound modules/inputs/runtime remained unchanged.
+Source15.0910144s,batch30.3534823s;fresh150ledger45.4444967used/104.5555033remaining.
+The one batch is CONSUMED. Remaining time does not authorize g15 or another h.
+Rawroot-result-v7.json preserves outcome and supporting review. Saved local Q4
+contributions dominate the fine error; scatter bounds alone cannot explain it.
+Internal arithmetic and tangent correctness remain unproved. No threshold change,
+operator admission or fold/capacity acceptance follows from the g13 scoped pass.
 
 ## Question and bound
 

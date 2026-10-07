@@ -4180,3 +4180,18 @@ ProposedFRESH150s:sourcecap30,batchcap60,reserve60,CPU0/thread1/JIToff/2GiB.
 Authority-v5/ledger-v5PENDING,0used. Old300ledgerunchanged200.3074764/99.6925236,
 g13verificationonly; no authority transfer. No g13/sweep/continuation/F03/body/release.
 No new physical capability or aggregate gate accepted; prior failures preserved.
+
+## 7 October2026: approved remaining-endpoint batch failed and stopped
+Sourcebbf4c85a43controlsPASS0fail/error/skip15.0910144s,verifiedbeforeprimary.
+ONEinstalledLog-only3e-6/1e-6batch g14completed30.3534823s,but criterionFAILED:
+coarse2.6626205044e-7,fine1.00904614988e-6,plateau1.14229461890e-6 vsfixed1e-6.
+G15NOTRUN_STOP_ON_FIRST_FAILURE;exit2intentionalcriteriafailure,nottimeout.
+Public/checkpoint/runtime/bindingspreserved;5captures16Q4/fourLogcalls.
+Fresh15045.4444967used/104.5555033remaining,60reserve,ONEbatchCONSUMED.
+Old300unchanged200.3074764/99.6925236. Remainders verification/repaironly,
+no automatic newendpoint/retry/sweep/continuation/F03/body/release.
+Q4localdiscrepancy remains; internalarithmetic/tangentdefect exclusionUNPROVEN.
+Offlineinspectionv1 used wrong fullfree-row norm; correctedv2mechanicalrows
+preservesfailedv1 andhasnoeffectonvalidoriginalbatchcriterion.
+G13scopedpasspreserved;completeJacobian/slope/fold/capacity/G4D/F03 remainOPEN.
+Rawroot-result-v7.json,root-endpoints-bindings-v1.json andindependentendpointsreview.

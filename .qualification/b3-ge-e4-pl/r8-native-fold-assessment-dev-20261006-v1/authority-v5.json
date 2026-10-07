@@ -1,6 +1,11 @@
 {
-  "status": "PENDING_USER_APPROVAL",
-  "approval_evidence": null,
+  "status": "APPROVED",
+  "approval_evidence": {
+    "answer": "Approve this bounded check",
+    "source": "Direct human reply to call_nnpFCtEMrB3RPdqcv5Xe0S28 question0",
+    "candidate_commit": "bbf4c85ae7ac44556edbba2ab53ee5787cc67bd5",
+    "scope": "Fresh150s;source43cap30 thenonlyafterPASS ONEg14/g15Log3e-6/1e-6cap60;60reserve;CPU0/thread1/JIToff/2GiB;stopfirstfailure;no g13/sweep/continuation/F03/body/main/release"
+  },
   "total_seconds": 150,
   "scope": "FRESH150second development-check allowance:focused bounded-generation sourcecontrols/compatible repair cap30s,then ONLYafterPASS ONE orderedg14/g15 installedLog-only3e-6/1e-6 batch cap60s;1border/5assemblies perendpoint;stoponfirstcriterionfailure. Retain60sreserve.",
   "limits": {
