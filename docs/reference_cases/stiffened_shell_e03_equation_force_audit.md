@@ -1,4 +1,4 @@
-# E03 complete-force equation audit — implemented, unverified
+# E03 complete-force equation audit — source controls verified
 
 This additive diagnostic prepares one output-only candidate and independently
 derivable force recovery. No source import, collection, test, numerical solve,
@@ -133,7 +133,14 @@ neither this tooling nor remaining240s accounting authorizes another solve.
 
 Prepared source controls cover coupled pivots, loaded pivots, signs, offset moments,
 free residuals, complete-force inventory, refusals, detached mutation, provenance,
-overflow, exact output-only changes and strict saved-output inventory. All checks
-are UNRUN. Root owns source review, bounded collection/execution, independent
+overflow, exact output-only changes and strict saved-output inventory. The author
+ran no checks. Root subsequently verified47 nonphysical controls at da690490:
+all PASS, no failures/errors/skips,11.6249994 process-wall seconds, peak sampled
+RSS197730304 bytes. Two effective runtime records and11 frozen inputs checked;
+812 loaded files independently rehashed. CPU0/thread1/JIT off. Shared allowance
+now57.3187615/240s used,182.6812385s remaining; controls20.7585858/30s used.
+Raw root-audit-result-v1.json and audit-controls-v1 remain beside earlier failed
+physical evidence. No installed rebuild or physical rerun was performed. Actual
+CCX force recovery and runtime semantics remain unverified. Root owns independent
 semantics adjudication and any next exact-output execution decision. Scientific
 tolerances and full E03/GE/convergence requirements remain unchanged and OPEN.

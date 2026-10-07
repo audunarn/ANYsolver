@@ -4289,3 +4289,17 @@ Additive complete-force recovery tooling is being prepared, not qualified.
 [Measured results and next discriminator](../reference_cases/stiffened_shell_e03_coarse_results_20261007.md).
 Raw: .qualification/b3-ge-e4-pl/r8-e03-coarse-dev-20261007-v1/root-result-v1.json.
 Aggregate E03/G0 and complete programme remain OPEN; no tolerance or scope change.
+## 2026-10-07 — E03 complete-force tooling controls
+
+Additive source da690490:47 focused synthetic controls PASS, no failures/errors/
+skips. Coupled dependent-force solve, physical SPC/work signs, refusal/mutation,
+output-only ROOT->PHYSICAL card reversal and strict333-node force inventory are
+exercised.11.6249994s, CPU0/thread1/JIT off, peak sampled197730304B;11 frozen
+inputs/two runtime records checked;812 loaded-file hashes independently checked.
+Shared240s authority now57.3187615s used/182.6812385s remaining; shared controls
+20.7585858/30s. Physical primaries remain consumed. Official2.23 reference-source
+archive retained, but runtime semantics and actual recovered CCX equilibrium
+remain OPEN. Two unexecuted next-run decks/spec prepared; fresh authority pending.
+[Audit contract and source verification](../reference_cases/stiffened_shell_e03_equation_force_audit.md).
+Raw root-audit-result-v1.json under r8-e03-coarse-dev-20261007-v1. Earlier balance
+failure unchanged; no actual force correction, external accuracy or gate acceptance.

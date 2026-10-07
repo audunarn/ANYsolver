@@ -36,24 +36,36 @@ work and coupled-pivot controls. Source prep proceeds; no automatic CCX semantic
 adoption or accepted parser change. A new physical run would change output inventory
 only after pinned semantics and the diagnostic contract are established. It needs
 fresh explicit authority; no rerun/refinement now. Supporting Read review completed;
-same owner prepares new audit source/tests/doc only, checks withheld pending root
-inspection. No source-product changes or criterion relaxation.
+Audit source da690490 and connected output-only adapter are implemented:47 focused
+synthetic controls PASS; root inspected the source, rehashed812 loaded files and
+checked11 frozen inputs and two runtime records. No product changes or criterion
+relaxation. Actual CCX force recovery and binary semantics remain unverified.
 
 ## Runtime, authority and restart
 
 Fresh240s approved scope at r8-e03-coarse-dev-20261007-v1/authority-v1.json.
-Six measured attempts use45.6937621s;194.3062379s remain,60s reserve. Both native
+Seven measured attempts use57.3187615s;182.6812385s remain,60s reserve. Both native
 and external one-use primaries CONSUMED_BEFORE_LAUNCH. Remainder permits saved-output
 investigation/compatible tooling verification only, not another physical solve.
-Controls cumulative30s:9.1335864s consumed,20.8664136s maximum remaining.
-CPU0/thread1/JIT off/2GiB/one numerical job;12 before/after runtime records checked.
+Controls cumulative30s:20.7585858s consumed,9.2414142s maximum remaining.
+CPU0/thread1/JIT off/2GiB/one numerical job;14 before/after runtime records checked.
 All owned numerical children exited; no numerical job running. No allowance transfer.
 
 Raw: .qualification/b3-ge-e4-pl/r8-e03-coarse-dev-20261007-v1/.
-See root-result-v1.json, ledger-v1.json, six unique attempt directories and
+See root-result-v1.json, root-audit-result-v1.json, ledger-v1.json, seven attempts and
 saved-balance-v1/saved-balance.json. Prior live note preserved byte-for-byte as
 active-before-results-v1.md. Current result:
 [coarse screen and recovery decision](../reference_cases/stiffened_shell_e03_coarse_results_20261007.md).
+[Complete-output tooling and provenance boundary](../reference_cases/stiffened_shell_e03_equation_force_audit.md).
+next-force-output-v1 contains two prepared, UNEXECUTED decks and proposal-v3.json:
+one analytic SPC/MPC semantics control and the identical coarse model with only
+RF output ROOT->PHYSICAL. Fresh150s scope is proposed, not approved or executed;
+execution adapters/reader checks must pass before physical launch. Do not infer
+new authority from the existing remainder. Supporting review identified/repaired
+SPC step placement and unactuated-DOF preparation defects; v1/v2 retained, v3 is
+pending authority. No binary semantics adopted. Fresh150s approval requested from
+human; no launch pending it. Prepared decks are reviewable; runtime wrappers and
+reader checks still need the permitted bounded implementation/verification slice.
 
 Unchanged independent sources: GE distributing bridge38 controls UNRUN; no
 public curved GE admission. FormalF03 UNCONSUMED; body retry PENDING; closed
