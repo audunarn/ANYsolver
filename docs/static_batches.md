@@ -107,6 +107,20 @@ remain permitted. Internally created sessions and source iterators close on
 exhaustion, failure, cancellation or generator close. A supplied session remains
 caller-owned. Cleanup preserves a primary failure when iterator close also fails.
 
+Stress and reaction recovery inside one block share one package-owned
+qualified recovery lease scope. The lease, the exact built-in beam authority
+and the qualified trusted operation scopes are captured once per block; every
+per-case recovery operation then borrows that lease and still runs the complete
+class-authority, preflight and output guards under its own operation context,
+so per-case failure identities, unchanged scans and guard behavior are
+identical to the ordinary per-operation capture path. The scope closes before
+progress callbacks, cancellation points and yields, and revokes its borrowed
+lease on every exit path, including failure, cancellation and scope entry
+failures. A context copied while the scope was live cannot retain a usable
+borrowed lease after the scope has closed; recovery dispatched in such a
+copied context takes an ordinary fresh lease capture with full guards, and a
+borrowing operation must present the model the lease was captured for.
+
 `ResourceConfig.memory_limit_bytes` limits a conservative storage estimate and
 adapts the requested block size; it refuses a request that cannot fit one case.
 This is an allocation estimate, not an operating-system RSS cap. Native sparse

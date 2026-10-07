@@ -6790,18 +6790,22 @@ def _make_q4_trusted_operation_scope() -> tuple[Any, Any]:
     Entry and exit retain the complete element/runtime validation.  Calls made
     between those brackets only check the monotonic authority generation and
     exact instance identity.  The token class and ContextVar are closure-owned,
-    so there is no process-wide guard-disable switch.
+    so there is no process-wide guard-disable switch.  The token carries an
+    explicit live flag revoked before exit validation/reset on every exit, so
+    a context copied inside the scope cannot retain the operation lease after
+    the scope has ended.
     """
 
     active: ContextVar[Any] = ContextVar("qualified_q4_operation", default=None)
     manager = _q4_runtime_epoch_manager
 
     class Token:
-        __slots__ = ("generation", "records")
+        __slots__ = ("generation", "records", "live")
 
         def __init__(self, generation: int, records: dict[int, tuple[Any, Any]]) -> None:
             self.generation = generation
             self.records = records
+            self.live = True
 
     @contextmanager
     def operation(elements: Sequence[Any]) -> Any:
@@ -6821,6 +6825,10 @@ def _make_q4_trusted_operation_scope() -> tuple[Any, Any]:
         try:
             yield
         finally:
+            # Revoke the shared token before exit validation/reset so a
+            # context copied inside the scope cannot retain the operation
+            # lease after any exit (normal, error or cancellation).
+            token.live = False
             active.reset(marker)
             try:
                 manager.require_generation(generation)
@@ -6846,6 +6854,8 @@ def _make_q4_trusted_operation_scope() -> tuple[Any, Any]:
     def accepts(element: Any) -> bool:
         token = active.get()
         if type(token) is not Token:
+            return False
+        if not token.live:
             return False
         record = token.records.get(id(element))
         if (

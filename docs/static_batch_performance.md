@@ -117,3 +117,46 @@ python scripts/benchmark_static_batches.py --route candidate --family supported 
 Select the baseline import roots before the first command and candidate roots
 before subsequent commands. `--sample-cases` is an explicitly bounded subset,
 not the full named history. Do not launch the canceled repeated campaign.
+
+## Recovery and reaction follow-up (2026-10-08)
+
+Compared with published solver `50d81d40`, static blocks now capture the
+qualified recovery lease, built-in beam authority and Q4/S3 operation scopes
+once per block. Individual stress/reaction operations retain full preflight
+and output guards, and each case retains its model-change check. Borrowed
+leases and shell operation tokens are explicitly revoked on exit, including
+in copied contexts. Public per-case recovery remains available unchanged.
+
+The frozen application tree is equivalent to published ANYfem `3e4eb7f`.
+Serial warm comparisons used JIT enabled, one native/Numba worker, one warm-up
+case, the same selected outputs and exact loading. These are one measured pair
+per workload, not repeated-campaign estimates:
+
+| Workload | Cases | Before | After | Observed ratio |
+| --- | ---: | ---: | ---: | ---: |
+| Supported barge, 0.7 m, 26,094 DOFs, eight held-out positions above | 8 | 32.330 s | 24.509 s | 1.319x |
+| Disconnected free-free control, 96 DOFs | 20 | 0.480 s | 0.452 s | 1.063x |
+
+These times cover load evaluation through selected recovery, reactions and
+envelope output, excluding model preparation and warm-up. Barge recovery time
+fell from 20.348 s to 13.169 s; the candidate phase includes block scope entry
+and exit. Total barge time fell 24.2%. The small free-free difference is not a
+repeatability or broad speedup claim. Peak working set was 597.5/604.2 MB for
+barge and 176.5/177.4 MB for the control; no memory reduction is claimed.
+Both sides reused the warm factor with zero measured factorization attempts.
+All selected values and case digests were bit-identical, and envelope values
+and governing identities matched exactly in both comparisons.
+
+Final affected checks: 17 new lease/lifetime tests, 31 existing mutation tests,
+36 existing static-batch tests, five compiled recovery tests, seven recovery
+qualification tests, 11 recovery policy tests and seven application stream
+tests passed (114 distinct tests). An independent copied-context counterexample
+failed on the first candidate and passed on the published baseline; explicit
+Q4/S3 token revocation repaired it. Fixture failures and that counterexample
+are retained with the successful evidence under
+`C:/ANYworkspaceWork/static-batch-20261007/recovery-slice/` and sibling `checks/`.
+
+For this comparison use `--route candidate` on **both** import roots, since
+the baseline already has the streaming API. The barge command above applies;
+the control uses `--family multiple-body --history pilot --warmup
+--warmup-cases 1`. The large canceled campaign remains canceled.

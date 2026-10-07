@@ -8922,17 +8922,23 @@ _s3_runtime_epoch_manager = make_authority_epoch_manager(
 
 
 def _make_s3_trusted_operation_scope() -> tuple[Any, Any]:
-    """Create the context-local validated fast boundary for S3 operations."""
+    """Create the context-local validated fast boundary for S3 operations.
+
+    The token carries an explicit live flag revoked before exit
+    validation/reset on every exit, so a context copied inside the scope
+    cannot retain the operation lease after the scope has ended.
+    """
 
     active: ContextVar[Any] = ContextVar("qualified_s3_operation", default=None)
     manager = _s3_runtime_epoch_manager
 
     class Token:
-        __slots__ = ("generation", "records")
+        __slots__ = ("generation", "records", "live")
 
         def __init__(self, generation: int, records: dict[int, tuple[Any, Any]]) -> None:
             self.generation = generation
             self.records = records
+            self.live = True
 
     @contextmanager
     def operation(elements: Sequence[Any]) -> Any:
@@ -8952,6 +8958,10 @@ def _make_s3_trusted_operation_scope() -> tuple[Any, Any]:
         try:
             yield
         finally:
+            # Revoke the shared token before exit validation/reset so a
+            # context copied inside the scope cannot retain the operation
+            # lease after any exit (normal, error or cancellation).
+            token.live = False
             active.reset(marker)
             try:
                 manager.require_generation(generation)
@@ -8978,6 +8988,8 @@ def _make_s3_trusted_operation_scope() -> tuple[Any, Any]:
     def accepts(element: Any) -> bool:
         token = active.get()
         if type(token) is not Token:
+            return False
+        if not token.live:
             return False
         record = token.records.get(id(element))
         if (

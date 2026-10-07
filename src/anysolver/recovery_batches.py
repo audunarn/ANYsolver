@@ -13,7 +13,8 @@ import math
 import sys
 import time
 from collections import OrderedDict
-from contextlib import ExitStack
+from contextlib import ExitStack, contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, Mapping, Sequence, Tuple
@@ -1159,13 +1160,10 @@ _clear_recovery_plan_without_callbacks = (
 )
 
 
-def _run_with_qualified_recovery_runtime_lease(
+def _require_exact_builtin_beam_recovery_class_authority(
     model: "FEModel",
-    *,
-    context: str,
-    operation: Callable[[Any], Any],
-) -> Any:
-    """Run plan/recovery work under one non-renewable family lease."""
+) -> None:
+    """Reject a changed exact built-in beam recovery attribute authority."""
 
     capture_namespace = getattr(
         _CAPTURE_EXACT_BUILTIN_BEAM_RECOVERY_AUTHORITY,
@@ -1205,13 +1203,15 @@ def _run_with_qualified_recovery_runtime_lease(
                 "exact built-in beam recovery attribute authority changed"
             )
 
-    lease = _CAPTURE_QUALIFIED_RECOVERY_RUNTIME_LEASE(
-        model,
-        context=f"{context} preflight",
-    )
-    exact_beam_authority = (
-        _CAPTURE_EXACT_BUILTIN_BEAM_RECOVERY_AUTHORITY(model, lease)
-    )
+
+def _build_qualified_recovery_require(
+    model: "FEModel",
+    lease: Any,
+    exact_beam_authority: Any,
+    *,
+    context: str,
+) -> Callable[..., Any]:
+    """Build the per-operation guard for one captured recovery lease."""
 
     def require(*, stage: str) -> None:
         try:
@@ -1357,19 +1357,184 @@ def _run_with_qualified_recovery_runtime_lease(
         )
         require._qualified_recover_captured_beam = recover_captured_beam
 
+    return require
+
+
+def _qualified_recovery_trusted_elements(
+    model: "FEModel",
+) -> Tuple[Tuple[Any, ...], Tuple[Any, ...]]:
+    """Collect the qualified Q4/S3 elements entering trusted scopes."""
+
+    qualified_elements = tuple(model.mesh.elements.values())
+    q4_elements = tuple(
+        element
+        for element in qualified_elements
+        if type(element) is _QualifiedE4PLShellElement
+    )
+    s3_elements = tuple(
+        element
+        for element in qualified_elements
+        if type(element) is _QualifiedE4PLS3ShellElement
+    )
+    return q4_elements, s3_elements
+
+
+_ACTIVE_QUALIFIED_RECOVERY_RUNTIME_LEASE_SCOPE: ContextVar[Any] = ContextVar(
+    "qualified_recovery_runtime_lease_scope",
+    default=None,
+)
+
+
+@contextmanager
+def _qualified_recovery_runtime_lease_scope(
+    model: "FEModel",
+    *,
+    context: str,
+) -> Any:
+    """Lend one captured recovery lease to package-owned block operations.
+
+    The lease, the exact built-in beam authority and the Q4/S3 trusted
+    operation scopes are captured once per block.  Every borrowing
+    operation still runs the complete class-authority, preflight and
+    output guards under its own context, and any guard failure clears
+    the retained recovery plan.  The scope is private to the package: it
+    never crosses a yield, progress callback or input iteration
+    boundary, and a borrowing operation must present the same model
+    object the lease was captured for.  Leaving the scope revokes the
+    published borrow explicitly, so a context copied while the scope
+    was live cannot retain a usable borrowed lease once the scope has
+    closed; dispatch in such a copied context falls back to the
+    ordinary fresh lease capture below.
+    """
+
+    _require_exact_builtin_beam_recovery_class_authority(model)
+    lease = _CAPTURE_QUALIFIED_RECOVERY_RUNTIME_LEASE(
+        model,
+        context=f"{context} preflight",
+    )
+    exact_beam_authority = (
+        _CAPTURE_EXACT_BUILTIN_BEAM_RECOVERY_AUTHORITY(model, lease)
+    )
+    entry_guard = _build_qualified_recovery_require(
+        model,
+        lease,
+        exact_beam_authority,
+        context=context,
+    )
+    live = [True]
+
+    def borrow(
+        borrowed_model: "FEModel",
+        *,
+        operation_context: str,
+        operation: Callable[[Any], Any],
+    ) -> Any:
+        """Run one operation under full pre/post borrowed guards."""
+
+        if not live[0]:
+            raise AssemblyError(
+                "borrowed recovery lease scope is no longer active"
+            )
+        if borrowed_model is not model:
+            raise AssemblyError(
+                "borrowed recovery lease model identity changed"
+            )
+        _require_exact_builtin_beam_recovery_class_authority(model)
+        guard = _build_qualified_recovery_require(
+            model,
+            lease,
+            exact_beam_authority,
+            context=operation_context,
+        )
+        guard(stage="preflight")
+        try:
+            result = operation(guard)
+        except BaseException:
+            guard(stage="exceptional output")
+            raise
+        guard(stage="output")
+        return result
+
+    stack = ExitStack()
+    marker = None
+    published = False
     try:
-        qualified_elements = tuple(model.mesh.elements.values())
-        q4_elements = tuple(
-            element
-            for element in qualified_elements
-            if type(element) is _QualifiedE4PLShellElement
+        try:
+            q4_elements, s3_elements = _qualified_recovery_trusted_elements(
+                model
+            )
+            stack.enter_context(_Q4_TRUSTED_OPERATION_SCOPE(q4_elements))
+            stack.enter_context(_S3_TRUSTED_OPERATION_SCOPE(s3_elements))
+        except BaseException:
+            entry_guard(stage="exceptional output")
+            raise
+        marker = _ACTIVE_QUALIFIED_RECOVERY_RUNTIME_LEASE_SCOPE.set(
+            (model, borrow, live)
         )
-        s3_elements = tuple(
-            element
-            for element in qualified_elements
-            if type(element) is _QualifiedE4PLS3ShellElement
+        published = True
+        yield borrow
+    except BaseException as primary:
+        # Error, cancellation and close all revoke the published borrow,
+        # clear the context marker and close the trusted scopes.  A
+        # cleanup failure is noted on the primary failure instead of
+        # replacing it, so the case failure identity survives.
+        live[0] = False
+        if published:
+            _ACTIVE_QUALIFIED_RECOVERY_RUNTIME_LEASE_SCOPE.reset(marker)
+        try:
+            stack.close()
+        except BaseException as cleanup_error:
+            BaseException.add_note(
+                primary,
+                "recovery lease scope cleanup failed: " + repr(cleanup_error),
+            )
+        raise
+    live[0] = False
+    _ACTIVE_QUALIFIED_RECOVERY_RUNTIME_LEASE_SCOPE.reset(marker)
+    stack.close()
+
+
+def _run_with_qualified_recovery_runtime_lease(
+    model: "FEModel",
+    *,
+    context: str,
+    operation: Callable[[Any], Any],
+) -> Any:
+    """Run plan/recovery work under one non-renewable family lease."""
+
+    active_scope = _ACTIVE_QUALIFIED_RECOVERY_RUNTIME_LEASE_SCOPE.get()
+    if (
+        active_scope is not None
+        and active_scope[0] is model
+        and active_scope[2][0]
+    ):
+        return active_scope[1](
+            model,
+            operation_context=context,
+            operation=operation,
         )
+    # A scope published for another model, or one retained by a context
+    # copied before the live scope closed, takes the ordinary fresh
+    # capture path below instead of reusing the expired closure.
+
+    _require_exact_builtin_beam_recovery_class_authority(model)
+    lease = _CAPTURE_QUALIFIED_RECOVERY_RUNTIME_LEASE(
+        model,
+        context=f"{context} preflight",
+    )
+    exact_beam_authority = (
+        _CAPTURE_EXACT_BUILTIN_BEAM_RECOVERY_AUTHORITY(model, lease)
+    )
+    require = _build_qualified_recovery_require(
+        model,
+        lease,
+        exact_beam_authority,
+        context=context,
+    )
+    try:
+        q4_elements, s3_elements = _qualified_recovery_trusted_elements(model)
         with ExitStack() as stack:
+
             stack.enter_context(_Q4_TRUSTED_OPERATION_SCOPE(q4_elements))
             stack.enter_context(_S3_TRUSTED_OPERATION_SCOPE(s3_elements))
             result = operation(require)

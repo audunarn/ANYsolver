@@ -179,7 +179,8 @@ def iter_linear_batches(
         _compute_constraint_force_diagnostics_under_lease)
     from .matrix_assembly import _assemble_load_matrix_annotated, LoadMatrixCaseError, assemble_load_vector
     from .recovery import recover_stress_result, filter_reactions
-    from .recovery_batches import _run_with_qualified_recovery_runtime_lease
+    from .recovery_batches import (_run_with_qualified_recovery_runtime_lease,
+        _qualified_recovery_runtime_lease_scope)
     from .threading_policy import solver_thread_scope
     from .jit_compiler import numba_thread_scope
     from .linalg import backend_operation_counts
@@ -430,9 +431,31 @@ def iter_linear_batches(
             # scope still restores before input iteration, callbacks, yields
             # and every error or close path, and each case keeps its own
             # failure boundary and mutation check.
+            recovery_block_started = _time.perf_counter()
             with ExitStack() as block_scopes:
                 if recovery.include_stresses or recovery.include_reactions:
                     block_scopes.enter_context(solver_thread_scope(resource_config))
+                    # One package-owned recovery lease scope per block captures
+                    # the qualified lease once; every per-case recovery
+                    # operation below borrows it and still runs the complete
+                    # preflight/output guards under its own context.  The
+                    # scope closes before progress callbacks, cancellation
+                    # points and the yield, revokes its borrowed lease on
+                    # every exit path, and entry or exit failures keep the
+                    # surrounding case failure identity.
+                    lease_scope = _qualified_recovery_runtime_lease_scope(
+                        model, context="static batch recovery block")
+                    with _case_failure_boundary("recovery lease scope", block[0], indices[0]):
+                        lease_scope.__enter__()
+
+                    def _close_recovery_lease_scope(exc_type, exc_value, exc_traceback):
+                        if exc_type is not None:
+                            return lease_scope.__exit__(exc_type, exc_value, exc_traceback)
+                        with _case_failure_boundary("recovery lease scope", block[-1], indices[-1]):
+                            lease_scope.__exit__(None, None, None)
+                        return False
+
+                    block_scopes.push(_close_recovery_lease_scope)
                 for j, case in enumerate(block):
                     phase_start = _time.perf_counter()
                     info = certified[j]
@@ -470,6 +493,9 @@ def iter_linear_batches(
                     unchanged("case recovery")
                     phases["recovery"] += _time.perf_counter() - phase_start
                     results.append(item)
+            # Include the amortized lease setup and exit validation, not only
+            # the per-case work, in the public recovery phase measurement.
+            phases["recovery"] = _time.perf_counter() - recovery_block_started
             after = backend_operation_counts()
             diagnostics = {"status": "converged", "batch_size": len(block), "requested_batch_size": batch_size,
                 "effective_batch_size": effective, "estimated_block_bytes": base_bytes + per_case_bytes * len(block),
