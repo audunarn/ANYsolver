@@ -1,0 +1,109 @@
+{
+  "status": "SOURCE_COMPLETE_UNEXECUTED",
+  "scope": "C8_NATIVE_MULTI_SHELL_DEV",
+  "source_checkpoint": "6362bdfb",
+  "raw_owned_files": [
+    "native_multi_shell_bind_restart_v1.py",
+    "native_multi_shell_bind_restart_source_snapshot_v1.py",
+    "author_restart_binder_source_check_v1.json",
+    "author_restart_binder_handoff_v1.json",
+    "author_restart_binder_handoff_v1.md"
+  ],
+  "binder_sha256": "9f1b249e3a9dd6b4d99e7a0a0e4106ae8069e9e02b265c2f2d6ec36889f259e3",
+  "source_report_sha256": "f02c6bed4afe8be4e102189ad9e04eedf741eabe695655a26d6e16f7a817795f",
+  "checks": {
+    "status": "PASS",
+    "source_checkpoint": "6362bdfb",
+    "binder_file": "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\native_multi_shell_bind_restart_v1.py",
+    "binder_sha256": "9f1b249e3a9dd6b4d99e7a0a0e4106ae8069e9e02b265c2f2d6ec36889f259e3",
+    "binder_size": 26709,
+    "AST": "PASS",
+    "whitespace": "PASS",
+    "imports": [
+      "argparse",
+      "hashlib",
+      "json",
+      "math",
+      "pathlib",
+      "zipfile"
+    ],
+    "held_product_files_unchanged": 12,
+    "solver_imports": 0,
+    "binder_invocations": 0,
+    "runner_invocations": 0,
+    "numerical_attempts": 0,
+    "producer_artifacts_created": 0,
+    "checks": "STDLIB_SOURCE_AST_HASH_INSPECTION_ONLY_NO_HELPER_IMPORT_OR_INVOCATION"
+  },
+  "actual_tool_steps": 7,
+  "approved_seconds": 0,
+  "proposed_seconds": 600,
+  "numerical_attempts": 0,
+  "runner_invocations": 0,
+  "binder_invocations": 0,
+  "producer_artifacts_created": 0,
+  "product_files_changed": 0,
+  "prior_allowances": "PROTECTED_NO_POOLING",
+  "future_commands_not_executed": {
+    "prefix": [
+      "C:/Python/Python314/python.exe",
+      "-X",
+      "utf8",
+      "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\native_multi_shell_bind_restart_v1.py",
+      "--mode",
+      "prefix",
+      "--manifest",
+      "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\native_multi_shell_authorized_manifest_v1.json",
+      "--prefix",
+      "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\nms8_restart_prefix_v1",
+      "--binding",
+      "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\native_multi_shell_prefix_binding_v1.json",
+      "--output-manifest",
+      "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\native_multi_shell_restart_prefix_manifest_v1.json"
+    ],
+    "verify": [
+      "C:/Python/Python314/python.exe",
+      "-X",
+      "utf8",
+      "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\native_multi_shell_bind_restart_v1.py",
+      "--mode",
+      "verify",
+      "--manifest",
+      "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\native_multi_shell_restart_prefix_manifest_v1.json",
+      "--prefix",
+      "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\nms8_restart_prefix_v1",
+      "--full",
+      "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\nms8_restart_full_v1",
+      "--resumed",
+      "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\nms8_restart_resumed_v1",
+      "--binding",
+      "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\native_multi_shell_restart_binding_v1.json",
+      "--output-manifest",
+      "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\native_multi_shell_restart_verify_manifest_v1.json"
+    ]
+  },
+  "prospective_sequence": [
+    "root creates immutable new human authority and authorized manifest binding helper/report hashes; pending0 manifests preserved",
+    "guarded private BUILD/INSTALL then authentic PREFIX and FULL CLI groups",
+    "prefix binder validates successful package/producer evidence and writes immutable prefix manifest binding actual prefix capsule",
+    "RESUMED uses prefix-bound manifest and authentic saved prefix hash; public owner performs genuine continuation",
+    "verify binder validates allthree producer artifacts and exact full/resumed public/capsule bytes, writes immutable replay binding and raw/environment hashes",
+    "RESTART_VERIFY runs against final replay-bound manifest; ordinary pytest remains fresh by default"
+  ],
+  "guards": [
+    "pending0 authority refused before binder outputs",
+    "all producer statuses complete+exit0+fully accounted+no live descendants",
+    "scope/source/private-wheel/site/actual-profile identities and actual module hashes",
+    "effective JIT disabled/Numba1/observed BLAS pools1",
+    "one exact successful matching BUILD/INSTALL plus all prior measured charges retained",
+    "accepted1/2/2 counts, actual additional resumed accepted step and exact prefix chain",
+    "full2=fresh1+1 exact public result/capsule byte identity",
+    "output names fresh/exclusive; earlier manifests/artifacts/failures never overwritten",
+    "scientific/resource group controls unchanged; no allowance renewed"
+  ],
+  "remaining": [
+    "explicit human numerical authority and root adoption/binding",
+    "actual guarded private builds/installed checks/public producers and binder/runtime verification"
+  ],
+  "engineering_acceptance": false
+}

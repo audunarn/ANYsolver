@@ -52,8 +52,8 @@ checkpoint directory. No numerical authority for this fixture; old balances
 remain protected. Initial global field/API/feature/aggregate-budget design
 checkpoint is retained. The210-coordinate candidate is implemented on disk;
 13 AST/source checks and final supporting review PASS;10 numerical tests are
-prepared but unexecuted. Source handoff and ledger row are saved. The author
-is finishing the raw-only authentic restart binder; product bytes frozen.
+prepared but unexecuted. Source handoff and ledger row are saved. The raw-only authentic restart binder is now implemented and AST/hash checked;
+product6362bdfb bytes frozen. Binder/producer execution remains unverified.
 Root added five compatible lazy exports, using NativeTransientS3ContactPair
 to avoid the existing static selection name. Allocation and boundary-label
 findings are repaired and source-reviewed. No numerical checks run.
@@ -77,3 +77,15 @@ assembly, midpoint work and transaction/replay rather than create another stack.
 Temporal/spatial/section and independent C7/C8 qualification, curved native
 geometry, friction, multiple bodies, broader shell/search and application/package
 acceptance remain required. This component does not complete the programme.
+
+## Pending numerical request
+
+600 measured seconds has been requested for C8_NATIVE_MULTI_SHELL_DEV at source
+checkpoint6362bdfb, not granted. Scope:10 focused selectors, changed single-S3
+compatibility, private build/install, public CLI and scoped repairs; one job
+<=60s,953MiB,60s protected reserve, no old allowance pooling. Numerical jobs0.
+Raw binder native_multi_shell_bind_restart_v1.py SHA9f1b249e3a9dd6b4d99e7a0a0e4106ae8069e9e02b265c2f2d6ec36889f259e3.
+Create actual authority only from the human answer; pendingmanifest3 refuses
+children. Follow source binder/handoff records for future authentic prefix/full/
+resumed production and immutable restart binding. Publication/acceptance remains
+unauthorized. Goal ACTIVE and incomplete.

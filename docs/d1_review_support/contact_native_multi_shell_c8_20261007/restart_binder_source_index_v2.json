@@ -1,0 +1,21 @@
+{
+  "source_checkpoint": "6362bdfb",
+  "status": "SOURCE_ONLY",
+  "copied_files": [
+    {
+      "path": "native_multi_shell_bind_restart_v1.py",
+      "sha256": "9f1b249e3a9dd6b4d99e7a0a0e4106ae8069e9e02b265c2f2d6ec36889f259e3"
+    },
+    {
+      "path": "author_restart_binder_source_check_v1.json",
+      "sha256": "f02c6bed4afe8be4e102189ad9e04eedf741eabe695655a26d6e16f7a817795f"
+    },
+    {
+      "path": "author_restart_binder_handoff_v1.json",
+      "sha256": "651becffc3b14b289033ee2b4f9589f80d5b0e015c2bafe781d3899e41055b19"
+    }
+  ],
+  "numerical_jobs": 0,
+  "binder_invocations": 0,
+  "approval_status": "REQUESTED_NOT_GRANTED"
+}
