@@ -41,7 +41,7 @@ source-v1,installed-v1,and root-result-v1.json. Full E03 and external physics OP
 Next discriminator: ONE coarse level0,+offset B2/native and CalculiX feasibility
 screen; preparation only until its separate physical execution is authorized.
 No physical solves/CCX/F03/body/sibling/main/push/release launched. No allowance
-transfer to the38 bridge controls or physical screen. Keep complete goalACTIVE.
+transfer to the38 bridge controls or physical screen. Complete programme remainsOPEN.
 
 Independent source slice delivered: GE finite distributing reference work bridge
 uses material face-pair director tilt and planar-gradient yaw; arbitrary-frame
@@ -91,3 +91,12 @@ NEVER inspect/traverse/copy/archive us3-modal-canary. No WMI/ACL/env bypass.
 Closed Fy/pressure/native80/material/turning/adaptive1.01/event/compound/parity/
 refinement campaigns remain closed. PortableS3 STOPPED/NOT_DELIVERED;
 PR62NONPASS/local02ca395e unpushed. Equations/defaults/versions unchanged.
+
+Coarse E03 screen source prepared: scripts/r8_e03_coarse_screen.py and
+docs/reference_cases/stiffened_shell_e03_coarse_screen.md. One-phase deferred
+prepare/finish only; fixed level0/+offset, existing native adapter/strict parser,
+431-module payload parity, physical-output completeness and raw failure retention.
+Root inspected and adopted smaller unapproved240s/2GiB/CPU0 proposal, not authority.
+No imports/tests/execution for this new runner; root physical adapter still required.
+Worker accidental broad search exposed protected canary script lines; not reopened,
+used, executed or changed. Future reads remain exact-path only.
