@@ -4316,3 +4316,76 @@ review validates prospectivework/reaction, not runtime. PENDING explicit amendme
 retains original ceiling/history/charges. Raw root-terminal-result-v1.json,
 proposal-v4 and original/v2ledgers in r8-e03-coarse-dev-20261007-v1/next-force-output-v1.
 Full G0–G6 remain OPEN; pending remainder is not execution authority.
+### 7 October - independent finite-footprint displacement implementation
+
+IN_PROGRESS, not acceptance: fixed physical translation control for existing
+finite distributing Q4 owners through the existing solve/controller/endpoint
+services. Separate inner/outer checkpoint identity; legacy routes, the physical
+connection law, tolerances and reference-only guards remain unchanged. Sparse
+isolated branch codex/ge-distributing-displacement-20261007 at base bf0d96d8;
+qualification evidence excluded. No runtime checks, E03-budget transfer, product
+integration, main merge or release. Supporting independent source review is
+assigned; different-family/scientific acceptance remains open.
+
+7 October source completion: isolated candidate a79754f8 is IMPLEMENTED BUT
+UNVERIFIED. Existing finite distributing Q4 elastic/generalized/native-fibre and
+coupled J2 routes now have source admission for fixed signed displacement targets,
+seed-bound affine loading, physical recovery and durable restore/continue.
+Independent source review closed cyclic direction/base-forgery findings; this
+supporting review is not final acceptance. Seventeen proposed controls and example
+UNRUN. Separate 180-second source verification request PENDING, preserving 60-second
+reserve and existing task resources. Canonical E03 product unchanged; no merge,
+external execution, inherited authority or aggregate gate disposition.
+
+### 2026-10-07 isolated distributing displacement source repair
+- Candidate6399be686903aec3e838d98706521ac4c093c0b1 retains a79754f8 implementation; no canonical product or installed identity changed.
+- IMPLEMENTED_NOT_QUALIFIED / UNVERIFIED: scratch attachment weakrefs rebound to replay owner; scratch generation0 only during compiled construction, finally restored. Live ownership guards unchanged. Supporting reviewer acknowledged previously missed imported precondition; corrected source reviewed, runtime UNRUN.
+- Ordinary source-check runner prepared, manifest9e9524a405613a4fb5a3046b1a6bbc298d0670475811179f5eaefeac1eaf6f09. Four accounting/cleanup/dependency-origin findings repaired and supporting source reviewed. No qualification claim.
+- Actual nonnumerical evidence: PowerShell parser0 errors; PENDING authority refusal before launch, unchanged ledger hash0108398b02b86ce82fe02e2344737239919caa6bb0724546c1f46fd30be23c36, zero numerical child/seconds. All17 new/13 legacy/1 final controls UNRUN; separate180s request PENDING. E03 prior charges and pending amendment unchanged.
+- Evidence: isolated .development/distributing-displacement-20261007/source-review-v2.json and prelaunch-source-check-v2.json; previous pending source inputs retained. No F03, body, external, closed campaign, sibling, main or release authority consumed.
+
+- Source-only runner correction: every loaded solver module must belong to frozen source map and match its hash. Manifest832b74a755994005beaf4f54609ffdab0fce5f5766dbb2e7b828626dbd4271ff supersedes unexecuted pending manifest9e9524a4; prior inputs retained. Product6399be68 unchanged, numerical used0, all tests UNRUN,180s authority PENDING. Isolated README and source-import-binding-v3.json give exact restart. No acceptance or authority renewed.
+
+## 2026-10-07 current bounded verification delta
+
+Human programme completion approval activates compatible prospective checks; no
+scientific criterion or historical failure is waived. Canonical product535390ef
+and HEADbf0d96d8 unchanged. Isolated985eb9eb/product6399be68 finite distributing
+fixed translational displacement: new17/17 source controls PASS at process-wall
+116.3260553s, peak208179200B, actualCPU0/thread1/JIT-off, exact frozen identities.
+No installed or aggregate gate acceptance yet. Preserved legacy attempt failed
+collection before controls (missing controlled ROOT path for docs fixture), then
+registry replacement failed;15.5481047s charged, cleanup uncertainty retained.
+Followup300 ledger used131.8741600, remainingNULL pending terminal reconciliation.
+Original180 terminal-partial used61.6633553 retained separately, not transferred.
+E03 original150 ledger used41.8408609/rem108.1591391/reserve60:62 controls PASS,
+scalarv4 expected independent u/g observed; saved finalization TIMEOUT retained.
+No physical panel comparison or external-force correspondence adopted. Lean
+saved-output preparation only; original external unconsumed and gated. Refer to
+active note and named attempt receipts for full evidence, not older UNRUN summaries.
+
+2026-10-07 source-slice terminal delta: unchanged985eb9eb new17 PASS reused by exact bindings; affected13 PASS31.0507396s and final1 PASS17.8700295s. Followup300 used182.7547355/rem117.2452645/reserve60; original180 charges separate. Failures retained, host pinned settings verified. Implementation/tested experimental behavior only; installed and programme gates remain open.
+
+
+2026-10-07 E03 coarse force observability resolved: confirmed pinned uncondensed g semantics and saved equation audit give scaledbalance1.4974177636511776e-10 <=1e-8, eight compatibleports and positivephysicalwork. Original support-only failure retained. One approved externalfollowup consumed; no native/refinementrerun. Exact150 carry44.1285582/rem105.8714418/reserve60. Engineeringaccuracyunscored/E03aggregateopen; see saved-adjudication-v3/root-terminal-result-v1.json. New finite-displacement wheel431 sourcebyteparityPASS, installed controlsinprogress; no programmequalification.
+
+
+2026-10-07 installed slice: exactwheelabc87da6 all431Pythonbytes/source match, installed17PASS81.5960612s pluslegacy13PASS36.9447997s. Publicexample physicalendpoint/restoreparity observed but completewrapperTIMEOUT18.0910853s retained, NOTPASS.400used158.823301/rem241.176699/reserve60. SupportingindependentOpenAIreview no concrete productdefect; two directcycliclayoutcontrols prepared, actualzero/signedplasticreversal stillopen. Prospective groupedcheckamendment keepssameartifact and oldcharges; no rebuiltwheel/unchangedcampaignrepeat or aggregatequalification.
+
+### 2026-10-07: finite distributing displacement installed slice and integration
+
+Candidate a990de12, product 6399be68, integrated into development branch at
+2c3b3779. Source controls 17/13/final1 PASS; installed controls 17/13/2 PASS;
+public example PASS after preserved 18.0910853s timeout. No wheel rebuild:
+SHA256 abc87da6987961edc4eec35f641be018aa148103eb319af0b2a876288ad61087.
+All 431 canonical solver modules match the tested site exactly after reconciling
+16 checkout-only line-ending differences; initial mismatch receipt retained.
+Installed 400s allocation used 223.8072112s, remaining 176.1927888s, reserve 60s.
+Supporting independent OpenAI review found no concrete product defect; different-
+family final acceptance and actual-zero/signed yielded reversal remain open.
+Status: IMPLEMENTED_AND_FOCUSED_INSTALLED_VERIFIED, EXPERIMENTAL_NOT_QUALIFIED.
+No aggregate G0-G6 acceptance, main merge, push or release. Next consumer slice
+is source-only in the clean isolated ANYfem experimental checkout. Existing failed
+runs, scientific criteria, consumed authorities and unrelated work are preserved.
+Evidence: ge-distributing-displacement-20261007/.development/distributing-displacement-installed-20261007/root-terminal-result-v1.json;
+canonical .development/distributing-displacement-integration-20261007/source-parity-v2.json.

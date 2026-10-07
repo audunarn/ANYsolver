@@ -1,7 +1,12 @@
 {
   "schema": "R8_E03_FORCE_OBSERVABILITY_AMENDMENT_V2",
-  "status": "PENDING",
-  "approval_evidence": null,
+  "status": "APPROVED",
+  "approval_evidence": {
+    "source": "Human user message in this task",
+    "text": "Approvals given needed to finish programme",
+    "recorded_utc": "2026-10-07T17:13:40.5998240Z",
+    "scope": "PreparedV4 zero-support existing-remainder amendment; original150 and prior charges preserved, controls10/analytic15/external30/finalization6.5 each, reserve60, existing resource settings; no v3 rerun or criterion waiver."
+  },
   "amendment_id": "V4_ZERO_SUPPORT_EXISTING_REMAINDER",
   "prior_ledger_sha256": "0ed29c479742368b333852eff2c4c2e5150cd3ed4e90ed2c5fe12e84577c677a",
   "total_seconds": 150,

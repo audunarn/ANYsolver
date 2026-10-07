@@ -1,49 +1,77 @@
-# Current state — 7 October 2026
+# Current state - 7 October 2026
 
-Revision8 complete programme OPEN: G0–G6/F01–F13/V01–V28/B01–B18, external,
-scale, platforms, consumers, reviews, artifacts and authorized complete release.
-Criteria unchanged. Worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001;
-branch codex/stiffened-main-reconcile-20261001. Product535390ef and431-module
-wheel/site unchanged. No sibling/contact communication or main/push/release.
-Mistral/local cached unavailable; OpenAI review is supporting, not final acceptance.
+Revision 8 remains the complete programme: G0-G6/F01-F13/V01-V28/B01-B18,
+external references, practical scale, platforms, consumers, reviews and release.
+Goal ACTIVE. Human approval covers pending checks, compatible repairs and
+prospective bounded checks; scientific criteria and consumed authority remain.
+No communication with the contact task. Mistral/local remain unavailable;
+OpenAI supporting review does not satisfy final different-family acceptance.
 
-## Decision, facts, uncertainty, next action
+Canonical checkout: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001
+Branch: codex/stiffened-main-reconcile-20261001; HEAD 2c3b3779.
+No main merge, push or release. Unrelated ANYfem main edits remain untouched.
 
-Decision: valid curved B2 external force recovery before refinement; GE independent
-rotation/drill correspondence remains separately open. E03 tooling56 source/56
-installed, consumer41/41 and audit47 PASS retain their original identities.
-Native coarse balance1.7275070263167436e-13; original ROOT-only CCX balance3.9905884
-fails1e-8 and remains failed/unscored. No actual CCX force semantics adopted.
+## Decision, facts, uncertainty and next action
 
-Executed25ba6f4c:46 controls PASS with verified CPU0/thread1/JIT-off. One scalar
-v3 CCX exits0. Finalization FAILS on absent periodic samples; directCPU0 launch
-is observed, child wall0.0264034s/CCX reported0.0075s. Saved DAT additionally
-violates its independent oracle: u4=0 vs.1, g=[1,-1,2,-2] vs[1,-1,0,0], free-node4
-x residual−2N. Cause unallocated. No panel follow-up or physical accuracy scored.
+Deliver the verified finite distributing displacement route through the existing
+experimental ANYfem consumer while assessing saved E03 reference applicability.
+No replacement framework or automatic refinement campaign.
 
-Source-only repairs admit exact STEP/INCREMENT framing and retain wrong-response
-refusal; future entry checks directCPU0 and any actual periodic samples honestly.
-New62 controls UNRUN. Executed v1 files/25snapshots and failures preserved.
-Next v4 discriminator matches E03 zero supports: u=[0,.1,0,0],g=[-1,1,0,0],
-physical lambda/support reaction−3N, whereas elemental fn3=0. Independent analytic
-review found no blocker. Do not deepen unrelated nonzero-SPC/backend research.
+The GE displacement candidate a990de12 (product 6399be68) has been integrated
+as four commits ending at 2c3b3779. All 431 canonical solver modules now match
+the tested installed site byte-for-byte. Sixteen checkout-only line-ending
+differences were diagnosed and reconciled; initial mismatch evidence is retained.
+Numerical checks were not repeated for this byte-identical integration.
 
-## Authority, evidence and restart
+Source controls: 17 new PASS (116.3260553s), 13 affected legacy PASS
+(31.0507396s), final observer control PASS (17.8700295s). Replay uses independent
+scratch-owner bindings; observer tests honor the detached-copy contract.
+The source 300s follow-up used 182.7547355s, remaining 117.2452645s, reserve 60s.
+Earlier 180s failures and sandbox/host visibility failures remain recorded;
+no old allocation is transferred or silently renewed.
 
-Approved150s: three terminal attempts use18.5152391s;131.4847609s remain, reserve60.
-V3 analytic CONSUMED; external UNCONSUMED but STOPFIRSTFAILURE bars further launch.
-Prepared PENDING explicit amendment keeps original150/prior charges: controls10,
-one v4 analytic15, original external30 only after PASS/root adoption, finalization
-6.5 each; CPU0/thread1/JIT-off/2GiB/one job. No V4 launch until explicit approval.
-No retry/refinement/native/F03/body/bridge38/sibling/main/push/release renewed.
+Installed wheel: abc87da6987961edc4eec35f641be018aa148103eb319af0b2a876288ad61087.
+Built and installed once; 431 Python modules and 441 site files are bound.
+Installed 17 new + 13 legacy + 2 cyclic controls PASS, and the public example
+PASS after its preserved first timeout. Final equilibrium 1.162664177e-12;
+compatibility 1.002599187e-17; checkpoint/restore/continue parity passed.
+The separate 400s allowance used 223.8072112s, remaining 176.1927888s,
+reserve 60s. There is no in-flight numerical job.
 
-Raw .qualification/b3-ge-e4-pl/r8-e03-coarse-dev-20261007-v1/next-force-output-v1:
-root-terminal-result-v1, three execution receipts, original outputs, proposal-v4,
-PENDING v2 authority/ledger and32 frozen snapshots. Root checked32 snapshots,
-11 executed source snapshots and805 unchanged dependencies per successful attempt.
-Original live note preserved byte-for-byte as active-before-followup-v1.md.
-[Source/pending scope](../reference_cases/stiffened_shell_e03_force_observability_followup.md).
-One acceptance matrix retains history. No owned numerical job running. FormalF03
-UNCONSUMED; body retry PENDING; bridge38 UNRUN; closed campaigns unchanged. Never
-inspect/traverse/copy protected canary evidence. Other remainders nontransferable.
-Goal metadata may retain BLOCKED after resumption; do not replace or mark complete.
+Supporting independent product review found no concrete correctness defect.
+The added generalized/coupled cyclic controls close that coverage gap. Physical
+accumulated history is the high+low compensated scalar, independently reconstructed
+with Decimal at 80 digits; its two compensation terms are not separate channels.
+Actual-zero-load and signed yielded reversal remain open G3 obligations.
+This is a verified experimental slice, not programme or production acceptance.
+
+Evidence: isolated ge-distributing-displacement-20261007/.development/
+distributing-displacement-installed-20261007/root-terminal-result-v1.json;
+canonical .development/distributing-displacement-integration-20261007/source-parity-v2.json.
+
+E03 force observability is resolved in next-force-output-v1/saved-adjudication-v3.
+Pinned RF/FORC semantics are uncondensed element nodal gradients, not raw support
+reactions. The original unconsumed coarse external follow-up is now consumed.
+Recovered balance 1.4974177636511776e-10 <= 1e-8; eight compatible point ports;
+positive work 4.210950351426983e-5J. Engineering accuracy remains unscored.
+The original ROOT-only balance failure 3.9905884 and all failed scalar runs remain.
+Original 150s accounting used 44.1285582s, remaining 105.8714418s, reserve 60s;
+this remainder grants no new physical comparison or refinement scope.
+An independent saved-data review is checking matched geometry, laws, connection
+and output measures before choosing a defensible accuracy assessment.
+
+ANYfem consumer work owns only stiffened-shell source/tests/examples/docs in
+C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer (clean baseline da24321).
+Source-only assignment now: targets, physical recovery, experimental persistence,
+checkpoint/restore/continue, focused controls and example. Root activates checks
+only after source review and a prospective bounded packet. No sibling main edits.
+
+## Protected boundaries and restart
+
+Formal F03 UNCONSUMED; body retry PENDING; bridge38 UNRUN; closed campaigns unchanged.
+Never inspect, traverse or copy protected us3-modal-canary evidence. No automatic
+physical retry, criterion relaxation or release claim. Other remainders remain
+nontransferable. One numerical job, CPU0, one thread, JIT off, 2GiB for current
+packets. Root owns ledgers, execution, scientific adoption and Git integration.
+Historical active records are preserved; one acceptance matrix retains failures.
+Resume actual artifacts without repeating passed checks or copying historical plans.
