@@ -207,3 +207,23 @@ These fake-owner, spy and analytic source controls verify the observation and
 selection contracts; they do **not** establish actual mechanical directional
 derivative accuracy, operator compatibility or scientific acceptance. The source-controls snapshot preceded the physical comparison; its completed
 result and unmet criterion are recorded above.
+
+## Prospective intermediate pair — source prepared, unverified
+The historical default remains SAVED_G13_REGISTERED_1E5_1E6_V1. A separate
+SAVED_G13_PROSPECTIVE_3E6_1E6_V1 option selects exactly3e-6/1e-6 and requires the
+explicit private Log-only candidate. Unknown identities/types and selection on
+the original numerical route refuse before saved inputs or owner construction.
+No arbitrary sequence,sweep,public policy or product module changes.
+
+Five new guard-test cases are prepared but UNRUN. The earlier32PASS apply to
+the frozen036d4975 source only,not these prospective changes. Both v4source and
+v4candidate supervisor modes refuse PENDING authority before interpreter launch.
+Proposed caps30s(source)/54s(candidate) share the existing144.2985002s remainder
+and retain60sreserve; no numerical budget reset. One candidate marker prevents
+replay. Fixed1e-6directional/plateau criteria and all failed historical evidence
+remain intact. Exact source inputs are frozen in inputs-manifest-v4.json.
+
+The choice3e-6 is a rounded intermediate logarithmic step between the old pair.
+Captured coarse curvature motivates testing a different finite-difference
+window; it does not bound truncation or predict acceptance. If this fixed pair
+still fails,the slice stops with its evidence; no automatic refinement follows.

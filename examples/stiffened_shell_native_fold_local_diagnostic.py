@@ -23,7 +23,20 @@ SHELL_ROWS = 162
 MIXED_ROWS = 552
 BASELINE_NUMERICS = 'Q4_LOCAL_ORIGINAL_EXP_LOG_CHART_V2'
 LOG_ONLY_CANDIDATE = 'PRIVATE_Q4_SAVED_G13_STABLE_PRINCIPAL_LOG_ONLY_V1'
+REGISTERED_PAIR = 'SAVED_G13_REGISTERED_1E5_1E6_V1'
+INTERMEDIATE_PAIR = 'SAVED_G13_PROSPECTIVE_3E6_1E6_V1'
 _active_capture = None
+
+
+def _fd_steps(pair):
+    """Fixed private assessment choices; selecting one grants no run authority."""
+    if type(pair) is not str:
+        raise ValueError('explicit known private difference-pair identity required')
+    if pair == REGISTERED_PAIR:
+        return fold.FD_STEPS
+    if pair == INTERMEDIATE_PAIR:
+        return (3e-6, 1e-6)
+    raise ValueError('explicit known private difference-pair identity required')
 
 
 def _copy_array(value,shape):
@@ -251,7 +264,8 @@ def _sum_rows(records,size):
     return values,absolute,counts
 
 
-def q4_difference_witness(baseline,minus,plus,tangent,h,rows,free,n,direction):
+def q4_difference_witness(baseline,minus,plus,tangent,h,rows,free,n,direction,*,
+                          difference_pair=REGISTERED_PAIR):
     """Q4 returned-force decomposition; element arithmetic remains unbounded.
 
     Standard gamma_n summation bounds assume finite normal binary64 arithmetic
@@ -259,7 +273,7 @@ def q4_difference_witness(baseline,minus,plus,tangent,h,rows,free,n,direction):
     They do not bound local constitutive, deformation or pullback evaluation.
     """
     size = len(tangent)
-    if h not in fold.FD_STEPS:
+    if h not in _fd_steps(difference_pair):
         raise ValueError('only the fixed registered step pair is permitted')
     qplus,aplus,cplus = _sum_rows(plus,size)
     qminus,aminus,cminus = _sum_rows(minus,size)
@@ -323,10 +337,14 @@ def q4_difference_witness(baseline,minus,plus,tangent,h,rows,free,n,direction):
 
 
 def diagnose_saved_g13(folder,*,cancellation_token=None,on_evaluation=None,
-                      numerical_candidate=BASELINE_NUMERICS):
+                      numerical_candidate=BASELINE_NUMERICS,
+                      difference_pair=REGISTERED_PAIR):
     """Exactly one bound restore, one border, baseline+four actual assemblies."""
     if numerical_candidate not in (BASELINE_NUMERICS,LOG_ONLY_CANDIDATE):
         raise ValueError('explicit known private Q4 numerical identity required')
+    steps = _fd_steps(difference_pair)
+    if difference_pair == INTERMEDIATE_PAIR and numerical_candidate != LOG_ONLY_CANDIDATE:
+        raise ValueError('prospective intermediate pair requires explicit Log-only candidate')
     raw,packet = fold.load_saved(folder,13)
     cancellation_safe_point(cancellation_token,'before fresh saved-g13 diagnostic owner')
     owner = ss.create_analysis(definition=case.definition())
@@ -344,6 +362,7 @@ def diagnose_saved_g13(folder,*,cancellation_token=None,on_evaluation=None,
         yield_branch_margin='UNESTABLISHED',G4D='OPEN',same_law_external_and_refinement='OPEN',F03='OPEN',
         registered_relative_criterion=fold.ELASTIC_FD_LIMIT)
     result.update(numerical_candidate=numerical_candidate,baseline_numerics=BASELINE_NUMERICS,
+        difference_pair=difference_pair,difference_steps=steps,
         numerical_provenance=dict(principal_log='original' if numerical_candidate == BASELINE_NUMERICS else
             '_ge_beam3_g3c_so3_numerics.so3_log value/first/second; private Q4 function context',
             Exp='original _ge_beam3_mixed_ad.so3_exp',spatial_chart='original _ge_beam3_pose_joint._exp_terms',
@@ -419,7 +438,7 @@ def diagnose_saved_g13(folder,*,cancellation_token=None,on_evaluation=None,
                 column_scales=columns.copy(),free_rows=free.copy(),constraint_start=n,
                 physical_tangent_norm=norm,accepted_public_state=deepcopy(before))
             derivatives = []
-            for h in fold.FD_STEPS:
+            for h in steps:
                 signed = []
                 for sign in (-1,1):
                     moved = driver._advance(state,actual_tangent,sign*h)
@@ -428,7 +447,8 @@ def diagnose_saved_g13(folder,*,cancellation_token=None,on_evaluation=None,
                     metric.evaluate((moved.q[:nodal]-state.q[:nodal]).reshape(-1,6)[:,:3],moved_poses,poses)
                     signed.append(evaluate(f'h={h:.0e},sign={sign:+d}',moved))
                 observed = (signed[1][0][0]-signed[0][0][0])/(2*h)
-                witness = q4_difference_witness(base_records,signed[0][1],signed[1][1],actual_tangent,h,rows,free,n,direction)
+                witness = q4_difference_witness(base_records,signed[0][1],signed[1][1],actual_tangent,h,rows,free,n,direction,
+                    difference_pair=difference_pair)
                 witness.update(step=h,assembled_original_derivative=observed,
                     assembled_original_expected_derivative=expected.copy(),
                     assembled_original_difference=observed-expected,

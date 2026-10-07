@@ -441,3 +441,40 @@ def test_unknown_candidate_identity_refuses_before_model_or_alias_change(seam,mo
     with pytest.raises(ValueError,match='known private Q4 numerical identity'):
         local.diagnose_saved_g13('fixture',numerical_candidate='implicit fallback')
     assert local.finite.q4_algorithmic_response is seam.response
+
+
+@pytest.mark.parametrize('pair',('arbitrary-step-sweep',None,(3e-6,1e-6)))
+def test_unknown_difference_pair_refuses_before_saved_input_or_owner(monkeypatch,pair):
+    def forbidden(*args,**kwargs): raise AssertionError('fixture/model must not be opened')
+    monkeypatch.setattr(local.fold,'load_saved',forbidden)
+    monkeypatch.setattr(local.ss,'create_analysis',forbidden)
+    with pytest.raises(ValueError,match='known private difference-pair'):
+        local.diagnose_saved_g13('fixture',numerical_candidate=local.LOG_ONLY_CANDIDATE,
+            difference_pair=pair)
+
+
+def test_intermediate_pair_does_not_change_original_selection_or_allow_baseline(monkeypatch):
+    assert local._fd_steps(local.REGISTERED_PAIR) == local.fold.FD_STEPS == (1e-5,1e-6)
+    assert local._fd_steps(local.INTERMEDIATE_PAIR) == (3e-6,1e-6)
+    def forbidden(*args,**kwargs): raise AssertionError('fixture/model must not be opened')
+    monkeypatch.setattr(local.fold,'load_saved',forbidden)
+    with pytest.raises(ValueError,match='requires explicit Log-only'):
+        local.diagnose_saved_g13('fixture',difference_pair=local.INTERMEDIATE_PAIR)
+
+
+def test_intermediate_witness_requires_explicit_pair_and_keeps_criterion():
+    h=3e-6
+    def record(force):
+        return dict(element_id=1,slots=np.array([0]),returned_residual=np.array([force]),
+            returned_tangent=np.array([[1.]]),local_coordinates=np.array([force]),
+            deformation_differential=np.array([[1.]]),local_force=np.array([force]))
+    args=([record(1.)],[record(1.-h)],[record(1.+h)],np.ones(1),h,
+          np.ones(1),np.array([0]),1,np.ones(1))
+    with pytest.raises(ValueError,match='fixed registered step'):
+        local.q4_difference_witness(*args)
+    witnessed=local.q4_difference_witness(*args,difference_pair=local.INTERMEDIATE_PAIR)
+    assert witnessed['Q4_only_original_observed_derivative'][0] == pytest.approx(1.,abs=2e-11)
+    assert witnessed['criterion'] == local.fold.ELASTIC_FD_LIMIT == 1e-6
+    assert witnessed['operator_defect_excluded'] is False
+    with pytest.raises(ValueError,match='fixed registered step'):
+        local.q4_difference_witness(*args[:4],1e-5,*args[5:],difference_pair=local.INTERMEDIATE_PAIR)

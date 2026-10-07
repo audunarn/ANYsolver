@@ -67,6 +67,14 @@ Decision:retainprivateLog candidate; no productionadoption,criterionwaiver or
 furtheroperator retuning. Nextboundedaccuracydecision addresses coarse-step
 truncation and finer value/forcechain arithmetic using savedcovectors first;
 additional primary/step-pair amendment requires scope authority,not budget reuse.
+Prospective source prepared:explicitLog-only fixed3e-6/1e-6 difference_pair;
+originaldefault unchanged,unknown/baselinechoices refusebeforeload/owner.
+Newsource/5addedguardcases UNVERIFIED; old32PASS applyonly036d4975snapshot.
+v4source/candidate authority PENDING beforeinterpreter;sourceCap30/candidateCap54,
+same144.2985002remain/60reserve,distinctoneuse. No new numericaljob launched.
+Supporting Readreview foundnoblockingdefect;source/physicalstillUNRUN.
+Next:savecandidate,requestscope;afterapproval inspectsourcecontrolsPASS before
+launching ONEcandidate. Sourcefailure stopsphysicalrun;no baseline rerun.
 Rawroot-result-v5.json,root-log-comparison-v1.json,root-log-endpoint-tangent-v1.json,
 root-log-covector-split-v1.json and independent-log-evidence-review-v1.json.
 No automatic smallersteps, 3state rerun, tolerance/norm change or campaign.

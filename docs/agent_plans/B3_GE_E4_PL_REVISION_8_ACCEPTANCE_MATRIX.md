@@ -4151,3 +4151,10 @@ Retainprivatecandidate,no productionadoption or tolerancechange.
 SAME300ledger155.7014998used/144.2985002remaining,60sreserve;v3primaryCONSUMED.
 Supportingindependentreviewclean,notdifferent-family/mechanicsacceptance.
 F03/G4D/fullprogramme remainOPEN. Rawfold-assessment-dev/root-result-v5.json.
+
+## 7 October2026: prospective fixed difference-pair source
+PrivateLog-only3e-6/1e-6 pair prepared,UNVERIFIED. Originaldefault1e-5/1e-6,
+1e-6criteria,430productmodules and allfailed evidence unchanged.
+Five addedguardcases UNRUN;old32PASS do notverifychangedsource.
+v4source/candidate scopePENDING beforeinterpreter;30s/54scaps share existing
+144.2985002sremainder,60sreserve. No newbudget,primary,sweep or acceptance.
