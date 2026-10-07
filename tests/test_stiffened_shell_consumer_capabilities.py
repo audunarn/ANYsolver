@@ -251,9 +251,44 @@ def test_real_ge_facade_report_is_preserved_without_request_execution():
 
 
 def test_real_b2_panel_facade_report_is_preserved_without_request_execution():
-    from test_stiffened_shell_b2_q4_panel_experimental import _panel
-
-    nodes, shells, members, points, free = _panel()
+    # Keep this public-facade smoke independent of legacy diagnostic test imports.
+    nodes = {
+        1: (0., 0., 0.), 2: (1., 0., 0.), 3: (2., 0., 0.),
+        4: (0., 1., 0.), 5: (1., 1., 0.), 6: (2., 1., 0.),
+    }
+    shells = (
+        stiffened_shell.Q4PanelShell("left", (1, 2, 5, 4), 1000., .3, .15),
+        stiffened_shell.Q4PanelShell("right", (2, 3, 6, 5), 1000., .3, .15),
+    )
+    section = stiffened_shell.LinearSection.isotropic(
+        E=2000., nu=.25, area=.04, Iy=.00015, Iz=.0003,
+        J=.0004, ky=.8, kz=.7)
+    members = (
+        stiffened_shell.PhysicalB2Member(
+            "beam-left", "beam-source-left", (10, 11),
+            ((.2, .5, .2), (1.2, .5, .2)),
+            (0., 1., 0.), "beam-section", section),
+        stiffened_shell.PhysicalB2Member(
+            "beam-right", "beam-source-right", (11, 12),
+            ((1.2, .5, .2), (2.2, .5, .2)),
+            (0., 1., 0.), "beam-section", section),
+    )
+    points = (
+        stiffened_shell.Q4B2Point("joint-left", "left", "beam-left", .5,
+                                 (0., .08, -.03)),
+        stiffened_shell.Q4B2Point("joint-right", "right", "beam-right", .5,
+                                 (0., .08, -.03)),
+    )
+    shell_index = {node_id: i for i, node_id in enumerate(sorted(nodes))}
+    beam_index = {node_id: i+len(nodes)
+                  for i, node_id in enumerate((10, 11, 12))}
+    fixed = set()
+    for node_id in (1, 4):
+        fixed.update(6*shell_index[node_id]+axis for axis in range(6))
+    fixed.update(6*beam_index[10]+axis for axis in range(6))
+    for node_id in (2, 3, 5, 6):
+        fixed.add(6*shell_index[node_id]+5)
+    free = np.array([i for i in range(54) if i not in fixed])
     owner = stiffened_shell.create_analysis(definition=stiffened_shell.B2Q4PanelDefinition(
         stiffened_shell.B2_E4_PL_FAST_LINEAR_V1, nodes, shells, members, points,
         sparse.eye(54, format="csr")[:, free], np.zeros(54)))
