@@ -46,7 +46,33 @@ The factor is retained unchanged through displacement continuation and restorati
 displacement, checkpoint, restore, continue and physical recovery. Focused proposed
 controls are in `tests/test_stiffened_shell_ge_distributing_displacement.py`, covering
 signed targets, replay, detached physical actions, cancellation, observers, stale
-publication, incompatible controls and material histories. These controls and the
-example were **not executed** during source-only preparation. Required follow-up
+publication, incompatible controls and material histories. The 17 focused source
+controls **passed** at source commit `985eb9eb2bb226d0e15821b92b65a4c07a236a79`
+in `source-new-controls-v1`, under original manifest SHA256
+`5701cd4d72515e6f682811fc6e36d1e8a2c84badb6d38b966f9429f571aba41d`.
+This source verification does not establish installed-artifact verification or
+qualification. Isolated wheel, installed controls and public-example verification
+remain **pending**. Required follow-up
 also includes the existing finite distributing public/material/native/cyclic tests
 and legacy BL5, curved and native point displacement/checkpoint regressions.
+
+Installed development verification completed on 7 October 2026 for product
+6399be68 and source-control identity 985eb9eb. Wheel SHA256:
+abc87da6987961edc4eec35f641be018aa148103eb319af0b2a876288ad61087.
+All 431 installed Python files match source, and solver imports came exclusively
+from the isolated site. The 17 new controls, 13 affected controls and two cyclic
+generalized/coupled unload/reload/restart controls passed. The public example
+completed force seed, displacement, checkpoint, restore, continued solve and
+physical recovery: equilibrium 1.162664177e-12; compatibility 1.002599187e-17.
+Effective settings were CPU0, one numerical thread, JIT disabled and a 2 GiB limit.
+
+The first example attempt timed out before final validation and remains failed.
+Its charge was retained in the same 400-second allowance: 223.8072112 seconds used,
+176.1927888 remaining, with a 60-second reserve. Evidence remains in
+`.development/distributing-displacement-installed-20261007/`: execution receipts,
+`installation-v1.json`, `handoff-v1.md` and `root-terminal-result-v1.json`.
+
+Supporting independent OpenAI review found no concrete product defect. Required
+programme reviews, actual-zero-load/signed plastic reversal, consumer completion,
+scale, external qualification and aggregate G0-G6 acceptance remain open. These
+checks establish experimental behavior; they do not establish qualification or release.
