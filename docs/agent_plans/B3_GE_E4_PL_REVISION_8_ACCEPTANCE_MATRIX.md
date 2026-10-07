@@ -4254,3 +4254,13 @@ No physical solves/CCX/F03/body/sibling/main/push/release; consumer remainder
 is not transferable. E03/full programme physical acceptance remainsOPEN.
 Source contract: docs/reference_cases/stiffened_shell_e03_curved.md.
 Pending runner: r8-e03-curved-source-dev-20261007-v1/supervise-v1.ps1.
+### 2026-10-07 — GE distributing reference work bridge source
+IMPLEMENTED_UNVERIFIED: arbitrary-frame rectangular material face-pair map,
+independent director tilt/planar yaw, eccentric transpose actions and local native
+oracle preparation for the existing distinct GE finite distributing family.
+Supporting source review found narrow-direction and frame-admission masking;
+repaired without scientific tolerance or product changes.38 controls UNRUN.
+This supplies no public curved admission, GE point equivalence or E03 acceptance.
+Actual curved physical correspondence and bulk convergence remain unestablished.
+Frozen56-control candidate628bbff5/150-second proposal unchanged; no transfer.
+Source: docs/reference_cases/stiffened_shell_e03_ge_distributing_work_bridge.md.

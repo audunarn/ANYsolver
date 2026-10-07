@@ -43,6 +43,18 @@ Root and supporting reader inspected repairs; no remaining source finding.
 Source, frozen inputs and pending runner live at
 .qualification/b3-ge-e4-pl/r8-e03-curved-source-dev-20261007-v1/.
 
+Independent source slice delivered: GE finite distributing reference work bridge
+uses material face-pair director tilt and planar-gradient yaw; arbitrary-frame
+local maps, transpose forces/wrenches and deferred actual-native oracle prepared.
+Same author completed three NEW script/test/reference-note files;38 controls unrun.
+Supporting source review found narrow-direction masking and frame-bound mismatch;
+same owner repaired both with directional(W,H,h) and256eps representation guards.
+Root inspected repairs; no universal output-error bound or qualification claim.
+Actual curved owner guard, GE point obstruction, physical sampling/bulk convergence
+remainOPEN. This distinct footprint family never substitutes for point semantics.
+Frozen56 controls and pending150 request unchanged;38 bridge controls EXCLUDED.
+No tests/native/CCX/builds or new resource use occurred. Keep complete goalACTIVE.
+
 Consumer allowance57.9778161used/122.0221839remaining,reserve60: that completed
 slice's verification/repair only, never E03. Wheel431modules SHA
 fa5507fe14cc09949743adb7d5ae340a2499d9b813d6b80a1b7d4ea414267e82,
