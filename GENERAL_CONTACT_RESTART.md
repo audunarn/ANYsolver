@@ -1,9 +1,9 @@
 # General contact - restart point
 
-Updated7 October2026. Execution active by user request; full programme incomplete.
+Updated 7 October 2026. Execution active by user request; full programme incomplete.
 Use only C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001 on
-codex/contact-main-reconcile-20261001. Original source checkpoint3c5db637;
-latest Git checkpoint, if recorded below, supersedes this working-tree identity.
+codex/contact-main-reconcile-20261001. Product/evidence checkpoint f201b1e7; evidence-filter correction fd414777.
+Historical four evidence blobs match 3c5db637; all 15 indexed hashes are preserved.
 Protected original ANYsolver-general-contact and siblings must not be accessed.
 No publication/merge/release or historical-default changes are authorized.
 
@@ -39,6 +39,21 @@ allowance cannot cover it. Retain native physical internal inertia, SO3 work,
 no child steppers/lagged forces/artificial trace inertia, and atomic state.
 Author retains bounded implementation ownership; lead owns contracts/records/Git.
 Mistral/local cached unavailable; OpenAI fallback and reviewer are same-family.
+
+## Active source slice
+
+The sustained author owns the bounded native-S3 midpoint implementation,
+fixtures/example and guide. Source-only work: no new solver imports, numerical
+checks or builds under the pair allowance. New evidence directory:
+C:/ANYworkspaceWork/contact_native_shell_c8_20261007.
+
+Principal design question: shell massless rotational equations must be consistent
+at the shared stage and accepted endpoint while still moving the physical skin.
+Specify the actual path, including endpoint algebraic projection, before claiming
+conservative event control. Retain both-body work, physical mass and atomic
+state. Early source checkpoint precedes extensive implementation; the lead adopts
+consequential interface/physics choices. Numerical fixture authority will be
+requested only for a concrete, source-reviewed candidate.
 
 ## Evidence and remaining programme
 
