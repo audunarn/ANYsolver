@@ -1,0 +1,16 @@
+{
+  "scope": "C8_NATIVE_MULTI_SHELL_DEV",
+  "initial_scoped_seconds": 600,
+  "resource_controls_unchanged": true,
+  "historical_authorities": "PROTECTED_NO_POOLING",
+  "files": [
+    {
+      "path": "lead_full_goal_execution_authority_v1.json",
+      "sha256": "40e586d5d454fcdc1d5c4cbeb1c79db1061ce62d799dc505ad7dffd17af85404"
+    },
+    {
+      "path": "native_multi_shell_authority_v1.json",
+      "sha256": "29a48f3466fc9953e12e3c3f86e241183f7a7bc60ddd828469510ed4bf5d30b1"
+    }
+  ]
+}

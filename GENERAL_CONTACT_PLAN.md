@@ -1,10 +1,10 @@
 # General contact - current delivery plan
 
 **Updated:** 7 October 2026. **Goal:** [complete C0-C9](GENERAL_CONTACT_GOAL.md).
-**Execution:** RESUMED by user request, using the remaining scoped allowance and
+**Execution:** RESUMED under explicit full-goal prospective execution approval and
 [the checkpoint](GENERAL_CONTACT_RESTART.md).
 This plan changes the route, not scientific obligations or execution authority.
-The restart note holds current execution balances. Older milestone counts below
+GENERAL_CONTACT_EXECUTION_AUTHORITY.md records the approval; the restart note holds current scoped balances. Older milestone counts below
 are historical evidence, not renewed or additional execution authority.
 
 The separately opted-in equilibrated V20 slice is implemented and tested below.
