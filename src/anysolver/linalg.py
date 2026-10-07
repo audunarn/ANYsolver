@@ -37,6 +37,30 @@ from .threading_policy import (
     native_thread_scope,
 )
 
+_NUMERIC_OPERATION_LOCK = threading.Lock()
+_NUMERIC_OPERATIONS = {
+    "scipy_factorization_attempts": 0,
+    "pardiso_factorization_attempts": 0,
+    "pardiso_stale_rebuilds": 0,
+}
+
+
+def backend_operation_counts() -> Dict[str, int]:
+    """Process-wide monotonic counts of actual numerical backend operations.
+
+    Differences across an isolated run include failed attempts, PARDISO phase
+    22 refreshes and hidden stale-handle refactorizations. These are operations,
+    not cache misses; concurrent analyses are intentionally not attributed to
+    an individual session.
+    """
+    with _NUMERIC_OPERATION_LOCK:
+        return dict(_NUMERIC_OPERATIONS)
+
+
+def _count_numeric_operation(name: str) -> None:
+    with _NUMERIC_OPERATION_LOCK:
+        _NUMERIC_OPERATIONS[name] += 1
+
 try:
     _HAS_PYPARDISO = importlib.util.find_spec("pypardiso") is not None
 except (ImportError, ModuleNotFoundError, ValueError):
@@ -139,7 +163,9 @@ class FactorizationHandle:
             "status": self.status,
             "failure_reason": self.failure_reason,
             "factorization_time": self.factorization_time,
-            "factorization_count": self.factorization_count,
+            "factorization_count": self.factorization_count + int(
+                getattr(self._solver, "stale_rebuild_count", 0)
+            ),
             "solve_count": self.solve_count,
             "solve_time": self.solve_time,
             **self.metadata,
@@ -164,6 +190,7 @@ class SparseSolverBackend:
         start = time.time()
         try:
             csc = sparse.csc_matrix(matrix)
+            _count_numeric_operation("scipy_factorization_attempts")
             solver = splu(csc, permc_spec=ordering)
         except Exception as exc:
             return FactorizationHandle(
@@ -313,6 +340,7 @@ def _release_mkl_solver(solver: Any) -> None:
 def _pardiso_full_factorize(solver: Any, prepared: sparse.csr_matrix) -> None:
     solver._check_A(prepared)
     solver.set_phase(12)
+    _count_numeric_operation("pardiso_factorization_attempts")
     solver._call_pardiso(prepared, np.zeros((prepared.shape[0], 1)))
 
 
@@ -381,6 +409,7 @@ class _PardisoFactorization:
         weakref.finalize(self, _release_mkl_solver, solver)
         self._slot = None
         self.stale_rebuild_count += 1
+        _count_numeric_operation("pardiso_stale_rebuilds")
         return solver
 
     @_serialized_pypardiso_call
@@ -490,6 +519,7 @@ class PyPardisoSolverBackend:
                 slot.generation += 1
                 try:
                     slot.solver.set_phase(22)
+                    _count_numeric_operation("pardiso_factorization_attempts")
                     slot.solver._call_pardiso(prepared, np.zeros((prepared.shape[0], 1)))
                 except Exception:
                     _pardiso_full_factorize(slot.solver, prepared)

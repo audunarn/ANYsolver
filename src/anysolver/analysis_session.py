@@ -18,6 +18,7 @@ import threading
 import time
 import weakref
 import uuid
+import hashlib
 from collections import Counter, OrderedDict
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, Mapping, Optional, Tuple
@@ -67,6 +68,19 @@ if TYPE_CHECKING:
 def _revision_key(model: "FEModel", *categories: str) -> Tuple[int, ...]:
     revisions = model.revision_signature()
     return tuple(int(revisions.get(category, 0)) for category in categories)
+
+
+def _immutable_array(values: np.ndarray) -> np.ndarray:
+    made = np.asarray(values)
+    return np.frombuffer(made.tobytes(), dtype=made.dtype).reshape(made.shape)
+
+
+def _immutable_csr(matrix: sparse.spmatrix) -> sparse.csr_matrix:
+    made = matrix.tocsr(copy=True)
+    made.data = _immutable_array(made.data)
+    made.indices = _immutable_array(made.indices)
+    made.indptr = _immutable_array(made.indptr)
+    return made
 
 
 def _constraint_fingerprints(
@@ -206,6 +220,20 @@ class StructuralMatrixPlan:
 
 
 @dataclass(frozen=True)
+class StaticOperatorPlan:
+    """Prepared scaled or rigid-mode augmented static operator."""
+
+    constraint: ConstraintPlan
+    matrix: sparse.csr_matrix
+    scaling: np.ndarray
+    rigid_modes: np.ndarray
+    handle: Any
+    augmented: bool
+    key: Tuple[Any, ...]
+    info: Mapping[str, Any]
+
+
+@dataclass(frozen=True)
 class OutputSelectionPlan:
     """Selected rows of the affine transform for reduced-coordinate output."""
 
@@ -228,8 +256,9 @@ class OutputSelectionPlan:
 class AnalysisSession:
     """Explicit bounded cache for repeated analyses of one live model.
 
-    A session never owns the model.  Closing it releases all retained matrices
-    and factorization handles; using it after close or with a different model
+    A session never owns the model. Closing it releases all retained matrices
+    and its owned factorization handles; an explicitly supplied cache remains
+    caller-owned. Using it after close or with a different model
     raises immediately instead of risking stale numerical data.
     """
 
@@ -239,6 +268,7 @@ class AnalysisSession:
         *,
         max_factorizations: int = 4,
         max_output_plans: int = 8,
+        factorization_cache: Optional[FactorizationCache] = None,
     ) -> None:
         if max_factorizations <= 0:
             raise ValueError("max_factorizations must be positive")
@@ -251,6 +281,7 @@ class AnalysisSession:
         self._stiffness: Optional[StructuralMatrixPlan] = None
         self._mass: Optional[StructuralMatrixPlan] = None
         self._constraint: Optional[ConstraintPlan] = None
+        self._static_operator: Optional[StaticOperatorPlan] = None
         self._reduced_mass: Optional[Tuple[Tuple[Any, ...], sparse.csr_matrix]] = None
         self._rigid_modes: Optional[Tuple[Tuple[Any, ...], np.ndarray, Dict[str, Any]]] = None
         self._load_vectors: "OrderedDict[Tuple[Any, ...], Tuple[np.ndarray, Dict[str, Any]]]" = OrderedDict()
@@ -259,10 +290,11 @@ class AnalysisSession:
         self._activity_identity = uuid.uuid4().hex
         self._activity_generation = 0
         self._max_output_plans = int(max_output_plans)
+        self._owns_factorization_cache = factorization_cache is None
         self.factorization_cache = FactorizationCache(
             name="analysis_session",
             max_entries=int(max_factorizations),
-        )
+        ) if factorization_cache is None else factorization_cache
         self._counters: Counter[str] = Counter()
         self._invalidation_reasons: Counter[str] = Counter()
         self._setup_seconds = 0.0
@@ -355,10 +387,12 @@ class AnalysisSession:
         with self._lock:
             if self._closed:
                 return
-            self.factorization_cache.clear()
+            if self._owns_factorization_cache:
+                self.factorization_cache.clear()
             self._stiffness = None
             self._mass = None
             self._constraint = None
+            self._static_operator = None
             self._reduced_mass = None
             self._rigid_modes = None
             self._load_vectors.clear()
@@ -416,16 +450,71 @@ class AnalysisSession:
                 self._invalidation_reasons["stiffness_revision"] += 1
                 self.factorization_cache.clear()
                 self._constraint = None
+                self._static_operator = None
                 self._reduced_mass = None
                 self._rigid_modes = None
                 self._load_vectors.clear()
                 self._output_plans.clear()
             start = time.perf_counter()
             matrix, info = assemble_stiffness_matrix(owned)
-            plan = StructuralMatrixPlan(matrix.tocsr(), dict(info), key, "stiffness")
+            plan = StructuralMatrixPlan(_immutable_csr(matrix), dict(info), key, "stiffness")
             self._stiffness = plan
             self._setup_seconds += time.perf_counter() - start
             self._counters["stiffness_builds"] += 1
+            return plan
+
+    def static_operator_plan(
+        self, *, constraint_mode: str = "auto", model: Optional["FEModel"] = None,
+    ) -> StaticOperatorPlan:
+        """Reuse preparation and factorization for unchanged static operators."""
+        from .assembly import _equilibrate_supported_stiffness, _SYMMETRIC_DIAGONAL_EQUILIBRATION_ID
+        from .linalg import MatrixClass, factorize_cached
+
+        with self._lock:
+            owned = self._require_model(model)
+            constraint = self.constraint_plan(model=owned)
+            modes, mode_info = self.rigid_body_modes(constraint, owned)
+            mode = str(constraint_mode).strip().lower()
+            if mode not in {"auto", "transformation", "nullspace"}:
+                raise ValueError("constraint_mode must be auto, transformation or nullspace")
+            augmented = mode == "nullspace" or (
+                mode == "auto" and int(constraint.info["num_fixed_dofs"]) == 0 and modes.shape[1] > 0
+            )
+            augmented = bool(augmented and modes.shape[1])
+            key = (self._activity_identity, self._model_id, constraint.stiffness_key,
+                   constraint.structure_key, augmented, modes.shape,
+                   hashlib.sha256(modes.tobytes()).hexdigest())
+            old = self._static_operator
+            if old is not None and old.key == key and (old.handle is None or old.handle.status == "ok"):
+                self._counters["static_operator_hits"] += 1
+                handle = None if old.handle is None else factorize_cached(old.matrix,
+                    MatrixClass.SYMMETRIC_INDEFINITE, cache=self.factorization_cache,
+                    signature=old.handle.signature)
+                if old.constraint is constraint and handle is old.handle:
+                    return old
+                refreshed = StaticOperatorPlan(constraint, old.matrix, old.scaling,
+                    old.rigid_modes, handle, old.augmented, key, old.info)
+                self._static_operator = refreshed
+                return refreshed
+            if augmented:
+                q_sparse = sparse.csr_matrix(modes)
+                matrix = sparse.bmat([[constraint.K_red, q_sparse],
+                    [q_sparse.T, sparse.csr_matrix((modes.shape[1], modes.shape[1]))]], format="csr")
+                scaling = np.ones(matrix.shape[0])
+                equilibration = {"applied": False, "disposition": "NULLSPACE_AUGMENTED"}
+                signature = repr(key) + ":rigid_body_nullspace_augmented"
+            else:
+                matrix, scaling, equilibration = _equilibrate_supported_stiffness(constraint.K_red)
+                signature = self.factorization_signature("linear_static", constraint) + ":" + _SYMMETRIC_DIAGONAL_EQUILIBRATION_ID
+            handle = None if matrix.shape[0] == 0 else factorize_cached(
+                matrix, MatrixClass.SYMMETRIC_INDEFINITE,
+                cache=self.factorization_cache, signature=signature)
+            plan = StaticOperatorPlan(constraint, matrix, scaling, modes, handle,
+                augmented, key, {"equilibration": equilibration, "nullspace_info": mode_info})
+            plan = StaticOperatorPlan(constraint, _immutable_csr(matrix), _immutable_array(scaling),
+                _immutable_array(modes), handle, augmented, key, plan.info)
+            self._static_operator = plan
+            self._counters["static_operator_builds"] += 1
             return plan
 
     def mass_plan(self, model: Optional["FEModel"] = None) -> StructuralMatrixPlan:
@@ -447,9 +536,10 @@ class AnalysisSession:
                 self._invalidation_reasons["mass_revision"] += 1
                 self._reduced_mass = None
                 self.factorization_cache.clear()
+                self._static_operator = None
             start = time.perf_counter()
             matrix, info = assemble_mass_matrix(owned)
-            plan = StructuralMatrixPlan(matrix.tocsr(), dict(info), key, "mass")
+            plan = StructuralMatrixPlan(_immutable_csr(matrix), dict(info), key, "mass")
             self._mass = plan
             self._setup_seconds += time.perf_counter() - start
             self._counters["mass_builds"] += 1
@@ -512,17 +602,17 @@ class AnalysisSession:
                 owned,
             )
             plan = ConstraintPlan(
-                (existing.T if value_only_refresh and existing is not None else T.tocsr()),
-                np.asarray(u0, dtype=float),
+                (existing.T if value_only_refresh and existing is not None else _immutable_csr(T)),
+                _immutable_array(np.asarray(u0, dtype=float)),
                 (
                     existing.independent_dofs
                     if value_only_refresh and existing is not None
-                    else np.asarray(independent, dtype=np.intp)
+                    else _immutable_array(np.asarray(independent, dtype=np.intp))
                 ),
                 (
                     existing.K_red
                     if value_only_refresh and existing is not None
-                    else K_red.tocsr()
+                    else _immutable_csr(K_red)
                 ),
                 dict(info),
                 structure_key,
@@ -581,6 +671,7 @@ class AnalysisSession:
                 int(constraint.T.shape[0]),
                 transformation=constraint.T,
             )
+            modes = _immutable_array(modes)
             self._rigid_modes = (key, modes, dict(info))
             self._setup_seconds += time.perf_counter() - start
             self._counters["rigid_mode_builds"] += 1
@@ -612,9 +703,9 @@ class AnalysisSession:
                 self._counters["output_plan_hits"] += 1
                 return existing
             plan = OutputSelectionPlan(
-                dofs.copy(),
-                constraint.T[dofs].tocsr(),
-                constraint.u0[dofs].copy(),
+                _immutable_array(dofs),
+                _immutable_csr(constraint.T[dofs]),
+                _immutable_array(constraint.u0[dofs]),
                 constraint.structure_key,
                 constraint.value_key,
             )
@@ -716,6 +807,8 @@ class AnalysisSession:
             _ = purpose
             return repr(
                 (
+                    self._activity_identity,
+                    self._model_id,
                     constraint.stiffness_key,
                     constraint.structure_key,
                     tuple(int(value) for value in constraint.K_red.shape),
@@ -726,6 +819,9 @@ class AnalysisSession:
     def diagnostics(self) -> Dict[str, Any]:
         with self._lock:
             retained = 0
+            if self._static_operator is not None:
+                retained += _sparse_nbytes(self._static_operator.matrix)
+                retained += int(self._static_operator.scaling.nbytes)
             if self._stiffness is not None:
                 retained += _sparse_nbytes(self._stiffness.matrix)
             if self._mass is not None:

@@ -394,6 +394,8 @@ from .analysis_session import (
     OutputSelectionPlan,
     StructuralMatrixPlan,
 )
+from .static_batch import StaticCase, StaticBatch, StaticBatchError, iter_linear_batches
+from .static_envelopes import EnvelopeReducer, EnvelopeExtrema, GoverningValue
 from .linalg import (
     AutoSparseSolverBackend,
     FactorizationCache,
@@ -806,6 +808,13 @@ __all__ = [
     "run_generated_geometry_fem",
     # Assembly and solving
     "AnalysisSession",
+    "StaticCase",
+    "StaticBatch",
+    "StaticBatchError",
+    "iter_linear_batches",
+    "EnvelopeReducer",
+    "EnvelopeExtrema",
+    "GoverningValue",
     "ConstraintPlan",
     "OutputSelectionPlan",
     "StructuralMatrixPlan",

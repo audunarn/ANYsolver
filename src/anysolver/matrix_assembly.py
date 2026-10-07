@@ -7069,6 +7069,7 @@ def _assemble_load_matrix_under_lease(
     load_cases: Sequence[Optional["LoadCase"]],
     *,
     qualified_runtime_guard: Any,
+    annotate_case_errors: bool = False,
 ) -> Tuple[np.ndarray, Dict[str, Any]]:
     """Assemble a dense load matrix with one column per load case."""
     from .current_state_tangent import (
@@ -7095,12 +7096,20 @@ def _assemble_load_matrix_under_lease(
                 model,
                 context="load-matrix assembly preflight",
             )
-        vector, info = _assemble_load_vector_under_lease(
-            model,
-            load_case,
-            qualified_runtime_guard=qualified_runtime_guard,
-            preflight_verified=True,
-        )
+        try:
+            vector, info = _assemble_load_vector_under_lease(
+                model,
+                load_case,
+                qualified_runtime_guard=qualified_runtime_guard,
+                preflight_verified=True,
+            )
+        except Exception as error:
+            if not annotate_case_errors:
+                raise
+            from .control import SolveCancelled
+            if isinstance(error, SolveCancelled):
+                raise
+            raise LoadMatrixCaseError(index, error) from error
         vectors.append(vector)
         infos.append(info)
         names.append(info["load_case"])
@@ -7133,6 +7142,21 @@ def assemble_load_matrix(
             frozen_load_cases,
             qualified_runtime_guard=lease,
         ),
+    )
+
+
+class LoadMatrixCaseError(AssemblyError):
+    """Internal case-position annotation without evaluating a failed provider."""
+    def __init__(self, case_index: int, original: Exception):
+        super().__init__(str(original))
+        self.case_index = int(case_index)
+
+
+def _assemble_load_matrix_annotated(model: "FEModel", load_cases: tuple[Any, ...]) -> Tuple[np.ndarray, Dict[str, Any]]:
+    return _run_with_qualified_assembly_runtime_lease(
+        model, context="static stream load-matrix assembly",
+        operation=lambda lease: _assemble_load_matrix_under_lease(
+            model, load_cases, qualified_runtime_guard=lease, annotate_case_errors=True),
     )
 
 

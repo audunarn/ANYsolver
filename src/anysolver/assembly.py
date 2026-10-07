@@ -647,15 +647,18 @@ def _solve_reduced_system(
     *,
     factorization_cache: Optional[FactorizationCache] = None,
     factorization_signature: Optional[str] = None,
+    prepared_operator: Any = None,
 ) -> Tuple[np.ndarray, Dict[str, Any]]:
     if K_red.shape[0] == 0:
         return np.zeros(0), {"status": "converged", "note": "no independent DOFs"}
 
     if solver_type == "direct":
         try:
-            equilibrated, scaling, equilibration_info = (
-                _equilibrate_supported_stiffness(K_red)
-            )
+            if prepared_operator is None:
+                equilibrated, scaling, equilibration_info = _equilibrate_supported_stiffness(K_red)
+            else:
+                equilibrated, scaling = prepared_operator.matrix, prepared_operator.scaling
+                equilibration_info = dict(prepared_operator.info["equilibration"])
             scaled_rhs = scaling * np.asarray(F_red, dtype=float)
             cache_signature = (
                 None
@@ -665,7 +668,9 @@ def _solve_reduced_system(
                     f"{_SYMMETRIC_DIAGONAL_EQUILIBRATION_ID}"
                 )
             )
-            if factorization_cache is None:
+            if prepared_operator is not None:
+                handle = prepared_operator.handle
+            elif factorization_cache is None:
                 handle = factorize(
                     equilibrated,
                     MatrixClass.SYMMETRIC_INDEFINITE,
@@ -748,6 +753,7 @@ def _solve_nullspace_augmented_system(
     Q: np.ndarray,
     load_imbalance_tolerance: float = 1.0e-7,
     allow_unbalanced_loads: bool = False,
+    prepared_operator: Any = None,
 ) -> Tuple[np.ndarray, Dict[str, Any]]:
     """Solve free-free reduced system with rigid body modes constrained by Q.T q = 0."""
     n = int(K_red.shape[0])
@@ -755,13 +761,14 @@ def _solve_nullspace_augmented_system(
     if n == 0:
         return np.zeros(0), {"status": "converged", "note": "no independent DOFs", "nullspace_rank": r}
     if r == 0:
-        q, info = _solve_reduced_system(K_red, F_red, "direct")
+        q, info = _solve_reduced_system(K_red, F_red, "direct", prepared_operator=prepared_operator)
         info["nullspace_rank"] = 0
         return q, info
 
     Q_sparse = sparse.csr_matrix(Q)
     zero = sparse.csr_matrix((r, r), dtype=float)
-    augmented = sparse.bmat([[K_red, Q_sparse], [Q_sparse.T, zero]], format="csr")
+    augmented = (sparse.bmat([[K_red, Q_sparse], [Q_sparse.T, zero]], format="csr")
+                 if prepared_operator is None else prepared_operator.matrix)
     rhs = np.concatenate([F_red, np.zeros(r, dtype=float)])
 
     load_components = np.asarray(Q.T @ F_red, dtype=float).reshape(-1)
@@ -790,7 +797,8 @@ def _solve_nullspace_augmented_system(
         )
 
     try:
-        handle = factorize(augmented, MatrixClass.SYMMETRIC_INDEFINITE)
+        handle = (factorize(augmented, MatrixClass.SYMMETRIC_INDEFINITE)
+                  if prepared_operator is None else prepared_operator.handle)
         if handle.status != "ok":
             return np.zeros(n), {
                 "status": "failed",
@@ -931,17 +939,22 @@ def solve_linear(
     )
     start_time = time.time()
     if use_nullspace:
+        prepared_operator = (None if session is None else
+            session.static_operator_plan(constraint_mode="nullspace", model=model))
         q, convergence_info = _solve_nullspace_augmented_system(
             K_red,
             F_red,
             Q,
             allow_unbalanced_loads=allow_unbalanced_free_free,
+            prepared_operator=prepared_operator,
         )
     else:
         q, convergence_info = _solve_reduced_system(
             K_red,
             F_red,
             solver_type,
+            prepared_operator=(session.static_operator_plan(constraint_mode="transformation", model=model)
+                if session is not None and solver_type == "direct" else None),
             factorization_cache=(
                 session.factorization_cache
                 if session is not None and solver_type == "direct"
@@ -1008,12 +1021,48 @@ def solve_linear_many(
     cancellation_token: Optional[CancellationToken] = None,
     progress_callback: Optional[ProgressCallback] = None,
     session: Optional["AnalysisSession"] = None,
+    allow_unbalanced_free_free: bool = False,
 ) -> Tuple[np.ndarray, Dict[str, Any]]:
     """Solve several unchanged-stiffness static load cases with one factorization.
 
     The returned displacement matrix has one column per load case.
     """
     cancellation_safe_point(cancellation_token, "linear_static_many.start")
+    if (constraint_mode or "auto").strip().lower() == "nullspace":
+        from .static_batch import StaticCase, iter_linear_batches
+        from .analysis_session import AnalysisSession
+        if session is not None and factorization_cache is not None and factorization_cache is not session.factorization_cache:
+            raise ValueError("nullspace solve requires factorization_cache to match the supplied session cache")
+        owned_session = session is None
+        active = AnalysisSession(model, factorization_cache=factorization_cache) if owned_session else session
+        primary_failure = None
+        try:
+            blocks = list(iter_linear_batches(model,
+                (StaticCase(str(index), case) for index, case in enumerate(load_cases)),
+                constraint_mode="nullspace", allow_unbalanced_free_free=allow_unbalanced_free_free,
+                session=active, resource_config=resource_config,
+                cancellation_token=cancellation_token, progress_callback=progress_callback))
+            cache_info = active.factorization_cache.diagnostics()
+        except BaseException as error:
+            primary_failure = error
+            raise
+        finally:
+            if owned_session:
+                try:
+                    active.close()
+                except BaseException as cleanup_error:
+                    if primary_failure is None:
+                        raise
+                    BaseException.add_note(primary_failure, "analysis session cleanup failed: " + repr(cleanup_error))
+        full = np.column_stack([block.displacements for block in blocks]) if blocks else np.zeros((model.mesh.dof_manager.total_dofs, 0))
+        info = {"status": "converged", "num_result_cases": len(load_cases),
+                "constraint_mode": "nullspace", "case_results": tuple(result for block in blocks for result in block.case_results),
+                "static_batches": tuple(block.diagnostics for block in blocks)}
+        info["factorization_cache"] = cache_info
+        if session is not None:
+            info["analysis_session"] = session.diagnostics()
+            info["factorization_cache"] = session.factorization_cache.diagnostics()
+        return full, info
     model.apply_boundary_conditions()
     if session is None:
         K, _, assembly_info = assemble_system(model, None)
@@ -1075,11 +1124,18 @@ def solve_linear_many(
             "linear_static_many",
             constraint_plan,
         )
-    equilibrated, scaling, equilibration_info = _equilibrate_supported_stiffness(K_red)
+    prepared_operator = (None if session is None or (factorization_cache is not None
+        and factorization_cache is not session.factorization_cache) else
+        session.static_operator_plan(constraint_mode="transformation", model=model))
+    if prepared_operator is None:
+        equilibrated, scaling, equilibration_info = _equilibrate_supported_stiffness(K_red)
+    else:
+        equilibrated, scaling = prepared_operator.matrix, prepared_operator.scaling
+        equilibration_info = dict(prepared_operator.info["equilibration"])
     equilibrated_signature = (
         f"{stiffness_signature}:{_SYMMETRIC_DIAGONAL_EQUILIBRATION_ID}"
     )
-    handle = factorize_cached(
+    handle = prepared_operator.handle if prepared_operator is not None else factorize_cached(
         equilibrated,
         MatrixClass.SYMMETRIC_INDEFINITE,
         cache=local_cache,
@@ -1371,6 +1427,7 @@ def _compute_constraint_force_diagnostics_under_lease(
     *,
     force_tolerance: float = 0.0,
     qualified_runtime_guard: Any,
+    prepared_system: Optional[Tuple[Any, ...]] = None,
 ) -> Dict[str, Any]:
     """Return separated support, MPC and nullspace force diagnostics.
 
@@ -1384,9 +1441,15 @@ def _compute_constraint_force_diagnostics_under_lease(
     dof_manager = mesh.dof_manager
     model.apply_boundary_conditions()
 
-    K, _, _ = assemble_system(model)
+    if prepared_system is None:
+        K, _, _ = assemble_system(model)
+    else:
+        K, F_ext, prepared_constraint, prepared_Q, prepared_mode_info = prepared_system
     qualified_runtime_guard(stage="constraint-force stiffness observation")
-    if load_case is None:
+    if prepared_system is not None:
+        F_ext = np.asarray(F_ext, dtype=float).reshape(-1)
+        qualified_runtime_guard(stage="constraint-force prepared-load observation")
+    elif load_case is None:
         F_ext = np.zeros(dof_manager.total_dofs, dtype=float)
     else:
         F_ext = load_case.get_load_vector(
@@ -1453,14 +1516,16 @@ def _compute_constraint_force_diagnostics_under_lease(
             }
         )
 
-    K_red, _, T, _, independent_dofs, constraint_info = build_constraint_transformation(K, F_ext, model)
+    if prepared_system is None:
+        K_red, _, T, _, independent_dofs, constraint_info = build_constraint_transformation(K, F_ext, model)
+        Q, nullspace_info = build_reduced_rigid_body_modes(
+            model, independent_dofs, int(K.shape[0]), transformation=T,
+        )
+    else:
+        T = prepared_constraint.T
+        constraint_info = dict(prepared_constraint.info)
+        Q, nullspace_info = prepared_Q, prepared_mode_info
     reduced_residual = np.asarray(T.T @ residual, dtype=float).reshape(-1)
-    Q, nullspace_info = build_reduced_rigid_body_modes(
-        model,
-        independent_dofs,
-        int(K.shape[0]),
-        transformation=T,
-    )
     if Q.shape[1] > 0:
         nullspace_generalized_forces = np.asarray(Q.T @ reduced_residual, dtype=float).reshape(-1)
     else:

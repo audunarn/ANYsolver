@@ -39,7 +39,12 @@ from .e4_pl_s3_element import (
 
 from ._qualified_authority_epoch import _AuthorityEpochManager
 from . import elements as _element_module
-from .elements import BeamElement as _BeamElement, Element as _Element, ShellElement as _ShellElement
+from .elements import (
+    BeamElement as _BeamElement,
+    CoupledBeamShellElement as _CoupledBeamShellElement,
+    Element as _Element,
+    ShellElement as _ShellElement,
+)
 from anymaterial import IsotropicMaterial as _IsotropicMaterial
 
 from .fe_core import (
@@ -877,6 +882,7 @@ _EXACT_MASS_CLASSES = tuple(
     (owner, type.__getattribute__(owner, "__mro__"),
      dict(type.__getattribute__(owner, "__dict__")))
     for owner in (_BeamElement, _Element, _ShellElement, _IsotropicMaterial, _AuthorityEpochManager,
+                  _CoupledBeamShellElement,
                   _QualifiedE4PLShellElement, _QualifiedE4PLS3ShellElement)
 )
 _EXACT_MASS_METADATA = {
@@ -1120,11 +1126,13 @@ def _capture_mass_function_dependencies() -> tuple:
         (_QualifiedE4PLShellElement, "compute_mass_matrix"),
         (_QualifiedE4PLS3ShellElement, "compute_mass_matrix"),
         (_QualifiedE4PLS3ShellElement, "_compute_mass_components"),
-        (_QualifiedE4PLS3ShellElement, "_compute_stiffness_components"))]
+        (_QualifiedE4PLS3ShellElement, "_compute_stiffness_components"),
+        (_CoupledBeamShellElement, "compute_mass_matrix"))]
     seen = set()
     dependencies = []
     methods = {}
     for owner in (_BeamElement, _Element, _ShellElement, _IsotropicMaterial,
+                  _CoupledBeamShellElement,
                   _QualifiedE4PLShellElement, _QualifiedE4PLS3ShellElement,
                   _AuthorityEpochManager, _Node, _FEMesh, _DOFManager):
         for name, member in type.__getattribute__(owner, "__dict__").items():
@@ -1184,6 +1192,23 @@ def _mass_classes_are_untouched() -> bool:
     return True
 
 
+def _plain_coupled_element_state(data: dict) -> bool:
+    """Exact coupling state: plain ids/stiffness and a numeric eccentricity.
+
+    The acceleration span never evaluates this state (a coupling element's
+    mass matrix is exactly zero), but admitting only constructed plain
+    state keeps a hand-crafted instance from smuggling an executable value
+    past the exact-type and class-authority checks.
+    """
+    return (
+        type(data.get("beam_node_id")) is int
+        and type(data.get("shell_node_id")) is int
+        and type(data.get("coupling_stiffness")) in (float, int)
+        and (data.get("eccentricity") is None
+             or _plain_numeric_array(data.get("eccentricity")))
+    )
+
+
 def _builtin_acceleration_inputs(state: dict, mesh_state: dict, material_getter: Any,
                                  elements: Any, loaded_nodes: set) -> bool:
     acceleration = state.get("gravity")
@@ -1216,10 +1241,12 @@ def _builtin_acceleration_inputs(state: dict, mesh_state: dict, material_getter:
     mass_class_names = {
         kind: {name for owner in type.__getattribute__(kind, "__mro__")
                for name in type.__getattribute__(owner, "__dict__")}
-        for kind in (_BeamElement, _QualifiedE4PLShellElement, _QualifiedE4PLS3ShellElement)
+        for kind in (_BeamElement, _CoupledBeamShellElement,
+                     _QualifiedE4PLShellElement, _QualifiedE4PLS3ShellElement)
     }
     for element in dict.values(elements):
-        if type(element) not in (_BeamElement, _QualifiedE4PLShellElement, _QualifiedE4PLS3ShellElement):
+        if type(element) not in (_BeamElement, _CoupledBeamShellElement,
+                                 _QualifiedE4PLShellElement, _QualifiedE4PLS3ShellElement):
             return False
         data = object.__getattribute__(element, "__dict__")
         if type(data) is not dict or not all(type(key) is str for key in data):
@@ -1229,6 +1256,8 @@ def _builtin_acceleration_inputs(state: dict, mesh_state: dict, material_getter:
         if data.get("shell_section") is not None or data.get("generalized_section") is not None:
             return False
         if not all(key in authority_fields or _plain_mass_input(value) for key, value in data.items()):
+            return False
+        if type(element) is _CoupledBeamShellElement and not _plain_coupled_element_state(data):
             return False
         ids = data.get("node_ids")
         if type(ids) not in (list, tuple) or not all(type(node_id) is int for node_id in ids) or type(data.get("material_name")) is not str:
@@ -1363,7 +1392,10 @@ def _run_foreign_code_free_load_vector(
     load case is an untouched ``LoadCase`` with only nodal, element and
     pressure/acceleration loads (no activity provider), every loaded element is
     an exact qualified Q4/S3 element (their class authority is epoch-tracked by
-    the lease), the mesh is an exact ``FEMesh`` with its providers unchanged,
+    the lease), every element contributing acceleration load is an exact
+    package beam or beam-shell coupling element with untouched class
+    authority and plain constructed state, the mesh is an exact ``FEMesh``
+    with its providers unchanged,
     every value read is a plain ``float``/``int``/``tuple``/``ndarray`` and no
     mesh element belongs to the native fibre family that takes a different
     route. Cheap builtin family/key scans and loaded-entry checks avoid repeated
