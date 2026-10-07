@@ -72,6 +72,27 @@ Native-pair balance and every old purse remain unchanged. After authorization,
 return connected verification/repair ownership to the same author and preserve
 all failures. No repeat campaign or publication/merge/release is authorized.
 
+## Prepared native-S3 execution handoff
+
+Product remains frozen at 5c403caf; source preparation is complete and unexecuted.
+Raw native_shell_harness_handoff_v2.md names native_shell_run_v2.py and pending
+manifest v3 (SHA e89ddbfac3a5c2c607395e1452bc11a2a454c8f417c282490bb9f03e24137531).
+Approved seconds remain0. Four harness/preparation ASTs and byte bindings pass;
+runner invocation, numerical attempt, solver import, build and install counts0.
+The final manifest explicitly names the runner, resolving the preserved v1/v2
+filename ambiguity recorded in lead_harness_review_v1.json. Lead review v2
+confirms the actual v2 runner hash matches the pending v3 manifest. Generated
+egg-info/build/pyc files are excluded from immutable build inputs. Old pending
+manifests, reports and source findings remain retained in the same raw directory.
+
+The author is idle; no live owned job. After the separately requested480-second
+human grant, create new immutable authority/manifest artifacts, then return the
+connected verification/repair loop to the same owner. Do not overwrite pending
+evidence, invoke the pending runner or pool historical balances. Nine exact
+groups cover build/install, eight new selectors, affected legacy routes and CLI;
+actual imports/thread settings/process-wall accounting remain unverified until
+execution. Full programme and engineering acceptance remain incomplete.
+
 ## Evidence and remaining programme
 
 [Current evidence](docs/d1_review_support/contact_native_c8_pair_20261007/native_pair_development.md),
