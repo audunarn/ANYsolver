@@ -55,6 +55,21 @@ def validate_thread_environment(value):
         raise FollowupError("complete inherited numerical-thread1 override contract required")
 
 
+def validate_ccx_observations(launch, observations):
+    """Direct launch is required; a short process may have zero periodic rows."""
+    launch, observations = detached(launch), detached(observations)
+    if type(launch) is not dict or type(observations) is not list or len(observations) > 10000:
+        raise FollowupError("bounded actual launch/periodic observations required")
+    pid, created = launch.get("pid"), launch.get("creation_time")
+    if type(pid) is not int or pid <= 0 or type(created) not in (int, float) or not math.isfinite(created) or created <= 0 or launch.get("affinity") != [0]:
+        raise FollowupError("direct actual CPU0 launch/creation observation required")
+    validate_thread_environment(launch.get("environment"))
+    if any(type(row) is not dict or row.get("pid") != pid or row.get("affinity") != [0] for row in observations):
+        raise FollowupError("every existing periodic row must bind the launched CPU0 process")
+    return dict(direct_launch_observed=True, periodic_sample_count=len(observations),
+        periodic_samples_observed=bool(observations), os_thread_counts_are_diagnostic=True)
+
+
 def sha(data):
     return hashlib.sha256(data).hexdigest()
 
@@ -93,6 +108,12 @@ def read_analytic_dat(data):
     except UnicodeDecodeError as error:
         raise FollowupError("ASCII DAT required") from error
     labels = ("displacements (vx,vy,vz)", "forces (fx,fy,fz)")
+    # Actual printout.f adds exactly one step/increment preamble. It is
+    # framing, not another result frame; optional for detached unit fixtures.
+    if len(lines) == 12:
+        if not re.fullmatch(r"S\s+T\s+E\s+P\s+1", lines[0]) or not re.fullmatch(r"INCREMENT\s+1", lines[1]):
+            raise FollowupError("exact single step1/increment1 DAT preamble required")
+        lines = lines[2:]
     if len(lines) != 10:
         raise FollowupError("exact two complete four-node DAT frames required")
     result = []
@@ -170,6 +191,27 @@ def analytic_candidate(dat, sta, stdout, stderr, *, receipt, deck_sha256, comman
     return detached(dict(status="ANALYTIC_SEMANTICS_REVIEW_CANDIDATE", semantics_adopted=False,
         production_qualified=False, e03_accepted=False, instrumentation_limit=INSTRUMENT_LIMIT,
         u=u, element_gradient=g, physical_multiplier=multiplier, physical_spc_fx=reaction,
+        internal_fmpc_is_not_physical_multiplier=True, receipt=receipt))
+
+
+def zero_support_analytic_candidate(dat, sta, stdout, stderr, *, receipt, deck_sha256, command):
+    """Prospective v4 fixed oracle; never substitutes for the executed v3 test."""
+    receipt = validate_process_receipt(receipt, dict(dat=dat,sta=sta,stdout=stdout,stderr=stderr), deck_sha256, command)
+    completed_outputs(sta, stdout, stderr)
+    u, g = read_analytic_dat(dat)
+    expected_u, expected_g = (0., .1, 0., 0.), (-1., 1., 0., 0.)
+    if any(abs(values[n][j]-(expected[n-1] if j == 0 else 0.)) > INSTRUMENT_LIMIT
+           for values, expected in ((u,expected_u),(g,expected_g)) for n in range(1,5) for j in range(3)):
+        raise FollowupError("independently derived v4 zero-support oracle failed")
+    multiplier = g[1][0]-2.
+    reaction = g[3][0]+multiplier
+    free = (g[2][0]-1.,g[4][0])
+    if abs(multiplier+3.) > INSTRUMENT_LIMIT or abs(reaction+3.) > INSTRUMENT_LIMIT or any(abs(v)>INSTRUMENT_LIMIT for v in free):
+        raise FollowupError("v4 physical multiplier/support/free-equilibrium oracle failed")
+    return detached(dict(status="ANALYTIC_SEMANTICS_REVIEW_CANDIDATE", control_id="ZERO_SUPPORT_TWO_FREE_DOFS_V4",
+        semantics_adopted=False, production_qualified=False, e03_accepted=False,
+        instrumentation_limit=INSTRUMENT_LIMIT, u=u, element_gradient=g, physical_multiplier=multiplier,
+        physical_spc_fx=[reaction], free_equilibrium_fx=list(free), applied_fx=[2.,1.,0.,0.],
         internal_fmpc_is_not_physical_multiplier=True, receipt=receipt))
 
 

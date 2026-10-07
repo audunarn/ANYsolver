@@ -167,3 +167,77 @@ def test_thread_override_refusal(change):
     if change == 'override': value['NUMBER_OF_CPUS']='2'
     if change == 'unrecorded': value['CCX_NPROC_FOREIGN']='2'
     with pytest.raises(followup.FollowupError): followup.validate_thread_environment(value)
+
+
+def test_actual_saved_wrong_response_refused_after_valid_preamble_and_hashes():
+    from pathlib import Path
+    raw = Path(followup.__file__).resolve().parents[1]/'.qualification/b3-ge-e4-pl/r8-e03-coarse-dev-20261007-v1/next-force-output-v1/analytic-v1'
+    dat = (raw/'phase/mpc-support-v3.dat').read_bytes()
+    sta = (raw/'phase/mpc-support-v3.sta').read_bytes()
+    stdout = (raw/'ccx-stdout.log').read_bytes(); stderr = (raw/'ccx-stderr.log').read_bytes()
+    u, g = followup.read_analytic_dat(dat)
+    assert u[4][0] == 0 and [g[n][0] for n in range(1,5)] == [1,-1,2,-2]
+    import json
+    source=json.loads((raw/'ccx-process.json').read_text())
+    source.update(timed_out=False,deck_sha256=followup.sha((raw/'phase/mpc-support-v3.inp').read_bytes()))
+    source.update({key+'_sha256':followup.sha(value) for key,value in dict(dat=dat,sta=sta,stdout=stdout,stderr=stderr).items()})
+    with pytest.raises(followup.FollowupError, match='oracle'):
+        followup.analytic_candidate(dat, sta, stdout, stderr, receipt=source, deck_sha256=source['deck_sha256'], command=source['command'])
+
+
+def test_exact_single_preamble_accepts_synthetic_oracle():
+    u,g=followup.read_analytic_dat(b' S T E P 1\n INCREMENT 1\n'+DAT)
+    assert u[4][0] == .1 and g[4] == [0,0,0]
+
+
+@pytest.mark.parametrize('prefix', [b'S T E P 2\nINCREMENT 1\n',b'S T E P 1\nINCREMENT 2\n',
+    b'STEP 1\nINCREMENT 1\n', b'S T E P 1\nINCREMENT 1\nS T E P 1\nINCREMENT 1\n'])
+def test_wrong_or_repeated_preamble_refused(prefix):
+    with pytest.raises(followup.FollowupError): followup.read_analytic_dat(prefix+DAT)
+
+
+def direct_launch():
+    return dict(pid=42,creation_time=10.,affinity=[0],environment=dict(followup.THREAD_ENVIRONMENT))
+
+
+def test_short_run_direct_launch_without_periodic_rows_is_reported_honestly():
+    value=followup.validate_ccx_observations(direct_launch(),[])
+    assert value['direct_launch_observed'] is True
+    assert value['periodic_sample_count'] == 0 and value['periodic_samples_observed'] is False
+
+
+def test_existing_periodic_rows_still_validate():
+    value=followup.validate_ccx_observations(direct_launch(),[dict(pid=42,affinity=[0],os_threads=2)])
+    assert value['periodic_sample_count'] == 1 and value['os_thread_counts_are_diagnostic']
+
+
+@pytest.mark.parametrize('change', ['missing-direct','wrong-direct','wrong-row','wrong-pid'])
+def test_observation_refusal(change):
+    launch=direct_launch(); rows=[]
+    if change == 'missing-direct': launch.pop('affinity')
+    if change == 'wrong-direct': launch['affinity']=[1]
+    if change == 'wrong-row': rows=[dict(pid=42,affinity=[1])]
+    if change == 'wrong-pid': rows=[dict(pid=43,affinity=[0])]
+    with pytest.raises(followup.FollowupError): followup.validate_ccx_observations(launch,rows)
+
+
+def v4_dat():
+    text='S T E P 1\nINCREMENT 1\n'
+    for label,values in [('displacements (vx,vy,vz)',[0,.1,0,0]),('forces (fx,fy,fz)',[-1,1,0,0])]:
+        text+=label+' for set ALL and time 1.0\n'
+        text+=''.join(f'{node} {value} 0 0\n' for node,value in enumerate(values,1))
+    return text.encode('ascii')
+
+
+def test_separate_fixed_v4_zero_support_oracle():
+    dat=v4_dat(); source=receipt(); source['dat_sha256']=followup.sha(dat)
+    value=followup.zero_support_analytic_candidate(dat,STA,STDOUT,b'',receipt=source,deck_sha256='a'*64,command=COMMAND)
+    assert value['physical_multiplier'] == -3 and value['physical_spc_fx'] == [-3]
+    assert value['free_equilibrium_fx'] == [0,0] and value['semantics_adopted'] is False
+
+
+@pytest.mark.parametrize('bad', [DAT,v4_dat().replace(b'2 0.1 0 0',b'2 0 0 0'),v4_dat().replace(b'1 -1 0 0',b'1 1 0 0')])
+def test_v4_cannot_accept_v3_or_fitted_response(bad):
+    source=receipt(); source['dat_sha256']=followup.sha(bad)
+    with pytest.raises(followup.FollowupError,match='v4'):
+        followup.zero_support_analytic_candidate(bad,STA,STDOUT,b'',receipt=source,deck_sha256='a'*64,command=COMMAND)

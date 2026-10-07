@@ -4303,3 +4303,16 @@ remain OPEN. Two unexecuted next-run decks/spec prepared; fresh authority pendin
 [Audit contract and source verification](../reference_cases/stiffened_shell_e03_equation_force_audit.md).
 Raw root-audit-result-v1.json under r8-e03-coarse-dev-20261007-v1. Earlier balance
 failure unchanged; no actual force correction, external accuracy or gate acceptance.
+### 7 October — E03 force-observability follow-up stopped, prospective v4 prepared
+
+Executed25ba6f4c:46 controls PASS; scalarCCXv3 exits0, finalization FAILS on absent
+periodic samples. DirectCPU0 launch observed; solver0.0075s. Saved DAT additionally
+violates independentu4/g, free-node4 x residual−2N, allocation unresolved.
+STOPFIRSTFAILURE honored: no panel follow-up, semantics adoption or accuracy claim;
+prior ROOT-only3.99059 balance failure and1e-8 retained.150s:18.5152391used/
+131.4847609remaining,reserve60; analyticv3 consumed. Source repair and separate
+zero-supportv4 IMPLEMENTED_NOT_QUALIFIED;62 controls UNRUN. Independent analytic
+review validates prospectivework/reaction, not runtime. PENDING explicit amendment
+retains original ceiling/history/charges. Raw root-terminal-result-v1.json,
+proposal-v4 and original/v2ledgers in r8-e03-coarse-dev-20261007-v1/next-force-output-v1.
+Full G0–G6 remain OPEN; pending remainder is not execution authority.

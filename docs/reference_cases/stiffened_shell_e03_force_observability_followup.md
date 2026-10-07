@@ -35,3 +35,35 @@ $packet='./.qualification/b3-ge-e4-pl/r8-e03-coarse-dev-20261007-v1/next-force-o
 Both phases/finalizations must complete before moving onward. Stop at the first failure; no physical retry, native rerun, refinement, sign/load sweep, qualification, merge or publication is granted. The unchanged431-module wheel/site payload is hash-validated; no new wheel/install is needed. `sys.orig_argv` is preserved and must exactly match the outer command; path-spelling differences refuse rather than discarding actual argv.
 
 Prepared tests:46 by static parametrization, including fake-process fatal cleanup and thread-override refusal. All checks are **UNRUN by the author**: no imports, collection, tests or numerical processes were launched. Root's bounded checks, actual binary semantics adoption, external observations and numerical adjudication remain outstanding.
+
+## Preserved executed failure and prospective repair
+
+Root executed candidate25ba6f4c:46 controls passed; analytic CCX exited0; finalization failed because no periodic CCX observations were recorded. CCX stdout reports Total CalculiX Time0.0075; that printed value is not outer process-wall accounting. Direct launch CPU0/creation identity and inherited thread environment were recorded. The repaired observation gate requires that direct observation and validates every periodic row when present, reporting sample count0 honestly. This does not claim a periodic sample or weaken numerical-thread/stdout requirements.
+
+The actual DAT has a single `S T E P 1`/`INCREMENT 1` preamble. The repaired reader admits exactly that bounded framing; unknown/repeated preambles still refuse. More consequentially, saved u4=0 and g=[1,-1,2,-2] fail the unchanged executed v3 oracle. The regression reads the preserved original DAT/STA/stdout/stderr and actual process receipt, binds their hashes, accepts framing, then requires oracle refusal. No semantics confirmation can be adopted from that response.
+
+Observed obstruction: the saved stdout declares one reduced equation and zero lower-triangular off-diagonal entries, while the declared free node4 x equilibrium has g4-p4=-2N. Its ten declared SPCs and prescribed u1/u3=.1 are reflected in the outputs. The evidence does not allocate this mismatch to assembly, the nonzero-SPC route, the scalar solve, or recovery; no backend defect is asserted. Further investigation of that route was explicitly stopped because E03 uses zero supports.
+
+Root adopted preparation of a separate unexecuted v4 discriminator, `mpc-support-v4.inp`. It retains the four nodes/two springs/equation and zero transverse supports, fixes only u3x=0 and applies p1=2,p2=1. Nodes2/4 x are free: from 10(u2-u1)=1 and20(u4-u3)=0, u=[0,.1,0,0]; g=[-1,1,0,0]. Physical lambda=g1-p1=-3, r3=g3+lambda=-3; both free residuals vanish and total applied3N balances support−3N. The separate fixed-oracle function `zero_support_analytic_candidate` cannot parameterize or fit the failed v3 response.
+
+`entry-followup-v2.py` is a source-only candidate for v4, referencing future versioned manifest/snapshots and proposal-v4. Its snapshot is prepared separately. The executed v1 entry/wrapper,25 frozen snapshots, authority, ledger and old decks/proposals remain unchanged. The previous46PASS applies only to executed source. Revised source has62 tests expected by static parametrization; all added/changed controls are UNRUN. Fresh one-use execution authority and root freezing/binding are required for any v4 run; the recorded131.4847609s remainder grants no rerun or external launch after stop-first-failure.
+
+## Pending amendment within the existing remainder
+
+Root prospectively chose an explicit amendment rather than new time. Proposal-v4 and the PENDING v2 authority/ledger carry forward used18.5152391/remaining131.4847609 of the original150. They bind the exact prior ledger hash, preserve all three prior attempts including failed finalization in `prior_history`, retain v3's consumed token, and grant nothing until human amendment evidence is recorded by root. The original records remain unchanged. This prospective amendment supersedes the earlier fresh-authority proposal only after explicit approval; remainder alone is not authority.
+
+The new v2 attempts stop at their first failure. Their caps are controls10, one v4 analytic15, external30 from the original unconsumed allowance only after oracle PASS/root semantics adoption, and each finalization6.5. The original7.5138045s controls and5.3276499s finalization remain charged against their cumulative20s category limits. Reserve60 and total150 are unchanged; all new caps sum68s, within71.4847609s available above reserve. Prior v3 physics is not retried. Versioned snapshots include the actual saved v3 outputs consumed by the refusal regression. Pending wrappers refuse before any interpreter/CCX launch.
+
+Deferred amendment commands (root only, after activation and frozen-source review):
+
+```powershell
+$packet='./.qualification/b3-ge-e4-pl/r8-e03-coarse-dev-20261007-v1/next-force-output-v1/supervise-followup-v2.ps1'
+& $packet -Mode controls -Attempt controls-followup-v2 -Cap 10 -Reserve 60
+& $packet -Mode analytic -Attempt analytic-v4 -Cap 15 -Reserve 60
+& $packet -Mode finalize-analytic -Attempt analytic-finalize-v4 -PhaseAttempt analytic-v4 -Cap 6.5 -Reserve 60
+# Root adopts actual bound v4 semantics in semantics-confirmation-v2.json here.
+& $packet -Mode external -Attempt external-followup-v2 -Cap 30 -Reserve 60
+& $packet -Mode finalize-external -Attempt external-finalize-followup-v2 -PhaseAttempt external-followup-v2 -Cap 6.5 -Reserve 60
+```
+
+No worker check was run. Root still owns approval/adoption, checks, integration and numerical adjudication.
