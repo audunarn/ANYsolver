@@ -60,16 +60,28 @@ Preserve old scope balances. Development passes do not establish C7/C8 acceptanc
 
 ## Active implementation route
 
-The current source milestone is the native-S3 common-midpoint adapter described
-in the restart note. This supersedes earlier pair-development next-action prose;
-that prose and its failures remain historical evidence. One sustained author owns
-the new descriptor/contact/transaction route, focused fixtures, example and guide.
-Use the existing midpoint controller and minimal default-preserving hooks. Source
-admission is free centered zero-lift native plus elastic small-motion S3 interior;
-24 physical and 36 algebraic coordinates are solved in one 60-coordinate system.
-Shell zero-mass rotations still move the physical skin. Certify both path legs
-through the actual shared stage and endpoint consistency projection. No new
-fixture execution until its concrete source candidate and scope are ready.
+The current source milestone extends the installed-development-verified native/S3
+owner to multiple native beams and multiple S3 patches/bodies. One sustained
+fallback author owns the global contributor assembly, fixtures, example and guide;
+the lead owns contracts, lazy public exports, records and Git. The independent
+source reviewer supplies supporting assessment, not engineering acceptance.
+
+Use one retained midpoint system and existing transaction/replay controller.
+Shared native and shell coordinates, stiffness and physical mass assemble once.
+The prepared four-beam/two-shell-body case has210 full coordinates,81 physical
+and129 algebraic; three contacts share one two-triangle body. Preserve actual
+shell zero-mass rotational work and both physical stage-to-endpoint path legs.
+
+Initial geometry remains centered zero-lift native and planar small-motion S3
+interior. Physical exterior rims and internal integration edges retain distinct
+identities; unresolved boundary crossing is refused. Contact work and error
+budgets aggregate prospectively over every contributor in one atomic operation.
+Check coordinate admission before dense allocation. The new profile and immutable
+body/pair selections do not alter legacy identities or selectors.
+
+Finish source review and concrete bounded checks before requesting this fixture's
+own numerical allowance. All old balances remain protected. No independent child
+steppers, lagged contact forces or duplicate transient configuration stack.
 
 ## Current C8 result and next delivery
 

@@ -72,13 +72,16 @@ class NativeRetainedLineS3Work:
 
     def evaluate(self, positions: np.ndarray, position_low: np.ndarray,
                  cell_rotations: np.ndarray,
-                 shell_displacement: np.ndarray) -> NativeRetainedLineS3WorkResult:
+                 shell_displacement: np.ndarray, *, _work_budget=None) -> NativeRetainedLineS3WorkResult:
+        if _work_budget is not None:_work_budget.debit('geometry')
         if self._fingerprint() != self.identity:
             raise ValueError("native line-S3 shell work definition changed")
         physical = self.shell.current_positions(shell_displacement)
-        contact = self.contact.evaluate(
-            positions, position_low, cell_rotations, physical,
-        )
+        if _work_budget is None:
+            contact = self.contact.evaluate(positions, position_low, cell_rotations, physical)
+        else:
+            contact = self.contact.evaluate(positions, position_low, cell_rotations, physical,
+                                            _work_budget=_work_budget, _geometry_predebited=True)
         residual = np.asarray(self.work_map.T @ contact.residual).reshape(-1)
         tangent = (self.work_map.T @ sparse.csr_matrix(contact.tangent)
                    @ self.work_map).tocsr()

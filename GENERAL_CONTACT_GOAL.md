@@ -28,15 +28,15 @@ byte-preserving evidence correction fd414777. Full derivative/work, actual impac
 restart/tamper and private-package checks pass within their recorded scope.
 Broader C7/C8 engineering acceptance remains open.
 
-The active source milestone is a native-S3 common-midpoint development adapter:
-one free centered zero-lift native beam and one elastic small-motion S3 V2D,
-actual shell translation mass and massless rotational equilibrium, retained
-native inertia and complete both-body contact work. The declared shell path
-passes through its actual midpoint and consistently projected endpoint; both
-legs require conservative geometry checks. Friction and physical rims remain
-excluded from this bounded first component. Source development is authorized;
-its new numerical fixture requires a separately scoped allowance. Earlier
-pair/nonprincipal balances cannot be pooled into this fixture.
+The active source milestone now extends the verified native/S3 common-midpoint
+component to multiple beams and S3 patches/bodies in one authoritative retained
+system. Shared-node stiffness/mass and both-body work assemble once. The prepared
+210-coordinate case includes a genuinely shared deformable two-triangle target.
+Conservative geometry, physical rim identity, aggregate error/resource caps,
+atomic state and authenticated restart remain obligations. Implementation and
+source checks are authorized; no numerical execution allowance covers this new
+fixture. Historical balances cannot be pooled. Broader geometry/friction and
+independent C7/C8 acceptance remain open.
 
 Native nonprincipal dynamics: the same physical fixture now passes the complete
 16-step dt1/256 development check. Strict totalH error5.108152488863217e-7 meets

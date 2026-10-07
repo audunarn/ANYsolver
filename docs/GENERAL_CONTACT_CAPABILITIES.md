@@ -3082,3 +3082,18 @@ TIMEOUT remain non-success; repaired/split checks pass without relaxed gates.
 Broader geometry, multiple components, friction, temporal/spatial/section and
 independent engineering acceptance remain open. No programme/release claim.
 Evidence: d1_review_support/contact_native_shell_c8_20261007/installed_development.md.
+
+
+## 2026-10-07 multiple native beams/S3 bodies - source implemented
+
+Profile NATIVE_MULTI_B3_GE_S3_SMALL_MOTION_DESCRIPTOR_MIDPOINT_DEV_V1.
+Implemented:YES, bounded global midpoint owner; tested:numerical NO;
+independently accepted:NO; released:NO. Source AST/hash/supporting review only.
+Prepared four-beam/two-body210-coordinate fixture shares a deformable two-face
+S3 target; actual structural K/M and both-body work assemble once. DefaultNone
+leaf hooks preserve old contracts; runtime compatibility remains prospective.
+Physical rims/internal boundaries retain separate identity and are not admitted.
+Aggregate geometry/integration/swept/error limits apply to the complete operation.
+Ten tests, private artifact/CLI and authentic split restart are prepared; no
+numerical authority for this fixture. Historical balances/evidence unchanged.
+Evidence: d1_review_support/contact_native_multi_shell_c8_20261007/source_candidate.md.

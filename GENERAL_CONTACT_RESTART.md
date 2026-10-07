@@ -32,7 +32,7 @@ Old native-pair allowance remains100.07723390020374/840 including60reserve;
 its53attempts charged739.9227660997963. Every other old purse remains separate.
 Do not repeat passed checks without an affected input/implementation/assumption.
 
-Sustained author idle; lead owns contracts/records/Git. Mistral/local cached
+Sustained author active on the source extension; lead owns contracts/records/Git. Mistral/local cached
 unavailable; OpenAI fallback review is same-family, not engineering acceptance.
 Next source milestone extends this integrated owner to multiple declared native
 beams/S3 patches using global native assembly, local both-body work and shared
@@ -40,6 +40,31 @@ midpoint transactions/replay. Preserve existing admission and identity. No
 independent child steppers, lagged forces, artificial inertia or separate stack.
 Fix owned files/interfaces before dispatch. New fixture execution needs its own
 scope; current480s and all old purses cannot fund that fixture.
+
+## Active source extension
+
+The sustained author now owns the multiple-native/S3 source outcome in new
+_ge_beam3_native_multi_shell_contact.py and general_contact/native_transient_multi_shell.py,
+with its focused fixtures/example/guide and minimal default-preserving existing
+owner/controller hooks. Root owns public exports/contracts/records/Git.
+Raw C:/ANYworkspaceWork/contact_native_multi_shell_c8_20261007 is the new source
+checkpoint directory. No numerical authority for this fixture; old balances
+remain protected. Initial global field/API/feature/aggregate-budget design
+checkpoint is retained. The210-coordinate candidate is implemented on disk;
+13 AST/source checks and final supporting review PASS;10 numerical tests are
+prepared but unexecuted. Source handoff and ledger row are saved. The author
+is finishing the raw-only authentic restart binder; product bytes frozen.
+Root added five compatible lazy exports, using NativeTransientS3ContactPair
+to avoid the existing static selection name. Allocation and boundary-label
+findings are repaired and source-reviewed. No numerical checks run.
+Manifest3 e63546a4c498daa539943eff9a8be867433e6c92e94a3ee517899136f7ddce54
+binds565 held/560 build files. Pending600s proposal is NOT authority.
+
+Principal issue: several contacts must act on one authoritative native/shell
+system. Shared shell nodes and structural elements are assembled once; independent
+one-pair solves or duplicated per-face inertia cannot substitute. Physical rim
+identity and integration boundaries remain distinct. Extend the existing retained
+assembly, midpoint work and transaction/replay rather than create another stack.
 
 ## Evidence and programme
 

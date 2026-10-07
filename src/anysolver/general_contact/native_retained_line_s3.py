@@ -259,8 +259,9 @@ class NativeRetainedRoundLineS3Interior:
 
         return states, curves, shell, normal, roundoff, minimum_rim
 
-    def geometry_gap(self, positions, position_low, cell_rotations, shell_physical_vertices):
+    def geometry_gap(self, positions, position_low, cell_rotations, shell_physical_vertices, *, _work_budget=None):
         """Physical quadratic gap/rim without constructing contact derivatives."""
+        if _work_budget is not None:_work_budget.debit('geometry')
         _, curves, shell, normal, _, rim = self._geometry_state(
             positions, position_low, cell_rotations, shell_physical_vertices)
         minimum = float('inf')
@@ -277,7 +278,10 @@ class NativeRetainedRoundLineS3Interior:
 
     def evaluate(self, positions: np.ndarray, position_low: np.ndarray,
                  cell_rotations: np.ndarray,
-                 shell_physical_vertices: np.ndarray) -> NativeRetainedLineS3Result:
+                 shell_physical_vertices: np.ndarray, *, _work_budget=None, _geometry_predebited=False) -> NativeRetainedLineS3Result:
+        if _geometry_predebited and _work_budget is None:
+            raise ValueError('private predebit requires aggregate work ledger')
+        if _work_budget is not None and not _geometry_predebited:_work_budget.debit('geometry')
         states, curves, shell, normal, roundoff, minimum_rim = self._geometry_state(
             positions, position_low, cell_rotations, shell_physical_vertices)
 
@@ -333,6 +337,7 @@ class NativeRetainedRoundLineS3Interior:
 
         def integrate(cell, left, right, budget):
             nonlocal visited, intervals
+            if _work_budget is not None:_work_budget.debit('integration')
             visited += 1
             if visited > self.maximum_integration_intervals:
                 raise MemoryError(
