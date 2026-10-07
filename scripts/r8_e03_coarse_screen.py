@@ -36,6 +36,8 @@ def _json(path, value):
 
 def _bindings(bindings, phase):
     """Check caller-declared identities; this does not grant execution authority."""
+    if phase not in ("native", "external"):
+        raise ValueError("exactly one native or external phase required")
     from scripts.r8_e03_curved_reference import _detached_receipt
 
     bindings = _detached_receipt(bindings)

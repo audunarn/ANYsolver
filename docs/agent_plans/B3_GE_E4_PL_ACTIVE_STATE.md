@@ -100,3 +100,14 @@ Root inspected and adopted smaller unapproved240s/2GiB/CPU0 proposal, not author
 No imports/tests/execution for this new runner; root physical adapter still required.
 Worker accidental broad search exposed protected canary script lines; not reopened,
 used, executed or changed. Future reads remain exact-path only.
+
+Current physical discriminator: can fixed level0/+offset B2 and CCX complete
+and supply valid work, tips and common-origin reactions? Distinguish adapter/
+format/admission failure from physical idealization discrepancy before refinement.
+Human Proceed7October adopts proposed240s scope; root authority at
+.qualification/b3-ge-e4-pl/r8-e03-coarse-dev-20261007-v1/authority-v1.json.
+Controls cumulative30s; native/external one60s primary each; preserve60s reserve
+until final external verification. CPU0/thread1/JIToff/2GiB/onejob. No retries/
+refinement/F03/body/siblings/main/release. Owner prepares adapter; root reviews
+and launches. Successful coarse phases permit evidence inspection, not accuracy
+or G0/E03 acceptance. Failure stops the physical sequence and preserves evidence.

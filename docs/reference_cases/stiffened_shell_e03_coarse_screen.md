@@ -1,4 +1,4 @@
-# E03 coarse B2 feasibility screen — source prepared, unverified
+# E03 coarse B2 feasibility screen — adapter implemented, unverified
 
 This screen fixes `build_case(0, 1)`: level 0, positive eccentric offset,
 `B2_E4_PL_FAST_LINEAR_V1`, one native job and one external job only if separately
@@ -17,8 +17,10 @@ existing E03 candidate, not this new runner.
 
 ## Caller and supervision boundary
 
-The remaining prerequisite is a **root-owned physical execution adapter** under
-fresh, explicitly bounded authority. The caller must supervise each native/CCX
+The source-prepared **root-owned physical execution adapter** is adjacent
+`entry-v1.py` and `supervise-v1.ps1` under
+`.qualification/b3-ge-e4-pl/r8-e03-coarse-dev-20261007-v1`. Root owns all execution.
+The caller must supervise each native/CCX
 process tree with the existing resource services, retain raw output on timeout
 or failure, record precise process-wall duration and cumulative budget, and
 provide the actual effective settings and resource evidence. Neither a caller's
@@ -26,10 +28,12 @@ provide the actual effective settings and resource evidence. Neither a caller's
 functions validate provenance supplied by that caller; they are not a process
 safety guarantee or an execution authorization mechanism.
 
-No authority for a native solve, CCX run or new runner check exists at preparation.
-The existing source-control supervision example is evidence of a service shape,
-not reusable authority. The root adapter and its invocation command have not yet
-been supplied; do not substitute an unsupervised shell call.
+Root recorded the user's subsequent “Proceed” in adjacent root-owned
+`authority-v1.json` and `ledger-v1.json`:240s aggregate,30s aggregate controls,
+one native phase capped60s and one external phase capped60s after native
+finalization succeeds, retaining60s for final verification. The worker has
+launched nothing. No prior authority is reused. Do not substitute an unsupervised
+shell call.
 
 ## Concrete deferred call contract
 
@@ -136,17 +140,46 @@ raw receipt and `failure.json`, then raises. Success saves detached provisional
 or accuracy verdict is produced. Preserve a failure and investigate it rather
 than reusing its directory or automatically retrying.
 
-## Resource proposal and next decision
+## Root execution commands and retained limits
 
-Root-selected proposal, **not approved**:240s cumulative allowance, including
-at most30s focused runner controls, one native phase capped60s and (only after
-native completion) one external phase capped60s, retaining60s for final
-verification. CPU affinity0, one numerical thread, JIT disabled,2GiB process-tree
-memory, one numerical job. Fixed level0/+offset only; preserve failures and stop
-on failure, with no automatic retry. This is a small feasibility screen, not the
-complete reference campaign. The root-owned adapter and fresh authorization are
-still prerequisites. Unsupported enforcement is a blocker. Existing control-check
-budgets do not fund these jobs.
+Prepared commands for root after source review, unexecuted at this handoff:
+
+```powershell
+& ./.qualification/b3-ge-e4-pl/r8-e03-coarse-dev-20261007-v1/supervise-v1.ps1 -Mode controls -Attempt controls-v1 -Cap 30 -Reserve 60
+& ./.qualification/b3-ge-e4-pl/r8-e03-coarse-dev-20261007-v1/supervise-v1.ps1 -Mode native -Attempt native-v1 -Cap 60 -Reserve 60
+& ./.qualification/b3-ge-e4-pl/r8-e03-coarse-dev-20261007-v1/supervise-v1.ps1 -Mode finalize-native -Attempt native-finalize-v1 -PhaseAttempt native-v1 -Cap 30 -Reserve 60
+& ./.qualification/b3-ge-e4-pl/r8-e03-coarse-dev-20261007-v1/supervise-v1.ps1 -Mode external -Attempt external-v1 -Cap 60 -Reserve 60
+& ./.qualification/b3-ge-e4-pl/r8-e03-coarse-dev-20261007-v1/supervise-v1.ps1 -Mode finalize-external -Attempt external-finalize-v1 -PhaseAttempt external-v1 -Cap 30 -Reserve 0
+```
+
+Run serially from the declared checkout and inspect each exit/receipt. The
+supervisor reuses the E03 source-entry watchdog and precise outer accounting:
+CPU0, frozen thread environment1, JIT off,2GiB process tree, one job. Physical
+primary tokens are persisted as consumed before launch; launch failure grants
+no retry. Controls repairs share30s aggregate. Only finalize-external may consume
+the final60s reserve; all modes still share240s cumulative.
+
+Outer `execution.json` exists only after child exit, so finalization is a separate
+bounded invocation. Actual completed outer receipts, input/artifact hashes,
+before/after runtime, actual loaded origins and resource records are validated
+before writing provisional success. Finalization refusal preserves all physical
+raw files at the original attempt and writes `finalization-failure.json`; parser
+refusal also preserves its `received` inventory. No outer timing or physical
+success is synthesized. External launch requires matching controls PASS and
+successful native finalization. Both finalized phases are required before
+examination of paired coarse evidence.
+
+CCX configuration requires inherited frozen thread environment, observed CPU0
+and actual solve stdout `Using up to N cpu(s)` declarations all equal to1.
+Missing/conflicting declarations explicitly refuse configuration. OS threadcount
+observations remain diagnostics. The watchdog alone does not prove settings.
+
+Static parametrization prepares **33 synthetic controls**: phase/binding refusal,
+source and child-origin hashes, case/deck mutation, failed receipts, partial native
+observables, malformed raw output, evidence preservation and detached results.
+They invoke no native solve or CCX. Neither collection nor execution has occurred.
+The unchanged431package modules reuse the verified wheel; no package build is
+needed. Root reviews frozen snapshots/manifest and launches all approved checks.
 
 The principal question is whether both routes complete at this fixed coarse case
 and yield inspectable finite work, tip and common-origin reaction observables
@@ -154,6 +187,6 @@ under their declared fitted-port work maps. A completion permits examination of
 that bounded feasibility evidence. A refusal, timeout or resource limit stops the
 affected phase and retains its evidence. Neither outcome establishes physical
 accuracy, adopted native/external mapping, GE correspondence or converged E03.
-After source review, the root-owned adapter and fresh physical/check authority
-are the next concrete decisions; no future runner-check command can be claimed
-runnable until that adapter exists.
+Source review and root-run focused controls remain prerequisites. Missing runtime
+evidence remains a refusal; it does not authorize weaker criteria or a physical
+retry. Full E03 acceptance remains open.
