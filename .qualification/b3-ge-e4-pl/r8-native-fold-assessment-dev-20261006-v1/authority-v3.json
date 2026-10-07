@@ -1,6 +1,6 @@
 {
-  "status": "PENDING_USER_APPROVAL",
-  "approval_evidence": null,
+  "status": "APPROVED",
+  "approval_evidence": "Direct human: I approve. Resume. 7 October2026; approves the ONE saved-g13 Log-only comparison requested for036d4975, same remaining175.684463s,90s cap,60s reserve; no budget renewal",
   "total_seconds": 300,
   "scope": "Amend SAME remaining allowance: ONE installed saved-g13 Log-only candidate capture, one border and five actual assemblies, fixed existingh1e-5/1e-6/criterion1e-6; no originalcapture rerun. Focused candidate controls and compatible repairs included.",
   "limits": {
@@ -30,5 +30,6 @@
     "new_budget": false
   },
   "numerical_candidate": "PRIVATE_Q4_SAVED_G13_STABLE_PRINCIPAL_LOG_ONLY_V1",
-  "candidate_binding": "Source inputs SHA256 bind exact candidate; commit recorded in user-facing request after save. Manifest candidate field retains original assessor origin; it is not current source identity."
+  "candidate_binding": "Source inputs SHA256 bind exact candidate; commit recorded in user-facing request after save. Manifest candidate field retains original assessor origin; it is not current source identity.",
+  "approved_candidate_commit": "036d497551b1e49d10641b150d89e89b9fee4970"
 }

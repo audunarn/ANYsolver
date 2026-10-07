@@ -1,4 +1,4 @@
-# Current state - 6 October 2026
+# Current state - 7 October 2026
 
 Revision8 complete programme remains OPEN: G0-G6/F01-F13/V01-V28/B01-B18,
 external, scale, platform, independent acceptance and coordinated release.
@@ -50,12 +50,25 @@ Baseline route preserved; operator/restart compatibility UNPROVEN. Candidate
 source/example/test hashes18fd0d3b/10838bbf unchanged after32focused controlsPASS
 (15.1801944s; CPU0/pools1/JIToff; fake/scalar seams only). Independent source and
 harness review found no consequential blocker; supporting OpenAI only.
-Product430modules unchanged. Candidatephysical UNRUN; authority-v3 PENDING.
-Latest SAME300ledger124.315537used/175.684463remaining;60sreserve, no reset.
-Next: ONE installedsavedg13 Log-only comparison needs concrete scope amendment:
-1border/5assemblies, fixedh1e-5/1e-6, unchanged1e-6criterion,90s cap.
-Previous capture/evidence archivedf5a34d1c. Rawroot-result-v4.json and
-independent-log-candidate-source-review-v1.json; no live numericaljob.
+Product430modules unchanged. Sourcecandidate036d4975; scopev3APPROVED by direct
+human I approve.Resume.,7October2026. ONEinstalledg13 Log-only comparison
+completed31.3859628s,1border/5assemblies/16Q4perassembly/4LogcallsperQ4.
+430source/wheel/site,810loadedmodules,5inputs/6refs/5durablecapture hashesPASS;
+CPU0/pools1/JIToff,peak296767488B. Fullpublic/checkpoint unchanged.
+SAME300ledger155.7014998used/144.2985002remaining;60sreserve,no reset.
+ALLthreeprimaries (original3endpoint,originalcapture,Log-onlycapture) CONSUMED.
+Candidateerrorsh1e-5=1.937853e-6,h1e-6=7.347924e-7,plateau2.333619e-6:
+unchanged1e-6criterion NOTMET. Originalfailures preserved, no slope/fold acceptance.
+SavedQ4endpoint curvature explainscoarseerror:FDminusSimpson6.074768e-8,
+weightedcos.9995488. FineFDminusSimpson7.025194e-7; value/forcechain dominates
+mapchain at elements5/6/14. Estimates/decomposition only,not rigorouserrorbound.
+Supporting independent evidence/mathematical review clean,samefamilyonly.
+Decision:retainprivateLog candidate; no productionadoption,criterionwaiver or
+furtheroperator retuning. Nextboundedaccuracydecision addresses coarse-step
+truncation and finer value/forcechain arithmetic using savedcovectors first;
+additional primary/step-pair amendment requires scope authority,not budget reuse.
+Rawroot-result-v5.json,root-log-comparison-v1.json,root-log-endpoint-tangent-v1.json,
+root-log-covector-split-v1.json and independent-log-evidence-review-v1.json.
 No automatic smallersteps, 3state rerun, tolerance/norm change or campaign.
 No owned numericaljob remainslive; no accepted firstfold/descendingbranch/G4D.
 

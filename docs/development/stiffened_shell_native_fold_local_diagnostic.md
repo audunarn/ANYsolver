@@ -1,10 +1,13 @@
 # Passive saved-g13 Q4 local diagnostic
 
-Status: **source controls verified; Log-only numerical comparison UNRUN and not
-authorized**. The focused source controls ran as recorded below. No physical
-Log-only model/assembly/finite-difference comparison has run. Both previous
-physical primaries are CONSUMED; remaining verification allowance provides no
-authority for this new numerical comparison.
+Status: **approved Log-only comparison completed; registered accuracy criterion
+unmet**. The ONE saved-g13 comparison ran on7October2026 at source036d4975.
+Errors were1.937853e-6(h1e-5),7.347924e-7(h1e-6),plateau2.333619e-6 against
+unchanged1e-6. All32source controls passed; accepted recovery/checkpoint stayed
+unchanged. See stiffened_shell_native_fold_result_20261006.md and raw
+root-result-v5.json for exact bindings,diagnosis and remaining limitations.
+Allthree physical primaries are CONSUMED. Remaining verification allowance
+does not authorize another primary or step campaign.
 The example's main entry refuses execution; a separately authorized supervisor
 may call `diagnose_saved_g13(folder,on_evaluation=writer)` and save its detached
 structured result. After every complete baseline/signed evaluation, and before
@@ -20,10 +23,10 @@ The original v2 capture numerical route remains the default, explicitly named
 `numerical_candidate=LOG_ONLY_CANDIDATE`, whose private identity is
 `PRIVATE_Q4_SAVED_G13_STABLE_PRINCIPAL_LOG_ONLY_V1`. Unknown identities refuse
 before opening a fixture or owner. Each invocation still performs only one
-selected route's one border and five assemblies. A future comparison uses the
+selected route's one border and five assemblies. The completed comparison used the
 existing frozen original-route observations; there is no automatic original/
-candidate double run, fallback, or extra h. The consumed original assessment
-and installed local diagnostic do not authorize executing this new candidate.
+candidate double run, fallback, or extra h. The original assessment, local diagnostic and Log-only comparison are consumed;
+no additional primary is authorized.
 
 ## Question and bound
 
@@ -202,5 +205,5 @@ Executed source SHA256 identities:
 
 These fake-owner, spy and analytic source controls verify the observation and
 selection contracts; they do **not** establish actual mechanical directional
-derivative accuracy, operator compatibility or scientific acceptance. The new
-saved-g13 Log-only numerical comparison remains **UNRUN and not authorized**.
+derivative accuracy, operator compatibility or scientific acceptance. The source-controls snapshot preceded the physical comparison; its completed
+result and unmet criterion are recorded above.

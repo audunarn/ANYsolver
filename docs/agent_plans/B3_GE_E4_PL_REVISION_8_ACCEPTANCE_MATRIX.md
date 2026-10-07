@@ -4139,3 +4139,15 @@ Same300ledger124.315537used/175.684463remaining,60sreserve. v3 physicalscopePEND
 ONEsavedg13,1border/5assemblies,fixedh1e-5/1e-6,unchangedcriterion1e-6.
 No acceptance,authority renewal,continuation,F03 or completeprogramme closure.
 Rawfold-assessment-dev/root-result-v4.json and independent-log-candidate-source-review-v1.json.
+
+## 7 October2026: approved Log-only saved-g13 comparison consumed
+Source036d4975,unchangedwheel6464174e. ONEcomparison completed31.3859628s:
+1border/5assemblies,16Q4/capture,4Logcalls/Q4;CPU0/onepoolthread/JIToff;
+430module/810loaded/5input/6ref/5capture bindingsPASS. Public/checkpoint unchanged.
+Errors1.937853e-6(h1e-5),7.347924e-7(h1e-6),plateau2.333619e-6:criterion1e-6UNMET.
+Coarseerror followsendpointcurvature;fineerror mainlylocalvalue/forcechain.
+OfflineSimpson/covectors are diagnostics,not errorbounds/replacement acceptance.
+Retainprivatecandidate,no productionadoption or tolerancechange.
+SAME300ledger155.7014998used/144.2985002remaining,60sreserve;v3primaryCONSUMED.
+Supportingindependentreviewclean,notdifferent-family/mechanicsacceptance.
+F03/G4D/fullprogramme remainOPEN. Rawfold-assessment-dev/root-result-v5.json.

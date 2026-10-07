@@ -100,3 +100,30 @@ Same300s allowance now124.315537used/175.684463remaining,60sreserved.
 ONE new installedsaved-g13 physical comparison remains UNRUN and scope-v3PENDING.
 No product module,law,tolerance,default,checkpoint or accepted capability changed.
 Exact source/control/review bindings are in root-result-v4.json.
+
+## Approved Log-only comparison — 7 October2026
+The ONE installed comparison completed31.3859628s,with five durable16Q4 captures
+and unchanged accepted public recovery/checkpoint. All frozen bindings passed;
+CPU0,one numericalthread,JIT off,peak296767488B.
+
+| Step | Original assembled error | Log-only assembled error |
+|---|---:|---:|
+|1e-5|1.923879526e-6|1.937853387e-6|
+|1e-6|5.324856144e-6|7.347923613e-7|
+Candidate plateau2.333619105e-6; unchanged1e-6criterion remains unmet.
+
+Captured endpoint Q4 tangents include actual additive-chart/spatial-row
+corrections. Their Simpson curvature estimate explains the coarse discrepancy
+(weightedcosine.9995488; FDminusSimpson6.074768e-8). At the fine step curvature
+estimate1.943109e-8 is smaller than FDminusSimpson7.025194e-7.
+The saved central covector split separates force/moment units and shows local
+value/forcechain discrepancy dominates map-differential discrepancy in top
+elements5/6/14. These are diagnostic estimates,not rigorous bounds or acceptance.
+
+Retain the private Log-only candidate; do not retune the operator,adopt it into
+production,change tolerances or automatically add finer steps. A next accuracy
+assessment must explicitly distinguish coarse truncation from finer arithmetic.
+Source controls32PASS remain evidence for their own source; supporting review
+found no consequential mismatch. First/simplefold,slopeaccuracy,G4D,F03 and
+complete programme remain open. SAME300s ledger155.7014998used/144.2985002remaining;
+60sreserved,ONEv3primary consumed. Rawroot-result-v5.json binds this result.
