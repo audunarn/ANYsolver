@@ -8,7 +8,7 @@ No communication with the contact task. Mistral/local remain unavailable;
 OpenAI supporting review does not satisfy final different-family acceptance.
 
 Canonical checkout: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001
-Branch: codex/stiffened-main-reconcile-20261001; HEAD 2c3b3779.
+Branch: codex/stiffened-main-reconcile-20261001; integrated source 2c3b3779.
 No main merge, push or release. Unrelated ANYfem main edits remain untouched.
 
 ## Decision, facts, uncertainty and next action
@@ -57,8 +57,11 @@ positive work 4.210950351426983e-5J. Engineering accuracy remains unscored.
 The original ROOT-only balance failure 3.9905884 and all failed scalar runs remain.
 Original 150s accounting used 44.1285582s, remaining 105.8714418s, reserve 60s;
 this remainder grants no new physical comparison or refinement scope.
-An independent saved-data review is checking matched geometry, laws, connection
-and output measures before choosing a defensible accuracy assessment.
+Saved-data review and root inspection now adopt FAILED / NOT CONVERGED as
+the coarse B2 compliance screen: external/native work 2.78978, relative gap
+64.1549%. No concrete section/axis/unit error was found; continuum versus
+plate/beam idealization and convergence remain unresolved. This is distinct
+from the principal GE connection. No new physical campaign is launched.
 
 ANYfem consumer work owns only stiffened-shell source/tests/examples/docs in
 C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer (clean baseline da24321).

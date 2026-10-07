@@ -4389,3 +4389,16 @@ is source-only in the clean isolated ANYfem experimental checkout. Existing fail
 runs, scientific criteria, consumed authorities and unrelated work are preserved.
 Evidence: ge-distributing-displacement-20261007/.development/distributing-displacement-installed-20261007/root-terminal-result-v1.json;
 canonical .development/distributing-displacement-integration-20261007/source-parity-v2.json.
+
+### 2026-10-07: E03 saved accuracy-applicability decision
+
+Root inspected the independent saved-data review, raw work records, section
+properties and point/trace source. Adopt FAILED / NOT CONVERGED for the coarse
+B2 compliance screen: external/native work 2.7897786674; larger-work relative
+gap 64.15486247%. E03 accuracy remains unscored; equilibrium success is retained.
+No concrete section/axis/unit error found. Continuum/plate-beam deformation and
+coarse interpolation/convergence remain unresolved. The small external thickness
+discrepancy is real but not causally allocated. This does not invalidate the
+scoped local F09 foundation, qualify E03, or diagnose the GE connection. No new
+physical execution or refinement authority is consumed or inferred.
+Review: next-force-output-v1/saved-adjudication-v3/accuracy-applicability-review-v1.md.
