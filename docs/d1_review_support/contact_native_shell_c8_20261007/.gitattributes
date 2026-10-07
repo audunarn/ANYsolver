@@ -1,0 +1,2 @@
+# New source-candidate evidence only; preserve recorded bytes.
+* -text whitespace=cr-at-eol

@@ -256,6 +256,7 @@ from .contact import (
 )
 _GENERAL_CONTACT_EXPORTS = frozenset({
     'create_native_transient_pair_analysis', 'solve_native_transient_pair',
+    'create_native_transient_shell_analysis', 'solve_native_transient_shell',
     "RigidCappedCylinder",
     "ContactCapabilityReport", "ContactDefinition", "ContactInteraction", "ContactPathControl",
     "ContactPathNodalForce", "ContactPathProgram", "ContactResults",
@@ -740,6 +741,7 @@ __all__ = [
     "TransientContactSettings",
     "solve_transient_contact",
     'create_native_transient_pair_analysis', 'solve_native_transient_pair',
+    'create_native_transient_shell_analysis', 'solve_native_transient_shell',
     "validate_general_contact",
     "report_general_contact_capability",
     "ContactRequestIdentity",

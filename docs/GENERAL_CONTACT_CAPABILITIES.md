@@ -3048,3 +3048,17 @@ Wheel487af877...; sourceV20/manifest21, final tests/guideV24/manifest23.
 Different-family acceptance, temporal/spatial/section, curved physical lift,
 native friction/shell common-stage coupling and programme acceptance remain open.
 Evidence: d1_review_support/contact_native_c8_pair_20261007/native_pair_development.md.
+
+
+## 2026-10-07 native-S3 common-midpoint source candidate
+
+Profile NATIVE_B3_GE_S3_SMALL_MOTION_DESCRIPTOR_MIDPOINT_DEV_V1.
+Implemented SOURCE_CANDIDATE; numerical testing NOT_EXECUTED; independently
+accepted NO; released NO. One60 retained system, actual S3 translation mass
+and rotational algebraic equilibrium, native physical internal inertia,
+both-body contact and two-leg actual-stage/projected-endpoint path. Explicit
+top/+polarity small-motion interior admission; no other-side/finite-shell/
+curved-lift/friction/rim claim.14 AST checks and15 held hashes pass. Eight
+focused selectors, changed shared-route compatibility and installed workflow
+remain unexecuted. Prospective480s request is not authority; old purses intact.
+Evidence: d1_review_support/contact_native_shell_c8_20261007/source_candidate.md.

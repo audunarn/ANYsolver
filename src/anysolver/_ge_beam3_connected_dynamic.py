@@ -63,6 +63,7 @@ class ConnectedCandidate:
 class _RetainedMidpointAssembly:
     """One globally coupled physical/algebraic owner, no child time steppers."""
     route_profile=PROFILE
+    state_type=ConnectedState
     checkpoint_schema=SCHEMA
     extra_step_keys=()
     retryable=('connected midpoint iteration limit','connected midpoint backtracking failed')
@@ -75,8 +76,7 @@ class _RetainedMidpointAssembly:
             raise ValueError('bounded native Newton controls required')
         self.analysis=NativeBeamAnalysis(definitions,boundaries)
         self.elements=self.analysis._elements;self._captured_elements=self.elements
-        if len(self.elements)<2:
-            raise ValueError('explicit connected multi-element route requires at least two elements')
+        self._admit_element_count(len(self.elements))
         self.nodes=tuple(sorted(self.analysis.model.mesh.nodes))
         self.node_index={n:i for i,n in enumerate(self.nodes)}
         self.n=len(self.nodes);self.e=len(self.elements);self.size=6*self.n+24*self.e
@@ -130,6 +130,10 @@ class _RetainedMidpointAssembly:
             inertia_order=self.inertia_order,iterations=self.max_iterations,backtracks=self.max_backtracks,
             coordinate_budget=MAX_COORDINATES,runtime_limit_seconds=120.,length=self.length,scale=self.scale)
 
+    def _admit_element_count(self,count):
+        if count<2:
+            raise ValueError('explicit connected multi-element route requires at least two elements')
+
     def _admit_graph(self):
         # Legacy graph closure is unchanged and independent of traversal order.
         seen=set(self.elements[0].node_ids);pending=list(self.elements[1:])
@@ -140,6 +144,16 @@ class _RetainedMidpointAssembly:
 
     def _step_extra(self,previous,unknown,dt,stage,endpoint,token):
         return {}
+
+    def _reference_physical_pose(self,state):
+        data=self._data(state)
+        data.update(positions=self.reference_positions,position_low=np.zeros((self.n,3)),
+                    cell_rotations=np.tile(np.eye(3),(self.e,2,1,1)))
+        return self._state(data)
+
+    def _physical_pose_matches(self,actual,expected):
+        return all(canonical(getattr(actual,name))==canonical(getattr(expected,name))
+                   for name in ('positions','position_low','cell_rotations'))
 
     def _validate_initial_contact(self,state):
         pass
@@ -196,11 +210,11 @@ class _RetainedMidpointAssembly:
         return ConnectedState(*map(_owned,(positions,low,frames,cells,resultants,velocity,acceleration)),
             data['time'],data['epoch'],self.identity,self.histories)
 
-    def _data(self,state):return {name:getattr(state,name) for name in ConnectedState.__dataclass_fields__}
+    def _data(self,state):return {name:getattr(state,name) for name in self.state_type.__dataclass_fields__}
 
     def _require(self,state):
         record=self._issued.get(id(state))
-        if type(state) is not ConnectedState or state is not self._current or record is None or record[0] is not state or record[1]!=canonical(state):
+        if type(state) is not self.state_type or state is not self._current or record is None or record[0] is not state or record[1]!=canonical(state):
             raise ValueError('issued unmutated current connected state required')
         return sha(state)
 
@@ -249,7 +263,7 @@ class _RetainedMidpointAssembly:
             for c in range(2):
                 first=6*self.n+6*k+3*c;cells[k,c]=rotation(factor*step[first:first+3])@cells[k,c]
         d.update(positions=high,position_low=low,nodal_frames=frames,cell_rotations=cells,
-            resultants=state.resultants+step[6*self.n+6*self.e:].reshape(self.e,18))
+            resultants=state.resultants+step[6*self.n+6*self.e:6*self.n+24*self.e].reshape(self.e,18))
         return self._state(d)
 
     def _consistent(self,state,token):
@@ -299,12 +313,8 @@ class _RetainedMidpointAssembly:
             state=self._advance(state,step)
         state,_=self._endpoint(state,cancellation_token);canonical(state);return self._issue(state)
 
-    def _stage(self,accepted,u,dt,token):
-        p=list(self.p);increment=np.zeros(self.size);increment[p]=dt*accepted.velocity[p]+.5*dt*dt*u[p]
-        increment[list(self.z)]=u[list(self.z)]
-        stage=self._advance(accepted,increment,.5)
-        d=self._data(stage);v=np.zeros(self.size);a=np.zeros(self.size)
-        v[p]=accepted.velocity[p]+.5*dt*u[p];a[p]=u[p];d.update(velocity=v,acceleration=a,time=float(accepted.time+.5*dt));stage=self._state(d)
+    def _midpoint_chart(self,increment,u,dt):
+        p=list(self.p)
         chart=np.eye(self.size)
         for n in range(self.n):
             chart[6*n:6*n+3,6*n:6*n+3]*=.5
@@ -314,6 +324,15 @@ class _RetainedMidpointAssembly:
                 first=6*self.n+6*k+3*c;half=.5*increment[first:first+3]
                 chart[first:first+3,first:first+3]=.5*exp_chart_terms(half)[0]
         chart[:,p]*=.5*dt*dt
+        return chart
+
+    def _stage(self,accepted,u,dt,token):
+        p=list(self.p);increment=np.zeros(self.size);increment[p]=dt*accepted.velocity[p]+.5*dt*dt*u[p]
+        increment[list(self.z)]=u[list(self.z)]
+        stage=self._advance(accepted,increment,.5)
+        d=self._data(stage);v=np.zeros(self.size);a=np.zeros(self.size)
+        v[p]=accepted.velocity[p]+.5*dt*u[p];a[p]=u[p];d.update(velocity=v,acceleration=a,time=float(accepted.time+.5*dt));stage=self._state(d)
+        chart=self._midpoint_chart(increment,u,dt)
         r,j,fi,m,dv,dq,account=self._evaluate(stage,token)
         vmap=np.zeros_like(m);amap=np.zeros_like(m);vmap[p,p]=.5*dt;amap[p,p]=1.
         tangent=(j+dq)@chart+dv@vmap+m@amap
@@ -407,7 +426,7 @@ class _RetainedMidpointAssembly:
         body=data['body']
         if set(body)!= {'schema','profile','identity','state'} or body['schema']!=self.checkpoint_schema or body['profile']!=self.route_profile or body['identity']!=self.identity or data['sha256']!=sha(body):
             raise ValueError('connected checkpoint identity/integrity mismatch')
-        if type(body['state']) is not dict or set(body['state'])!=set(ConnectedState.__dataclass_fields__):raise ValueError('complete state inventory required')
+        if type(body['state']) is not dict or set(body['state'])!=set(self.state_type.__dataclass_fields__):raise ValueError('complete state inventory required')
         state=self._state(body['state']);r,j,fi,m,_,_,_=self._evaluate(state,cancellation_token)
         self._block_admission(j,m)
         if canonical(self._data(state))!=canonical(body['state']):raise ValueError('restore must preserve exact stored numeric inventory')

@@ -41,7 +41,7 @@ def _result(identity,contract,controller,native,status):
     body=dict(schema=schema,identity=identity,contract=contract,native_checkpoint=native.decode('ascii'),
         native_sha256=sha256(native).hexdigest(),controller=controller,production_qualified=False)
     checkpoint=_bytes(dict(body=body,checkpoint_sha256=sha(body)))
-    data=dict(profile=profile,identity=identity,status=status,production_qualified=False,contact='NATIVE_WHOLE_ROUND_LINE_PENALTY' if contact_profile else 'UNSUPPORTED',
+    data=dict(profile=profile,identity=identity,status=status,production_qualified=False,contact=contract['settings'].get('contact_result_label','NATIVE_WHOLE_ROUND_LINE_PENALTY') if contact_profile else 'UNSUPPORTED',
         loads='UNSUPPORTED',integrator='EXISTING_NATIVE_SO3_MIDPOINT',outputs=controller['outputs'],
         steps=controller['steps'],initial=controller['initial'],accepted_time=controller['time'],
         accepted_steps=controller['accepted_steps'],final=controller['steps'][-1]['endpoint'] if controller['steps'] else controller['initial'],
@@ -168,10 +168,8 @@ def _restore(owner,raw,expected,identity,contract,token):
     owner._validate_initial_contact(previous)
     # Physical initial fields are bound to the declared reference contract.
     initial_step=np.zeros(owner.size);initial_step[list(owner.physical)]=contract['initial_displacement_physical']
-    reference=owner._data(previous);reference.update(positions=owner.reference_positions,position_low=np.zeros((owner.n,3)),cell_rotations=np.tile(np.eye(3),(owner.e,2,1,1)))
-    expected_initial=owner._advance(owner._state(reference),initial_step)
-    for name in ('positions','position_low','cell_rotations'):
-        if canonical(getattr(previous,name))!=canonical(getattr(expected_initial,name)):raise NativeTransientError('connected initial physical contract mismatch')
+    expected_initial=owner._advance(owner._reference_physical_pose(previous),initial_step)
+    if not owner._physical_pose_matches(previous,expected_initial):raise NativeTransientError('connected initial physical contract mismatch')
     if canonical(previous.velocity[list(owner.physical)])!=canonical(contract['initial_velocity_physical']):raise NativeTransientError('connected initial velocity contract mismatch')
     r,_,fi,_,_,_,_=owner._evaluate(previous,token)
     if owner._norm(r,owner.z)>1e-11 or owner._norm(r+fi,owner.p)>1e-11:raise NativeTransientError('connected initial equilibrium mismatch')
@@ -198,8 +196,7 @@ def _restore(owner,raw,expected,identity,contract,token):
         if canonical(increment)!=canonical(step['midpoint_physical_increment_global']):raise NativeTransientError('connected physical increment mismatch')
         physical_increment=increment.copy();physical_increment[list(owner.z)]=0.
         expected_pose=owner._advance(previous,physical_increment)
-        for name in ('positions','position_low','cell_rotations'):
-            if canonical(getattr(endpoint,name))!=canonical(getattr(expected_pose,name)):raise NativeTransientError('connected endpoint physical stage mismatch')
+        if not owner._physical_pose_matches(endpoint,expected_pose):raise NativeTransientError('connected endpoint physical stage mismatch')
         extra=owner._step_extra(previous,unknown,step['dt'],actual_stage,endpoint,token)
         if any(canonical(step[key])!=canonical(value) for key,value in extra.items()):
             raise NativeTransientError('native contact path/work journal mismatch')
@@ -234,6 +231,7 @@ def _solve_retained_transient(owner,config, *, checkpoint=None,expected_sha256=N
     settings=_settings(config,max_steps,max_cutbacks,minimum_dt);settings['profile']=PROFILE
     if type(owner) is not ConnectedDynamicAnalysis:
         settings.update(profile=owner.trajectory_profile,trajectory_schema=owner.trajectory_schema,retryable=owner.retryable)
+        if hasattr(owner,'contact_result_label'):settings['contact_result_label']=owner.contact_result_label
     t_end=float(config.t_end);count=len(owner.physical)
     displacement=_vector(config.initial_displacement,count,'initial_displacement');velocity=_vector(config.initial_velocity,count,'initial_velocity')
     contract=dict(analysis_sha256=owner.identity,settings=settings,initial_displacement_physical=displacement,initial_velocity_physical=velocity)
