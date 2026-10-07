@@ -4402,3 +4402,26 @@ discrepancy is real but not causally allocated. This does not invalidate the
 scoped local F09 foundation, qualify E03, or diagnose the GE connection. No new
 physical execution or refinement authority is consumed or inferred.
 Review: next-force-output-v1/saved-adjudication-v3/accuracy-applicability-review-v1.md.
+
+### 2026-10-07: displacement consumer source milestone
+
+ANYfem isolated candidate 8ecb8b42 implements existing elastic/material panel
+v2 displacement requests, public seeding/solve/recovery and Project input roundtrip.
+Force v1 meanings unchanged. Supporting independent review found and source-closed
+flat shell indexing and pre-seed invalid execution-option defects; root corrected
+an overnarrow unit-seed instruction against the actual solver checkpoint contract.
+No remaining blocking source finding. Source IMPLEMENTED_NOT_RUNTIME_VERIFIED:
+53 focused controls, 19 legacy controls and one actual example are proposed,
+not passed. Same-owner runner preparation uses fresh 360s/reserve60 prospectively,
+unchanged tested solver artifact and existing resource settings. No release or
+aggregate acceptance. Different-family final review remains unmet.
+
+### 2026-10-07: explicit development pause
+
+Goal PAUSED. No workers or numerical jobs running. Consumer 8ecb8b42 remains
+source-reviewed but runtime-unverified. Its static packet completed before pause:
+manifest c31184cbe0ff9e0d4435cd113dc25f461e67dbb74f3a302ea317eaa41e8ce53f;
+authority and ledger PENDING, 0s used/360s remaining, no attempts/in-flight job.
+Root frozen-record review and activation require explicit resumption. Existing
+human programme approval is preserved; consumed campaigns and all failed evidence
+remain unchanged. No source/runtime work follows this pause; checkpoint only.

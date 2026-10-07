@@ -1,8 +1,8 @@
-# Current state - 7 October 2026
+# PAUSED restart point - 7 October 2026
 
 Revision 8 remains the complete programme: G0-G6/F01-F13/V01-V28/B01-B18,
 external references, practical scale, platforms, consumers, reviews and release.
-Goal ACTIVE. Human approval covers pending checks, compatible repairs and
+Goal PAUSED by explicit human request. Human approval covers pending checks, compatible repairs and
 prospective bounded checks; scientific criteria and consumed authority remain.
 No communication with the contact task. Mistral/local remain unavailable;
 OpenAI supporting review does not satisfy final different-family acceptance.
@@ -63,13 +63,31 @@ the coarse B2 compliance screen: external/native work 2.78978, relative gap
 plate/beam idealization and convergence remain unresolved. This is distinct
 from the principal GE connection. No new physical campaign is launched.
 
-ANYfem consumer work owns only stiffened-shell source/tests/examples/docs in
-C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer (clean baseline da24321).
-Source-only assignment now: targets, physical recovery, experimental persistence,
-checkpoint/restore/continue, focused controls and example. Root activates checks
-only after source review and a prospective bounded packet. No sibling main edits.
+ANYfem source milestone committed at 8ecb8b42 in its isolated experimental
+checkout. Existing elastic/material panels now persist v2 displacement requests;
+v1 force formats stay unchanged. Source review repaired flat shell-output indexing
+and refusal of bad callbacks/iteration controls before force seeding. Root also
+corrected its overnarrow unit-seed assumption: actual cyclic seed factors are
+preserved. Supporting independent review has no remaining blocking source finding.
 
-## Protected boundaries and restart
+Runtime remains UNVERIFIED. Static packet preparation completed before pause.
+The packet covers 53 framing/dispatch controls, 19 affected legacy controls and
+one actual public helper/checkpoint/restore/continue example. Prospective 360s,
+reserve 60s; CPU0/thread1/JIT off/2GiB/job1. No old allocation transfer or solver
+wheel rebuild. Authority/ledger remain PENDING, used 0s, remaining 360s, no attempts or in-flight
+process. Manifest c31184cbe0ff9e0d4435cd113dc25f461e67dbb74f3a302ea317eaa41e8ce53f.
+Root reviews final JSON bindings and activates only after explicit resumption.
+Existing programme approval persists; this is a pause, not a fresh approval need.
+Unrelated ANYfem main edits and protected historical evidence remain untouched.
+
+## Resume action and protected boundaries
+
+No workers or numerical jobs remain running. Consumer handoff is saved in its
+.development/distributing-displacement-consumer-20261007/handoff.md; supporting
+review found no runner-code blocker but final frozen JSON records are unreviewed.
+On explicit resume, read this note, confirm source/packet identities and actual
+Git state, finish the frozen-record review, then activate bounded checks. Do not
+rerun completed solver checks or the consumed E03 physical comparison.
 
 Formal F03 UNCONSUMED; body retry PENDING; bridge38 UNRUN; closed campaigns unchanged.
 Never inspect, traverse or copy protected us3-modal-canary evidence. No automatic

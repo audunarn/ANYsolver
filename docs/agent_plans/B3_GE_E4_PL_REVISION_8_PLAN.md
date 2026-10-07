@@ -1,3 +1,5 @@
+**Current status: PAUSED by user on 7 October 2026.** Resume only after user direction; exact restart state is in B3_GE_E4_PL_ACTIVE_STATE.md.
+
 # B3-GE / E4-PL stiffened shells: Revision 8 development plan
 
 **5 October execution delta:** the separately identified prescribed-motion CCX
