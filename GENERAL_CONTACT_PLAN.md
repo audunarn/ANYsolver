@@ -58,6 +58,19 @@ The original source checkpoint and execution scope are in the
 [source checkpoint and execution proposal](docs/d1_review_support/contact_native_c8_pair_20261007/source_candidate.md).
 Preserve old scope balances. Development passes do not establish C7/C8 acceptance.
 
+## Active implementation route
+
+The current source milestone is the native-S3 common-midpoint adapter described
+in the restart note. This supersedes earlier pair-development next-action prose;
+that prose and its failures remain historical evidence. One sustained author owns
+the new descriptor/contact/transaction route, focused fixtures, example and guide.
+Use the existing midpoint controller and minimal default-preserving hooks. Source
+admission is free centered zero-lift native plus elastic small-motion S3 interior;
+24 physical and 36 algebraic coordinates are solved in one 60-coordinate system.
+Shell zero-mass rotations still move the physical skin. Certify both path legs
+through the actual shared stage and endpoint consistency projection. No new
+fixture execution until its concrete source candidate and scope are ready.
+
 ## Current C8 result and next delivery
 
 The native beam-beam V3k component is development verified: five fresh focused
