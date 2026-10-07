@@ -1,6 +1,6 @@
 {
-  "status": "PENDING",
-  "approval_evidence": null,
+  "status": "APPROVED",
+  "approval_evidence": "Human user, 7 October 2026: Proceed on dvelopemnt, **150-second E03 verification** approved.",
   "total_seconds": 150,
   "reserve_seconds": 60,
   "mode_cap_seconds": 30,

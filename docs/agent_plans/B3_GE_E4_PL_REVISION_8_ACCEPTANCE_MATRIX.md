@@ -4264,3 +4264,15 @@ This supplies no public curved admission, GE point equivalence or E03 acceptance
 Actual curved physical correspondence and bulk convergence remain unestablished.
 Frozen56-control candidate628bbff5/150-second proposal unchanged; no transfer.
 Source: docs/reference_cases/stiffened_shell_e03_ge_distributing_work_bridge.md.
+## 2026-10-07 — E03 tooling source and installed verification
+
+`628bbff5`:56 source and56 installed controls PASS, no failures/errors/skips.
+Existing431-module wheel reused, exact source/artifact/input identities matched;
+root checked246 loaded solver-file hashes in each mode. CPU0/thread1/JIToff
+verified before/after, peak197648384B. Exact process-wall17.4686185s used of150s;
+132.5313815s remains with60s reserve, restricted to E03 verification/repair.
+Raw execution/JUnit/per-case/runtime/import/resource evidence and root result:
+`.qualification/b3-ge-e4-pl/r8-e03-curved-source-dev-20261007-v1/`.
+No native/CCX physical execution or bridge controls. FullE03, physical idealization,
+convergence, independent mechanics acceptance and aggregate gates remainOPEN.
+Next: prepare ONE coarse B2/CCX feasibility screen, with separate execution scope.

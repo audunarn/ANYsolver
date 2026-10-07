@@ -26,22 +26,22 @@ compatibility and physical convergence remain unverified. Full E03 staysOPEN.
 Supporting same-family source review found no blocking local fit/pivot defect;
 it found rib-identity matching and nested receipt-ownership gaps. Same owner
 repaired these and added refusal/mutation controls; root inspected the final delta.
-No imports, tests, native/CCX jobs or builds have run for this source slice.
+No native/CCX jobs or builds ran for E03; source/installed control results follow.
 Owner /root/mandatory_consumer_gap completed four E03 source/test/document files.
 Mistral/local unavailable; supporting review does not satisfy family independence.
 
-Next discriminator: focused source controls, then the same controls against the
-existing installed wheel only after source PASS and all431 package hashes match.
-A fresh150-second proposal is PENDING; each processcap30,reserve60,CPU0/thread1,
-JIToff/2GiB/onejob. Compatible repairs preserve failures within that scope.
-56 controls expected by static parametrization, not executed/collected.
-Controls pass -> prepare one bounded physically matched native/CCX coarse screen.
-Mapping/serialization defect -> same owner repairs the exact failing contract.
-No physical solves, CCX, F03/body retry, sibling, main/push/release in this proposal.
-Candidate628bbff5; seven input snapshots frozen;431 package hashes unchanged.
-Root and supporting reader inspected repairs; no remaining source finding.
-Source, frozen inputs and pending runner live at
-.qualification/b3-ge-e4-pl/r8-e03-curved-source-dev-20261007-v1/.
+E03 candidate628bbff5 verified:56 source/56 installed PASS, no skips/failures.
+Fresh150 approval received from the human7October;17.4686185seconds used,
+132.5313815remaining,reserve60,restricted to this slice verification/repair only.
+CPU0/thread1/JIToff effective before/after;peak197648384B;all431 package hashes
+and seven frozen input hashes matched. Root checked246 loaded solver files in
+each mode. Existing wheel reused; no rebuild or source repairs were needed.
+Raw results at .qualification/b3-ge-e4-pl/r8-e03-curved-source-dev-20261007-v1,
+source-v1,installed-v1,and root-result-v1.json. Full E03 and external physics OPEN.
+Next discriminator: ONE coarse level0,+offset B2/native and CalculiX feasibility
+screen; preparation only until its separate physical execution is authorized.
+No physical solves/CCX/F03/body/sibling/main/push/release launched. No allowance
+transfer to the38 bridge controls or physical screen. Keep complete goalACTIVE.
 
 Independent source slice delivered: GE finite distributing reference work bridge
 uses material face-pair director tilt and planar-gradient yaw; arbitrary-frame

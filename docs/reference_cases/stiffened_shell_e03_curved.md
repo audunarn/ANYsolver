@@ -147,9 +147,26 @@ These source criteria authorize no runs and do not revive earlier campaigns.
 
 Proposed source controls, only after fresh scope:
 `python -m pytest tests/test_stiffened_shell_e03_reference.py -q`.
-Static parametrization gives 56 prepared controls; collection and execution remain
-unrun, including the receipt-isolation/bounds and rib-identity repairs.
+At the candidate source freeze, 56 controls were prepared and unrun. Their later
+scoped verification is recorded below.
 Source controls, installed-provider verification and actual native/external jobs
 need separately bounded accounting and preserved failures. Every comparison
 remains a B2-only unqualified candidate and refuses a full E03 verdict. No G0–G6,
 F01–F13, scientific acceptance, application integration or release gate is closed.
+
+## 7 October scoped tooling verification
+
+Candidate `628bbff5` passed all 56 source controls and the same 56 controls
+against the existing hash-matched installed wheel, with no failures or skips.
+Wheel SHA256 `fa5507fe14cc09949743adb7d5ae340a2499d9b813d6b80a1b7d4ea414267e82`;
+all 431 package modules and frozen input hashes matched. Actual CPU affinity0,
+one numerical thread and JIT disabled were verified before and after each run.
+Process-wall time total:17.4686185s; peak process-tree RSS:197648384bytes.
+Raw commands, runtime, imports, per-case reports, stdout/stderr, JUnit and
+accounting: `.qualification/b3-ge-e4-pl/r8-e03-curved-source-dev-20261007-v1/`.
+
+This establishes only assigned tooling controls. No physical native or CalculiX
+case executed. Parser-positive synthetic fixtures do not establish equilibrium,
+physical convergence, connection fidelity or E03 acceptance. The remaining
+132.5313815s is restricted to this verification/repair slice, including its60s
+reserve; it cannot fund the separate bridge or physical screen.
