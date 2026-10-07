@@ -22,29 +22,34 @@ It reads only owner.capabilities; no new solver/preflight/compile/checkpoint pat
 No model identity, admitted operation union or qualification is fabricated.
 Existing accessors, dispatch, mechanics, defaults and checkpoint meanings unchanged.
 
-Candidate state IMPLEMENTED_UNVERIFIED. Root reviewed all4 owned files and the
-worker repaired Unicode scalar handling before any execution. Git diff whitespace
-passed. 41 source controls are PREPARED, including distinct actual GE/B2 facade
-report fixtures. No imports/pytest/build/install/ANYworkspaceAI checks ran.
-OpenAI author handoff and separate supporting source/harness review complete;
-no consequential finding, no execution or different-family acceptance; no job live.
+Candidate state SOURCE_AND_INSTALLED_VERIFIED within assigned consumer criteria.
+Source candidate535390ef; fixture repair0acbef03. First source40/41 failed solely
+from a transitive legacy-test import. Same author replaced that fixture with the
+same self-contained B2 panel; product unchanged. Failed v1 evidence preserved.
+Then41 source and41 installed controls passed; one isolated wheel build/install
+passed. Actual imported solver paths/hashes checked,431 package modules; wheel
+SHA fa5507fe14cc09949743adb7d5ae340a2499d9b813d6b80a1b7d4ea414267e82.
+CPU0/thread1/JIToff/2GiB verified. Four attempts57.9778161s total; peak209440768B.
+Fresh180 approved by human reply call_vlNEmdqV8t7XonfSAFBVvJx2/question0;
+122.0221839s remains with60s reserve, this consumer verification/repair scope only.
+No physics requests, new scientific acceptance, ANYworkspaceAI integration, main,
+push, sibling edit or release. Public defaults/checkpoint meanings unchanged.
+Full G6B, external/scale/platform and different-family review obligations remainOPEN.
 
-Next permitted action: fresh bounded source controls -> one isolated wheel
-build/install -> installed controls, each cap30s, cumulative180s,reserve60.
-CPU0/thread1/JIToff/2GiB/one job. Compatible repair within that same allowance;
-preserve failures. This is Level-A consumer verification, not a scientific campaign.
-authority-v1/ledger-v1 PENDING_USER_APPROVAL,0used; supervisor refuses interpreter
-launch before approval. No transfer from fold or other consumed scope.
-No force/displacement/arc/modes/buckling/body solve, closed campaign,F03,sibling,
-main,push or release included. Actual commercial-consumer integration, full
-platform/resource/evidence qualification and aggregate G6B remainOPEN.
-
+Next: retain the verified consumer-record slice and select a concrete remaining
+programme obligation under its actual ownership/prerequisites/authority. No new
+milestone draws from this remainder. Parked capacity finding stays unresolved;
+do not substitute corrected diagnostic values for the frozen accuracy criterion.
+OpenAI author handoff and separate supporting completion review complete;
+one stale documentation statement corrected, no unresolved slice finding.
+Raw receipts,original failure,new frozen snapshots and root-verification-result-v1
+are at consumer-capabilities-dev. Normal recovery needs no campaign replay.
 Source/tests/doc:
 src/anysolver/_stiffened_shell_consumer_capabilities.py
 src/anysolver/stiffened_shell.py (additive facade only)
 tests/test_stiffened_shell_consumer_capabilities.py
 docs/development/stiffened_shell_consumer_capabilities.md
-Pending runner/431source-module/4input snapshot:
+Verified runner/431source-module/3v2-input snapshot; original4v1 inputs preserved:
 .qualification/b3-ge-e4-pl/r8-consumer-capabilities-dev-20261007-v1/
 
 ## Parked physical-accuracy finding

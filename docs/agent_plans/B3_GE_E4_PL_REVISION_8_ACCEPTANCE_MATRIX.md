@@ -4230,3 +4230,12 @@ G6B/commercial consumer integration/artifact/platform/acceptance remainOPEN.
 Fresh180verification proposalPENDING,0used;source/build/installedcap30,reserve60,
 CPU0/thread1/JIToff/2GiB. No oldfold budgettransfer or numerical/closedcampaign.
 Evidence:consumer-capabilities-dev-20261007-v1/source-preparation-v1.json.
+### 2026-10-07 — consumer capability record source/installed slice
+Candidate535390ef, compatible test-fixture repair0acbef03: 41 source/41 installed
+controls PASS; one isolated wheel build/install PASS. Original40/41 fixture
+failure preserved. Four attempts57.9778161s/180; remaining122.0221839s,reserve60.
+CPU0/thread1/JIToff/2GiB verified; peak209440768B;431 payload modules bound.
+Wheel fa5507fe14cc09949743adb7d5ae340a2499d9b813d6b80a1b7d4ea414267e82.
+Scope: additive primitive record, ownership/refusal and actual GE/B2 facade reports.
+No physics/capacity qualification, consumer application acceptance or G6B closure.
+Evidence: r8-consumer-capabilities-dev-20261007-v1/root-verification-result-v1.json.

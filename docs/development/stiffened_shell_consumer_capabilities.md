@@ -1,7 +1,8 @@
 # Experimental stiffened-shell consumer capability record
 
-Candidate state: **IMPLEMENTED_UNVERIFIED**. Source, import, pytest and installed
-artifact checks have not run. This candidate closes no G6B or other acceptance gate.
+Candidate state: **VERIFIED_AGAINST_ASSIGNED_CONSUMER_CRITERIA** for product
+`535390ef` with test-fixture repair `0acbef03`. This scoped verification closes no
+G6B gate and establishes no application or scientific acceptance.
 
 `anysolver.stiffened_shell.capabilities_record(analysis)` reads the `capabilities`
 property of an existing stiffened-shell GE or B2 owner and returns detached Python
@@ -40,11 +41,16 @@ capability properties; they establish no compiled-provider integration claim.
 Separate public-facade smoke tests construct existing GE and B2 panel fixtures
 and read their actual reports without issuing numerical solve requests.
 
-The prepared tests cover primitive JSON round-trip, field/identity preservation,
+The verified tests cover primitive JSON round-trip, field/identity preservation,
 mutation isolation, qualification truth, refusal boundaries, no owner operation
-beyond capability access, and representative existing facade routes. They remain
-unrun until fresh source-check authority is supplied. Proposed source command:
-`python -m pytest tests/test_stiffened_shell_consumer_capabilities.py -q`.
-Installed-artifact verification and ANYworkspaceAI integration require separately
-scoped follow-through; the consumed numerical campaign and remaining fold budget
-provide no execution authority for this candidate.
+beyond capability access, and representative existing facade routes. Preserved
+`source-v1` evidence records 40 of 41 passing and one failure from an unbound
+legacy test import, with process-wall duration 12.5308052 seconds. After the
+self-contained B2 fixture repair, `source-v2` and `installed-v1` each passed all
+41 controls; one isolated build/install also passed. Cumulative process-wall use
+was 57.9778161 seconds of the 180-second allowance, with effective settings CPU0,
+one thread, JIT off and 2 GiB. The verified wheel SHA-256 is
+`fa5507fe14cc09949743adb7d5ae340a2499d9b813d6b80a1b7d4ea414267e82`, with 431
+payload modules. ANYworkspaceAI application integration and G6B/scientific
+acceptance remain open; these checks do not transfer authority from the consumed
+numerical campaign or remaining fold budget.
