@@ -1,0 +1,17 @@
+Failed to find real location of C:\Python\Python314\python.exe
+Traceback (most recent call last):
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_mz_work_matched_dev.py", line 240, in <module>
+    main()
+    ~~~~^^
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_mz_work_matched_dev.py", line 229, in main
+    result = evaluate()
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_mz_work_matched_dev.py", line 148, in evaluate
+    q, lam, interface, support, external_checks = solve_continuum(
+                                                  ~~~~~~~~~~~~~~~^
+        model, k, c, scale, load)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_mz_work_matched_dev.py", line 112, in solve_continuum
+    raise ValueError("continuum equilibrium, gap or work gate failed: " +
+    ...<4 lines>...
+                               applied_pairing=work)))
+ValueError: continuum equilibrium, gap or work gate failed: {'equilibrium': 631.6352559851599, 'compatibility': 1.049269156154338e-21, 'work_error': 1.4504798642007472e-11, 'interface_work_error': 4.928240908537466e-16, 'applied_pairing': 6.445248134483477e-07}

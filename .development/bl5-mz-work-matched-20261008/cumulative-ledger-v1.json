@@ -1,0 +1,62 @@
+{
+  "scope": "one bounded Mz work-matched source-development batch; no external executable or formal F03",
+  "status": "CLOSED",
+  "allowance_seconds": 90.0,
+  "reserve_seconds": 30.0,
+  "used_seconds": 12.582444100014982,
+  "remaining_seconds": 77.41755589998502,
+  "unspent_above_reserve_seconds": 47.41755589998502,
+  "attempts": [
+    {
+      "id": 1,
+      "receipt": "receipt.json",
+      "wall_seconds": 2.376177699989057,
+      "cumulative_seconds": 2.376177699989057,
+      "exit_code": 1,
+      "stop_reason": null,
+      "output": null,
+      "source_sha256": "8243511e3bfee0573a5cab9fa2ae2d414b6ba5b34aa62238f5849705bc2a0f0e"
+    },
+    {
+      "id": 2,
+      "receipt": "receipt-v2.json",
+      "wall_seconds": 2.1884316000068793,
+      "cumulative_seconds": 4.5646092999959365,
+      "exit_code": 1,
+      "stop_reason": null,
+      "output": null,
+      "source_sha256": "e2d6a82ea18d4eb4ce43e693fabb875b6e9f39761fa3dc62c01ea486c6ec4d8c"
+    },
+    {
+      "id": 3,
+      "receipt": "receipt-v3.json",
+      "wall_seconds": 2.739466099999845,
+      "cumulative_seconds": 7.3040753999957815,
+      "exit_code": 0,
+      "stop_reason": null,
+      "output": "case-v3/result.json",
+      "source_sha256": "441ed87de8216e59f9b494eecd105d3f3f7fe00738053c0e0d412941d1e26cb2"
+    },
+    {
+      "id": 4,
+      "receipt": "receipt-v4.json",
+      "wall_seconds": 2.67020940000657,
+      "cumulative_seconds": 9.974284800002351,
+      "exit_code": 0,
+      "stop_reason": null,
+      "output": "case-v4/result.json",
+      "source_sha256": "049e3b4eed88324cfaea17ac0663d80b3fbcabff50a8205ab115bf4650b6a6db"
+    },
+    {
+      "id": 5,
+      "receipt": "receipt-v5.json",
+      "wall_seconds": 2.6081593000126304,
+      "cumulative_seconds": 12.582444100014982,
+      "exit_code": 0,
+      "stop_reason": null,
+      "output": "case-v5/result.json",
+      "source_sha256": "896a6c17aa672e49d635c48fe6239d668d5a1637adcfe3ecd74a4cbde05b5423"
+    }
+  ],
+  "note": "Each immutable per-attempt receipt has a local remaining field; only this ledger gives cumulative accounting. V1/V2 failed unchanged numerical gate; V3 passed after exact odd-parity nodal load construction; V4 corrected exerted-action sign label; V5 added body work attribution."
+}

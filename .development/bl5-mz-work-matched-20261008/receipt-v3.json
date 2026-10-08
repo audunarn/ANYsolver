@@ -1,0 +1,37 @@
+{
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-I",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\scripts\\r8_bl5_mz_work_matched_dev.py",
+    "--output",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-mz-work-matched-20261008\\case-v3"
+  ],
+  "cwd": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008",
+  "source_sha256": "441ed87de8216e59f9b494eecd105d3f3f7fe00738053c0e0d412941d1e26cb2",
+  "source_commit": "121e51b6147cdb88b9d79f8fbd1eaeb9c6dd180a",
+  "effective_cpu_affinity": [
+    0
+  ],
+  "environment": {
+    "NUMBA_DISABLE_JIT": "1",
+    "NUMBA_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "BLIS_NUM_THREADS": "1",
+    "VECLIB_MAXIMUM_THREADS": "1"
+  },
+  "process_wall_seconds": 2.739466099999845,
+  "process_cap_seconds": 60.0,
+  "cumulative_allowance_seconds": 90.0,
+  "consumed_seconds": 2.739466099999845,
+  "remaining_seconds": 87.26053390000015,
+  "reserve_seconds": 30.0,
+  "sampled_peak_rss_bytes": 165351424,
+  "memory_limit_bytes": 2147483648,
+  "exit_code": 0,
+  "stop_reason": null,
+  "output": "case-v3/result.json",
+  "stdout": "stdout-v3.txt",
+  "stderr": "stderr-v3.txt"
+}

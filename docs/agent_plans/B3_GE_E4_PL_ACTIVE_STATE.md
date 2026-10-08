@@ -1,16 +1,22 @@
 # Active development — 8 October 2026
 
-BL5 in-plane couple screen completed at source `333b1e7b`: the supported
-three-edge fixture transferred a +1 N m beam-tip Mz to -1 N m shell
-interface and support moments, with near-zero resultant force and a
-4.66e-14 free-equilibrium ratio. Child CPU0/thread1/JIT-off and 3.8291954 s
-wall are recorded in
-`.development/bl5-inplane-couple-20261008/decision.md` and its raw receipt.
-This rules out an unsupported moment mode in that fixture only. Physical
-accuracy, growing-space stability, F03 and G0 remain open. Next discriminate
-the five-channel work against a matched physical Mz reference, rather than
-further channel tuning or an unmotivated mesh sweep. Current-main ANYfem
-installed verification remains PENDING distinct authority and unrun.
+BL5 Mz development decision: a +1 N m native tip action and a resolved-bar
+`t_x=-Mz*y/I_z` traction share the declared five-channel weak material-trace
+work on the 1 m specimen. Both exert +1 N m on the shell and balance -1 N m
+at the support; equilibrium/gap/body work checks pass. Native tip rotation is
+1.88630052e-6 rad versus continuum work-conjugate 6.44524813e-7 rad.
+The difference is primarily in beam-side internal work, but different
+interface action distributions and body spaces prevent a law-error or
+physical-accuracy attribution. Preserve five attempts, including two failed
+numerical screens and the corrected exerted-action sign, in
+`.development/bl5-mz-work-matched-20261008/`; cumulative wall 12.5824441 s
+of 90 s, final CPU0/thread1/JIT-off and peak RSS 165,392,384 B. The original
+three-edge probe's `C.T @ lambda` label denotes the algebraic covector; its
+physical exerted action is `-C.T @ lambda`, as documented by the new
+adjudication. Next: compare beam body/port response under one common physical
+interface density before another refinement or external run. F03/M2/G0
+remain open. Current-main ANYfem installed verification remains PENDING
+distinct authority and unrun.
 
 The human resumed development after PR #63 established common main at
 `cff55d95e905ab689efdacdf08742a60614728c1`. Work in the sparse, isolated
