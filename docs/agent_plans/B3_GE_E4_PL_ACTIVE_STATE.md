@@ -132,6 +132,43 @@ explanation for the saved shell-work contrast, not the physical bond-fidelity
 uncertainty. The next discriminator is the declared same-action local-slip and
 traction/couple-work reference; no further reconstruction is needed.
 
+Next bounded BL5 decision: reuse the already executed, geometrically matched
+Fy/Mx C3D20 weak-P0 and native cases. Recover pointwise five-channel gaps and
+signed/absolute multiplier work at the same Gauss stations, checking each
+side's integrated work against its assembled rows. If local slip is material
+despite weak-row closure, investigate one coherent interface-resolution rule
+before attributing the tip-response difference to body mechanics. If local
+slip is small on both sides, prioritize the known body/traction/root mismatch.
+A work-transpose or geometry mismatch invalidates this comparison and requires
+repair. This is saved external output plus bounded native development solves,
+not a new CalculiX run or formal F03 assessment. Cached worker unavailability
+and the coupled physical-contract interpretation keep this slice with Astra.
+The first saved-output recovery attempt failed a near-zero signed-work parity
+check that used the cancelled signed value as its scale. Preserve the failure;
+the revised check uses absolute local station-work contributions as its scale.
+One repair attempt remains within this 150-second development allowance, with
+the same physical inputs and no changed scientific acceptance threshold.
+The corrected v2 completed; v3 added an independent-multiplier check and
+passed on both saved loads. At the same eight Gauss stations, native versus
+resolved director-gap RMS is `3.08e-6`/`2.31e-7` for Fy and
+`6.85e-6`/`7.15e-7` for Mx. Absolute cancelling local work divided by applied
+work is `4.91%`/`0.73%` for Fy and `10.86%`/`1.85%` for Mx. Both assembled
+weak-row works remain approximately zero. The [bounded result](../../.development/bl5-saved-local-transfer-20261008-v3/results.md)
+does not allocate body/traction/connection error. It justifies one complete
+five-channel P1 screen on the unchanged native body for both loads; it does
+not select P1 or replace the required 2:1 and full-ratio assessment.
+The first P1 script attempt used a basis excluded by the native-fibre owner;
+its admission failure is preserved. The admitted five-channel P1-coarse
+candidate then passed the bounded same-body screen: 25 rows against P0's 20,
+identical shell/beam operator and supports, and reconstructed weak work.
+Fy P1/P0 position and director gaps are 0.597/0.864; Mx gaps are 0.979/0.977.
+Absolute local-work ratios are 0.340/0.619; applied-work ratios are
+0.9624/0.9658. [Result](../../.development/bl5-p1-native-screen-20261008-v2/results.md).
+Thus resolution matters for Fy but does not explain most Mx local slip.
+Stop this isolated basis contrast. Next distinguish body, end traction, root
+and connection using a physically matched work-conjugate reference; do not
+promote P1 from smaller local work. F03, M2 and full ratios remain open.
+
 ## Delivered experimental behavior and open acceptance
 
 - The sparse multi-element Q4/mixed Q4-S3/all-S3 GE point workflow, physical

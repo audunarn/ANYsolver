@@ -1,0 +1,16 @@
+Failed to find real location of C:\Python\Python314\python.exe
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_native_p1_contrast_dev.py", line 105, in <module>
+    main()
+    ~~~~^^
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_native_p1_contrast_dev.py", line 96, in main
+    result = evaluate(args.prior)
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_native_p1_contrast_dev.py", line 47, in evaluate
+    candidate = ss.create_analysis(definition=p1)
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\src\anysolver\stiffened_shell.py", line 220, in create_analysis
+    return ExperimentalGEAnalysis(definition, resources=resources)
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\src\anysolver\_stiffened_shell_ge_experimental.py", line 743, in __init__
+    raise ValueError("native-fibre BL5 requires its explicit flat shell material domain, objective Q4 when present, supported director-bond lines and physical fibres")
+ValueError: native-fibre BL5 requires its explicit flat shell material domain, objective Q4 when present, supported director-bond lines and physical fibres

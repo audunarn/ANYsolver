@@ -1,0 +1,14 @@
+Failed to find real location of C:\Python\Python314\python.exe
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_saved_local_transfer_dev.py", line 187, in <module>
+    main()
+    ~~~~^^
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_saved_local_transfer_dev.py", line 180, in main
+    result = evaluate(cases)
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_saved_local_transfer_dev.py", line 147, in evaluate
+    solid = _solid(case, *cases[case])
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_saved_local_transfer_dev.py", line 87, in _solid
+    raise AssertionError("resolved station work does not reconstruct assembled rows")
+AssertionError: resolved station work does not reconstruct assembled rows

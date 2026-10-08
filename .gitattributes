@@ -678,3 +678,5 @@ tests/test_stiffened_shell_physical_fibre_j2_history.py text eol=lf
 # Preserve exact development receipts and output bytes, including failed attempts.
 .development/b2-member-envelope-20261008-*/** -text -whitespace
 .development/bl5-saved-work-guard-20261008-*/** -text -whitespace
+.development/bl5-saved-local-transfer-20261008-*/** -text -whitespace
+.development/bl5-p1-native-screen-20261008-*/** -text -whitespace

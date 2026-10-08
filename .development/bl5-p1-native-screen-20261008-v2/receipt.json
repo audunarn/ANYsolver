@@ -1,0 +1,29 @@
+{
+  "status": "COMPLETED",
+  "exit_code": 0,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-m",
+    "scripts.r8_bl5_native_p1_contrast_dev",
+    "--prior",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-saved-local-transfer-20261008-v3\\local-transfer.json",
+    "--output",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-p1-native-screen-20261008-v2\\screen.json"
+  ],
+  "source_sha256": "7c6cceb9f069dbdaa9ab3e8c9d3d48de0af89bf1e4a58ff3f15dab53d758ecf2",
+  "prior_sha256": "84a0280817174df9946f455dd6939842c21d6648bd23796d149906300914fe1b",
+  "source_commit": "39e6ad4a1e9f67c4806b84f135fcf41585784718",
+  "wall_seconds": 3.0722863000119105,
+  "process_cap_seconds": 80,
+  "cumulative_allowance_seconds": 120,
+  "cumulative_used_seconds": 5.68763770001533,
+  "cumulative_remaining_seconds": 114.31236229998467,
+  "peak_sampled_process_tree_rss_bytes": 165888000,
+  "memory_cap_bytes": 2147483648,
+  "cpu_affinity_observed": [
+    0
+  ],
+  "threads_requested": 1,
+  "jit_disabled_requested": true,
+  "output_sha256": "6585cec3b591a2efe1459227d924aefef37c0485b11b01a1a90a8da400e9ed95"
+}

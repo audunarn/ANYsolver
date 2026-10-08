@@ -1,0 +1,42 @@
+{
+  "status": "COMPLETED",
+  "exit_code": 1,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-m",
+    "scripts.r8_bl5_saved_local_transfer_dev",
+    "--fy",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-ccx-weak-p0-20261008-fy-v4",
+    "--fy-result",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-ccx-weak-p0-20261008-fy-v4-recovery-v3\\result.json",
+    "--mx",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-ccx-weak-p0-20261008-mx-v2",
+    "--mx-result",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-ccx-weak-p0-20261008-mx-v2-recovery-v1\\result.json",
+    "--output",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-saved-local-transfer-20261008-v1\\local-transfer.json"
+  ],
+  "source_sha256": "567e2ef73ac999e64473e0382afc07125a10c0df5e61264d05a5e02ec36b0749",
+  "input_sha256": {
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-ccx-weak-p0-20261008-fy-v4\\weak.frd": "85c9799830f69ecd611bd4cc323974aff9dda99b5be1c7f64c2b4f52ca035123",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-ccx-weak-p0-20261008-fy-v4\\metadata.json": "3649947289bdb383922ebc7479bf1f4180dc060b2356c81f1496d4b3c996c423",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-ccx-weak-p0-20261008-fy-v4-recovery-v3\\result.json": "9bd5f9ad16d23c384bf315b3e9e36bf50e3d09b15c37238af20893f709622bde",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-ccx-weak-p0-20261008-mx-v2\\weak.frd": "d5f7b203ebadd9757dae523309d09414f4365bb09c0c966246ea6d68612c207d",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-ccx-weak-p0-20261008-mx-v2\\metadata.json": "74ed82d4109587badca2f414fb0a5dff070a81f8bf27b4649551dd50d01af9c5",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-ccx-weak-p0-20261008-mx-v2-recovery-v1\\result.json": "97a672c54dc18e918bbc38be6111098c3f987d88cb75a07c09fc2684b1015a43"
+  },
+  "source_commit": "39e6ad4a1e9f67c4806b84f135fcf41585784718",
+  "wall_seconds": 3.0360516000073403,
+  "process_cap_seconds": 120,
+  "cumulative_allowance_seconds": 150,
+  "cumulative_used_seconds": 3.0360516000073403,
+  "cumulative_remaining_seconds": 146.96394839999266,
+  "peak_sampled_process_tree_rss_bytes": 166338560,
+  "memory_cap_bytes": 2147483648,
+  "cpu_affinity_observed": [
+    0
+  ],
+  "threads_requested": 1,
+  "jit_disabled_requested": true,
+  "output_sha256": null
+}
