@@ -7,7 +7,10 @@ The candidate is not wired into the original body probe or solver facade.
 from dataclasses import dataclass
 from decimal import Decimal as D, localcontext
 from fractions import Fraction as F
-from math import fma
+try:
+    from math import fma as _fma
+except ImportError:  # Python 3.11/3.12: retain correctly rounded product error.
+    _fma = None
 import numpy as np
 from scipy import sparse
 from scipy.sparse.linalg import splu
@@ -40,7 +43,12 @@ def two_sum(a,b):
 def _product(a,b):
     high=np.asarray(a,dtype=float)*np.asarray(b,dtype=float)
     if not np.isfinite(high).all():raise FloatingPointError('nonfinite scaled correction')
-    low=np.array([fma(float(x),float(y),-float(z)) for x,y,z in zip(a,b,high)],dtype=float)
+    # The finite high product is already checked. Exact dyadic subtraction
+    # followed by one binary64 rounding reproduces fma(x,y,-high), including
+    # subnormal errors, without a precision-dependent splitting heuristic.
+    low=np.array([(_fma(float(x),float(y),-float(z)) if _fma is not None else
+                   float(F.from_float(float(x))*F.from_float(float(y))-F.from_float(float(z))))
+                  for x,y,z in zip(a,b,high)],dtype=float)
     if not np.isfinite(low).all():raise FloatingPointError('nonfinite product remainder')
     return high,low
 

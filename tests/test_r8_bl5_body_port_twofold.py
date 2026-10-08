@@ -7,6 +7,22 @@ from scipy import sparse
 from scripts import r8_bl5_body_port_twofold as candidate
 
 
+def test_product_remainder_without_platform_fma(monkeypatch):
+    from fractions import Fraction
+    a=np.array([1.+2.**-27, -1.-2.**-27, 1.e-200, 0., np.nextafter(0.,1.)])
+    b=np.array([1.-2.**-27, 1.-2.**-27, 1.e-100, -3., .6])
+    native_high,native_low=candidate._product(a,b)
+    monkeypatch.setattr(candidate,'_fma',None)
+    high,low=candidate._product(a,b)
+    expected=np.array([float(Fraction.from_float(float(x))*Fraction.from_float(float(y))
+                             -Fraction.from_float(float(z))) for x,y,z in zip(a,b,high)])
+    np.testing.assert_array_equal(high,native_high)
+    np.testing.assert_array_equal(low,expected)
+    np.testing.assert_array_equal(low,native_low)
+    assert low[0]!=0.
+    with pytest.raises(FloatingPointError):candidate._product(np.array([np.nan]),np.array([1.]))
+
+
 @pytest.mark.parametrize('tiny',(1e-20,))
 def test_quiet_physical_row_requires_retained_low_parts(tmp_path,tiny):
     # u are physical coordinates; p are retained conjugates. No retained loads.

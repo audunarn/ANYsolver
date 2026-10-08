@@ -61,8 +61,31 @@ Completed so far: 167 then 168 main controls; 93 targeted guard controls;
 fibre/S3 and physical B2 batching. Intermediate failures and runner/fixture
 corrections are preserved, including preimport subprocess input correction.
 These counts refer to their recorded file hashes, not automatically to later
-edits. Final guard verification, a fresh installed artifact, representative
-stiffened-shell lifecycle/example checks and portable CI remain before promotion.
+edits. Final guard controls passed 96/96. The first fresh installed wheel passed
+209 main/contact/B2 controls and 19 GE lifecycle controls; its public experimental
+panel example completed. A second isolated artifact passed 37 affected installed
+controls. Artifact identities and receipts remain under the raw path above.
+
+CI exposed missing optional ANYgeometry license metadata, ten unclassified GE
+modules, missing development-only psutil, and an unavailable Python 3.11/3.12
+`math.fma` import in a manufactured-control script. The license and explicit test
+inventory were corrected: two ordinary runtime modules are portable; eight
+explicitly unexecuted or authority-bound scientific development modules remain
+extended obligations. The script now uses exact dyadic product-error subtraction
+when platform fma is unavailable, with one binary64 rounding and unchanged
+acceptance criteria. Thirteen focused controls passed (one archival skip).
+
+Supporting independent inventory review found no protected canary access or
+frozen campaign replay in the bounded sample. It identified one contact test
+that imported a machine-local archived driver merely when present. Its current
+secant-corruption guard remains portable; the archived compatibility comparison
+is now separate and requires an explicit baseline and its own execution authority.
+No archived driver was accessed. Pure guard, saved-fixture parsing and bounded
+algebra coverage are retained rather than excluded because CI failed.
+
+Full CI and final fresh-artifact reconciliation remain before main promotion.
+Earlier failed CI runs and local failed attempts are preserved. The prospective
+CI corrections do not complete any open scientific obligation.
 
 Do not resume feature development, numerical refinement campaigns or release
 work from this note. After consolidation, continue only on explicit human resume.

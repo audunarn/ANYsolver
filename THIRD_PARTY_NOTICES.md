@@ -18,6 +18,7 @@ inventory is `dependency-licenses.json`.
 | pypardiso | `pypardiso>=0.4` | BSD-3-Clause | Optional accelerator; not bundled |
 | mpmath | `mpmath==1.3.0` | BSD-3-Clause | Development/research dependency; not bundled |
 | pytest | `pytest>=8` | MIT | Development dependency; not bundled |
+| psutil | `psutil>=5.9` | BSD-3-Clause | Development resource-monitor dependency; not bundled |
 | build | `build>=1.2` | MIT | Development dependency; not bundled |
 | Twine | `twine>=5` | Apache-2.0 | Development dependency; not bundled |
 

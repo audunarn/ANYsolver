@@ -85,6 +85,13 @@
       "status": "not-bundled"
     },
     {
+      "distribution": "psutil",
+      "licence": "BSD-3-Clause",
+      "requirement": "psutil>=5.9",
+      "scope": "development",
+      "status": "not-bundled"
+    },
+    {
       "distribution": "twine",
       "licence": "Apache-2.0",
       "requirement": "twine>=5",

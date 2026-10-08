@@ -175,7 +175,7 @@ def test_loaded_initial_transaction_boundaries(monkeypatch,tmp_path,failure):
 
 
 def test_V20_secant_corruption_and_legacy_profile_identity(tmp_path):
-    import copy,importlib.util,sys,hashlib
+    import copy
     import numpy as np
     from examples.general_contact_beam_s3_transient_directional_tilted import run
     from anysolver.nonlinear_restart import analysis_configuration_fingerprint
@@ -188,9 +188,18 @@ def test_V20_secant_corruption_and_legacy_profile_identity(tmp_path):
     index=list(ids).index(m.mesh.dof_manager.get_node_dofs(3)[3]);changed['state']['acceleration'][index]+=.1
     changed.pop('checkpoint_sha256');changed['checkpoint_sha256']=analysis_configuration_fingerprint(changed)
     with pytest.raises(ValueError,match='secant history'):run(restart=changed)
-    baseline=Path('C:/ANYworkspaceWork/contact_transient_archive_20261006/native_reader_installed1/anysolver/general_contact/transient.py')
-    # Explicit opt-in baseline compatibility control; ordinary checkout collection stays portable.
-    if not baseline.exists():pytest.skip('protected pre-V20 artifact unavailable for this compatibility discriminator')
+
+
+@pytest.mark.skipif(not os.environ.get('ANYSOLVER_CONTACT_PRE_V20_BASELINE'),
+                    reason='archived compatibility needs explicit baseline and execution authority')
+def test_V20_archived_legacy_profile_identity(tmp_path):
+    import importlib.util,sys,hashlib
+    from anysolver.dynamics import TransientConfig
+    from anysolver.general_contact.transient import solve_transient_contact,ContactTransientSolverControls
+    # Ordinary checks never discover or import a machine-local archived owner.
+    # An authorised reference runner supplies its exact baseline explicitly.
+    baseline=Path(os.environ['ANYSOLVER_CONTACT_PRE_V20_BASELINE'])
+    if not baseline.is_file():raise ValueError('explicit pre-V20 baseline is not a file')
     name='anysolver.general_contact._pre_V20_transient';spec=importlib.util.spec_from_file_location(name,baseline);old=importlib.util.module_from_spec(spec);sys.modules[name]=old
     rows=[]
     try:
