@@ -308,6 +308,23 @@ shear/drilling and unresolved modes for these exact two spaces before any
 further loaded refinement or formal F03. Preserve the previous failed
 thickness attempts and all protected evidence.
 
+The supported same-body local comparison is complete. At fixed 16×8×4
+resolved shell and 32×8×4 beam, 80 rows leave a maximum `1.10e-6` fine
+segment-mean slope-y gap and up to `2.59e-6 J` segment constraint work that
+cancels in paired rows. The 160-row over-resolution control closes those
+segment means but its beam-side segment Mx changes sign across 26 interior
+boundaries, versus four for 80 rows; both transfer `−10 N·m` in total and
+pass KKT/work/wrench checks. [Exact evidence and interpretation](../../.development/bl5-mx-local-transfer-20261008-v1/results.md).
+The 160-row supports are half the local shell-trace length and do not meet
+Revision 8's initial `c_lambda=1` P0 support rule. Keep 160 as a checkerboard/
+over-resolution control; do not select it from smaller gaps. The 80-row rule
+matches that support length here but remains unqualified. Stop this loaded
+refinement sequence. Next distinguish acceptable weak-line compliance from a
+prohibited local motion using a physically matched torque/shear reference,
+then develop and independently review the positive norm and actual mixed-system
+stability contract for the coherent support rule and controls. Formal F03 remains
+unconsumed; G0/G1/M2 acceptance remains open.
+
 ## Delivered experimental behavior and open acceptance
 
 - The sparse multi-element Q4/mixed Q4-S3/all-S3 GE point workflow, physical

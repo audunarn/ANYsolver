@@ -1,0 +1,35 @@
+{
+  "identity": "R8_BL5_MX_LOCAL_TRANSFER_RUN_V1",
+  "status": "EXITED",
+  "exit_code": 0,
+  "launch_error": null,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-m",
+    "scripts.r8_bl5_mx_local_transfer_dev",
+    "--fine",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-mx-beam-interface-20261008-v1\\result.json",
+    "--coarse",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-mx-interface-aggregation-20261008-v1\\result.json",
+    "--output",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-mx-local-transfer-20261008-v1\\result.json"
+  ],
+  "source_sha256": "f6293c7361f2262ffec26b9039ecffdb4adad05eed5330936ed08f64bb1d1a2f",
+  "fine_result_sha256": "65bab6152c4e2c2885eda352ef525b3243ca426902f88a0adfaacbf951bb6bac",
+  "coarse_result_sha256": "6555b7270e7f84c6d9459eab17b87cfc5314e24cebee74e90c2a7092a3ec7784",
+  "source_commit": "740b61256cd7de8dd1a919dcfb7733b64e996749",
+  "result_sha256": "ee44d222c8e86395580363bdbe23d20e3b5455c3dad69c78fdbada09aad97f58",
+  "process_started": true,
+  "wall_seconds": 25.066695800007437,
+  "process_cap_seconds": 120,
+  "cumulative_allowance_seconds": 180,
+  "cumulative_used_seconds": 25.066695800007437,
+  "cumulative_remaining_seconds": 154.93330419999256,
+  "memory_cap_bytes": 2147483648,
+  "peak_sampled_process_tree_rss_bytes": 970637312,
+  "cpu_affinity_observed": [
+    0
+  ],
+  "threads_requested": 1,
+  "jit_disabled_requested": true
+}
