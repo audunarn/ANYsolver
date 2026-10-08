@@ -4425,3 +4425,22 @@ authority and ledger PENDING, 0s used/360s remaining, no attempts/in-flight job.
 Root frozen-record review and activation require explicit resumption. Existing
 human programme approval is preserved; consumed campaigns and all failed evidence
 remain unchanged. No source/runtime work follows this pause; checkpoint only.
+
+### 2026-10-08: resumed displacement consumer verification
+
+User resumption and PR #63 establish common-main baseline `cff55d95`.
+ANYfem isolated commit `345db0cb` repairs v2 Project decoding so a tuple of
+seed factors cannot be silently canonicalized to a valid JSON list. Exact
+candidate/dependency-bound source controls 53/53 PASS; the preceding source
+failure and six pretest dependency-catalog refusals remain in the carried ledger.
+The isolated wheel and all 117 installed files match their saved hashes, and
+build/install subprocesses exited zero. The 30-second build-install phase then
+TIMED OUT in post-install auditing: installed controls, public example and
+19 legacy controls remain UNRUN, not accepted. Packet v9 charged
+269.4988338/360 seconds and retains a 60-second reserve. A distinct
+artifact-only installed packet is statically prepared but PENDING fresh
+bounded authority, with zero attempts. Its frozen older solver wheel differs
+from common main in 22/431 Python files, so current-main installed impact
+verification remains a separate requirement. No E01/E02/F03 or aggregate gate
+disposition changes; no release claim follows. Exact paths and hashes are in
+`B3_GE_E4_PL_ACTIVE_STATE.md` and the two packet registrations.
