@@ -1,0 +1,24 @@
+{
+  "identity": "BL5_V6_SAVED_SIDED_FACE_DEVELOPMENT_V1",
+  "status": "PENDING_USER_AUTHORITY",
+  "source_commit": "a2169eb4cb23265f32058af9ec15252ee53e7f4e",
+  "runner_sha256": "5558a2bc41e347566b975b48555b53f027adcf04db97375ff1cf81d906e099d4",
+  "source_sha256": "32e0bcee3da9a47522c2d4651f4cd233159406b5e7b88cbc6aa032e7ff6bc707",
+  "input_sha256": {
+    ".development/bl5-mz-common-beam-20261008/case-v5/preflight.json": "28225b23fa2aeb86878615b949187446d53df823b4c06a256d312bd93158b4d2",
+    ".development/bl5-mz-common-beam-20261008/case-v5/reference-beam-solved.json": "6ba8b3af282954ad68efc6a71bdd394948a01e489b11667bb9cf8ce4242c99a0",
+    ".development/bl5-mz-common-beam-20261008/case-v5/beam-solved.json": "3b018950628ff5565ecdede721eebe6cff8feb3db56edf1e139e7a484b2952c9",
+    ".development/bl5-mz-common-beam-20261008/v5-native-seam-work-postprocess-v1.json": "afeb2b4d67808ab9d5829152938324118fceb3e3f8ace03c3f9215b4f4bac315"
+  },
+  "one_use": true,
+  "process_cap_seconds": 30.0,
+  "memory_limit_bytes": 2147483648,
+  "cpu_affinity": [0],
+  "numba_threads": 1,
+  "native_threads": 1,
+  "jit_disabled": true,
+  "heavy_jobs": 1,
+  "permitted_action": "One saved-solution C3D20 sided cut-face stress/work reconstruction at x=0.5 m; no new equilibrium solve",
+  "excluded_actions": ["F03", "V5 rerun", "external solver", "mesh sweep", "connection-law acceptance", "main merge", "release"],
+  "decision": "If sided force/work checks are interpretable, use their sign-corrected scale to decide whether a targeted seam/trace reference is justified. If the sided action is inconsistent or unsupported, correct the reference extraction before mechanical comparison."
+}
