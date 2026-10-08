@@ -1,0 +1,23 @@
+{
+  "identity": "BL5_V7_SAVED_NODAL_PORT_DEVELOPMENT_V1",
+  "status": "PENDING_USER_AUTHORITY",
+  "source_commit": "9e714f64060b1795ca07d3763fa1e6fc364510c7",
+  "runner_sha256": "7d5f18a6e4f70d70f43b6c42170272b68eac719ef17346d316b22c1d95d59656",
+  "source_sha256": "4f60fc1344b720b649e2866794a6a7b13a11c655dbf204ba899e4ed2203dd744",
+  "input_sha256": {
+    ".development/bl5-mz-common-beam-20261008/case-v5/preflight.json": "28225b23fa2aeb86878615b949187446d53df823b4c06a256d312bd93158b4d2",
+    ".development/bl5-mz-common-beam-20261008/case-v5/reference-beam-solved.json": "6ba8b3af282954ad68efc6a71bdd394948a01e489b11667bb9cf8ce4242c99a0",
+    ".development/bl5-mz-common-beam-20261008/case-v6-sided-face/result.json": "96bf50e4d67390f946943ab7c8efa93c666a1ce9645f6a24d892163cbf9e51d5"
+  },
+  "one_use": true,
+  "process_cap_seconds": 30.0,
+  "memory_limit_bytes": 2147483648,
+  "cpu_affinity": [0],
+  "numba_threads": 1,
+  "native_threads": 1,
+  "jit_disabled": true,
+  "heavy_jobs": 1,
+  "permitted_action": "One saved V5 C3D20 beam volume-work and nodal-action reconstruction at x=0.5 m, using original weak-P0 edge load partition and the saved V6 face result; no new equilibrium solve",
+  "excluded_actions": ["F03", "V5/V6 rerun", "external solver", "mesh sweep", "connection-law acceptance", "main merge", "release"],
+  "decision": "If saved load and equilibrium reconstruct and the source-partitioned nodal cut ports balance up to reported gauge/roundoff, retain them as a discrete sided-action diagnostic and assess their scale against native retained work with explicit trace limitations. If reconstruction or side work fails, correct the specific saved reference/source partition; do not infer BL5 law failure or refine automatically."
+}
