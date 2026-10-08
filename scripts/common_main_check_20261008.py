@@ -4,6 +4,7 @@ import argparse, hashlib, json, os, subprocess, sys, time
 
 REPO = Path(__file__).resolve().parents[1]
 RAW = REPO / '.development/common-main-20261008'
+SITE = RAW / 'site-v2'
 DEPS = Path('C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001/.qualification/b3-ge-e4-pl/r8-native-s3-restart-binding-dev-20261005-v1/ci-site-network-v2')
 BASE = Path('C:/Python/Python314/Lib/site-packages')
 SIBLINGS = [Path('C:/Github') / n / 'src' for n in ('ANYmaterial', 'ANYfileIO', 'ANYmesh', 'ANYgeometry')]
@@ -22,7 +23,7 @@ def setup(mode):
     sys.path[:0] = [str(DEPS), str(BASE), *map(str, SIBLINGS)]
     import psutil
     psutil.Process().cpu_affinity([0])
-    package_root = REPO / 'src' if mode in ('source', 'policy') else RAW / 'site'
+    package_root = REPO / 'src' if mode in ('source', 'policy') else SITE
     sys.path.insert(0, str(package_root))
     sys.path.append(str(REPO))  # scripts/examples, never src in installed mode
     os.environ['PYTHONPATH'] = os.pathsep.join(map(str, [package_root, DEPS, BASE, *SIBLINGS, REPO]))
@@ -46,13 +47,15 @@ def child(args):
         wheels = list((out / 'wheel').glob('*.whl'))
         if len(wheels) != 1:
             raise RuntimeError('Expected exactly one wheel')
-        subprocess.run([sys.executable, '-m', 'pip', 'install', '--no-index', '--no-deps', '--target', str(RAW / 'site'), str(wheels[0])], env=env, check=True)
-        write(out / 'artifact.json', {'wheel': str(wheels[0]), 'sha256': sha(wheels[0])})
+        if SITE.exists():
+            raise RuntimeError('Fresh artifact requires a new install directory')
+        subprocess.run([sys.executable, '-m', 'pip', 'install', '--no-index', '--no-deps', '--target', str(SITE), str(wheels[0])], env=env, check=True)
+        write(out / 'artifact.json', {'wheel': str(wheels[0]), 'sha256': sha(wheels[0]), 'site': str(SITE)})
         return 0
     import anysolver, psutil, numpy, scipy, numba
     from threadpoolctl import threadpool_info
     imported = Path(anysolver.__file__).resolve()
-    expected = (REPO / 'src' if args.mode == 'source' else RAW / 'site').resolve()
+    expected = (REPO / 'src' if args.mode == 'source' else SITE).resolve()
     if not imported.is_relative_to(expected):
         raise RuntimeError(f'Wrong ANYsolver import: {imported}')
     if numba.get_num_threads() != 1 or not numba.config.DISABLE_JIT:

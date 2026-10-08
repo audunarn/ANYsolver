@@ -21,10 +21,11 @@ Use evidence in this order:
 Generated CalculiX-style input decks without matching executed results are
 reproducible handoff artifacts, not numerical validation.
 
-## Current 0.2 verification policy
+## Current verification policy
 
-Version 0.2 delegates material behavior, neutral meshing, and interchange
-syntax to ANYmaterial, ANYmesher, and ANYfileio. A qualifying ecosystem run
+Since version 0.2, ANYsolver delegates material behavior, neutral meshing,
+and interchange syntax to ANYmaterial, ANYmesher, and ANYfileio. A qualifying
+ecosystem run
 therefore installs those sibling packages, runs their own tests, and then runs
 the ANYsolver suite and ecosystem-wiring tests. Compatibility tests must cover
 both the historical ANYsolver imports and the canonical package imports.
