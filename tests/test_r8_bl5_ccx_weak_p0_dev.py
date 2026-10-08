@@ -5,6 +5,8 @@ import numpy as np
 import pytest
 
 from scripts import r8_bl5_ccx_weak_p0_dev as reference
+from scripts import r8_bl5_mx_beam_body_dev as body
+from scripts import r8_bl5_ccx_weak_p0_run_dev as execution
 
 
 @pytest.mark.parametrize("case,expected",[("fy",(0.,100.,0.,0.,0.,0.)),
@@ -40,3 +42,24 @@ def test_weak_deck_has_unique_ccx_pivots_and_declared_wrench(case,expected):
 def test_weak_deck_rejects_undeclared_load():
     with pytest.raises(ValueError,match="admitted Fy or Mx"):
         reference.deck("follower")
+
+
+def test_beam_body_refuses_changed_saved_tip_load(tmp_path):
+    saved=tmp_path/"saved"; saved.mkdir()
+    data,metadata=reference.deck("mx")
+    (saved/"weak.inp").write_bytes(data)
+    meta=saved/"metadata.json"
+    meta.write_text(json.dumps(metadata,allow_nan=False),encoding="utf-8")
+    report=tmp_path/"comparison.json"
+    report.write_text(json.dumps({"status":"DEVELOPMENT_COMPARISON_NOT_QUALIFIED",
+        "cases":{"mx":{"external":{"files_sha256":{
+            "weak.inp":execution.digest(saved/"weak.inp"),
+            "metadata.json":execution.digest(meta)}}}}}),encoding="utf-8")
+    model,load,_=body.checked_saved(saved,report)
+    assert model["model_sha256"]==metadata["model_sha256"]
+    assert np.array_equal(load,metadata["physical_tip_load_N"])
+    changed=json.loads(meta.read_text(encoding="utf-8"))
+    changed["physical_tip_load_N"][0]+=1.
+    meta.write_text(json.dumps(changed),encoding="utf-8")
+    with pytest.raises(ValueError,match="exact saved coupled-Mx"):
+        body.checked_saved(saved,report)

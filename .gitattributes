@@ -18,6 +18,7 @@ scripts/r8_bl5_v12_retained_load_response_dev.py -text
 .development/bl5-ccx-weak-p0-20261008-* -text -whitespace
 .development/bl5-ccx-weak-p0-20261008-*/** -text -whitespace
 .development/bl5-ccx-native-fy-mx-20261008-*/** -text -whitespace
+.development/bl5-mx-beam-only-20261008-*/** -text -whitespace
 docs/agent_plans/s4_drill_constraint_tor_agent.md text eol=lf
 docs/reference_cases/s4_drill_constraint_cases.json text eol=lf
 docs/reference_cases/s4_drill_constraint_oracle.py text eol=lf

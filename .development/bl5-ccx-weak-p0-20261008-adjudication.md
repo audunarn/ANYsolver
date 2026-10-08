@@ -77,12 +77,29 @@ the Mx polar face traction is not an exact work image of every native retained
 half-cell field. Zero weak interface work follows from `Cq=0` and does not
 measure connection compliance.
 
-**Next discriminating action.** Compare Mx beam-only response under the
-actual saved resolved end-face traction with the native section response,
-including warping and root conventions. If that explains most of the 22.5%
-gap, investigate section/traction modelling before revising BL5. If it does
-not, use a physical shell/connection decomposition on the same action. No
-automatic axial refinement, channel tuning, or new F03 assessment follows.
+**Beam-only discriminator.** The saved Mx traction was then applied to the
+resolved bar alone, fixing all 39 translation DOFs on its x=0 root face. The
+native B3-GE beam block used its two axial members and matched physical section with a
+10 N·m tip torque, fixing the six root pose coordinates while retaining all
+48 internal coordinates. Both solve/balance checks passed. Work-conjugate
+responses are `1.44991865e-4 rad` (resolved) and `1.64701403e-4 rad`
+(native), ratio `1.13594`, compared with `1.22489` coupled. The raw runs
+`bl5-mx-beam-only-20261008-v1` and `-v2` remain; `-v3/result.json` binds the
+final metadata-load guard and is current. The initial focused test attempt
+could not create pytest's default sandbox temp directory; the rerun at
+`bl5-ccx-weak-p0-20261008-test-v2.log` passed 4/4 using a fresh workspace
+temp root, including a mutated-load refusal. Supporting read-only review
+found the clamps, work pairing and signs internally consistent. This
+beam-only discrepancy shows section/traction/root modelling matters, but
+the ratio difference is not an additive allocation of coupled compliance.
+
+**Next discriminating action.** Run one same-law rigid-shell Mx counterfactual
+using the existing local operators, with no new CalculiX solve. If the
+native/resolved ratio approaches `1.13594`, investigate shell compliance and
+its interaction with the connection. If it remains near `1.22489`, examine
+beam trace/connection work with the actual native retained fields. A rank,
+work or balance failure stops interpretation and directs a formulation audit.
+No automatic axial refinement, channel tuning, or formal F03 assessment follows.
 
 Three focused source deck tests passed. A supporting same-family read-only
 review found no sign or reaction-recovery error and identified the load-work,

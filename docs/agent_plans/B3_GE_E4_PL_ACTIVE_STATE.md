@@ -52,9 +52,16 @@ BL5 owner, the work-conjugate response ratios are Fy `0.95955` and Mx
 [adjudication](../../.development/bl5-ccx-weak-p0-20261008-adjudication.md)
 and raw directories named there. Fy/Mx are new actions, not V5's +Fz;
 their equal resultants do not establish identical warping work or allocate
-body versus connection error. The next discriminator is a bounded Mx
-beam-only same-action/warping comparison before attributing the 22.5%
-response difference. Do not select a line law from this result.
+body versus connection error. A bounded beam-only Mx comparison now gives
+native/resolved `1.13594`, while the coupled result remains `1.22489`.
+Both beam-only models balance 10 N·m, but the resolved root clamps its whole
+bar face and native B3-GE clamps one section pose; the end torque work fields
+also differ in warping. This establishes a body/traction/root discrepancy,
+not an additive allocation of the coupled gap. The next specific check is a
+rigid-shell counterfactual under the same weak-P0 Mx action: see whether the
+ratio tends toward the beam-only value or remains near the coupled value.
+Stop if that counterfactual is rank-deficient or violates work. Do not select
+a line law from these results.
 
 ## Delivered experimental behavior and open acceptance
 
@@ -93,6 +100,6 @@ Mistral/local workers were unavailable for this task; Astra directly owned
 the tightly coupled physical diagnostics and their Git integration. Do not
 communicate with the separate contact worker. On resumption, verify actual
 Git and process state, read this note and the relevant evidence only, then
-advance the Mx body/traction discriminator while independent capability work
+advance the bounded rigid-shell Mx discriminator while independent capability work
 continues where prerequisites permit. Do not rerun passed campaigns merely
 to reconstruct their accounting.

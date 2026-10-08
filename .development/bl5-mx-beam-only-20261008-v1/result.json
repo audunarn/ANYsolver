@@ -1,0 +1,97 @@
+{
+  "identity": "R8_BL5_MX_BEAM_ONLY_BODY_DISCRIMINATOR_DEV_V1",
+  "status": "DEVELOPMENT_BODY_DISCRIMINATOR_NOT_QUALIFIED",
+  "source_sha256": {
+    "body": "cd7812be6fea6c04d88b8e1225e522ea69ce23275c55d5e456cf4a2cfaa62a2a",
+    "continuum": "9a37d949298e494e099e6eb8eab02790ef03a0199645c9c227f4ea447d52c6db",
+    "native": "068ae3ae16fe167d3052a02e8ecf0b7c6c0c3ba83f0db1f79ab5dfd07a75d9a8"
+  },
+  "effective_runtime": {
+    "affinity": [
+      0
+    ],
+    "numba_disable_jit": 1,
+    "numba_threads": 1,
+    "threadpools": [
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python313\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-4bb64bb73b19ae7523581172b5c4a821.dll",
+        "version": "0.3.31.dev",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      },
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python313\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-48c358d105077551cc9cc3ba79387ed5.dll",
+        "version": "0.3.29.dev",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      }
+    ]
+  },
+  "input_sha256": {
+    "saved_deck": "7575fbf329ef288b88e3c5eb8c362ec4f93979819ff642277ace65b71495f300",
+    "saved_metadata": "74ed82d4109587badca2f414fb0a5dff070a81f8bf27b4649551dd50d01af9c5",
+    "coupled_comparison": "353421a23e7126d0b2fcbea8e69c7a055396468e53726c455b07ba3448a01e29"
+  },
+  "resolved_beam_only": {
+    "work_conjugate_tip_spin_rad": 0.00014499186499536298,
+    "applied_work_J": 0.0014499186499536299,
+    "internal_work_J": 0.001449918649952153,
+    "free_equilibrium_ratio": 1.866334715811076e-10,
+    "support_wrench_about_origin": [
+      2.4185723074809894e-11,
+      1.9194895597194833e-10,
+      6.270823860177188e-10,
+      -10.000000000024443,
+      -3.4020932903342603e-10,
+      2.5802589037203826e-10
+    ],
+    "applied_wrench_about_origin": [
+      0.0,
+      6.394884621840902e-14,
+      -7.105427357601002e-15,
+      9.999999999999996,
+      7.105427357601002e-15,
+      6.394884621840902e-14
+    ],
+    "root_fixed_translation_count": 39,
+    "body_dofs": 153
+  },
+  "native_beam_only": {
+    "tip_spin_x_rad": 0.0001647014034494602,
+    "applied_work_J": 0.001647014034494602,
+    "internal_work_J": 0.0016470140344946019,
+    "free_equilibrium_ratio": 2.3227861286140797e-21,
+    "support_wrench_about_origin": [
+      0.0,
+      0.0,
+      0.0,
+      -10.0,
+      0.0,
+      0.0
+    ],
+    "applied_wrench_about_origin": [
+      0.0,
+      0.0,
+      0.0,
+      10.0,
+      0.0,
+      0.0
+    ],
+    "root_fixed_pose_count": 6,
+    "body_dofs": 78,
+    "retained_coordinate_count": 48
+  },
+  "beam_only_native_over_resolved": 1.1359354778609652,
+  "coupled_native_over_resolved": 1.224894327001428,
+  "difference_between_ratios": 0.08895884914046293,
+  "limitation": "Beam-only comparison removes connection and shell but resolved polar face traction and native section torque still differ in warping work; this cannot alone select BL5 or allocate the complete coupled gap",
+  "process_wall_seconds": 0.6558695999992779
+}
