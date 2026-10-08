@@ -26,15 +26,19 @@ Neither allocates body versus connection error or qualifies a line law.
 and [V12](../../.development/bl5-mz-common-beam-20261008/v12-retained-load-adjudication.md)
 retain source, exact input, runtime, raw output and limitations.
 
-The next mechanics step is **one physically matched distributed P0/tip
-action-and-response contract**, including the native retained half-cell
-traces, resolved two-sided face/section work, original geometry and supports,
-and a common virtual-work check. First identify the exact side or section
-terms that make the two models comparable. If no such reference can be
-constructed from saved data, state the missing observable and obtain focused
-review before another external run. Do not repeat saved-vector decomposition,
-classical axial refinement, or a channel-by-channel tuning sweep. Formal F03
-remains unconsumed; G0B and G1 acceptance remain open.
+The frozen V5/V7 records **cannot** supply a full two-sided original-action
+reference. The C3D20 bar has axial faces only at `x=0,.5,1 m`, while native
+retained half-cell sides also meet at `.25` and `.75 m`. A four-axial-cell
+solid with duplicated interior faces would expose those sides, but its extra
+relative rigid modes require an independently physical seam traction/jump
+law. A full displacement weld removes the sided freedom; an unspecified
+hinge fitted to V5 would be circular. This is a missing reference contract,
+not a native-formulation failure. Keep V5's `7.24284` ratio unallocated and
+stop the V5 causal-decomposition sequence. Advance the plan's physically
+matched BL5 torque/shear and work-transfer benchmark under an explicitly
+declared continuous connection, with its real geometry, loads and supports.
+Do not repeat classical axial refinement or tune channels to one case.
+Formal F03 remains unconsumed; G0B and G1 acceptance remain open.
 
 ## Delivered experimental behavior and open acceptance
 
