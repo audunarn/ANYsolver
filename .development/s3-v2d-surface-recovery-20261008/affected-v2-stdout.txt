@@ -1,0 +1,33 @@
+..............F.....                                                     [100%]
+================================== FAILURES ===================================
+_____________ test_v6e_contract_and_production_boundary_are_exact _____________
+
+    def test_v6e_contract_and_production_boundary_are_exact() -> None:
+        raw = CONTRACT.read_bytes()
+        assert raw.endswith(b"\n")
+        assert b"\r" not in raw
+        contract = json.loads(raw)
+        assert raw == (
+            json.dumps(contract, sort_keys=True, separators=(",", ":")) + "\n"
+        ).encode("utf-8")
+        assert contract["candidate"]["implementation_id"] == (
+            "E4_PL_S3_V2D_FINAL_PARITY_GATE_V1"
+        )
+        assert contract["candidate"]["formulation_id"] == FORMULATION_ID
+        assert contract["runtime_policy"] == {
+            "automatic_retry": False,
+            "focused_cycle_limit_seconds": 600,
+            "long_running_scientific_cycle_authorized": False,
+            "required_focused_cycles": 2,
+        }
+        assert DEFAULT_Q4_FORMULATION == "e4-pl"
+>       assert DEFAULT_S3_FORMULATION == "legacy-s3"
+E       AssertionError: assert 'e4-pl-s3-v2d' == 'legacy-s3'
+E         
+E         - legacy-s3
+E         + e4-pl-s3-v2d
+
+tests\test_e4_pl_s3_v6e_final_parity.py:202: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_e4_pl_s3_v6e_final_parity.py::test_v6e_contract_and_production_boundary_are_exact
+1 failed, 19 passed in 5.92s

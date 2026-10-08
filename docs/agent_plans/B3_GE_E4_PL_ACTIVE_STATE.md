@@ -1,5 +1,26 @@
 # Active development — 8 October 2026
 
+Current independent product slice: default elastic S3 V2D recovery now has a
+candidate local physical surface-stress mapping for exact isotropic Material,
+using its existing N/M/Q resultants and the same top/bottom von Mises convention
+as Q4. Generalized sections remain resultants-only. Mixed Q4/S3 public
+prescribed-displacement recovery, nonzero bending/shear tensor agreement, and
+public committed-state isolation pass 11 focused source tests. Supporting
+read-only review found no concrete defect; its consequential coverage requests
+were added and passed. Full affected historical file recorded 19 PASS / 1 unrelated
+FAIL: its frozen pre-default-activation assertion still expects `legacy-s3`.
+Do not change that historical boundary to obtain a pass. Raw source receipts
+are in `.development/s3-v2d-surface-recovery-20261008/`; installed-artifact
+verification and mandatory programme review remain pending. This is an experimental
+recovery addition, not G0/G1 or full-programme acceptance. Direct OpenAI edit
+uses the already recorded Mistral/local unavailability for this task.
+
+Read-only consumer review found a static packet blocker in the unrun ANYfem
+common-main installed packet: its supervisor expects 431 solver Python files,
+while its frozen artifact and entry require 627. The packet remains PENDING,
+zero attempts; repair and re-freeze before any activation. No sibling edits or
+numerical attempt were made for that packet in this slice.
+
 Mz common-density beam-only branch stopped FAILED, without a validated body
 comparison. V1 native calculation failed the unchanged active-row equilibrium
 check (ratio 3.253606). V2 found a reflection-search bookkeeping defect.

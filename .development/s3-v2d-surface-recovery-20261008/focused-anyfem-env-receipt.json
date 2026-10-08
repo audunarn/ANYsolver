@@ -1,0 +1,13 @@
+{
+  "command": "ANYfem env python -m pytest -q tests/test_e4_pl_s3_v2d_linear_native_parity.py -k=surface",
+  "source": "91da2ae937abd68e6bdc71be237542af53850ef7",
+  "exit": 0,
+  "wall_seconds": 3.186832,
+  "affinity": 1,
+  "omp": "1",
+  "openblas": "1",
+  "mkl": "1",
+  "numba_jit": "1",
+  "stdout": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\s3-v2d-surface-recovery-20261008\\focused-anyfem-env-stdout.txt",
+  "stderr": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\s3-v2d-surface-recovery-20261008\\focused-anyfem-env-stderr.txt"
+}
