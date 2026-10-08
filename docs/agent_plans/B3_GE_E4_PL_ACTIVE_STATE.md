@@ -1,5 +1,18 @@
 # Active development — 8 October 2026
 
+Consumer integration: the unchanged installed ANYfem `345db0c` and pinned
+common-main solver sites now have 54/54 affected plus 19/19 legacy development
+controls passing, including the public checkpoint example. The 19-case run
+used 9.4482919 s child wall and 186,146,816 B sampled peak; the combined
+logical allowance has 127.4974380 s used and 112.5025620 s remaining with
+60 s reserved. Exact V2/V3 packet attempts timed out before pytest and remain
+failed evidence. This is a development milestone, not G6 acceptance. Raw
+receipts and adjudication:
+`C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/.development/distributing-displacement-consumer-common-main-20261008-v1/installed-development-adjudication-v1.md`.
+ANYfem evidence is byte-preserved on its isolated branch at `c923160`;
+unrelated local `.development` contents remain untouched. The smoke requested
+one numerical thread/JIT-off; effective pools were not independently audited.
+
 V10 resolves the specific V9 port ambiguity: under pure cut Mz and the same
 incremental remote supports, native nodal-frame work agrees with the C3D20
 rigid-face work to `8.9e-11` relative; native retained-spin work is 2/3 of
