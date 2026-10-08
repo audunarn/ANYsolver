@@ -47,9 +47,11 @@ material-face coordinate slightly inside `zeta=+/-1`. A candidate source
 correction now substitutes exact reference boundary coordinates when the
 physical sample is on a cell face. A focused algebraic regression confirms
 all five local trace channels and all 20 weak rows are exactly zero in the
-slot-55 column: 1 passed, 9 deselected. This is not a V5 solve or a proof of
-equilibrium. V4 remains FAILED, its cumulative ledger remains CLOSED, and
-the prior high-precision residual remains unsatisfied. No old attempt was
+three top V4 tiny-load columns, beam-local slots 55, 58 and 130: 3 passed,
+9 deselected. Their saved loads were respectively `3.5664998967e-16`,
+`-1.1916410059e-16` and `-2.3748588913e-16` N. This is not a V5 solve or
+a proof of equilibrium. V4 remains FAILED, its cumulative ledger remains
+CLOSED, and the prior high-precision residual remains unsatisfied. No old attempt was
 rerun, and no F03 or separate Fz body authority was consumed.
 
 To decompose the V4 implemented dot exactly, the actual binary64 C column

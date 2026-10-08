@@ -14,7 +14,8 @@ midside node's y displacement. Its shape vanishes exactly on both sampled
 beam faces, so its analytical weak-P0 interface column and end-traction load
 are structural zeros, independent of multipliers. The old 3.5665e-16 N load
 arose in floating face interpolation. A candidate exact-face coordinate
-correction and source-only regression now pass (1 passed, 9 deselected).
+correction and source-only regression now pass for the three top tiny-load
+rows, slots 55/58/130 (3 passed, 9 deselected).
 This does not repair the saved 9.1302e-13 N high-precision equilibrium
 residual or reopen the CLOSED V4 ledger. V4 remains FAILED; no numerical
 retry, active-row criterion change, F03 execution, or Fz body retry occurred.

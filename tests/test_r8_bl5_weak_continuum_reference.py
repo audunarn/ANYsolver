@@ -32,12 +32,13 @@ def save(name,value):
     Path(os.environ['ANYSOLVER_WEAK_RAW'],name).write_text(json.dumps(value,default=tool.jsonable,indent=2)+'\n')
 
 
-def test_vertical_midside_beam_slot_has_exact_zero_weak_face_trace():
+@pytest.mark.parametrize('beam_slot',(55,58,130))
+def test_vertical_midside_beam_slot_has_exact_zero_weak_face_trace(beam_slot):
     model=tool.specimen()
     _,index,*_=tool.layout(model)
     beam_nodes=model['beam_nodes']
-    slot=index[beam_nodes[18]]+1
-    assert tuple(model['physical_nodes'][beam_nodes[18]])==(0.5,0.,0.04)
+    slot=index[beam_nodes[beam_slot//3]]+beam_slot%3
+    assert model['physical_nodes'][beam_nodes[beam_slot//3]][2]==0.04
     for edge in range(4):
         for alpha in (.5-.5/np.sqrt(3),.5+.5/np.sqrt(3)):
             assert np.array_equal(tool.five_rows(model,(edge+alpha)*.25)[:,slot],np.zeros(5))
