@@ -1,5 +1,17 @@
 # Active development — 8 October 2026
 
+BL5 in-plane couple screen completed at source `333b1e7b`: the supported
+three-edge fixture transferred a +1 N m beam-tip Mz to -1 N m shell
+interface and support moments, with near-zero resultant force and a
+4.66e-14 free-equilibrium ratio. Child CPU0/thread1/JIT-off and 3.8291954 s
+wall are recorded in
+`.development/bl5-inplane-couple-20261008/decision.md` and its raw receipt.
+This rules out an unsupported moment mode in that fixture only. Physical
+accuracy, growing-space stability, F03 and G0 remain open. Next discriminate
+the five-channel work against a matched physical Mz reference, rather than
+further channel tuning or an unmotivated mesh sweep. Current-main ANYfem
+installed verification remains PENDING distinct authority and unrun.
+
 The human resumed development after PR #63 established common main at
 `cff55d95e905ab689efdacdf08742a60614728c1`. Work in the sparse, isolated
 `C:/Github/ANYsolver/.perf2-worktrees/stiffened-rev8-20261008` checkout on
