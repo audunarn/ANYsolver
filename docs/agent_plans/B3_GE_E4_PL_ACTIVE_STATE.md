@@ -51,6 +51,46 @@ Any next reference must explicitly resolve two-sided trace and seam work
 before it can distinguish body compliance from connection transfer. No
 automatic refinement or F03 run follows.
 
+Saved-state postprocessing now fixes the next two-sided reference location:
+the shared member station at `x=0.5 m` has the largest one-sided native
+retained-spin jump, `9.569014186e-7 rad` (versus `1.233892858e-7` and
+`5.250428264e-7 rad` at `x=0.25` and `0.75 m`). Under a *conditional* rigid
+0.04 x 0.06 m section lift, its maximum corner displacement mismatch is
+`1.995511594e-8 m`. This is not a measured seam gap or proof of a body-law
+defect. The exact saved-input hash, indexing and all three stations are in
+[the postprocess record](../../.development/bl5-mz-common-beam-20261008/v5-retained-jump-postprocess-v1.json);
+it launched zero new solves. The next discriminator must recover left/right
+cut-face work conjugate to independent section variations at that station,
+including how seam action is represented. Failure of sided force/work balance
+invalidates that reference; a valid result then determines whether the
+broken-port work is large enough to justify a targeted seam/trace comparison.
+The V5 receipt stays closed and no new numerical authority is inferred.
+The saved native material resultants provide a further, source-derived check
+at the **virgin reference linearization**:
+the left/right retained end moments balance within `8.868e-13 N m` at all
+three stations. Their linearized conjugate virtual work against the saved
+one-sided spin jumps is `1.6892e-8`, `4.0092e-7`, and `8.0595e-8 J`, summing
+to `4.9841e-7 J`. Its magnitude is 33.1% of the V5 *difference* in paired
+body work, but these are different work quantities; the percentage is a
+scale comparison, **not** an energy partition, finite-rotation work, or causal
+attribution. This
+favors `x=0.5 m` for a sided cut-face action check and makes an affine-only
+reference inadequate for the disputed mode. The exact saved-input bindings,
+moment-row mapping and limits are in [the native seam-work postprocess](../../.development/bl5-mz-common-beam-20261008/v5-native-seam-work-postprocess-v1.json).
+It used saved arrays only and performed zero new solver executions.
+The prospective [sided C3D20 cut-face extractor](../../scripts/r8_bl5_saved_sided_face_work_dev.py)
+is source-prepared and **unrun**. It integrates the actual saved resolved-beam
+stress separately from the left and right elements at `x=0.5 m`, then pairs
+their force/moment resultants with the saved native shared translation and
+one-sided spins. Independent read-only review found no concrete source defect
+and flagged the opposite outward-face versus native endpoint-log action sign;
+the script now states that convention. The remaining uncertainty is whether
+the sided physical action is balanced and large enough to explain why a
+conforming affine reference misses the broken-port virtual field. One bounded
+saved-solution execution needs new authority; the consumed V5 registration
+cannot authorize it. No new solid equilibrium solve or F03 execution is
+proposed by this extractor.
+
 The scoped S3 V2D elastic recovery fix is now a separate **draft PR #65**
 against common main: `codex/s3-v2d-surface-recovery` at `974f283a`, based on
 `cff55d95`. Its three product/test files are byte-identical to the installed

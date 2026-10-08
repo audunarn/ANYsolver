@@ -1,0 +1,87 @@
+{
+  "identity": "BL5_V5_SAVED_RETAINED_JUMP_POSTPROCESS_V1",
+  "source": "case-v5/beam-solved.json",
+  "source_sha256": "3b018950628ff5565ecdede721eebe6cff8feb3db56edf1e139e7a484b2952c9",
+  "solver_executions": 0,
+  "section_width_m": 0.04,
+  "section_height_m": 0.06,
+  "largest_jump_station_m": 0.5,
+  "stations": [
+    {
+      "x_m": 0.25,
+      "node_spin_rad": [
+        -8.258091953577816e-09,
+        -0.0,
+        4.105485811929295e-07
+      ],
+      "left_cell_spin_rad": [
+        1.6243771513597494e-08,
+        0.0,
+        2.266418022624519e-07
+      ],
+      "right_cell_spin_rad": [
+        5.173446157578497e-08,
+        0.0,
+        3.4481678591186217e-07
+      ],
+      "spin_jump_rad": [
+        3.5490690062187475e-08,
+        0.0,
+        1.1817498364941026e-07
+      ],
+      "spin_jump_norm_rad": 1.2338928576512888e-07,
+      "max_rigid_section_corner_slip_m": 2.6876749263318067e-09
+    },
+    {
+      "x_m": 0.5,
+      "node_spin_rad": [
+        2.0847236383530721e-07,
+        0.0,
+        -6.250697304681267e-08
+      ],
+      "left_cell_spin_rad": [
+        5.173446157578497e-08,
+        0.0,
+        3.4481678591186217e-07
+      ],
+      "right_cell_spin_rad": [
+        2.4012684779361954e-07,
+        0.0,
+        -5.933562438773206e-07
+      ],
+      "spin_jump_rad": [
+        1.8839238621783457e-07,
+        0.0,
+        -9.381730297891828e-07
+      ],
+      "spin_jump_norm_rad": 9.569014186470122e-07,
+      "max_rigid_section_corner_slip_m": 1.9955115937268584e-08
+    },
+    {
+      "x_m": 0.75,
+      "node_spin_rad": [
+        4.9952564720630264e-08,
+        0.0,
+        -9.061390629037023e-07
+      ],
+      "left_cell_spin_rad": [
+        2.4012684779361954e-07,
+        0.0,
+        -5.933562438773206e-07
+      ],
+      "right_cell_spin_rad": [
+        -2.247161353489197e-07,
+        0.0,
+        -3.49243625178307e-07
+      ],
+      "spin_jump_rad": [
+        -4.648429831425393e-07,
+        0.0,
+        2.441126186990136e-07
+      ],
+      "spin_jump_norm_rad": 5.250428264293734e-07,
+      "max_rigid_section_corner_slip_m": 1.7456777678401807e-08
+    }
+  ],
+  "interpretation": "The saved native retained spins have one-sided values. Corner slip is a conditional rigid-section lift, not a measured physical seam gap or a matched solid solution. A two-sided reference must specify seam work before its compliance can allocate the V5 work difference."
+}

@@ -1,0 +1,75 @@
+{
+  "identity": "BL5_V5_SAVED_NATIVE_SEAM_WORK_POSTPROCESS_V1",
+  "source_sha256": {
+    "jump": "d27a911372bfded117d11382ec6752f066b25f47938e8a18915886a503a9d0b4",
+    "material": "10e2e47010f23d64e05da4ee759810d593d7786b1a2af0c45e8a54a31ef1a65c",
+    "result": "b8dbec0ce3751cad8e273ec50f1b1032010e97ffa2da6494a9c0ad1d706d3e33"
+  },
+  "solver_executions": 0,
+  "stations": [
+    {
+      "x_m": 0.25,
+      "left_moment_Nm": [
+        -0.017851843120210945,
+        -0.0,
+        0.14830242652909406
+      ],
+      "right_moment_Nm": [
+        -0.017851843120243783,
+        0.0,
+        0.14830242652998024
+      ],
+      "moment_balance_norm_Nm": 8.867882383715831e-13,
+      "retained_spin_jump_rad": [
+        3.5490690062187475e-08,
+        0.0,
+        1.1817498364941026e-07
+      ],
+      "balanced_first_variation_work_J": 1.6892062599077138e-08
+    },
+    {
+      "x_m": 0.5,
+      "left_moment_Nm": [
+        0.12312378434223356,
+        -0.0,
+        -0.40261709248926564
+      ],
+      "right_moment_Nm": [
+        0.12312378434220073,
+        0.0,
+        -0.40261709248837946
+      ],
+      "moment_balance_norm_Nm": 8.867881099026002e-13,
+      "retained_spin_jump_rad": [
+        1.8839238621783457e-07,
+        0.0,
+        -9.381730297891828e-07
+      ],
+      "balanced_first_variation_work_J": 4.009200810375506e-07
+    },
+    {
+      "x_m": 0.75,
+      "left_moment_Nm": [
+        -0.20012120915810758,
+        -0.0,
+        -0.050919519018684446
+      ],
+      "right_moment_Nm": [
+        -0.20012120915814044,
+        -0.0,
+        -0.05091951901779827
+      ],
+      "moment_balance_norm_Nm": 8.867822039063441e-13,
+      "retained_spin_jump_rad": [
+        -4.648429831425393e-07,
+        0.0,
+        2.441126186990136e-07
+      ],
+      "balanced_first_variation_work_J": 8.059484272471728e-08
+    }
+  ],
+  "sum_balanced_first_variation_work_J": 4.98406986361345e-07,
+  "v5_body_work_difference_J": 1.5044044353030248e-06,
+  "scale_ratio_to_v5_work_difference": 0.3312985355968811,
+  "interpretation": "This is native retained-coordinate virtual work for the saved independent one-sided spin field. It is not a strain-energy partition, continuum traction work, or a causal allocation of the V5 body-work difference. A physical two-sided cut reference must still recover face actions and seam work."
+}
