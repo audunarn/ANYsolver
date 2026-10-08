@@ -108,8 +108,11 @@ within `3.55e-12 N`. The source-partitioned left/right cut port has y-force
 nodal works have magnitude `1.567e-7 J`. Thus V7 provides a balanced discrete
 reference port where V6 raw face tractions did not. It does **not** establish
 native B3 port equivalence, allocate the V5 work gap, BL5 accuracy or F03
-acceptance. V7 one-use authority is consumed. The next discriminator is the
-actual native half-cell one-sided trace work against the full nodal cut port;
+acceptance. V7 one-use authority is consumed. A rigid lift of the native
+spin jump onto this balanced section wrench would only check algebraic work
+duality, not allocate compliance. The next substantive discriminator requires
+a derived two-sided response/port-flexibility reference with matched physical
+loads, cut kinematics and gauge;
 [adjudication](../../.development/bl5-mz-common-beam-20261008/v7-nodal-port-adjudication.md)
 binds raw hashes and the pre-child launcher failure.
 

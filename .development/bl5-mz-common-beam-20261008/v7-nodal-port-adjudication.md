@@ -44,13 +44,16 @@ within this scope and no overlooked source/sign defect. It noted that the
 magnitude, but equal moment scale alone is expected from the common action;
 the conforming V7 cut work is not the native broken-spin work.
 
-The next discriminating step is to derive the actual native B3 half-cell
-one-sided trace map at the cut and pair its admissible virtual fields against
-the complete saved C3D20 cut-node port. Compare its full nodal work with the
-six-wrench rigid-trace projection and native retained first variation. A
-material mismatch there identifies the missing trace/work component; agreement
-would justify a later matched transfer test. No automatic refinement, V5/V6
-rerun or formal F03 follows merely from V7.
+An explicit native half-cell trace map remains necessary to interpret the
+broken virtual field. Merely lifting the native spin jump rigidly onto this
+already balanced V7 section wrench will reproduce moment-times-jump work by
+algebraic duality; even agreement would **not** allocate the V5 compliance or
+body-work difference. The next substantive decision therefore needs a bounded
+two-sided *response* reference with independently declared cut kinematics,
+loads and support/gauge treatment, or another reference that measures the
+left/right port flexibility under the same physical action. Derive and review
+that contract before a new solve. No automatic refinement, V5/V6 rerun or
+formal F03 follows merely from V7.
 
 Protected raw SHA-256: registration
 `1eb4b4064e8e9e3996a5951a814567aaf6034e35e10c64efc41a3b57ce367fe6`,
