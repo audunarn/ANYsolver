@@ -155,3 +155,11 @@ the failed first fixture attempt remains preserved.
 Both programmes remain paused. This is common-main compatibility work, not
 scientific acceptance or release. Installed artifacts must be rebuilt for the
 changed validation implementation before consolidation is accepted.
+
+Independent scheduling review found a test-fixture flaw: invalid inner-shard tests
+were reaching outer partition failure. The fixture now supplies 64 general
+modules; all eight intended refusal controls passed. No scheduling source defect
+was identified. Fresh wheel4 installed controls passed 35/35, including the
+changed contact validation. Artifact member comparison and actual imported site
+are recorded in `artifact-parity-v2.json` and
+`repaired-installed-controls-v2/runtime-before.json`.

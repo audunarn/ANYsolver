@@ -4,7 +4,7 @@ import argparse, hashlib, json, os, subprocess, sys, time
 
 REPO = Path(__file__).resolve().parents[1]
 RAW = REPO / '.development/common-main-20261008'
-SITE = RAW / 'site-v3'
+SITE = RAW / 'site-v4'
 DEPS = Path('C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001/.qualification/b3-ge-e4-pl/r8-native-s3-restart-binding-dev-20261005-v1/ci-site-network-v2')
 BASE = Path('C:/Python/Python314/Lib/site-packages')
 SIBLINGS = [Path('C:/Github') / n / 'src' for n in ('ANYmaterial', 'ANYfileIO', 'ANYmesh', 'ANYgeometry')]

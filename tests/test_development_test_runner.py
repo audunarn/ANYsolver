@@ -124,7 +124,8 @@ def test_nested_matrix_preserves_parent_allocation_and_complete_coverage(monkeyp
     ((0,8),(True,4)), ((0,8),(0,True))])
 def test_nested_matrix_rejects_invalid_configuration(monkeypatch, parent, inner):
     monkeypatch.setattr(runner, 'merge_test_modules',
-                        lambda: (*runner.PORTABLE_CURRENT_S3_SUCCESSOR_MODULES, 'tests/test_x.py'))
+                        lambda: (*runner.PORTABLE_CURRENT_S3_SUCCESSOR_MODULES,
+                                 *(f'tests/test_general_{i}.py' for i in range(64))))
     monkeypatch.setattr(runner, '_module_weight', lambda module: 1)
     with pytest.raises(ValueError, match='matrix'):
         runner.run(workers=2, timeout_seconds=1,
