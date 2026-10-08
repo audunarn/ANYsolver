@@ -1,0 +1,42 @@
+{
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-I",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\scripts\\r8_bl5_v11_cut_warping_response_dev.py",
+    "--output",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-mz-common-beam-20261008\\case-v11-cut-warping-attempt-1\\result.json"
+  ],
+  "cwd": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008",
+  "attempt": 1,
+  "registration_sha256": "7e70b11bfe5066a73546a2ce3167c70fe486e150e00588fe2a32e8e1bc3e56a0",
+  "source_sha256": "d6d0c53312657fc3767d3b793ed9cbb69d7a8ba30b86df6c6e290fb7817f0fe6",
+  "inputs_sha256": {
+    "scripts/r8_bl5_two_sided_port_response_dev.py": "2400b813eb68e7243bbe2aa425d37b2374a41f79a2b5aad7f1295f23b65ebac6",
+    "scripts/r8_bl5_weak_continuum_reference.py": "9a37d949298e494e099e6eb8eab02790ef03a0199645c9c227f4ea447d52c6db",
+    "scripts/r8_bl5_released_director_reference.py": "7d3a388ba2ba900aa7e04170fc08057b6ead8d2d11d00d5f0c1de3cf5240bbee",
+    ".development/bl5-mz-common-beam-20261008/case-v7-nodal-port/result.json": "43e592a917e3e716cb2d9bcfcc46cfbe271b03191eeb624b657506e96a85e8ec"
+  },
+  "effective_parent_affinity": [
+    0
+  ],
+  "environment": {
+    "NUMBA_DISABLE_JIT": "1",
+    "NUMBA_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "BLIS_NUM_THREADS": "1",
+    "VECLIB_MAXIMUM_THREADS": "1"
+  },
+  "process_wall_seconds": 2.327402399998391,
+  "cumulative_wall_seconds": 2.327402399998391,
+  "remaining_including_reserve_seconds": 117.67259760000161,
+  "process_cap_seconds": 30.0,
+  "sampled_peak_process_tree_rss_bytes": 164986880,
+  "memory_limit_bytes": 2147483648,
+  "exit_code": 0,
+  "stop_reason": null,
+  "output": "case-v11-cut-warping-attempt-1\\result.json",
+  "stdout": "stdout-v11-cut-warping-attempt-1.txt",
+  "stderr": "stderr-v11-cut-warping-attempt-1.txt"
+}

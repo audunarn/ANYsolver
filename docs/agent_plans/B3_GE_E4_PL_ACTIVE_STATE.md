@@ -1,5 +1,20 @@
 # Active development — 8 October 2026
 
+Current connection decision: stop reusing saved V5 vectors as a causal
+allocation. A read-only load-role review found direct native retained-spin
+interface pairing of `1.15586949156334e-7 J`, but it cannot say how the
+solution would change without that load. One bounded V11 saved-V7 two-sided
+C3D20 response run found full/six-resultant work ratio `0.998452783` under
+V9 remote supports (2.3274024 s, 165 MB sampled peak, equation ratios below
+`8.24e-12`). Independent review found no blocking sign or work defect.
+This limits the cut-face warping hypothesis in that *incremental solid* model;
+it does not explain the V5 7.24 body-work ratio or qualify BL5/F03. Next,
+seek the original P0/tip action with physically matched two-sided beam/shell
+responses and native retained traces, or state the exact unavailable
+conjugate reference. No automatic refinement. Evidence:
+`.development/bl5-mz-common-beam-20261008/v11-cut-warping-adjudication.md`.
+The programme remains experimental; G0/F03 and G1 acceptance remain open.
+
 Consumer integration: the unchanged installed ANYfem `345db0c` and pinned
 common-main solver sites now have 54/54 affected plus 19/19 legacy development
 controls passing, including the public checkpoint example. The 19-case run

@@ -1,0 +1,30 @@
+{
+  "identity": "R8_BL5_V11_CUT_WARPING_RESPONSE_DEV_V1",
+  "status": "AUTHORIZED",
+  "authority": "Human 2026-10-08 approval of prospective work needed to finish the programme; distinct from consumed V5-V10 and formal F03 authority",
+  "decision": "Does V7's zero-resultant cut action cause material two-sided C3D20 response under the same V9 remote supports, despite small work on the saved V5 field?",
+  "actions": {
+    "material_response": "Keep the full cut-face warping action in the next physically matched reference and do not reduce it to six resultant ports.",
+    "small_response": "Treat cut-face warping as a bounded contributor in this incremental setting; focus next on the original V5 body/connection and interface-resolution contrast.",
+    "invalid_check": "Repair the source or preserve the obstruction; do not infer a physical result."
+  },
+  "source_commit": "ed095e41",
+  "source_sha256": "d6d0c53312657fc3767d3b793ed9cbb69d7a8ba30b86df6c6e290fb7817f0fe6",
+  "runner_sha256": "355f9185a55e7382d3d8cf7bf9b03b2952b041a6a6bf092bed56e5ad88c6793f",
+  "inputs_sha256": {
+    "scripts/r8_bl5_two_sided_port_response_dev.py": "2400b813eb68e7243bbe2aa425d37b2374a41f79a2b5aad7f1295f23b65ebac6",
+    "scripts/r8_bl5_weak_continuum_reference.py": "9a37d949298e494e099e6eb8eab02790ef03a0199645c9c227f4ea447d52c6db",
+    "scripts/r8_bl5_released_director_reference.py": "7d3a388ba2ba900aa7e04170fc08057b6ead8d2d11d00d5f0c1de3cf5240bbee",
+    ".development/bl5-mz-common-beam-20261008/case-v7-nodal-port/result.json": "43e592a917e3e716cb2d9bcfcc46cfbe271b03191eeb624b657506e96a85e8ec"
+  },
+  "cumulative_seconds": 120.0,
+  "reserve_seconds": 60.0,
+  "max_attempts": 2,
+  "process_cap_seconds": 30.0,
+  "memory_limit_bytes": 2147483648,
+  "cpu_affinity": [0],
+  "threads": 1,
+  "jit_disabled": true,
+  "one_numerical_job": true,
+  "exclusions": "No V5 retry, no formal F03, no external execution, no line-law or multiplier selection, no release."
+}
