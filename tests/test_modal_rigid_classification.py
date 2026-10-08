@@ -108,7 +108,26 @@ def test_rigid_classification_invariant_under_rigid_basis_rotation(
     assert all(not mode.is_rigid_body for mode in rotated.modes[6:])
 
 
-def test_rigid_classification_invariant_under_mass_rescaling() -> None:
+def test_rigid_classification_invariant_under_mass_rescaling(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Isolate the classifier's mass scaling from LAPACK's choice of basis in
+    # repeated eigenspaces. Independent solves can give different roundoff in
+    # nominally zero elastic/rigid correlations even for equivalent pencils.
+    original_dense = modal_module._dense_eigensolve
+    reference: list[tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]] = []
+
+    def consistently_scaled_eigensolve(K, M):
+        if not reference:
+            values, vectors = original_dense(K, M)
+            reference.append((K.toarray(), M.toarray(), values.copy(), vectors.copy()))
+            return values, vectors
+        base_K, base_M, values, vectors = reference[0]
+        np.testing.assert_array_equal(K.toarray(), base_K)
+        np.testing.assert_allclose(M.toarray(), 100.0 * base_M, rtol=1.0e-12, atol=0.0)
+        return values / 100.0, vectors / 10.0
+
+    monkeypatch.setattr(modal_module, "_dense_eigensolve", consistently_scaled_eigensolve)
     baseline = solve_free_vibration(_free_free_beam_model(density=2.0), num_modes=12)
     rescaled = solve_free_vibration(
         _free_free_beam_model(density=200.0), num_modes=12
