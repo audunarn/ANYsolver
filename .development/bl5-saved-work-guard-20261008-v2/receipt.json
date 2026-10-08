@@ -1,0 +1,24 @@
+{
+  "status": "COMPLETED",
+  "exit_code": 0,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-m",
+    "scripts.b3_e4_f03_saved_mode_patch_work",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\.qualification\\b3-ge-e4-pl\\r7-f03-fy-saved-projection-dev-20260929-v1\\source-mode.json",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-saved-work-guard-20261008-v2\\comparison-guarded.json"
+  ],
+  "source_sha256": "863d2142456a214be236f9abad7a74d0526a9e5b4a981b37457e0f22a9b2cf85",
+  "saved_input_sha256": "40aeaf34a38ffcf6cba5fcd7675597b1a18b86f48cf0fc9b62b11c53b3f4d19d",
+  "source_commit": "43208b871b4d3a30d6e588b0b80e1752ea1ce8f7",
+  "wall_seconds": 38.99802629998885,
+  "process_cap_seconds": 120,
+  "peak_sampled_process_tree_rss_bytes": 243400704,
+  "memory_cap_bytes": 2147483648,
+  "cpu_affinity_observed": [
+    0
+  ],
+  "threads_requested": 1,
+  "jit_disabled_requested": true,
+  "output_sha256": "91be3a366b0fb7529b472669663c44c313d37113efe652bf08ff987d564a94f4"
+}

@@ -112,6 +112,26 @@ next work is a matched physical bond/reference declaration with local slip and
 traction/couple work, followed by the justified growing-space norm and mixed
 system check. Do not infer the connection law from either saved quotient.
 
+Before reusing the saved 2:1 trace comparison, check its frozen total action
+and native beam work at every station. A pass permits using its *signed
+virtual-work difference* to design a matched physical reference; a failure
+requires repairing the diagnostic before interpreting that difference. This
+single saved-state check does not consume formal F03 authority or select a law.
+The first CPU0/JIT-off development attempt timed out at its 30-second cap
+without output or a guard finding. Preserve its receipt; one 120-second retry
+with the same source/input will distinguish preparation cost from a failed
+invariant. A second timeout ends this guard-check route for now.
+That versioned retry passed in 38.998 seconds on the frozen input. L1 total
+work differs from the frozen mean-row action by `1.94e-16 J`; native beam work
+agrees at all 16 stations, with zero reported maximum station difference.
+Two observed OpenBLAS pools each used one thread, and sampled process-tree RSS
+remained below 244 MB. [Failed attempt](../../.development/bl5-saved-work-guard-20261008-v1/receipt.json)
+and [passing receipt](../../.development/bl5-saved-work-guard-20261008-v2/receipt.json)
+retain exact source/input/output hashes. This removes a possible bookkeeping
+explanation for the saved shell-work contrast, not the physical bond-fidelity
+uncertainty. The next discriminator is the declared same-action local-slip and
+traction/couple-work reference; no further reconstruction is needed.
+
 ## Delivered experimental behavior and open acceptance
 
 - The sparse multi-element Q4/mixed Q4-S3/all-S3 GE point workflow, physical
