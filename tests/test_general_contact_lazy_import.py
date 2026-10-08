@@ -8,9 +8,11 @@ import textwrap
 
 
 def test_no_contact_static_route_leaves_contact_kernel_unloaded():
-    source = Path(__file__).resolve().parents[1] / "src"
+    source = Path(os.environ.get("ANYSOLVER_TEST_PACKAGE_ROOT",
+                                 Path(__file__).resolve().parents[1] / "src"))
     environment = os.environ.copy()
-    environment["PYTHONPATH"] = str(source)
+    environment["PYTHONPATH"] = os.pathsep.join(
+        (str(source), environment.get("PYTHONPATH", "")))
     environment["ANYSOLVER_TEST_SOURCE"] = str(source)
     code = textwrap.dedent("""
         import os

@@ -900,13 +900,36 @@ _WARNING_MESSAGE_CLASS = warnings.WarningMessage
 _WARNING_MESSAGE_NAMESPACE = dict(vars(_WARNING_MESSAGE_CLASS))
 _NUMPY_GETERR = _NUMPY_ERROR_MODULE.geterr
 _NUMPY_GETERR_AUTHORITY = _callable_authority(_NUMPY_GETERR)
+if sys.version_info >= (3, 14):
+    import _py_warnings as _WARNING_IMPLEMENTATION
+else:
+    _WARNING_IMPLEMENTATION = warnings
+
+
+def _canonical_python_function(function: Any, module: Any, name: str) -> bool:
+    # Python 3.14's warnings facade re-exports the stdlib implementation.
+    if module is warnings:
+        module = _WARNING_IMPLEMENTATION
+    return (type(function) is types.FunctionType and function.__globals__ is vars(module)
+            and (function.__code__.co_filename == module.__file__ or
+                 (module.__spec__.origin == "frozen" and
+                  function.__code__.co_filename == "<frozen " + module.__name__ + ">"))
+            and function.__code__.co_name == name)
+
+
 _WARNING_CANONICAL_ORIGIN = {
-    name: (type(function) is types.FunctionType
-           and function.__globals__ is vars(warnings)
-           and function.__code__.co_filename == warnings.__file__
-           and function.__code__.co_name == name)
+    name: _canonical_python_function(function, warnings, name)
     for name, function, _authority in _WARNING_FUNCTIONS
 }
+if _WARNING_IMPLEMENTATION is not warnings:
+    _WARNING_GET_CONTEXT = _WARNING_IMPLEMENTATION._get_context
+    _WARNING_GET_CONTEXT_AUTHORITY = _callable_authority(_WARNING_GET_CONTEXT)
+    _WARNING_GLOBAL_CONTEXT = _WARNING_IMPLEMENTATION._global_context
+    _WARNING_GLOBAL_CLASS = type(_WARNING_GLOBAL_CONTEXT)
+    _WARNING_CONTEXT_CLASSES = tuple(
+        (owner, type.__getattribute__(owner, "__mro__"), dict(vars(owner)),
+         {name: _callable_authority(member) for name, member in vars(owner).items()})
+        for owner in _WARNING_GLOBAL_CLASS.__mro__)
 _WARNING_MESSAGE_METADATA = {name: _callable_authority(member)
                              for name, member in _WARNING_MESSAGE_NAMESPACE.items()}
 _MASS_HELPERS = tuple((name, getattr(_element_module, name),
@@ -926,14 +949,6 @@ _BUILTIN_WARNING_ERROR_HANDLERS = {
 _LINECACHE_FUNCTIONS = tuple((name, getattr(linecache, name),
                             _callable_authority(getattr(linecache, name)))
                            for name in ("getline", "getlines", "updatecache"))
-
-
-def _canonical_python_function(function: Any, module: Any, name: str) -> bool:
-    return (type(function) is types.FunctionType and function.__globals__ is vars(module)
-            and (function.__code__.co_filename == module.__file__ or
-                 (module.__spec__.origin == "frozen" and
-                  function.__code__.co_filename == "<frozen " + module.__name__ + ">"))
-            and function.__code__.co_name == name)
 
 
 _WARNING_CODECS = {
@@ -1034,6 +1049,39 @@ def _numpy_error_routes_are_builtin() -> bool:
     standard warning machinery, plain filters, and builtin output streams.
     Capture/custom handlers fall back to the public guarded route.
     """
+    if _WARNING_IMPLEMENTATION is not warnings:
+        implementation = vars(_WARNING_IMPLEMENTATION)
+        # Context-aware warning routing is deliberately left on the full path.
+        # Authenticate the ordinary context without evaluating a foreign getter.
+        use_context = implementation.get("_use_context")
+        if (implementation.get("_wm") is not warnings
+                or not (use_context is False or (type(use_context) is int and use_context == 0))
+                or vars(warnings).get("_get_context") is not _WARNING_GET_CONTEXT
+                or not _canonical_python_function(_WARNING_GET_CONTEXT, warnings, "_get_context")
+                or not _callable_authority_matches(_WARNING_GET_CONTEXT, _WARNING_GET_CONTEXT_AUTHORITY)
+                or implementation.get("_global_context") is not _WARNING_GLOBAL_CONTEXT
+                or type(_WARNING_GLOBAL_CONTEXT) is not _WARNING_GLOBAL_CLASS
+                or type.__getattribute__(_WARNING_GLOBAL_CLASS, "__getattribute__") is not object.__getattribute__):
+            return False
+        for owner, mro, namespace, metadata in _WARNING_CONTEXT_CLASSES:
+            current = vars(owner)
+            dictionary = current.get("__dict__", _MISSING)
+            if (type(owner) is not type or "log" in current
+                    or (dictionary is not _MISSING and
+                        (type(dictionary) is not types.GetSetDescriptorType
+                         or dictionary.__objclass__ is not owner
+                         or dictionary.__name__ != "__dict__"))
+                    or type.__getattribute__(owner, "__mro__") != mro
+                    or len(current) != len(namespace)
+                    or any(current.get(name, _MISSING) is not member or
+                           not _callable_authority_matches(member, metadata[name])
+                           for name, member in namespace.items())):
+                return False
+        context = object.__getattribute__(_WARNING_GLOBAL_CONTEXT, "__dict__")
+        if (type(context) is not dict or len(context) != 1
+                or not all(type(key) is str for key in context)
+                or context.get("log", _MISSING) is not None):
+            return False
     if (np.geterr is not _NUMPY_GETERR
             or type(_NUMPY_GETERR) is not types.FunctionType
             or _NUMPY_GETERR.__globals__ is not vars(_NUMPY_ERROR_MODULE)

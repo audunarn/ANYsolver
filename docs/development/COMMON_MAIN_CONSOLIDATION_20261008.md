@@ -1,0 +1,68 @@
+# Common-main consolidation — 8 October 2026
+
+Human request: consolidate on latest main and coordinate with contact task
+`01a0d278-3e81-77b1-a9b6-e6c1dc764a38`. This authorizes consolidation;
+both feature programmes remain paused. It does not authorize publication or
+represent acceptance of incomplete scientific gates.
+
+Integration owner: this task. Contact confirmed clean source, no owned jobs and
+no independent main push. It subsequently paused its own implementation; no
+further work is requested from that task.
+
+## Sources and preserved boundaries
+
+- Fresh main: `539763e1447776d44a328fe49988fc78ac59362b`.
+- Paused stiffened-shell: `928c341a62b4a63e1cdf6efb5fe7e31f4d8229ae`.
+- Paused contact: `5864a85329f66e6010d636158a1138b38d417b8c`.
+- Prepared merge: `a8cc7814768cf01dd317142e688b3ede35c01ecf`.
+- Checkout: `C:/Github/ANYsolver/.perf2-worktrees/common-main-20261008`.
+
+Both original histories remain unchanged. The only merge conflict was the
+attributes file: both disjoint evidence-preservation blocks were retained.
+Sparse checkout excludes evidence directories; protected canary contents were
+not accessed or materialized. No sibling edits are included. Primary checkout's
+unrelated quality-control edits are preserved.
+
+The original stiffened-shell and contact wheel identities retain their original
+applicability. The ANYfem consumer source `8ecb8b42` remains a separate unverified
+candidate, with its pending packet unconsumed. F03 and other frozen authorities,
+failed external accuracy evidence, scientific tolerances and release gates are
+unchanged. This integration does not complete either programme.
+
+## Consequential integration repair
+
+Fresh controls exposed an existing main admission defect on Python 3.14:
+`warnings` re-exports functions implemented by `_py_warnings`, so provenance
+checks against the facade incorrectly refused the trusted load path.
+
+The repair recognizes the standard implementation, preserves function identity,
+metadata and canonical origin checks, and authenticates its ordinary warning
+context without calling foreign providers. Context-aware or modified warning
+contexts retain the guarded fallback. Supporting independent OpenAI review
+identified additional callback and preimport descriptor routes; their findings
+were addressed with refusal controls. This does not establish final
+different-family scientific acceptance. OpenAI performed reconciliation because
+Mistral/local availability remains exhausted/unavailable for this task.
+
+The contact import test now preserves dependency paths and accepts an explicit
+package root for installed verification; it still verifies the actual import.
+
+## Verification and next action
+
+Fresh ordinary integration allowance: 900 cumulative process-wall seconds,
+60 seconds reserved, each process at most 600 seconds. CPU0, one numerical
+thread, JIT disabled, 2 GiB process-tree memory, one numerical job. Old allowances
+are not pooled or renewed. Commands, hashes, runtime settings, failures and exact
+accounting are retained at `.development/common-main-20261008/` by
+`scripts/common_main_check_20261008.py`. Pytest elapsed time is not the ledger.
+
+Completed so far: 167 then 168 main controls; 93 targeted guard controls;
+146 integrated source controls covering contact/no-contact, restart, native
+fibre/S3 and physical B2 batching. Intermediate failures and runner/fixture
+corrections are preserved, including preimport subprocess input correction.
+These counts refer to their recorded file hashes, not automatically to later
+edits. Final guard verification, a fresh installed artifact, representative
+stiffened-shell lifecycle/example checks and portable CI remain before promotion.
+
+Do not resume feature development, numerical refinement campaigns or release
+work from this note. After consolidation, continue only on explicit human resume.
