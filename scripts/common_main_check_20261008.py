@@ -4,7 +4,7 @@ import argparse, hashlib, json, os, subprocess, sys, time
 
 REPO = Path(__file__).resolve().parents[1]
 RAW = REPO / '.development/common-main-20261008'
-SITE = RAW / 'site-v4'
+SITE = RAW / 'site-v5'
 DEPS = Path('C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001/.qualification/b3-ge-e4-pl/r8-native-s3-restart-binding-dev-20261005-v1/ci-site-network-v2')
 BASE = Path('C:/Python/Python314/Lib/site-packages')
 SIBLINGS = [Path('C:/Github') / n / 'src' for n in ('ANYmaterial', 'ANYfileIO', 'ANYmesh', 'ANYgeometry')]
@@ -91,8 +91,8 @@ def main():
         return child(args)
     import psutil
     RAW.mkdir(parents=True, exist_ok=True)
-    ledger_path = RAW / 'ledger.json'
-    ledger = json.loads(ledger_path.read_text()) if ledger_path.exists() else dict(scope='Human-approved common-main consolidation only; fresh ordinary integration checks, no old authority reuse', budget_seconds=900.0, reserve_seconds=60.0, used_seconds=0.0, attempts=[], in_flight=None)
+    ledger_path = RAW / 'ledger-v2.json'
+    ledger = json.loads(ledger_path.read_text()) if ledger_path.exists() else dict(scope='Fresh human-approved 600-second common-main CI-repair allowance 2026-10-08; old ledger preserved, no authority transfer', budget_seconds=600.0, reserve_seconds=60.0, used_seconds=0.0, attempts=[], in_flight=None)
     if ledger['in_flight'] is not None:
         raise RuntimeError('Prior execution unresolved')
     cap = min(args.cap, 600.0, ledger['budget_seconds'] - ledger['used_seconds'] - ledger['reserve_seconds'])

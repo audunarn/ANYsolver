@@ -1,3 +1,50 @@
+# Current common-baseline decision - 8 October 2026
+
+Human clarified: establish a common baseline to resume development; do not solve
+all outstanding technical issues as a prerequisite. This supersedes the earlier
+procedural requirement in this note to clear every experimental CI failure before
+baseline consolidation. It does not waive scientific criteria, qualification,
+release gates or compatibility claims. Feature programmes remain paused until
+resumed; consolidation is authorized.
+
+Baseline product candidate: d87aed49 (reviewed repairs plus both frozen branches).
+Common branch: codex/common-main-20261008; PR63. Main integration is pending this
+record's commit/push. GitHub main has no configured branch protection/rules.
+Do not describe this baseline as CI-green, scientifically accepted or released.
+
+Evidence: wheel5 SHA866509295b400c71c398d569e95077d2a38798c8dcdb3e36d4d62b0b9e01412b;
+627 package members exactly match source (artifact-parity-v3.json); 16 focused
+installed controls passed. Contact repair passed8 source plus5 shared-caller
+checks; B2/probe/current-profile controls passed12. Supporting independent source
+review completed; unavailable Mistral does not establish different-family review.
+Last full CI37743299319 on older1ba9f115:23 jobs passed,26 failed. Several observed
+compatibility failures have since been repaired; a full green result is NOT claimed.
+
+Carry forward, without weakening or hiding failures: mixed-pressure component
+convergence; pivot response eligibility; native saved-checkpoint binding/strict
+replay; fresh native-route120-second deadlines; mixed buckling. Fail-fast means
+this is not an exhaustive failure inventory. These are follow-up development
+issues, not reasons to continue expanding this consolidation slice.
+
+Deferred pivot candidate is excluded from baseline and preserved in Git stash
+079a478c8a221a72d8e034e834933ae2b2a6b3cb (two named pivot files only). Three new
+controls reached completion but full comparison timed out20/60 seconds; no pass
+claim. Pressure review found a possible S3 layer-resultant cancellation site;
+mechanism unconfirmed. Keep its original1e-8 component criterion.
+
+No local numerical job or source-writing worker remains. Original900-second ledger
+retains98.0110219 seconds unused. Fresh approved600-second ledger-v2 retains
+519.8298063 including60 reserve; the ledgers are separate, no carry-over assumed.
+All raw records are under .development/common-main-20261008. Protected historical
+evidence and failed runs are unchanged. Primary local QC/restart backups remain
+in primary-local-preservation-v1; preserve them before primary main fast-forward.
+
+Next: commit/push this baseline record, update PR63 as a development consolidation,
+merge without a qualification claim, then synchronize primary main and send the
+exact common identity to the contact task. Resume technical programmes separately
+only when requested. Historical chronological records follow unchanged.
+
+---
 # Common-main consolidation â€” 8 October 2026
 
 Human request: consolidate on latest main and coordinate with contact task
@@ -165,7 +212,7 @@ are recorded in `artifact-parity-v2.json` and
 `repaired-installed-controls-v2/runtime-before.json`.
 
 
-## PAUSED — app update restart, 8 October 2026
+## PAUSED ï¿½ app update restart, 8 October 2026
 
 Human requested pause. No new feature work, checks, worker activity or merge is
 permitted until resumed. The independently running GitHub campaign is retained.
@@ -222,7 +269,7 @@ Read reviewers `common_main_review` and `portable_inventory_review` were
 interrupted for pause. Their existing reports remain supporting OpenAI review;
 Mistral/local unavailability is cached. Contact task was given status-only
 coordination, with no work requested. Both programmes and the root goal remain
-paused; G0–G6 acceptance, failed E03 evidence and publication boundaries remain
+paused; G0ï¿½G6 acceptance, failed E03 evidence and publication boundaries remain
 unchanged. Main cannot merge until required CI passes. Preserve primary local
 QC/root restart backups before an eventual fast-forward (see prior record).
 
@@ -292,3 +339,35 @@ sliding-overlap-source-v1 passed8/8 including the unchanged failing CI path;
 sliding-shared-impact-source-v1 passed5/5 including patch restart and hidden
 crossings. Both retained exact input hashes. Remaining124.6193586 seconds with
 60 reserved. Other CI failures still block common-main acceptance and merge.
+
+## Installed consolidation checkpoint (current)
+
+Local integration HEAD d87aed49; preceding fixture/acceptance repair08ba1ab8.
+Fresh wheel5 SHA866509295b400c71c398d569e95077d2a38798c8dcdb3e36d4d62b0b9e01412b
+was built and installed successfully. consolidation-installed-v5 passed16/16;
+actual import is site-v5 with CPU0, one BLAS/Numba thread and JIT disabled.
+artifact-parity-v3.json confirms627 package members match current source bytes;
+only the three GE/B2 owner files and two contact files differ from wheel4.
+This permits unaffected earlier evidence reuse; it does not clear full CI.
+
+Unchanged pivot diagnostic now identifies coordinate2 (first source z): plus-side
+signed clip signature changes in two positions, minus-side is unchanged, overlap
+vertex counts and positive supports remain unchanged. The eligibility guard
+therefore refuses before Schur construction. Trace and original assertion failure
+are preserved in pivot-eligibility-diagnostic-v1 and pivot-diagnostic-input-v1.
+No guard is bypassed. Independent interpretation is pending.
+
+Ledger remaining98.0110219/900 seconds, reserve60, in_flight=null. No local
+numerical process remains. Contact task returned source ownership and has no
+running work. Main is unchanged. PR63 remote still holds1ba9f115; these reviewed
+local commits have not launched another known-failing full CI campaign. Remaining
+real blockers: mixed pressure convergence, pivot eligibility, saved native-fibre
+checkpoint binding/strict replay, fresh native-route deadlines, mixed buckling.
+No new scientific campaign, F03 use, body retry, feature development or release.
+
+Human approved a FRESH600-second common-main CI-repair verification allowance.
+Use ledger-v2.json, never add the old98.0110219 remainder. Prior ledger/evidence
+remain unchanged. CPU0/one thread/JIToff/2GiB/one local job and60-second reserve
+remain; original native120-second context deadlines remain. Scope includes fixed
+pivot/pressure diagnostics, serial failing native routes, compatible repairs and
+final installed controls. No tolerances, old campaign execution or release added.
