@@ -9,15 +9,18 @@ at PR creation; do not describe it as passing before results are inspected.
 This extraction excludes BL5 diagnostics and qualification evidence. Main was
 not edited or merged; package publication remains separate.
 
-BL5 source-only independent review now localizes the V4 tiny-load obstruction:
-slot 55 is a symmetry-allowed y row, with 3.5665e-16 N assembled load and
-9.1302e-13 N high-precision residual. Reflection cannot delete it. The next
-discriminating calculation, under applicable execution authority, is an
-analytic/exact-integral derivation of that C3D20/P0 row's individual interface
-terms evaluated against the saved binary64 multipliers, with an error bound.
-Only a proved structural zero could justify exact cancellation. Even then,
-the active-row equilibrium check remains unsatisfied until its residual is
-resolved. V4 remains FAILED; no numerical retry or criterion change occurred.
+BL5 source review has now proved that V4's slot 55 is the vertical C3D20
+midside node's y displacement. Its shape vanishes exactly on both sampled
+beam faces, so its analytical weak-P0 interface column and end-traction load
+are structural zeros, independent of multipliers. The old 3.5665e-16 N load
+arose in floating face interpolation. A candidate exact-face coordinate
+correction and source-only regression now pass (1 passed, 9 deselected).
+This does not repair the saved 9.1302e-13 N high-precision equilibrium
+residual or reopen the CLOSED V4 ledger. V4 remains FAILED; no numerical
+retry, active-row criterion change, F03 execution, or Fz body retry occurred.
+The next solved comparison needs separately valid authority. Astra handled
+this reserved source/mechanics decision directly while the recorded Mistral
+and local workers remain unavailable for this task.
 Main and origin/main still point to `cff55d95`; the main checkout has unrelated
 untracked work and was not edited.
 
