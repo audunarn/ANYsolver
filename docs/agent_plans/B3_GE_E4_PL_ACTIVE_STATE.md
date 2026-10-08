@@ -30,7 +30,11 @@ binds the v9 source pass and timeout by hash, copies the verified wheel/site,
 and admits only 53 installed controls, one public example and 19 affected
 legacy controls. Its static source/artifact/runner bindings passed. Do not run
 it before the pending authority reply. It does not rewrite or transfer the old
-packet's ledger. Complete independent consumer review before integration.
+packet's ledger. Its frozen solver wheel predates common main: 22/431 solver
+Python files differ at `cff55d95`, including shared nonlinear and arc-length
+code. Passing this packet will verify the consumer only against that older
+solver artifact. A separate current-main installed impact check is required
+before integration. Complete independent consumer review before integration.
 No F03, E03, body retry, old campaign, release or production qualification is
 implied. The programme's G0–G6/F01–F13/V01–V28/B01–B18 obligations remain open.
 
