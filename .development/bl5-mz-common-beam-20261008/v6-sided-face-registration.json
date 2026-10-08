@@ -1,6 +1,7 @@
 {
   "identity": "BL5_V6_SAVED_SIDED_FACE_DEVELOPMENT_V1",
-  "status": "PENDING_USER_AUTHORITY",
+  "status": "AUTHORIZED",
+  "authority": "User approved one bounded saved-state BL5 cut-face check in the current conversation on 8 October 2026",
   "source_commit": "a2169eb4cb23265f32058af9ec15252ee53e7f4e",
   "runner_sha256": "5558a2bc41e347566b975b48555b53f027adcf04db97375ff1cf81d906e099d4",
   "source_sha256": "32e0bcee3da9a47522c2d4651f4cd233159406b5e7b88cbc6aa032e7ff6bc707",

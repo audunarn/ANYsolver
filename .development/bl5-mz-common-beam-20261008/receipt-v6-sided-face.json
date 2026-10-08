@@ -1,0 +1,41 @@
+{
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-I",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\scripts\\r8_bl5_saved_sided_face_work_dev.py",
+    "--output",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-mz-common-beam-20261008\\case-v6-sided-face\\result.json"
+  ],
+  "cwd": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008",
+  "source_commit": "a2169eb4cb23265f32058af9ec15252ee53e7f4e",
+  "actual_head": "dcdb80fca732adda2f19753fd304e2c817df92e2",
+  "source_sha256": "32e0bcee3da9a47522c2d4651f4cd233159406b5e7b88cbc6aa032e7ff6bc707",
+  "registration_sha256": "c93f7f15292934862d5e78576619b805b39bcee8322d486b5443e11a322b3b01",
+  "input_sha256": {
+    ".development/bl5-mz-common-beam-20261008/case-v5/preflight.json": "28225b23fa2aeb86878615b949187446d53df823b4c06a256d312bd93158b4d2",
+    ".development/bl5-mz-common-beam-20261008/case-v5/reference-beam-solved.json": "6ba8b3af282954ad68efc6a71bdd394948a01e489b11667bb9cf8ce4242c99a0",
+    ".development/bl5-mz-common-beam-20261008/case-v5/beam-solved.json": "3b018950628ff5565ecdede721eebe6cff8feb3db56edf1e139e7a484b2952c9",
+    ".development/bl5-mz-common-beam-20261008/v5-native-seam-work-postprocess-v1.json": "afeb2b4d67808ab9d5829152938324118fceb3e3f8ace03c3f9215b4f4bac315"
+  },
+  "effective_parent_affinity": [
+    0
+  ],
+  "environment": {
+    "NUMBA_DISABLE_JIT": "1",
+    "NUMBA_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "BLIS_NUM_THREADS": "1",
+    "VECLIB_MAXIMUM_THREADS": "1"
+  },
+  "process_wall_seconds": 2.5653281999984756,
+  "process_cap_seconds": 30.0,
+  "sampled_peak_process_tree_rss_bytes": 160354304,
+  "memory_limit_bytes": 2147483648,
+  "exit_code": 0,
+  "stop_reason": null,
+  "output": "case-v6-sided-face/result.json",
+  "stdout": "stdout-v6-sided-face.txt",
+  "stderr": "stderr-v6-sided-face.txt"
+}

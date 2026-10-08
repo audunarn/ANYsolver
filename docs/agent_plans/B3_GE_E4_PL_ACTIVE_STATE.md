@@ -78,18 +78,20 @@ favors `x=0.5 m` for a sided cut-face action check and makes an affine-only
 reference inadequate for the disputed mode. The exact saved-input bindings,
 moment-row mapping and limits are in [the native seam-work postprocess](../../.development/bl5-mz-common-beam-20261008/v5-native-seam-work-postprocess-v1.json).
 It used saved arrays only and performed zero new solver executions.
-The prospective [sided C3D20 cut-face extractor](../../scripts/r8_bl5_saved_sided_face_work_dev.py)
-is source-prepared and **unrun**. It integrates the actual saved resolved-beam
-stress separately from the left and right elements at `x=0.5 m`, then pairs
-their force/moment resultants with the saved native shared translation and
-one-sided spins. Independent read-only review found no concrete source defect
-and flagged the opposite outward-face versus native endpoint-log action sign;
-the script now states that convention. The remaining uncertainty is whether
-the sided physical action is balanced and large enough to explain why a
-conforming affine reference misses the broken-port virtual field. One bounded
-saved-solution execution needs new authority; the consumed V5 registration
-cannot authorize it. No new solid equilibrium solve or F03 execution is
-proposed by this extractor.
+The separately approved V6 [sided C3D20 cut-face extractor](../../scripts/r8_bl5_saved_sided_face_work_dev.py)
+ran once from the saved resolved solution (no new equilibrium solve): exit 0,
+`2.5653282 s`, peak `160,354,304 B`, effective CPU0/one thread/JIT off.
+However, its raw outward side tractions **do not balance**: y-forces
+`+7.349246346` and `+13.008910282 N` sum to `+20.358156629 N`, while the
+moment-sum ratio is `0.92555`. The `1.631405007e-9 J` computed broken-trace
+work is therefore unqualified for comparison with native seam work. This is
+an invalid sided reference, **not** a BL5 formulation failure or a reversal
+of V5 global equilibrium. Independent read-only review found no concrete
+extraction sign/layout defect and noted that cut-node external loads and weak
+FE stress balance must be handled explicitly. V6 one-use authority is
+consumed; [the adjudication](../../.development/bl5-mz-common-beam-20261008/v6-sided-face-adjudication.md)
+binds the raw receipt. A future saved-only volume-work/nodal-action audit is
+the discriminating route; no automatic refinement, V6 rerun or F03 follows.
 
 The scoped S3 V2D elastic recovery fix is now a separate **draft PR #65**
 against common main: `codex/s3-v2d-surface-recovery` at `974f283a`, based on

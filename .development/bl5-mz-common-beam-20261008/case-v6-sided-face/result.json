@@ -1,0 +1,116 @@
+{
+  "identity": "BL5_V5_SAVED_SIDED_C3D20_FACE_WORK_DEV_V1",
+  "runtime": {
+    "cpu_affinity": [
+      0
+    ],
+    "numba_disable_jit": 1,
+    "numba_threads": 1,
+    "loaded_threadpools": [
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+        "version": "0.3.31.188.0",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      },
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+        "version": "0.3.30",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      }
+    ]
+  },
+  "source_sha256": {
+    "preflight": "28225b23fa2aeb86878615b949187446d53df823b4c06a256d312bd93158b4d2",
+    "resolved": "6ba8b3af282954ad68efc6a71bdd394948a01e489b11667bb9cf8ce4242c99a0",
+    "native": "3b018950628ff5565ecdede721eebe6cff8feb3db56edf1e139e7a484b2952c9",
+    "native_seam": "afeb2b4d67808ab9d5829152938324118fceb3e3f8ace03c3f9215b4f4bac315"
+  },
+  "cut_x_m": 0.5,
+  "center_m": [
+    0.5,
+    0.0,
+    0.039999999999999994
+  ],
+  "sides": {
+    "left": {
+      "force": [
+        -6.435130206483564e-14,
+        7.349246346424337,
+        4.719002966169228e-13
+      ],
+      "moment": [
+        0.0873299996688176,
+        6.264433416447446e-14,
+        0.019143046716500904
+      ],
+      "area": 0.0024,
+      "elements": [
+        5,
+        6
+      ]
+    },
+    "right": {
+      "force": [
+        1.375566327510569e-13,
+        13.008910282122462,
+        7.235913257463977e-13
+      ],
+      "moment": [
+        0.011861774040725503,
+        -3.926373115525905e-14,
+        -0.013462258063762517
+      ],
+      "area": 0.0024,
+      "elements": [
+        7,
+        8
+      ]
+    }
+  },
+  "force_sum_N": [
+    7.320533068622126e-14,
+    20.3581566285468,
+    1.1954916223633205e-12
+  ],
+  "moment_sum_Nm": [
+    0.0991917737095431,
+    2.3380603009215406e-14,
+    0.005680788652738387
+  ],
+  "shared_translation_m": [
+    -0.0,
+    1.259641521230577e-07,
+    -0.0
+  ],
+  "shared_nodal_spin_rad": [
+    2.0847236383530721e-07,
+    0.0,
+    -6.250697304681267e-08
+  ],
+  "left_cell_spin_rad": [
+    5.173446157578497e-08,
+    0.0,
+    3.4481678591186217e-07
+  ],
+  "right_cell_spin_rad": [
+    2.4012684779361954e-07,
+    0.0,
+    -5.933562438773206e-07
+  ],
+  "split_virtual_work_J": 2.58635299814539e-06,
+  "common_virtual_work_J": 2.584721593138349e-06,
+  "broken_trace_virtual_work_J": 1.6314050070409712e-09,
+  "native_reference_linearized_station_work_J": 4.009200810375506e-07,
+  "solver_executions": 0,
+  "interpretation": "Element-side C3D20 stress resultants act on separate virtual section rotations at one cut. Outward cut-face work uses the opposite action sign from the native endpoint-log convention; compare magnitudes or reconcile signs explicitly. This is a saved-solution diagnostic, not a split-solid equilibrium solve, seam constitutive law, matched compliance, or BL5 acceptance."
+}
