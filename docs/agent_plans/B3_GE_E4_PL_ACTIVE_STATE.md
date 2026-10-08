@@ -1,3 +1,38 @@
+# Active development — 8 October 2026
+
+The human resumed development after PR #63 established common main at
+`cff55d95e905ab689efdacdf08742a60614728c1`. Work in the sparse, isolated
+`C:/Github/ANYsolver/.perf2-worktrees/stiffened-rev8-20261008` checkout on
+`codex/stiffened-rev8-resume`; do not edit main or the older reconciliation
+checkout's protected qualification evidence. Mistral/local were already found
+unavailable for this task, so OpenAI handled the connected consumer repair and
+artifact reconciliation directly.
+
+The experimental ANYfem displacement consumer is at isolated commit
+`345db0cb73e7e7683872188b2a5ee4df0fd84b86`. It now rejects a non-JSON
+seed-factor tuple before Project canonicalization can turn it into a list.
+Frozen source controls passed **53/53** in
+`C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/.development/distributing-displacement-consumer-20261008-v9/source-controls-v8`.
+The subsequent wheel build and isolated install commands exited zero; wheel and
+site receipt exist, but the 30-second `build-install` phase timed out during its
+post-install audit. Preserve that outcome as **TIMEOUT**, not a passed installed
+gate. Packet v9 charged 269.4988338/360 seconds and retains a 60-second reserve;
+no installed controls, public example or affected legacy checks ran. Earlier
+pretest dependency-catalog refusals and the one source test failure remain in
+the carried ledger; the repaired source result supersedes only the test defect.
+The wheel's saved SHA matches its file, but installed behavior is unverified.
+
+Next decision: use a prospective bounded, artifact-bound installed verification
+slice that reuses the exact v9 wheel/site and 53-case source pass, without
+rewriting the timed-out receipt or transferring its remaining allowance. First
+audit the wheel/site against the saved manifest, then run installed controls,
+public example and affected legacy checks under effective CPU0/thread1/JIT-off/
+2 GiB/job1 settings. Complete the independent consumer review before integration.
+No F03, E03, body retry, old campaign, release or production qualification is
+implied. The programme's G0–G6/F01–F13/V01–V28/B01–B18 obligations remain open.
+
+---
+
 # Common-main consolidation — 8 October 2026
 
 Human authorizes consolidation and coordination with contact task `01a0d278-3e81-77b1-a9b6-e6c1dc764a38`. Both feature programmes remain paused.
