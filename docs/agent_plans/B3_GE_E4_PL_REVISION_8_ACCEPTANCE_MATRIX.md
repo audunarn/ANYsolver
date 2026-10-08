@@ -4444,3 +4444,15 @@ from common main in 22/431 Python files, so current-main installed impact
 verification remains a separate requirement. No E01/E02/F03 or aggregate gate
 disposition changes; no release claim follows. Exact paths and hashes are in
 `B3_GE_E4_PL_ACTIVE_STATE.md` and the two packet registrations.
+### 2026-10-08: current-main consumer artifact route prepared
+
+The older-wheel artifact-only packet remains PENDING/UNRUN. A higher-value
+current-main variant is prepared with the same ANYfem consumer wheel and prior
+53/53 source pass. It binds the existing ANYsolver common-main wheel SHA256
+866509295b400c71c398d569e95077d2a38798c8dcdb3e36d4d62b0b9e01412b:
+634 wheel files, 627 Python members and 1264 installed site files. Git source at
+cff55d95 and the wheel differ only by CRLF/LF in four recorded Python members;
+no exact Git-byte-parity claim is made. Static source, wheel/site, manifest and
+runner bindings pass; no numerical attempt or fresh authority is consumed.
+Current-main installed behavior remains UNRUN pending the changed-scope reply.
+The old timeout, scientific gates and release status are unchanged.

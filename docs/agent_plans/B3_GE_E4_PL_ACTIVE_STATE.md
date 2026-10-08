@@ -33,8 +33,18 @@ it before the pending authority reply. It does not rewrite or transfer the old
 packet's ledger. Its frozen solver wheel predates common main: 22/431 solver
 Python files differ at `cff55d95`, including shared nonlinear and arc-length
 code. Passing this packet will verify the consumer only against that older
-solver artifact. A separate current-main installed impact check is required
-before integration. Complete independent consumer review before integration.
+solver artifact. It remains PENDING/unrun and is superseded as the proposed
+next check by
+`C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/.development/distributing-displacement-consumer-common-main-20261008-v1`.
+The latter binds the same consumer wheel/source pass/timeout to the existing
+common-main solver wheel `86650929...`, with 627 Python members and all 1,264
+installed files frozen; static manifest, source and runner checks passed. Its
+solver wheel differs from Git commit `cff55d95` only by CRLF/LF in four named
+Python files, recorded in its registration; it is not described as exactly
+byte-identical to Git. This changed-artifact 240-second check is PENDING a
+separate authority reply, has zero attempts and retains 60 seconds. Do not run
+either pending packet before the applicable reply. Complete independent
+consumer review before integration.
 No F03, E03, body retry, old campaign, release or production qualification is
 implied. The programme's G0–G6/F01–F13/V01–V28/B01–B18 obligations remain open.
 
