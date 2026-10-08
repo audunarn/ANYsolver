@@ -1,0 +1,42 @@
+{
+  "scope": "Supplemental saved-array rigid-work compatibility counterexample; original225-file manifest unchanged",
+  "archive_root": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-main-reconcile-20261001\\.qualification\\b3-ge-e4-pl\\r8-bl5-projected-assessment-dev-20261003-v1\\norm-nullspace",
+  "entries": {
+    "rigid-work.py": {
+      "bytes": 3630,
+      "sha256": "8973c3567d6002f20c9724f06fbfc6f46d5f85eb44ac8938a4213eb593573754"
+    },
+    "run-rigid-work.py": {
+      "bytes": 392,
+      "sha256": "68ff77e982b89df64ada988e9b284796a9e6a866b5d368e8f00dda9a9237831b"
+    },
+    "rigid-work.json": {
+      "bytes": 2028,
+      "sha256": "18b67b5385d7d9c6ac6b8f51a786fb9c4d3488ee382a9e41027799f0414dd43f"
+    },
+    "rigid-work.npz": {
+      "bytes": 1638,
+      "sha256": "5dbcdde4bd3778275e5872c767c9ae91910ad465fb06633d5598e9da35a5b85e"
+    },
+    "check/execution.json": {
+      "bytes": 879,
+      "sha256": "a5f1f4422ad05fb18ec695247aa6132eccdb1a9872179762114a8be74a328ef6"
+    },
+    "check/stdout.log": {
+      "bytes": 198,
+      "sha256": "5eaf93eefcbc4b028597ef82593e33fc91bad9153e894d6c7371482d56a78d8e"
+    },
+    "check/stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "check/thread-samples.json": {
+      "bytes": 3381,
+      "sha256": "189f38fc4e5b3d7fb0eb4b4efdb00cc91c7d213a7d12f90aed59365f461f0544"
+    },
+    "B3_GE_E4_PL_ACTIVE_STATE.md": {
+      "bytes": 6411,
+      "sha256": "19f25418420a28b2a5bf4d0304c72278d1dcd5f04fc9ec726d23ad21f56d5de4"
+    }
+  }
+}

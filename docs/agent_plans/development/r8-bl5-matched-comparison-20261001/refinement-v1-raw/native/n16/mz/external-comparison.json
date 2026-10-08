@@ -1,0 +1,120 @@
+{
+  "external_applied_work_J": 1.774153836642759e-05,
+  "external_files": {
+    "inputs.json": "da0211499dc1ca28da33212fd188d98e8e971b5fdfbf675b3e990a99091dccba",
+    "raw-inventory.json": "07dfe3b31a9b11cbb86ac9092ff509990e272bed1fa6a5d9fee2aed110101f69",
+    "recovered-actions.json": "5696a74fcc111a111b2f3212e9521c92143221edf550d643cec160102ef5953f",
+    "summary.json": "b9946aad3f15ae3b0e13c5d2282af136f151b92f4ac8bd67f6dd0ffc0f302946"
+  },
+  "field_errors": {
+    "beam": {
+      "combined_1m_relative_l2": 0.004976909474089627,
+      "component_error_squared": [
+        2.0983157026681406e-21,
+        2.2860833361270215e-18,
+        1.838202584964724e-18,
+        7.057154190197701e-20,
+        1.1558213931048482e-17,
+        1.1252156558571808e-17
+      ],
+      "component_reference_squared": [
+        6.575493790389257e-17,
+        6.914813152416449e-14,
+        6.052309656112737e-14,
+        2.6495651309343083e-14,
+        3.680130906104092e-13,
+        5.660946856141921e-13
+      ],
+      "component_units": "translations m; rotations rad; shell measure m2/beam measure m",
+      "denominator_floor": 1e-24,
+      "rotation_relative_l2": 0.004880506375754286,
+      "translation_relative_l2": 0.005639660173506225
+    },
+    "shell": {
+      "combined_1m_relative_l2": 0.009072737615859855,
+      "component_error_squared": [
+        7.979018796202541e-21,
+        4.552762152308327e-19,
+        3.579015496043045e-19,
+        4.5900665233525515e-20,
+        2.364432046840263e-18,
+        1.0643423546685206e-17
+      ],
+      "component_reference_squared": [
+        2.7015934961075414e-16,
+        1.269647774890886e-14,
+        1.0667230650809835e-14,
+        4.964612920177336e-15,
+        6.372106322999077e-14,
+        7.624008540340224e-14
+      ],
+      "component_units": "translations m; rotations rad; shell measure m2/beam measure m",
+      "denominator_floor": 1e-24,
+      "rotation_relative_l2": 0.009490628068920884,
+      "translation_relative_l2": 0.005894481948014854
+    }
+  },
+  "fixed_region_difference": {
+    "closed": [
+      0.20727457344133438,
+      0.05143975740133078,
+      0.018943982486207073,
+      0.003931020330645352,
+      -0.02795241284065436,
+      0.03550694454688719
+    ],
+    "endpoint_atoms": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "open": [
+      0.20727457344133438,
+      0.05143975740133078,
+      0.018943982486207073,
+      0.003931020330645352,
+      -0.02795241284065436,
+      0.03550694454688719
+    ],
+    "smooth_unit_peak": [
+      0.006645580409662788,
+      0.017884258211044557,
+      0.0018964585025250183,
+      0.0011072161149668358,
+      -0.0019372534011082576,
+      0.011809960556807164
+    ]
+  },
+  "native_applied_work_J": 1.769339530874084e-05,
+  "polynomial_transfer_difference": [
+    [
+      -0.36941432462089807,
+      -0.08978348442490436,
+      -0.0015383424130415158,
+      -0.0065218151422998805,
+      0.023327960188844976,
+      -8.5105256175666e-12
+    ],
+    [
+      -0.14885676177926044,
+      -8.5105256175666e-12,
+      0.0030233212213116034,
+      8.996409096673208e-05,
+      0.006158452002809067,
+      -0.01112543160391688
+    ],
+    [
+      -0.12717004771586815,
+      -0.01112543160391688,
+      0.005972145248728411,
+      -0.0003778043699311784,
+      0.0020866578382892076,
+      -0.017748926177674207
+    ]
+  ],
+  "scope": "Common nodal Q1/P1 physical fields at1m rotation scale; retained-cell rotations remain distinct. Continuous P0 actions compared, no discrepancy/1% acceptance predicate.",
+  "work_relative_signed": -0.002713578534872227
+}

@@ -1,0 +1,21 @@
+{
+  "classification": "bounded development diagnostic resource-limit outcome, not mechanical failure",
+  "status": "BLOCKED_RESOURCE_CAP",
+  "question": "Does the provisional P0 policy pass a loaded x16/B3-12 shell:beam 8:1 extreme under the existing diagnostic resource envelope?",
+  "model": "C1 Q4 x16/y4 35 mm shell, native B3-12, material-line P0 m4; unchanged geometry, section, root supports, terminal 100 Nm Mx and 1000 N Fz definitions",
+  "attempt": "run(shell_cells=16, beam_half_cells=12, policy_p0_only=True)",
+  "result": {
+    "shell_coordinates": 1782,
+    "beam_coordinates": 222,
+    "free_primal_coordinates": 1932,
+    "p0_rows": 24,
+    "required_kkt_rows": 1956,
+    "existing_max_kkt_rows": 1900,
+    "failure": "ValueError: bounded constraint and scaling rows required",
+    "loaded_solution_obtained": false,
+    "physical_or_stability_verdict": "none"
+  },
+  "source_git": "7dd0d50068e3c8f92bb8d86afd80274997c9fcb5",
+  "runner_sha256": "8dba14d60b0ab7353c51339fb26a8371b61c765e1263c220ef900d0a5f5ce4bc",
+  "boundary": "No resource cap was raised. The registered x16/y4 fixture cannot be scored by this full-coordinate loaded diagnostic; a mathematically equivalent bounded reduction or a separately interpreted reduced transverse mesh would be needed."
+}

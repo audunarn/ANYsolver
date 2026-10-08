@@ -96,8 +96,13 @@ def _rigid_rotation_field(model: FEModel, angle_deg: float, axis) -> np.ndarray:
     return u
 
 
-@pytest.mark.parametrize("model_factory", [_single_shell_model, _single_beam_model])
-def test_consistent_corotational_tangent_matches_force_jacobian(model_factory) -> None:
+@pytest.mark.parametrize("model_factory,centered_shell_reference", [
+    (_single_shell_model, False), (_single_shell_model, True),
+    (_single_beam_model, False),
+])
+def test_consistent_corotational_tangent_matches_force_jacobian(
+    model_factory, centered_shell_reference,
+) -> None:
     """The opt-in tangent differentiates both pull-back and frame rotation."""
 
     model = model_factory()
@@ -115,6 +120,7 @@ def test_consistent_corotational_tangent_matches_force_jacobian(model_factory) -
         u,
         tangent=True,
         tangent_mode="consistent",
+        centered_shell_reference=centered_shell_reference,
     )
     numerical = np.zeros_like(tangent)
     step = 2.0e-7
@@ -130,6 +136,7 @@ def test_consistent_corotational_tangent_matches_force_jacobian(model_factory) -
             plus,
             tangent=False,
             tangent_mode="consistent",
+            centered_shell_reference=centered_shell_reference,
         )
         force_minus, _, _ = corotational_element_response(
             model,
@@ -138,6 +145,7 @@ def test_consistent_corotational_tangent_matches_force_jacobian(model_factory) -
             minus,
             tangent=False,
             tangent_mode="consistent",
+            centered_shell_reference=centered_shell_reference,
         )
         numerical[:, column] = (force_plus - force_minus) / (2.0 * step)
 
@@ -160,6 +168,48 @@ def test_corotational_tangent_mode_rejects_unknown_value() -> None:
             tangent=True,
             tangent_mode="secant",
         )
+
+
+def test_centered_shell_reference_remains_objective_under_rigid_rotation() -> None:
+    model = _single_shell_model()
+    element = model.mesh.elements[1]
+    zero = np.zeros(element.total_dofs)
+    ordinary_force, ordinary_tangent, _ = corotational_element_response(
+        model, 1, element, zero, tangent=True, tangent_mode="consistent")
+    centered_force, centered_tangent, _ = corotational_element_response(
+        model, 1, element, zero, tangent=True, tangent_mode="consistent",
+        centered_shell_reference=True)
+    assert np.linalg.norm(centered_force) < 1e-9
+    assert np.linalg.norm(centered_force-ordinary_force) < 1e-9
+    assert (np.linalg.norm(centered_tangent-ordinary_tangent) <=
+            1e-10*np.linalg.norm(ordinary_tangent))
+    displacement = _rigid_rotation_field(model, 90., (1., 1., 1.))
+    force, _tangent, _state = corotational_element_response(
+        model, 1, element, displacement, tangent=False,
+        centered_shell_reference=True)
+    assert np.linalg.norm(force) < 1e-9 * E_STEEL * 1e-5
+
+
+def test_centered_shell_reference_preserves_response_after_origin_shift() -> None:
+    model = _single_shell_model()
+    element = model.mesh.elements[1]
+    displacement = np.zeros(element.total_dofs)
+    displacement[2::6] = (0., 0.001, 0.002, 0.001)
+    displacement[3::6] = (0.001, -0.002, 0.003, 0.)
+    base_force, base_tangent, _ = corotational_element_response(
+        model, 1, element, displacement, tangent=True,
+        tangent_mode="consistent", centered_shell_reference=True)
+    shifted = _single_shell_model()
+    for node_id, node in tuple(shifted.mesh.nodes.items()):
+        shifted.set_node_coordinates(
+            node_id, node.x+1000., node.y-300., node.z+700.)
+    moved_force, moved_tangent, _ = corotational_element_response(
+        shifted, 1, shifted.mesh.elements[1], displacement, tangent=True,
+        tangent_mode="consistent", centered_shell_reference=True)
+    assert (np.linalg.norm(moved_force-base_force) <=
+            1e-9*np.linalg.norm(base_force))
+    assert (np.linalg.norm(moved_tangent-base_tangent) <=
+            1e-9*np.linalg.norm(base_tangent))
 
 
 @pytest.mark.parametrize("axis", [(0, 0, 1), (0, 1, 0), (1, 1, 1)])

@@ -1,0 +1,246 @@
+{
+  "status": "COMPLETED_DEVELOPMENT_ONLY",
+  "predicates": {
+    "reference_error": true,
+    "inverse_residual": true,
+    "eigen_residual": true,
+    "gram_symmetry": true,
+    "conditioning": true,
+    "all_eigenvalues_positive": true,
+    "case_floor": true,
+    "absolute_floor": true,
+    "variational_ceiling": true
+  },
+  "source_sha256": "9c3f361876bf90ca43cc00a839a759eafc38c424779a4540733770f11233ddc9",
+  "nx": 64,
+  "ny": 16,
+  "beam_halfcells": 16,
+  "policy": {
+    "c_lambda": 2,
+    "span_halfcells": 1,
+    "shape_aspect": 1.25,
+    "shell_trace_segments": 64,
+    "beam_halfcells": 16,
+    "support_membership": [
+      [
+        0
+      ],
+      [
+        1
+      ],
+      [
+        2
+      ],
+      [
+        3
+      ],
+      [
+        4
+      ],
+      [
+        5
+      ],
+      [
+        6
+      ],
+      [
+        7
+      ],
+      [
+        8
+      ],
+      [
+        9
+      ],
+      [
+        10
+      ],
+      [
+        11
+      ],
+      [
+        12
+      ],
+      [
+        13
+      ],
+      [
+        14
+      ],
+      [
+        15
+      ]
+    ],
+    "support_endpoints_m": [
+      0.0,
+      0.0625,
+      0.125,
+      0.1875,
+      0.25,
+      0.3125,
+      0.375,
+      0.4375,
+      0.5,
+      0.5625,
+      0.625,
+      0.6875,
+      0.75,
+      0.8125,
+      0.875,
+      0.9375,
+      1.0
+    ],
+    "shell_spacing_m": 0.015625,
+    "beam_spacing_m": 0.0625
+  },
+  "rows": 6924,
+  "constraint_rows": 80,
+  "norm_rows": 5536,
+  "native_physical_pairing_max_abs": 4.336808689942018e-19,
+  "omitted_C_max_abs": 0.0,
+  "omitted_slots": 1300,
+  "native_inverse_residual": 1.553867887849988e-14,
+  "gram_relative_skew": 1.5608470098905062e-15,
+  "eigen_relative_residual": 3.0956125746683774e-14,
+  "conditions": {
+    "native": 91.52703449266633,
+    "reference": 77.00125204510333
+  },
+  "reference_refinements": [
+    {
+      "beam": {
+        "rows": 432,
+        "subdivisions": 8,
+        "inverse_residual_max": 1.3784198284239536e-13,
+        "relative_loewner_error_bound": 0.015732589673170917
+      },
+      "total_relative_loewner_error": 0.0014640707281964513
+    },
+    {
+      "beam": {
+        "rows": 816,
+        "subdivisions": 16,
+        "inverse_residual_max": 6.49485348887437e-13,
+        "relative_loewner_error_bound": 0.0038870991195022356
+      },
+      "total_relative_loewner_error": 0.00044312550341259253
+    }
+  ],
+  "shell_reference": {
+    "modes": 4096,
+    "supports": 16,
+    "relative_loewner_tail_bound": 0.00011411496643447326,
+    "lower_min_eigenvalue": 0.0013277231066195674
+  },
+  "all_generalized_eigenvalues": [
+    0.841249774460003,
+    0.8432780211828877,
+    0.8432780571852736,
+    0.8467009630485152,
+    0.8486643751757754,
+    0.8486644100299845,
+    0.8568702609835503,
+    0.8587130300615026,
+    0.8587130627385073,
+    0.8705113284115479,
+    0.8721926814537544,
+    0.8721927111184403,
+    0.8861911403691556,
+    0.8876870241591674,
+    0.8876870501787659,
+    0.9025828348237762,
+    0.9038839841711075,
+    0.9038840060613225,
+    0.9186416472024534,
+    0.9197497785931729,
+    0.9197497959214063,
+    0.9336580456823784,
+    0.9345818003408077,
+    0.9345818126028359,
+    0.9472275551324838,
+    0.947979147252468,
+    0.9479791537302473,
+    0.9591836294268468,
+    0.9597765214853899,
+    0.9597765218859468,
+    0.9695268031638836,
+    0.9699743764990316,
+    0.9699743854195289,
+    0.978366852840727,
+    0.9786820549676765,
+    0.9786820746861067,
+    0.98587604002336,
+    0.9860722986324483,
+    0.986072331644529,
+    0.9922064613707986,
+    0.9923011333804873,
+    0.9923011798896834,
+    0.9972136749746519,
+    0.997235931558515,
+    0.9972359795962618,
+    0.9983771678848143,
+    0.9983853248063093,
+    0.998402575157397,
+    0.9984106004936036,
+    0.9984526041792031,
+    0.9984603705443875,
+    0.9985257129602895,
+    0.9985331012058773,
+    0.9986196546546716,
+    0.9986265576162173,
+    0.9987315531424343,
+    0.9987378789639968,
+    0.9988579937415857,
+    0.9988636686933726,
+    0.9989951155700102,
+    0.999000086345988,
+    0.9991386780196845,
+    0.9991429136382401,
+    0.999284051499057,
+    0.9992875451606761,
+    0.9994260704998758,
+    0.9994288419987587,
+    0.9995587884236325,
+    0.9995608873361249,
+    0.9996757171840277,
+    0.9996772238201269,
+    0.9997727391918448,
+    0.9997737494608924,
+    0.9998287753000827,
+    0.9998287827219017,
+    0.9998295119416579,
+    0.9998582349540763,
+    0.9998588001566141,
+    0.999947728284214,
+    0.9999478785127187
+  ],
+  "beta": 0.9171966934414902,
+  "safe_case_floor": 0.47973294026360613,
+  "frozen_scalar_sha256": "0c83f708ad726e2237f7b02b5d559124740f53357fa91caed035455cbe50cb98",
+  "imported_anysolver": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-aggregation-installed-v1\\site\\anysolver\\__init__.py",
+  "elapsed_seconds": 34.12018170001102,
+  "limitation": "finite reference inf-sup development only; actual indefinite KKT, locking, physical accuracy and F03/M2 acceptance remain open",
+  "threads": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "version": "0.3.31.188.0",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "version": "0.3.30",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    }
+  ],
+  "jit_disabled": true
+}

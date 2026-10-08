@@ -1,0 +1,53 @@
+{
+  "classification": "saved-field linear half-load C1 torque surface-order screen",
+  "full_load": {
+    "meaning": "all 9x9 face-interior samples projected to the same deformed XY on paired Q8 plate faces; sampling does not certify a global contact condition",
+    "minimum_projected_gap_m": -7.112493261018926e-09,
+    "minimum_sample": [
+      120,
+      0.6133714327005904,
+      -0.9681602395076261,
+      [
+        0.6133620155623972,
+        -0.9681625699597369
+      ],
+      4.445768331151997e-16
+    ],
+    "negative": 43,
+    "samples": 10368,
+    "unresolved": 0
+  },
+  "full_load_Nm": 100.0,
+  "half_load": {
+    "meaning": "all 9x9 face-interior samples projected to the same deformed XY on paired Q8 plate faces; sampling does not certify a global contact condition",
+    "minimum_projected_gap_m": -2.20022468647163e-09,
+    "minimum_sample": [
+      120,
+      0.8360311073266358,
+      -0.9681602395076261,
+      [
+        0.8360276212238323,
+        -0.968160755776896
+      ],
+      2.2247786310271853e-16
+    ],
+    "negative": 27,
+    "samples": 10368,
+    "unresolved": 0
+  },
+  "half_load_Nm": 50.0,
+  "limitations": [
+    "linear superposition on one fixed C1 solid geometry",
+    "interior same-paired-face sampling only",
+    "not a continuous nonintersection certificate or mesh convergence",
+    "no native accuracy or F03/G0B acceptance"
+  ],
+  "saved_input_sha256": {
+    "model.json": "864d36e9c843576fd9e49804103d92c9754b47db672bb5df72aff50a8f4ccce9",
+    "result.json": "765642d21348b7645c9433333466c5c449cfac9f93c37261a03d6a6909e20834",
+    "solid-4-tip_mx.frd": "543dbbb0b86b5cde20d0d2ead4ecbafc5465928444ffeb5d23e5aaa76ad08043",
+    "solid-4-tip_mx.inp": "cc88870f0664cbadb39a114f4755dc996c226ab683d3304ea8f4a60f26b93da0"
+  },
+  "source_sha256": "b3a9d9fe0b402def94de88486fa451f82b642dd4223a844dd48591ba8a489d4b",
+  "status": "EXPLORATORY_COMPLETE"
+}

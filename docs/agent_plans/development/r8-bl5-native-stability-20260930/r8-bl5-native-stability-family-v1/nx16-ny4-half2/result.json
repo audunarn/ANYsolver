@@ -1,0 +1,120 @@
+{
+  "status": "COMPLETED_DEVELOPMENT_ONLY",
+  "predicates": {
+    "reference_error": true,
+    "inverse_residual": true,
+    "eigen_residual": true,
+    "gram_symmetry": true,
+    "conditioning": true,
+    "all_eigenvalues_positive": true,
+    "case_floor": true,
+    "absolute_floor": true,
+    "variational_ceiling": true
+  },
+  "source_sha256": "9c3f361876bf90ca43cc00a839a759eafc38c424779a4540733770f11233ddc9",
+  "nx": 16,
+  "ny": 4,
+  "beam_halfcells": 2,
+  "policy": {
+    "c_lambda": 2,
+    "span_halfcells": 1,
+    "shape_aspect": 1.25,
+    "shell_trace_segments": 16,
+    "beam_halfcells": 2,
+    "support_membership": [
+      [
+        0
+      ],
+      [
+        1
+      ]
+    ],
+    "support_endpoints_m": [
+      0.0,
+      0.5,
+      1.0
+    ],
+    "shell_spacing_m": 0.0625,
+    "beam_spacing_m": 0.5
+  },
+  "rows": 552,
+  "constraint_rows": 10,
+  "norm_rows": 412,
+  "native_physical_pairing_max_abs": 5.551115123125783e-17,
+  "omitted_C_max_abs": 0.0,
+  "omitted_slots": 112,
+  "native_inverse_residual": 2.3967253954175857e-15,
+  "gram_relative_skew": 2.378592778448813e-16,
+  "eigen_relative_residual": 7.842540917631632e-16,
+  "conditions": {
+    "native": 6.312859105149222,
+    "reference": 4.58314105243206
+  },
+  "reference_refinements": [
+    {
+      "beam": {
+        "rows": 54,
+        "subdivisions": 8,
+        "inverse_residual_max": 4.647665945918948e-15,
+        "relative_loewner_error_bound": 0.009428326135631118
+      },
+      "total_relative_loewner_error": 0.003833311840197623
+    },
+    {
+      "beam": {
+        "rows": 102,
+        "subdivisions": 16,
+        "inverse_residual_max": 2.6678973675364923e-14,
+        "relative_loewner_error_bound": 0.0023350025386205072
+      },
+      "total_relative_loewner_error": 0.0009533322138710322
+    }
+  ],
+  "shell_reference": {
+    "modes": 4096,
+    "supports": 2,
+    "relative_loewner_tail_bound": 1.094369626369837e-07,
+    "lower_min_eigenvalue": 0.11314391579611505
+  },
+  "all_generalized_eigenvalues": [
+    0.7251968462033846,
+    0.7287966848570392,
+    0.7287980655798992,
+    0.9890369950130259,
+    0.9890376536852364,
+    0.9890605096343044,
+    0.9965743144629869,
+    0.9965887432283921,
+    0.9989797482102523,
+    0.9989827458972844
+  ],
+  "beta": 0.8515849025219885,
+  "safe_case_floor": 0.49506691000292147,
+  "frozen_scalar_sha256": "0c83f708ad726e2237f7b02b5d559124740f53357fa91caed035455cbe50cb98",
+  "imported_anysolver": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-aggregation-installed-v1\\site\\anysolver\\__init__.py",
+  "elapsed_seconds": 2.4791597000148613,
+  "limitation": "finite reference inf-sup development only; actual indefinite KKT, locking, physical accuracy and F03/M2 acceptance remain open",
+  "threads": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "version": "0.3.31.188.0",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "version": "0.3.30",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    }
+  ],
+  "jit_disabled": true
+}

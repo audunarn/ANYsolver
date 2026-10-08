@@ -1,0 +1,200 @@
+{
+  "provenance": {
+    "git_head": "6e1ad8e0303d4accff4b8290410a76f4febe522f",
+    "source_sha256": {
+      "scripts/b3_e4_f03_l1_candidate_compare.py": "f3e44a30817957155066765e9ea1d01d51d18ab1ca1e5655ec1e830cde47b2bc",
+      "scripts/b3_e4_f03_l1_space_design.py": "4b3145057dbbe78c67cfa569368a72e4deddc01caf447ed340996ea90aaf6c9d",
+      "scripts/b3_e4_f03_l1_native_connection_probe.py": "420a1e68ca4b839a3a3c08960fcdd2f3eacf6420a1933211b56c61a9a180c9e4",
+      "scripts/_b3_e4_f03_native_fixture.py": "94d9e1a3532c3b2c061153e73942ccd73283eae0ef895b5ca4ef4014e5caa3fb",
+      "scripts/b3_e4_f03_plate_patch_work.py": "211dfd94745a436967b0b1e2567bca411524f6d58b8ebfbcb430a1f6786fed0f",
+      "src/anysolver/e4_pl_element.py": "8aa0a6845804857c15d3ca30d883e1960386c00044d69a892f9bf35bb0110f33",
+      "src/anysolver/_ge_beam3_pose_joint.py": "f3fce05e6d65dfac9a9783e6fb466b8a0067ab4831ba00a74df9c579461abf71",
+      "scripts/b3_e4_f03_l1_nested_action.py": "0ce2f3da126a795290b25deef76ff89f6634ac5a28bdad720fee9e6f191710c5"
+    },
+    "python": "3.14.2",
+    "python_executable": "C:\\Python\\Python314\\python.exe",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "anysolver_import": "C:\\Github\\ANYsolver\\src\\anysolver\\__init__.py",
+    "thread_environment": {
+      "OPENBLAS_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": null,
+      "NUMBA_DISABLE_JIT": "1"
+    },
+    "effective_threadpools": [
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+        "version": "0.3.31.188.0",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      },
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+        "version": "0.3.30",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      }
+    ]
+  },
+  "results": [
+    {
+      "segments": 16,
+      "line_interval_m": [
+        0.5,
+        1.0
+      ],
+      "grid_policy": "longitudinal_shell_and_beam",
+      "shell_grid_x_m": [
+        0.0,
+        0.03125,
+        0.0625,
+        0.09375,
+        0.125,
+        0.15625,
+        0.1875,
+        0.21875,
+        0.25,
+        0.28125,
+        0.3125,
+        0.34375,
+        0.375,
+        0.40625,
+        0.4375,
+        0.46875,
+        0.5,
+        0.53125,
+        0.5625,
+        0.59375,
+        0.625,
+        0.65625,
+        0.6875,
+        0.71875,
+        0.75,
+        0.78125,
+        0.8125,
+        0.84375,
+        0.875,
+        0.90625,
+        0.9375,
+        0.96875,
+        1.0
+      ],
+      "shell_grid_y_m": [
+        -0.1,
+        -0.07500000000000001,
+        -0.05,
+        -0.024999999999999994,
+        0.0,
+        0.024999999999999994,
+        0.05000000000000002,
+        0.07500000000000001,
+        0.1
+      ],
+      "native_half_cells": 32,
+      "shell_thickness_m": 0.035,
+      "beam_axis_z_m": 0.0675,
+      "line_section_offset_z_m": -0.05,
+      "completion_non_drill_relative": 0.0943078477601886,
+      "loads": {
+        "shell_fy_N": 1000.0,
+        "beam_tip_mx_Nm": 100.0
+      },
+      "candidates": {
+        "P1_translation_twist_P0_pitch_normal": {
+          "actual_PL": {
+            "dual_rows": 100,
+            "physical_dofs": 2016,
+            "resultant_dofs": 288,
+            "equilibrium_relative": 2.792712117116736e-12,
+            "compatibility_relative": 3.4227195174119554e-20,
+            "scaled_constraint_schur_min_eigen": 7.287754721740382e-06,
+            "cases": {
+              "shell_fy": {
+                "shell_tip_y_m": 5.116185267873446e-05,
+                "native_tip_twist_rad": 6.059490616752038e-06,
+                "external_work_Nm": 0.05116185267873446,
+                "shell_operator_work_Nm": 0.03758887769037218,
+                "shell_physical_component_work_Nm": 0.037488129558014165,
+                "shell_completion_work_Nm": 0.0001007481323580181,
+                "native_retained_operator_work_Nm": 0.013572974988413353,
+                "shell_interface_work_Nm": 0.013572974988420108,
+                "native_interface_work_Nm": -0.013572974988420108,
+                "interface_force_N": 243.39225093515256,
+                "interface_origin_moment_Nm": 260.2884640507448,
+                "force_balance_N": 0.0,
+                "origin_moment_balance_Nm": 1.2924697071141057e-26
+              },
+              "beam_tip_mx": {
+                "shell_tip_y_m": 6.059490616751556e-07,
+                "native_tip_twist_rad": 4.5533921941075816e-05,
+                "external_work_Nm": 0.004553392194107581,
+                "shell_operator_work_Nm": 0.0005762604927286462,
+                "shell_physical_component_work_Nm": 0.0005751338973586246,
+                "shell_completion_work_Nm": 1.1265953700215691e-06,
+                "native_retained_operator_work_Nm": 0.003977131701381904,
+                "shell_interface_work_Nm": -0.0005762604927289112,
+                "native_interface_work_Nm": 0.0005762604927289694,
+                "interface_force_N": 143.22920825069139,
+                "interface_origin_moment_Nm": 43.39656082780943,
+                "force_balance_N": 0.0,
+                "origin_moment_balance_Nm": 0.0
+              }
+            }
+          }
+        },
+        "P0_translation_twist_pair_P0_pitch_normal": {
+          "actual_PL": {
+            "dual_rows": 80,
+            "physical_dofs": 2016,
+            "resultant_dofs": 288,
+            "equilibrium_relative": 6.93278678909337e-12,
+            "compatibility_relative": 6.045798884088491e-20,
+            "scaled_constraint_schur_min_eigen": 1.4442915548115403e-06,
+            "cases": {
+              "shell_fy": {
+                "shell_tip_y_m": 5.1175190909615994e-05,
+                "native_tip_twist_rad": 5.928932551593032e-06,
+                "external_work_Nm": 0.051175190909615996,
+                "shell_operator_work_Nm": 0.03759518827991442,
+                "shell_physical_component_work_Nm": 0.03749395163938453,
+                "shell_completion_work_Nm": 0.00010123664052989062,
+                "native_retained_operator_work_Nm": 0.01358000262974129,
+                "shell_interface_work_Nm": 0.013580002629748096,
+                "native_interface_work_Nm": -0.013580002629748065,
+                "interface_force_N": 242.9435918573854,
+                "interface_origin_moment_Nm": 260.20503685088437,
+                "force_balance_N": 0.0,
+                "origin_moment_balance_Nm": 2.5849394142282115e-25
+              },
+              "beam_tip_mx": {
+                "shell_tip_y_m": 5.92893255159151e-07,
+                "native_tip_twist_rad": 4.541258742171104e-05,
+                "external_work_Nm": 0.0045412587421711035,
+                "shell_operator_work_Nm": 0.0005936224140074924,
+                "shell_physical_component_work_Nm": 0.0005908649441163391,
+                "shell_completion_work_Nm": 2.7574698911532643e-06,
+                "native_retained_operator_work_Nm": 0.003947636328167031,
+                "shell_interface_work_Nm": -0.0005936224140076817,
+                "native_interface_work_Nm": 0.00059362241400766,
+                "interface_force_N": 142.9445519056178,
+                "interface_origin_moment_Nm": 43.26295898025264,
+                "force_balance_N": 0.0,
+                "origin_moment_balance_Nm": 4.547473508864641e-13
+              }
+            }
+          }
+        }
+      },
+      "scope": "virgin supported local KKT development screen only"
+    }
+  ]
+}

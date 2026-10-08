@@ -1,0 +1,81 @@
+{
+  "applied_work_J": 0.0004241241807251041,
+  "case": "fy",
+  "counts": {
+    "beam_nodes": 129,
+    "full_q": 8940,
+    "members": 64,
+    "multipliers": 160,
+    "physical_dofs": 7404,
+    "retained_cell_rotations": 384,
+    "retained_dofs": 1536,
+    "retained_resultants": 1152,
+    "shell_nodes": 1105
+  },
+  "generation": 1,
+  "nx": 64,
+  "physical_checks": {
+    "beam_physical_workmap_scaled": 4.547473508864641e-15,
+    "compatible_connection_work_relative": 7.395524903517034e-11,
+    "complete_domain_cuts_scaled": 2.098659024341032e-12,
+    "energy_work_relative": 7.314598625266166e-11,
+    "equilibrium_ratio": 1.3088578032441944e-12,
+    "global_ground_applied_scaled": 2.09922745852964e-12,
+    "ground_work_relative": 0.0,
+    "shell_physical_workmap_scaled": 4.547473508864641e-15,
+    "weak_gap": 8.39983052253859e-15
+  },
+  "preflight": {
+    "constraint_norm": "reference_row_scaled_max",
+    "constraints": 160,
+    "equilibrium_norm": "frozen_work_weighted_l2_plus_active_load_rows",
+    "experimental_line_samples": 256,
+    "identity": "deb01405d52ea4aa163d5a924f3d36eee0009d143124d24854a6caf46fe25bf4",
+    "matrix_nnz": 448701,
+    "physical_dofs": 7404,
+    "production_qualified": false,
+    "reference_length_m": 0.3008686983131212,
+    "reference_linear_factorizations": 1,
+    "reference_linear_refinements": 1,
+    "retained_dofs": 1536,
+    "stress_free_scaled_max": 0.0,
+    "unsupported_modes": []
+  },
+  "raw_state_sha256": "a9d42e799a2d39bffdd0610551f1e803fe4b35f735509f84925ee030569fee58",
+  "status": "completed",
+  "windows": {
+    "closed": [
+      157.4013759337609,
+      -11.155652742806575,
+      -0.8264738524167432,
+      -0.2658770395870351,
+      -8.875474953235853,
+      -2.4584041019195557
+    ],
+    "endpoint_atoms": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "open": [
+      157.4013759337609,
+      -11.155652742806575,
+      -0.8264738524167432,
+      -0.2658770395870351,
+      -8.875474953235853,
+      -2.4584041019195557
+    ],
+    "provenance": "Native continuous density, no endpoint atoms; 3Gauss per halfcell exactly integrates quartic times affine wrench.",
+    "smooth_unit_peak": [
+      82.59988629043441,
+      -3.029611226071085,
+      -0.8116327967523623,
+      -0.04346529850538729,
+      -4.553122510964748,
+      -0.9816332448064021
+    ]
+  }
+}

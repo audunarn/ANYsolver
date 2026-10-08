@@ -1,0 +1,69 @@
+{
+  "classification": "combined leading-order development interpretation; no causal allocation or acceptance",
+  "source_sha256": "326edac51be700f6387958c2d6eb212e36805cbb2a94b54cd986ceb251e73e86",
+  "input_sha256": {
+    "endport": "48f2132a483b19b803f6ad6623de8fab6cec83c56e9eb15432b39fd0e6ffc777",
+    "repair_archive": "c781023a9df4500f4fa9ea16ec442651a72065427f87cbd3d4028ff8702680a0"
+  },
+  "verified_bound_inputs": 55,
+  "common_saved_inputs": 4,
+  "verified_repair_inputs": 7,
+  "parameter": "common PL+hourglass coefficient alpha at1; C/supports/load fixed",
+  "moment_origin_m": [
+    0.0,
+    0.0,
+    0.0675
+  ],
+  "scale": "1m force-equivalent; no scientific threshold",
+  "applied_work_relative_derivative": -0.00038354871196140167,
+  "domains": {
+    "shell": {
+      "discrepancy": [
+        -0.05285113163379407,
+        -0.19829741056623007,
+        0.00382830472140272,
+        -0.013175154972516867,
+        0.0033613378803161176,
+        -6.974687494221143e-10
+      ],
+      "derivative_per_unit_alpha": [
+        -0.04199700068812445,
+        -0.18938636023251426,
+        0.004585493636054299,
+        -0.012547108192599802,
+        0.002637086989254196,
+        -9.882233920066597e-13
+      ],
+      "norm_ratio": 0.945354009815002,
+      "projection_on_discrepancy": 0.9444990815673815,
+      "direction_cosine": 0.9990956528044053,
+      "fy_derivative_to_discrepancy": 0.955062195173045,
+      "fy_derivative_to_native_reaction": 0.014319704158533078
+    },
+    "beam": {
+      "discrepancy": [
+        0.0528511317671132,
+        0.1982974096114969,
+        -0.0038283047071339116,
+        0.013175154949488621,
+        -0.003361337933011299,
+        0.0
+      ],
+      "derivative_per_unit_alpha": [
+        0.04199700068820208,
+        0.18938636023134003,
+        -0.004585493636065707,
+        0.012547108192519474,
+        -0.002637086989251177,
+        0.0
+      ],
+      "norm_ratio": 0.9453540138857595,
+      "projection_on_discrepancy": 0.944499085561255,
+      "direction_cosine": 0.9990956527269713,
+      "fy_derivative_to_discrepancy": 0.9550621997654164,
+      "fy_derivative_to_native_reaction": 0.01431970415847351
+    }
+  },
+  "warning": "Projection is a signed alignment, not a causal fraction. A local derivative cannot predict finite removal.",
+  "decision": "Completion sensitivity is material for root transfer on this fixture despite small total-work slope. Do not dismiss it or tune coefficients; no new factorization/refinement/reference is justified by this contraction alone."
+}

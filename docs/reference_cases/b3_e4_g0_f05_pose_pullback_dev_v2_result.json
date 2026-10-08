@@ -1,0 +1,29 @@
+{
+  "active_stations": 12,
+  "directions": [
+    {
+      "adjacent_plateau": true,
+      "combined_errors": [4.8370446505670615e-08, 1.148759388914552e-08, 1.8436093200042763e-07],
+      "joint_errors": [2.8658120824160507e-10, 2.3978230437863057e-09, 2.0611583448685666e-08],
+      "material_errors": [4.8397112610553904e-08, 1.1493883784469607e-08, 1.8445915344352614e-07],
+      "sampled_active_masks_stable": [true, true, true]
+    },
+    {
+      "adjacent_plateau": true,
+      "combined_errors": [8.855621301862599e-07, 1.0046217689266495e-08, 1.4725282851200337e-07],
+      "joint_errors": [6.981546798310986e-11, 1.4807505050732046e-09, 1.0796551318873158e-08],
+      "material_errors": [8.857119764662786e-07, 1.0047953154416131e-08, 1.4727530696006258e-07],
+      "sampled_active_masks_stable": [true, true, true]
+    }
+  ],
+  "finite": true,
+  "first_variation_relative_error": 2.421609428085015e-16,
+  "joint_cross_block_norm": 3240477.028699588,
+  "joint_force_norm": 3241283.9210750107,
+  "material_force_norm": 3601011.498562337,
+  "parent_alpha_max": 0.003996180741289721,
+  "predecessor_unchanged": true,
+  "status": "DEV_F05_POSE_PASS",
+  "steps": [2e-06, 2e-07, 2e-08],
+  "trial_alpha_max": 0.0042552827671876025
+}

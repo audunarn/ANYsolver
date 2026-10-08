@@ -1,0 +1,226 @@
+# B3-GE / E4-PL multi-element stiffened shells, with an efficient B2 option
+
+Revision: 26 September 2026, programme revision 5 (continuous connection-law decision and risk-proportionate execution).
+Status: governing development and qualification contract; no new product capability qualified.
+Prospective execution from 29 September 2026 follows the
+[Revision 8 plan](B3_GE_E4_PL_REVISION_8_PLAN.md) and
+[goal](B3_GE_E4_PL_REVISION_8_GOAL.md). Their explicit amendments change
+development order and owner decisions; the unaffected scientific and final
+release obligations in this programme remain binding. Historical evidence
+and this document's earlier revision record are not reinterpreted.
+Accepted main at registration: be41a77a62e1cd7e1767bda6e955253af0819f91 (ANYsolver 0.4.7).
+Current reviewed integration head: 85ede9d356d0ee5ce5469cb02f33079ccde34351; the living checkpoint records subsequent uncommitted work.
+First application: eccentric stiffened flat panel.
+Release decision: one complete coordinated release after G0 through G6, including all B2 additions, pass. Intermediate milestones remain experimental.
+
+This contract replaces the prior conversational development plan and the staged-release proposal in B2_B3_GE_E4_PL_STIFFENED_SHELL_UPDATED_PLAN.md. Historical registration, failed runs, hashes and reviews remain immutable. The accepted G0 registration is amended, not restarted; results are reusable only under their actual input/evidence contracts. The B3-GE/E4-PL programme remains the principal objective. B2 is an explicitly selected additional execution option, mandatory for the complete programme but not compulsory in an individual model.
+
+## Revision 5 current decision and execution order
+
+This revision changes prospective development procedure, not the scientific
+criteria or complete G0–G6 release boundary below. The historical revision 4
+text and exact evidence identities remain recoverable from Git. The current
+integration state and unresolved findings are maintained in
+`B3_GE_E4_PL_CURRENT_CHECKPOINT.md`; that living note is not an acceptance
+record. G0B remains open, G1 is barred, and formal F03 authority remains
+unconsumed.
+
+The principal decision is the **continuous native beam–shell connection law**.
+For the existing hybrid candidate, declare its finite transverse support,
+shell-top position and E4 director, native retained B3 sides, eccentricity,
+and the physical meaning of its independent pitch-couple channel. Measure the
+same prescribed fields as (a) local shell-top/beam-bottom slip, (b) the
+continuous six-channel section gap `g6(x)`, and (c) the P0/P1/dual projected
+rows. A nonzero pointwise slip with zero weak rows does not, by itself,
+classify the connection or prove a zero-energy mode. The intended pose-line
+law may admit local transverse deformation; it cannot be called an equivalent
+pointwise welded surface bond without evidence. Bonded-line and distributing-
+footprint capabilities remain separate mandatory deliverables.
+
+Use one bounded mode-resolved discriminator before enlarging any mesh or
+selecting a multiplier. Include a support-admissible even transverse slip
+field, a finite-element-representable longitudinal field with nonzero
+`g6(x)` but zero coarse projection, and the existing rigid, torque, and
+transverse-shear patches. Measure physical shell energy when inferring
+supported-system behavior. A nonzero continuous gap hidden by discrete rows
+directs a targeted longitudinal-resolution check; a motion forbidden by the
+declared connection but invisible to `g6(x)` directs a change to the continuum
+work law; an admissible reduction retains its declared semantics and proceeds
+to physical transfer validation. A proposed law with the same supported row
+space stops before another loaded solve. Failed objective work, shear freedom,
+or tangent consistency stops before mesh-ratio studies. None of these single
+probes alone ranks P0, continuous P1, and dual P1.
+
+The saved, independently validated F5 common weak action and same-action E4
+response are reusable evidence for integrated wrench, low-order transfer
+moments, common virtual fields, and fixed-distance observables. The failed F4
+recovered force and F4/F5 face-stress cut partitions cannot supply exact
+one-sided native retained-port work. Obtain a new sided reference only if the
+continuous-law decision requires it; first verify its side cancellation,
+support wrench, and representable virtual work. Keep the classical axial,
+historical Q6/finite-pad, and native six-channel comparisons separate. No
+further classical axial refinement follows without a new stated hypothesis.
+
+The existing positive broken-trace metric is a fixed-space representability
+diagnostic. In its current endpoint screens the P0/P1/dual row counts stay
+12/18/18 while the primal mesh changes. After the continuous law is credible,
+evaluate growing interface spaces under the registered ratios and three-level
+refinements, compatible primal/multiplier norms, unsupported modes, locking,
+physical work, and convergence. Distinguish trace inf-sup from well-posedness
+of the actual retained-variable mixed KKT system. Do not impose positive
+definiteness on the complete native mixed tangent, and do not infer stability
+from row rank, a raw mixed-unit singular value, or one signed quotient.
+
+While F03 remains open, advance independent G0 foundations: F05–F08 mechanics
+and review, B2 F09 physical-range/conditioning and mass metadata, and the
+beam-side and fixed-affine portions of F10–F13. Their shell-side attachment
+proofs depend on the selected connection law. Private feasibility work is
+allowed within its authority; G1 production integration still waits for G0B.
+
+Apply `ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1` prospectively. For a
+substantial diagnostic, keep one short record of decision, competing
+explanations, bounded test, and actions for its outcomes. Reuse completed
+evidence and stop optional refinements once they cease to distinguish the
+decision. Routine Level-A fixtures and helper corrections use recoverable
+source and focused checks, without a separate qualification dossier for each.
+Formal scientific and installed-artifact acceptance retains its registered
+cases, limits, independent review, and immutable raw evidence.
+
+To reduce development cost, separate native pose-only fixtures from full
+sparse/dense assembly parity fixtures, reuse immutable reference geometry and
+compiled trace/quadrature tables within a run, and copy mutable trial state.
+The B2 compiled owner retains its physical operator and station tables once,
+uses compatible existing session/factorization services, and returns selected
+outputs for bounded load-case chunks. Measure preparation, JIT, solve,
+factorization, recovery, memory, and test-suite cost before claiming a saving.
+These shortcuts cannot replace the actual native local operators, independent
+oracles, final installed checks, or practical-scale workloads.
+
+## 1. Required capability and preservation
+
+The GE owner solves one sparse global equilibrium problem containing multiple connected E4-PL Q4 and S3-V2D shells, multiple straight or piecewise-curved *native* B3-GE members, matching and nonmatching eccentric point/line/footprint connections, junctions, loops, terminations, releases and declared multi-surface seams. It owns one atomic accepted state for supported elastic and plastic materials. Required operations are reference linearization, nonlinear force and displacement control, adaptation, prescribed motion, dead and follower loads, conservative modes/buckling, stress-free imperfections, and bounded continuation through a first limit point and descending branch. The completed practical model contains at least 10,000 shell and 1,000 native beam elements, and a separate multi-stiffener workload has simultaneous shell and beam plasticity.
+
+The additional B2_E4_PL_FAST_LINEAR_V1 profile supplies a separately compiled *elastic reference-linearized* global beam/shell problem. Its beam law is a new, explicitly identified B2_PHYSICAL_FLEXIBILITY_LINEAR_V1 operator for supported isotropic scalar and elastic generalized positive-definite 6x6 sections. It shares B2's two-node displacement/rotation layout, physical section/axis conventions and appropriate sparse services, but it does not identify its low-shear law with the historical public BeamElement. The definition and compiled provenance carry both profile and operator identities. Existing nodal/interpolated affine MPC identities remain historical behavior; newly qualified linearized point, exact weak nonmatching line, rigid footprint and distributing footprint laws receive new identities. Its new attachment combinations cover linear static, multiple compatible load cases, conservative modes and reference buckling after their individual evidence passes. It uses appropriate existing B2 structural/session, affine transformation, factorization and selected-output services after their compatibility is verified. It contains no B3-GE retained variables, compulsory GE state or pose evaluation, and no unnecessary multipliers. New nonlinear-material or transient attachment combinations are not admitted. Existing valid B2 nonlinear, material, dynamic, damping, prescribed-motion and old-attachment routes remain intact.
+
+Do not assemble B2 and B3-GE members in the same nonlinear model. Different native B3-GE section families in one GE model are required. Curved B2 members use explicit straight segments; attachment integration segmentation does not silently remesh either family. The word FAST in the B2 profile is an execution identity, not an unmeasured speed claim.
+
+Preserve legacy B3, historical ge-beam3 records, native standalone b3-ge, the bounded create_coupled_analysis route, Q4/S3 policies and guards, public B2 identities/defaults, legacy checkpoints, element equations and material tolerances. Do not rewrite historical production_qualified fields. The F09-S-v1 diagnostic found public scalar B2's 1e-12 shear-denominator floor can change a physical response by 184.6923 times at a registered small area; that is an open G0 mechanics finding, not an assertion that every old B2 result is invalid. Preserve that historical equation and its valid workflows. The new physical operator must remove the artificial floor and earn its own section, trace, mass and geometric-stiffness evidence. Existing private B2 physical-flexibility core/adapter identities and bounded evidence are design references, not a public dispatch, graph qualification or a substitute for the new linear operator's tests.
+
+Excluded new work: B2/B3 hybrid nonlinear assembly, a new geometrically exact B2 law, new B2 transient/constitutive admission for the new attachments, general transient GE dynamics, contact, debonding, weld failure, remeshing, deletion, arbitrary section laws or warping DOFs, deep postbuckling/branch switching, or a broad geometry/mesher/commercial GUI rewrite. The closed Armijo experiment is not reopened.
+
+## 2. Architecture, definitions and public contract
+
+Use the dedicated ANYsolver stiffened_shell subsystem with independent profile identities B3_GE_E4_PL_STIFFENED_SHELL_V1 and B2_E4_PL_FAST_LINEAR_V1. Shared immutable engineering definitions specify tagged beam/shell subdomains, model/source IDs, sections and frames, physical attachments/offsets/extents/releases, explicit seams, supports, loads, resource controls, scaling and recovery requests. Definitions own arrays and never infer beam identity from matching coordinates. A definition contains one beam formulation family; a B3-GE definition may contain multiple admitted native section families.
+
+The physical B2 linear operator uses the straight-reference force-flexibility law. In the declared local frame, scalar S=diag(EA,GAky,GAkz,GJ,EIy,EIz), G=E/[2(1+nu)], with strictly positive mechanical inputs; a symmetric positive-definite generalized S retains its admitted off-diagonal coupling. With the six basic displacement rows B and equilibrium resultant interpolation H(x), F=integral H(x)^T S^-1 H(x) dx, q=F^-1 B u_local, f=B^T q, K=B^T F^-1 B, and station resultants/strains H(x)q and S^-1 H(x)q. Integrate the polynomial exactly and calculate weak bending modes with stable factors rather than a subtraction of near-equal rounded dense entries. Physical energy, force, station work and a six-rigid/six-basic rank check must agree. The new descriptor separates scalar, generalized, mass/inertia and section-geometric metadata; stiffness cannot invent density, polar radius or Wagner data. F09 freezes numerical conditioning and representability limits by physical scales before production admission. A failure to represent a result is reported explicitly, not silently floored. Historical public B2 remains available through its original route.
+
+Compile once to validated admission, stable physical/retained/algebraic numbering, local layouts, indexed reference hosts and quadrature segments, family-specific beam/shell trace tables, support/attachment provenance, sparse patterns, required-only state and recovery layouts, resource estimates and immutable identities. Reference correspondence is material and fixed: do not reproject on each Newton iteration or regenerate offsets to hide a gap. Split interface integration at shell, beam and native half-cell boundaries without changing member discretization. Reject ambiguous hosts, unintended surface switches, invalid normals, degenerate supports and duplicate/conflicting connections. Preserve shell face/material frames at creases and S3 topology guards.
+
+The thin neutral facade is anysolver.stiffened_shell.create_analysis(definition=..., resources=...), with the profile carried by the definition. Retain b3_ge.create_stiffened_shell_analysis(formulation="b3-ge", definition=..., resources=...) as a GE-only convenience facade. Provide typed capability/preflight/diagnostic results and profile-admitted solve_linear, solve_linear_many, solve, continue_arc_length, recover, checkpoint, restore, modes, buckling, provenance and close operations. Unsupported requests fail explicitly before numerical work; programming/ownership errors do not become ordinary nonconvergence. A failed factorization must not return a plausible offset-only result. Completed B2 batch cases have ordered case identity and bounded selected outputs; cancellation publishes only complete cases.
+
+ANYgeometry owns geometry/topology/source identities; ANYmesher/ANYmesh owns neutral indexed search, mesh and mapping records; ANYmaterial owns canonical definitions; ANYsolver owns mechanics, assembly, state, analysis and evidence; ANYfileIO owns native persistence; ANYfem exercises both public profiles; ANYworkbenchAI in ANYworkspaceAI consumes the same machine-readable capabilities without another mechanics implementation. Sibling changes remain bounded and separately identified.
+
+Capability records are per combination: profile/schema, exact beam and shell authority, section/material family, point/line/footprint law and enforcement, geometry/mesh bounds, analysis/load/support family, state and mass assumptions, resource/platform limits, accepted evidence identity and exclusions. A single supports_b3_ge flag is insufficient.
+
+## 3. Mechanical formulation and selection rules
+
+GE point coupling retains the existing objective reference relative-pose law:
+
+    e0 = Rs0^T (rb0-rs0); A0 = Rs0^T Rb0
+    ct = Rs^T (rb-rs)-e0; cR = Log(A0^T Rs^T Rb)
+    Pi_point = lambda_t^T ct + lambda_R^T cR
+
+Use spatial left updates and declare covector/wrench row and additive/multiplicative column representations at every interface. Recover wrenches through the actual transpose variation, including eccentric lever arms. For d(q), the coordinate pullback is g = D^T f and H = D^T K_alg D + sum_i f_i Hessian(d_i), plus the required representation/chart corrections. Include multiplier constraint curvature and follower external tangent. Do not symmetrize a failed Jacobian. Plastic K_alg derives from the same accepted material predecessor.
+
+The native curved beam trace includes its actual retained half-cell rotations and reference lift, schematically r_h,c = I_c x + U_c (r0-I_c X), with the native compensated coordinate representation where needed. Do not substitute quadratic current-nodal interpolation or averaged nodal rotation vectors. Check one-sided midpoint fields, retained-coordinate variations and possible overconstraint. Derive B2 reference traces from the actual admitted element interpolation, shear, section axes and virtual work; two-node geometry alone does not determine interior rotations/displacements. Section-dependent trace coefficients invalidate together with the section.
+
+Derive and qualify distinct shell nodal, line, point-port, rigid-footprint, distributing-footprint and seam maps. They need stress-free references, objectivity where applicable, first/second variations, valid chart domains, all admitted physical moment components, admissible transverse shear, and Q4/S3/crease behavior. Isolated flat nodal drilling has not shown physical shell-normal moment stiffness. An invisible point attachment footprint or tuned drill penalty is forbidden. A beam point may use a declared finite shell-side physical support. Four-point fits integrated along a member form rails, not automatically an area footprint.
+
+Production GE nonmatching bonded lines use exact weak multipliers:
+
+    Pi_line = integral_Gamma0 (lambda_t^T ct + lambda_R^T cR) ds.
+
+G0 compares piecewise-constant, continuous-linear and an appropriate dual multiplier space. Reject failed reference/rank/work/patch tests, unsupported modes, locking, norm-scaled instability or failed force/moment/shear transfer over beam:shell ratios 1:1, 1:2, 1:4, 1:8 and reciprocals with three refinements. Among passers choose lowest multiplier dimension, then sparsity and measured cost. Freeze quadrature, interface resolution, norms, thresholds and admission before production. Row rank or raw mixed-unit singular values alone do not pass. If none passes, stay in G0; neither a penalty nor a point-tie chain substitutes.
+
+For new B2 connections, preserve historical affine laws under historical identities and derive the reference linearization c_lin(delta q)=C0 delta q-b of each declared physical point/line/footprint law. The prescribed relative motion b cannot conceal a geometry mismatch. Transfer work with C0^T lambda or a proven equivalent sparse elimination. Compare with an independently calculated derivative, and with a same-law GE small-perturbation limit only when fields/idealization match. A B2 corotational *beam* does not make the attachment finite-rotation objective.
+
+Rigid footprint work intentionally constrains a region; distributing footprint work transfers resultants but leaves admissible local deformation. Each is differentiable with a consistent tangent and physical load balance. Use the complete translation/rotation support Jacobian for deficient-rank checks, including offset collinear supports. Detect overlaps, openings, unsupported seam crossings and missing moment directions. Qualify T/L/X junctions, terminations and loops without treating a closed loop as inherently invalid. Releases distinguish full pose, translation-only and explicit physical-axis rotation. Seam handling preserves S3 admission; node splitting requires a real welded/released law.
+
+Freeze force, length, moment, multiplier, retained-variable and compatibility scales during a solve. For scaled c_hat = S c, physical lambda = S^T lambda_hat. Use dimensionally consistent force/moment about a common origin and virtual-work balances, physical branch metrics, and equivalent-unit controls. Neither raw Log multipliers nor stabilization forces are automatically display-ready reactions.
+
+## 4. Execution, ownership and analyses
+
+GE production uses precomputed sparse CSR/CSC patterns, local gather/scatter and globally retained native internal coordinates initially; no inherited dense global assembler, model-wide inverse/nullspace/tensor/Schur or static wrapper condensation. General sparse direct is the starting backend; symmetric-indefinite classification is allowed only for a justified representation. A bounded dense assembler is an independent small-model oracle. Nonlinear constraint audits extend (not misuse) the existing affine auditor: duplicate/contradictory supports, line/footprint/seam overlap, deficiency, changing rank and source provenance. No global dense SVD or automatic deletion of general nonlinear rows.
+
+The GE owner separates immutable definition, compiled model, accepted physical/material state, scratch trial, accepted journal and checkpoint. Every candidate identifies its predecessor generation; all domains commit together. Discard trial state on Newton/backtrack rejection, cutback, recoverable local material failure, cancellation before commit and failed acceptance. Cancellation after commit preserves a complete accepted prefix. Retry only typed recoverable failures; preserve backend details and propagate programming/ownership/memory errors. Rebase physical rotations without altering strain, material state, work, gaps, reactions or accepted history.
+
+GE checkpoint schema is new and versioned: model/formulation identity, physical poses/charts, native retained coordinates, shell/beam histories, constraint/scaling data, load cursor, continuation/controller state and accepted provenance, with bounded metadata and binary arrays. Validate dimensions, finiteness, orientations and mechanics. Normal restore uses snapshots; replay is an independent oracle. Neither normal recovery nor continuation replays full history. B2 persists definition and completed batch results; numerical factors are disposable runtime caches.
+
+For eligible fixed B2 affine laws, use u=Tq+u0, K_r=T^T K T and f_r=T^T(f-Ku0), with appropriate M_r=T^T M T and damping/effective-load treatment only in existing admitted dynamic routes. Reuse AnalysisSession, ConstraintPlan and factorization services. Weak/distributing laws retain multipliers if required; elimination must be algebraically equivalent, sparse and fill-bounded. Existing multiple-RHS support restrictions remain explicit. For an unchanged supported linear static operator, compile/assemble/audit/factor once, solve bounded chunks of 1/10/100 compatible loads, and recover only requested outputs. Changed dead loads rebuild loads; changed prescribed values update u0/effective RHS; stiffness, mass, trace coefficients, prestress, damping, geometry, supports, offsets and state-dependent loads invalidate their actual dependencies. No full-model serialization/hashing per element or attachment evaluation. Public mutable legacy models retain required fingerprint checks.
+
+Required GE material combinations: elastic Q4/S3 with elastic generalized beam; elastic shells with generalized yielding; elastic shells with physical axial/biaxial fibre sections; shell isotropic J2 with generalized beam; shell J2 with physical fibres; and a supported shell with different admitted native beam section families. Derive a reviewed shell-plasticity algorithmic adapter without disabling the elastic variational guard. Qualify yield, unload, supported reversal, simultaneous shell/beam yield, dissipation and actual-state recovery. New B2 attachments remain elastic; preserve existing qualified B2 nonlinear/material paths and reject corotational-plus-fibre requests that would silently dispatch an elastic result.
+
+GE supports linear reference and coupled nonlinear force/displacement/adaptive static analysis; accepted equilibrium, attachment gaps, retained compatibility, material validity and finiteness each require checks. Loads include nodal dead forces/moments, native distributed beam forces/couples, shell dead pressure, current-area follower pressure, gravity, staging and prescribed finite-rotation motion. Follower residual derivatives come from the actual state update. Conservative spectral operators treat multipliers and zero-inertia variables as algebraic, retain required beam mass, recover six free-free rigid-body modes, and check prestress/constraint curvature. Active plastic and nonconservative nonsymmetric spectra are excluded. B2 reference buckling has its own derivation of element *and attachment* prestress; zero affine static Hessian does not prove physical buckling accuracy. GE stress-free imperfection coherently rebuilds geometry/frames/maps without initial gap, and arc length passes a registered limit point and descending branch with a mesh/unit-consistent physical metric that excludes force-like algebraic variables.
+
+Record centroid/axis, shell reference surface, section origin, offset and parallel-axis conventions. Verify both eccentricity signs and U=0.5(EA_s+EA_b)epsilon0^2 + EA_b e epsilon0 kappa + 0.5(EI_s+EI_b+EA_b e^2)kappa^2. Avoid double-counting shell effective flange, connection offset stiffness or mass. Recover typed shell/beam resultants and material stresses, measured connection wrenches, support reactions, work/gaps and accepted histories. No smoothing across incompatible seams/materials/frames without an explicit policy; point-connection stress peaks are not converged weld stresses.
+
+## 5. Mandatory gates and terminal decisions
+
+### G0A: refreshed baseline and registration
+
+Refresh accepted main and sibling graph; preserve existing branch/evidence and source/installed identities. Inventory legacy B2 selectors, scalar/generalized sections, shear, mass, geometric/Wagner stiffness, nonlinear dispatch, MPCs, analyses, recovery, defaults, installed test cases and warm time/memory with the *existing cached* session path. Freeze neutral API, owner contracts, V01-V28/B01-B18 case matrix, physical targets, tolerance/normalization, resource/threads/backend budgets and external execution route. Existing G0 evidence is reused only where contracts and inputs match. The original F04 distinction diagnostic already passed its bounded registered criterion; it is not full F04 acceptance.
+
+### G0B: executable mechanics feasibility
+
+Preserve F01 eccentric nonzero-multiplier point work/tangent; F02 physical moment and transverse-shear response; F03 full vector multiplier spaces and interface stability; F04 rigid/distributing footprint work/rank/shear; F05 yielded shell algorithmic pullback from one predecessor; F06 chart rebase; F07 massless constrained modes; F08 both native beam local extraction seams. Extend with F09 new physical B2 scalar/generalized local operator, station trace and physical/unit range, alongside separately checked historical public behavior; F10 B2 reference-linearization work/derivatives; F11 affine/KKT parity including offsets and reactions; F12 B2 prestress/attachment buckling; F13 ownership/cache/invalidation/selected recovery feasibility. Register exact cases before executing each. F09 must include clamp-active, threshold and unclamped regimes, extreme shear-soft modal retention, both bending planes, unequal section data, off-diagonal generalized coupling, rigid modes, reversal, station work, finite-difference derivatives, units and representability negatives; an independent physical formula is the oracle, while old-route parity applies only when the laws actually agree. F03 includes full native half-cells, curved/pre-rotated refs, shell physical stiffness, off-grid Q4/S3, thickness/shear and the coupled KKT. F02/F04 include at least three refinements, physical ports/directors and all admitted moments. Independent mechanics and B2/interface reviews must leave no correctness finding open. Freeze selected maps, multiplier space, resolution/scales, plastic pullback and constrained mass design. No penalty/artificial inertia/disabled guard. An unresolved foundation stops G1; preserve failures and revise within G0.
+
+### G1: sparse elastic points and persistent foundation
+
+Implement immutable definitions/numbering, local native/generalized/fibre-family elastic adapters, sparse GE multi-shell/multi-beam/point assembly, dense oracle, support audit, reactions, accepted/trial generations, cancellation and elastic snapshots/restart. Deliver thin public/headless GE consumer. Compile B2 models through verified existing numbering, shell, affine, session and solve services while dispatching the new physical B2 operator explicitly; never route its stiffness through the historical scalar floor-bearing BeamElement method. Preserve the historical affine point law under its identity, qualify new point-port linearization, multiple RHS and selected outputs with no GE state. Old/new one-shell Q4/S3, dense/sparse, physical eccentric and rigid-motion checks, connected models, exact parity for unchanged historical B2 workflows and for the new operator only in physically identical regimes, constraint errors, accepted-prefix cancellation and restart pass; no inherited 16/32 caps or dense production matrices. Failure: fix G1 before expanding.
+
+### G2: nonmatching attachments and topology
+
+Implement G0-selected objective GE traces/exact weak line, B2 reference-linearized counterparts, indexed segmentation, rigid/distributing footprints, releases, declared seams, multiple surfaces, curved/reversed members, crossings/terminations/loops, native definition serialization and ANYfem save/reopen. Pass all registered ratios, three-level norm stability/convergence, physical torque/drill/shear/thickness, derivative/work/balance, correct distinct footprints, Q4/S3 transitions and precise negative preflight. B2 integration splitting does not remesh beams; report sparse transform/fill and weak cost. Failure: remain experimental; no point-tie/penalty surrogate.
+
+### G3: coupled GE material history and restart
+
+Implement shell J2 algorithmic adapter, physical beam fibre families, mixed native sections, atomic material state, recovery, chart transport, snapshot/replay comparison and all advertised material/attachment combinations. Prove tangent/local oracle, simultaneous yielding, reversal, applicable nonnegative dissipation, rejection/cutback/failure/cancellation atomicity and restored accepted path. Preserve original B2 nonlinear/dynamic material combinations and new-profile explicit rejections; B2 linear route allocates no unused histories. Failure: no elastic subset release.
+
+### G4A-D: loads, spectra, imperfections and capacity
+
+G4A: GE staged/native/dead/follower/gravity/prescribed loads and displacement control; B2 compatible fixed-reference loads, physical reactions, actual derivatives.
+G4B: conservative sparse modes and buckling for both profiles/new attachments, correct mass and algebraic treatment, physical/free-free modes, eigen/constraint residuals, GE multiplier curvature and B2 reviewed reference attachment prestress.
+G4C: coherent stress-free GE imperfections, zero unintended residual/gap.
+G4D: GE first limit point and descending branch, physical/unit/mesh metric and accepted restart near turn.
+Any failed subgate leaves G4 open; static convergence does not qualify stability/capacity.
+
+### G5: practical scale and measured performance
+
+Run registered GE >=10,000-shell/>=1,000-native-beam compile/assemble/linear/recovery/save-reopen/restore/short nonlinear routes plus genuinely multi-stiffener shell+beam plastic history. Run B2 >=10,000-shell/>=1,000-B2 with 1/10/100 loads, selected recovery/save-reopen and beam-rich control. Profile compilation, mapping, elements, attachments, assembly, factorization, recovery, checkpoint and restores. No prototype cap, hidden quadratic global array, historical replay or irrelevant GE overhead. Upper-size comparable doublings: median assembly time <=2.5x, assembly-state memory <=2.3x; total resources within G0 limits, factorization separately reported. B2 mechanically identical warm controls may regress no more than 5% time and 10% peak memory. One factorization per unchanged eligible static operator, correct invalidation and bounded caches. Installed artifacts, serial at least five warm repetitions; cold/JIT and profiling separate. Promising optimization claims proceed to seven alternating installed pairs. Compare B2/GE at matched physical accuracy, not equal element counts. Failure preserves candidate/results and leaves scale open.
+
+### G6A-D: final installed, consumer, acceptance and release
+
+G6A: compatible wheel/sdist graph, full impacted CI, installed Windows/Linux suites across declared Python versions, actual import/dependency hashes, unchanged legacy identities/checkpoints.
+G6B: exercised ANYfem build/edit/preflight/save-reopen/solve/recover/cancel/resume and B2 batching plus GE stability/capacity; machine-readable ANYworkbenchAI contract and explicit unsupported exports.
+G6C: all mandatory rows and four external cases executed and accepted; practical-scale evidence; independent code/mechanics reviews without findings; accurate capability/exclusion/documentation. EXTERNAL_REFERENCE_PENDING blocks completion.
+G6D: only after applicable release authority, stage/verify artifacts, merge integration into main, run final CI, publish through repository process, verify published installed use and clean local main equal to remote. Rebuilt artifacts have new identities/checks; older release approval does not authorize this artifact.
+
+## 6. Verification matrix and quantitative acceptance
+
+Preserve V01-V28 exactly as families: V01 old/new Q4/S3; V02 dense/sparse; V03 rigid motions; V04 point/line/footprint work and balance; V05 element/attachment/load/global derivatives; V06 patches/eccentric section; V07 torque/drill/shear/refinement/thickness; V08 ratios through 1:8 and reciprocals; V09 mixed Q4/S3 isolated/chains/1-25% triangles; V10 curved long/ring; V11 parallel/T/L/X/loops; V12 terminations/footprints/degeneracy; V13 seams/nonmanifold negatives; V14 support/prescribed overlap; V15 required materials; V16 cyclic/simultaneous yield; V17 trial failures/cancel; V18 loaded charts/restart; V19 dead/follower/native beam loads; V20 conservative/free-free/massless modes; V21 plate/cylinder buckling; V22 imperfections/limit point; V23 renumber/orientation; V24 large/backend/recovery/checkpoint; V25 installed consumer/export; V26 norm-stable multiplier modes; V27 persistent lifetime/no caps/no replay; V28 ownership/stale generation/corrupted snapshots.
+
+B01-B18 add: B01 old public-route scope unchanged; B02 new physical scalar/generalized/shear/axes/inertia/units and old-law difference; B03 historical MPC preservation and new attachment point parity where physically equivalent, Q4/S3/offset signs; B04 no GE state/idle multipliers; B05 1/10/100 RHS and factor count; B06 mutation/invalidation; B07 selected recovery/envelopes; B08 reference linearization and independent work; B09 nonmatching/mixed ratios; B10 rigid/distributing torque/rank/shear; B11 segmentation without remeshing; B12 legacy dynamics/damping/prescribed motion; B13 nonlinear/material dispatch and unsupported requests; B14 geometric/Wagner/attachment prestress and spectra; B15 same-law old-route time/memory controls and separately reported new-operator complete-route cost; B16 B2 large/beam-rich/caches; B17 installed API/ANYfem/persistence; B18 accuracy-matched physical-law B2/GE comparison, with equation and idealization differences reported. Every case has frozen geometry, laws, frames, scales, supports, loads, expected quantities, installed artifact, resources and negatives. At least three refinement levels for convergence.
+
+Defaults, to be bound to normalized measures and absolute floors before candidate execution: old/new residual/tangent/solution <=1e-10 relative; rigid-motion <=1e-9; accepted scaled constraint <=1e-9; scaled force/moment/work <=1e-8; elastic tangent <=1e-6 over a finite-difference plateau; smooth-branch plastic tangent <=1e-5; conservative coordinate Hessian skew <=1e-9 where required; spectral equation/constraint residuals <=1e-8; matched converged linear external quantities <=1%; matched low modes/elastic buckling <=2% with mode identity; matched converged nonlinear limit <=5% with imperfection/refinement evidence; restart same accepted path and state/result tolerances. Report pointwise and weak gaps, use physical nonzero energy denominators, actual rotation charts and one-sided yield derivatives. A weaker limit requires written numerical case, independent review and explicit registration amendment.
+
+## 7. External evidence, consumers and terminal checklist
+
+Four mandatory executed external references, CalculiX as publicly reproducible default: E01 eccentric elastic strip/panel (both profiles where idealizations match, including offset signs); E02 physical torque/footprint (both new profiles); E03 curved stiffened configuration (GE and explicit B2 piecewise-straight model); E04 physically compatible nonlinear GE/capacity. Matched frequency/reference-buckling quantities in suitable E01/E03 or separately registered spectral cases. Record solver binary/version, deck/mesh identities, material/section/offset/coupling meanings, commands/logs, numerical parses, refinement, comparisons, environment and discrepancies. A generated deck, exit code or solver availability is not numerical agreement; commercial references optional.
+
+Deliver an installed public API and ANYfem path for each scoped family; native round-trip preserves identities, sections, frames, attachments, loads and compatibility. Older saved projects retain their original route. Expose only actual profile combinations to ANYworkbenchAI; never auto-switch formulations or material laws. Document mathematics, API, examples, result meaning, idealization, supported platform/resources, migration, checkpoint rules, external evidence and exclusions. Runnable examples: GE eccentric mixed panel, GE longitudinal/ring cylinder, imperfect GE elastoplastic panel, GE footprint termination, B2 panel with 1/10/100 loads and selected recovery. Installed public API and ANYfem run the first GE and B2 examples.
+
+The acceptance matrix separates NOT_STARTED, IN_PROGRESS, IMPLEMENTED_NOT_QUALIFIED, PASSED, FAILED, BLOCKED_EXTERNAL_DEPENDENCY, RELEASE_READY and RELEASED per capability/gate. Each record binds candidate/dependencies/wheels/hashes, cases/runners, threads/resources, raw output, review and disposition. Preserve failed/aborted evidence. A summary cannot hide a failed mandatory row, an unexecuted external case, a smaller proxy workload or a legacy-only B2 adapter.
+
+Independent G0 mechanics/B2 interface review, major attachment/material/spectral boundary reviews, final code and mechanics reviews must be by reviewers who were not sole implementers. Separate implementation and verification ownership. A stop/pause stops new work and leaves an exact checkpoint. All G0-G6 and B2 rows, external runs, scale routes, artifact/consumer tests, reviews, authorized publication and clean synchronized main are required before claiming completion.
+
+Source interpretation: the mixed-dimensional beam/surface paper (doi:10.1007/s00466-025-02647-9) uses Kirchhoff-Love shell and penalty regularization; derive the E4-PL exact-multiplier adaptation. The published beam/beam pose paper (doi:10.1007/s00707-026-04808-0) guides point work, not beam/shell qualification. Official Abaqus coupling and overconstraint documentation supply adversarial tests, not mechanical authority or permission for automatic nonlinear row deletion. Preserve source licenses and exact equation provenance.

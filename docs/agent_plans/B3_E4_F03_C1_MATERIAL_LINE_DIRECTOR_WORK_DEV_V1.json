@@ -1,0 +1,37 @@
+{
+  "cases": {
+    "tip_fz": {
+      "excluded_fraction_of_solid_minus_native": 0.0001290363928373497,
+      "max_absolute_thickness_stretch_m": 3.7630784903842744e-08,
+      "paired_face_sites": 23,
+      "rms_thickness_stretch_m": 1.7963686371842918e-08,
+      "solid_minus_native_E4_work_J": 0.00217104198838532,
+      "solid_plate_excluded_thickness_work_J": 2.801434268796689e-07,
+      "solid_plate_full_action_work_J": 0.01516426512913236,
+      "solid_plate_local_director_compatible_work_J": 0.01516398498570548,
+      "work_identity_defect_J": 1.885548280147276e-18
+    },
+    "tip_mx": {
+      "excluded_fraction_of_solid_minus_native": 4.2463629684168804e-20,
+      "max_absolute_thickness_stretch_m": 3.956070042522564e-09,
+      "paired_face_sites": 23,
+      "rms_thickness_stretch_m": 1.4890316402497929e-09,
+      "solid_minus_native_E4_work_J": 0.00020203965568202213,
+      "solid_plate_excluded_thickness_work_J": 8.579337120398359e-24,
+      "solid_plate_full_action_work_J": 0.0019801369310543967,
+      "solid_plate_local_director_compatible_work_J": 0.0019801369310543967,
+      "work_identity_defect_J": -8.579337120398359e-24
+    }
+  },
+  "classification": "local through-thickness work split of fixed solid interface action",
+  "limitations": [
+    "local director-compatible projection is not a globally interpolated E4 response",
+    "excluded work only diagnoses thickness-normal stretch at active line face sites",
+    "does not allocate remaining E4/3D difference to support, transverse shear, or constitutive law",
+    "not F03/G0B acceptance or multiplier selection"
+  ],
+  "same_action_sha256": "b61ad12d112e5dc1a4d7046e60c0a1a8f4c3dda8344dd43cc4eebcee6e243a7b",
+  "solid_reconstruction_sha256": "118aef26cf0766fa50a6d42929a095440e142f7177216e5b85dc2c7e51fa7f92",
+  "source_deck_sha256": "4792273d1efe3957de336436d7398d3eb6ee7960c50fe1eea1aab70fa504fdec",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE"
+}

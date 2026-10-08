@@ -1,0 +1,18 @@
+# F03 graph-scaled signed KKT v1: finite check passes, floor declines
+
+22 September 2026. Frozen source `c4dd7368136cf7851086c9aecedf1875f1a1cc97` ran once under exclusive evidence root `C:/Github/ANYsolver/.qualification/b3-ge-e4-pl/f03-signed-graph-v1/`; supervisor exit **0**. Manifest SHA-256 `0045420d809afd09c50723d889ed68c639e5f59c57c31a2afed0d08d82c17194`; records SHA-256 `25ed58c4fa7dcbc057e34d492c0c9c902fac8c72403c22bd70478f1290fe59b7`. All ten ordered Q4/S3-V2D native cases completed, with 20 K4/local-dual results, empty stderr, zero child exits and saved stdout identical to parsed responses. Independent read-only audit matched all 20 current source hashes, all inherited predecessor hashes, the v3 raw hash pins, isolated source import, exact case inventory, frozen thread/cache/resource settings, and every registered threshold. No case was rerun.
+
+The diagnostic uses the actual **signed** retained stiffness in the full KKT and Schur, with `|Krr|` confined to the positive primal norm `H0`. The broken reachable-trace graph is added with frozen coefficient one, and the supported shell-port norm scales multiplier rows. Maximum independent graph skew/parity were `3.414e-15`/`3.517e-15`; normalized signed-operator norm was `1.0000000000382`; row parity `1.080e-15`; full/condensed signed Schur parity `4.685e-13`; normalized KKT equation residual `1.100e-14`. The generalized reachable/port dual ratio spans approximately `1.0000000000` to `5.30866`; maximum discarded graph action is `4.615e-13`, with no reported dual change across the three registered cutoffs. Maximum KKT dimension was 930 and trace dimension 2,352. Sampled child RSS peaked at 383,414,272 bytes; maximum case time was 31.561 s and summed child time 68.170 s, below all limits.
+
+For joint `(Nb,Ns)=4/4→8/8→16/16`, the measured finite normalized floors are:
+
+| Shell | Space | Positive constraint β | Signed KKT σmin | Signed Schur minimum eigenvalue |
+|---|---|---|---|---|
+| Q4 | K4 | .575218 → .519677 → .453752 | .131440 → .0942718 → .0346111 | 1.48476 → .842612 → .457979 |
+| Q4 | Local dual | .623562 → .549849 → .471049 | .162759 → .111525 → .0345040 | 2.31216 → 1.25199 → .634667 |
+| S3-V2D | K4 | .573120 → .517553 → .450406 | .141329 → .0993358 → .0346095 | 1.48016 → .840071 → .454347 |
+| S3-V2D | Local dual | .622112 → .547722 → .467817 | .176175 → .111676 → .0344999 | 2.30928 → 1.25008 → .630752 |
+
+All 20 Schur blocks were positive with no registered near-zero mode. The full KKT had no near-zero mode; its negative inertia was 48, 96 and 192 for Nb 4, 8 and 16 respectively, while native retained negative modes were 36, 72 and 144. At fixed Nb 8, Q4 shell refinement Ns 8→64 reduced KKT σmin from `.094272` to `.043549` for K4 and `.111525` to `.043549` for local dual. The S3 values remained near `.096–.112`. The full floor's decline is an **adverse trend in this chosen normalization**, despite positive constraint β and Schur at these finite meshes. It does not isolate a physical instability mechanism, prove an asymptotic failure, or favor a line space.
+
+**Disposition:** the registered finite planar *internal-consistency* screen passed, but neither signed stability nor production coupling is qualified. The graph-augmented `H0+G` is a fixed diagnostic norm, not a certified full mechanical norm. An independently converged loaded physical reference, the full eccentric six-channel work/torque/shear formulation, an accepted signed stability criterion over a justified mesh range, and production sparse/lifecycle evidence remain required. **F03 IN_PROGRESS; G0B OPEN; G1 barred.** Preserve the prior L2 signed-norm decay and both earlier failed banded experiments as independent historical evidence.

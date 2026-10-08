@@ -1,0 +1,903 @@
+{
+  "anysolver_import_path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\__init__.py",
+  "beam_half_cells": 12,
+  "classification": "private channel-compatible material-line loaded screen",
+  "numba_disable_jit": "1",
+  "numpy_version": "2.4.6",
+  "python_version": "3.14.2",
+  "qualification": "development only; no multiplier selection or G0B pass",
+  "scipy_version": "1.17.1",
+  "shell_nodes": 143,
+  "thread_settings": {
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "topologies": {
+    "mixed_s3_bl_tr": {
+      "spaces": {
+        "dual_non_yaw_p0_yaw": {
+          "loads": {
+            "tip_fz_1000n": {
+              "constraint_max": 1.8860218258789275e-20,
+              "dimension": 1025,
+              "free_residual_ratio": 3.408297019370932e-12,
+              "nnz": 18098,
+              "orientation_rms_rad": 6.634397467048007e-07,
+              "position_rms_m": 3.317198733524009e-08,
+              "row_rank": 17,
+              "shell_physical_work_j": 0.0135622013151953,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 2.2155614738238966e-09,
+              "support_moment_balance_nm": 2.4768735888485807e-09,
+              "tip_rotation_rad": [
+                4.494034878617765e-08,
+                -6.11688894375182e-05,
+                -6.025208942445975e-08
+              ],
+              "tip_translation_m": [
+                -2.613018302756308e-06,
+                -7.080256864528415e-09,
+                7.01980819113122e-05
+              ],
+              "work_absolute_error_j": 3.79737907785227e-13,
+              "work_relative_error": 5.4095197111651195e-12
+            },
+            "tip_mx_100nm": {
+              "constraint_max": 6.969699966567842e-21,
+              "dimension": 1025,
+              "free_residual_ratio": 3.17956019156232e-12,
+              "nnz": 18098,
+              "orientation_rms_rad": 6.980217983547656e-07,
+              "position_rms_m": 3.490108991773825e-08,
+              "row_rank": 17,
+              "shell_physical_work_j": 0.001879647544843717,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 1.6399356205189576e-10,
+              "support_moment_balance_nm": 1.6252882131004362e-10,
+              "tip_rotation_rad": [
+                4.98181156323058e-05,
+                1.1600395555620329e-09,
+                -7.491940198806142e-07
+              ],
+              "tip_translation_m": [
+                -2.410839604546991e-10,
+                -3.1805460901056208e-06,
+                4.494034865029298e-09
+              ],
+              "work_absolute_error_j": 3.2170446861989888e-15,
+              "work_relative_error": 6.457580029608377e-13
+            }
+          },
+          "rank": {
+            "left_smallest_mode": [
+              -2.1205916480489315e-19,
+              7.90439546786419e-17,
+              4.22708374090758e-18,
+              0.3717827093502136,
+              -4.844515822165404e-15,
+              -0.37178270935021196,
+              -4.81623168244552e-17,
+              1.0374396482006083e-19,
+              -8.512157657053904e-17,
+              0.013972377292886782,
+              -4.64276875001929e-17,
+              -0.013972377292886516,
+              1.0437143542920508e-17,
+              -1.603382238151155e-17,
+              4.734589515247765e-18,
+              -0.6013172122108278,
+              -0.6013172122108257
+            ],
+            "meaning": "bounded unit-row, physical-coordinate rank diagnostic; not inf-sup or mixed-system stability",
+            "rank_tolerance": 3.281964217276553e-13,
+            "scaled_row_norm_max": 0.0038511933863841544,
+            "scaled_row_norm_min": 0.0001666319552913724,
+            "scaled_row_rank": 17,
+            "scaled_row_singular_values": [
+              1.4663346057509905,
+              1.1876350722620923,
+              1.1876188784191146,
+              1.1440894332589753,
+              1.008086609172293,
+              1.0000202800656774,
+              1.000000000000002,
+              0.9999999999999998,
+              0.9999999999999982,
+              0.9998245384965391,
+              0.9993187483225621,
+              0.9991804268965623,
+              0.991847462268016,
+              0.7691078032406169,
+              0.7690983694300731,
+              0.5904535722560552,
+              0.4377703016624287
+            ]
+          },
+          "row_count": 17
+        },
+        "p0_two": {
+          "loads": {
+            "tip_fz_1000n": {
+              "constraint_max": 1.3552527156068805e-20,
+              "dimension": 1020,
+              "free_residual_ratio": 3.4946469972513848e-12,
+              "nnz": 18014,
+              "orientation_rms_rad": 4.24066818446513e-07,
+              "position_rms_m": 6.39109152452478e-08,
+              "row_rank": 12,
+              "shell_physical_work_j": 0.013697852562691772,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 7.765024709847497e-10,
+              "support_moment_balance_nm": 7.787102088500479e-10,
+              "tip_rotation_rad": [
+                8.947799286837908e-09,
+                -6.286640360195443e-05,
+                -1.7884569274878532e-08
+              ],
+              "tip_translation_m": [
+                -2.6197892115629964e-06,
+                -6.694606481475176e-10,
+                7.027876882524568e-05
+              ],
+              "work_absolute_error_j": 2.3205048993446553e-13,
+              "work_relative_error": 3.301857642262907e-12
+            },
+            "tip_mx_100nm": {
+              "constraint_max": 6.776263578034403e-21,
+              "dimension": 1020,
+              "free_residual_ratio": 3.0374708851860383e-12,
+              "nnz": 18014,
+              "orientation_rms_rad": 6.985207652292299e-07,
+              "position_rms_m": 1.8306453331324522e-08,
+              "row_rank": 12,
+              "shell_physical_work_j": 0.0018385579810004443,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 1.1551626058614574e-10,
+              "support_moment_balance_nm": 1.0076148071193481e-10,
+              "tip_rotation_rad": [
+                4.8678978867426125e-05,
+                -1.8170518438581087e-09,
+                -6.610436880060859e-07
+              ],
+              "tip_translation_m": [
+                3.8539881036810674e-11,
+                -3.1572238338178764e-06,
+                8.947799375034524e-10
+              ],
+              "work_absolute_error_j": 4.329002434300122e-15,
+              "work_relative_error": 8.892960647530969e-13
+            }
+          },
+          "rank": {
+            "left_smallest_mode": [
+              -3.389096601088619e-17,
+              0.5000058919118041,
+              1.5755968327794955e-16,
+              0.030760969566157263,
+              8.960807705974751e-18,
+              -0.49904696252440073,
+              9.338802707322808e-17,
+              -0.5000058919118046,
+              8.796177423224076e-18,
+              -0.030760969566157117,
+              7.896815873141533e-19,
+              -0.4990469625244014
+            ],
+            "meaning": "bounded unit-row, physical-coordinate rank diagnostic; not inf-sup or mixed-system stability",
+            "rank_tolerance": 3.0463012759114716e-13,
+            "scaled_row_norm_max": 0.0038511933863841544,
+            "scaled_row_norm_min": 0.00013605442176870745,
+            "scaled_row_rank": 12,
+            "scaled_row_singular_values": [
+              1.3610437788743224,
+              1.2253382651299667,
+              1.2247448713915892,
+              1.0876390744291071,
+              1.0788726107866689,
+              1.062730926060197,
+              0.9321597966243402,
+              0.9151230249333869,
+              0.9052990471103761,
+              0.7071067811865468,
+              0.7050743754664526,
+              0.38303498980647743
+            ]
+          },
+          "row_count": 12
+        },
+        "p1_non_yaw_p0_yaw": {
+          "loads": {
+            "tip_fz_1000n": {
+              "constraint_max": 1.3552527156068805e-20,
+              "dimension": 1025,
+              "free_residual_ratio": 3.1273044970413837e-12,
+              "nnz": 18098,
+              "orientation_rms_rad": 3.692635692177486e-07,
+              "position_rms_m": 1.84631784608874e-08,
+              "row_rank": 17,
+              "shell_physical_work_j": 0.013558549436974982,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 1.6048693989593227e-09,
+              "support_moment_balance_nm": 2.0551949173453754e-09,
+              "tip_rotation_rad": [
+                4.4233145523106815e-08,
+                -6.191365176658368e-05,
+                -5.941653371392781e-08
+              ],
+              "tip_translation_m": [
+                -2.6189526989204266e-06,
+                -6.952726494991165e-09,
+                7.002139415047116e-05
+              ],
+              "work_absolute_error_j": 3.0490887592549143e-13,
+              "work_relative_error": 4.354510212553941e-12
+            },
+            "tip_mx_100nm": {
+              "constraint_max": 1.3552527156068805e-20,
+              "dimension": 1025,
+              "free_residual_ratio": 3.961452766617142e-12,
+              "nnz": 18098,
+              "orientation_rms_rad": 4.3756533892167433e-07,
+              "position_rms_m": 2.187826694608377e-08,
+              "row_rank": 17,
+              "shell_physical_work_j": 0.0018589348657369808,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 7.612197793696887e-11,
+              "support_moment_balance_nm": 7.481858406187419e-11,
+              "tip_rotation_rad": [
+                4.9049461879840565e-05,
+                3.1918780796094844e-09,
+                -7.799098679970144e-07
+              ],
+              "tip_translation_m": [
+                -1.5335086465041054e-10,
+                -3.1701383342024564e-06,
+                4.42331458193132e-09
+              ],
+              "work_absolute_error_j": 3.2916377956659915e-15,
+              "work_relative_error": 6.710854043067212e-13
+            }
+          },
+          "rank": {
+            "left_smallest_mode": [
+              1.591166363154456e-17,
+              -3.3937113765957977e-17,
+              1.5767035416017248e-17,
+              -0.012571960506370045,
+              0.02015053712630675,
+              -0.01257196050636984,
+              4.2994263699163985e-16,
+              -3.2007240800132924e-16,
+              1.4325388152437803e-16,
+              -0.49027733554669545,
+              0.7199995672266617,
+              -0.49027733554669556,
+              1.5774118525020209e-15,
+              -2.3171023042442453e-15,
+              1.5785279437533998e-15,
+              0.008207897521888831,
+              -0.008207897521888679
+            ],
+            "meaning": "bounded unit-row, physical-coordinate rank diagnostic; not inf-sup or mixed-system stability",
+            "rank_tolerance": 3.310725776154064e-13,
+            "scaled_row_norm_max": 0.0038511933863841544,
+            "scaled_row_norm_min": 0.00013605442176870748,
+            "scaled_row_rank": 17,
+            "scaled_row_singular_values": [
+              1.4791848583148153,
+              1.4277096468790955,
+              1.4142135623730956,
+              1.4056854342516159,
+              1.393855231350989,
+              1.1914983593093729,
+              1.0602007111591272,
+              0.9675503799027514,
+              0.9627150439453049,
+              0.8944271909999153,
+              0.8904305768041341,
+              0.4472135954999577,
+              0.44686433791425884,
+              0.42284580503047153,
+              0.310893841708624,
+              0.3001744026172282,
+              0.3001548187235337
+            ]
+          },
+          "row_count": 17
+        }
+      },
+      "station_count": 6
+    },
+    "mixed_s3_br_tl": {
+      "spaces": {
+        "dual_non_yaw_p0_yaw": {
+          "loads": {
+            "tip_fz_1000n": {
+              "constraint_max": 1.8860218259883492e-20,
+              "dimension": 1025,
+              "free_residual_ratio": 3.465140055257099e-12,
+              "nnz": 18096,
+              "orientation_rms_rad": 6.6343974671629e-07,
+              "position_rms_m": 3.3171987335814537e-08,
+              "row_rank": 17,
+              "shell_physical_work_j": 0.013562201315374538,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 1.6231344255193912e-09,
+              "support_moment_balance_nm": 1.6156950235668568e-09,
+              "tip_rotation_rad": [
+                -4.4940348830530154e-08,
+                -6.116888943774094e-05,
+                6.02520894250465e-08
+              ],
+              "tip_translation_m": [
+                -2.6130183027659536e-06,
+                7.08025686768179e-09,
+                7.019808191152043e-05
+              ],
+              "work_absolute_error_j": 2.3082924460737786e-13,
+              "work_relative_error": 3.288255723259238e-12
+            },
+            "tip_mx_100nm": {
+              "constraint_max": 1.374596354468063e-20,
+              "dimension": 1025,
+              "free_residual_ratio": 3.3961036987223793e-12,
+              "nnz": 18096,
+              "orientation_rms_rad": 6.98021798354915e-07,
+              "position_rms_m": 3.4901089917745615e-08,
+              "row_rank": 17,
+              "shell_physical_work_j": 0.0018796475448453773,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 1.1067132084496757e-10,
+              "support_moment_balance_nm": 9.478506994687071e-11,
+              "tip_rotation_rad": [
+                4.981811563232308e-05,
+                -1.1600395364605052e-09,
+                -7.491940198809701e-07
+              ],
+              "tip_translation_m": [
+                2.4108396127097104e-10,
+                -3.1805460901067456e-06,
+                -4.494034891285486e-09
+              ],
+              "work_absolute_error_j": 2.805047860654497e-15,
+              "work_relative_error": 5.630578003706188e-13
+            }
+          },
+          "rank": {
+            "left_smallest_mode": [
+              3.0469546442730534e-17,
+              -4.7239579915162034e-17,
+              -6.241080900616678e-17,
+              0.37178270935021357,
+              -3.9702888786967666e-15,
+              -0.37178270935021296,
+              8.556965991862979e-17,
+              -1.2566158900878174e-16,
+              5.543840934171137e-16,
+              0.013972377292886817,
+              -2.8425788102767917e-16,
+              -0.013972377292886631,
+              -8.385018080008828e-17,
+              -1.1874021944241943e-17,
+              4.949907512286459e-17,
+              -0.6013172122108273,
+              -0.6013172122108261
+            ],
+            "meaning": "bounded unit-row, physical-coordinate rank diagnostic; not inf-sup or mixed-system stability",
+            "rank_tolerance": 3.281964217276551e-13,
+            "scaled_row_norm_max": 0.0038511933863841544,
+            "scaled_row_norm_min": 0.0001666319552913724,
+            "scaled_row_rank": 17,
+            "scaled_row_singular_values": [
+              1.4663346057509896,
+              1.187635072262093,
+              1.187618878419115,
+              1.1440894332589748,
+              1.0080866091722929,
+              1.0000202800656781,
+              1.0000000000000022,
+              1.0000000000000018,
+              0.9999999999999978,
+              0.9998245384965386,
+              0.9993187483225611,
+              0.9991804268965632,
+              0.9918474622680172,
+              0.7691078032406177,
+              0.7690983694300725,
+              0.5904535722560553,
+              0.4377703016624287
+            ]
+          },
+          "row_count": 17
+        },
+        "p0_two": {
+          "loads": {
+            "tip_fz_1000n": {
+              "constraint_max": 1.3552527156068805e-20,
+              "dimension": 1020,
+              "free_residual_ratio": 3.4066745986165383e-12,
+              "nnz": 18012,
+              "orientation_rms_rad": 4.240668184316029e-07,
+              "position_rms_m": 6.391091524483299e-08,
+              "row_rank": 12,
+              "shell_physical_work_j": 0.013697852562849408,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 1.1824752367454572e-09,
+              "support_moment_balance_nm": 7.695888858077788e-10,
+              "tip_rotation_rad": [
+                -8.947799833444346e-09,
+                -6.286640360203957e-05,
+                1.7884569245116825e-08
+              ],
+              "tip_translation_m": [
+                -2.6197892115668584e-06,
+                6.694606809181476e-10,
+                7.027876882520139e-05
+              ],
+              "work_absolute_error_j": 2.7797208979052357e-13,
+              "work_relative_error": 3.955278307192614e-12
+            },
+            "tip_mx_100nm": {
+              "constraint_max": 1.3552527156068805e-20,
+              "dimension": 1020,
+              "free_residual_ratio": 3.5733029120513327e-12,
+              "nnz": 18012,
+              "orientation_rms_rad": 6.985207652289233e-07,
+              "position_rms_m": 1.8306453331333574e-08,
+              "row_rank": 12,
+              "shell_physical_work_j": 0.001838557980999255,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 9.82101522622824e-11,
+              "support_moment_balance_nm": 1.1152851539274191e-10,
+              "tip_rotation_rad": [
+                4.867897886743268e-05,
+                1.8170518693490476e-09,
+                -6.610436880066571e-07
+              ],
+              "tip_translation_m": [
+                -3.853987999638519e-11,
+                -3.1572238338183863e-06,
+                -8.947799575680626e-10
+              ],
+              "work_absolute_error_j": 3.1970953662252555e-15,
+              "work_relative_error": 6.567712471808203e-13
+            }
+          },
+          "rank": {
+            "left_smallest_mode": [
+              8.769880746753885e-18,
+              -0.5000058919118043,
+              7.591441163391558e-17,
+              -0.030760969566156707,
+              -5.372501558132278e-18,
+              0.49904696252440034,
+              -4.297628193631001e-17,
+              0.500005891911804,
+              1.3021446945662488e-16,
+              0.030760969566157,
+              1.378550786552979e-17,
+              0.49904696252440145
+            ],
+            "meaning": "bounded unit-row, physical-coordinate rank diagnostic; not inf-sup or mixed-system stability",
+            "rank_tolerance": 3.04630127591147e-13,
+            "scaled_row_norm_max": 0.0038511933863841544,
+            "scaled_row_norm_min": 0.00013605442176870745,
+            "scaled_row_rank": 12,
+            "scaled_row_singular_values": [
+              1.3610437788743217,
+              1.2253382651299667,
+              1.2247448713915894,
+              1.0876390744291076,
+              1.0788726107866682,
+              1.0627309260601971,
+              0.9321597966243405,
+              0.9151230249333875,
+              0.9052990471103767,
+              0.7071067811865469,
+              0.7050743754664524,
+              0.3830349898064763
+            ]
+          },
+          "row_count": 12
+        },
+        "p1_non_yaw_p0_yaw": {
+          "loads": {
+            "tip_fz_1000n": {
+              "constraint_max": 1.3552527156068805e-20,
+              "dimension": 1025,
+              "free_residual_ratio": 4.252400740456855e-12,
+              "nnz": 18096,
+              "orientation_rms_rad": 3.692635691748386e-07,
+              "position_rms_m": 1.846317845874203e-08,
+              "row_rank": 17,
+              "shell_physical_work_j": 0.013558549436967215,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 2.6447431205911206e-09,
+              "support_moment_balance_nm": 2.4202359751462433e-09,
+              "tip_rotation_rad": [
+                -4.423314612495041e-08,
+                -6.191365176668746e-05,
+                5.941653371615353e-08
+              ],
+              "tip_translation_m": [
+                -2.6189526989244043e-06,
+                6.952726534682941e-09,
+                7.00213941504656e-05
+              ],
+              "work_absolute_error_j": 2.8110846983508964e-13,
+              "work_relative_error": 4.014608295730719e-12
+            },
+            "tip_mx_100nm": {
+              "constraint_max": 1.0164395367051604e-20,
+              "dimension": 1025,
+              "free_residual_ratio": 3.791836681927142e-12,
+              "nnz": 18096,
+              "orientation_rms_rad": 4.375653389220757e-07,
+              "position_rms_m": 2.1878266946103616e-08,
+              "row_rank": 17,
+              "shell_physical_work_j": 0.0018589348657371057,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 2.2331180206304798e-11,
+              "support_moment_balance_nm": 4.896829200778596e-11,
+              "tip_rotation_rad": [
+                4.904946187985123e-05,
+                -3.1918780542927424e-09,
+                -7.799098679975738e-07
+              ],
+              "tip_translation_m": [
+                1.5335086571680036e-10,
+                -3.170138334203193e-06,
+                -4.423314600665754e-09
+              ],
+              "work_absolute_error_j": 1.7156415177410622e-15,
+              "work_relative_error": 3.4977784709312407e-13
+            }
+          },
+          "rank": {
+            "left_smallest_mode": [
+              -1.819318292301448e-16,
+              3.8831274608505105e-16,
+              -1.811907617477632e-16,
+              -0.01257196050636647,
+              0.020150537126300116,
+              -0.012571960506365758,
+              1.8120512874374914e-16,
+              -1.5703813616737352e-16,
+              -1.0965569871851888e-17,
+              -0.49027733554669534,
+              0.719999567226662,
+              -0.49027733554669606,
+              -1.7971827098835064e-14,
+              2.6393577089893327e-14,
+              -1.7974980169375673e-14,
+              0.008207897521887384,
+              -0.008207897521886876
+            ],
+            "meaning": "bounded unit-row, physical-coordinate rank diagnostic; not inf-sup or mixed-system stability",
+            "rank_tolerance": 3.310725776154063e-13,
+            "scaled_row_norm_max": 0.0038511933863841544,
+            "scaled_row_norm_min": 0.00013605442176870748,
+            "scaled_row_rank": 17,
+            "scaled_row_singular_values": [
+              1.4791848583148148,
+              1.427709646879094,
+              1.414213562373096,
+              1.4056854342516165,
+              1.3938552313509853,
+              1.191498359309373,
+              1.0602007111591267,
+              0.9675503799027523,
+              0.9627150439453048,
+              0.8944271909999154,
+              0.8904305768041338,
+              0.44721359549995765,
+              0.4468643379142593,
+              0.4228458050304714,
+              0.31089384170862444,
+              0.30017440261722866,
+              0.3001548187235335
+            ]
+          },
+          "row_count": 17
+        }
+      },
+      "station_count": 6
+    },
+    "q4": {
+      "spaces": {
+        "dual_non_yaw_p0_yaw": {
+          "loads": {
+            "tip_fz_1000n": {
+              "constraint_max": 1.9325943377262445e-20,
+              "dimension": 1025,
+              "free_residual_ratio": 3.524747811886838e-12,
+              "nnz": 18187,
+              "orientation_rms_rad": 7.121979238833328e-07,
+              "position_rms_m": 3.560989619416628e-08,
+              "row_rank": 17,
+              "shell_physical_work_j": 0.013568753197400838,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 3.598967254031004e-10,
+              "support_moment_balance_nm": 5.977206761580634e-10,
+              "tip_rotation_rad": [
+                -4.912178984157631e-16,
+                -6.114212415473196e-05,
+                3.879292710106481e-18
+              ],
+              "tip_translation_m": [
+                -2.616329374715133e-06,
+                3.2416311348266144e-17,
+                7.030643940224696e-05
+              ],
+              "work_absolute_error_j": 2.152167333235866e-13,
+              "work_relative_error": 3.0611240613716583e-12
+            },
+            "tip_mx_100nm": {
+              "constraint_max": 7.010993346126027e-21,
+              "dimension": 1025,
+              "free_residual_ratio": 3.152729712513749e-12,
+              "nnz": 18187,
+              "orientation_rms_rad": 6.980601029809027e-07,
+              "position_rms_m": 3.490300514904527e-08,
+              "row_rank": 17,
+              "shell_physical_work_j": 0.001881612794419483,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 4.283023083561234e-11,
+              "support_moment_balance_nm": 4.4038257305204197e-11,
+              "tip_rotation_rad": [
+                4.982711430912891e-05,
+                4.7193269438832454e-18,
+                -7.681406335603474e-07
+              ],
+              "tip_translation_m": [
+                2.2298207707995363e-19,
+                -3.182651759865958e-06,
+                1.7577604045840665e-18
+              ],
+              "work_absolute_error_j": 8.257283745649602e-16,
+              "work_relative_error": 1.657186826919409e-13
+            }
+          },
+          "rank": {
+            "left_smallest_mode": [
+              -2.1205916480489315e-19,
+              7.90439546786419e-17,
+              4.22708374090758e-18,
+              0.3717827093502136,
+              -4.844515822165404e-15,
+              -0.37178270935021196,
+              -4.81623168244552e-17,
+              1.0374396482006083e-19,
+              -8.512157657053904e-17,
+              0.013972377292886782,
+              -4.64276875001929e-17,
+              -0.013972377292886516,
+              1.0437143542920508e-17,
+              -1.603382238151155e-17,
+              4.734589515247765e-18,
+              -0.6013172122108278,
+              -0.6013172122108257
+            ],
+            "meaning": "bounded unit-row, physical-coordinate rank diagnostic; not inf-sup or mixed-system stability",
+            "rank_tolerance": 3.281964217276553e-13,
+            "scaled_row_norm_max": 0.003851193386384145,
+            "scaled_row_norm_min": 0.0001666319552913724,
+            "scaled_row_rank": 17,
+            "scaled_row_singular_values": [
+              1.4663346057509905,
+              1.1876350722620923,
+              1.1876188784191146,
+              1.1440894332589753,
+              1.008086609172293,
+              1.0000202800656774,
+              1.000000000000002,
+              0.9999999999999998,
+              0.9999999999999982,
+              0.9998245384965391,
+              0.9993187483225621,
+              0.9991804268965623,
+              0.991847462268016,
+              0.7691078032406169,
+              0.7690983694300731,
+              0.5904535722560552,
+              0.4377703016624287
+            ]
+          },
+          "row_count": 17
+        },
+        "p0_two": {
+          "loads": {
+            "tip_fz_1000n": {
+              "constraint_max": 1.3552527156068805e-20,
+              "dimension": 1020,
+              "free_residual_ratio": 3.5523673952061594e-12,
+              "nnz": 18103,
+              "orientation_rms_rad": 6.217677831387193e-07,
+              "position_rms_m": 7.096105601080641e-08,
+              "row_rank": 12,
+              "shell_physical_work_j": 0.013697674231258802,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 7.774947416915942e-10,
+              "support_moment_balance_nm": 8.649147270704488e-10,
+              "tip_rotation_rad": [
+                -3.182215405729598e-16,
+                -6.28868502452518e-05,
+                9.287053266087444e-18
+              ],
+              "tip_translation_m": [
+                -2.619077288118764e-06,
+                1.9519296416300884e-17,
+                7.028940065032916e-05
+              ],
+              "work_absolute_error_j": 2.0854151738802784e-13,
+              "work_relative_error": 2.966898500464753e-12
+            },
+            "tip_mx_100nm": {
+              "constraint_max": 3.3881317890172014e-21,
+              "dimension": 1020,
+              "free_residual_ratio": 3.994495630847198e-12,
+              "nnz": 18103,
+              "orientation_rms_rad": 7.584424398839883e-07,
+              "position_rms_m": 1.8448849269404887e-08,
+              "row_rank": 12,
+              "shell_physical_work_j": 0.0018375429516247648,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 4.4698427151958444e-11,
+              "support_moment_balance_nm": 6.108151769845235e-11,
+              "tip_rotation_rad": [
+                4.8684233685335104e-05,
+                1.0540585964997014e-17,
+                -6.519489386934916e-07
+              ],
+              "tip_translation_m": [
+                4.423753128595999e-19,
+                -3.1565212981137368e-06,
+                -1.1796625022491467e-17
+              ],
+              "work_absolute_error_j": 2.1848842179927885e-15,
+              "work_relative_error": 4.4878681507334266e-13
+            }
+          },
+          "rank": {
+            "left_smallest_mode": [
+              -3.389096601088619e-17,
+              0.5000058919118041,
+              1.5755968327794955e-16,
+              0.030760969566157263,
+              8.960807705974751e-18,
+              -0.49904696252440073,
+              9.338802707322808e-17,
+              -0.5000058919118046,
+              8.796177423224076e-18,
+              -0.030760969566157117,
+              7.896815873141533e-19,
+              -0.4990469625244014
+            ],
+            "meaning": "bounded unit-row, physical-coordinate rank diagnostic; not inf-sup or mixed-system stability",
+            "rank_tolerance": 3.0463012759114716e-13,
+            "scaled_row_norm_max": 0.003851193386384145,
+            "scaled_row_norm_min": 0.00013605442176870745,
+            "scaled_row_rank": 12,
+            "scaled_row_singular_values": [
+              1.3610437788743224,
+              1.2253382651299667,
+              1.2247448713915892,
+              1.0876390744291071,
+              1.0788726107866689,
+              1.062730926060197,
+              0.9321597966243402,
+              0.9151230249333869,
+              0.9052990471103761,
+              0.7071067811865468,
+              0.7050743754664526,
+              0.38303498980647743
+            ]
+          },
+          "row_count": 12
+        },
+        "p1_non_yaw_p0_yaw": {
+          "loads": {
+            "tip_fz_1000n": {
+              "constraint_max": 1.6352297941088773e-20,
+              "dimension": 1025,
+              "free_residual_ratio": 3.3209875525414342e-12,
+              "nnz": 18187,
+              "orientation_rms_rad": 4.1735839469733064e-07,
+              "position_rms_m": 2.0867919734866624e-08,
+              "row_rank": 17,
+              "shell_physical_work_j": 0.013579782197383513,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 3.1527462676068197e-09,
+              "support_moment_balance_nm": 3.762136831158757e-09,
+              "tip_rotation_rad": [
+                -3.398003567509214e-16,
+                -6.185476924740665e-05,
+                1.2980752540692085e-17
+              ],
+              "tip_translation_m": [
+                -2.6208223803123716e-06,
+                2.3412529649556097e-17,
+                7.012877942930109e-05
+              ],
+              "work_absolute_error_j": 2.7478019859472624e-15,
+              "work_relative_error": 3.9182230295586464e-14
+            },
+            "tip_mx_100nm": {
+              "constraint_max": 6.776263578034403e-21,
+              "dimension": 1025,
+              "free_residual_ratio": 4.030383647577217e-12,
+              "nnz": 18187,
+              "orientation_rms_rad": 4.376620193146228e-07,
+              "position_rms_m": 2.1883100965731106e-08,
+              "row_rank": 17,
+              "shell_physical_work_j": 0.001860809763431386,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 1.56903248088495e-10,
+              "support_moment_balance_nm": 1.6583733965399563e-10,
+              "tip_rotation_rad": [
+                4.90583435355709e-05,
+                7.399693925326888e-18,
+                -7.98574152413377e-07
+              ],
+              "tip_translation_m": [
+                3.1073320449751094e-19,
+                -3.1722112553816508e-06,
+                -1.1966796400933363e-18
+              ],
+              "work_absolute_error_j": 1.867429821889033e-15,
+              "work_relative_error": 3.806548870805247e-13
+            }
+          },
+          "rank": {
+            "left_smallest_mode": [
+              1.591166363154456e-17,
+              -3.3937113765957977e-17,
+              1.5767035416017248e-17,
+              -0.012571960506370045,
+              0.02015053712630675,
+              -0.01257196050636984,
+              4.2994263699163985e-16,
+              -3.2007240800132924e-16,
+              1.4325388152437803e-16,
+              -0.49027733554669545,
+              0.7199995672266617,
+              -0.49027733554669556,
+              1.5774118525020209e-15,
+              -2.3171023042442453e-15,
+              1.5785279437533998e-15,
+              0.008207897521888831,
+              -0.008207897521888679
+            ],
+            "meaning": "bounded unit-row, physical-coordinate rank diagnostic; not inf-sup or mixed-system stability",
+            "rank_tolerance": 3.310725776154064e-13,
+            "scaled_row_norm_max": 0.003851193386384145,
+            "scaled_row_norm_min": 0.00013605442176870748,
+            "scaled_row_rank": 17,
+            "scaled_row_singular_values": [
+              1.4791848583148153,
+              1.4277096468790955,
+              1.4142135623730956,
+              1.4056854342516159,
+              1.393855231350989,
+              1.1914983593093729,
+              1.0602007111591272,
+              0.9675503799027514,
+              0.9627150439453049,
+              0.8944271909999153,
+              0.8904305768041341,
+              0.4472135954999577,
+              0.44686433791425884,
+              0.42284580503047153,
+              0.310893841708624,
+              0.3001744026172282,
+              0.3001548187235337
+            ]
+          },
+          "row_count": 17
+        }
+      },
+      "station_count": 6
+    }
+  }
+}

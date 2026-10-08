@@ -1,0 +1,147 @@
+{
+  "anysolver_import_path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\__init__.py",
+  "base_p0_intervals": 8,
+  "cases": {
+    "yaw_m12": {
+      "spaces": {
+        "continuous_linear": {
+          "active_primal_columns": 112,
+          "candidate_into_p0_row_span_relative_defect": 1.6357351694506784e-15,
+          "minimum_unit_row_singular": 0.010666043827180258,
+          "p0_into_candidate_row_span_relative_defect": 0.28361551619884373,
+          "rank": 53,
+          "rows": 53,
+          "transpose_work_relative_defect": 3.6319060808122175e-16
+        },
+        "dual_linear": {
+          "active_primal_columns": 112,
+          "candidate_into_p0_row_span_relative_defect": 1.6301973864852782e-15,
+          "minimum_unit_row_singular": 0.010630788166385678,
+          "p0_into_candidate_row_span_relative_defect": 0.26788341535640614,
+          "rank": 53,
+          "rows": 53,
+          "transpose_work_relative_defect": 3.888242202968504e-16
+        },
+        "piecewise_constant": {
+          "active_primal_columns": 112,
+          "candidate_into_p0_row_span_relative_defect": 1.5727405826078952e-15,
+          "minimum_unit_row_singular": 0.014202251757572422,
+          "p0_into_candidate_row_span_relative_defect": 0.28875574087149447,
+          "rank": 52,
+          "rows": 52,
+          "transpose_work_relative_defect": 1.9575498189297503e-16
+        }
+      },
+      "yaw_intervals": 12
+    },
+    "yaw_m16": {
+      "spaces": {
+        "continuous_linear": {
+          "active_primal_columns": 112,
+          "candidate_into_p0_row_span_relative_defect": 1.6316811970902413e-15,
+          "minimum_unit_row_singular": 6.815747767660442e-16,
+          "p0_into_candidate_row_span_relative_defect": 0.23730299777120045,
+          "rank": 56,
+          "rows": 57,
+          "transpose_work_relative_defect": 1.2534381961247638e-16
+        },
+        "dual_linear": {
+          "active_primal_columns": 112,
+          "candidate_into_p0_row_span_relative_defect": 1.6387572164867375e-15,
+          "minimum_unit_row_singular": 6.815747765043208e-16,
+          "p0_into_candidate_row_span_relative_defect": 0.2373029977712005,
+          "rank": 56,
+          "rows": 57,
+          "transpose_work_relative_defect": 5.013752784499031e-16
+        },
+        "piecewise_constant": {
+          "active_primal_columns": 112,
+          "candidate_into_p0_row_span_relative_defect": 1.6125017736256956e-15,
+          "minimum_unit_row_singular": 0.005393937701244684,
+          "p0_into_candidate_row_span_relative_defect": 0.2373029977712005,
+          "rank": 56,
+          "rows": 56,
+          "transpose_work_relative_defect": 1.2377368474716482e-16
+        }
+      },
+      "yaw_intervals": 16
+    },
+    "yaw_m8": {
+      "spaces": {
+        "continuous_linear": {
+          "active_primal_columns": 112,
+          "candidate_into_p0_row_span_relative_defect": 1.5989072782756312e-15,
+          "minimum_unit_row_singular": 0.005683508033723697,
+          "p0_into_candidate_row_span_relative_defect": 0.4308551380353318,
+          "rank": 49,
+          "rows": 49,
+          "transpose_work_relative_defect": 0.0
+        },
+        "dual_linear": {
+          "active_primal_columns": 112,
+          "candidate_into_p0_row_span_relative_defect": 1.5816770893115601e-15,
+          "minimum_unit_row_singular": 0.08775117827845678,
+          "p0_into_candidate_row_span_relative_defect": 0.3000483274739325,
+          "rank": 49,
+          "rows": 49,
+          "transpose_work_relative_defect": 6.828352226025824e-16
+        },
+        "piecewise_constant": {
+          "active_primal_columns": 112,
+          "candidate_into_p0_row_span_relative_defect": 1.5992974124824175e-15,
+          "minimum_unit_row_singular": 0.23078986325831094,
+          "p0_into_candidate_row_span_relative_defect": 0.32906698764226006,
+          "rank": 48,
+          "rows": 48,
+          "transpose_work_relative_defect": 5.913318299369408e-16
+        }
+      },
+      "yaw_intervals": 8
+    }
+  },
+  "classification": "fixed-primal selective yaw resolution row/work diagnostic",
+  "decision": "rank/work admission only; physical loaded response and mixed stability remain separate",
+  "effective_threadpools": [
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.31.188.0"
+    },
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.30"
+    }
+  ],
+  "elapsed_s": 3.972516300040297,
+  "env": {
+    "NUMBA_DISABLE_JIT": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "geometry": "C1 Q4 x16/y4, B3-14, 4:1 on 0.9-1.0 m line; P0 m8 on five channels",
+  "limits": [
+    "same supported fixed primal and 120-second row deadline",
+    "no KKT solve, physical load, or mesh-uniform stability claim"
+  ],
+  "numpy": "2.4.6",
+  "python": "3.14.2",
+  "question": "Which exact yaw actions are missing from x16/B3-14 P0 m8, and can the m16 physical trace space be represented?",
+  "reference_p0_intervals": 16,
+  "reference_p0_rank": 88,
+  "reference_p0_rows": 96,
+  "runner_sha256": "fbeafb2d1bf3d5fc432bbe7d91ec2c6c58a245dcbee5718b0e0b77368c22ff0c",
+  "scipy": "1.17.1",
+  "source_git": "0cc03394d4845a836441a851422990a75e039eb3",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE"
+}

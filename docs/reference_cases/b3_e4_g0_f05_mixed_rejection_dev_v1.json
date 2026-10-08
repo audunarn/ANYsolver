@@ -1,0 +1,40 @@
+{
+  "case": "B3_E4_G0_F05_MIXED_REJECTION_DEV_V1",
+  "date": "2026-09-27",
+  "status": "passed_development_screen",
+  "source_head": "103357f870e5712ee61405ee4d5d5f293f0bdc3a",
+  "command": "python -B -m pytest -q tests/test_b3_e4_g0_f05_mixed_rejection_dev.py --disable-warnings",
+  "environment": {
+    "python": "3.14.2",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "pytest": "9.0.3",
+    "PYTHONPATH": "src;tests;.",
+    "OPENBLAS_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_DISABLE_JIT": "1"
+  },
+  "source_sha256": {
+    "tests/test_b3_e4_g0_f05_mixed_rejection_dev.py": "143914b5e79e5067c07735a1d3faff8a21e7e22aa876ce2deefffda1286ee8e9",
+    "src/anysolver/_ge_beam3_retained_plastic_program.py": "d8fecefb2eebc1be0b0369fcfae23f4bf938f75e8849036724ae4116e4e37709",
+    "src/anysolver/_ge_beam3_retained_plastic_state.py": "c58790c39589369a453689d8fc81d288f20b9ab2803305d0c1281dcd499cd504",
+    "src/anysolver/e4_pl_s3_v2d_element.py": "d0ad70f7c87718d60ee02a82420915b435d0cf66b466049f83ea9c2ad1b90a80",
+    "src/anysolver/e4_pl_s3_v2d_state.py": "d8f1429dcfb1bd575046cd064e506e36330c709f1e38e068f8e90a9dc0713e66",
+    "src/anysolver/_ge_beam3_pose_joint.py": "f3fce05e6d65dfac9a9783e6fb466b8a0067ab4831ba00a74df9c579461abf71"
+  },
+  "result": {
+    "pytest": "1 passed in 4.24s",
+    "yielded_shell_accepted_and_trial": true,
+    "yielded_beam_accepted_at_target_3": true,
+    "beam_rejection_before_target_4_publication": true,
+    "rejected_beam_checkpoint_byte_identical": true,
+    "accepted_shell_predecessor_byte_identical": true,
+    "replayed_shell_trial_byte_identical": true,
+    "accepted_beam_target_4_checkpoint_restarts_identically": true,
+    "accepted_shell_trial_serializes_and_restores_identically": true,
+    "nonzero_mixed_chart_pose_cross_block": true
+  },
+  "interpretation": "A test-local pair of existing yielded S3-V2D and paired-plastic retained-beam owner APIs can discard a trial before beam publication, replay from exact accepted parents, evaluate a nonzero pose coupling action, and restore separately accepted artifacts. This is not a production atomic mixed-owner coordinator, a mixed plastic adapter, branch-continuity proof, independent review, F05 acceptance, or G0B acceptance.",
+  "initial_harness_failure": "The first attempt omitted required pose-port chart flags and rotation coordinates. The API rejected it with TypeError; the test was corrected to an additive shell chart and spatial beam frame before the passing run. No mechanics or owner source was changed."
+}

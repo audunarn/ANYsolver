@@ -1,0 +1,28 @@
+{
+  "source_git": "ccb9b51230fab43fda8440b1ad8229121547f658",
+  "source_sha256": {
+    "scripts/b3_e4_f03_c1_drill_quotient_metric.py": "250353c1e390b87e55ae946bede04234845d587206dc146840d889d3ef4b0b0a",
+    "scripts/b3_e4_f03_c1_native_mixed_metric.py": "9e5be04e9757b9ad365d0f89c74ee9027447dbf74773da43b9a4ced3ee47c390",
+    "scripts/_b3_e4_f03_native_fixture.py": "94d9e1a3532c3b2c061153e73942ccd73283eae0ef895b5ca4ef4014e5caa3fb",
+    "scripts/b3_e4_f03_distributed_surface_finite.py": "cfc4cde7fe9920899415341c813a4c3df99a3fddb0d5579737cb2bb27f7b09e7",
+    "scripts/b3_e4_f03_plate_patch_work.py": "cf1e58684b334003297306cd5a9e8b50390f075c3f3c6b0038b8cc572bc6bc18",
+    "scripts/b3_e4_f03_square_section_control.py": "efe684d6ad08236da0eeb4323812107d8a6bc96e04de622132a9b9915f4ab17f",
+    "scripts/_b3_e4_f03_p0_dual_norm.py": "08295c8376857840087b5dc699dbe9cefdb33995ca79fed638cf672ff7c3905e",
+    "scripts/_b3_e4_f03_p1_dual_norm.py": "50b5397aa11ceb97932f7c8a66497ffa8f77537da57b0c046ea30eb07f386935",
+    "scripts/_b3_e4_f03_dual_linear_norm.py": "690812e542ccd7274082f4f9f0b55cf3f0c6c821c060be704455394c31fdf21f"
+  },
+  "result_sha256": "deedb16167ccc99d8d7e9f919b45b456d502b31c4e89badf8d1ef8e2a00da9ee",
+  "runtime": null,
+  "execution": {
+    "command": "unverified exact executable/invocation for V1",
+    "pythonpath": "src;.",
+    "numba_disable_jit": "1",
+    "openblas_num_threads": "1",
+    "omp_num_threads": "1",
+    "script_threadpool_limits": 1,
+    "max_dense_rows": 1900,
+    "stage_checked_deadline_s": 120,
+    "elapsed_s": 36.47476089998963
+  },
+  "classification": "incomplete retrospective V1 provenance; exact Python environment and effective BLAS runtime were not captured in the target process; use V2 as source-bound evidence"
+}

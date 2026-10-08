@@ -1,0 +1,83 @@
+{
+  "cases": {
+    "b3_half_12": {
+      "order_3": {
+        "basis_first_sum_m2": 6.179952383167375e-18,
+        "basis_mass_sum_m": 0.09999999999999998,
+        "basis_second_sum_m3": 8.333333333333329e-05,
+        "next_relative": 0.002322516813773259,
+        "rank_at_1e_10": 53,
+        "smallest_relative": 9.58212734353392e-17
+      },
+      "order_5": {
+        "basis_first_sum_m2": 6.613633252161577e-18,
+        "basis_mass_sum_m": 0.10000000000000003,
+        "basis_second_sum_m3": 8.333333333333322e-05,
+        "next_relative": 0.0023225168137731853,
+        "rank_at_1e_10": 53,
+        "smallest_relative": 1.6350584941964627e-16
+      }
+    },
+    "b3_half_24": {
+      "order_3": {
+        "basis_first_sum_m2": 6.179952383167375e-18,
+        "basis_mass_sum_m": 0.09999999999999998,
+        "basis_second_sum_m3": 8.333333333333329e-05,
+        "next_relative": 0.003025635798825361,
+        "rank_at_1e_10": 53,
+        "smallest_relative": 9.434389169150081e-17
+      },
+      "order_5": {
+        "basis_first_sum_m2": 6.613633252161577e-18,
+        "basis_mass_sum_m": 0.10000000000000003,
+        "basis_second_sum_m3": 8.333333333333322e-05,
+        "next_relative": 0.0030256357988253124,
+        "rank_at_1e_10": 53,
+        "smallest_relative": 1.573197306695689e-16
+      }
+    }
+  },
+  "classification": "fixed-grid quadrature discriminator, not multiplier selection",
+  "elapsed_s_not_benchmark": 24.207733099989127,
+  "limitations": [
+    "persistent rank loss suggests finite trial/trace representability, not necessarily locking",
+    "finite-chart work and physical dual mapping remain open"
+  ],
+  "model": "same x16/y4 C1 Q4/B3-12/B3-24, dual-eight, physical scales and supports",
+  "numpy": "2.4.6",
+  "python": "3.14.2",
+  "question": "Does dual-eight rank loss disappear with higher exact-enough longitudinal and transverse quadrature?",
+  "source_sha256": {
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b3_e4_f03_dual_eight_quadrature_check.py": "b378fd9840871083d4097e86129cd7a27314e5ea36003f7323d9b7471dee7d25",
+    "scripts\\b3_e4_f03_common_trace_spaces.py": "36555d56701137be47a001d2ffa9f9dc4390ae0369ec6e6f9a2e14f7397656f5",
+    "scripts\\b3_e4_f03_top_face_common_trace.py": "b9bde46d65cb764b409990d723682c3fa34f8f30a196eca04d600bf15eb0c963"
+  },
+  "thread_env": {
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_DISABLE_JIT": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "threadpool_info": [
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.31.188.0"
+    },
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.30"
+    }
+  ]
+}

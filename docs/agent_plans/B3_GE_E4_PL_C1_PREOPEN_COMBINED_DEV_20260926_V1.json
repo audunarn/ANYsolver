@@ -1,0 +1,46 @@
+{
+  "status": "DIRECTIONAL_REFERENCE_RETAINED_NOT_G0_ACCEPTANCE",
+  "source_head": "825f1445",
+  "question": "Do directly executed C1 terminal -1000 N Fz plus 100 N m Mx solutions agree with the separately executed linear bases and remain open on the saved opposed faces at factors two and four?",
+  "declared_comparison": {
+    "nodal_displacement_difference_m": "maximum <= 2e-5 times maximum direct displacement plus 5e-10 m",
+    "support_wrench_component_difference": "maximum <= 2e-5 times declared 1000 N force or 1000 N m moment scale",
+    "face_gap": "positive sufficient continuous saved-field opposed-face bound",
+    "wrench_balance": "report full six-component residual; no G0 acceptance from rounded external output"
+  },
+  "cases": [
+    {
+      "factor": 2,
+      "combined_root": ".qualification/b3-ge-e4-pl/f03-ccx-c1-preopen-combined-factor2-dev-20260926-v1",
+      "manifest_sha256": "3f2fb1618f278021d8e0062c2f995ba6bf7a285925ed162ea7e0de82ee9c5b8b",
+      "result_sha256": "f8f43002b4adcd7daf6e8fccd8f74059eb53654aed54f5a3e3b3acf32c8da806",
+      "torque_basis_root": ".qualification/b3-ge-e4-pl/f03-ccx-c1-torque-basis-dev-20260926-v1",
+      "opening_basis_root": ".qualification/b3-ge-e4-pl/f03-ccx-c1-opening-shear-dev-20260926-v2",
+      "solver_status": "EXPLORATORY_COMPLETE",
+      "maximum_full_field_displacement_difference_m": 5.000531000747008e-10,
+      "registered_displacement_bound_m": 2.917458240270403e-9,
+      "maximum_support_component_difference": 0.0005977984455967089,
+      "minimum_nonseam_gap_bound_um": 2.104792938906458,
+      "minimum_seam_factored_gap_bound_um": 0.965278715421846,
+      "sampled_negative_face_points": 0,
+      "applied_mixed_work_j": 0.0739340872125
+    },
+    {
+      "factor": 4,
+      "combined_root": ".qualification/b3-ge-e4-pl/f03-ccx-c1-preopen-combined-factor4-dev-20260926-v1",
+      "manifest_sha256": "2b38594266d23449bdb5b66ae16748521f43e9dcf85f7f60b26c5bbb077cc320",
+      "result_sha256": "e239152f28b035bc0c6c2899d78fa76d2c66be516530cd7e9a527df90f5d3504",
+      "torque_basis_root": ".qualification/b3-ge-e4-pl/f03-ccx-c1-tangent-terminal-torque-full-u-dev-20260925-v1",
+      "opening_basis_root": ".qualification/b3-ge-e4-pl/f03-ccx-c1-opening-shear-dev-20260925-v1",
+      "solver_status": "EXPLORATORY_COMPLETE",
+      "maximum_full_field_displacement_difference_m": 5.400684771503721e-10,
+      "registered_displacement_bound_m": 2.924937224236158e-9,
+      "maximum_support_component_difference": 0.0013430446624624892,
+      "minimum_nonseam_gap_bound_um": 0.769776547748726,
+      "minimum_seam_factored_gap_bound_um": 0.5408174709013196,
+      "sampled_negative_face_points": 0,
+      "applied_mixed_work_j": 0.0742620312847006
+    }
+  ],
+  "interpretation": "An executed, balanced, pre-opened incremental-torque directional solid reference is retained. The standalone torque bases penetrate and are not physical zero-preload references. Opposed-face saved-field openness does not certify side surfaces, solver error, contact, three-level convergence, native line accuracy, or G0B acceptance."
+}

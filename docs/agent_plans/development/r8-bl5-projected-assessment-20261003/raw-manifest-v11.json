@@ -1,0 +1,210 @@
+{
+  "identity": "BL5_FIXED_DENSITY_SUBSPACE_DEVELOPMENT_RAW_V11",
+  "source_parent": "4e41c121d9ef87c497af0bfda37b64a95b586b70",
+  "previous_manifest": "raw-manifest-v10.json",
+  "previous_manifest_sha256": "11c78508848846ee6b51d2b2621154531ad081f34266ae8d788231185c547568",
+  "formal_f03_authority_consumed": false,
+  "qualification_claim": false,
+  "files": [
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/active-state-parent.md",
+      "sha256": "9d7124c1eaebb88d51a9c98ea4675cff651f34abb0eab1cd9d6d7ead9c87956b",
+      "bytes": 5413
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/active-state-prospective.md",
+      "sha256": "ae6bfc753c40b5d84ade6baa76609f545ffa6868c2216cdd35aa48daa002d836",
+      "bytes": 6046
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/analysis-v1/execution.json",
+      "sha256": "165ed523cacf6c64d4ffba6ef17aa5fcf76ef97035af78e7fcb10b740148e79c",
+      "bytes": 879
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/analysis-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/analysis-v1/stdout.log",
+      "sha256": "b4a7160b7b0e04e5e72641da7be71d797dc5b96af67e268dd435fca25bb56976",
+      "bytes": 336
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/analysis-v1/thread-samples.json",
+      "sha256": "54dfa8d3bfebb67e199d0b4f2aa7514f91fe0baf56f491fbe08b41a90853a888",
+      "bytes": 1498
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/analysis-v1.json",
+      "sha256": "29bc0de1c241d40fe001f90bd3e7248e7fd8f05f759e4c1c341fe83ac77d9ed2",
+      "bytes": 2699
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/analysis-v1.py",
+      "sha256": "736358db41e150f3e3d96d137e9f806334244ea2296e321022f6930b521a094f",
+      "bytes": 4692
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/case-entry-v1.py",
+      "sha256": "2d0220c539d7d4627934b9203ac13064eb710db72e3f65b5bf07732f92fc0376",
+      "bytes": 936
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/case-v1/execution.json",
+      "sha256": "3aea86669bde198e0a8bfd7c41faf3aebbe2467ca4f06bc6903c84062d0b821f",
+      "bytes": 881
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/case-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/case-v1/stdout.log",
+      "sha256": "798cb614455c3ddcdae9b7137817a08b8d0593114e893ed3423bc7dfdf566aaf",
+      "bytes": 237
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/case-v1/thread-samples.json",
+      "sha256": "a637418856170cd102afd1a97ef7461b3b725b6c5633716c983bd0a93aeb0d15",
+      "bytes": 19834
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/control-v1.json",
+      "sha256": "88e062423e21c04621f293b6afdf06accb0da54c7024c47666dd76253c896b35",
+      "bytes": 71200
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/control-v1.npz",
+      "sha256": "c80832ade6f8f9094f98fadee5d5aeb6b77238e44c8480c33a3146fbfcc7fde1",
+      "bytes": 148958
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/density-analysis-review-v1.md",
+      "sha256": "d87c71eacf762137048f3541dadfab183bd28ba4847f6c742e37c49892735a0f",
+      "bytes": 3026
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/density-design-review-v1.md",
+      "sha256": "7a560c65400b6e034c2beb1ae0797f8f1387a893381991842b8b315a477efe14",
+      "bytes": 5971
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/density-integration-review-v1.md",
+      "sha256": "bcb12f6bc2995f42d9449acf065333cec506fd4fcad5ca26329958a4ff4fdf05",
+      "bytes": 5925
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/density-integration-review-v2.md",
+      "sha256": "62d472eed9af395b141f8c5a859782983e6461304c0da70396a3d0d22d0e2b37",
+      "bytes": 5673
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/prepare-v1/execution.json",
+      "sha256": "162b1df2f64092190d8039ae13455df5961049bd021ffb401ef66db6325269a0",
+      "bytes": 891
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/prepare-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/prepare-v1/stdout.log",
+      "sha256": "f33a93d160eb08695d42749449c84590cd6be6274e5523db0b28c9a652d1d20d",
+      "bytes": 239
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/prepare-v1/thread-samples.json",
+      "sha256": "a41e25b0e8360c71446f68ab76b6e179c391fcbb1079a025e8ad2b455c20194f",
+      "bytes": 3575
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/prepared-v1.json",
+      "sha256": "25a956ee13cf2a36a9dbd6c3e93a06e4db5537cc8a00d78926bf8e9db62028e2",
+      "bytes": 3923
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/prepared-v1.npz",
+      "sha256": "423b4171ed678275345340140f34714dc8c76e6f421a081dca4ece3cc65f8ab9",
+      "bytes": 197328
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/probe-v1.py",
+      "sha256": "71974b719f26c9d2a6e9a12e139baf2ae41d6a38a9ff0ea3521633fda5fb902d",
+      "bytes": 17904
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/run-analysis-v1.py",
+      "sha256": "368a3f781e81026918040c4c5c81af42f6f40d92044c0dc8fd54e9b5adf36b4c",
+      "bytes": 945
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/run-v1.py",
+      "sha256": "02d363c7d20b47cd2c1e0014735f8ce81a8b81250da74869d2d9573249840f2b",
+      "bytes": 1223
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/run-v2.py",
+      "sha256": "e6a170974b2f2e0624e32b76ac21a4642d4f55767a41025c6297138daf519899",
+      "bytes": 1297
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/source/_b3_e4_f03_sparse_certificate.py",
+      "sha256": "2a4786d2990281d953ec58e65c2583f4de932b3bb4d10697df319c5432dfcfe2",
+      "bytes": 12860
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/source/r8_bl5_affine_flexible_native_dev.py",
+      "sha256": "496d4119175b52c3237c5ff8ea47328fd4957da5c6f060c6727a20574bdd7166",
+      "bytes": 21844
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/source/r8_bl5_density_subspace_dev.py",
+      "sha256": "f049024905421c6773cce2d44fe75eb575ca2b97b74e300fe644973bb1209d05",
+      "bytes": 4010
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/source/r8_bl5_sparse_kernel_interval_dev.py",
+      "sha256": "0f5b199822bfbdc52bdb95166008e4de59ce89e5c6a8d985727b574c2f5d2ab0",
+      "bytes": 16359
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/source/r8_bl5_sparse_kernel_saved_dev.py",
+      "sha256": "064a0d8d36dca6db916d9a8eb2563620cf8c72cb82920bd4dc0c7182b6d1c138",
+      "bytes": 22166
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/source/test_r8_bl5_density_subspace_dev.py",
+      "sha256": "d12cea729db78c62fb10cffd246fa27d15df0e93fa53b64ef152e0c4f04f60bd",
+      "bytes": 7510
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/supervisor.py",
+      "sha256": "ad9947c9268774a980041112004364d4daba6ce884fe339fab9f0d90b265d3ec",
+      "bytes": 7424
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/test-v1/execution.json",
+      "sha256": "7bd9d909e92db77202af128648360bde3ff434b1d647e83a938de1867188f428",
+      "bytes": 1080
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/test-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/test-v1/stdout.log",
+      "sha256": "1649544ead4a8d351e9282b2f3b2bb2d81910e6fc75fa1dbb0ffc90993c73e1c",
+      "bytes": 101
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/test-v1/thread-samples.json",
+      "sha256": "64c46b6f60fcfd0546368b13f2c98352591c39dfe23f22de2ea42187dbd81df9",
+      "bytes": 8034
+    }
+  ]
+}

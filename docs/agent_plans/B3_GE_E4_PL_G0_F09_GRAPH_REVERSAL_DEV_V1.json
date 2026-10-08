@@ -1,0 +1,32 @@
+{
+  "cases": [
+    {
+      "free_force_residual_ratio": 8.326672684688674e-16,
+      "free_moment_residual_ratio": 2.7408630920433552e-15,
+      "physical_work": 0.5281740943600921,
+      "reference_error": 0.0,
+      "tip_error": 0.0,
+      "tip_wrench": [0.4, -0.9, 0.7, -0.2, 0.3, 0.1],
+      "unchanged_section_work_difference": 0.007494940960240171,
+      "work_error": 4.440892098500626e-16
+    },
+    {
+      "free_force_residual_ratio": 2.463307335887066e-15,
+      "free_moment_residual_ratio": 2.220446049250313e-15,
+      "physical_work": 0.49167615970743483,
+      "reference_error": 0.0,
+      "tip_error": 0.0,
+      "tip_wrench": [-0.25, 0.6, -0.8, 0.4, -0.15, 0.35],
+      "unchanged_section_work_difference": 0.0015783601474482767,
+      "work_error": 1.6653345369377348e-16
+    }
+  ],
+  "diagnostic_limits": {
+    "balance": 2e-12,
+    "component": 2e-12,
+    "work": 2e-12
+  },
+  "matrix_error": 0.0,
+  "passed": true,
+  "unchanged_section_matrix_difference": 0.09346156676815115
+}

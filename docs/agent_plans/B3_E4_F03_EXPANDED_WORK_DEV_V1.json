@@ -1,0 +1,55 @@
+{
+  "schema": "B3_E4_F03_EXPANDED_WORK_DEV_V1",
+  "classification": "bounded_development_diagnostic_not_F03_assessment",
+  "source_head_before_changes": "9052e971",
+  "calculix_version": "2.23",
+  "calculix_exe_sha256": "27a9426a1ee2f72c38fbe892e0ffaf38e14867628ffd0235770261b6f3ec9c5f",
+  "raw_replay": ".qualification/b3-ge-e4-pl/f03-expanded-solid-replay-dev-20260928-v1/",
+  "raw_work_probe": ".qualification/b3-ge-e4-pl/f03-expanded-solid-work-probe-dev-20260928-v1/",
+  "bound_hashes": {
+    "source_s4_energy_deck": "1d466414a7349f9813691877e45833581de572e184d6c15a11d6b8509075",
+    "source_s4_frd": "060ea9961978fb7f6cafa125abc949d92d016dab9c5dae3d1faadb738f28d04f",
+    "successful_replay_deck": "46448cf5b0937e0e1ef7a6a3614bf5203a2979ee0be30b8462331f17535eb17f",
+    "replay_report": "6342a073861b68aa8e77f808d09590c62e7655d1efdf861f77402e15fa2b175e",
+    "nine_probe_manifest": "a17fec05b5c5648194a3416e2201edd1efd7c44f7238aaf6838e0716b574ed3d",
+    "corrected_work_assessment": "f8c2e1c836ecd709827f649e0f224ec6e3b4d14f03d94893e897894c58668ff8"
+  },
+  "execution": {
+    "replay": "Two preserved input-card parse failures, then one successful explicit C3D8I replay; 100 exterior nodes, 32 elements, 300 prescribed displacement scalars.",
+    "work_probes": "Nine successful serial 32-element jobs; solver stdout confirms one CPU for Spooles and completed jobs. Each stayed below the registered 600-second limit.",
+    "formal_F03_authority": "unconsumed"
+  },
+  "mechanics": {
+    "knot_map": "At a shared S4 knot, delta_u_a=delta_t+delta_theta cross r_a+delta_e r_a. The plate and web have separate work contributions to one common expansion coordinate.",
+    "virtual_field": "One seven-coordinate hat at x=0.5; all other original nodes, including the clamped root, have zero virtual motion. Separate wall perturbations measure wall energy derivatives.",
+    "energy_parity": {
+      "plate_sum_relative_difference": 2.8148820209786794e-7,
+      "web_sum_relative_difference": 5.13696556892113e-6,
+      "plate_max_element_relative_difference": 9.274463163257379e-6,
+      "web_max_element_relative_difference": 9.899337526449182e-5
+    },
+    "hat_work_j": {
+      "plate_RF": 0.014072732558588765,
+      "web_RF": -0.014162740699999999,
+      "combined_residual": -9.000814141123421e-5,
+      "largest_plate_centered_derivative_relative_difference": 5.16420060139267e-4,
+      "largest_web_centered_derivative_relative_difference": 1.830860324730432e-5
+    },
+    "last_place_FRD_displacement_bound_j": {
+      "plate": 0.0003759711435919352,
+      "web": 5.914047556727387e-5,
+      "sum": 0.0004351116191592091
+    }
+  },
+  "independent_review": "Read-only mechanics review confirmed the source knot pullback, support-zero combined hat, nine completed one-CPU runs, wall energy derivatives and the adjoint print bound. Two reuse-hardening findings were fixed prospectively: the corrected assessment regenerates all nine probe decks from the bound source, and an unsound auxiliary printed-zero proxy was removed. The original assessment remains preserved.",
+  "decision": "The replayed seven-coordinate action is work-conjugate, but the saved ASCII FRD precision bound exceeds the apparent seam imbalance. Stop interpreting this S4 residual as a native connection defect. No L1 multiplier space or physical law is selected; G0B/F03 remain open.",
+  "limitations": [
+    "The print bound covers displacement formatting in the replayed linear operator. It does not bound the S4-to-solid operator difference or prove the original S4 sided force exactly.",
+    "The welded S4 seam, deformable web and two-force torque loading differ from the native L1/B3 material-pose law and applied rotational moment.",
+    "This is one mesh/case diagnostic, not growing-space stability, seven-ratio, three-level, G0 or external-reference acceptance."
+  ],
+  "primary_mechanics_sources": [
+    "https://web.mit.edu/calculix_v2.7/CalculiX/ccx_2.7/doc/ccx/node39.html",
+    "https://raw.githubusercontent.com/Dhondtguido/CalculiX/master/src/knotmpc.f"
+  ]
+}

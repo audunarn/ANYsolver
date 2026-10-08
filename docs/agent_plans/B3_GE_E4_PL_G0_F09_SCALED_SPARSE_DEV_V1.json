@@ -1,0 +1,464 @@
+{
+  "cases": {
+    "extreme": {
+      "area_m2": 8.271806125530277e-25,
+      "baseline_sparse_tip_exact_match": true,
+      "matrix_nnz": 144,
+      "matrix_order": 12,
+      "rounded_matrix_sha256": "0a7610f3111173b52ef88d298ae476a4ed09888ad41d72bb70f05834ef7169b6",
+      "variants": [
+        {
+          "diag_pivot_thresh": 0,
+          "free_force_residual_to_tip_force": 3.3306690738754696e-16,
+          "free_moment_residual_to_tip_moment": 2.9605947323337506e-16,
+          "ordering": "NATURAL",
+          "scaled": false,
+          "status": "FINITE",
+          "tip": [
+            0.953125,
+            2.5833333333333344,
+            3.4312500000000012,
+            1.3750000000000004,
+            -0.625,
+            1.3125
+          ],
+          "tip_vs_exact_component_scaled_max": 3.43811001174242e-16,
+          "tip_vs_physical_component_scaled_max": 5.157165017613631e-16
+        },
+        {
+          "diag_pivot_thresh": 1,
+          "free_force_residual_to_tip_force": 21192271.861748077,
+          "free_moment_residual_to_tip_moment": 2.9605947323337506e-16,
+          "ordering": "NATURAL",
+          "scaled": false,
+          "status": "FINITE",
+          "tip": [
+            1.1386593204775026,
+            2.5833333333333344,
+            74172954.94736826,
+            1.3750000000000004,
+            -0.625,
+            1.3125
+          ],
+          "tip_vs_exact_component_scaled_max": 21616889.330744844,
+          "tip_vs_physical_component_scaled_max": 21616889.330744848
+        },
+        {
+          "diag_pivot_thresh": 0,
+          "free_force_residual_to_tip_force": 2.220446049250313e-16,
+          "free_moment_residual_to_tip_moment": 2.9605947323337506e-16,
+          "ordering": "COLAMD",
+          "scaled": false,
+          "status": "FINITE",
+          "tip": [
+            0.9531250000000001,
+            2.583333333333333,
+            3.4312500000000012,
+            1.3750000000000004,
+            -0.625,
+            1.3125
+          ],
+          "tip_vs_exact_component_scaled_max": 3.2297397080004555e-16,
+          "tip_vs_physical_component_scaled_max": 3.8827471899459025e-16
+        },
+        {
+          "diag_pivot_thresh": 1,
+          "free_force_residual_to_tip_force": 42705640.346022725,
+          "free_moment_residual_to_tip_moment": 2.9605947323337506e-16,
+          "ordering": "COLAMD",
+          "scaled": false,
+          "status": "FINITE",
+          "tip": [
+            106764101.81818181,
+            2.583333333333333,
+            59750435.92982453,
+            1.3750000000000002,
+            -0.625,
+            1.3125
+          ],
+          "tip_vs_exact_component_scaled_max": 106764100.86505681,
+          "tip_vs_physical_component_scaled_max": 106764100.86505681
+        },
+        {
+          "diag_pivot_thresh": 0,
+          "free_force_residual_to_tip_force": 2.220446049250313e-16,
+          "free_moment_residual_to_tip_moment": 2.9605947323337506e-16,
+          "ordering": "MMD_AT_PLUS_A",
+          "scaled": false,
+          "status": "FINITE",
+          "tip": [
+            0.9531250000000001,
+            2.583333333333333,
+            3.4312500000000012,
+            1.3750000000000004,
+            -0.625,
+            1.3125
+          ],
+          "tip_vs_exact_component_scaled_max": 3.2297397080004555e-16,
+          "tip_vs_physical_component_scaled_max": 3.8827471899459025e-16
+        },
+        {
+          "diag_pivot_thresh": 1,
+          "free_force_residual_to_tip_force": 42705640.346022725,
+          "free_moment_residual_to_tip_moment": 2.9605947323337506e-16,
+          "ordering": "MMD_AT_PLUS_A",
+          "scaled": false,
+          "status": "FINITE",
+          "tip": [
+            106764101.81818181,
+            2.583333333333333,
+            59750435.92982453,
+            1.3750000000000002,
+            -0.625,
+            1.3125
+          ],
+          "tip_vs_exact_component_scaled_max": 106764100.86505681,
+          "tip_vs_physical_component_scaled_max": 106764100.86505681
+        },
+        {
+          "diag_pivot_thresh": 0,
+          "free_force_residual_to_tip_force": 4.440892098500626e-16,
+          "free_moment_residual_to_tip_moment": 2.9605947323337506e-16,
+          "ordering": "NATURAL",
+          "scaled": true,
+          "status": "FINITE",
+          "tip": [
+            0.9531250000000001,
+            2.5833333333333344,
+            3.4312500000000017,
+            1.3750000000000002,
+            -0.6250000000000001,
+            1.3125
+          ],
+          "tip_vs_exact_component_scaled_max": 3.882747189945902e-16,
+          "tip_vs_physical_component_scaled_max": 5.176996253261204e-16
+        },
+        {
+          "diag_pivot_thresh": 1,
+          "free_force_residual_to_tip_force": 4.440892098500626e-16,
+          "free_moment_residual_to_tip_moment": 2.9605947323337506e-16,
+          "ordering": "NATURAL",
+          "scaled": true,
+          "status": "FINITE",
+          "tip": [
+            0.9531250000000001,
+            2.5833333333333344,
+            3.4312500000000017,
+            1.3750000000000002,
+            -0.6250000000000001,
+            1.3125
+          ],
+          "tip_vs_exact_component_scaled_max": 3.882747189945902e-16,
+          "tip_vs_physical_component_scaled_max": 5.176996253261204e-16
+        },
+        {
+          "diag_pivot_thresh": 0,
+          "free_force_residual_to_tip_force": 3.3306690738754696e-16,
+          "free_moment_residual_to_tip_moment": 2.9605947323337506e-16,
+          "ordering": "COLAMD",
+          "scaled": true,
+          "status": "FINITE",
+          "tip": [
+            0.9531250000000001,
+            2.5833333333333335,
+            3.4312500000000017,
+            1.3750000000000002,
+            -0.6250000000000001,
+            1.3125
+          ],
+          "tip_vs_exact_component_scaled_max": 3.882747189945902e-16,
+          "tip_vs_physical_component_scaled_max": 5.176996253261204e-16
+        },
+        {
+          "diag_pivot_thresh": 1,
+          "free_force_residual_to_tip_force": 3.3306690738754696e-16,
+          "free_moment_residual_to_tip_moment": 2.9605947323337506e-16,
+          "ordering": "COLAMD",
+          "scaled": true,
+          "status": "FINITE",
+          "tip": [
+            0.9531250000000001,
+            2.5833333333333335,
+            3.4312500000000017,
+            1.3750000000000002,
+            -0.6250000000000001,
+            1.3125
+          ],
+          "tip_vs_exact_component_scaled_max": 3.882747189945902e-16,
+          "tip_vs_physical_component_scaled_max": 5.176996253261204e-16
+        },
+        {
+          "diag_pivot_thresh": 0,
+          "free_force_residual_to_tip_force": 3.3306690738754696e-16,
+          "free_moment_residual_to_tip_moment": 2.9605947323337506e-16,
+          "ordering": "MMD_AT_PLUS_A",
+          "scaled": true,
+          "status": "FINITE",
+          "tip": [
+            0.9531250000000001,
+            2.5833333333333335,
+            3.4312500000000017,
+            1.3750000000000002,
+            -0.6250000000000001,
+            1.3125
+          ],
+          "tip_vs_exact_component_scaled_max": 3.882747189945902e-16,
+          "tip_vs_physical_component_scaled_max": 5.176996253261204e-16
+        },
+        {
+          "diag_pivot_thresh": 1,
+          "free_force_residual_to_tip_force": 3.3306690738754696e-16,
+          "free_moment_residual_to_tip_moment": 2.9605947323337506e-16,
+          "ordering": "MMD_AT_PLUS_A",
+          "scaled": true,
+          "status": "FINITE",
+          "tip": [
+            0.9531250000000001,
+            2.5833333333333335,
+            3.4312500000000017,
+            1.3750000000000002,
+            -0.6250000000000001,
+            1.3125
+          ],
+          "tip_vs_exact_component_scaled_max": 3.882747189945902e-16,
+          "tip_vs_physical_component_scaled_max": 5.176996253261204e-16
+        }
+      ]
+    },
+    "moderate": {
+      "area_m2": 0.0001,
+      "baseline_sparse_tip_exact_match": true,
+      "matrix_nnz": 144,
+      "matrix_order": 12,
+      "rounded_matrix_sha256": "0399889879578a56c726cdc5943d96811db2236b4b09840f7f66d230872d3ac2",
+      "variants": [
+        {
+          "diag_pivot_thresh": 0,
+          "free_force_residual_to_tip_force": 5.421010862427522e-16,
+          "free_moment_residual_to_tip_moment": 5.921189464667501e-16,
+          "ordering": "NATURAL",
+          "scaled": false,
+          "status": "FINITE",
+          "tip": [
+            0.9533062499999998,
+            2.5832722222222224,
+            3.4315058333333335,
+            1.3751425000000006,
+            -0.62504,
+            1.3123604166666667
+          ],
+          "tip_vs_exact_component_scaled_max": 4.844107536310556e-16,
+          "tip_vs_physical_component_scaled_max": 4.844107536310556e-16
+        },
+        {
+          "diag_pivot_thresh": 1,
+          "free_force_residual_to_tip_force": 7.58128369110489e-13,
+          "free_moment_residual_to_tip_moment": 2.9605947323337506e-16,
+          "ordering": "NATURAL",
+          "scaled": false,
+          "status": "FINITE",
+          "tip": [
+            0.9533062499981042,
+            2.583272222222223,
+            3.4315058333318937,
+            1.3751425000000004,
+            -0.62504,
+            1.312360416666667
+          ],
+          "tip_vs_exact_component_scaled_max": 1.8954837699425298e-12,
+          "tip_vs_physical_component_scaled_max": 1.8958168368499173e-12
+        },
+        {
+          "diag_pivot_thresh": 0,
+          "free_force_residual_to_tip_force": 1.0842021724855044e-15,
+          "free_moment_residual_to_tip_moment": 2.9605947323337506e-16,
+          "ordering": "COLAMD",
+          "scaled": false,
+          "status": "FINITE",
+          "tip": [
+            0.9533062500000002,
+            2.583272222222223,
+            3.4315058333333326,
+            1.3751424999999997,
+            -0.6250399999999999,
+            1.3123604166666667
+          ],
+          "tip_vs_exact_component_scaled_max": 5.551115123125783e-16,
+          "tip_vs_physical_component_scaled_max": 2.5883051431020204e-16
+        },
+        {
+          "diag_pivot_thresh": 1,
+          "free_force_residual_to_tip_force": 6.721375843052324e-13,
+          "free_moment_residual_to_tip_moment": 5.921189464667501e-16,
+          "ordering": "COLAMD",
+          "scaled": false,
+          "status": "FINITE",
+          "tip": [
+            0.9533062499998374,
+            2.5832722222222224,
+            3.43150583333098,
+            1.375142499999999,
+            -0.6250399999999998,
+            1.3123604166666665
+          ],
+          "tip_vs_exact_component_scaled_max": 6.859008629220355e-13,
+          "tip_vs_physical_component_scaled_max": 6.859008629220355e-13
+        },
+        {
+          "diag_pivot_thresh": 0,
+          "free_force_residual_to_tip_force": 1.0842021724855044e-15,
+          "free_moment_residual_to_tip_moment": 2.9605947323337506e-16,
+          "ordering": "MMD_AT_PLUS_A",
+          "scaled": false,
+          "status": "FINITE",
+          "tip": [
+            0.95330625,
+            2.583272222222223,
+            3.4315058333333326,
+            1.3751424999999997,
+            -0.6250399999999999,
+            1.312360416666667
+          ],
+          "tip_vs_exact_component_scaled_max": 3.3306690738754696e-16,
+          "tip_vs_physical_component_scaled_max": 2.5883051431020204e-16
+        },
+        {
+          "diag_pivot_thresh": 1,
+          "free_force_residual_to_tip_force": 6.721375843052324e-13,
+          "free_moment_residual_to_tip_moment": 5.921189464667501e-16,
+          "ordering": "MMD_AT_PLUS_A",
+          "scaled": false,
+          "status": "FINITE",
+          "tip": [
+            0.9533062500006352,
+            2.583272222222223,
+            3.43150583333098,
+            1.375142499999999,
+            -0.6250399999999998,
+            1.312360416666667
+          ],
+          "tip_vs_exact_component_scaled_max": 6.859008629220355e-13,
+          "tip_vs_physical_component_scaled_max": 6.859008629220355e-13
+        },
+        {
+          "diag_pivot_thresh": 0,
+          "free_force_residual_to_tip_force": 8.131516293641283e-16,
+          "free_moment_residual_to_tip_moment": 5.921189464667501e-16,
+          "ordering": "NATURAL",
+          "scaled": true,
+          "status": "FINITE",
+          "tip": [
+            0.9533062500000002,
+            2.5832722222222233,
+            3.4315058333333326,
+            1.3751424999999997,
+            -0.6250399999999999,
+            1.3123604166666667
+          ],
+          "tip_vs_exact_component_scaled_max": 5.551115123125783e-16,
+          "tip_vs_physical_component_scaled_max": 3.4381913453011263e-16
+        },
+        {
+          "diag_pivot_thresh": 1,
+          "free_force_residual_to_tip_force": 8.131516293641283e-16,
+          "free_moment_residual_to_tip_moment": 5.921189464667501e-16,
+          "ordering": "NATURAL",
+          "scaled": true,
+          "status": "FINITE",
+          "tip": [
+            0.9533062500000002,
+            2.5832722222222233,
+            3.4315058333333326,
+            1.3751424999999997,
+            -0.6250399999999999,
+            1.3123604166666667
+          ],
+          "tip_vs_exact_component_scaled_max": 5.551115123125783e-16,
+          "tip_vs_physical_component_scaled_max": 3.4381913453011263e-16
+        },
+        {
+          "diag_pivot_thresh": 0,
+          "free_force_residual_to_tip_force": 5.421010862427522e-16,
+          "free_moment_residual_to_tip_moment": 5.921189464667501e-16,
+          "ordering": "COLAMD",
+          "scaled": true,
+          "status": "FINITE",
+          "tip": [
+            0.9533062499999998,
+            2.583272222222224,
+            3.4315058333333335,
+            1.3751425000000008,
+            -0.6250400000000002,
+            1.312360416666667
+          ],
+          "tip_vs_exact_component_scaled_max": 6.876382690602253e-16,
+          "tip_vs_physical_component_scaled_max": 6.876382690602253e-16
+        },
+        {
+          "diag_pivot_thresh": 1,
+          "free_force_residual_to_tip_force": 5.421010862427522e-16,
+          "free_moment_residual_to_tip_moment": 5.921189464667501e-16,
+          "ordering": "COLAMD",
+          "scaled": true,
+          "status": "FINITE",
+          "tip": [
+            0.9533062499999998,
+            2.583272222222224,
+            3.4315058333333335,
+            1.3751425000000008,
+            -0.6250400000000002,
+            1.312360416666667
+          ],
+          "tip_vs_exact_component_scaled_max": 6.876382690602253e-16,
+          "tip_vs_physical_component_scaled_max": 6.876382690602253e-16
+        },
+        {
+          "diag_pivot_thresh": 0,
+          "free_force_residual_to_tip_force": 5.421010862427522e-16,
+          "free_moment_residual_to_tip_moment": 5.921189464667501e-16,
+          "ordering": "MMD_AT_PLUS_A",
+          "scaled": true,
+          "status": "FINITE",
+          "tip": [
+            0.9533062499999996,
+            2.583272222222224,
+            3.4315058333333335,
+            1.3751425000000008,
+            -0.6250400000000002,
+            1.312360416666667
+          ],
+          "tip_vs_exact_component_scaled_max": 6.876382690602253e-16,
+          "tip_vs_physical_component_scaled_max": 6.876382690602253e-16
+        },
+        {
+          "diag_pivot_thresh": 1,
+          "free_force_residual_to_tip_force": 5.421010862427522e-16,
+          "free_moment_residual_to_tip_moment": 5.921189464667501e-16,
+          "ordering": "MMD_AT_PLUS_A",
+          "scaled": true,
+          "status": "FINITE",
+          "tip": [
+            0.9533062499999996,
+            2.583272222222224,
+            3.4315058333333335,
+            1.3751425000000008,
+            -0.6250400000000002,
+            1.312360416666667
+          ],
+          "tip_vs_exact_component_scaled_max": 6.876382690602253e-16,
+          "tip_vs_physical_component_scaled_max": 6.876382690602253e-16
+        }
+      ]
+    }
+  },
+  "classification": "UNREGISTERED_F09_SPARSE_DIAGNOSTIC_NOT_ADMISSION",
+  "elapsed_s_not_benchmark": 0.0614077000063844,
+  "elbow_source_sha256": "7bd6670c059d4a334e124d2f42cd884ed22fe7a48df69c518ac4ea7f12d9e947",
+  "limitations": [
+    "two areas do not define a supported physical conditioning range",
+    "sparse factorization recovery alone does not qualify global B2 admission",
+    "one-metre/one-radian tip floors are diagnostic, not physical tolerances"
+  ],
+  "reference_sha256": "cb9e88a0124cf74e7f22179e6fb82239e0edde232055981e47fffd9f13813271",
+  "source_sha256": "870fafbec8df45e05be4954abd3f18024d76039833b93a03c32f657925b77e59"
+}

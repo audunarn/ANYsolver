@@ -1,0 +1,146 @@
+{
+  "beam_rows": 216,
+  "cases": {
+    "p0_m2": {
+      "assembly_asymmetry_relative": 2.9238548091814045e-16,
+      "beta_min": 0.0018764829361650308,
+      "constraint_rows": 12,
+      "left_right_svd_defect": 1.431523370387955e-14,
+      "line_norm": {
+        "basis_integrals_m": [
+          0.04999999999999995,
+          0.05000000000000006
+        ],
+        "density_gram_ordering_defect": -2.16840436112688e-19,
+        "moment_to_force_equivalent_length_m": 0.1,
+        "physical_density_units": [
+          "N/m",
+          "N/m",
+          "N/m",
+          "Nm/m",
+          "Nm/m",
+          "Nm/m"
+        ]
+      },
+      "max_reference_gap_m_rad": 1.6433494346337567e-16,
+      "near_null_metric_share": {
+        "beam_complementary": 7.795460274812187e-09,
+        "beam_kinematic": 3.373171022639627e-08,
+        "line_dual": 1.1134981609176248e-08,
+        "shell_drilling_chart": 0.9993547760114352,
+        "shell_physical": 0.0006451713264139971
+      },
+      "normalized_constraint_rank": 12,
+      "normed_condition": 52695.02365666436,
+      "operator_max": 98.88131271254329,
+      "rows": 1416,
+      "scaled_weak_residual_norm": 0.001876482936165296,
+      "svd_residual_defect": 2.651958513899544e-16,
+      "weak_constraint_euclidean": 1.195926406685194e-11,
+      "weak_vector_metric_norm_sq": 1.0000000000000016,
+      "work_left_J": 2.089460298688761e-11,
+      "work_right_J": 2.0894602986884812e-11
+    },
+    "p0_m4": {
+      "assembly_asymmetry_relative": 2.923854809181405e-16,
+      "beta_min": 0.0018765552754503093,
+      "constraint_rows": 24,
+      "left_right_svd_defect": 1.3042583252734451e-14,
+      "line_norm": {
+        "basis_integrals_m": [
+          0.02500000000000003,
+          0.024999999999999918,
+          0.02500000000000003,
+          0.02500000000000003
+        ],
+        "density_gram_ordering_defect": 2.710505071948774e-20,
+        "moment_to_force_equivalent_length_m": 0.1,
+        "physical_density_units": [
+          "N/m",
+          "N/m",
+          "N/m",
+          "Nm/m",
+          "Nm/m",
+          "Nm/m"
+        ]
+      },
+      "max_reference_gap_m_rad": 3.577898055322998e-16,
+      "near_null_metric_share": {
+        "beam_complementary": 1.7792410068105935e-08,
+        "beam_kinematic": 7.246983262606327e-08,
+        "line_dual": 1.4133110810060714e-07,
+        "shell_drilling_chart": 0.9993545577501106,
+        "shell_physical": 0.000645210656538468
+      },
+      "normalized_constraint_rank": 24,
+      "normed_condition": 52694.94998765314,
+      "operator_max": 98.88498638892071,
+      "rows": 1428,
+      "scaled_weak_residual_norm": 0.0018765552754504069,
+      "svd_residual_defect": 9.75781955236954e-17,
+      "weak_constraint_euclidean": 4.996971180070621e-11,
+      "weak_vector_metric_norm_sq": 0.9999999999999999,
+      "work_left_J": 2.652156365079547e-10,
+      "work_right_J": 2.6521563650793923e-10
+    }
+  },
+  "classification": "bounded top-face native retained mixed-KKT diagnostic, not G0B/F03 acceptance",
+  "elapsed_s_not_benchmark": 37.527515399997355,
+  "layout": {
+    "cell_rotations": 36,
+    "complementary_min_diagonal_J_per_resultant_squared": 1.7857142859640813e-11,
+    "free": 216,
+    "nodal": 78,
+    "resultants": 108
+  },
+  "limitations": [
+    "one x8 shell and B3-12 ratio, not mesh-uniform well-posedness",
+    "auxiliary drilling chart norm is not physical drilling stiffness",
+    "beam kinematic H1 norm is diagnostic, not a replacement for the native half-cell trace",
+    "floating H^-1/2 Gram is not an interval certificate",
+    "smallest mixed singular value alone cannot establish physical transfer or locking absence"
+  ],
+  "loads": "operator-only metric; loaded torque/shear results are a separate saved screen",
+  "model": "C1 E4 Q4 x8/y4 35 mm, native B3-12 and 2 um tangent axis, left shell/root beam fixed",
+  "norm": "E4 physical energy + independent drill chart; B3 kinematic and complementary metric; P0 physical-density H^-1/2 dual / Et",
+  "numpy": "2.4.6",
+  "operator": "actual virgin E4 tangent, full native B3 retained tangent, exact weak top-face position-moment rows",
+  "python": "3.14.2",
+  "question": "Does two-to-four interval growth expose a weak mode in the actual indefinite retained E4/B3 system?",
+  "shell_rows": 1188,
+  "source_git": "1833deab13756775b6cd078b9a52088af07ea151",
+  "source_sha256": {
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b3_e4_f03_top_face_native_mixed_metric.py": "405677f1e552a25d07671f13586d79d4d12b6fc3287a086ad07ec9eabeece4a0",
+    "scripts\\_b3_e4_f03_native_fixture.py": "94d9e1a3532c3b2c061153e73942ccd73283eae0ef895b5ca4ef4014e5caa3fb",
+    "scripts\\b3_e4_f03_c1_native_mixed_metric.py": "9e5be04e9757b9ad365d0f89c74ee9027447dbf74773da43b9a4ced3ee47c390",
+    "scripts\\b3_e4_f03_distributed_surface_finite.py": "2cedbdc73564d6ffee0efa54825065dd10cb02329ca505ef49815d636ccc7cca"
+  },
+  "thread_env": {
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_DISABLE_JIT": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "threadpool_info": [
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.31.188.0"
+    },
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.30"
+    }
+  ]
+}

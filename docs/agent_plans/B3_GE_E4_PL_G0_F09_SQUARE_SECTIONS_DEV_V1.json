@@ -1,0 +1,166 @@
+{
+  "all_declared_cases_passed": true,
+  "cases": [
+    {
+      "E_Pa": 210000000000.0,
+      "Iy_Iz_m4": 2.1333333333333334e-07,
+      "Saint_Venant_J_m4": 3.5987715828525415e-07,
+      "area_m2": 0.0016,
+      "exact_rounded_tip_m_rad": [
+        0.007827444940479142,
+        -0.004911405357145479,
+        0.024338836267293232,
+        0.013036720209941515,
+        -0.004753029017440399,
+        -0.0055524553571448245
+      ],
+      "free_force_residual_ratio": 2.3283064365386963e-12,
+      "free_moment_residual_ratio": 9.094947017729283e-14,
+      "independent_force_method_tip_m_rad": [
+        0.007827444940476191,
+        -0.004911405357142857,
+        0.02433883626729323,
+        0.013036720209941515,
+        -0.0047530290174403935,
+        -0.005552455357142857
+      ],
+      "nu": 0.3,
+      "passed_declared_diagnostic": true,
+      "rounded_vs_physical_component_error": 5.338664482510311e-13,
+      "scale_max": 0.00718365579460551,
+      "scale_min": 6.680530292260742e-05,
+      "scaled_tip_m_rad": [
+        0.00782744494048083,
+        -0.004911405357146973,
+        0.02433883626729335,
+        0.01303672020994156,
+        -0.00475302901744044,
+        -0.005552455357145952
+      ],
+      "scaled_vs_exact_rounded_component_error": 3.042844493337862e-13,
+      "scaled_vs_physical_component_error": 8.381508975849797e-13,
+      "square_side_m": 0.04,
+      "terminal_wrench_N_Nm": [
+        50.0,
+        -30.0,
+        100.0,
+        2.0,
+        -3.0,
+        5.0
+      ]
+    },
+    {
+      "E_Pa": 210000000000.0,
+      "Iy_Iz_m4": 3.4133333333333334e-06,
+      "Saint_Venant_J_m4": 5.7580345325640664e-06,
+      "area_m2": 0.0064,
+      "exact_rounded_tip_m_rad": [
+        0.0004894016927082997,
+        -0.00030709241071425527,
+        0.0015217866417058317,
+        0.0008147950131213481,
+        -0.0002970643135900249,
+        -0.00034702845982140625
+      ],
+      "free_force_residual_ratio": 4.547473508864641e-15,
+      "free_moment_residual_ratio": 4.5474735088646414e-14,
+      "independent_force_method_tip_m_rad": [
+        0.0004894016927083333,
+        -0.00030709241071428574,
+        0.0015217866417058267,
+        0.0008147950131213447,
+        -0.0002970643135900246,
+        -0.0003470284598214286
+      ],
+      "nu": 0.3,
+      "passed_declared_diagnostic": true,
+      "rounded_vs_physical_component_error": 9.920818614820106e-14,
+      "scale_max": 0.0017959139486513774,
+      "scale_min": 3.338772805509403e-05,
+      "scaled_tip_m_rad": [
+        0.0004894016927083753,
+        -0.0003070924107143224,
+        0.0015217866417058389,
+        0.0008147950131213517,
+        -0.00029706431359002676,
+        -0.00034702845982145683
+      ],
+      "scaled_vs_exact_rounded_component_error": 2.1854045276064964e-13,
+      "scaled_vs_physical_component_error": 1.1933226661242692e-13,
+      "square_side_m": 0.08,
+      "terminal_wrench_N_Nm": [
+        50.0,
+        -30.0,
+        100.0,
+        2.0,
+        -3.0,
+        5.0
+      ]
+    },
+    {
+      "E_Pa": 210000000000.0,
+      "Iy_Iz_m4": 5.4613333333333334e-05,
+      "Saint_Venant_J_m4": 9.212855252102506e-05,
+      "area_m2": 0.0256,
+      "exact_rounded_tip_m_rad": [
+        3.063420177641347e-05,
+        -1.9225669642856973e-05,
+        9.526400885661394e-05,
+        5.0924688320083875e-05,
+        -1.8566519599376557e-05,
+        -2.1689278738839134e-05
+      ],
+      "free_force_residual_ratio": 1.4551915228366852e-13,
+      "free_moment_residual_ratio": 4.5474735088646414e-14,
+      "independent_force_method_tip_m_rad": [
+        3.063420177641369e-05,
+        -1.9225669642857142e-05,
+        9.526400885661416e-05,
+        5.0924688320084045e-05,
+        -1.8566519599376537e-05,
+        -2.1689278738839287e-05
+      ],
+      "nu": 0.3,
+      "passed_declared_diagnostic": true,
+      "rounded_vs_physical_component_error": 8.811479266928901e-15,
+      "scale_max": 0.00044897848716284435,
+      "scale_min": 1.66646614464415e-05,
+      "scaled_tip_m_rad": [
+        3.0634201776413407e-05,
+        -1.9225669642856892e-05,
+        9.5264008856614e-05,
+        5.092468832008392e-05,
+        -1.856651959937654e-05,
+        -2.1689278738839093e-05
+      ],
+      "scaled_vs_exact_rounded_component_error": 4.22951004812591e-15,
+      "scaled_vs_physical_component_error": 1.3040989315054772e-14,
+      "square_side_m": 0.16,
+      "terminal_wrench_N_Nm": [
+        50.0,
+        -30.0,
+        100.0,
+        2.0,
+        -3.0,
+        5.0
+      ]
+    }
+  ],
+  "classification": "F09_PHYSICAL_SQUARE_SECTION_DEV_NOT_ADMISSION",
+  "geometry": "rooted two-member 2 m + 1.5 m elbow, unchanged private B2 physical flexibility operator",
+  "limits": [
+    "one rooted elbow and three square sizes, not a complete section admission",
+    "linearized response checked mathematically; no nonlinear validity inference",
+    "no generalized off-diagonal SPD, shell attachment, dynamics, installed artifact or performance claim"
+  ],
+  "material": "isotropic E=210 GPa, nu=0.3, ky=kz=5/6; area=b^2, Iy=Iz=b^4/12, Fourier Saint-Venant square J",
+  "prior_scaled_oracle_sha256": "36caa2e9ec02940842d3cd7ed7bc7c9a711c6b4a4c84b8e8d031fd5235d2a21d",
+  "question": "Does the scaled sparse B2 elbow solve preserve fixed mixed physical loads for linked square sections?",
+  "source_sha256": "e5eae3f02b5009e87bd58d7779feb54ea7153d74be421f65fe72a64bc3115359",
+  "thresholds": {
+    "component_floor_m_rad": 1e-08,
+    "component_relative": 1e-08,
+    "separate_force_moment_residual_relative": 1e-10
+  },
+  "torsion_oracle_sha256": "efe684d6ad08236da0eeb4323812107d8a6bc96e04de622132a9b9915f4ab17f"
+}

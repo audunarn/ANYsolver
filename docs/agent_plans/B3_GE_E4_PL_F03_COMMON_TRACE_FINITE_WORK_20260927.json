@@ -1,0 +1,118 @@
+{
+  "cases": {
+    "continuous_linear": {
+      "finite_rigid_gap_error": 2.871441691192078e-19,
+      "first_analytic_work": [
+        -0.0018731817160845396,
+        -0.001526584735715668
+      ],
+      "first_fd_work": [
+        -0.0018731817167261936,
+        -0.0015265847364500271
+      ],
+      "first_max_error_J": 7.343591880426548e-13,
+      "mixed_analytic_work_J": -0.0001007084034679261,
+      "mixed_error_J": 3.116557440721243e-13,
+      "mixed_fd_work_J": -0.00010070840377958184,
+      "nonzero_gap_norm": 1.1671721048699064e-05,
+      "quadrature_points": 72,
+      "reference_gap_max": 4.4346081614446714e-20,
+      "reference_jacobian_error": 2.202285662861181e-20,
+      "signed_weight_min": 5.4350725973793586e-05
+    },
+    "dual_linear": {
+      "finite_rigid_gap_error": 4.2690460541616737e-19,
+      "first_analytic_work": [
+        -0.0009401586630502786,
+        -0.0005083929178953544
+      ],
+      "first_fd_work": [
+        -0.0009401586628025696,
+        -0.0005083929181933997
+      ],
+      "first_max_error_J": 2.980452256523547e-13,
+      "mixed_analytic_work_J": -0.00018490472477256196,
+      "mixed_error_J": 5.230816322622511e-13,
+      "mixed_fd_work_J": -0.00018490472424948032,
+      "nonzero_gap_norm": 4.292647197033894e-05,
+      "quadrature_points": 36,
+      "reference_gap_max": 4.660645138587156e-20,
+      "reference_jacobian_error": 6.776263578034403e-21,
+      "signed_weight_min": -0.0005107214535973998
+    },
+    "piecewise_constant": {
+      "finite_rigid_gap_error": 1.2332799712022613e-18,
+      "first_analytic_work": [
+        -0.0029630917302097904,
+        -0.0019566288114785993
+      ],
+      "first_fd_work": [
+        -0.0029630917318791777,
+        -0.0019566288122569364
+      ],
+      "first_max_error_J": 1.6693872846584856e-12,
+      "mixed_analytic_work_J": -0.000212714279682835,
+      "mixed_error_J": 2.521189230693735e-12,
+      "mixed_fd_work_J": -0.00021271427716164576,
+      "nonzero_gap_norm": 3.2460658785265615e-05,
+      "quadrature_points": 36,
+      "reference_gap_max": 9.637352644315555e-20,
+      "reference_jacobian_error": 3.3881317890172014e-21,
+      "signed_weight_min": 0.00048225308641975154
+    }
+  },
+  "classification": "bounded finite-chart common-work discriminator, not F03 acceptance",
+  "derivative_steps": {
+    "first": 1e-05,
+    "mixed": 0.002
+  },
+  "development_limits": {
+    "finite_rigid_gap": 1e-10,
+    "first_work_J": 1e-07,
+    "mixed_work_J": 1e-06,
+    "reference_gap": 1e-11,
+    "reference_jacobian": 1e-10
+  },
+  "elapsed_s_not_benchmark": 3.5492836000048555,
+  "limitations": [
+    "one bounded chart and selected basis rows, not all multipliers",
+    "registered stability, physical transfer and signed dual units remain open"
+  ],
+  "model": "Q4 x4/y4 35mm, C1 B3-12, common x=.95 frame, selected basis rows",
+  "numpy": "2.4.6",
+  "python": "3.14.2",
+  "question": "Does one co-moving material-frame position law retain objective P0/P1/signed-dual multiplier work and actual E4/B3 chart derivatives?",
+  "source_sha256": {
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b3_e4_f03_common_trace_finite_work.py": "e8e605bd9b46a9c904fe4ad7f5f7a7a88ca8fd6a1ff22141f5fce96b2632e11f",
+    "scripts\\b3_e4_f03_distributed_surface_finite.py": "2cedbdc73564d6ffee0efa54825065dd10cb02329ca505ef49815d636ccc7cca",
+    "scripts\\b3_e4_f03_top_face_common_trace.py": "b9bde46d65cb764b409990d723682c3fa34f8f30a196eca04d600bf15eb0c963"
+  },
+  "thread_env": {
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_DISABLE_JIT": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "threadpool_info": [
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.31.188.0"
+    },
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.30"
+    }
+  ]
+}

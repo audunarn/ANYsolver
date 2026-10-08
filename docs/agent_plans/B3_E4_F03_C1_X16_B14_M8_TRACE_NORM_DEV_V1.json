@@ -1,0 +1,188 @@
+{
+  "beam_half_cells": 14,
+  "beam_layout": {
+    "cell_rotations": 42,
+    "complementary_min_diagonal_J_per_resultant_squared": 1.1904761904761862e-11,
+    "free": 252,
+    "nodal": 90,
+    "resultants": 126
+  },
+  "beam_rows": 252,
+  "cases": {
+    "continuous_linear_m8": {
+      "constraint_rows": 54,
+      "drill_constraint_column_max": 0.0,
+      "line_norm": {
+        "basis_integrals_m": [
+          0.00625,
+          0.012500000000000028,
+          0.012499999999999975,
+          0.0125,
+          0.012499999999999975,
+          0.01250000000000003,
+          0.01250000000000003,
+          0.012499999999999975,
+          0.006249999999999978
+        ],
+        "density_gram_ordering_defect": 1.1952756579357862e-20,
+        "moment_to_force_equivalent_length_m": 0.1,
+        "physical_density_units": [
+          "N/m",
+          "N/m",
+          "N/m",
+          "Nm/m",
+          "Nm/m",
+          "Nm/m"
+        ]
+      },
+      "normalized_constraint_rank": 54,
+      "rank_tolerance": 3.659073518817672e-11,
+      "scope": "single-grid auxiliary-norm trace map, not full KKT or uniform inf-sup",
+      "status": "TRACE_NORM_DIAGNOSTIC_COMPUTED",
+      "trace_singular_condition": 215.72994731058185,
+      "trace_singular_max": 97.97266430361782,
+      "trace_singular_min": 0.45414494151138246,
+      "transpose_work_discrepancy_J": 2.842170943040401e-14
+    },
+    "dual_linear_m8": {
+      "constraint_rows": 54,
+      "drill_constraint_column_max": 0.0,
+      "line_norm": {
+        "basis_integrals_m": [
+          0.0062500000000000454,
+          0.012500000000000061,
+          0.012499999999999897,
+          0.012500000000000091,
+          0.012499999999999895,
+          0.012500000000000063,
+          0.012500000000000063,
+          0.012499999999999897,
+          0.006249999999999979
+        ],
+        "density_gram_ordering_defect": 9.787908371609741e-21,
+        "moment_to_force_equivalent_length_m": 0.1,
+        "physical_density_units": [
+          "N/m",
+          "N/m",
+          "N/m",
+          "Nm/m",
+          "Nm/m",
+          "Nm/m"
+        ]
+      },
+      "normalized_constraint_rank": 54,
+      "rank_tolerance": 3.6590586138974914e-11,
+      "scope": "single-grid auxiliary-norm trace map, not full KKT or uniform inf-sup",
+      "status": "TRACE_NORM_DIAGNOSTIC_COMPUTED",
+      "trace_singular_condition": 216.23464640883887,
+      "trace_singular_max": 97.97226522042536,
+      "trace_singular_min": 0.4530831060032229,
+      "transpose_work_discrepancy_J": 1.4210854715202004e-13
+    },
+    "piecewise_constant_m8": {
+      "constraint_rows": 48,
+      "drill_constraint_column_max": 0.0,
+      "line_norm": {
+        "basis_integrals_m": [
+          0.012499999999999956,
+          0.012500000000000067,
+          0.012499999999999956,
+          0.012499999999999957,
+          0.012500000000000067,
+          0.012499999999999957,
+          0.012500000000000067,
+          0.012499999999999957
+        ],
+        "density_gram_ordering_defect": -1.016438284170338e-20,
+        "moment_to_force_equivalent_length_m": 0.1,
+        "physical_density_units": [
+          "N/m",
+          "N/m",
+          "N/m",
+          "Nm/m",
+          "Nm/m",
+          "Nm/m"
+        ]
+      },
+      "normalized_constraint_rank": 48,
+      "rank_tolerance": 3.877114955805908e-11,
+      "scope": "single-grid auxiliary-norm trace map, not full KKT or uniform inf-sup",
+      "status": "TRACE_NORM_DIAGNOSTIC_COMPUTED",
+      "trace_singular_condition": 190.9874147072045,
+      "trace_singular_max": 103.81078163044033,
+      "trace_singular_min": 0.5435477609327749,
+      "transpose_work_discrepancy_J": 5.684341886080802e-14
+    }
+  },
+  "classification": "bounded drill-quotient native trace diagnostic, not G0B acceptance",
+  "drilling_equilibrium_relative_residual": 1.228536876551415e-15,
+  "elapsed_s": 64.6290566000389,
+  "limits": [
+    "exact bounded diagnostic elimination, not a production assembler or changed mechanics",
+    "physical-coordinate restriction is not a full continuum quotient proof",
+    "one-grid trace singular values, not mixed KKT or mesh-uniform stability",
+    "no multiplier selection or physical connection accuracy claim"
+  ],
+  "line_law": "material_line",
+  "matched_p0_only": false,
+  "maximum_rows": 1900,
+  "metric": "physical E4 energy on non-drilling coordinates; previous native B3 and basis-specific line norms",
+  "model": "C1 Q4 x16/y4 35 mm shell, native B3-14, material-line P0/P1/dual m8 fixed-primal trace norm",
+  "operator": "actual E4 tangent with exact free-drilling Schur complement; actual native retained B3 tangent and declared line-law rows",
+  "provenance": {
+    "effective_threadpools": [
+      {
+        "architecture": "SkylakeX",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "threading_layer": "pthreads",
+        "user_api": "blas",
+        "version": "0.3.31.188.0"
+      },
+      {
+        "architecture": "SkylakeX",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "threading_layer": "pthreads",
+        "user_api": "blas",
+        "version": "0.3.30"
+      }
+    ],
+    "env": {
+      "NUMBA_DISABLE_JIT": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONPATH": ".;src"
+    },
+    "executable": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\.venv\\Scripts\\python.exe",
+    "numpy": "2.4.6",
+    "python": "3.14.2",
+    "scipy": "1.17.1",
+    "source_git": "dc5ab5144f590736d88936214e47043c68986c3c",
+    "source_sha256": {
+      "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b3_e4_f03_c1_drill_quotient_metric.py": "3c8c8fcb4e4bcf4052b8a555874646516a4fc743be79b66acfd5ccb3c7e8a021",
+      "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b3_e4_f03_c1_native_mixed_metric.py": "7aff0289f5ec67c36f9937f30f48c1e7d6a451a5550e07f9689db5b29a804cf4",
+      "scripts\\_b3_e4_f03_dual_linear_norm.py": "690812e542ccd7274082f4f9f0b55cf3f0c6c821c060be704455394c31fdf21f",
+      "scripts\\_b3_e4_f03_native_fixture.py": "94d9e1a3532c3b2c061153e73942ccd73283eae0ef895b5ca4ef4014e5caa3fb",
+      "scripts\\_b3_e4_f03_p0_dual_norm.py": "08295c8376857840087b5dc699dbe9cefdb33995ca79fed638cf672ff7c3905e",
+      "scripts\\_b3_e4_f03_p1_dual_norm.py": "50b5397aa11ceb97932f7c8a66497ffa8f77537da57b0c046ea30eb07f386935",
+      "scripts\\_b3_e4_f03_weak_line_candidate.py": "701ef13c7aa571ae479320c99540c847b254a151dbb3379a9cacf568ecfdc443",
+      "scripts\\b3_e4_f03_distributed_surface_finite.py": "b3fa0d30068436f8bf69e69be510fc931fc705ae8f8e71e26bbd5da4c4fda9d1",
+      "scripts\\b3_e4_f03_material_line_position.py": "5ded28290d6ea548c5f00cc77b89e11a4db1484b716aa5ff9ea11b599f1fed7c",
+      "scripts\\b3_e4_f03_material_line_space_screen.py": "4e377d2c9553baa91791aa263c32871cd704f66a1f4556290ed6bc08001bd6ce",
+      "scripts\\b3_e4_f03_plate_patch_work.py": "211dfd94745a436967b0b1e2567bca411524f6d58b8ebfbcb430a1f6786fed0f",
+      "scripts\\b3_e4_f03_square_section_control.py": "efe684d6ad08236da0eeb4323812107d8a6bc96e04de622132a9b9915f4ab17f"
+    },
+    "threadpoolctl": "3.6.0"
+  },
+  "question": "How do three full-rank line spaces compare in the same x16/B3-14 auxiliary-norm trace map?",
+  "runner_sha256": "3c8c8fcb4e4bcf4052b8a555874646516a4fc743be79b66acfd5ccb3c7e8a021",
+  "schur_action_relative_residual": 9.235178608591897e-16,
+  "shell_drilling_rows_eliminated": 286,
+  "shell_physical_rows": 1430,
+  "trace_only": true
+}

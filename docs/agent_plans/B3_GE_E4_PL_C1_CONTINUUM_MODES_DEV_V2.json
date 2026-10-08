@@ -1,0 +1,194 @@
+{
+  "classification": "bounded G0B development diagnostic; growing-space detection is not stability or multiplier selection",
+  "combined_row_singular_values": [
+    1.0321130129403253,
+    1.0096710580605388,
+    0.881584167953297,
+    0.3392830170020631,
+    1.4792285802553912e-15,
+    9.50893648368141e-16,
+    8.408723605954899e-16,
+    7.437334862231061e-16,
+    5.39463567551273e-16
+  ],
+  "common_null_relative_residual": 3.162089876778105e-16,
+  "geometry": "C1 35 mm Q4 x8/y4 terminal bond, native retained B3-12, reference shell translations only",
+  "law": "six-channel transverse mean/first-moment and director-pitch pose trace",
+  "limitations": [
+    "translation-only linearized fields; no loaded coupled solution",
+    "a transverse section null does not by itself classify the intended connection law",
+    "a longitudinal projection null on fixed multiplier spans is not a uniform inf-sup result",
+    "growing-space row detection does not establish locking, loaded work, or mixed-system stability",
+    "saved F5 common action does not provide one-sided retained B3 port work"
+  ],
+  "modes": {
+    "longitudinal_projection": {
+      "complete_shell_energy_j": 50.019224868700604,
+      "continuous_g6_component_max_abs": [
+        0,
+        0,
+        0.000008462527967911489,
+        2.0328790734103208e-20,
+        0,
+        0
+      ],
+      "continuous_g6_component_weighted_rms": [
+        0,
+        0,
+        0.0000029733526087061915,
+        5.895327619166901e-21,
+        0,
+        0
+      ],
+      "fixed_root_max_displacement_m": 0,
+      "integrated_mean_g6": [
+        0,
+        0,
+        -1.8867936457624563e-22,
+        7.466961439930441e-22,
+        0,
+        0
+      ],
+      "longitudinal_resolution_detection": {
+        "continuous_linear_2": {
+          "max_basis_mean_gap_m": 2.6461091897161945e-21,
+          "max_integrated_gap": 6.615272974290481e-22,
+          "rows": 18
+        },
+        "continuous_linear_4": {
+          "max_basis_mean_gap_m": 0.0000016703648499187372,
+          "max_integrated_gap": 4.1759121247968235e-7,
+          "rows": 30
+        },
+        "continuous_linear_8": {
+          "max_basis_mean_gap_m": 0.000005003698183252055,
+          "max_integrated_gap": 6.254622729065096e-7,
+          "rows": 54
+        },
+        "dual_linear_2": {
+          "max_basis_mean_gap_m": 2.797308153174562e-21,
+          "max_integrated_gap": 6.993270382936374e-22,
+          "rows": 18
+        },
+        "dual_linear_4": {
+          "max_basis_mean_gap_m": 0.000005549871235461189,
+          "max_integrated_gap": 0.0000012527736374390475,
+          "rows": 30
+        },
+        "dual_linear_8": {
+          "max_basis_mean_gap_m": 0.000009999999999999897,
+          "max_integrated_gap": 0.0000012500000000000016,
+          "rows": 54
+        },
+        "piecewise_constant_2": {
+          "max_basis_mean_gap_m": 2.5705097079870103e-21,
+          "max_integrated_gap": 1.2852548539935066e-21,
+          "rows": 12
+        },
+        "piecewise_constant_4": {
+          "max_basis_mean_gap_m": 2.693883428524596e-7,
+          "max_integrated_gap": 6.734708571311497e-8,
+          "rows": 24
+        },
+        "piecewise_constant_8": {
+          "max_basis_mean_gap_m": 0.000003179018132009207,
+          "max_integrated_gap": 3.97377266501153e-7,
+          "rows": 48
+        }
+      },
+      "physical_shell_energy_j": 50.019224868700604,
+      "sampled_local_slip_rms_m": 0.000002973352608706193,
+      "station_count": 24,
+      "weak_row_max_abs_by_space": {
+        "continuous_linear": 3.085206774240976e-21,
+        "dual_linear": 1.507000829108534e-20,
+        "piecewise_constant": 8.068023415545172e-22
+      }
+    },
+    "transverse_section": {
+      "complete_shell_energy_j": 30.11427659254808,
+      "continuous_g6_component_max_abs": [
+        0,
+        0,
+        3.917527381051139e-21,
+        6.776263578034403e-20,
+        0,
+        0
+      ],
+      "continuous_g6_component_weighted_rms": [
+        0,
+        0,
+        3.620666372875766e-21,
+        4.356893917133745e-20,
+        0,
+        0
+      ],
+      "fixed_root_max_displacement_m": 0,
+      "integrated_mean_g6": [
+        0,
+        0,
+        -2.7323165296055594e-21,
+        -2.422344822557848e-20,
+        0,
+        0
+      ],
+      "longitudinal_resolution_detection": {
+        "continuous_linear_2": {
+          "max_basis_mean_gap_m": 4.233838874830024e-20,
+          "max_integrated_gap": 2.1169194374150114e-20,
+          "rows": 18
+        },
+        "continuous_linear_4": {
+          "max_basis_mean_gap_m": 4.411591974233808e-20,
+          "max_integrated_gap": 1.1028979935584547e-20,
+          "rows": 30
+        },
+        "continuous_linear_8": {
+          "max_basis_mean_gap_m": 4.674961498072435e-20,
+          "max_integrated_gap": 5.843701872590569e-21,
+          "rows": 54
+        },
+        "dual_linear_2": {
+          "max_basis_mean_gap_m": 4.3723593098227777e-20,
+          "max_integrated_gap": 2.1861796549113885e-20,
+          "rows": 18
+        },
+        "dual_linear_4": {
+          "max_basis_mean_gap_m": 4.6804167813677335e-20,
+          "max_integrated_gap": 1.170104195341933e-20,
+          "rows": 30
+        },
+        "dual_linear_8": {
+          "max_basis_mean_gap_m": 5.4039713866068536e-20,
+          "max_integrated_gap": 6.754964233258645e-21,
+          "rows": 54
+        },
+        "piecewise_constant_2": {
+          "max_basis_mean_gap_m": 4.366925416955507e-20,
+          "max_integrated_gap": 2.183462708477756e-20,
+          "rows": 12
+        },
+        "piecewise_constant_4": {
+          "max_basis_mean_gap_m": 4.423394280105794e-20,
+          "max_integrated_gap": 1.1058485700264496e-20,
+          "rows": 24
+        },
+        "piecewise_constant_8": {
+          "max_basis_mean_gap_m": 5.232781318593234e-20,
+          "max_integrated_gap": 6.540976648241577e-21,
+          "rows": 48
+        }
+      },
+      "physical_shell_energy_j": 30.11427659254808,
+      "sampled_local_slip_rms_m": 0.000007438987946398806,
+      "station_count": 24,
+      "weak_row_max_abs_by_space": {
+        "continuous_linear": 6.745600985343797e-20,
+        "dual_linear": 8.630079886395164e-20,
+        "piecewise_constant": 6.983278430343354e-20
+      }
+    }
+  },
+  "physical_tangent": "E4 physical stiffness without drilling completion",
+  "source_sha256": "4de624415a411111e30e446080169756a9bbd6bdaa5f19a6fc73128bd71d2a0d"
+}

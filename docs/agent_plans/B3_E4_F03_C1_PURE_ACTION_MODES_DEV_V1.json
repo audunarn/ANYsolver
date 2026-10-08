@@ -1,0 +1,189 @@
+{
+  "cases": {
+    "torsion_Mx": {
+      "intervals": [
+        {
+          "component_work_J": {
+            "native_B3": 0.008073301565576362,
+            "native_E4": 0.01333758545482231,
+            "solid_bar": 0.00805217505729167,
+            "solid_plate": 0.016840742857142883
+          },
+          "integrated_interface_resultant": 100.0,
+          "interval_index": 0,
+          "native_B3_vs_solid_bar_relative": 0.002623702059924904,
+          "native_E4_vs_solid_plate_relative": -0.20801679783589433,
+          "x_interval_m": [
+            0.9,
+            0.925
+          ]
+        },
+        {
+          "component_work_J": {
+            "native_B3": 0.008073301565576292,
+            "native_E4": 0.01382828386535606,
+            "solid_bar": 0.008272885755208306,
+            "solid_plate": 0.017131333333333273
+          },
+          "integrated_interface_resultant": 100.0,
+          "interval_index": 1,
+          "native_B3_vs_solid_bar_relative": -0.024125099214184487,
+          "native_E4_vs_solid_plate_relative": -0.19280749511483197,
+          "x_interval_m": [
+            0.925,
+            0.9500000000000001
+          ]
+        },
+        {
+          "component_work_J": {
+            "native_B3": 0.008513663469152848,
+            "native_E4": 0.01403696679331972,
+            "solid_bar": 0.00849353084895834,
+            "solid_plate": 0.01735300952380955
+          },
+          "integrated_interface_resultant": 100.0,
+          "interval_index": 2,
+          "native_B3_vs_solid_bar_relative": 0.0023703475683469755,
+          "native_E4_vs_solid_plate_relative": -0.19109323520741384,
+          "x_interval_m": [
+            0.9500000000000001,
+            0.9750000000000001
+          ]
+        },
+        {
+          "component_work_J": {
+            "native_B3": 0.008513663469152848,
+            "native_E4": 0.013696292796756548,
+            "solid_bar": 0.008734758031250003,
+            "solid_plate": 0.017437171428571454
+          },
+          "integrated_interface_resultant": 100.0,
+          "interval_index": 3,
+          "native_B3_vs_solid_bar_relative": -0.02531204199431214,
+          "native_E4_vs_solid_plate_relative": -0.21453471666197743,
+          "x_interval_m": [
+            0.9750000000000001,
+            1.0
+          ]
+        }
+      ],
+      "resultant": 100.0,
+      "resultant_unit": "Nm",
+      "uniform_component_work_J": {
+        "native_B3": 0.008220088866768506,
+        "native_E4": 0.01212222695910361,
+        "solid_bar": 0.008228916248860676,
+        "solid_plate": 0.013104938095238095
+      },
+      "uniform_minus_uncoupled_interval_work_J": {
+        "native_B3": 0.00614671823742736,
+        "native_E4": 0.008691031402212696,
+        "solid_bar": 0.006131831893066406,
+        "solid_plate": 0.008807297023809522
+      },
+      "uniform_native_B3_vs_solid_bar_relative": -0.0010727271763631974,
+      "uniform_native_E4_vs_solid_plate_relative": -0.07498785030442601
+    },
+    "transverse_Fz": {
+      "intervals": [
+        {
+          "component_work_J": {
+            "native_B3": 0.14612239583340123,
+            "native_E4": 1.1876610338562072,
+            "solid_bar": 0.14489989583333351,
+            "solid_plate": 1.1992783333333348
+          },
+          "integrated_interface_resultant": 1000.0,
+          "interval_index": 0,
+          "native_B3_vs_solid_bar_relative": 0.008436859067682434,
+          "native_E4_vs_solid_plate_relative": -0.009686908496743918,
+          "x_interval_m": [
+            0.9,
+            0.925
+          ]
+        },
+        {
+          "component_work_J": {
+            "native_B3": 0.1583872767858316,
+            "native_E4": 1.252544044572993,
+            "solid_bar": 0.1570956249999995,
+            "solid_plate": 1.264323333333329
+          },
+          "integrated_interface_resultant": 1000.0,
+          "interval_index": 1,
+          "native_B3_vs_solid_bar_relative": 0.008222073567179855,
+          "native_E4_vs_solid_plate_relative": -0.009316674342535913,
+          "x_interval_m": [
+            0.925,
+            0.9500000000000001
+          ]
+        },
+        {
+          "component_work_J": {
+            "native_B3": 0.17131733630970603,
+            "native_E4": 1.3197596225437713,
+            "solid_bar": 0.16995897916666677,
+            "solid_plate": 1.3317100000000013
+          },
+          "integrated_interface_resultant": 1000.0,
+          "interval_index": 2,
+          "native_B3_vs_solid_bar_relative": 0.007992264661152104,
+          "native_E4_vs_solid_plate_relative": -0.008973708582371454,
+          "x_interval_m": [
+            0.9500000000000001,
+            0.9750000000000001
+          ]
+        },
+        {
+          "component_work_J": {
+            "native_B3": 0.18493936011930606,
+            "native_E4": 1.3893445653075172,
+            "solid_bar": 0.18351291666666686,
+            "solid_plate": 1.4014616666666684
+          },
+          "integrated_interface_resultant": 1000.0,
+          "interval_index": 3,
+          "native_B3_vs_solid_bar_relative": 0.007772986657011094,
+          "native_E4_vs_solid_plate_relative": -0.00864604551615844,
+          "x_interval_m": [
+            0.9750000000000001,
+            1.0
+          ]
+        }
+      ],
+      "resultant": 1000.0,
+      "resultant_unit": "N",
+      "uniform_component_work_J": {
+        "native_B3": 0.16475967261919616,
+        "native_E4": 1.2857315872156883,
+        "solid_bar": 0.16342319921874998,
+        "solid_plate": 1.2973839583333333
+      },
+      "uniform_minus_uncoupled_interval_work_J": {
+        "native_B3": 0.12346177455368085,
+        "native_E4": 0.9638997580731576,
+        "solid_bar": 0.12245648567708331,
+        "solid_plate": 0.972585625
+      },
+      "uniform_native_B3_vs_solid_bar_relative": 0.00817799068207714,
+      "uniform_native_E4_vs_solid_plate_relative": -0.008981436099005036
+    }
+  },
+  "classification": "pure P0 material-line transverse-force and torque action work",
+  "limitations": [
+    "linear open-interface influence with separate plate/bar and E4/B3 domains",
+    "not a standalone contact state or re-equilibrated bonded comparison",
+    "interval and uniform responses include different longitudinal action shapes",
+    "pure positive work does not by itself establish physical torque/shear fidelity",
+    "not multiplier-space, F03 or G0B acceptance"
+  ],
+  "native_component_diagnostics": {
+    "beam_equilibrium_ratio": 7.575213373277563e-17,
+    "beam_free_variables": 216,
+    "shell_equilibrium_ratio": 4.6164056457399356e-11,
+    "shell_free_variables": 924
+  },
+  "solid_reconstruction_sha256": "118aef26cf0766fa50a6d42929a095440e142f7177216e5b85dc2c7e51fa7f92",
+  "source_commit": "32ca922d170a422de6f8a3caa3bb08a05c2e7ece",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE"
+}

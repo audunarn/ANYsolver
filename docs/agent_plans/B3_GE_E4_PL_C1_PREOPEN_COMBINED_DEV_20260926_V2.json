@@ -1,0 +1,15 @@
+{
+  "status": "DIRECTIONAL_REFERENCE_RETAINED_NOT_G0_ACCEPTANCE",
+  "kind": "additive_independent_review_of_immutable_v1",
+  "reviewed_record": "B3_GE_E4_PL_C1_PREOPEN_COMBINED_DEV_20260926_V1.json",
+  "reviewed_record_sha256": "11f3711b662e1227b275c401682f62e279dcf5fa2cdcaf03594024c42f6aded6",
+  "raw_roots_unchanged": true,
+  "independent_read_only_review": "No blocking source, model geometry, load, support, work, reaction or saved-face-gap inconsistency was found for the declared linear no-contact C1 reference.",
+  "clarifications": {
+    "support_component_maximum": "V1 reports the plate/root component maximum. Including the total support gives approximately 0.000718 at factor 2 and 0.001551 at factor 4, still below the registered 0.02 bound.",
+    "open_faces": "The positive continuous saved-field bound covers opposed top/underside faces only where their deformed XY regions overlap; it does not establish side clearance or contact admissibility.",
+    "work": "The reported work is the actual end-face nodal-force dot displacement. It differs from 100 times fitted tip rx minus 1000 times fitted tip uz by approximately 2.03e-5 J at factor 2 and 1.08e-5 J at factor 4.",
+    "pose": "The fitted 25-node solid section rotation differs from the bonded-face slope by 3.34 and 3.55 microradians at factors 2 and 4; maximum fitted-section warping residuals are 0.316 and 0.341 micrometres. A native rigid B3 tip rotation is not simultaneously both solid observables."
+  },
+  "limits": "Directional combined-load reference only. No side contact, three-level convergence, native-line accuracy, multiplier-space selection or G0B acceptance follows."
+}

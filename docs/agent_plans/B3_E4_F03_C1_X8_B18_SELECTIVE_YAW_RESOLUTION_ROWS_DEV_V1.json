@@ -1,0 +1,142 @@
+{
+  "anysolver_import_path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\__init__.py",
+  "cases": {
+    "yaw_m4": {
+      "spaces": {
+        "continuous_linear": {
+          "active_primal_columns": 96,
+          "minimum_unit_row_singular": 0.19281701734049753,
+          "rank": 45,
+          "rows": 45,
+          "transpose_work_relative_defect": 2.276157294973728e-15
+        },
+        "dual_linear": {
+          "active_primal_columns": 96,
+          "minimum_unit_row_singular": 0.16661215504601692,
+          "rank": 45,
+          "rows": 45,
+          "transpose_work_relative_defect": 3.1792675628092963e-15
+        }
+      },
+      "yaw_intervals": 4
+    },
+    "yaw_m5": {
+      "spaces": {
+        "continuous_linear": {
+          "active_primal_columns": 96,
+          "minimum_unit_row_singular": 0.1821466063270859,
+          "rank": 46,
+          "rows": 46,
+          "transpose_work_relative_defect": 1.375683456173677e-15
+        },
+        "dual_linear": {
+          "active_primal_columns": 96,
+          "minimum_unit_row_singular": 0.15722868693796846,
+          "rank": 46,
+          "rows": 46,
+          "transpose_work_relative_defect": 1.0480213481088164e-15
+        }
+      },
+      "yaw_intervals": 5
+    },
+    "yaw_m6": {
+      "spaces": {
+        "continuous_linear": {
+          "active_primal_columns": 96,
+          "minimum_unit_row_singular": 0.16994912374283896,
+          "rank": 47,
+          "rows": 47,
+          "transpose_work_relative_defect": 0.0
+        },
+        "dual_linear": {
+          "active_primal_columns": 96,
+          "minimum_unit_row_singular": 0.14708438159230786,
+          "rank": 47,
+          "rows": 47,
+          "transpose_work_relative_defect": 5.589553393447853e-16
+        }
+      },
+      "yaw_intervals": 6
+    },
+    "yaw_m7": {
+      "spaces": {
+        "continuous_linear": {
+          "active_primal_columns": 96,
+          "minimum_unit_row_singular": 0.16934372419425409,
+          "rank": 48,
+          "rows": 48,
+          "transpose_work_relative_defect": 3.5093380517509623e-16
+        },
+        "dual_linear": {
+          "active_primal_columns": 96,
+          "minimum_unit_row_singular": 0.1364319316009242,
+          "rank": 48,
+          "rows": 48,
+          "transpose_work_relative_defect": 1.4469642177842435e-15
+        }
+      },
+      "yaw_intervals": 7
+    },
+    "yaw_m8": {
+      "spaces": {
+        "continuous_linear": {
+          "active_primal_columns": 96,
+          "minimum_unit_row_singular": 7.178104609443284e-16,
+          "rank": 48,
+          "rows": 49,
+          "transpose_work_relative_defect": 0.0
+        },
+        "dual_linear": {
+          "active_primal_columns": 96,
+          "minimum_unit_row_singular": 2.2006604946791013e-16,
+          "rank": 48,
+          "rows": 49,
+          "transpose_work_relative_defect": 2.3442125204918723e-16
+        }
+      },
+      "yaw_intervals": 8
+    }
+  },
+  "classification": "fixed-primal selective yaw resolution row/work diagnostic",
+  "decision": "rank/work admission only; physical loaded response and mixed stability remain separate",
+  "effective_threadpools": [
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.31.188.0"
+    },
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.30"
+    }
+  ],
+  "elapsed_s": 2.8965330999926664,
+  "env": {
+    "NUMBA_DISABLE_JIT": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "geometry": "C1 Q4 x8/y4, B3-18, 1:1 on 0.9-1.0 m line; P0 m8 on five channels",
+  "limits": [
+    "same supported x8/B3-18 primal and 120-second row deadline",
+    "no KKT solve, physical load, or mesh-uniform stability claim"
+  ],
+  "numpy": "2.4.6",
+  "python": "3.14.2",
+  "question": "Can more longitudinal yaw test intervals remain independent before the known m8 alias?",
+  "runner_sha256": "80c4344a7f94d749a0d673a19531cdcce6b13bc6f6bcee382ca527563671defd",
+  "scipy": "1.17.1",
+  "source_git": "c42e9314bd254d28be644a683b3a4e8e4b1f6fcf",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE"
+}

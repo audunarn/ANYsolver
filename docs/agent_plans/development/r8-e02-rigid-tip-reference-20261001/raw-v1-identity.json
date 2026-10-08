@@ -1,0 +1,1123 @@
+{
+  "archive": "raw-v1.zip",
+  "sha256": "aad2c08bea51451e88b2bdec9d00c2f64e6379164e5b7dacdd905819f9ccf657",
+  "file_count": 222,
+  "bytes": 1671952,
+  "source_parent_commit": "02788ed2",
+  "solver_product": "39d2ae3a",
+  "solver_wheel_sha256": "27660d7357eedf36a2d96a73282b9ede974fd3219903b2492d32553c118f47ec",
+  "ccx_sha256": "27a9426a1ee2f72c38fbe892e0ffaf38e14867628ffd0235770261b6f3ec9c5f",
+  "scope": "reference-linear flat isotropic out-of-plane development only; E02/F03 acceptance OPEN",
+  "files": [
+    {
+      "path": "final-source/r8_e02_native_rigid_tip.py",
+      "bytes": 12225,
+      "sha256": "77d16d2b7eaf573bbd890d89827307f30d61d0cf2f3abee10d80465e54807781"
+    },
+    {
+      "path": "final-source/r8_e02_rigid_tip_reference.py",
+      "bytes": 25070,
+      "sha256": "c54822bfbed9efbcd98c7e1b5a07f9bc26d32c3ab5e7a1830c14b10d45e6e446"
+    },
+    {
+      "path": "r8-e02-reference-helper-dev/initial-self-check-failure.txt",
+      "bytes": 259,
+      "sha256": "3ac054b2c777a17a54aa8fa3691df4bef69a36dd2be70b52e4be23a608cd0b08"
+    },
+    {
+      "path": "r8-e02-reference-helper-dev/self-check.log",
+      "bytes": 382,
+      "sha256": "8f2c779273005decf1b86b1e6289fc75f90c058ed21f0e49405bdfce90770894"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v1/native-b2-10x4-s1/execution.json",
+      "bytes": 1133,
+      "sha256": "d0db2fb779287f93daa031e7a4b6b9b1965224f53b467e76638e9551993a563b"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v1/native-b2-10x4-s1/stderr.log",
+      "bytes": 1033,
+      "sha256": "e1387fc3f75678444d02631101d9fc4faceddf0674285a8de17751e9a0efed9e"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v1/native-b2-10x4-s1/stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v1/native-runner.py",
+      "bytes": 11422,
+      "sha256": "4084b62d609f377c87abdf79a7a11a7cbbf1db50a006f2a02a21e46e561879ce"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v1/run.py",
+      "bytes": 5838,
+      "sha256": "b3ae357a5519d15044931d72f44316bc5c95377580257bccad971e9c6b451f1b"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/b2-resolution-diagnostic.json",
+      "bytes": 464,
+      "sha256": "3911316ce73484d347464baf27f48be87deb0a38e4ed85b0da931f99cc36044b"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/Fz.12d",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/Fz.cvg",
+      "bytes": 278,
+      "sha256": "7949113325cb32be7bffd2b865928ef5606322c0f7f08d37a302e5063b074593"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/Fz.dat",
+      "bytes": 10416,
+      "sha256": "40153c1a51697ff1842973c59117d189c8be7b9325ba8fb0089806aff9f0aba8"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/Fz.frd",
+      "bytes": 48218,
+      "sha256": "ed5d0b1d7431abf5f1179656367b69a407357aa9bcac15234a3aea53b231d1d5"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/Fz.inp",
+      "bytes": 33866,
+      "sha256": "4d29581f0a6d3c20c61f78bd7a27c5c2e131859346db177686bac52c9fec86bf"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/Fz.sta",
+      "bytes": 173,
+      "sha256": "253efd59462bae0a6fce7b06552a063c82349747e482366b56da923c68b7ca9d"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/Fz/execution.json",
+      "bytes": 865,
+      "sha256": "81180f27c6069fcb29b7bf5211fcad4600030e604976ffcf31a0021522233da9"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/Fz/identity.json",
+      "bytes": 69758,
+      "sha256": "25c2ecdcc927c887a3ee176e31455f3f15d7cf7598d4fbc22c38b36831dd55e3"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/Fz/result.json",
+      "bytes": 3400,
+      "sha256": "81a7569f2cbf20e23b2088b104ae1c08490e010d596dac2031da64bab55a51d3"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/Fz/spooles.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/Fz/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/Fz/stdout.log",
+      "bytes": 2297,
+      "sha256": "e7604a992d256e839ac9303f68fba1eaaf6dcdcd863d02b80793995da8090487"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/Mx.12d",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/Mx.cvg",
+      "bytes": 278,
+      "sha256": "7949113325cb32be7bffd2b865928ef5606322c0f7f08d37a302e5063b074593"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/Mx.dat",
+      "bytes": 10416,
+      "sha256": "d9b9099ac529e52507dca757b4a24b11e67dd4dcc6bfa2b3ae6bc82a252db142"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/Mx.frd",
+      "bytes": 48218,
+      "sha256": "ed5d0b1d7431abf5f1179656367b69a407357aa9bcac15234a3aea53b231d1d5"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/Mx.inp",
+      "bytes": 33865,
+      "sha256": "3cd3a972dda678a52ba37ef669da7a5e40c29afa4b91e89107973c5cf858ab1b"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/Mx.sta",
+      "bytes": 173,
+      "sha256": "253efd59462bae0a6fce7b06552a063c82349747e482366b56da923c68b7ca9d"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/Mx/execution.json",
+      "bytes": 865,
+      "sha256": "4a8241dc55f1c2568a42fba964873a62b0b2305fb8b9c747e65bf036c9bd053d"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/Mx/identity.json",
+      "bytes": 69757,
+      "sha256": "485778c6918a170d946805c9e7e1b7a94bdbf1bad4b121bc9a002e01ebde99ea"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/Mx/result.json",
+      "bytes": 3383,
+      "sha256": "ebfd21f84ae53458f26b1b774b1d15c74a138f7fbb133a3c9e62aefe1b99ef88"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/Mx/spooles.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/Mx/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/Mx/stdout.log",
+      "bytes": 2297,
+      "sha256": "5861dc96b573f901396823e4e5ca8d7a3dfcade865a336cd05c0387958ad7766"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/My.12d",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/My.cvg",
+      "bytes": 278,
+      "sha256": "7949113325cb32be7bffd2b865928ef5606322c0f7f08d37a302e5063b074593"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/My.dat",
+      "bytes": 10416,
+      "sha256": "dedcbd13c5f1955bb7ab6ba0e951c140dd97ffceae0ee9b337c2f6ca8601f198"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/My.frd",
+      "bytes": 48218,
+      "sha256": "ed5d0b1d7431abf5f1179656367b69a407357aa9bcac15234a3aea53b231d1d5"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/My.inp",
+      "bytes": 33865,
+      "sha256": "97053f6bf26b738aad0a8e46fd136437abfc4f47fdcef2762df3a49fc791af8a"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/My.sta",
+      "bytes": 173,
+      "sha256": "253efd59462bae0a6fce7b06552a063c82349747e482366b56da923c68b7ca9d"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/My/execution.json",
+      "bytes": 864,
+      "sha256": "f8ac0130ef9814e81c8a47bd7b0c539bcba7ee9e0d5365d62902df05ff757dee"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/My/identity.json",
+      "bytes": 69757,
+      "sha256": "02d6074659df5b2df6b4ff35a5356c012fa1858c336e055d5311501c4e18d193"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/My/result.json",
+      "bytes": 3384,
+      "sha256": "d6b2c444e4a577300b0d69cfaa9059f398ff9e5b9e1f9d060d4b2cd0be0bdb59"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/My/spooles.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/My/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/My/stdout.log",
+      "bytes": 2297,
+      "sha256": "3a02ff33f933169d42954f8cc5f374a21aeceb41aa0fa19c450eb8ff5684b1c8"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/external-ccx-10x4-s1/reference-helper.py",
+      "bytes": 25070,
+      "sha256": "c54822bfbed9efbcd98c7e1b5a07f9bc26d32c3ab5e7a1830c14b10d45e6e446"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/native-b2-10x4-s1/execution.json",
+      "bytes": 1133,
+      "sha256": "b5068ea40c17fe4f17b5348ba179a6d655dcf5411474250b0f77b6e29a1fe40d"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/native-b2-10x4-s1/stderr.log",
+      "bytes": 399,
+      "sha256": "f15fbf9e86f8c82682d7aaa72fd44f8b584b88012363356403cc122ae0f77421"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/native-b2-10x4-s1/stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/native-ge-10x4-s1/execution.json",
+      "bytes": 1131,
+      "sha256": "919d24a377fe4ff32061a7380e2628ac409cac38382f280940d9648cba57ca9f"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/native-ge-10x4-s1/outputs/result.json",
+      "bytes": 80567,
+      "sha256": "08d6fbecef1661e41be049a10d634427b029a41778b54857b2f0d312ed9bb736"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/native-ge-10x4-s1/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/native-ge-10x4-s1/stdout.log",
+      "bytes": 534,
+      "sha256": "d2e000986cf444a590f7d03099114356fa927329d1fdbfe4a598ac5f306db3ae"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/native-runner.py",
+      "bytes": 11603,
+      "sha256": "ea469e67d7723bb1e6e92fc8a9a4e786723abae09ae6a8395bfe619da46ddddc"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/run.py",
+      "bytes": 6452,
+      "sha256": "c042fcc735803a1faf764fee89511e97c1c21beea56bb77d633a24dc7e2c4741"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v2/trace_failed_b2.py",
+      "bytes": 1328,
+      "sha256": "8064dacfad5919f1929f683fe0fecc49f35bff63041dd082cdef79716f923c34"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/compare-v1-failed.py",
+      "bytes": 5416,
+      "sha256": "f5fb19011b4bcb51d3dc525296a1b327c330bb1435396faae52e10190ded1201"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/compare.py",
+      "bytes": 5462,
+      "sha256": "76b8222ce19842fea6409b86450581f950239c4554111e00b15523ae886876f4"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/comparison.json",
+      "bytes": 25080,
+      "sha256": "b35443c18fac3f5fcf8870f75ab9ec773dd21a18919bd78d55f8f006f9d86adb"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/Fz.12d",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/Fz.cvg",
+      "bytes": 278,
+      "sha256": "7949113325cb32be7bffd2b865928ef5606322c0f7f08d37a302e5063b074593"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/Fz.dat",
+      "bytes": 10416,
+      "sha256": "35a562bca1af527ce5425aadf0498e3d4c1dc50a8197c77d703aeccd30956484"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/Fz.frd",
+      "bytes": 48218,
+      "sha256": "af5e1ba6a62fb99d9ff096c92808dd809349128e84edb32fe28b2e54c22af6e0"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/Fz.inp",
+      "bytes": 33105,
+      "sha256": "112e5688c0425104b649007af9605cb3dcfc7bc4ee1076bcd18fcfcadbcaf365"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/Fz.sta",
+      "bytes": 173,
+      "sha256": "253efd59462bae0a6fce7b06552a063c82349747e482366b56da923c68b7ca9d"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/Fz/execution.json",
+      "bytes": 865,
+      "sha256": "95c5ddb4849103624362664466e6ef1352a8cfcb2c323f510884a565754c39de"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/Fz/identity.json",
+      "bytes": 69760,
+      "sha256": "512d27362537a26ae4ea2aa10968aa993a107cfb5b69c5b1bc76774d66f934e9"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/Fz/result.json",
+      "bytes": 3398,
+      "sha256": "b318bfdde719c010e5eb0ab32f1aafc0a497d87a650c21d9f6c6c4bc11a3c06a"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/Fz/spooles.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/Fz/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/Fz/stdout.log",
+      "bytes": 2297,
+      "sha256": "7651475bb9f783621c49348ff731203ccd35bd1eddf134c2175f2295b93dd5bf"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/Mx.12d",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/Mx.cvg",
+      "bytes": 278,
+      "sha256": "7949113325cb32be7bffd2b865928ef5606322c0f7f08d37a302e5063b074593"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/Mx.dat",
+      "bytes": 10416,
+      "sha256": "b381f81d122031289974a0586c459ccf6695236836eebd22af1184b6fd8bf978"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/Mx.frd",
+      "bytes": 48218,
+      "sha256": "af5e1ba6a62fb99d9ff096c92808dd809349128e84edb32fe28b2e54c22af6e0"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/Mx.inp",
+      "bytes": 33104,
+      "sha256": "56dcc8ccec3b5e123cfe244c8bebbd6a8850298a7d443349134586b4e897b024"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/Mx.sta",
+      "bytes": 173,
+      "sha256": "253efd59462bae0a6fce7b06552a063c82349747e482366b56da923c68b7ca9d"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/Mx/execution.json",
+      "bytes": 865,
+      "sha256": "1df331379943d12e055f901b63e5f143cfacf0a01b1829629572f6444e70d976"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/Mx/identity.json",
+      "bytes": 69758,
+      "sha256": "46cf33c1c5c5426b2aae05b2f36626ac1d11cc1da9cc63d267e4a48b32d1b5d7"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/Mx/result.json",
+      "bytes": 3373,
+      "sha256": "6ff4097678d3019fd5221d5c2f05f407e03884b6611468a29eddf1e1a31a64a5"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/Mx/spooles.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/Mx/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/Mx/stdout.log",
+      "bytes": 2297,
+      "sha256": "6e6af3df31dc962c18c51eeeb36a87cac6ff4989324b94579d7d546398f4f6c2"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/My.12d",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/My.cvg",
+      "bytes": 278,
+      "sha256": "7949113325cb32be7bffd2b865928ef5606322c0f7f08d37a302e5063b074593"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/My.dat",
+      "bytes": 10416,
+      "sha256": "ce7d5edff4fa0ee19163ed2ab809172d8c74d134c57f8699bb06639757ed0ff5"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/My.frd",
+      "bytes": 48218,
+      "sha256": "49bf6a385aac209dfdebb9f756413a3073c8ee0f247aed4aac42f19d64a133ed"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/My.inp",
+      "bytes": 33104,
+      "sha256": "9e43d4c7ac4c57ffe0a73c50134cf1f7cca1c19376754f195e0f92482092c08c"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/My.sta",
+      "bytes": 173,
+      "sha256": "253efd59462bae0a6fce7b06552a063c82349747e482366b56da923c68b7ca9d"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/My/execution.json",
+      "bytes": 865,
+      "sha256": "c84d2495204de3d8c9a3ec35bd93005e0983748468ee7566db35176806f2dcec"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/My/identity.json",
+      "bytes": 69759,
+      "sha256": "5800bc6cb72756ff0c7d6dd5bb3d2f4096670712dafdc4bb034b6e36efb0cbd1"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/My/result.json",
+      "bytes": 3387,
+      "sha256": "8da41aac7a11364a5f00237df858b847518374899024f4b0f4e3e297c58540df"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/My/spooles.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/My/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/My/stdout.log",
+      "bytes": 2297,
+      "sha256": "49be822131746a799ee99d3132e42486996b1b3e40e5a94a9fe77dd99b330aa0"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s-1/reference-helper.py",
+      "bytes": 25070,
+      "sha256": "c54822bfbed9efbcd98c7e1b5a07f9bc26d32c3ab5e7a1830c14b10d45e6e446"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/Fz.12d",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/Fz.cvg",
+      "bytes": 278,
+      "sha256": "7949113325cb32be7bffd2b865928ef5606322c0f7f08d37a302e5063b074593"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/Fz.dat",
+      "bytes": 10416,
+      "sha256": "40153c1a51697ff1842973c59117d189c8be7b9325ba8fb0089806aff9f0aba8"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/Fz.frd",
+      "bytes": 48218,
+      "sha256": "e01d9ee5491afa136592645ad841034e78d687f952996e54ea88c75adc3b6f07"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/Fz.inp",
+      "bytes": 33104,
+      "sha256": "e2fd59aa9079fe8e7a00f7bb37e3379d1e632c9ff8d88ea41cb16a42c5eb94e5"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/Fz.sta",
+      "bytes": 173,
+      "sha256": "253efd59462bae0a6fce7b06552a063c82349747e482366b56da923c68b7ca9d"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/Fz/execution.json",
+      "bytes": 865,
+      "sha256": "6a4904c9d98c81477f5aa8ec1974450a4d4c4dd5eb8e3084184647c7c3e2fa57"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/Fz/identity.json",
+      "bytes": 69758,
+      "sha256": "169ba5096bfac2e695f18763d83e25119c117cbdb4ca248715ffa4b82db46c97"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/Fz/result.json",
+      "bytes": 3400,
+      "sha256": "81a7569f2cbf20e23b2088b104ae1c08490e010d596dac2031da64bab55a51d3"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/Fz/spooles.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/Fz/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/Fz/stdout.log",
+      "bytes": 2297,
+      "sha256": "8e3f1ee8cff2fc2acc9225b088c57da13968337fd0c8fec63b29abab0574a973"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/Mx.12d",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/Mx.cvg",
+      "bytes": 278,
+      "sha256": "7949113325cb32be7bffd2b865928ef5606322c0f7f08d37a302e5063b074593"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/Mx.dat",
+      "bytes": 10416,
+      "sha256": "d9b9099ac529e52507dca757b4a24b11e67dd4dcc6bfa2b3ae6bc82a252db142"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/Mx.frd",
+      "bytes": 48218,
+      "sha256": "e01d9ee5491afa136592645ad841034e78d687f952996e54ea88c75adc3b6f07"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/Mx.inp",
+      "bytes": 33103,
+      "sha256": "1ce03d30f3385846764d713ac2908204ac4ec71f5ab2daf375e7103dc64708b8"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/Mx.sta",
+      "bytes": 173,
+      "sha256": "253efd59462bae0a6fce7b06552a063c82349747e482366b56da923c68b7ca9d"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/Mx/execution.json",
+      "bytes": 864,
+      "sha256": "ef66cc99273e0b9776763705e71de7dc19a2b96cb9e534334754318e6d9e6331"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/Mx/identity.json",
+      "bytes": 69757,
+      "sha256": "504a019f92d3ef1e6b2e8b9e894a729a1ac2b9346ef3ff8e0c122b275af3d0c0"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/Mx/result.json",
+      "bytes": 3383,
+      "sha256": "ebfd21f84ae53458f26b1b774b1d15c74a138f7fbb133a3c9e62aefe1b99ef88"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/Mx/spooles.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/Mx/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/Mx/stdout.log",
+      "bytes": 2297,
+      "sha256": "9dde24f17a98a2b603b7cf954054811396c1fcf288996243c6bc90cfa162c0a4"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/My.12d",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/My.cvg",
+      "bytes": 278,
+      "sha256": "7949113325cb32be7bffd2b865928ef5606322c0f7f08d37a302e5063b074593"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/My.dat",
+      "bytes": 10416,
+      "sha256": "dedcbd13c5f1955bb7ab6ba0e951c140dd97ffceae0ee9b337c2f6ca8601f198"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/My.frd",
+      "bytes": 48218,
+      "sha256": "e01d9ee5491afa136592645ad841034e78d687f952996e54ea88c75adc3b6f07"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/My.inp",
+      "bytes": 33103,
+      "sha256": "10524aacb431ad9e9da9a49453b1ce1b9e3148a61815669d65d2c6056d7af016"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/My.sta",
+      "bytes": 173,
+      "sha256": "253efd59462bae0a6fce7b06552a063c82349747e482366b56da923c68b7ca9d"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/My/execution.json",
+      "bytes": 865,
+      "sha256": "9ee70f84fd89abc70732f426b004d0dafe39d8b949854b772841f1e1d3a648a5"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/My/identity.json",
+      "bytes": 69757,
+      "sha256": "121a12c1a9432733999d4d2af6748bfcfa8a4ad1b8be3e35db0426ed1f4c6b79"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/My/result.json",
+      "bytes": 3384,
+      "sha256": "d6b2c444e4a577300b0d69cfaa9059f398ff9e5b9e1f9d060d4b2cd0be0bdb59"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/My/spooles.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/My/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/My/stdout.log",
+      "bytes": 2297,
+      "sha256": "dcf41d02b1f1adf9931c089c28200ca2c4748002aadf9b9081df7cda6257ebaf"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-10x4-s1/reference-helper.py",
+      "bytes": 25070,
+      "sha256": "c54822bfbed9efbcd98c7e1b5a07f9bc26d32c3ab5e7a1830c14b10d45e6e446"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/Fz.12d",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/Fz.cvg",
+      "bytes": 278,
+      "sha256": "7949113325cb32be7bffd2b865928ef5606322c0f7f08d37a302e5063b074593"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/Fz.dat",
+      "bytes": 28992,
+      "sha256": "d226fb1436d30c177492ce935baee46f97be8e8286166dd8a15443012b0c3fb3"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/Fz.frd",
+      "bytes": 177896,
+      "sha256": "10517a5cdadbbc35fbdba0d37ec69ff498d0179ab6d1ef66203879c5a2794cad"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/Fz.inp",
+      "bytes": 127333,
+      "sha256": "34b2cc6e0a848f83301e8fe015326f22405511d274b5057e0257b5abe426184f"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/Fz.sta",
+      "bytes": 173,
+      "sha256": "253efd59462bae0a6fce7b06552a063c82349747e482366b56da923c68b7ca9d"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/Fz/execution.json",
+      "bytes": 865,
+      "sha256": "db77eaf180156670dea81c607541fbcc8984c1766bb2813e842e48897f383cf3"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/Fz/identity.json",
+      "bytes": 259759,
+      "sha256": "b25295fae7ab7351c3a7179e722346fb4918bb839a77cd6d2dacbe3074d30074"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/Fz/result.json",
+      "bytes": 3399,
+      "sha256": "7794605a0eb57cba0cf6405be9c1fe7202d063b81f827e18fdf4c026a87dffd1"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/Fz/spooles.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/Fz/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/Fz/stdout.log",
+      "bytes": 2298,
+      "sha256": "6212730c69bf0df3ad947322ae056c7d2c989f3e290adc9d43c17105e449c46f"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/Mx.12d",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/Mx.cvg",
+      "bytes": 278,
+      "sha256": "7949113325cb32be7bffd2b865928ef5606322c0f7f08d37a302e5063b074593"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/Mx.dat",
+      "bytes": 28992,
+      "sha256": "8e556cf3adab8ff3114a1d2cd5f5ad8ad95fb07442f11be5b05f3b7f63db1066"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/Mx.frd",
+      "bytes": 177896,
+      "sha256": "10517a5cdadbbc35fbdba0d37ec69ff498d0179ab6d1ef66203879c5a2794cad"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/Mx.inp",
+      "bytes": 127332,
+      "sha256": "9dea22c76fd75236c7f53359bf463357b4b359d25cc57e8144386deac15945db"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/Mx.sta",
+      "bytes": 173,
+      "sha256": "253efd59462bae0a6fce7b06552a063c82349747e482366b56da923c68b7ca9d"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/Mx/execution.json",
+      "bytes": 865,
+      "sha256": "fdcbac7827ed0cd1e13e11792562c8c90af3fb663d9a0a628f4b770690cb760b"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/Mx/identity.json",
+      "bytes": 259758,
+      "sha256": "b0772362c38212cd32bdefc7e16f53909cd0154bb0fa48f74dbe6bc243b0b677"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/Mx/result.json",
+      "bytes": 3387,
+      "sha256": "1f42d3f1ba2ea951c1f116a926732ddd6cc89bf3fd541caf5c107179cd23756c"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/Mx/spooles.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/Mx/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/Mx/stdout.log",
+      "bytes": 2298,
+      "sha256": "f1478dfcc6afb773fcd7b119bc6e0458261f3bfbd5845e1e359860928f9656ec"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/My.12d",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/My.cvg",
+      "bytes": 278,
+      "sha256": "7949113325cb32be7bffd2b865928ef5606322c0f7f08d37a302e5063b074593"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/My.dat",
+      "bytes": 28992,
+      "sha256": "1e6ec27ccb7957e1a8564c8deccdb5e4f23459e9a9ea0f7ddc732bd8561158e8"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/My.frd",
+      "bytes": 177896,
+      "sha256": "10517a5cdadbbc35fbdba0d37ec69ff498d0179ab6d1ef66203879c5a2794cad"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/My.inp",
+      "bytes": 127332,
+      "sha256": "39b032ffebb59b7a06ac0c75389749221262641f203b5e87073436666107d8c7"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/My.sta",
+      "bytes": 173,
+      "sha256": "253efd59462bae0a6fce7b06552a063c82349747e482366b56da923c68b7ca9d"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/My/execution.json",
+      "bytes": 865,
+      "sha256": "f9d8ce555d503fef3be6fa7268b0e631e1245050025d035e6570e00407f92262"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/My/identity.json",
+      "bytes": 259758,
+      "sha256": "a5112f3cca6098b1fce17bfd3d8d0e66f246d75a3c54b95232a1e8413c41f875"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/My/result.json",
+      "bytes": 3389,
+      "sha256": "6ca9d24a0ce13cc80bfa160ade11aa16fb2bdd2d50d9bb2141ab6430406dbc95"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/My/spooles.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/My/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/My/stdout.log",
+      "bytes": 2298,
+      "sha256": "bcc180d78c84fd5a79a66155a60f590c3d99916c7c97e0eb55ca24091493f3a9"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-20x8-s1/reference-helper.py",
+      "bytes": 25070,
+      "sha256": "c54822bfbed9efbcd98c7e1b5a07f9bc26d32c3ab5e7a1830c14b10d45e6e446"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/Fz.12d",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/Fz.cvg",
+      "bytes": 278,
+      "sha256": "7949113325cb32be7bffd2b865928ef5606322c0f7f08d37a302e5063b074593"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/Fz.dat",
+      "bytes": 94656,
+      "sha256": "1d8430d3bc69b7f9872eabfada56ac7dc713324a755a2ae5a725f5c9cf1dc119"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/Fz.frd",
+      "bytes": 685292,
+      "sha256": "b059d7c7b31f2adff29aff4509d2ff098ce605b0e6fff3ea8a4aa6314b428005"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/Fz.inp",
+      "bytes": 498010,
+      "sha256": "b9d3d96b87cd6456ddc9aac8bfd3a62e7c4b890bfab49af86399873741db739d"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/Fz.sta",
+      "bytes": 173,
+      "sha256": "253efd59462bae0a6fce7b06552a063c82349747e482366b56da923c68b7ca9d"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/Fz/execution.json",
+      "bytes": 866,
+      "sha256": "88da9fc94655b69d914f7ba868e2dd1ec23500fba2f11d4cf76a10341ceb479c"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/Fz/identity.json",
+      "bytes": 1016608,
+      "sha256": "5958affd29a1ff7a7141d6564411221a3f5a917b09531ad9b2a6e0df86ab8d91"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/Fz/result.json",
+      "bytes": 3401,
+      "sha256": "bd25c6982d6e46b60bc562bc041c670e66ce749ca8719fcb4926d18f8b1ad713"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/Fz/spooles.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/Fz/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/Fz/stdout.log",
+      "bytes": 2300,
+      "sha256": "d1ad66657c6e491f0666ee2a3f2db9de927dd5bc6785b4bc1cca2aceb15a6e70"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/Mx.12d",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/Mx.cvg",
+      "bytes": 278,
+      "sha256": "7949113325cb32be7bffd2b865928ef5606322c0f7f08d37a302e5063b074593"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/Mx.dat",
+      "bytes": 94656,
+      "sha256": "7955dac687d2a65a162e1fba1fb6ebda6dec3a603d19db240c2533288bf64395"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/Mx.frd",
+      "bytes": 685292,
+      "sha256": "2c06314d3714295036d2d2d1fa523beb33811c9a811e21431197fa2bd0313804"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/Mx.inp",
+      "bytes": 498009,
+      "sha256": "b0f8ca20c952a799cbb5a66e664fc559f874cbbc42bef9096ca8b723c9167c38"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/Mx.sta",
+      "bytes": 173,
+      "sha256": "253efd59462bae0a6fce7b06552a063c82349747e482366b56da923c68b7ca9d"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/Mx/execution.json",
+      "bytes": 866,
+      "sha256": "a07bcc03721b44de5809fb64d5cca37d909e49b730389af3f5258c6848812758"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/Mx/identity.json",
+      "bytes": 1016607,
+      "sha256": "78072947da76dce52b26a67551e98210de0d543242d3b997d72205b035ca8c5c"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/Mx/result.json",
+      "bytes": 3395,
+      "sha256": "b5c75808d224854343cbf543874c1ee92cd1d354c92967be1bdcfe968f9922c5"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/Mx/spooles.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/Mx/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/Mx/stdout.log",
+      "bytes": 2300,
+      "sha256": "efd6be9429c193054d2895f6113639f1d0450b69baaf572c356335781e9cdf36"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/My.12d",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/My.cvg",
+      "bytes": 278,
+      "sha256": "7949113325cb32be7bffd2b865928ef5606322c0f7f08d37a302e5063b074593"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/My.dat",
+      "bytes": 94656,
+      "sha256": "971d6e91866e9526650ecaefbf7b425f17417d00611b2d073d60111802ef6003"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/My.frd",
+      "bytes": 685292,
+      "sha256": "c050906f916fb200efe0850e78eea539dede532f5aaa95e2f6fa1fe4164987bd"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/My.inp",
+      "bytes": 498009,
+      "sha256": "bb19592d75dc9f421eba8291ef730ce83d531f93ed1d45178badaba21275df47"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/My.sta",
+      "bytes": 173,
+      "sha256": "253efd59462bae0a6fce7b06552a063c82349747e482366b56da923c68b7ca9d"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/My/execution.json",
+      "bytes": 865,
+      "sha256": "9c2c0abc7262fde9d736ea38d82cd8868bc45a9c0ccb42f52f1a5346ce028c8a"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/My/identity.json",
+      "bytes": 1016607,
+      "sha256": "b62b01196a135dfe3f4c62b967f4f3094b0398c497e4bd7279c0e0d923a40978"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/My/result.json",
+      "bytes": 3401,
+      "sha256": "ec6a0cc5c968c461e7b6ef5d45014e11f12ad46764d1a986b790f2c9c310a8c5"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/My/spooles.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/My/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/My/stdout.log",
+      "bytes": 2300,
+      "sha256": "8987415483d836d6fefd28644ba271fd4db2f1a7f501a9ff4f3f3936dfe3aee9"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/external-ccx-40x16-s1/reference-helper.py",
+      "bytes": 25070,
+      "sha256": "c54822bfbed9efbcd98c7e1b5a07f9bc26d32c3ab5e7a1830c14b10d45e6e446"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/native-ge-10x4-s-1/execution.json",
+      "bytes": 1135,
+      "sha256": "b94d04200038f0baf91cb36a70a7c93e52c506e1d07a4fe622829d3b56b7fecf"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/native-ge-10x4-s-1/outputs/result.json",
+      "bytes": 80611,
+      "sha256": "0c50edf60b30655a6786e88bcb743855fb0dead131f6e89251c2dcf752b14007"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/native-ge-10x4-s-1/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/native-ge-10x4-s-1/stdout.log",
+      "bytes": 536,
+      "sha256": "35477041d6c4eeb0608660c37a0f74f05d7f179a42309d4647158446cfbead42"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/native-ge-20x8-s1/execution.json",
+      "bytes": 1133,
+      "sha256": "5e98c9a2974d95c7b1d0917312233fe63c4519e1083876cee62f7f5295bd8f6b"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/native-ge-20x8-s1/outputs/result.json",
+      "bytes": 227616,
+      "sha256": "8f91e6885c9e8b5038536968118d3ae9ff6c4d7ff7211d0fa70cec63db6fc554"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/native-ge-20x8-s1/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/native-ge-20x8-s1/stdout.log",
+      "bytes": 531,
+      "sha256": "31b311335ff6408e202d0534c8328dab5a1605a4e6797177bc8245cbcc3d62d3"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/native-ge-40x16-s1/execution.json",
+      "bytes": 1134,
+      "sha256": "5ba995f85273db4fedc4cc49f4ad1b54e5e4665fe123649dfebd304d36fa369d"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/native-ge-40x16-s1/outputs/result.json",
+      "bytes": 768831,
+      "sha256": "7025c41376bd5d27d98660198d9547744468776a6681136c202b41ccf2c4f755"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/native-ge-40x16-s1/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/native-ge-40x16-s1/stdout.log",
+      "bytes": 536,
+      "sha256": "32461186bc8fd3e0bf5c76b8609a08cd5f9d15ae82e50cc154dc4828bae5edf0"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/native-runner.py",
+      "bytes": 12225,
+      "sha256": "77d16d2b7eaf573bbd890d89827307f30d61d0cf2f3abee10d80465e54807781"
+    },
+    {
+      "path": "r8-e02-rigid-tip-dev-v3/run.py",
+      "bytes": 6608,
+      "sha256": "d47c346ebb2911fc3ccbf0de83dbe52bfb16b8079c488185d6b61b835c31d80d"
+    }
+  ]
+}

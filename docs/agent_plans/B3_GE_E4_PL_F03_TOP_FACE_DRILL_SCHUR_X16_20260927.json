@@ -1,0 +1,121 @@
+{
+  "beta_min_physical_quotient": 0.007139530314156398,
+  "classification": "bounded exact shell-drill Schur physical mixed diagnostic, not F03/G0B acceptance",
+  "drill_block_condition_raw": 15845.990121869228,
+  "drill_block_min_eigenvalue_raw": 6828.8139117334495,
+  "drill_block_relative_skew": 0.0,
+  "drill_lift_relative_residual": 4.215747344296033e-16,
+  "elapsed_s_not_benchmark": 69.38240210001823,
+  "full_drill_equilibrium_residual": 1.806001095480199e-15,
+  "layout": {
+    "cell_rotations": 36,
+    "complementary_min_diagonal_J_per_resultant_squared": 1.7857142859640813e-11,
+    "free": 216,
+    "nodal": 78,
+    "resultants": 108
+  },
+  "limitations": [
+    "reference-state diagnostic physical quotient, not a nonlinear formulation",
+    "inherited auxiliary physical/beam/dual norm is not canonical or mesh-uniform",
+    "full production tangent and native beam retained variables remain unchanged",
+    "no physical-transfer, locking or registered ratio claim"
+  ],
+  "limits": {
+    "max_dense_rows": 1900,
+    "rss_bytes": 2147483648,
+    "wall_s": 120.0
+  },
+  "line_norm": {
+    "basis_integrals_m": [
+      0.012499999999999959,
+      0.01250000000000007,
+      0.012499999999999959,
+      0.012499999999999959,
+      0.01250000000000007,
+      0.012499999999999959,
+      0.01250000000000007,
+      0.012499999999999959
+    ],
+    "density_gram_ordering_defect": -1.016438284170338e-20,
+    "moment_to_force_equivalent_length_m": 0.1,
+    "physical_density_units": [
+      "N/m",
+      "N/m",
+      "N/m",
+      "Nm/m",
+      "Nm/m",
+      "Nm/m"
+    ]
+  },
+  "line_rows": 48,
+  "line_scaled_rank": 48,
+  "mixed_nnz": 350405,
+  "mixed_rows": 1694,
+  "model": "C1 Q4 x16/y4 35 mm, B3-12 2 um tangent, P0-8, fixed left roots",
+  "native_beam_free_dofs": 216,
+  "near_eigenpair_relative_residual": 1.7523743754650153e-12,
+  "near_mode_metric_norm_sq": 1.0000000000000016,
+  "near_mode_metric_shares": {
+    "beam_complementary": 4.819294696709773e-06,
+    "beam_kinematic": 1.2388336810108623e-05,
+    "line_dual": 0.9929487602155622,
+    "shell_physical": 0.007034032152932454
+  },
+  "nearest_signed_generalized_eigenvalues": [
+    -0.007139530314156398,
+    0.015224795416996584,
+    -0.017407342023474808,
+    -0.027553032477082042,
+    -0.03903329055697966,
+    -0.051190154418472814
+  ],
+  "numpy": "2.4.6",
+  "peak_rss_bytes": 390701056,
+  "physical_response_relative_discrepancy": 8.711555482746063e-14,
+  "python": "3.14.2",
+  "question": "After exact chart elimination, does a physical/interface mixed mode approach zero under co-refinement?",
+  "reference_gap_m_rad": 3.232993416167595e-16,
+  "schur_relative_skew": 1.757624105910839e-15,
+  "schur_vs_uneliminated_physical_K_relative": 0.03508111628431869,
+  "shell_drill_dofs": 286,
+  "shell_physical_dofs": 1430,
+  "source_git": "bfa3fa6f1541e62227284ff7db17bc601fae4347",
+  "source_sha256": {
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b3_e4_f03_top_face_drill_schur.py": "eb0456949dbe963a57046301b03f1e3ca96a2d9ba2b4355b30ca5f77b91a04e5",
+    "scripts\\_b3_e4_f03_native_fixture.py": "94d9e1a3532c3b2c061153e73942ccd73283eae0ef895b5ca4ef4014e5caa3fb",
+    "scripts\\b3_e4_f03_c1_native_mixed_metric.py": "9e5be04e9757b9ad365d0f89c74ee9027447dbf74773da43b9a4ced3ee47c390",
+    "scripts\\b3_e4_f03_distributed_surface_finite.py": "2cedbdc73564d6ffee0efa54825065dd10cb02329ca505ef49815d636ccc7cca",
+    "scripts\\b3_e4_f03_plate_patch_work.py": "61226436c029b6ebd80a7d63fb5b7038493fb29dfd06ee245fe3ca7fd78507ea"
+  },
+  "thread_env": {
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_DISABLE_JIT": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "threadpool_info": [
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.31.188.0"
+    },
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.30"
+    }
+  ],
+  "weak_constraint_euclidean": 1.0902131794919614e-06,
+  "work_left_J": -0.007089187773962985,
+  "work_right_J": -0.007089187773962986
+}

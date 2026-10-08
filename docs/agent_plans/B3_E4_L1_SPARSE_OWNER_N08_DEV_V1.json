@@ -1,0 +1,98 @@
+{
+  "cases": [
+    {
+      "beam_elements": 8,
+      "compile_seconds": 5.709029699999519,
+      "factorizations": 0,
+      "factorizations_after_solve": 1,
+      "line_interval_m": [
+        0.5,
+        1.0
+      ],
+      "line_quadrature_samples": 16,
+      "line_segments": 8,
+      "loads": {
+        "beam_tip_mx": {
+          "constraint_max": 1.0422940063185771e-13,
+          "free_equilibrium_ratio": 1.3068200817629573e-12,
+          "generation": 2,
+          "load_displacement_work_Nm": 0.00461280065512887,
+          "support_reaction_norm": 290.9198569236931
+        },
+        "shell_fy": {
+          "constraint_max": 2.969871858526855e-12,
+          "free_equilibrium_ratio": 6.681950823421915e-12,
+          "generation": 1,
+          "load_displacement_work_Nm": 0.05080018932298507,
+          "support_reaction_norm": 4043.200595716089
+        }
+      },
+      "matrix_nnz": 55466,
+      "matrix_rows": 1204,
+      "rss_after_bytes": 166473728,
+      "shell_elements": 128,
+      "space": "P1_translation_twist_P0_pitch_normal",
+      "two_solve_seconds": 0.009275100001104875
+    },
+    {
+      "beam_elements": 8,
+      "compile_seconds": 6.847582599999441,
+      "factorizations": 0,
+      "factorizations_after_solve": 1,
+      "line_interval_m": [
+        0.5,
+        1.0
+      ],
+      "line_quadrature_samples": 16,
+      "line_segments": 8,
+      "loads": {
+        "beam_tip_mx": {
+          "constraint_max": 1.606400201951545e-13,
+          "free_equilibrium_ratio": 7.825404453533825e-13,
+          "generation": 2,
+          "load_displacement_work_Nm": 0.004566753652343767,
+          "support_reaction_norm": 288.5181052392172
+        },
+        "shell_fy": {
+          "constraint_max": 8.179521479351106e-13,
+          "free_equilibrium_ratio": 7.411129958506195e-12,
+          "generation": 1,
+          "load_displacement_work_Nm": 0.05080839663075445,
+          "support_reaction_norm": 4043.984992406173
+        }
+      },
+      "matrix_nnz": 55216,
+      "matrix_rows": 1192,
+      "rss_after_bytes": 179617792,
+      "shell_elements": 128,
+      "space": "P0_translation_twist_pair_P0_pitch_normal",
+      "two_solve_seconds": 0.009146200000031968
+    }
+  ],
+  "effective_threadpools": [
+    {
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "internal_api": "openblas",
+      "num_threads": 1
+    },
+    {
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "internal_api": "openblas",
+      "num_threads": 1
+    }
+  ],
+  "elapsed_seconds": 12.699608200000512,
+  "imported_package": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\__init__.py",
+  "numpy": "2.4.6",
+  "python": "3.14.2",
+  "runner_sha256": "ce5388863382198ba48fa809cde8422c13f16c6137d1a6d3e99f13f6afc51769",
+  "scipy": "1.17.1",
+  "segments": 8,
+  "source_commit": "a62263e03af7ee4656000350ccd2ec24dcea18ed",
+  "status": "development_not_qualified",
+  "thread_environment": {
+    "NUMBA_DISABLE_JIT": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  }
+}

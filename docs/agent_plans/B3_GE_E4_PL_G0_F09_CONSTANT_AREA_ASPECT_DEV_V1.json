@@ -1,0 +1,727 @@
+{
+  "cases": [
+    {
+      "batch": {
+        "factorization_count": 1,
+        "solve_count": 1,
+        "status": "completed",
+        "tip_ratio_to_rounded_reference_limit": 0.007470600430660089
+      },
+      "classification": "all_tested_layers_pass",
+      "lambda": "1",
+      "load_fourth_root": "1",
+      "orientation": "forward",
+      "passed_development_diagnostic": true,
+      "physical_cut_work_J": 1.0757451073370212e-05,
+      "physical_tip_m_rad": [
+        0.0013289927182539682,
+        -0.0004876394825396825,
+        0.0022218402130251918,
+        0.0014139752702354894,
+        -0.0006977583705394873,
+        -0.001141285052910053
+      ],
+      "rounded_reduced_matrix_sha256": "13209c168f9147b40bc697b95d79786f2478f4c4d29050d4666cd940cf429094",
+      "rounded_reference_coordinate_balance": {
+        "force_ratio": 8.926156498441569e-12,
+        "moment_ratio": 1.4260184884627856e-13,
+        "passes_1e-9": true
+      },
+      "rounded_reference_factored_balance": {
+        "force_ratio": 1.939265971911448e-12,
+        "moment_ratio": 1.0177563216998332e-13,
+        "passes_1e-9": true
+      },
+      "rounded_reference_tip_m_rad": [
+        0.001328992718257871,
+        -0.00048763948254318076,
+        0.002221840213029833,
+        0.0014139752702354855,
+        -0.0006977583705429427,
+        -0.0011412850529126544
+      ],
+      "rounded_reference_tip_ratio_to_physical_limit": 3.797507232200287e-05,
+      "rounded_reference_work_J": 1.0757451073403649e-05,
+      "rounded_reference_work_relative_error": 3.1083081296632015e-12,
+      "second_section": {
+        "A_m2": "9/250000",
+        "Iy_m4": "27/1000000000000",
+        "Iz_m4": "27/62500000000",
+        "J_approx_m4": "9317943/102400000000000000",
+        "depth_m": "3/1000",
+        "principal_stiffness": [
+          "7560000",
+          "31500000/13",
+          "31500000/13",
+          "195676803/26624000",
+          "567/100",
+          "2268/25"
+        ],
+        "stored_stiffness_sha256": "b393829abc6e10f91f0c3a1a752711b8ccf15b4dd3011f8d9ce73bb865315ff6",
+        "width_m": "3/250"
+      },
+      "small_rotation_and_displacement_eligibility": true,
+      "sparse_coordinate_balance": {
+        "force_ratio": 1.1438170718802182e-10,
+        "moment_ratio": 2.1872730693059577e-13,
+        "passes_1e-9": true
+      },
+      "sparse_correction_count": 0,
+      "sparse_factored_balance": {
+        "force_ratio": 1.0974072946500333e-10,
+        "moment_ratio": 2.0167095464970284e-13,
+        "passes_1e-9": true
+      },
+      "sparse_initial_factored_balance": {
+        "force_ratio": 1.0974072946500333e-10,
+        "moment_ratio": 2.0167095464970284e-13,
+        "passes_1e-9": true
+      },
+      "sparse_tip_m_rad": [
+        0.0013289927182703887,
+        -0.0004876394825542943,
+        0.0022218402130446007,
+        0.0014139752702354916,
+        -0.0006977583705540221,
+        -0.0011412850529210013
+      ],
+      "sparse_tip_ratio_to_physical_limit": 0.00015880549305727124,
+      "sparse_tip_ratio_to_rounded_reference_limit": 0.008948579623906574,
+      "sparse_work_J": 1.0757451073510121e-05,
+      "sparse_work_relative_error": 1.3005823883505142e-11,
+      "station_resultant_ratio_to_physical_limit": 1.1504800435992524e-05,
+      "station_strain_ratio_to_physical_limit": 0.0001393350830061222,
+      "tip_wrench_exact_N_Nm": [
+        "1/400",
+        "-1/125",
+        "3/500",
+        "1/1250",
+        "-9/10000",
+        "7/10000"
+      ]
+    },
+    {
+      "batch": {
+        "factorization_count": 1,
+        "solve_count": 1,
+        "status": "completed",
+        "tip_ratio_to_rounded_reference_limit": 0.007470600430660089
+      },
+      "classification": "all_tested_layers_pass",
+      "lambda": "1",
+      "load_fourth_root": "1",
+      "orientation": "reversed-second",
+      "passed_development_diagnostic": true,
+      "physical_cut_work_J": 1.0757451073370212e-05,
+      "physical_tip_m_rad": [
+        0.0013289927182539682,
+        -0.0004876394825396825,
+        0.0022218402130251918,
+        0.0014139752702354894,
+        -0.0006977583705394873,
+        -0.001141285052910053
+      ],
+      "rounded_reduced_matrix_sha256": "13209c168f9147b40bc697b95d79786f2478f4c4d29050d4666cd940cf429094",
+      "rounded_reference_coordinate_balance": {
+        "force_ratio": 8.926156498441569e-12,
+        "moment_ratio": 1.4260184884627856e-13,
+        "passes_1e-9": true
+      },
+      "rounded_reference_factored_balance": {
+        "force_ratio": 1.939265971911448e-12,
+        "moment_ratio": 1.0177563216998332e-13,
+        "passes_1e-9": true
+      },
+      "rounded_reference_tip_m_rad": [
+        0.001328992718257871,
+        -0.00048763948254318076,
+        0.002221840213029833,
+        0.0014139752702354855,
+        -0.0006977583705429427,
+        -0.0011412850529126544
+      ],
+      "rounded_reference_tip_ratio_to_physical_limit": 3.797507232200287e-05,
+      "rounded_reference_work_J": 1.0757451073403649e-05,
+      "rounded_reference_work_relative_error": 3.1083081296632015e-12,
+      "second_section": {
+        "A_m2": "9/250000",
+        "Iy_m4": "27/1000000000000",
+        "Iz_m4": "27/62500000000",
+        "J_approx_m4": "9317943/102400000000000000",
+        "depth_m": "3/1000",
+        "principal_stiffness": [
+          "7560000",
+          "31500000/13",
+          "31500000/13",
+          "195676803/26624000",
+          "567/100",
+          "2268/25"
+        ],
+        "stored_stiffness_sha256": "b393829abc6e10f91f0c3a1a752711b8ccf15b4dd3011f8d9ce73bb865315ff6",
+        "width_m": "3/250"
+      },
+      "small_rotation_and_displacement_eligibility": true,
+      "sparse_coordinate_balance": {
+        "force_ratio": 1.1438170718802182e-10,
+        "moment_ratio": 2.1872730693059577e-13,
+        "passes_1e-9": true
+      },
+      "sparse_correction_count": 0,
+      "sparse_factored_balance": {
+        "force_ratio": 1.0974072946500333e-10,
+        "moment_ratio": 2.0167095464970284e-13,
+        "passes_1e-9": true
+      },
+      "sparse_initial_factored_balance": {
+        "force_ratio": 1.0974072946500333e-10,
+        "moment_ratio": 2.0167095464970284e-13,
+        "passes_1e-9": true
+      },
+      "sparse_tip_m_rad": [
+        0.0013289927182703887,
+        -0.0004876394825542943,
+        0.0022218402130446007,
+        0.0014139752702354916,
+        -0.0006977583705540221,
+        -0.0011412850529210013
+      ],
+      "sparse_tip_ratio_to_physical_limit": 0.00015880549305727124,
+      "sparse_tip_ratio_to_rounded_reference_limit": 0.008948579623906574,
+      "sparse_work_J": 1.0757451073510121e-05,
+      "sparse_work_relative_error": 1.3005823883505142e-11,
+      "station_resultant_ratio_to_physical_limit": 1.1504800435992524e-05,
+      "station_strain_ratio_to_physical_limit": 0.0001393350830061222,
+      "tip_wrench_exact_N_Nm": [
+        "1/400",
+        "-1/125",
+        "3/500",
+        "1/1250",
+        "-9/10000",
+        "7/10000"
+      ]
+    },
+    {
+      "batch": {
+        "factorization_count": 1,
+        "solve_count": 1,
+        "status": "completed",
+        "tip_ratio_to_rounded_reference_limit": 0.00027238439778687036
+      },
+      "classification": "all_tested_layers_pass",
+      "lambda": "1/2",
+      "load_fourth_root": "1/2",
+      "orientation": "forward",
+      "passed_development_diagnostic": true,
+      "physical_cut_work_J": 2.9312921909670226e-07,
+      "physical_tip_m_rad": [
+        0.0008122752145337302,
+        -3.0477467658730158e-05,
+        0.0011079521598914555,
+        0.0010682221647071784,
+        -0.00018843023098343259,
+        -0.0008089295221560847
+      ],
+      "rounded_reduced_matrix_sha256": "30c06a36fd20a06ea16bed39777094db27dd2bc5c060335ccb6e170178aebee0",
+      "rounded_reference_coordinate_balance": {
+        "force_ratio": 8.731238158231697e-12,
+        "moment_ratio": 1.930498138397279e-13,
+        "passes_1e-9": true
+      },
+      "rounded_reference_factored_balance": {
+        "force_ratio": 1.541987906873102e-11,
+        "moment_ratio": 8.940189710242389e-14,
+        "passes_1e-9": true
+      },
+      "rounded_reference_tip_m_rad": [
+        0.0008122752145346293,
+        -3.0477467658956607e-05,
+        0.0011079521598926405,
+        0.0010682221647080813,
+        -0.0001884302309836597,
+        -0.0008089295221569191
+      ],
+      "rounded_reference_tip_ratio_to_physical_limit": 1.0668329836759363e-05,
+      "rounded_reference_work_J": 2.9312921909706204e-07,
+      "rounded_reference_work_relative_error": 1.2273673892181143e-12,
+      "second_section": {
+        "A_m2": "9/250000",
+        "Iy_m4": "27/16000000000000",
+        "Iz_m4": "27/3906250000",
+        "J_approx_m4": "11482259522103/1717986918400000000000000",
+        "depth_m": "3/4000",
+        "principal_stiffness": [
+          "7560000",
+          "31500000/13",
+          "31500000/13",
+          "241127449964163/446676598784000",
+          "567/1600",
+          "36288/25"
+        ],
+        "stored_stiffness_sha256": "76007fffb18a87619f8fe302a57aef86c30e499ab02936ccfb35b71fa91e741a",
+        "width_m": "6/125"
+      },
+      "small_rotation_and_displacement_eligibility": true,
+      "sparse_coordinate_balance": {
+        "force_ratio": 5.960683335803907e-11,
+        "moment_ratio": 7.970882558835063e-13,
+        "passes_1e-9": true
+      },
+      "sparse_correction_count": 0,
+      "sparse_factored_balance": {
+        "force_ratio": 4.822426812638212e-11,
+        "moment_ratio": 9.957356755015973e-13,
+        "passes_1e-9": true
+      },
+      "sparse_initial_factored_balance": {
+        "force_ratio": 4.822426812638212e-11,
+        "moment_ratio": 9.957356755015973e-13,
+        "passes_1e-9": true
+      },
+      "sparse_tip_m_rad": [
+        0.0008122752145349721,
+        -3.047746765881331e-05,
+        0.0011079521598931154,
+        0.0010682221647086447,
+        -0.00018843023098351897,
+        -0.0008089295221572381
+      ],
+      "sparse_tip_ratio_to_physical_limit": 1.4943470247098431e-05,
+      "sparse_tip_ratio_to_rounded_reference_limit": 0.00027238439778687036,
+      "sparse_work_J": 2.9312921909714515e-07,
+      "sparse_work_relative_error": 1.510911650706113e-12,
+      "station_resultant_ratio_to_physical_limit": 2.98019265826904e-07,
+      "station_strain_ratio_to_physical_limit": 1.877337343774313e-05,
+      "tip_wrench_exact_N_Nm": [
+        "1/6400",
+        "-1/2000",
+        "3/8000",
+        "1/20000",
+        "-9/160000",
+        "7/160000"
+      ]
+    },
+    {
+      "batch": {
+        "factorization_count": 1,
+        "solve_count": 1,
+        "status": "completed",
+        "tip_ratio_to_rounded_reference_limit": 0.00027238439778687036
+      },
+      "classification": "all_tested_layers_pass",
+      "lambda": "1/2",
+      "load_fourth_root": "1/2",
+      "orientation": "reversed-second",
+      "passed_development_diagnostic": true,
+      "physical_cut_work_J": 2.9312921909670226e-07,
+      "physical_tip_m_rad": [
+        0.0008122752145337302,
+        -3.0477467658730158e-05,
+        0.0011079521598914555,
+        0.0010682221647071784,
+        -0.00018843023098343259,
+        -0.0008089295221560847
+      ],
+      "rounded_reduced_matrix_sha256": "30c06a36fd20a06ea16bed39777094db27dd2bc5c060335ccb6e170178aebee0",
+      "rounded_reference_coordinate_balance": {
+        "force_ratio": 8.731238158231697e-12,
+        "moment_ratio": 1.930498138397279e-13,
+        "passes_1e-9": true
+      },
+      "rounded_reference_factored_balance": {
+        "force_ratio": 1.541987906873102e-11,
+        "moment_ratio": 8.940189710242389e-14,
+        "passes_1e-9": true
+      },
+      "rounded_reference_tip_m_rad": [
+        0.0008122752145346293,
+        -3.0477467658956607e-05,
+        0.0011079521598926405,
+        0.0010682221647080813,
+        -0.0001884302309836597,
+        -0.0008089295221569191
+      ],
+      "rounded_reference_tip_ratio_to_physical_limit": 1.0668329836759363e-05,
+      "rounded_reference_work_J": 2.9312921909706204e-07,
+      "rounded_reference_work_relative_error": 1.2273673892181143e-12,
+      "second_section": {
+        "A_m2": "9/250000",
+        "Iy_m4": "27/16000000000000",
+        "Iz_m4": "27/3906250000",
+        "J_approx_m4": "11482259522103/1717986918400000000000000",
+        "depth_m": "3/4000",
+        "principal_stiffness": [
+          "7560000",
+          "31500000/13",
+          "31500000/13",
+          "241127449964163/446676598784000",
+          "567/1600",
+          "36288/25"
+        ],
+        "stored_stiffness_sha256": "76007fffb18a87619f8fe302a57aef86c30e499ab02936ccfb35b71fa91e741a",
+        "width_m": "6/125"
+      },
+      "small_rotation_and_displacement_eligibility": true,
+      "sparse_coordinate_balance": {
+        "force_ratio": 5.960683335803907e-11,
+        "moment_ratio": 7.970882558835063e-13,
+        "passes_1e-9": true
+      },
+      "sparse_correction_count": 0,
+      "sparse_factored_balance": {
+        "force_ratio": 4.822426812638212e-11,
+        "moment_ratio": 9.957356755015973e-13,
+        "passes_1e-9": true
+      },
+      "sparse_initial_factored_balance": {
+        "force_ratio": 4.822426812638212e-11,
+        "moment_ratio": 9.957356755015973e-13,
+        "passes_1e-9": true
+      },
+      "sparse_tip_m_rad": [
+        0.0008122752145349721,
+        -3.047746765881331e-05,
+        0.0011079521598931154,
+        0.0010682221647086447,
+        -0.00018843023098351897,
+        -0.0008089295221572381
+      ],
+      "sparse_tip_ratio_to_physical_limit": 1.4943470247098431e-05,
+      "sparse_tip_ratio_to_rounded_reference_limit": 0.00027238439778687036,
+      "sparse_work_J": 2.9312921909714515e-07,
+      "sparse_work_relative_error": 1.510911650706113e-12,
+      "station_resultant_ratio_to_physical_limit": 2.98019265826904e-07,
+      "station_strain_ratio_to_physical_limit": 1.877337343774313e-05,
+      "tip_wrench_exact_N_Nm": [
+        "1/6400",
+        "-1/2000",
+        "3/8000",
+        "1/20000",
+        "-9/160000",
+        "7/160000"
+      ]
+    },
+    {
+      "batch": {
+        "factorization_count": 1,
+        "solve_count": 1,
+        "status": "completed",
+        "tip_ratio_to_rounded_reference_limit": 0.06163082618735028
+      },
+      "classification": "all_tested_layers_pass",
+      "lambda": "1/4",
+      "load_fourth_root": "1/4",
+      "orientation": "forward",
+      "passed_development_diagnostic": true,
+      "physical_cut_work_J": 1.6850114568704378e-08,
+      "physical_tip_m_rad": [
+        0.0007784517668612041,
+        -1.9048417286706349e-06,
+        0.0010394806093381053,
+        0.0010479095926819715,
+        -0.00015686528717763512,
+        -0.0007864279720568783
+      ],
+      "rounded_reduced_matrix_sha256": "7e30ae297c0f5dd78a72b430e60346cb6bf100c2d2131246c57db3bb4e742983",
+      "rounded_reference_coordinate_balance": {
+        "force_ratio": 1.9338398180630172e-10,
+        "moment_ratio": 8.229809912562973e-11,
+        "passes_1e-9": true
+      },
+      "rounded_reference_factored_balance": {
+        "force_ratio": 9.338840269066582e-11,
+        "moment_ratio": 4.111689212396465e-11,
+        "passes_1e-9": true
+      },
+      "rounded_reference_tip_m_rad": [
+        0.0007784517667744008,
+        -1.9048417286484521e-06,
+        0.0010394806092221117,
+        0.00104790959251691,
+        -0.00015686528717760107,
+        -0.0007864279719331953
+      ],
+      "rounded_reference_tip_ratio_to_physical_limit": 0.0014940522407401154,
+      "rounded_reference_work_J": 1.6850114566832018e-08,
+      "rounded_reference_work_relative_error": 1.1111851523776897e-10,
+      "second_section": {
+        "A_m2": "9/250000",
+        "Iy_m4": "27/256000000000000",
+        "Iz_m4": "27/244140625",
+        "J_approx_m4": "12152237916784951863/28823037615171174400000000000000",
+        "depth_m": "3/16000",
+        "principal_stiffness": [
+          "7560000",
+          "31500000/13",
+          "31500000/13",
+          "255196996252483989123/7493989779944505344000",
+          "567/25600",
+          "580608/25"
+        ],
+        "stored_stiffness_sha256": "53176ce9f4cce00bab13f5c10cbab0dfd783982f94956eecf1a166de5d620503",
+        "width_m": "24/125"
+      },
+      "small_rotation_and_displacement_eligibility": true,
+      "sparse_coordinate_balance": {
+        "force_ratio": 2.462404224544204e-10,
+        "moment_ratio": 1.1783357764021723e-10,
+        "passes_1e-9": true
+      },
+      "sparse_correction_count": 0,
+      "sparse_factored_balance": {
+        "force_ratio": 2.3778515060057156e-10,
+        "moment_ratio": 1.5721162455234044e-10,
+        "passes_1e-9": true
+      },
+      "sparse_initial_factored_balance": {
+        "force_ratio": 2.3778515060057156e-10,
+        "moment_ratio": 1.5721162455234044e-10,
+        "passes_1e-9": true
+      },
+      "sparse_tip_m_rad": [
+        0.0007784517668328071,
+        -1.9048417289039312e-06,
+        0.001039480609299867,
+        0.0010479095926431243,
+        -0.00015686528717787014,
+        -0.0007864279720280868
+      ],
+      "sparse_tip_ratio_to_physical_limit": 0.0003516247155599655,
+      "sparse_tip_ratio_to_rounded_reference_limit": 0.06163082618735028,
+      "sparse_work_J": 1.6850114568100338e-08,
+      "sparse_work_relative_error": 3.584784946403888e-11,
+      "station_resultant_ratio_to_physical_limit": 1.3746435208107453e-07,
+      "station_strain_ratio_to_physical_limit": 0.0004435656644223041,
+      "tip_wrench_exact_N_Nm": [
+        "1/102400",
+        "-1/32000",
+        "3/128000",
+        "1/320000",
+        "-9/2560000",
+        "7/2560000"
+      ]
+    },
+    {
+      "batch": {
+        "factorization_count": 1,
+        "solve_count": 1,
+        "status": "completed",
+        "tip_ratio_to_rounded_reference_limit": 0.06163082618735028
+      },
+      "classification": "all_tested_layers_pass",
+      "lambda": "1/4",
+      "load_fourth_root": "1/4",
+      "orientation": "reversed-second",
+      "passed_development_diagnostic": true,
+      "physical_cut_work_J": 1.6850114568704378e-08,
+      "physical_tip_m_rad": [
+        0.0007784517668612041,
+        -1.9048417286706349e-06,
+        0.0010394806093381053,
+        0.0010479095926819715,
+        -0.00015686528717763512,
+        -0.0007864279720568783
+      ],
+      "rounded_reduced_matrix_sha256": "7e30ae297c0f5dd78a72b430e60346cb6bf100c2d2131246c57db3bb4e742983",
+      "rounded_reference_coordinate_balance": {
+        "force_ratio": 1.9338398180630172e-10,
+        "moment_ratio": 8.229809912562973e-11,
+        "passes_1e-9": true
+      },
+      "rounded_reference_factored_balance": {
+        "force_ratio": 9.338840269066582e-11,
+        "moment_ratio": 4.111689212396465e-11,
+        "passes_1e-9": true
+      },
+      "rounded_reference_tip_m_rad": [
+        0.0007784517667744008,
+        -1.9048417286484521e-06,
+        0.0010394806092221117,
+        0.00104790959251691,
+        -0.00015686528717760107,
+        -0.0007864279719331953
+      ],
+      "rounded_reference_tip_ratio_to_physical_limit": 0.0014940522407401154,
+      "rounded_reference_work_J": 1.6850114566832018e-08,
+      "rounded_reference_work_relative_error": 1.1111851523776897e-10,
+      "second_section": {
+        "A_m2": "9/250000",
+        "Iy_m4": "27/256000000000000",
+        "Iz_m4": "27/244140625",
+        "J_approx_m4": "12152237916784951863/28823037615171174400000000000000",
+        "depth_m": "3/16000",
+        "principal_stiffness": [
+          "7560000",
+          "31500000/13",
+          "31500000/13",
+          "255196996252483989123/7493989779944505344000",
+          "567/25600",
+          "580608/25"
+        ],
+        "stored_stiffness_sha256": "53176ce9f4cce00bab13f5c10cbab0dfd783982f94956eecf1a166de5d620503",
+        "width_m": "24/125"
+      },
+      "small_rotation_and_displacement_eligibility": true,
+      "sparse_coordinate_balance": {
+        "force_ratio": 2.462404224544204e-10,
+        "moment_ratio": 1.1783357764021723e-10,
+        "passes_1e-9": true
+      },
+      "sparse_correction_count": 0,
+      "sparse_factored_balance": {
+        "force_ratio": 2.3778515060057156e-10,
+        "moment_ratio": 1.5721162455234044e-10,
+        "passes_1e-9": true
+      },
+      "sparse_initial_factored_balance": {
+        "force_ratio": 2.3778515060057156e-10,
+        "moment_ratio": 1.5721162455234044e-10,
+        "passes_1e-9": true
+      },
+      "sparse_tip_m_rad": [
+        0.0007784517668328071,
+        -1.9048417289039312e-06,
+        0.001039480609299867,
+        0.0010479095926431243,
+        -0.00015686528717787014,
+        -0.0007864279720280868
+      ],
+      "sparse_tip_ratio_to_physical_limit": 0.0003516247155599655,
+      "sparse_tip_ratio_to_rounded_reference_limit": 0.06163082618735028,
+      "sparse_work_J": 1.6850114568100338e-08,
+      "sparse_work_relative_error": 3.584784946403888e-11,
+      "station_resultant_ratio_to_physical_limit": 1.3746435208107453e-07,
+      "station_strain_ratio_to_physical_limit": 0.0004435656644223041,
+      "tip_wrench_exact_N_Nm": [
+        "1/102400",
+        "-1/32000",
+        "3/128000",
+        "1/320000",
+        "-9/2560000",
+        "7/2560000"
+      ]
+    }
+  ],
+  "claim": "private bounded development diagnostic; F09/G0B remain open",
+  "competing_explanations": [
+    "rounded assembly departs from the independent physical cut-work oracle",
+    "scaled sparse factorization loses a response retained by the rounded matrix",
+    "binary64 coordinate storage loses a response retained by factored D,z",
+    "all sampled sections and representations remain accurate"
+  ],
+  "criteria": {
+    "force_and_moment_balance_relative": 1e-09,
+    "linear_eligibility": "tip translation <= 1% shortest member; tip rotation <= 0.01 rad",
+    "numerical_threads": 1,
+    "physical_tip": "rtol=1e-8, atol=1e-10",
+    "physical_work_relative": 1e-08,
+    "rss_bytes": 2147483648,
+    "sparse_vs_rounded_reference": "rtol=1e-9, atol=1e-12",
+    "station_resultant": "rtol=1e-8, atol=1e-7",
+    "station_strain": "rtol=1e-8, atol=1e-10",
+    "wall_seconds": 120
+  },
+  "elapsed_seconds": 1.5133574000210501,
+  "first_section": {
+    "A_m2": "3/12500",
+    "Iy_m4": "9/50000000000",
+    "Iz_m4": "1/7812500",
+    "J_approx_m4": "11517788205927/16384000000000000000000",
+    "depth_m": "3/1000",
+    "principal_stiffness": [
+      "50400000",
+      "210000000/13",
+      "210000000/13",
+      "241873552324467/4259840000000",
+      "189/5",
+      "26880"
+    ],
+    "stored_stiffness_sha256": "71dd3b569d5f79b8cf99c2c9e7608851f4d44e24a06b10471ec77f8e11939662",
+    "width_m": "2/25"
+  },
+  "fixture": {
+    "first_section_m": [
+      "2/25",
+      "3/1000"
+    ],
+    "graph": "rooted 2 m + 1.5 m mixed-wrench elbow; second member also reversed",
+    "load": "complete mixed tip wrench multiplied by fourth power of listed load factor",
+    "second_area_m2": "9/250000",
+    "second_sections_width_depth_load_fourth_root": [
+      [
+        "3/250",
+        "3/1000",
+        "1"
+      ],
+      [
+        "6/125",
+        "3/4000",
+        "1/2"
+      ],
+      [
+        "24/125",
+        "3/16000",
+        "1/4"
+      ]
+    ],
+    "section_law": "same exact rectangular A,Iy,Iz and declared Saint-Venant J approximation as prior thin-section probe; E=210 GPa, nu=0.3, 3-4-5 section-axis rotation"
+  },
+  "numpy": "2.4.6",
+  "peak_rss_bytes": 91033600,
+  "python": "3.14.2",
+  "question": "Does fixed-area rectangular aspect change reveal an oracle, assembly, sparse-solve, or stored-state limit?",
+  "scipy": "1.17.1",
+  "source_graph": [
+    {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b2_f09_physical_homothety_state_dev.py",
+      "sha256": "fba076b6d2640315503ee8db2096e58c491420e9086b575b76992c089ea36a2c"
+    },
+    {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b2_f09_thin_section_dev.py",
+      "sha256": "34513b16c83f0ac359249dd0cb1a7349fba79948dc49fbdf9087c8d8a919947f"
+    },
+    {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\probe_b3_ge_e4_pl_g0_f09_graph_reversal.py",
+      "sha256": "341d20087651535e85c978be01a68dc06612133be308998f7af1bf105493f119"
+    },
+    {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\_b2_physical_flexibility_linear.py",
+      "sha256": "b2fedd1e8751c1801372e20b9b9c3a8a374cbbbb3d4719a642761216436738dc"
+    },
+    {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\_b2_physical_linear_definition.py",
+      "sha256": "264114db883eee64305ebc22b0891a367bf37c3560cb7a32d8e7c9573b8d9be7"
+    },
+    {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\_b2_physical_linear_batch_dev.py",
+      "sha256": "ca6f60c7ee152da3b86cd8b479e63c442740281ecab66852d631595ae61f3cce"
+    },
+    {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\control.py",
+      "sha256": "cd0432c28fe429474608d5a310d36e29c4143783f313f77b45177027d9f230bf"
+    },
+    {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\linalg.py",
+      "sha256": "98d15d22bb89d89643331c9a946a6b15894ad5c6e4bb0796f914e03be8e4f4a1"
+    },
+    {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\threading_policy.py",
+      "sha256": "a6a3e576c4140c230eb2997a1f0170c707429e00a38bcbf6b6d7bcf02e88a4c1"
+    },
+    {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b2_f09_constant_area_aspect_dev.py",
+      "sha256": "a7d0541f9f8e778023211502700a1905f43d87b44476dc0142aa7b0a3240217d"
+    }
+  ],
+  "source_head": "c42e9314bd254d28be644a683b3a4e8e4b1f6fcf",
+  "status": "passed_development_diagnostic",
+  "threadpools": [
+    {
+      "internal_api": "openblas",
+      "num_threads": 1
+    },
+    {
+      "internal_api": "openblas",
+      "num_threads": 1
+    }
+  ]
+}

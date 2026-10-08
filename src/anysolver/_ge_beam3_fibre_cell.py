@@ -7,6 +7,7 @@ reevaluated at fixed origin throughout the coupled solve. Not a public route.
 from dataclasses import dataclass
 from decimal import Decimal as D, localcontext
 import hashlib
+from math import isfinite, nextafter, ulp
 from time import monotonic
 
 from ._ge_beam3_fibre_section import (
@@ -26,17 +27,34 @@ class CellHistory:
     stations: tuple
 
 
-def _section_response(section, strain, origins, check):
+@dataclass(frozen=True)
+class FibreTrialState:
+    """Owned local branch linearization; never accepted/checkpoint state."""
+    cell_identity: str
+    origin: CellHistory
+    resultants: tuple
+    strains: tuple
+    strain_compliances: tuple
+
+
+def _section_response(section, strain, origins, check, *, include_energy=False):
     """Decimal first/second variations and recovery of the declared potential."""
     stress = mv(section._background, strain)
     tangent = [list(row) for row in section._background]
     potential = dot(strain, stress)/2
+    stored = potential; previous_hardening = D(0); dissipation = D(0)
     proposed = []; recovered = []
     for fibre, (z0, p0) in zip(section.fibres, origins):
         check(); b = section._map(fibre); area = D.from_float(fibre.area); young = D.from_float(fibre.young)
         ef = dot(b, strain); delta, et, branch = fibre.curve._return(young, ef, z0, p0)
         z = z0+delta; p = p0+abs(delta); elastic = ef-z; sigma = young*elastic
         potential += area*(young*elastic*elastic/2+fibre.curve._integral(p0, p))
+        if include_energy:
+            y0 = D.from_float(fibre.curve.flow_stress[0])
+            stored += area*(young*elastic*elastic/2+
+                           fibre.curve._integral(D(0), p)-y0*p)
+            previous_hardening += area*(fibre.curve._integral(D(0), p0)-y0*p0)
+            dissipation += area*y0*abs(delta)
         for i in range(6):
             stress[i] += area*b[i]*sigma
             for j in range(6): tangent[i][j] += area*et*b[i]*b[j]
@@ -44,7 +62,8 @@ def _section_response(section, strain, origins, check):
         proposed.append((zh, zl, ph, pl))
         recovered.append(FibreRecovery(fibre.fibre_id, _scalar_pair(ef), _scalar_pair(elastic),
             _scalar_pair(sigma), _scalar_pair(et), _scalar_pair(delta), branch))
-    return potential, stress, tangent, tuple(proposed), tuple(recovered)
+    fields = potential, stress, tangent, tuple(proposed), tuple(recovered)
+    return fields + (stored, previous_hardening, dissipation) if include_energy else fields
 
 
 class FibreCellConjugate:
@@ -163,7 +182,63 @@ class FibreCellConjugate:
             slope += curvature*(right-left)
         return D(1), evaluations
 
-    def response(self, resultants, origin=None, *, check=None):
+    def boundary_amount(self, trial, direction, *, origin, check=None):
+        """First fixed-origin yield/table crossing, guarded for binary64 updates.
+
+        Within the current affine material branch, dx/dp = T^-1 L. This is a
+        local force-chart proposal; actual global merit still decides acceptance.
+        """
+        if (type(trial) is not FibreTrialState or trial.cell_identity != self.identity or
+                trial.origin is not origin or len(trial.resultants) != 18):
+            raise ValueError('current cell/origin-bound fibre trial linearization required')
+        started = monotonic()
+        def guard():
+            if check is not None: check()
+            if monotonic()-started > 60.: raise TimeoutError('fibre boundary proposal deadline')
+        with localcontext() as context:
+            context.prec = 80
+            correction = tuple(direction)
+            dp = tuple(dec(v) for v in correction)
+            if len(dp) != 18: raise ValueError('18 retained resultant corrections required')
+            origins = self._origins(origin)
+            first = None
+            for strain, compliance, history in zip(trial.strains, trial.strain_compliances, origins):
+                guard()
+                change = mv(compliance, dp)
+                for fibre, (z0, p0) in zip(self.section.fibres, history):
+                    guard(); b = self.section._map(fibre)
+                    ef = dot(b, strain); de = dot(b, change)
+                    if de == 0: continue
+                    sensitivity = mv(tr(compliance), b)
+                    levels = (p0,)+tuple(D.from_float(k) for k in fibre.curve.plastic_strain if D.from_float(k) > p0)
+                    for accumulated in levels:
+                        guard(); flow = fibre.curve._at(accumulated)[0]
+                        for sign in (-1, 1):
+                            boundary = z0+sign*(accumulated-p0+flow/dec(fibre.young))
+                            amount = (boundary-ef)/de
+                            if not 0 < amount < 1: continue
+                            if first is None or amount < first[0]:
+                                first = amount, de, sensitivity
+            if first is None: return None
+            amount, de, sensitivity = first
+            # _advance performs amount*dp then p+product, each round-to-nearest.
+            # Half an ULP bounds each operation; this uniform [0,1] bound avoids
+            # fixture-dependent slack and includes subnormal arithmetic.
+            strain_rounding = D(0)
+            for p, d, coefficient in zip(trial.resultants, correction, sensitivity):
+                upper = nextafter(abs(p)+abs(d), float('inf'))
+                if not isfinite(upper): return None
+                bound = (D.from_float(ulp(d))+D.from_float(ulp(upper)))/2
+                strain_rounding += abs(coefficient)*bound
+            proposed = nextafter(float(amount+strain_rounding/abs(de)), float('inf'))
+            return proposed if isfinite(proposed) and 0 < proposed < 1 else None
+
+    def response(self, resultants, origin=None, *, check=None, include_energy=False,
+                 capture_trial=False):
+        if type(include_energy) is not bool:
+            raise ValueError('explicit native energy recovery policy required')
+        if type(capture_trial) is not bool:
+            raise ValueError('explicit fibre trial capture policy required')
         started = monotonic()
         def guard():
             if check is not None: check()
@@ -207,7 +282,8 @@ class FibreCellConjugate:
                 x = proposed
             try: cholesky(tangent)
             except ValueError as error: raise ValueError('nonpositive accepted fibre cell tangent; smooth compliance unavailable') from error
-            compliance = mul(tr(self.load_map), solve(tangent, [list(row) for row in self.load_map], guard))
+            strain_compliance = solve(tangent, [list(row) for row in self.load_map], guard)
+            compliance = mul(tr(self.load_map), strain_compliance)
             gradient = mv(tr(self.load_map), x)
             history = CellHistory(self.identity, tuple(FibreHistory(self.section.identity, row[2]) for row in fields))
             self._origins(history)
@@ -221,5 +297,30 @@ class FibreCellConjugate:
                 residual=str(max(abs(v) for v in residual)),
                 derivative_kind='SEMISMOOTH_BRANCH_SELECTION' if boundary else 'CLASSICAL_SMOOTH_BRANCH',
                 production_qualified=False)
+            if capture_trial:
+                response['_trial_state'] = FibreTrialState(self.identity, origin, tuple(float(v) for v in p),
+                    tuple(tuple(row[0]) for row in fields),
+                    tuple(frozen(mul(mapping, [strain_compliance[i] for i in indices]))
+                          for _, _, mapping, indices in self.stations))
+            if include_energy:
+                stored = D(0); previous_hardening = D(0); dissipation = D(0)
+                for (_, weight, _, _), predecessor, fields_row, station in zip(
+                        self.stations, origins, fields, station_rows):
+                    strain, stress, proposed, recovery = fields_row
+                    repeated = _section_response(self.section, strain, predecessor,
+                                                 guard, include_energy=True)
+                    if (repeated[1] != stress or repeated[3] != proposed or
+                            repeated[4] != recovery):
+                        raise ValueError('native energy recovery changed accepted station response')
+                    stored += weight*repeated[5]
+                    previous_hardening += weight*repeated[6]
+                    dissipation += weight*repeated[7]
+                    station['stored_energy_per_length'] = _scalar_pair(repeated[5])
+                    station['previous_hardening_per_length'] = _scalar_pair(repeated[6])
+                    station['incremental_dissipation_per_length'] = _scalar_pair(repeated[7])
+                response['stored_energy'] = _scalar_pair(stored)
+                response['previous_hardening_energy'] = _scalar_pair(previous_hardening)
+                response['incremental_dissipation'] = _scalar_pair(dissipation)
+                response['energy_recovery_station_updates'] = len(fields)
         guard()
         return response

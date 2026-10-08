@@ -1,0 +1,71 @@
+{
+  "results": [
+    {
+      "nx": 16,
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_seconds": 6.490726899995934,
+      "sampled_process_tree_peak_rss_bytes": 172769280,
+      "command": [
+        "C:\\Python\\Python314\\python.exe",
+        "-u",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-native-p0-family-v1\\b3_e4_bl5_matched_p0_native_refinement_dev.py",
+        "--site",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-staged-load-installed-v1\\site",
+        "--output-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-native-p0-family-v1\\n16",
+        "--nx",
+        "16",
+        "--external-level-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\n16",
+        "--prior-16-mz-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-matched-mz-native-v1\\mz"
+      ]
+    },
+    {
+      "nx": 32,
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_seconds": 12.851821599993855,
+      "sampled_process_tree_peak_rss_bytes": 210464768,
+      "command": [
+        "C:\\Python\\Python314\\python.exe",
+        "-u",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-native-p0-family-v1\\b3_e4_bl5_matched_p0_native_refinement_dev.py",
+        "--site",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-staged-load-installed-v1\\site",
+        "--output-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-native-p0-family-v1\\n32",
+        "--nx",
+        "32",
+        "--external-level-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\n32",
+        "--prior-16-mz-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-matched-mz-native-v1\\mz"
+      ]
+    },
+    {
+      "nx": 64,
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_seconds": 40.86456159999943,
+      "sampled_process_tree_peak_rss_bytes": 375480320,
+      "command": [
+        "C:\\Python\\Python314\\python.exe",
+        "-u",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-native-p0-family-v1\\b3_e4_bl5_matched_p0_native_refinement_dev.py",
+        "--site",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-staged-load-installed-v1\\site",
+        "--output-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-native-p0-family-v1\\n64",
+        "--nx",
+        "64",
+        "--external-level-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\n64",
+        "--prior-16-mz-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-matched-mz-native-v1\\mz"
+      ]
+    }
+  ],
+  "status": "COMPLETED_DEVELOPMENT_ONLY"
+}

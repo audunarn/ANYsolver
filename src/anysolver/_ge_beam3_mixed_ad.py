@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from math import isfinite
 from typing import Any
 
 import numpy as np
@@ -51,6 +52,12 @@ class Jet2:
         return self._coerce(other) - self
 
     def __mul__(self, other: Any) -> "Jet2":
+        if type(self) is Jet2 and not isinstance(other, Jet2):
+            scalar = float(other)
+            if _scalar_layout(self) and isfinite(self.value):
+                return _scalar_parts_product(self, scalar, 0.0, 0.0)
+            # Preserve one observable scalar conversion even on fallback.
+            other = scalar
         made = self._coerce(other)
         return Jet2(
             self.value * made.value,
@@ -70,10 +77,47 @@ class Jet2:
         return unary(self, inverse, -(inverse**2), 2.0 * inverse**3)
 
     def __truediv__(self, other: Any) -> "Jet2":
+        if type(self) is Jet2 and not isinstance(other, Jet2):
+            scalar = float(other)
+            if _scalar_layout(self) and isfinite(self.value):
+                if scalar == 0.0:
+                    raise ZeroDivisionError("jet reciprocal is singular")
+                inverse = 1.0 / scalar
+                # Same powers/order as reciprocal, including overflow errors.
+                first, second = -(inverse**2), 2.0 * inverse**3
+                if isfinite(first) and isfinite(second):
+                    return _scalar_parts_product(
+                        self, inverse, first*0.0, first*0.0 + second*0.0)
+            other = scalar
         return self * self._coerce(other).reciprocal()
 
     def __rtruediv__(self, other: Any) -> "Jet2":
         return self._coerce(other) * self.reciprocal()
+
+
+def _scalar_layout(jet: Jet2) -> bool:
+    """Fast arithmetic requires the ordinary owned binary64 derivative layout."""
+    gradient, hessian = jet.gradient, jet.hessian
+    return (type(jet.value) is float and type(gradient) is np.ndarray and
+            type(hessian) is np.ndarray and gradient.dtype == np.float64 and
+            hessian.dtype == np.float64 and gradient.ndim == 1 and
+            hessian.shape == (gradient.size, gradient.size))
+
+
+def _scalar_parts_product(jet: Jet2, value: float, gradient_zero: float,
+                          hessian_zero: float) -> Jet2:
+    """Original product order, with constant derivatives broadcast as vectors.
+
+    Do not drop the zero products: they retain signed zero and propagation of
+    nonfinite derivatives. Avoid only the constant NxN buffers/outer products.
+    Every returned derivative array is independently owned.
+    """
+    result = jet.value * value
+    gradient = jet.gradient * value + gradient_zero * jet.value
+    hessian = jet.hessian * value + hessian_zero * jet.value
+    hessian = hessian + (jet.gradient * gradient_zero)[:, None]
+    hessian = hessian + (gradient_zero * jet.gradient)[None, :]
+    return Jet2(result, gradient, hessian)
 
 
 def unary(argument: Jet2, value: float, first: float, second: float) -> Jet2:

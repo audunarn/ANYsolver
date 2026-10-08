@@ -1,0 +1,21 @@
+{
+  "anysolver_import": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\__init__.py",
+  "modules_sha256": {
+    "_ge_beam3_mixed_ad.py": "c71cea89056ccb671d37d3169085844b7012e7fa8b7d78545dfc45fadaec105b",
+    "_ge_beam3_pose_joint.py": "f3fce05e6d65dfac9a9783e6fb466b8a0067ab4831ba00a74df9c579461abf71",
+    "_ge_beam3_variational_shell.py": "958cbf00f62e8af87724f909b793fa24391e02e3a0a2a5d5d62f05e9f1168320",
+    "e4_pl_element.py": "8aa0a6845804857c15d3ca30d883e1960386c00044d69a892f9bf35bb0110f33",
+    "e4_pl_s3_state.py": "b8ba5c114318ec6397e3155012519aa4840fa20d7f26bc849cdc50fb1783e366",
+    "material_curves.py": "5400ce65fe87a049a6d89f880b4bc8a19f48aeaf9c5cda0bef0e6e88a8116661",
+    "plasticity.py": "1b6c5ab0af2eacbcc949cf473844d326869523f5a2e9fddb192be5f672726010"
+  },
+  "numba_cache": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\b3_e4_f05_numba_cache",
+  "numba_jit_disabled": true,
+  "numpy": "2.4.6",
+  "predecessor": "Q4 v1 loaded sealed state",
+  "purpose": "F05_DEV_Q4_POSE_NOT_G0B_ACCEPTANCE",
+  "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+  "source_sha256": "2defcd4c7ea46c0d07e72af5676e05db1ec99ccee3dd04d69ec7c9227509d948",
+  "steps": [2e-06, 2e-07, 2e-08],
+  "tolerance": 1e-05
+}

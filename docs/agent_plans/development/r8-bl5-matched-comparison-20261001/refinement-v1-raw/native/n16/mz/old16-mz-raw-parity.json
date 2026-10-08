@@ -1,0 +1,48 @@
+{
+  "raw_state_sha256": "75b1b461fd31235223cb0cd3dc8038c1309129de12aa7230316669db25bafdc1",
+  "roles": {
+    "Kq": {
+      "bit_equal": true,
+      "maximum_absolute_difference": 0.0,
+      "relative_l2_difference": 0.0
+    },
+    "connection_exerted": {
+      "bit_equal": true,
+      "maximum_absolute_difference": 0.0,
+      "relative_l2_difference": 0.0
+    },
+    "constraint_resisting": {
+      "bit_equal": true,
+      "maximum_absolute_difference": 0.0,
+      "relative_l2_difference": 0.0
+    },
+    "load": {
+      "bit_equal": true,
+      "maximum_absolute_difference": 0.0,
+      "relative_l2_difference": 0.0
+    },
+    "multipliers": {
+      "bit_equal": true,
+      "maximum_absolute_difference": 0.0,
+      "relative_l2_difference": 0.0
+    },
+    "q": {
+      "bit_equal": true,
+      "maximum_absolute_difference": 0.0,
+      "relative_l2_difference": 0.0
+    },
+    "reactions": {
+      "bit_equal": true,
+      "maximum_absolute_difference": 0.0,
+      "relative_l2_difference": 0.0
+    },
+    "weak_gaps": {
+      "bit_equal": true,
+      "maximum_absolute_difference": 0.0,
+      "relative_l2_difference": 0.0
+    }
+  },
+  "scope": "Instrumentation predecessor comparison only; raw deltas retained, no tuned acceptance threshold.",
+  "source_sha256": "92fa4515f1c61008f24bafe932e8fa2c50ea298903f2a1e5499e5be6c7dfaefb",
+  "summary_sha256": "2ace0975cbbc755dd6bce065313c46051ee775ace24cddebe75322784d93e699"
+}

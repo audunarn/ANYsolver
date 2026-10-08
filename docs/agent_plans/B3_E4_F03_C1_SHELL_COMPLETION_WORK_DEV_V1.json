@@ -1,0 +1,34 @@
+{
+  "cases": {
+    "tip_fz": {
+      "completion_fraction_of_total": 0.0053883250048077334,
+      "completion_operator_work_J": 7.001170914233375e-05,
+      "drilling_coordinate_force_work_J": 0.0,
+      "drilling_coordinate_force_work_fraction": 0.0,
+      "equilibrium_ratio": 1.5192495484517917e-12,
+      "physical_operator_work_J": 0.012923211431728874,
+      "total_action_work_J": 0.01299322314074704
+    },
+    "tip_mx": {
+      "completion_fraction_of_total": 4.824202317714964e-05,
+      "completion_operator_work_J": 8.577900996974073e-08,
+      "drilling_coordinate_force_work_J": 0.0,
+      "drilling_coordinate_force_work_fraction": 0.0,
+      "equilibrium_ratio": 1.6943455477625352e-12,
+      "physical_operator_work_J": 0.0017780114963609228,
+      "total_action_work_J": 0.0017780972753723746
+    }
+  },
+  "classification": "fixed-dual E4 physical and completion quadratic work",
+  "limitations": [
+    "fixed dual and unchanged full-tangent response only",
+    "drilling coordinate work is not the same as completion energy",
+    "no source of E4/3D difference is established by this partition alone",
+    "not F03/G0B acceptance or multiplier selection"
+  ],
+  "shell_physical_relative_skew": 0.0,
+  "shell_tangent_relative_skew": 8.784290012638976e-17,
+  "solid_reconstruction_sha256": "118aef26cf0766fa50a6d42929a095440e142f7177216e5b85dc2c7e51fa7f92",
+  "source_commit": "746ac313664a744289826e5bf8c0dc89711b1327",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE"
+}

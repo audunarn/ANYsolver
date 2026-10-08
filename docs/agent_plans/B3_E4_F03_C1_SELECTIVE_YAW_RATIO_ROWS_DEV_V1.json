@@ -1,0 +1,472 @@
+{
+  "anysolver_import_path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\__init__.py",
+  "cases": {
+    "1:1": {
+      "beam_bond_half_cells": 8,
+      "beam_half_cells_total": 18,
+      "multiplier_intervals": 8,
+      "shell_bond_cells": 8,
+      "spaces": {
+        "continuous_linear": {
+          "active_primal_columns": 96,
+          "p0_basis_integrals_m": [
+            0.012499999999999956,
+            0.012500000000000068,
+            0.012499999999999956,
+            0.012499999999999956,
+            0.012500000000000068,
+            0.012499999999999956,
+            0.012500000000000068,
+            0.012499999999999956
+          ],
+          "rank": 45,
+          "rank_tolerance": 3.312603841065166e-14,
+          "rows": 45,
+          "smallest_unit_row_singular": 0.19281701734049753,
+          "yaw_basis_integrals_m": [
+            0.012500000000000028,
+            0.024999999999999977,
+            0.024999999999999974,
+            0.02500000000000006,
+            0.012499999999999952
+          ]
+        },
+        "dual_linear": {
+          "active_primal_columns": 96,
+          "p0_basis_integrals_m": [
+            0.012499999999999956,
+            0.012500000000000068,
+            0.012499999999999956,
+            0.012499999999999956,
+            0.012500000000000068,
+            0.012499999999999956,
+            0.012500000000000068,
+            0.012499999999999956
+          ],
+          "rank": 45,
+          "rank_tolerance": 3.3390140364357015e-14,
+          "rows": 45,
+          "smallest_unit_row_singular": 0.16661215504601692,
+          "yaw_basis_integrals_m": [
+            0.012500000000000063,
+            0.024999999999999988,
+            0.024999999999999984,
+            0.025000000000000126,
+            0.01249999999999983
+          ]
+        }
+      },
+      "station_count": 24,
+      "yaw_multiplier_intervals": 4
+    },
+    "1:2": {
+      "beam_bond_half_cells": 8,
+      "beam_half_cells_total": 18,
+      "multiplier_intervals": 4,
+      "shell_bond_cells": 4,
+      "spaces": {
+        "continuous_linear": {
+          "active_primal_columns": 76,
+          "p0_basis_integrals_m": [
+            0.025000000000000022,
+            0.024999999999999915,
+            0.025000000000000022,
+            0.02500000000000003
+          ],
+          "rank": 23,
+          "rank_tolerance": 2.3799622189932575e-14,
+          "rows": 23,
+          "smallest_unit_row_singular": 0.48225666827299174,
+          "yaw_basis_integrals_m": [
+            0.025000000000000022,
+            0.049999999999999996,
+            0.02499999999999998
+          ]
+        },
+        "dual_linear": {
+          "active_primal_columns": 76,
+          "p0_basis_integrals_m": [
+            0.025000000000000022,
+            0.024999999999999915,
+            0.025000000000000022,
+            0.02500000000000003
+          ],
+          "rank": 23,
+          "rank_tolerance": 2.570063847022355e-14,
+          "rows": 23,
+          "smallest_unit_row_singular": 0.23877466239451894,
+          "yaw_basis_integrals_m": [
+            0.025000000000000105,
+            0.04999999999999999,
+            0.024999999999999894
+          ]
+        }
+      },
+      "station_count": 24,
+      "yaw_multiplier_intervals": 2
+    },
+    "1:4": {
+      "beam_bond_half_cells": 16,
+      "beam_half_cells_total": 26,
+      "multiplier_intervals": 4,
+      "shell_bond_cells": 4,
+      "spaces": {
+        "continuous_linear": {
+          "active_primal_columns": 124,
+          "p0_basis_integrals_m": [
+            0.025000000000000022,
+            0.02499999999999991,
+            0.025000000000000022,
+            0.025000000000000022
+          ],
+          "rank": 23,
+          "rank_tolerance": 3.972785763850024e-14,
+          "rows": 23,
+          "smallest_unit_row_singular": 0.3882503357099584,
+          "yaw_basis_integrals_m": [
+            0.02500000000000001,
+            0.049999999999999996,
+            0.024999999999999977
+          ]
+        },
+        "dual_linear": {
+          "active_primal_columns": 124,
+          "p0_basis_integrals_m": [
+            0.025000000000000022,
+            0.02499999999999991,
+            0.025000000000000022,
+            0.025000000000000022
+          ],
+          "rank": 23,
+          "rank_tolerance": 4.2587125008252165e-14,
+          "rows": 23,
+          "smallest_unit_row_singular": 0.19805730454187992,
+          "yaw_basis_integrals_m": [
+            0.0250000000000001,
+            0.05000000000000001,
+            0.024999999999999897
+          ]
+        }
+      },
+      "station_count": 48,
+      "yaw_multiplier_intervals": 2
+    },
+    "1:8": {
+      "beam_bond_half_cells": 16,
+      "beam_half_cells_total": 26,
+      "multiplier_intervals": 2,
+      "shell_bond_cells": 2,
+      "spaces": {
+        "continuous_linear": {
+          "active_primal_columns": 114,
+          "p0_basis_integrals_m": [
+            0.04999999999999993,
+            0.050000000000000044
+          ],
+          "rank": 12,
+          "rank_tolerance": 3.2022410396614386e-14,
+          "rows": 12,
+          "smallest_unit_row_singular": 0.36230468113391373,
+          "yaw_basis_integrals_m": [
+            0.05000000000000002,
+            0.04999999999999998
+          ]
+        },
+        "dual_linear": {
+          "active_primal_columns": 114,
+          "p0_basis_integrals_m": [
+            0.04999999999999993,
+            0.050000000000000044
+          ],
+          "rank": 12,
+          "rank_tolerance": 3.658640077488567e-14,
+          "rows": 12,
+          "smallest_unit_row_singular": 0.24560134565847722,
+          "yaw_basis_integrals_m": [
+            0.05000000000000003,
+            0.04999999999999995
+          ]
+        }
+      },
+      "station_count": 48,
+      "yaw_multiplier_intervals": 1
+    },
+    "2:1": {
+      "beam_bond_half_cells": 4,
+      "beam_half_cells_total": 14,
+      "multiplier_intervals": 8,
+      "shell_bond_cells": 8,
+      "spaces": {
+        "continuous_linear": {
+          "active_primal_columns": 72,
+          "p0_basis_integrals_m": [
+            0.012499999999999956,
+            0.012500000000000068,
+            0.012499999999999956,
+            0.012499999999999956,
+            0.012500000000000068,
+            0.012499999999999956,
+            0.012500000000000068,
+            0.012499999999999956
+          ],
+          "rank": 45,
+          "rank_tolerance": 2.5866185439215175e-14,
+          "rows": 45,
+          "smallest_unit_row_singular": 0.012765220907184743,
+          "yaw_basis_integrals_m": [
+            0.012500000000000028,
+            0.024999999999999977,
+            0.024999999999999974,
+            0.02500000000000006,
+            0.012499999999999952
+          ]
+        },
+        "dual_linear": {
+          "active_primal_columns": 72,
+          "p0_basis_integrals_m": [
+            0.012499999999999956,
+            0.012500000000000068,
+            0.012499999999999956,
+            0.012499999999999956,
+            0.012500000000000068,
+            0.012499999999999956,
+            0.012500000000000068,
+            0.012499999999999956
+          ],
+          "rank": 45,
+          "rank_tolerance": 2.536505042320451e-14,
+          "rows": 45,
+          "smallest_unit_row_singular": 0.012720698437200443,
+          "yaw_basis_integrals_m": [
+            0.012500000000000063,
+            0.024999999999999988,
+            0.024999999999999984,
+            0.025000000000000126,
+            0.01249999999999983
+          ]
+        }
+      },
+      "station_count": 24,
+      "yaw_multiplier_intervals": 4
+    },
+    "4:1": {
+      "beam_bond_half_cells": 2,
+      "beam_half_cells_total": 12,
+      "multiplier_intervals": 4,
+      "shell_bond_cells": 8,
+      "spaces": {
+        "continuous_linear": {
+          "active_primal_columns": 60,
+          "p0_basis_integrals_m": [
+            0.025000000000000022,
+            0.024999999999999915,
+            0.025000000000000026,
+            0.02500000000000003
+          ],
+          "rank": 25,
+          "rank_tolerance": 1.9308282202273925e-14,
+          "rows": 25,
+          "smallest_unit_row_singular": 0.011856667210800717,
+          "yaw_basis_integrals_m": [
+            0.012500000000000028,
+            0.024999999999999977,
+            0.024999999999999974,
+            0.02500000000000006,
+            0.012499999999999952
+          ]
+        },
+        "dual_linear": {
+          "active_primal_columns": 60,
+          "p0_basis_integrals_m": [
+            0.025000000000000022,
+            0.024999999999999915,
+            0.025000000000000026,
+            0.02500000000000003
+          ],
+          "rank": 25,
+          "rank_tolerance": 1.9341696802090182e-14,
+          "rows": 25,
+          "smallest_unit_row_singular": 0.1394720581837437,
+          "yaw_basis_integrals_m": [
+            0.012500000000000063,
+            0.024999999999999988,
+            0.024999999999999984,
+            0.025000000000000126,
+            0.01249999999999983
+          ]
+        }
+      },
+      "station_count": 24,
+      "yaw_multiplier_intervals": 4
+    },
+    "4:1-L2": {
+      "beam_bond_half_cells": 4,
+      "beam_half_cells_total": 14,
+      "multiplier_intervals": 8,
+      "shell_bond_cells": 16,
+      "spaces": {
+        "continuous_linear": {
+          "active_primal_columns": 112,
+          "p0_basis_integrals_m": [
+            0.012499999999999956,
+            0.012500000000000067,
+            0.012499999999999956,
+            0.012499999999999957,
+            0.012500000000000067,
+            0.012499999999999957,
+            0.012500000000000067,
+            0.012499999999999957
+          ],
+          "rank": 49,
+          "rank_tolerance": 3.819469550761908e-14,
+          "rows": 49,
+          "smallest_unit_row_singular": 0.005683508033723697,
+          "yaw_basis_integrals_m": [
+            0.00625,
+            0.012500000000000028,
+            0.012499999999999975,
+            0.0125,
+            0.012499999999999975,
+            0.01250000000000003,
+            0.01250000000000003,
+            0.012499999999999975,
+            0.006249999999999978
+          ]
+        },
+        "dual_linear": {
+          "active_primal_columns": 112,
+          "p0_basis_integrals_m": [
+            0.012499999999999956,
+            0.012500000000000067,
+            0.012499999999999956,
+            0.012499999999999957,
+            0.012500000000000067,
+            0.012499999999999957,
+            0.012500000000000067,
+            0.012499999999999957
+          ],
+          "rank": 49,
+          "rank_tolerance": 3.808788462952685e-14,
+          "rows": 49,
+          "smallest_unit_row_singular": 0.08775117827845678,
+          "yaw_basis_integrals_m": [
+            0.0062500000000000454,
+            0.012500000000000061,
+            0.012499999999999897,
+            0.012500000000000091,
+            0.012499999999999895,
+            0.012500000000000063,
+            0.012500000000000063,
+            0.012499999999999897,
+            0.006249999999999979
+          ]
+        }
+      },
+      "station_count": 48,
+      "yaw_multiplier_intervals": 8
+    },
+    "8:1": {
+      "beam_bond_half_cells": 2,
+      "beam_half_cells_total": 12,
+      "multiplier_intervals": 4,
+      "shell_bond_cells": 16,
+      "spaces": {
+        "continuous_linear": {
+          "active_primal_columns": 100,
+          "p0_basis_integrals_m": [
+            0.025000000000000022,
+            0.02499999999999991,
+            0.025000000000000022,
+            0.025000000000000022
+          ],
+          "rank": 29,
+          "rank_tolerance": 3.2657489999982784e-14,
+          "rows": 29,
+          "smallest_unit_row_singular": 0.009760569934315419,
+          "yaw_basis_integrals_m": [
+            0.00625,
+            0.012500000000000028,
+            0.012499999999999975,
+            0.0125,
+            0.012499999999999975,
+            0.01250000000000003,
+            0.01250000000000003,
+            0.012499999999999975,
+            0.006249999999999978
+          ]
+        },
+        "dual_linear": {
+          "active_primal_columns": 100,
+          "p0_basis_integrals_m": [
+            0.025000000000000022,
+            0.02499999999999991,
+            0.025000000000000022,
+            0.025000000000000022
+          ],
+          "rank": 29,
+          "rank_tolerance": 3.2676012237562474e-14,
+          "rows": 29,
+          "smallest_unit_row_singular": 0.16165571892511615,
+          "yaw_basis_integrals_m": [
+            0.0062500000000000454,
+            0.012500000000000061,
+            0.012499999999999897,
+            0.012500000000000091,
+            0.012499999999999895,
+            0.012500000000000063,
+            0.012500000000000063,
+            0.012499999999999897,
+            0.006249999999999979
+          ]
+        }
+      },
+      "station_count": 48,
+      "yaw_multiplier_intervals": 8
+    }
+  },
+  "classification": "bounded material-line ratio row screen, not mixed stability or F03 acceptance",
+  "effective_threadpools": [
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.31.188.0"
+    },
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.30"
+    }
+  ],
+  "elapsed_s": 16.50413869996555,
+  "env": {
+    "NUMBA_DISABLE_JIT": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "geometry": "Q4/y4, 35 mm shell, 100 mm square beam, 67.5 mm eccentricity, same C1 taper and root supports",
+  "limits": [
+    "existing <=60-row and <=1200-active-column unit-row diagnostic",
+    "no tangent, KKT solve, physical load, or mesh-uniform stability claim",
+    "one provisional policy and one shell/beam grid per ratio",
+    "rank alone cannot select P0, P1, dual, or a channel-selective space"
+  ],
+  "numpy": "2.4.6",
+  "python": "3.14.2",
+  "question": "Does P0 for five channels and every-second-shell-cell P1/dual yaw avoid dependent supported rows at the registered ratios?",
+  "ratio_convention": "shell bond cell count : native beam half-cell count on the same 0.9-1.0 m line",
+  "runner_sha256": "82dcb5d286d73f93fd6667ae44d2d4bae0a051a9a086f79d0f557aa418e5bb61",
+  "scipy": "1.17.1",
+  "selective_yaw": true,
+  "source_git": "08dfccb114dfe20419d33a93b6a8aabf80427806",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE"
+}
