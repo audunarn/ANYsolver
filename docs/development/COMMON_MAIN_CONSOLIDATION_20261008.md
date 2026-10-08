@@ -95,6 +95,12 @@ The manufactured workflow caller passed a further six source controls.
 The ledger has used 497.800684 seconds; 402.199316 remain, including the 60-second
 reserve. This is consolidation-only authority, not a future feature-run budget.
 
+Final supporting source review found no changed equations/tolerances in the
+fma fallback. It caught a stale archival report boolean claiming the now-separate
+corruption discriminator had executed; that unbound claim was removed. The
+archived comparison reports only its own executed profiles. No archived run
+was performed and no archival compatibility acceptance is claimed here.
+
 Main promotion requires successful full CI for the final branch head in
 [PR #63](https://github.com/audunarn/ANYsolver/pull/63).
 Earlier failed CI runs and local failed attempts are preserved. Prospective

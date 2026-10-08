@@ -214,4 +214,4 @@ def test_V20_archived_legacy_profile_identity(tmp_path):
             assert resumed.restart_checkpoint==full.restart_checkpoint and resumed.restart_checkpoint['version']==version
             rows.append(dict(version=version,old_checkpoint_resumed=True,exact_current_full=True))
     finally:sys.modules.pop(name,None)
-    path=Path(os.environ.get('CONTACT_APP_RESULT_RECORD',str(tmp_path/'actual_result.json')));path.with_name('legacy_compatibility.json').write_text(json.dumps(dict(baseline=str(baseline),baseline_sha256=hashlib.sha256(baseline.read_bytes()).hexdigest(),profiles=rows,V20_rechecksummed_null_corruption_refused=True),indent=2))
+    path=Path(os.environ.get('CONTACT_APP_RESULT_RECORD',str(tmp_path/'actual_result.json')));path.with_name('legacy_compatibility.json').write_text(json.dumps(dict(baseline=str(baseline),baseline_sha256=hashlib.sha256(baseline.read_bytes()).hexdigest(),profiles=rows),indent=2))
