@@ -15,6 +15,18 @@ import _b3_e4_f03_primal_ritz as operators
 
 def fake_parent(tmp_path,monkeypatch):
     """Tiny synthetic bytes with all 36 names; no frozen case is opened."""
+    # Supply Git's byte-returning boundary explicitly. This unit fixture does
+    # not depend on checkout depth and does not open frozen numerical evidence.
+    source_blob=(Path(__file__).parent/'data/b3_e4_f03_primal_ritz_e7908c1a.py.txt').read_bytes()
+    def source_at_head(command, *, cwd, stderr):
+        prefix=('git','show')
+        assert command[:2]==prefix and cwd==audit.ROOT
+        head,relative=command[2].split(':',1)
+        assert head==audit.PARENT_HEAD
+        if relative=='scripts/b3_e4_f03_primal_ritz.py':return source_blob
+        assert relative=='scripts/_b3_e4_f03_primal_ritz.py'
+        return (audit.ROOT/relative).read_bytes()
+    monkeypatch.setattr(audit.subprocess,'check_output',source_at_head)
     parent=tmp_path/'parent';parent.mkdir()
     registration={'identity':{'head':audit.PARENT_HEAD,
         'dependencies':audit.supervisor._versions(),

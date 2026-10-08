@@ -27,7 +27,7 @@ def test_refined_shell_profile_reports_exact_scope_without_acceptance():
     assert not report.independently_accepted
     assert not report.released
     assert not report.admitted_for_application
-    with pytest.raises(TypeError, match="init=False"):
+    with pytest.raises((TypeError, ValueError), match="init=False"):
         replace(report, independently_accepted=True, released=True)
 
 

@@ -138,3 +138,37 @@ def test_pressure_trial_merit_does_not_replace_component_acceptance():
     assert _trial_work_ratio(candidate,applied,np.ones(2))<_trial_work_ratio(parent,applied,np.ones(2))
     assert _trial_work_ratio(candidate,applied,np.ones(2))<1e-8
     assert _linear_equilibrium(candidate,applied,np.ones(2))==1.
+
+
+def test_equilibrated_pressure_trial_is_rechecked_despite_frozen_merit(request, monkeypatch):
+    import anysolver._stiffened_shell_ge_finite_experimental as finite
+    original_assemble = finite.FinitePointDriver._assemble
+    latest = {'equilibrated': False, 'obstructed': 0, 'certificates': 0,
+              'assembling': False}
+    def assemble(self, *args, **kwargs):
+        latest['assembling'] = True
+        try:
+            result = original_assemble(self, *args, **kwargs)
+        finally:
+            latest['assembling'] = False
+        latest['equilibrated'] = result[2] <= 1e-8 and result[3] <= 1e-9
+        latest['certificates'] += int(latest['equilibrated'])
+        return result
+    def obstruct_comparison(original):
+        def ratio(*args):
+            value = original(*args)
+            if latest['equilibrated'] and not latest['assembling']:
+                latest['obstructed'] += 1
+                return float('inf')
+            return value
+        return ratio
+    monkeypatch.setattr(finite.FinitePointDriver, '_assemble', assemble)
+    for name in ('_trial_work_ratio', '_linear_equilibrium'):
+        monkeypatch.setattr(finite, name, obstruct_comparison(getattr(finite, name)))
+    a = owner(request)
+    result = a.solve(load(a), (.1,))
+    assert latest['obstructed'] > 0
+    assert latest['certificates'] >= 2
+    assert result.free_equilibrium_ratio <= 1e-8
+    assert result.constraint_max <= 1e-9
+    balance(a, result)

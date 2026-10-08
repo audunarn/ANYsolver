@@ -1,8 +1,9 @@
 """Independent, bounded polynomial-moment reference for the F03 finite pads.
 
-This module reconstructs a tensor polynomial from shared nodal values by a
-Vandermonde solve on each cell. It then integrates monomials over clipped
-physical pad rectangles. Station derivatives use polynomial edge values and
+This module reconstructs a tensor polynomial from shared nodal values by an
+independent high-precision tensor Vandermonde inverse on each cell. It then
+integrates monomials over clipped physical pad rectangles. Station derivatives
+use polynomial edge values and
 Leibniz identities. It contains no shell energy or equilibrium calculation.
 """
 
@@ -10,6 +11,9 @@ from __future__ import annotations
 
 import math
 import numbers
+from decimal import Decimal, localcontext
+from fractions import Fraction
+from functools import lru_cache
 
 import numpy as np
 
@@ -19,6 +23,43 @@ PANEL_Y = (-.5, .5)
 OFFSETS = ((-.2, -.23), (.2, -.23), (.2, .23), (-.2, .23))
 HALFWIDTH = .05
 REPRESENTED_J = .2**2 + .23**2 + 2*HALFWIDTH**2/3
+
+
+@lru_cache(maxsize=6)
+def _local_inverse(nodes):
+    """Power coefficients of the cardinal polynomials at binary64 nodes.
+
+    This is an exact-rational construction, independent of the caller's
+    quadrature and polynomial basis. Column a represents
+    product((t-node[b])/(node[a]-node[b]), b != a).
+    """
+    exact = tuple(Fraction.from_float(value) for value in nodes)
+    columns = []
+    for a, node in enumerate(exact):
+        polynomial = [Fraction(1)]
+        denominator = Fraction(1)
+        for b, other in enumerate(exact):
+            if b == a:
+                continue
+            changed = [Fraction(0)] * (len(polynomial)+1)
+            for power, coefficient in enumerate(polynomial):
+                changed[power] -= other*coefficient
+                changed[power+1] += coefficient
+            polynomial = changed
+            denominator *= node-other
+        columns.append(tuple(value/denominator for value in polynomial))
+    with localcontext() as context:
+        context.prec = 64
+        return tuple(tuple(Decimal(columns[a][power].numerator) /
+                           Decimal(columns[a][power].denominator)
+                           for a in range(len(nodes)))
+                     for power in range(len(nodes)))
+
+
+def _contract(polynomial, x, y):
+    """Compensate cancellation between local monomial moments."""
+    return math.fsum(float(polynomial[i, k])*float(x[i])*float(y[k])
+                     for i in range(len(x)) for k in range(len(y)))
 
 
 class PiecewisePadMomentOracle:
@@ -59,7 +100,7 @@ class PiecewisePadMomentOracle:
         self.ny = (len(self.y)-1)*self.p+1
         self.n = self.nx*self.ny
         self.area = len(self.offsets)*(2*self.a)**2
-        # Centered local coordinates keep the Q3 tensor Vandermonde well
+        # Centered local coordinates keep the bounded tensor Vandermonde well
         # conditioned; they still give exact polynomial cell moments.
         local = 2*np.arange(self.p+1, dtype=float)/self.p-1
         vandermonde = np.array([
@@ -69,6 +110,7 @@ class PiecewisePadMomentOracle:
         if np.linalg.cond(vandermonde) > 1e5:
             raise ArithmeticError("local polynomial reconstruction is ill conditioned")
         self._vandermonde = vandermonde
+        self._inverse = _local_inverse(tuple(float(value) for value in local))
 
     def coefficients(self, q):
         """Return component/cell/local-monomial coefficients from global q."""
@@ -78,13 +120,30 @@ class PiecewisePadMomentOracle:
         fields = values.reshape(2, self.nx, self.ny)
         result = np.empty((2, len(self.x)-1, len(self.y)-1,
                            self.p+1, self.p+1))
-        for i in range(len(self.x)-1):
-            for k in range(len(self.y)-1):
-                block = fields[:, i*self.p:i*self.p+self.p+1,
-                               k*self.p:k*self.p+self.p+1]
-                solved = np.linalg.solve(self._vandermonde,
-                                         block.reshape(2, -1).T)
-                result[:, i, k] = solved.T.reshape(2, self.p+1, self.p+1)
+        # V C V.T = B. The dense tensor system has condition kappa(V)**2;
+        # apply the two independently constructed one-dimensional inverses
+        # in Decimal arithmetic, rounding only the final coefficients to
+        # binary64. Decimal.from_float retains the actual represented q.
+        width = self.p+1
+        with localcontext() as context:
+            context.prec = 64
+            for i in range(len(self.x)-1):
+                for k in range(len(self.y)-1):
+                    block = fields[:, i*self.p:i*self.p+width,
+                                   k*self.p:k*self.p+width]
+                    for component in range(2):
+                        data = tuple(tuple(Decimal.from_float(float(value))
+                                           for value in row)
+                                     for row in block[component])
+                        left = tuple(tuple(sum(self._inverse[a][n]*data[n][b]
+                                               for n in range(width))
+                                           for b in range(width))
+                                     for a in range(width))
+                        for a in range(width):
+                            for b in range(width):
+                                result[component, i, k, a, b] = float(sum(
+                                    left[a][n]*self._inverse[b][n]
+                                    for n in range(width)))
         return result
 
     @staticmethod
@@ -94,7 +153,7 @@ class PiecewisePadMomentOracle:
                          for order in range(degree+1)])
 
     def _area(self, coeff, low, high, bottom, top, station):
-        total = np.zeros(3)
+        terms = ([], [], [])
         for i, (xl, xr) in enumerate(zip(self.x, self.x[1:])):
             left, right = max(low, xl), min(high, xr)
             if right <= left:
@@ -109,14 +168,15 @@ class PiecewisePadMomentOracle:
                 ty = self._moment(2*(down-yb)/hy-1, 2*(up-yb)/hy-1, self.p+1)
                 cx, cy = coeff[:, i, k]
                 scale = hx*hy/4
-                ux = scale*np.einsum("ik,i,k->", cx, tx[:-1], ty[:-1])
-                uy = scale*np.einsum("ik,i,k->", cy, tx[:-1], ty[:-1])
-                yu = scale*((yb+hy/2)*np.einsum("ik,i,k->", cx, tx[:-1], ty[:-1])
-                    + (hy/2)*np.einsum("ik,i,k->", cx, tx[:-1], ty[1:]))
-                xv = scale*((xl+hx/2-station)*np.einsum("ik,i,k->", cy, tx[:-1], ty[:-1])
-                    + (hx/2)*np.einsum("ik,i,k->", cy, tx[1:], ty[:-1]))
-                total += (ux, uy, (xv-yu)/self.j)
-        return total
+                ux = scale*_contract(cx, tx[:-1], ty[:-1])
+                uy = scale*_contract(cy, tx[:-1], ty[:-1])
+                yu = scale*math.fsum(((yb+hy/2)*_contract(cx, tx[:-1], ty[:-1]),
+                                     (hy/2)*_contract(cx, tx[:-1], ty[1:])))
+                xv = scale*math.fsum(((xl+hx/2-station)*_contract(cy, tx[:-1], ty[:-1]),
+                                     (hx/2)*_contract(cy, tx[1:], ty[:-1])))
+                for row, value in zip(terms, (ux, uy, (xv-yu)/self.j)):
+                    row.append(value)
+        return np.array([math.fsum(row) for row in terms])
 
     def _edge(self, coeff, x, bottom, top, side):
         i = int(np.searchsorted(self.x, x, side=side)-1)
@@ -132,7 +192,7 @@ class PiecewisePadMomentOracle:
         derivative = np.zeros(self.p+1)
         derivative[1:] = 2*np.arange(1, self.p+1)*t**np.arange(self.p)/hx
         # ux, uy, ux,x, uy,x, y*ux, y*ux,x, all integrated along the edge.
-        result = np.zeros(6)
+        terms = tuple([] for _ in range(6))
         for k, (yb, yt) in enumerate(zip(self.y, self.y[1:])):
             down, up = max(bottom, yb), min(top, yt)
             if up <= down:
@@ -145,8 +205,8 @@ class PiecewisePadMomentOracle:
                 (2, cx, derivative, False), (3, cy, derivative, False),
                 (4, cx, powers, True), (5, cx, derivative, True)):
                 ym = (yb+hy/2)*my[:-1]+(hy/2)*my[1:] if weighted else my[:-1]
-                result[row] += (hy/2)*np.einsum("ik,i,k->", polynomial, xp, ym)
-        return result
+                terms[row].append((hy/2)*_contract(polynomial, xp, ym))
+        return np.array([math.fsum(row) for row in terms])
 
     def _closed_limit(self, value, station, offset):
         # Match a represented crossing only for its own pad side. Distinct
@@ -168,7 +228,7 @@ class PiecewisePadMomentOracle:
                     self.p+1, self.p+1)
         if coeff.shape != expected or not np.isfinite(coeff).all():
             raise ValueError("invalid local polynomial coefficients")
-        pose, first, second = (np.zeros(3) for _ in range(3))
+        pose_terms, first_terms, second_terms = (list() for _ in range(3))
         for ox, oy in self.offsets:
             l, r = ox-self.a, ox+self.a
             low = self._closed_limit(s+l, s, l)
@@ -177,12 +237,16 @@ class PiecewisePadMomentOracle:
             area = self._area(coeff, low, high, bottom, top, s)
             left = self._edge(coeff, low, bottom, top, side)
             right = self._edge(coeff, high, bottom, top, side)
-            pose += area
-            first += (right[0]-left[0], right[1]-left[1],
-                      (r*right[1]-l*left[1]-area[1]-right[4]+left[4])/self.j)
-            second += (right[2]-left[2], right[3]-left[3],
-                       (r*right[3]-l*left[3]-right[1]+left[1]
-                        -right[5]+left[5])/self.j)
+            pose_terms.append(area)
+            first_terms.append((right[0]-left[0], right[1]-left[1],
+                math.fsum((r*right[1], -l*left[1], -area[1],
+                           -right[4], left[4]))/self.j))
+            second_terms.append((right[2]-left[2], right[3]-left[3],
+                math.fsum((r*right[3], -l*left[3], -right[1], left[1],
+                           -right[5], left[5]))/self.j))
+        pose, first, second = (np.array([math.fsum(row[component] for row in terms)
+                                        for component in range(3)])
+                               for terms in (pose_terms, first_terms, second_terms))
         return pose/self.area, first/self.area, second/self.area
 
     def moments(self, q, station, *, side="right"):

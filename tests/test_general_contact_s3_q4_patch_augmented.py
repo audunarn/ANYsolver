@@ -87,7 +87,7 @@ def test_q4_pressure_source_augmented_has_distinct_admitted_profile():
     )
     assert report.valid, report.issues
     assert report.profile == (
-        "Q4_S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
+        "Q4_S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1"
     )
 
 
@@ -101,7 +101,7 @@ def test_q4_q4_augmented_profile_has_distinct_admission():
     )
     assert report.valid, report.issues
     assert report.profile == (
-        "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
+        "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1"
     )
 
 

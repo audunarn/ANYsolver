@@ -646,3 +646,9 @@ tests/data/general_contact_native_fibre_s3_plastic_*.checkpoint -text
 docs/agent_plans/B3_E4_F03_C1_MATERIAL_LINE_P0_SOLID_RECON_DEV_V1.json text eol=crlf
 # The independent predicate snapshot is the exact pre-optimization Git source.
 docs/d1_review_support/d1_touch_bounds_prepatch_20260930.py.txt text eol=lf
+
+# Exact source bytes for a mock-only audit unit fixture; no historical run.
+tests/data/b3_e4_f03_primal_ritz_e7908c1a.py.txt -text
+
+# Preserve the audit-bound corrected reader source bytes across platforms.
+scripts/b3_e4_f03_primal_ritz.py text eol=lf

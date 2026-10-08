@@ -20,6 +20,8 @@ from scipy.sparse.linalg import splu
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src" / "anysolver"
+if __name__ != "__main__":
+    import anysolver
 if "anysolver" not in sys.modules:
     package = types.ModuleType("anysolver")
     package.__path__ = [str(SRC)]

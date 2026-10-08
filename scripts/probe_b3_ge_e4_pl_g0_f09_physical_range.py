@@ -25,16 +25,19 @@ from scipy.sparse.linalg import splu
 # Load the two private owner modules without executing the unrelated package
 # initializer. This probe never substitutes an implementation for either.
 _src = Path(__file__).resolve().parents[1] / "src" / "anysolver"
-_package = types.ModuleType("anysolver")
-_package.__path__ = [str(_src)]
-sys.modules["anysolver"] = _package
-for _name in ("_b2_physical_flexibility_linear", "_b2_physical_linear_definition"):
-    _spec = importlib.util.spec_from_file_location(f"anysolver.{_name}",
-                                                   _src / f"{_name}.py")
-    assert _spec is not None and _spec.loader is not None
-    _module = importlib.util.module_from_spec(_spec)
-    sys.modules[_spec.name] = _module
-    _spec.loader.exec_module(_module)
+if __name__ == "__main__":
+    _package = types.ModuleType("anysolver")
+    _package.__path__ = [str(_src)]
+    sys.modules["anysolver"] = _package
+    for _name in ("_b2_physical_flexibility_linear", "_b2_physical_linear_definition"):
+        _spec = importlib.util.spec_from_file_location(f"anysolver.{_name}",
+                                                       _src / f"{_name}.py")
+        assert _spec is not None and _spec.loader is not None
+        _module = importlib.util.module_from_spec(_spec)
+        sys.modules[_spec.name] = _module
+        _spec.loader.exec_module(_module)
+else:
+    import anysolver
 
 from anysolver._b2_physical_flexibility_linear import LinearSection
 _elbow_spec = importlib.util.spec_from_file_location(

@@ -73,6 +73,14 @@ DEDICATED_LANE_NODES = (
 # checkouts may not carry the bound object, and superseded aliases must retain
 # their historical meaning on the frozen source revision.
 PORTABLE_HISTORY_ONLY_NODES = (
+    # Exact saved reference comparisons remain available with their bound evidence.
+    "tests/test_b3_e4_f03_c1_pure_action_modes.py::test_pure_and_mixed_modes_reproduce_independent_fixed_dual_work",
+    "tests/test_b3_e4_f03_ccx_six_channel_preflight.py::test_detached_loads_share_exact_stiffness_deck",
+    # Runtime assertion belongs to the registered JIT-off reference harness;
+    # portable algebra/parser tests from this module remain in ordinary CI.
+    "tests/test_r8_bl5_released_director_reference.py::test_effective_runtime",
+    # Replays detached-port, host-local saved model/results, not a current operator test.
+    "tests/test_b3_e4_f03_c1_shell_trace_action.py::test_station_trace_reproduces_saved_component_work",
     # Exact saved-deck/result regressions require untracked historical evidence.
     # Current generator/parser/oracle controls in both modules remain portable.
     "tests/test_r8_e02_distributing_thickness.py::test_saved_legacy_six_decks_metadata_and_parses_are_exact",

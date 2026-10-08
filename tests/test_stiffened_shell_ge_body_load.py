@@ -19,7 +19,7 @@ def owner(triangle=False):
     beam = SimpleNamespace(operator=SimpleNamespace(reference=reference(True)))
     panel = SimpleNamespace(density_kg_m3=3., thickness_m=.2)
     return SimpleNamespace(_identity='a'*64, _require_open=lambda: None,
-        _definition=SimpleNamespace(shell=panel, lines=(), footprints=(), points=(object(),)),
+        _definition=SimpleNamespace(shell=panel, lines=(), footprints=(), distributing_footprints=(), finite_distributing_footprints=(), points=(object(),)),
         _line_samples=(), _K=sparse.csr_matrix((shell_count+42, shell_count+42)),
         _shell_xyz=xyz, _shell_count=shell_count,
         _shell_parts=((1, None, np.arange(shell_count), None),),

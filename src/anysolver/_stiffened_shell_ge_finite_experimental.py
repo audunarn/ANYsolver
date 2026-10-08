@@ -1161,7 +1161,11 @@ class FinitePointDriver:
                     candidate_relative = (changed[2] if merit_applied is None else
                         trial_ratio(changed[0][owner._free],
                             merit_applied[owner._free], owner._coordinate_scale[owner._free]))
-                    if max(candidate_relative, changed[3]) < old_merit:
+                    # Current-state equilibrium is sufficient to advance to
+                    # the next mandatory acceptance check. A frozen comparison
+                    # norm must not reject an already equilibrated candidate.
+                    if ((changed[2] <= 1e-8 and changed[3] <= 1e-9) or
+                            max(candidate_relative, changed[3]) < old_merit):
                         trial = candidate
                         if allow_handoff:
                             handoff = FixedTrialHandoff.capture(self, trial, factor, pattern, changed, before=before)

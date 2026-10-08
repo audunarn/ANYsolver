@@ -3,6 +3,7 @@
 import numpy as np
 import pytest
 
+from anysolver import stiffened_shell
 from anysolver._stiffened_shell_l1_assembly_experimental import SPACE_A, SPACE_B
 from scripts.b3_e4_f03_l1_matched_flat_web import build, evaluate
 from scripts.b3_e4_f03_l1_uncoupled_flat_controls import evaluate as controls
@@ -33,6 +34,8 @@ def test_two_native_spaces_retain_equilibrium_and_reciprocal_work():
     assert set(result["spaces"]) == {SPACE_A, SPACE_B}
     for value in result["spaces"].values():
         assert value["factorizations"] == 1
+        assert all(max(abs(case["beam_root_uy_m"]), abs(case["beam_root_uz_m"])) <= 1e-12
+                   for case in value["cases"].values())
         assert value["reciprocity_relative"] < 1e-5
         assert all(case["load_displacement_work_j"] > 0.
                        and case["free_equilibrium_ratio"] < 1e-8
@@ -59,3 +62,9 @@ def test_uncoupled_native_blocks_and_uniform_torsion_oracle():
         expected_web_work, rel=1e-10)
     assert plate["free_equilibrium_ratio"] < 1e-8
     assert web["free_equilibrium_ratio"] < 1e-8
+
+
+def test_redundant_direct_and_p1_root_normal_support_is_rejected():
+    model, *_ = build(SPACE_A)
+    with pytest.raises(ValueError, match="independent supported attachment rows"):
+        stiffened_shell.create_analysis(definition=model)

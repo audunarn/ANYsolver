@@ -247,7 +247,7 @@ def test_refined_patch_couples_through_static_path():
     )
     assert result.status == "completed", result.failure_reason
     assert result.info["contact_path"]["profile"] == (
-        "S3_PATCH_REFINED_AUGMENTED_PATH_DEV_V0"
+        "S3_PATCH_REFINED_AUGMENTED_PATH_DEV_V1"
     )
     assert result.info["general_contact"]["gap_tolerance_met"]
     assert result.info["general_contact"]["active_pressure_dofs"] > 0

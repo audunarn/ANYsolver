@@ -116,7 +116,7 @@ def test_actual_rotational_impact_opening_restart_and_temporal_energy():
     assert min(c.minimum_gap for c in r.contact)>=-1.e-5
 
 
-def test_rotational_secant_corruption_and_legacy_v17_resume():
+def test_rotational_secant_corruption_refused():
     import copy,hashlib,importlib.util,sys
     from anysolver.general_contact.transient import solve_transient_contact,ContactTransientSolverControls
     from anysolver.nonlinear_restart import analysis_configuration_fingerprint
@@ -136,6 +136,14 @@ def test_rotational_secant_corruption_and_legacy_v17_resume():
     changed['checkpoint_sha256']=analysis_configuration_fingerprint(changed)
     with pytest.raises(ValueError,match='secant history'):
         run(restart=changed)
+
+
+@pytest.mark.skipif(not os.environ.get('C6_LEGACY_TRANSIENT'),
+                    reason='historical V17 producer artifact must be explicitly provisioned')
+def test_legacy_v17_producer_checkpoint_resumes():
+    import hashlib,importlib.util,sys
+    from anysolver.general_contact.transient import solve_transient_contact,ContactTransientSolverControls
+    from anysolver.dynamics import TransientConfig
     legacy=Path(os.environ['C6_LEGACY_TRANSIENT'])
     name='anysolver.general_contact._legacy_v17_transient'
     spec=importlib.util.spec_from_file_location(name,legacy);module=importlib.util.module_from_spec(spec);sys.modules[name]=module
@@ -149,7 +157,7 @@ def test_rotational_secant_corruption_and_legacy_v17_resume():
         actual=solve_transient_contact(oldm,oldd,TransientConfig(1.e-5,2.e-4,initial_velocity=oldv),contact_settings=olds,
             solver_controls=ContactTransientSolverControls(allow_deformable_beam_s3_dev=True),restart_checkpoint=reference.restart_checkpoint,emit_restart_checkpoint=True)
         assert actual.restart_checkpoint['version']==17
-        record(dict(check='restart',corrupt_null_refused=True,legacy_path=str(legacy),legacy_sha256=hashlib.sha256(legacy.read_bytes()).hexdigest(),legacy_v17_resumed=True))
+        record(dict(check='historical_restart',legacy_path=str(legacy),legacy_sha256=hashlib.sha256(legacy.read_bytes()).hexdigest(),legacy_v17_resumed=True))
     finally:sys.modules.pop(name,None)
 
 

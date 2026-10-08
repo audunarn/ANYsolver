@@ -8,6 +8,7 @@ single mesh cannot qualify either or score formal F03 stability.
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from hashlib import sha256
 from pathlib import Path
 import sys
@@ -78,6 +79,13 @@ def evaluate() -> dict:
     results = {}
     for space in (SPACE_A, SPACE_B):
         model, plate_tip, beam_tip, web = build(space)
+        if space == SPACE_A:
+            # P1 g_z fixes root uz. The same P1 moments of g_y-a*g_twist
+            # fix uy, since the shell-root translation and twist are fixed.
+            # Keep ux (pitch uses P0) and all independent native nodal rotations.
+            # Removing these two duplicate direct supports preserves the clamp.
+            model = replace(model, fixed=tuple(f for f in model.fixed
+                if not (f.domain == "beam" and f.node == 101 and f.component in (1, 2))))
         owner = stiffened_shell.create_analysis(definition=model)
         try:
             preflight = owner.preflight()
@@ -129,6 +137,8 @@ def evaluate() -> dict:
                     "beam_internal_energy_j": beam_energy,
                     "free_equilibrium_ratio": result.free_equilibrium_ratio,
                     "constraint_max": result.constraint_max,
+                    "beam_root_uy_m": float(result.beam_coordinates[6*owner._beam_index[101]+1]),
+                    "beam_root_uz_m": float(result.beam_coordinates[6*owner._beam_index[101]+2]),
                 }
             results[space] = {
                 "cases": cases,

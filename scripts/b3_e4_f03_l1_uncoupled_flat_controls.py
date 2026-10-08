@@ -16,13 +16,15 @@ from scipy.sparse import linalg as spla
 from threadpoolctl import threadpool_info
 
 from anysolver import stiffened_shell
-from anysolver._stiffened_shell_l1_assembly_experimental import SPACE_A
+from anysolver._stiffened_shell_l1_assembly_experimental import SPACE_B
 from scripts.b3_e4_f03_l1_matched_flat_web import build
 from scripts.b3_e4_f03_ccx_matched_t_reference import PLATE_T_M
 
 
 def evaluate() -> dict:
-    model, plate_tip, beam_tip, web = build(SPACE_A)
+    # This admitted assembly supplies only K and numbering. Its line rows
+    # are not included in either independent domain solve below.
+    model, plate_tip, beam_tip, web = build(SPACE_B)
     owner = stiffened_shell.create_analysis(definition=model)
     try:
         k = owner._K

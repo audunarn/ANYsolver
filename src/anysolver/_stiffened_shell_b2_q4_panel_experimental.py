@@ -42,7 +42,6 @@ from ._b2_physical_linear_batch_dev import (
 )
 from .control import CancellationToken, SolveCancelled
 from ._stiffened_shell_physical_q4_mass import physical_mass, POLICY as Q4_MASS_POLICY
-from .e4_pl_element import QualifiedE4PLShellElement
 from .e4_pl_s3_v2d_element import (
     MASS_POLICY_ID as S3_V2D_TRANSLATIONAL_LUMPED_SECTION_AREAL_MASS_V1,
     FORMULATION_ID as S3_V2D_FORMULATION_ID,
@@ -870,8 +869,8 @@ class ExperimentalB2Q4PanelAnalysis:
                     thickness=shell.thickness_m,
                     reference_normal=np.asarray(shell.reference_normal, dtype=float))
             else:
-                element = QualifiedE4PLShellElement(
-                    index, shell.node_ids, material_id, thickness=shell.thickness_m,
+                element = create_shell_element(
+                    index, shell.node_ids, material_id, formulation="e4-pl", thickness=shell.thickness_m,
                     reference_normal=np.asarray(shell.reference_normal, dtype=float))
             model.add_element(index, element)
             pieces.append((shell, vertices, element, material_id, count))

@@ -308,7 +308,11 @@ def test_public_endpoint_example_and_installed_no_contact_compatibility():
     # This child follows the effective source/installed runtime, unlike the
     # historical lazy-import test whose child explicitly requests source.
     import subprocess,sys
-    root=os.environ['ANYSOLVER_DEVELOPMENT_SOURCE']
+    import anysolver
+    root=str(Path(anysolver.__file__).resolve().parent)
+    environment=os.environ.copy()
+    environment['PYTHONPATH']=os.pathsep.join(
+        (str(Path(root).parent),environment.get('PYTHONPATH','')))
     command='''import sys
 from pathlib import Path
 import anysolver
@@ -322,5 +326,6 @@ assert result.status=='completed',result.failure_reason
 assert not any(n in sys.modules for n in ('anysolver.general_contact.capped_cylinder',
     'anysolver.general_contact.beam_plane','anysolver.general_contact.beam_end_topology'))
 '''
-    process=subprocess.run([sys.executable,'-c',command,root],capture_output=True,text=True,timeout=30)
+    process=subprocess.run([sys.executable,'-c',command,root],env=environment,
+                           capture_output=True,text=True,timeout=30)
     assert process.returncode==0,process.stdout+process.stderr

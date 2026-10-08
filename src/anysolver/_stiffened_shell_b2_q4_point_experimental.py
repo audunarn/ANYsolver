@@ -8,6 +8,8 @@ dynamic, stability, nonlinear or qualification claim.
 
 from __future__ import annotations
 
+from .elements import create_shell_element
+
 from dataclasses import dataclass
 from math import isfinite
 
@@ -18,7 +20,6 @@ from ._b2_f10_f11_point_attachment import LAW_ID, compile_reference_point
 from ._b2_physical_linear_definition import (
     PROFILE_ID, CompiledPhysicalB2Member, PhysicalB2Member,
 )
-from .e4_pl_element import QualifiedE4PLShellElement
 from .fe_core import FEModel
 from .linalg import MatrixClass, factorize_cached
 from ._stiffened_shell_b2_q4_panel_experimental import (
@@ -91,8 +92,8 @@ class ExperimentalB2Q4PointAnalysis:
         model.add_material("shell", shell_E, shell_nu)
         for index, point in enumerate(vertices, 1):
             model.add_node(index, *point)
-        shell = QualifiedE4PLShellElement(
-            1, (1, 2, 3, 4), "shell", thickness=shell_thickness_m,
+        shell = create_shell_element(
+            1, (1, 2, 3, 4), "shell", formulation="e4-pl", thickness=shell_thickness_m,
             reference_normal=np.asarray(reference_normal, dtype=float))
         model.add_element(1, shell)
         shell_k = shell.compute_stiffness_matrix(

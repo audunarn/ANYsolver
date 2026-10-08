@@ -12,16 +12,11 @@ from scripts.b3_e4_f03_ccx_six_channel_reconstruct import _same_stiffness_deck
 from scripts.b3_e4_f03_solid_bond_pose_projection import _read_deck_nodes
 
 
-def test_detached_six_channel_reference_work():
-    folder = DEFAULT_CASE
-    meta = json.loads((folder / "model.json").read_text())
-    deck, = folder.glob("*.inp")
-    coords = _read_deck_nodes(deck)
-    plate, bar = _element_domain_nodes(deck)
+def test_detached_six_channel_reference_work(f03_q8_sided_faces):
+    coords, plate, bar = f03_q8_sided_faces
     assert not plate & bar
     rows, _ = six_channel_rows(coords, plate, bar, factor=4)
-    audit = audit_rows(coords, rows,
-                       supported=set(meta["boundary_node_ids"]))
+    audit = audit_rows(coords, rows, supported=set())
     assert audit["rank"] == 6
     assert audit["max_rigid_translation_rotation_gap"] < 1e-12
 
@@ -65,7 +60,7 @@ def test_detached_six_channel_reference_work():
                                rtol=2e-14, atol=2e-13)
 
     # The external solve applies exactly C^T times its chosen dual scale.
-    replacement = _replace_load(deck.read_text(), rows[3], 100.)
+    replacement = _replace_load("*HEADING\nManufactured load-card control\n*CLOAD\n1,1,0.\n*NODE PRINT\n", rows[3], 100.)
     cards = replacement.split("*CLOAD\n", 1)[1].split("*NODE PRINT", 1)[0]
     actual = {(int(node), int(axis)-1): float(value)
               for node, axis, value in
