@@ -93,13 +93,30 @@ found the clamps, work pairing and signs internally consistent. This
 beam-only discrepancy shows section/traction/root modelling matters, but
 the ratio difference is not an additive allocation of coupled compliance.
 
-**Next discriminating action.** Run one same-law rigid-shell Mx counterfactual
-using the existing local operators, with no new CalculiX solve. If the
-native/resolved ratio approaches `1.13594`, investigate shell compliance and
-its interaction with the connection. If it remains near `1.22489`, examine
-beam trace/connection work with the actual native retained fields. A rank,
-work or balance failure stops interpretation and directs a formulation audit.
-No automatic axial refinement, channel tuning, or formal F03 assessment follows.
+**Rigid-shell counterfactual.** A separate same-law local solve then fixed
+every shell coordinate and left the beam connected by all 20 weak rows, with
+no added root clamp. The resolved and native work-conjugate tip spins are
+`2.91845519e-6` and `1.18869316e-5 rad`, ratio `4.07302`. Both KKT,
+gap, work and physical interface-wrench checks pass. The local Euclidean
+row-normalized algebraic conditions are `7.30` and `3.08`; this is not a
+physical inf-sup or mixed-system stability measure. `bl5-mx-beam-only-20261008-v4`
+is the first saved rigid-shell run and `-v5/result.json` binds the completed
+rank diagnostic and explicit interpretation. This counterfactual restrains
+the beam along x∈[0,1] and is much stiffer than a root-only clamp. It
+amplifies conforming-versus-broken trace differences and cannot allocate or
+predict the coupled `1.22489` ratio. Supporting read-only review found no
+KKT sign/work defect and emphasized this boundary-value distinction.
+
+**Next discriminating action.** Stop loaded refinements. Read-only source
+inspection found existing global-common-field tests that exercise all five
+native and resolved weak-row densities, including beam x-spin, on the
+supported globally affine material/director subspace. Those tests do not
+represent independent native quarter-cell side rotations. Reuse their
+previous execution evidence only after checking its bound source identity.
+The remaining mechanics question is the off-common trace space and its
+growing-interface stability under the prospective F03 contract. No new
+common-field helper, automatic axial refinement, channel tuning, or formal
+F03 execution follows from these diagnostics alone.
 
 Three focused source deck tests passed. A supporting same-family read-only
 review found no sign or reaction-recovery error and identified the load-work,

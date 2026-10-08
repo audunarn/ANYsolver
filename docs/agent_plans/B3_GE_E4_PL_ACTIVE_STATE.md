@@ -57,11 +57,21 @@ native/resolved `1.13594`, while the coupled result remains `1.22489`.
 Both beam-only models balance 10 N·m, but the resolved root clamps its whole
 bar face and native B3-GE clamps one section pose; the end torque work fields
 also differ in warping. This establishes a body/traction/root discrepancy,
-not an additive allocation of the coupled gap. The next specific check is a
-rigid-shell counterfactual under the same weak-P0 Mx action: see whether the
-ratio tends toward the beam-only value or remains near the coupled value.
-Stop if that counterfactual is rank-deficient or violates work. Do not select
-a line law from these results.
+not an additive allocation of the coupled gap. The rigid-shell weak-P0 Mx
+counterfactual then gave native/resolved `4.07302`; both KKT/work/wrench
+checks passed, and local row-normalized algebraic conditions were `7.30`
+(resolved) and `3.08` (native). This fixes the entire shell and restrains
+the beam along the line, a distinct boundary problem that amplifies trace
+differences. Its algebraic row condition is not an F03 stability metric.
+Stop loaded refinements here. Read-only source inspection found that
+`test_actual_global_continuum_common_field_and_integrated_dual` and
+`test_actual_common_native_weak_work_and_station_dual` already exercise all
+five channel densities, including beam x-spin, on the supported globally
+affine common subspace. They do not cover arbitrary broken native half-cell
+traces. Reuse their existing accepted execution evidence where bound; check
+its identity before citing it. Advance the off-common trace-space and growing
+interface stability question under the prospective F03 contract; no new
+common-field helper is needed. Do not select a line law from these results.
 
 ## Delivered experimental behavior and open acceptance
 
@@ -100,6 +110,6 @@ Mistral/local workers were unavailable for this task; Astra directly owned
 the tightly coupled physical diagnostics and their Git integration. Do not
 communicate with the separate contact worker. On resumption, verify actual
 Git and process state, read this note and the relevant evidence only, then
-advance the bounded rigid-shell Mx discriminator while independent capability work
+advance the off-common trace-space decision while independent capability work
 continues where prerequisites permit. Do not rerun passed campaigns merely
 to reconstruct their accounting.
