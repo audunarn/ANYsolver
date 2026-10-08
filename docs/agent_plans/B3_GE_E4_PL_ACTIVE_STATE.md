@@ -20,14 +20,17 @@ gate. Packet v9 charged 269.4988338/360 seconds and retains a 60-second reserve;
 no installed controls, public example or affected legacy checks ran. Earlier
 pretest dependency-catalog refusals and the one source test failure remain in
 the carried ledger; the repaired source result supersedes only the test defect.
-The wheel's saved SHA matches its file, but installed behavior is unverified.
+The wheel's saved SHA and all 117 isolated site-file hashes match; build and
+install subprocesses both exited zero. Installed behavior remains unverified.
 
-Next decision: use a prospective bounded, artifact-bound installed verification
-slice that reuses the exact v9 wheel/site and 53-case source pass, without
-rewriting the timed-out receipt or transferring its remaining allowance. First
-audit the wheel/site against the saved manifest, then run installed controls,
-public example and affected legacy checks under effective CPU0/thread1/JIT-off/
-2 GiB/job1 settings. Complete the independent consumer review before integration.
+The prepared artifact-only packet is
+`C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/.development/distributing-displacement-consumer-installed-20261008-v1`.
+It is **PENDING** a distinct 240-second authority with 60 seconds reserved; it
+binds the v9 source pass and timeout by hash, copies the verified wheel/site,
+and admits only 53 installed controls, one public example and 19 affected
+legacy controls. Its static source/artifact/runner bindings passed. Do not run
+it before the pending authority reply. It does not rewrite or transfer the old
+packet's ledger. Complete independent consumer review before integration.
 No F03, E03, body retry, old campaign, release or production qualification is
 implied. The programme's G0–G6/F01–F13/V01–V28/B01–B18 obligations remain open.
 
