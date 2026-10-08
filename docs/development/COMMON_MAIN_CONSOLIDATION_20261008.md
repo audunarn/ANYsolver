@@ -125,3 +125,33 @@ merge and CI status supply the final Git delivery result; no release is included
 
 Do not resume feature development, numerical refinement campaigns or release
 work from this note. After consolidation, continue only on explicit human resume.
+
+
+## CI repair checkpoint
+
+Full CI at `fa50873a` failed: all eight portable shards exhausted the existing
+1200-second cap; 17 other jobs passed. Main has not moved. Preserved job logs
+are under `.development/common-main-20261008/ci-v5-job-*.log`.
+
+Compatible repairs: catch invalid quadratic B3 reference geometry within the
+existing contact validation report; bind the independent touching predicate to
+its proven pre-optimization Git source; preserve the frozen C1 CRLF record at
+checkout; check actual composite-admission refusal instead of obsolete wording;
+and inject a deterministic post-trial rotation rejection for accepted-prefix
+rollback coverage. These 29 source controls passed. No physical criteria were
+changed. Native curved strict replay passes locally, but Linux previously failed
+canonical record equality; diagnostic field comparison is added without relaxing
+restore or modifying its frozen fixture.
+
+Ordinary CI now subdivides each existing OS/Python allocation into four jobs.
+General modules remain disjoint and complete within the original allocation;
+critical S3 modules repeat in each subshard. Configured workers, JIT, isolation,
+exclusions and per-job caps remain unchanged. This increases hosted job count;
+no runtime improvement is claimed. Pytest stops at its first failure and the
+parent stops live sibling trees on failure. Existing orphan-cleanup limitations
+are not represented as fixed. Mocked scheduling and workflow controls: 26 passed;
+the failed first fixture attempt remains preserved.
+
+Both programmes remain paused. This is common-main compatibility work, not
+scientific acceptance or release. Installed artifacts must be rebuilt for the
+changed validation implementation before consolidation is accepted.

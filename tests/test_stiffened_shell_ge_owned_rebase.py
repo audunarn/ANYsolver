@@ -214,7 +214,7 @@ def test_assembled_anchored_actual_update_derivative(loaded_elastic, triangles):
             assert np.linalg.norm(error[count:]) < 1e-9
 
 
-def test_rebase_preserves_existing_failed_increment_status():
+def test_rebase_preserves_rejected_increment_prefix(monkeypatch):
     base = _q4_shell_j2_panel()
     definition = replace(base, shell=replace(base.shell, q4_elements=(),
         s3_elements=((1, 2, 5), (1, 5, 4), (2, 3, 6), (2, 6, 5))))
@@ -223,10 +223,21 @@ def test_rebase_preserves_existing_failed_increment_status():
     rebased = _owner(definition)
     rebased.restore(baseline.checkpoint())
     rebased.rebase_rotations(rebased.recover().generation)
+    # A physical .55 increment need not fail on every admitted numerical
+    # platform. Exercise deterministic chart rejection after forming an actual
+    # candidate, rather than requiring an old observed convergence failure.
+    from anysolver._stiffened_shell_ge_finite_experimental import (
+        FinitePointDriver, _RotationStepTooLarge,
+    )
+    advance=FinitePointDriver._advance
+    def reject_candidate(self,*args,**kwargs):
+        advance(self,*args,**kwargs)
+        raise _RotationStepTooLarge('injected chart rejection')
+    monkeypatch.setattr(FinitePointDriver,'_advance',reject_candidate)
     for target in (baseline, rebased):
         prefix = target.checkpoint()
         with pytest.raises(RuntimeError, match="backtrack budget exhausted"):
-            target.solve(_actions(), (.55,), max_iterations=20, max_backtracks=12)
+            target.solve(_actions(), (.55,), max_iterations=20, max_backtracks=2)
         assert target.checkpoint() == prefix
 
 

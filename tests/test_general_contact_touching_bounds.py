@@ -15,7 +15,9 @@ def _old_touch():
     # Extract only the exact prepatch predicate; do not import another kernel.
     path = Path(__file__).parents[1] / "docs/d1_review_support/d1_touch_bounds_prepatch_20260930.py.txt"
     raw = path.read_bytes()
-    assert hashlib.sha256(raw).hexdigest() == "a5ef23226e40fe6c5661acd149aee88b34e8c5e36506308f511015e6ad674fce"
+    # Byte-identical to 590d7a42^:src/anysolver/general_contact/s3_patch_augmented.py.
+    # The former digest did not identify this committed prepatch source.
+    assert hashlib.sha256(raw).hexdigest() == "e5e885bfdc10469d476f86db60376ed9ef165d3cae7b351f76fee2715fa2d4e3"
     node = next(n for n in ast.parse(raw).body
                 if isinstance(n, ast.FunctionDef) and n.name == "_touching_projected_boundaries")
     namespace = dict(np=np, PlanarFace=PlanarFace)

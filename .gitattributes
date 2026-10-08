@@ -641,3 +641,8 @@ tests/data/general_contact_material_s3_ce3e5495.checkpoint -text
 tests/data/general_contact_material_plane_ce3e5495.checkpoint -text
 
 tests/data/general_contact_native_fibre_s3_plastic_*.checkpoint -text
+
+# Frozen reconstruction was bound with CRLF; keep that exact checkout identity.
+docs/agent_plans/B3_E4_F03_C1_MATERIAL_LINE_P0_SOLID_RECON_DEV_V1.json text eol=crlf
+# The independent predicate snapshot is the exact pre-optimization Git source.
+docs/d1_review_support/d1_touch_bounds_prepatch_20260930.py.txt text eol=lf

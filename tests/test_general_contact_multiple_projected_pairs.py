@@ -140,10 +140,13 @@ def test_nested_numpy_scalar_certificates_export_with_standard_json():
 def test_actual_analysis_control_is_forwarded_to_composite_admission():
     from anysolver.general_contact.core import contact_scope
     model,definition,settings,_=build()
-    assert not validate_general_contact(model,definition,settings,analysis_control="arc_length").valid
-    with pytest.raises(ValueError,match="analysis_control"):
+    assert validate_general_contact(model,definition,settings).valid
+    report=validate_general_contact(model,definition,settings,analysis_control="arc_length")
+    assert not report.valid
+    with pytest.raises(ValueError) as caught:
         with contact_scope(model,definition,settings,analysis_control="arc_length"):
             raise AssertionError("unsupported contributor must never activate")
+    assert report.issues[0] in str(caught.value)
 
 
 def test_shared_source_coordinates_sum_distinct_target_work_and_tangents():

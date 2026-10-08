@@ -126,6 +126,29 @@ def test_curved_owner_rejects_reassigned_program_before_prefix_replay():
 
 def test_nonvirgin_rejected_trial_cancellation_and_exception_roll_back(monkeypatch):
     owner=_owner();raw=_press_fixture().read_bytes()
+    expected_records=_load(raw.decode('ascii'))['records']
+    actual_record=owner._record
+    def traced_record(target,*args,**kwargs):
+        proposed,row=actual_record(target,*args,**kwargs)
+        expected=expected_records[target-1]
+        if canonical(expected)!=canonical(row):
+            changes=[]
+            def walk(a,b,path):
+                if isinstance(a,dict) and isinstance(b,dict) and set(a)==set(b):
+                    for key in a:walk(a[key],b[key],path+'.'+key)
+                elif isinstance(a,list) and isinstance(b,list) and len(a)==len(b):
+                    for index,(left,right) in enumerate(zip(a,b)):walk(left,right,path+f'[{index}]')
+                elif a!=b:
+                    change={'path':path,'types':[type(a).__name__,type(b).__name__]}
+                    if type(a) in (int,float) and type(b) in (int,float):
+                        change['absolute_difference']=abs(a-b)
+                    changes.append(change)
+            walk(json.loads(canonical(expected)),json.loads(canonical(row)),'record')
+            print('strict_fixture_replay_difference',json.dumps(dict(
+                count=len(changes),first=changes[:12],
+                max_numeric_difference=max((c.get('absolute_difference',0.) for c in changes),default=0.))))
+        return proposed,row
+    monkeypatch.setattr(owner,'_record',traced_record)
     accepted,records=owner._restore(raw,sha256(raw).hexdigest())
     assert owner._checkpoint(records)==raw
     origin=canonical(accepted.histories)

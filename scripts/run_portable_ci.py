@@ -349,6 +349,7 @@ def _worker_command(modules: Sequence[str], root: Path) -> list[str]:
         "-m",
         "pytest",
         "-q",
+        "-x",
         "-p",
         "no:cacheprovider",
         "--durations=20",
@@ -418,6 +419,8 @@ def run(
     timeout_seconds: int,
     matrix_shard_index: int | None = None,
     matrix_shard_count: int | None = None,
+    matrix_subshard_index: int | None = None,
+    matrix_subshard_count: int | None = None,
     development_targets: Sequence[str] | None = None,
     jit: str | None = None,
     memory_limit_mib: int | None = None,
@@ -426,7 +429,8 @@ def run(
         raise ValueError("timeout_seconds must be a positive integer")
     development = development_targets is not None
     if development:
-        if matrix_shard_index is not None or matrix_shard_count is not None:
+        if any(v is not None for v in (matrix_shard_index, matrix_shard_count,
+                                       matrix_subshard_index, matrix_subshard_count)):
             raise ValueError("focused development cannot select a CI matrix shard")
         modules = _development_targets(development_targets)
         if memory_limit_mib is not None and (isinstance(memory_limit_mib, bool) or memory_limit_mib < 1):
@@ -437,6 +441,10 @@ def run(
         modules = matrix_modules(
             merge_test_modules(), matrix_shard_index, matrix_shard_count
         )
+    if matrix_subshard_index is not None or matrix_subshard_count is not None:
+        if matrix_shard_index is None or matrix_shard_count is None:
+            raise ValueError("matrix subshards require a parent matrix shard")
+        modules = matrix_modules(modules, matrix_subshard_index, matrix_subshard_count)
     if matrix_shard_index is not None:
         print(
             "[portable-ci] matrix shard "
@@ -463,6 +471,11 @@ def run(
 
     try:
         for index, modules_for_worker in enumerate(partitions, start=1):
+            if not development and any(w.poll() not in (None, 0) for w in launched):
+                for worker in launched:
+                    _terminate_tree(worker)
+                print("[portable-ci] failed worker; stopped remaining work", flush=True)
+                return 1
             worker_root = run_root / f"P{index:02d}"
             worker_root.mkdir()
             environment = _worker_environment(worker_root)
@@ -502,7 +515,15 @@ def run(
             )
 
         deadline = started + timeout_seconds
-        while any(worker.poll() is None for worker in launched):
+        while True:
+            codes = [worker.poll() for worker in launched]
+            if not development and any(code not in (None, 0) for code in codes):
+                for worker in launched:
+                    _terminate_tree(worker)
+                print(f"[portable-ci] failed worker; child exits={codes}; stopped siblings", flush=True)
+                return 1
+            if all(code is not None for code in codes):
+                break
             if monitor is not None:
                 try:
                     parent = monitor.Process(launched[0].pid)
@@ -563,6 +584,8 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--matrix-shard-index", type=int)
     parser.add_argument("--matrix-shard-count", type=int)
+    parser.add_argument("--matrix-subshard-index", type=int)
+    parser.add_argument("--matrix-subshard-count", type=int)
     parser.add_argument("--development", nargs="+", metavar="TEST",
                         help="Run exactly these test files/node IDs in one source process; no qualification")
     parser.add_argument("--jit", choices=("off", "on"),
@@ -580,6 +603,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             600 if args.development is not None else DEFAULT_TIMEOUT_SECONDS),
         matrix_shard_index=args.matrix_shard_index,
         matrix_shard_count=args.matrix_shard_count,
+        matrix_subshard_index=args.matrix_subshard_index,
+        matrix_subshard_count=args.matrix_subshard_count,
         development_targets=args.development,
         jit=args.jit,
         memory_limit_mib=args.memory_limit_mib,

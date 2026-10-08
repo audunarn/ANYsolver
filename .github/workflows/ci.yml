@@ -48,14 +48,38 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {os: windows-latest, python-version: "3.11", shard-index: 0}
-          - {os: ubuntu-latest, python-version: "3.11", shard-index: 1}
-          - {os: windows-latest, python-version: "3.12", shard-index: 2}
-          - {os: ubuntu-latest, python-version: "3.12", shard-index: 3}
-          - {os: windows-latest, python-version: "3.13", shard-index: 4}
-          - {os: ubuntu-latest, python-version: "3.13", shard-index: 5}
-          - {os: windows-latest, python-version: "3.14", shard-index: 6}
-          - {os: ubuntu-latest, python-version: "3.14", shard-index: 7}
+          - {os: windows-latest, python-version: "3.11", shard-index: 0, subshard-index: 0}
+          - {os: windows-latest, python-version: "3.11", shard-index: 0, subshard-index: 1}
+          - {os: windows-latest, python-version: "3.11", shard-index: 0, subshard-index: 2}
+          - {os: windows-latest, python-version: "3.11", shard-index: 0, subshard-index: 3}
+          - {os: ubuntu-latest, python-version: "3.11", shard-index: 1, subshard-index: 0}
+          - {os: ubuntu-latest, python-version: "3.11", shard-index: 1, subshard-index: 1}
+          - {os: ubuntu-latest, python-version: "3.11", shard-index: 1, subshard-index: 2}
+          - {os: ubuntu-latest, python-version: "3.11", shard-index: 1, subshard-index: 3}
+          - {os: windows-latest, python-version: "3.12", shard-index: 2, subshard-index: 0}
+          - {os: windows-latest, python-version: "3.12", shard-index: 2, subshard-index: 1}
+          - {os: windows-latest, python-version: "3.12", shard-index: 2, subshard-index: 2}
+          - {os: windows-latest, python-version: "3.12", shard-index: 2, subshard-index: 3}
+          - {os: ubuntu-latest, python-version: "3.12", shard-index: 3, subshard-index: 0}
+          - {os: ubuntu-latest, python-version: "3.12", shard-index: 3, subshard-index: 1}
+          - {os: ubuntu-latest, python-version: "3.12", shard-index: 3, subshard-index: 2}
+          - {os: ubuntu-latest, python-version: "3.12", shard-index: 3, subshard-index: 3}
+          - {os: windows-latest, python-version: "3.13", shard-index: 4, subshard-index: 0}
+          - {os: windows-latest, python-version: "3.13", shard-index: 4, subshard-index: 1}
+          - {os: windows-latest, python-version: "3.13", shard-index: 4, subshard-index: 2}
+          - {os: windows-latest, python-version: "3.13", shard-index: 4, subshard-index: 3}
+          - {os: ubuntu-latest, python-version: "3.13", shard-index: 5, subshard-index: 0}
+          - {os: ubuntu-latest, python-version: "3.13", shard-index: 5, subshard-index: 1}
+          - {os: ubuntu-latest, python-version: "3.13", shard-index: 5, subshard-index: 2}
+          - {os: ubuntu-latest, python-version: "3.13", shard-index: 5, subshard-index: 3}
+          - {os: windows-latest, python-version: "3.14", shard-index: 6, subshard-index: 0}
+          - {os: windows-latest, python-version: "3.14", shard-index: 6, subshard-index: 1}
+          - {os: windows-latest, python-version: "3.14", shard-index: 6, subshard-index: 2}
+          - {os: windows-latest, python-version: "3.14", shard-index: 6, subshard-index: 3}
+          - {os: ubuntu-latest, python-version: "3.14", shard-index: 7, subshard-index: 0}
+          - {os: ubuntu-latest, python-version: "3.14", shard-index: 7, subshard-index: 1}
+          - {os: ubuntu-latest, python-version: "3.14", shard-index: 7, subshard-index: 2}
+          - {os: ubuntu-latest, python-version: "3.14", shard-index: 7, subshard-index: 3}
 
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -99,6 +123,7 @@ jobs:
       - run: >-
           python scripts/run_portable_ci.py --workers 2 --timeout-seconds 1200
           --matrix-shard-index ${{ matrix.shard-index }} --matrix-shard-count 8
+          --matrix-subshard-index ${{ matrix.subshard-index }} --matrix-subshard-count 4
 
   anymesher-compatibility:
     name: ANYmesher ${{ matrix.anymesher-version }} compatibility

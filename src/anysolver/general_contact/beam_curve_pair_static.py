@@ -91,8 +91,8 @@ def validate_b3_pair_contact(model, definition: ContactDefinition,
                 or material.yield_stress != 0.0
                 or material.hardening_curve is not None):
             issues.append(f"element {element_id} needs isotropic elastic material")
-        reference = np.asarray(element.get_node_coordinates(model.mesh), dtype=float)
         try:
+            reference = np.asarray(element.get_node_coordinates(model.mesh), dtype=float)
             virtual_reference, _ = _virtual_b3(reference)
             B3PairPotential(
                 virtual_reference, virtual_reference + np.array((0.0, 1.0, 0.0)),
