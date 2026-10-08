@@ -1,0 +1,102 @@
+{
+  "status": "DEVELOPMENT_MATCHED_REFINEMENT_NOT_QUALIFIED",
+  "identity": "R8_BL5_MX_MATCHED_NATIVE_C3D20_P0_DEV_V1",
+  "source_sha256": "192c74f5159a67921c896761fb49e98a670116b8dc3df559e5eeb195f947802e",
+  "saved_local_sha256": "84a0280817174df9946f455dd6939842c21d6648bd23796d149906300914fe1b",
+  "level": [
+    8,
+    4,
+    2
+  ],
+  "native_q4_elements": 32,
+  "native_b3_members": 4,
+  "resolved_shell_elements": 64,
+  "resolved_beam_elements": 64,
+  "multiplier_rows": 40,
+  "native": {
+    "applied_work_J": 0.0009928477489812898,
+    "tip_spin_x_rad": 9.928477489812899e-05,
+    "free_equilibrium_ratio": 4.726652318321328e-13,
+    "constraint_max": 6.059277490847881e-22,
+    "relative_internal_work_error": 9.041863666801899e-14,
+    "physical_dofs": 420,
+    "multiplier_rows": 40,
+    "matrix_nnz": 18648
+  },
+  "resolved": {
+    "applied_work_J": 0.000984473175778957,
+    "tip_section_spin_x_rad": 9.844731757789569e-05,
+    "equation_ratio": 4.668083527247607e-10,
+    "scaled_gap_max": 2.710505431213761e-20,
+    "relative_internal_work_error": 9.533089449637018e-12,
+    "relative_interface_work_error": 5.5065094669930326e-17,
+    "total_external_support_wrench": [
+      4.462918923309189e-11,
+      -4.081279314505082e-09,
+      3.511964052904659e-10,
+      1.42752853982131e-09,
+      3.30555138816635e-10,
+      -2.4072264181995706e-09
+    ],
+    "interface_wrench": {
+      "shell": [
+        4.343349189971863e-11,
+        3.954681915274705e-09,
+        4.576058685717812e-10,
+        9.999999999850727,
+        -2.698462126651047e-10,
+        2.3768791379552567e-09
+      ],
+      "beam": [
+        -4.343349189971358e-11,
+        -3.954639282710559e-09,
+        -4.576058685717812e-10,
+        -9.999999999850724,
+        2.6984621266510513e-10,
+        -2.376857821673184e-09
+      ]
+    },
+    "multiplier_rows": 40,
+    "physical_dofs": 2718,
+    "matrix_nnz": 300827,
+    "kkt_nnz": 287157
+  },
+  "native_over_resolved": 1.0085066545319596,
+  "tip_port": {
+    "area_m2": 0.002400000000000001,
+    "faces": 8,
+    "face_nodes": 37,
+    "rigid_projection_error": 2.886579864025407e-15
+  },
+  "effective_runtime": {
+    "cpu_affinity": [
+      0
+    ],
+    "numba_disable_jit": 1,
+    "numba_threads": 1,
+    "threadpools": [
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+        "version": "0.3.31.188.0",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      },
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+        "version": "0.3.30",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      }
+    ],
+    "anysolver_import": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\src\\anysolver\\__init__.py"
+  },
+  "level_wall_seconds": 1.5786813000013353
+}

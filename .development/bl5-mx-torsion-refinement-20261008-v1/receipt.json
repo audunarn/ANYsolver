@@ -1,0 +1,33 @@
+{
+  "status": "COMPLETED",
+  "exit_code": 0,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-m",
+    "scripts.r8_bl5_mx_torsion_refinement_dev",
+    "--parent",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-mx-section-port-20261008-v3\\contrast.json",
+    "--output-dir",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-mx-torsion-refinement-20261008-v1\\levels"
+  ],
+  "source_sha256": "b622c471b8f24519e37b65d9eb0cacf40e1f555c5c1791d3e3c7fe8a999900bb",
+  "parent_sha256": "2ecdfe791189d8c22ff2bd2ecae3835fd264e0773aee40670c29247df133fe89",
+  "source_commit": "54d1dd1a0b174ef4d68c0d3ef08c57d4bee11082",
+  "wall_seconds": 2.909865199995693,
+  "process_cap_seconds": 180,
+  "cumulative_allowance_seconds": 240,
+  "cumulative_used_seconds": 2.909865199995693,
+  "cumulative_remaining_seconds": 237.0901348000043,
+  "peak_sampled_process_tree_rss_bytes": 218935296,
+  "memory_cap_bytes": 2147483648,
+  "cpu_affinity_observed": [
+    0
+  ],
+  "threads_requested": 1,
+  "jit_disabled_requested": true,
+  "level_output_sha256": {
+    "2x2x1.json": "635890e1a636197779df3d7e0c7c7fcb141621a85a66d3a7bed767f01cf4466a",
+    "4x4x2.json": "80d696eb397844406109c8390c57d2566f32b9d3b0766d7a7838777e7ccc16ee",
+    "8x8x4.json": "e43acf9441aa46c40b790de8174ea3be52b0f6b7c0185009be11b8bad03370cd"
+  }
+}

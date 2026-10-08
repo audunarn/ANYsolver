@@ -680,3 +680,4 @@ tests/test_stiffened_shell_physical_fibre_j2_history.py text eol=lf
 .development/bl5-saved-work-guard-20261008-*/** -text -whitespace
 .development/bl5-saved-local-transfer-20261008-*/** -text -whitespace
 .development/bl5-p1-native-screen-20261008-*/** -text -whitespace
+.development/bl5-mx-*-20261008-*/** -text -whitespace

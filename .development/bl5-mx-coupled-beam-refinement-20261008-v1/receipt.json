@@ -1,0 +1,36 @@
+{
+  "status": "COMPLETED",
+  "exit_code": 0,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-m",
+    "scripts.r8_bl5_mx_coupled_body_refinement_dev",
+    "--prior",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-saved-local-transfer-20261008-v3\\local-transfer.json",
+    "--torsion-dir",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-mx-torsion-refinement-20261008-v1",
+    "--output-dir",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-mx-coupled-beam-refinement-20261008-v1\\levels"
+  ],
+  "source_sha256": "cc2eb1e95ca690973d1f7618361cfbddf1b25b311958afbbd561d82f0af7987e",
+  "parent_sha256": "84a0280817174df9946f455dd6939842c21d6648bd23796d149906300914fe1b",
+  "torsion_receipt_sha256": "757670fef2d886f2e3b09e6b871d73b409ac5d362eed5586bdcedc57a5a62bb6",
+  "source_commit": "54d1dd1a0b174ef4d68c0d3ef08c57d4bee11082",
+  "wall_seconds": 4.772809999994934,
+  "process_cap_seconds": 180,
+  "cumulative_allowance_seconds": 240,
+  "cumulative_used_seconds": 4.772809999994934,
+  "cumulative_remaining_seconds": 235.22719000000507,
+  "peak_sampled_process_tree_rss_bytes": 247308288,
+  "memory_cap_bytes": 2147483648,
+  "cpu_affinity_observed": [
+    0
+  ],
+  "threads_requested": 1,
+  "jit_disabled_requested": true,
+  "level_output_sha256": {
+    "2x2x1.json": "471758259c6bcd460c760f0d4ad1ed822a3c479c1d74a8b0baa15a95e8b354d6",
+    "4x4x2.json": "4c681792c5880f468efc8edbda8d08804797425fe52ed94f53090af59e28aad6",
+    "8x8x4.json": "a69f458a9e0a88a7c4e1079ca6a428fb80589b7eac73f05c17708c2eeb48fc96"
+  }
+}

@@ -169,6 +169,86 @@ Stop this isolated basis contrast. Next distinguish body, end traction, root
 and connection using a physically matched work-conjugate reference; do not
 promote P1 from smaller local work. F03, M2 and full ratios remain open.
 
+Next bounded Mx body discriminator: retain the exact saved C3D20 beam body,
+section geometry and 10 N m resultant. The earlier beam-only native/resolved
+ratio `1.13594` confounds full-face root clamp with one-section pose restraint
+and end-face traction with a section moment. Construct an area-L2 projection
+of each resolved end face onto six rigid section modes; verify its rigid-motion
+identity and work dual. Cross saved traction/section-dual torque with full-face/
+section-pose root restraint in four beam-only solves from one unchanged body.
+If the ratio changes materially, those boundary work definitions explain part
+of the existing body difference and must be matched before judging BL5. If it
+does not, examine body kinematics/section idealization. A rank, work, or wrench
+failure invalidates the experiment. This is one saved-input development batch,
+not a new CalculiX solve, F03 assessment, or connection qualification.
+The section-port contrast passed in its third, strongest saved-input attempt.
+Saved traction and section-dual load differ by only `6.77e-16` relative L2;
+the end load is therefore already work matched on this fixture. Replacing the
+full-face root clamp with six area-L2 pose constraints raises resolved work
+from `0.001449918650` to `0.001474597704 J`, while native beam-only work is
+`0.001647014034 J`. Native work matches the prismatic Saint-Venant `M²L/GJ`
+prediction to roundoff; resolved port-root work is `10.47%` below it.
+[Result](../../.development/bl5-mx-section-port-20261008-v3/results.md).
+Root warping restraint explains only a small part of the old body contrast.
+Next perform one same-port C3D20 torsion refinement series to distinguish
+coarse solid discretization from a port/body idealization mismatch. Preserve
+the old loaded BL5 and F03 decisions until a converged physical reference
+exists; no new connection law or multiplier policy follows from this result.
+The same-port C3D20 beam-only refinement passed 2×2×1, 4×4×2 and 8×8×4.
+Work relative to analytical Saint-Venant changes from `-10.47%` to `-1.17%`
+to `+0.14%`; the coarse operator and ports independently match the earlier
+assembly. [Exact three-level receipt](../../.development/bl5-mx-torsion-refinement-20261008-v1/receipt.json).
+This strongly identifies coarse resolved beam discretization as a body
+comparator limitation, without proving the full coupled reference converged.
+Next bounded discriminator: hold the old solid shell, 20 weak-P0 rows, 10 N m
+load and supports fixed; replace only the resolved beam body/trace by those
+three nested meshes. Coarse must reproduce the saved CalculiX work. If the
+native/resolved coupled difference collapses, refine the external reference
+before judging BL5; if it persists, inspect shell/connection representation
+with the body bias controlled. This remains development evidence, not F03.
+The fixed-shell coupled comparison passed all three beam levels and exactly
+reproduced coarse CalculiX work. Native/resolved Mx work ratios fall from
+`1.22489` to `1.12320` to `1.10994` as only the resolved beam is refined.
+[Result](../../.development/bl5-mx-coupled-beam-refinement-20261008-v1/results.md).
+Thus the coarse solid beam materially contaminated the original connection
+comparison, while an approximately 11% difference persists. Next hold that
+fine beam, physical weak law and supports fixed while refining only the solid
+shell; then decide whether native shell/connection comparison is meaningful.
+That fixed-beam shell contrast passed three levels. Native/resolved Mx work
+ratios change `1.10994 → 1.02092 → 0.95190` as only the resolved C3D20 shell
+is refined; work still moves `7.25%` at the last step. The middle near-match
+is not convergence. [Result](../../.development/bl5-mx-coupled-shell-refinement-20261008-v1/results.md).
+The physical decision is now clear: neither the original coarse CalculiX body
+nor an isolated refined level can qualify BL5. Stop component-by-component
+refinement. Next construct one matched native/resolved reference series with
+both bodies and the five-channel interface resolution growing under the same
+geometry, root, offsets, loads and physical work maps. Audit old native
+refinement fixture root/line policies before reuse. G0/F03/M2 remain open;
+historical failures and formal authority are unchanged.
+One bounded matched refinement will now compare native Q4/physical-fibre B3
+and the independent C3D20 shell/bar on the same 1 m geometry. Use 4×2,
+8×4 and 16×8 shell surface grids, corresponding native half-cell counts,
+solid thickness refinements, and one five-channel P0 multiplier interval per
+beam half-cell on both sides. Freeze material, section, offset, shell-root
+restraint and section-dual Mx load. The coarse native definition must equal
+the saved one; the coarse solid assembly uses the independently checked
+C3D20 operators. If both responses and connection work approach a stable
+common limit, advance the registered ratios and external execution. If a
+persistent matched difference remains, inspect the exact physical work maps
+and BL5 law; if convergence is unsettled, do not choose a basis from this
+sequence. This is a development discriminator, not formal F03 or a replacement
+for executed external reference acceptance.
+The matched native/C3D20 P0 Mx screen passed 4×2, 8×4 and 16×8 surfaces
+with matching body/interface refinement. Native/resolved work ratios are
+`1.11311 → 1.00851 → 0.98283`. Native work moves below `0.1%` between the
+last two levels, while resolved work still moves about `2.5%` and the ratio
+crosses unity. [Result](../../.development/bl5-mx-matched-refinement-20261008-v1/results.md).
+This rejects the coarse or middle-level tip response as a BL5 fidelity
+decision; it does not reject the continuous law. Next prepare one executed
+finer matched external deck with exact weak-row, root and section-torque work
+and a resolved-shell convergence check. Do not spend formal F03 authority or
+select P0 from these linear development results. No broad refinement sweep.
+
 ## Delivered experimental behavior and open acceptance
 
 - The sparse multi-element Q4/mixed Q4-S3/all-S3 GE point workflow, physical

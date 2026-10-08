@@ -1,0 +1,3 @@
+{"level": [2, 2, 1], "relative_to_analytical": -0.10468419018455788, "wall_seconds": 0.056005399994319305}
+{"level": [4, 4, 2], "relative_to_analytical": -0.011650675969915536, "wall_seconds": 0.040266500000143424}
+{"level": [8, 8, 4], "relative_to_analytical": 0.0014194370098672415, "wall_seconds": 0.3479859000071883}

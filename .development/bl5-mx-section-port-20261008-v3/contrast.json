@@ -1,0 +1,194 @@
+{
+  "status": "DEVELOPMENT_SECTION_PORT_CONTRAST_NOT_QUALIFIED",
+  "identity": "R8_BL5_MX_SECTION_PORT_CONTRAST_DEV_V3",
+  "source_sha256": "70aa28d4bd90931ae8c30b70be26e75602147476181cb8a5c474bd0fe8126f5f",
+  "input_sha256": {
+    "saved_deck": "7575fbf329ef288b88e3c5eb8c362ec4f93979819ff642277ace65b71495f300",
+    "saved_metadata": "74ed82d4109587badca2f414fb0a5dff070a81f8bf27b4649551dd50d01af9c5",
+    "earlier_beam_only": "03731cba008cce0d50a23c516ee4fb90f99ced4d37d0916bdf427a8fa73efae4"
+  },
+  "effective_runtime": {
+    "cpu_affinity": [
+      0
+    ],
+    "numba_disable_jit": 1,
+    "numba_threads": 1,
+    "threadpools": [
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+        "version": "0.3.31.188.0",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      },
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+        "version": "0.3.30",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      }
+    ],
+    "anysolver_import": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\src\\anysolver\\__init__.py"
+  },
+  "root_port": {
+    "area_m2": 0.0024,
+    "faces": 2,
+    "rigid_projection_error": 8.881784197001252e-16,
+    "section_center_m": [
+      0.0,
+      0.0,
+      0.04
+    ]
+  },
+  "tip_port": {
+    "area_m2": 0.0024,
+    "faces": 2,
+    "rigid_projection_error": 8.881784197001252e-16,
+    "section_center_m": [
+      1.0,
+      0.0,
+      0.04
+    ]
+  },
+  "saved_traction_wrench": [
+    0.0,
+    6.394884621840902e-14,
+    -7.105427357601002e-15,
+    9.999999999999996,
+    7.105427357601002e-15,
+    6.394884621840902e-14
+  ],
+  "section_dual_wrench": [
+    0.0,
+    1.0368851803400755e-14,
+    7.105427357601002e-15,
+    10.0,
+    -7.105427357601002e-15,
+    1.0368851803400755e-14
+  ],
+  "load_difference_zero_rigid_wrench": 5.357999441500826e-14,
+  "load_vector_l2_difference_N": 9.174854990752446e-14,
+  "load_vector_relative_difference": 6.769709701973587e-16,
+  "load_vector_max_difference_N": 4.973799150320701e-14,
+  "cases": {
+    "face/saved_traction": {
+      "root": "all_face_nodes_fixed",
+      "applied_work_J": 0.0014499186499536299,
+      "section_tip_spin_x_rad": 0.00014499186499536304,
+      "free_equation_ratio": 1.866334715811076e-10,
+      "root_gap_max": 0.0,
+      "relative_internal_work_error": 1.0186090091378485e-12,
+      "tip_wrench_about_origin": [
+        0.0,
+        6.394884621840902e-14,
+        -7.105427357601002e-15,
+        9.999999999999996,
+        7.105427357601002e-15,
+        6.394884621840902e-14
+      ],
+      "root_wrench_about_origin": [
+        1.685801850762043e-11,
+        1.730106794926258e-09,
+        3.147998887482862e-10,
+        -10.000000000102764,
+        -2.2757311415341103e-10,
+        1.4764123348290154e-09
+      ]
+    },
+    "face/section_dual": {
+      "root": "all_face_nodes_fixed",
+      "applied_work_J": 0.001449918649953629,
+      "section_tip_spin_x_rad": 0.00014499186499536288,
+      "free_equation_ratio": 1.2175641140229301e-10,
+      "root_gap_max": 0.0,
+      "relative_internal_work_error": 2.2102514382687232e-12,
+      "tip_wrench_about_origin": [
+        0.0,
+        1.0368851803400755e-14,
+        7.105427357601002e-15,
+        10.0,
+        -7.105427357601002e-15,
+        1.0368851803400755e-14
+      ],
+      "root_wrench_about_origin": [
+        2.298888831519461e-11,
+        8.908144838900169e-10,
+        -2.6540221359870794e-10,
+        -10.000000000083517,
+        2.0632475504755276e-10,
+        6.13528386367584e-10
+      ]
+    },
+    "port/saved_traction": {
+      "root": "area_L2_section_pose_fixed",
+      "applied_work_J": 0.0014745977040692365,
+      "section_tip_spin_x_rad": 0.00014745977040692368,
+      "free_equation_ratio": 1.6094165851529012e-10,
+      "root_gap_max": 4.6884067723913575e-17,
+      "relative_internal_work_error": 3.8365493994853883e-13,
+      "tip_wrench_about_origin": [
+        0.0,
+        6.394884621840902e-14,
+        -7.105427357601002e-15,
+        9.999999999999996,
+        7.105427357601002e-15,
+        6.394884621840902e-14
+      ],
+      "root_wrench_about_origin": [
+        3.1685507122695526e-11,
+        9.086467487426203e-11,
+        1.2521621051330898e-11,
+        -10.000000000038085,
+        9.843965251436996e-11,
+        -4.075431572653838e-11
+      ]
+    },
+    "port/section_dual": {
+      "root": "area_L2_section_pose_fixed",
+      "applied_work_J": 0.0014745977040692374,
+      "section_tip_spin_x_rad": 0.00014745977040692376,
+      "free_equation_ratio": 1.563509985762406e-10,
+      "root_gap_max": 5.626237681124379e-17,
+      "relative_internal_work_error": 8.133367086452155e-13,
+      "tip_wrench_about_origin": [
+        0.0,
+        1.0368851803400755e-14,
+        7.105427357601002e-15,
+        10.0,
+        -7.105427357601002e-15,
+        1.0368851803400755e-14
+      ],
+      "root_wrench_about_origin": [
+        2.795326553934049e-11,
+        1.3835083528101228e-09,
+        -1.446497730728546e-10,
+        -10.000000000073154,
+        1.2099176002861473e-10,
+        1.2166220257999197e-09
+      ]
+    }
+  },
+  "prior_native_beam_only_work_J": 0.001647014034494602,
+  "prismatic_Saint_Venant_check": {
+    "declared_scope": "1 m prismatic elastic bar, torque 10 N m, free end warping",
+    "J_m4": 7.517211220820933e-07,
+    "J_tail_absolute_bound_m4": 8.382226810688419e-21,
+    "G_Pa": 80769230769.23077,
+    "analytical_tip_spin_rad": 0.00016470140344946024,
+    "analytical_applied_work_J": 0.0016470140344946023,
+    "native_relative_work_difference": -1.3165670113044293e-16,
+    "resolved_port_relative_work_difference": -0.10468419018558761
+  },
+  "limitations": [
+    "One saved linear C3D20 beam-only geometry and one torque resultant.",
+    "The area-L2 section port is a declared diagnostic idealization, not the native retained-coordinate section law.",
+    "No coupled transfer, external execution, full mesh ratio, or F03 acceptance follows."
+  ]
+}

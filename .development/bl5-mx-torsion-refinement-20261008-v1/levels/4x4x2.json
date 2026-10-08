@@ -1,0 +1,75 @@
+{
+  "status": "DEVELOPMENT_TORSION_REFINEMENT_NOT_QUALIFIED",
+  "identity": "R8_BL5_MX_C3D20_TORSION_REFINEMENT_DEV_V1",
+  "source_sha256": "b622c471b8f24519e37b65d9eb0cacf40e1f555c5c1791d3e3c7fe8a999900bb",
+  "parent_sha256": "2ecdfe791189d8c22ff2bd2ecae3835fd264e0773aee40670c29247df133fe89",
+  "level": [
+    4,
+    4,
+    2
+  ],
+  "nodes": 245,
+  "elements": 32,
+  "matrix_nnz": 77165,
+  "root_port": {
+    "area_m2": 0.002400000000000001,
+    "faces": 8,
+    "face_nodes": 37,
+    "rigid_projection_error": 2.886579864025407e-15
+  },
+  "tip_port": {
+    "area_m2": 0.002400000000000001,
+    "faces": 8,
+    "face_nodes": 37,
+    "rigid_projection_error": 2.886579864025407e-15
+  },
+  "coarse_independent_control": null,
+  "analytical_Saint_Venant_work_J": 0.0016470140344946025,
+  "relative_to_analytical": -0.011650675969915536,
+  "result": {
+    "applied_work_J": 0.0016278252076608027,
+    "tip_section_spin_x_rad": 0.00016278252076608026,
+    "equation_ratio": 3.339177298547706e-10,
+    "root_gap_max": 3.9334019696227667e-16,
+    "relative_work_error": 5.4097373869865345e-12,
+    "support_wrench_about_origin": [
+      -3.6822751402439576e-12,
+      5.51336719216499e-10,
+      -5.576576513293835e-10,
+      -10.000000000112031,
+      2.6383845733237546e-10,
+      7.787046099994223e-11
+    ]
+  },
+  "effective_runtime": {
+    "cpu_affinity": [
+      0
+    ],
+    "numba_disable_jit": 1,
+    "numba_threads": 1,
+    "threadpools": [
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+        "version": "0.3.31.188.0",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      },
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+        "version": "0.3.30",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      }
+    ],
+    "anysolver_import": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\src\\anysolver\\__init__.py"
+  },
+  "level_wall_seconds": 0.040266500000143424
+}

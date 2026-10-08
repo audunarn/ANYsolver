@@ -1,0 +1,33 @@
+{
+  "status": "COMPLETED",
+  "exit_code": 0,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-m",
+    "scripts.r8_bl5_mx_section_port_dev",
+    "--saved",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-ccx-weak-p0-20261008-mx-v2",
+    "--earlier",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-mx-beam-only-20261008-v5\\result.json",
+    "--output",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-mx-section-port-20261008-v2\\contrast.json"
+  ],
+  "source_sha256": "6c52867dcbe818721ab1675a4fc2f91c7114a0761eca63e6221fc29eef0803d5",
+  "prior_sha256": "03731cba008cce0d50a23c516ee4fb90f99ced4d37d0916bdf427a8fa73efae4",
+  "saved_deck_sha256": "7575fbf329ef288b88e3c5eb8c362ec4f93979819ff642277ace65b71495f300",
+  "saved_metadata_sha256": "74ed82d4109587badca2f414fb0a5dff070a81f8bf27b4649551dd50d01af9c5",
+  "source_commit": "54d1dd1a0b174ef4d68c0d3ef08c57d4bee11082",
+  "wall_seconds": 2.2897068000020226,
+  "process_cap_seconds": 80,
+  "cumulative_allowance_seconds": 120,
+  "cumulative_used_seconds": 4.781888600002276,
+  "cumulative_remaining_seconds": 115.21811139999772,
+  "peak_sampled_process_tree_rss_bytes": 161853440,
+  "memory_cap_bytes": 2147483648,
+  "cpu_affinity_observed": [
+    0
+  ],
+  "threads_requested": 1,
+  "jit_disabled_requested": true,
+  "output_sha256": "aa3db2736562c3e484e6ce06bada86d2d57ed4ee7271392c6cb01227b6af38d4"
+}

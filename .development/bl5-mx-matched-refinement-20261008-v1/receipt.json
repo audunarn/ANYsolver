@@ -1,0 +1,33 @@
+{
+  "status": "COMPLETED",
+  "exit_code": 0,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-m",
+    "scripts.r8_bl5_mx_matched_refinement_dev",
+    "--saved-local",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-saved-local-transfer-20261008-v3\\local-transfer.json",
+    "--output-dir",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-mx-matched-refinement-20261008-v1\\levels"
+  ],
+  "source_sha256": "192c74f5159a67921c896761fb49e98a670116b8dc3df559e5eeb195f947802e",
+  "saved_local_sha256": "84a0280817174df9946f455dd6939842c21d6648bd23796d149906300914fe1b",
+  "source_commit": "54d1dd1a0b174ef4d68c0d3ef08c57d4bee11082",
+  "wall_seconds": 13.051427099999273,
+  "process_cap_seconds": 180,
+  "cumulative_allowance_seconds": 240,
+  "cumulative_used_seconds": 13.051427099999273,
+  "cumulative_remaining_seconds": 226.94857290000073,
+  "peak_sampled_process_tree_rss_bytes": 658124800,
+  "memory_cap_bytes": 2147483648,
+  "cpu_affinity_observed": [
+    0
+  ],
+  "threads_requested": 1,
+  "jit_disabled_requested": true,
+  "level_output_sha256": {
+    "16x8x4.json": "c81720f503d972dff685ec114446eece5abeef4c1d7d9a1d9df56cf43ff79729",
+    "4x2x1.json": "995063ed902e46daf27d8782ca8ecb448440e01cbc8e6c1ffbf2ece332fd535b",
+    "8x4x2.json": "69ac74e73dcc63e306aecdfb3d21b32088350905dcefddb4f9f0122e78a4feb3"
+  }
+}
