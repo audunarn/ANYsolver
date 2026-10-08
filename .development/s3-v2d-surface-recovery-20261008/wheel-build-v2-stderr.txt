@@ -1,0 +1,10 @@
+Failed to find real location of C:\Python\Python314\python.exe
+* Getting build dependencies for wheel...
+Failed to find real location of C:\Python\Python314\python.exe
+no previously-included directories found matching 'docs'
+no previously-included directories found matching 'reports'
+no previously-included directories found matching 'scripts'
+* Building wheel...
+Failed to find real location of C:\Python\Python314\python.exe
+no previously-included directories found matching 'reports'
+no previously-included directories found matching 'scripts'

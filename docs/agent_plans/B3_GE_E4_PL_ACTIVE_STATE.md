@@ -10,8 +10,10 @@ read-only review found no concrete defect; its consequential coverage requests
 were added and passed. Full affected historical file recorded 19 PASS / 1 unrelated
 FAIL: its frozen pre-default-activation assertion still expects `legacy-s3`.
 Do not change that historical boundary to obtain a pass. Raw source receipts
-are in `.development/s3-v2d-surface-recovery-20261008/`; installed-artifact
-verification and mandatory programme review remain pending. This is an experimental
+are in `.development/s3-v2d-surface-recovery-20261008/`. An isolated wheel from
+`552401b9` passed a public mixed Q4/S3 installed recovery probe; all 627 Python
+modules match source/wheel/site byte-for-byte. Wheel SHA-256 is `07f20642...6ed4d2`.
+Cross-platform/consumer and mandatory programme review remain pending. This is an experimental
 recovery addition, not G0/G1 or full-programme acceptance. Direct OpenAI edit
 uses the already recorded Mistral/local unavailability for this task.
 

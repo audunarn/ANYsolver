@@ -1,0 +1,10 @@
+{
+  "source_python_files": 627,
+  "wheel_python_files": 627,
+  "site_python_files": 627,
+  "wheel_sha256": "07f20642b509f9c818734619f41244366b687804b5c593d3d3702716cf6ed4d2",
+  "source_equals_wheel": true,
+  "wheel_equals_site": true,
+  "source_wheel_mismatches": [],
+  "wheel_site_mismatches": []
+}

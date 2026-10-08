@@ -1,0 +1,4 @@
+Failed to find real location of C:\Python\Python314\python.exe
+* Getting build dependencies for wheel...
+TIP pass --env-dir and --sdist-extract-dir to keep the build environment and sources, then see https://build.pypa.io/en/stable/how-to/troubleshooting.html#debug-a-failed-build for help debugging a failed build
+ERROR Backend operation failed: PermissionError(13, 'Access is denied')

@@ -1,0 +1,21 @@
+{
+  "command": [
+    "-m",
+    "build",
+    "--wheel",
+    "--no-isolation",
+    "--outdir",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\s3-v2d-surface-recovery-20261008\\wheel",
+    "."
+  ],
+  "source": "552401b9a89c6a9367abb521cfb93e5ac9210c0e",
+  "exit": 1,
+  "wall_seconds": 0.4037093,
+  "affinity": 1,
+  "peak_working_set_bytes": null,
+  "wheel_count": 0,
+  "wheel": null,
+  "wheel_sha256": null,
+  "stdout": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\s3-v2d-surface-recovery-20261008\\wheel-build-stdout.txt",
+  "stderr": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\s3-v2d-surface-recovery-20261008\\wheel-build-stderr.txt"
+}

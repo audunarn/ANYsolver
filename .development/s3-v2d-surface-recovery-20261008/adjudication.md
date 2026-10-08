@@ -32,5 +32,16 @@ with their respective receipts; no failed result was rewritten as a pass.
 
 Supporting read-only code/mechanics review found no concrete defect and called
 out missing bending/shear and committed-state coverage. These checks were
-added to the final run. Installed artifact verification, programme-independent
-review, and consumer integration remain open.
+added to the final run.
+
+An isolated wheel was built from source commit `552401b9a89c6a9367abb521cfb93e5ac9210c0e`
+and installed with `pip --no-index --no-deps --target`. Wheel SHA-256 is
+`07f20642b509f9c818734619f41244366b687804b5c593d3d3702716cf6ed4d2`.
+The installed public mixed Q4/S3 recovery probe passed with actual import from
+the isolated site. All **627 Python modules** match source, wheel, and site
+byte-for-byte (`artifact-identity.json`). The first build attempt failed on an
+inaccessible sandbox temporary directory; the second used a workspace-local
+temporary directory and passed. Both attempts and outputs are retained.
+This verifies this experimental elastic recovery route on one local Python
+environment; it does not close cross-platform, consumer, programme-independent
+review or qualification obligations.

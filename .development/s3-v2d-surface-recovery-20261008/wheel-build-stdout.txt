@@ -1,0 +1,23 @@
+
+Traceback (most recent call last):
+  File "C:\Github\ANYfem\reports\qt\integration-pr10\windows-env\Lib\site-packages\pyproject_hooks\_impl.py", line 30, in write_json
+    with open(path, "w", encoding="utf-8") as f:
+         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: 'C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Packages\\sandbox.{fab7cbc7-4379-4b77-a809-49dc4fcc884c}\\AC\\Temp\\tmpynv739os\\input.json'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Python\Python314\Lib\shutil.py", line 707, in _rmtree_unsafe
+    os.rmdir(path)
+    ~~~~~~~~^^^^^^
+PermissionError: [WinError 5] Access is denied: 'C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Packages\\sandbox.{fab7cbc7-4379-4b77-a809-49dc4fcc884c}\\AC\\Temp\\tmpynv739os'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Python\Python314\Lib\tempfile.py", line 276, in _dont_follow_symlinks
+    func(path, *args, follow_symlinks=False)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+PermissionError: [WinError 5] Access is denied: 'C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Packages\\sandbox.{fab7cbc7-4379-4b77-a809-49dc4fcc884c}\\AC\\Temp\\tmpynv739os'
+

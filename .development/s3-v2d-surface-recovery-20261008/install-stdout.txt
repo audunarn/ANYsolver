@@ -1,0 +1,3 @@
+Processing c:\github\anysolver\.perf2-worktrees\stiffened-rev8-20261008\.development\s3-v2d-surface-recovery-20261008\wheel\anysolver-0.4.7-py3-none-any.whl
+Installing collected packages: anysolver
+Successfully installed anysolver-0.4.7
