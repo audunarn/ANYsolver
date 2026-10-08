@@ -1,0 +1,25 @@
+{
+  "current_test_sha256": "8b69d7243bb07909d34a7736249e72953ecccb8810e022d2d15514bc8b45ab49",
+  "prior_replay_sha256": "d07dbb311231b8ca2d7940427c7c364ca04fb384fb16ec4255031a587a1ac0b2",
+  "qualification": false,
+  "replay": [
+    {
+      "attempt": "source-v2-a1",
+      "max_axis_sine": 0.0031599557053400085,
+      "max_bracket_rad2": 1.1314953840277132e-10,
+      "pairs": 6,
+      "qualifying_nodes": 4,
+      "states": 5
+    },
+    {
+      "attempt": "installed-v4-a1",
+      "max_axis_sine": 0.0031599557053400085,
+      "max_bracket_rad2": 1.1314953840277132e-10,
+      "pairs": 6,
+      "qualifying_nodes": 4,
+      "states": 5
+    }
+  ],
+  "source_line_ending_normalization_only": true,
+  "status": "PASS"
+}

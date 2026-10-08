@@ -1,3 +1,19 @@
+**8 October simultaneous J2/fibre chart - IMPLEMENTED_NOT_QUALIFIED:**
+The two-stiffener Q4-J2/native-fibre point-owner history passed 1/1 from
+source (86.1881032 s) and the byte-identical 627-file installed wheel site
+(90.4082661 s, wheel SHA-256 07f20642...6ed4d2). Both runs verified effective
+CPU0, one Numba/native thread and JIT off. Three accepted increments advanced
+shell and fibre plasticity together. Adjacent 2->3 and 3->4 physical rotations
+straddle the rebase; maximum bracket 1.131495384e-10 rad^2 and axis sine
+0.003159956. Material/reaction rebase-restore parity, continued history,
+rejection and cancellation passed. Independent read-only review found no
+blocking small-rotation defect. A same-node assertion refinement was verified
+on both saved state sets (4/6 node rows qualify); the full test was not rerun
+after that pure test edit. Raw receipts and replay are in
+.development/f06-j2-fibre-chart-20261008/evidence-v1.zip, with original
+byte hashes in evidence-index-v1.json. Finite-angle sensitivity, S3,
+broader F06/V18/G3, different-family acceptance and release remain OPEN.
+
 **8 October common-main distributing-displacement consumer - IMPLEMENTED_NOT_QUALIFIED:**
 The existing ANYfem consumer wheel and common-main solver site pass 54/54
 affected installed development tests, including the public checkpoint example,

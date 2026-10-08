@@ -18,6 +18,24 @@ proportionate evidence route or a separately authorized amended packet;
 full G6 artifact acceptance remains open. Local evidence:
 `C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/.development/distributing-displacement-consumer-common-main-20261008-v1/`.
 
+The ready F06 chart gap now has scoped source and installed development results
+on the existing two-stiffener Q4-J2/native-fibre point owner. Its full loaded
+history passed 1/1 from source in 86.1881032 s and from the byte-identical
+627-file installed site in 90.4082661 s (wheel `07f20642...6ed4d2`). Both
+record effective CPU0, one Numba/native thread and JIT off. Three accepted
+increments advanced shell and fibre plasticity together. The adjacent 2->3
+and 3->4 physical left rotations straddle the rebase and give a maximum
+bracket of `1.131495384e-10 rad^2` and axis sine `0.003159956`; rebase,
+material state, restore, continued history, rejection and cancellation passed.
+Independent read-only review found no blocking defect for small-rotation
+coverage, but requested a same-node conjunction in the guard. That final
+test-only refinement was verified against both saved state sets (4/6 node rows
+qualify); the full 86-90 s test was not repeated after this pure assertion edit.
+This does not establish finite-angle sensitivity, S3, broad F06/V18/G3 or
+release acceptance. Raw receipts and replay are preserved in
+`.development/f06-j2-fibre-chart-20261008/evidence-v1.zip`, with each original
+byte hash in `evidence-index-v1.json`; local unpacked originals remain intact.
+
 One expressly authorized BL5 V5 exact-face beam-only diagnostic completed:
 the resolved and native body equilibrium ratios are `1.6071e-12` and
 `3.9385e-12`, respectively, with the three prior tiny-load rows now exactly
@@ -37,11 +55,11 @@ The scoped S3 V2D elastic recovery fix is now a separate **draft PR #65**
 against common main: `codex/s3-v2d-surface-recovery` at `974f283a`, based on
 `cff55d95`. Its three product/test files are byte-identical to the installed
 verified development candidate (`552401b9`). The clean sparse checkout is
-`C:/Github/ANYsolver/.perf2-worktrees/s3-v2d-recovery-main`. CI snapshot for
-head `974f283a`: 49 checks, 16 success, 17 failure, 9 in progress, 7 queued.
-The 17 inspected failing test files are outside the three-file S3 diff;
-causality is not fully established, and common main was already recorded as
-CI-red. The portable matrix repeats the
+`C:/Github/ANYsolver/.perf2-worktrees/s3-v2d-recovery-main`. All 49 CI checks
+for head `974f283a` have completed: 23 success, 26 failure. The inspected
+failing test files are outside the three-file S3 diff; causality remains
+unproven, particularly for S3-adjacent failures, and common main was already
+recorded as CI-red. The portable matrix repeats the
 current S3 successor modules on every shard, so successful completed jobs
 include those source controls. Do not describe full CI as passed; inspect
 remaining jobs before PR disposition. GitHub Actions logs are linked from

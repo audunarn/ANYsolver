@@ -1,0 +1,950 @@
+{
+  "archive": "evidence-v1.zip",
+  "archive_sha256": "670f5df5d4e5ceab847dcd9c0d36fb6a9ba567101d77dc8a83304d3e64bc8e88",
+  "file_count": 188,
+  "files": [
+    {
+      "bytes": 620,
+      "path": "installed-preflight-v3.json",
+      "sha256": "b642e971bdc7bcba113339cd9e03dd9d2736d50b356cebd6d771eb2272e1cad8"
+    },
+    {
+      "bytes": 775,
+      "path": "installed-preflight-v4.json",
+      "sha256": "720dc858beb8cfa7ce77c6844d377a6288db512a1225de6155eeb39f9e5252dd"
+    },
+    {
+      "bytes": 2107,
+      "path": "installed-v3-a1/receipt.json",
+      "sha256": "19777a5ac6c0e06bd0c22eb25bc05390720752dfbf9e973b6c9862871bf8fd52"
+    },
+    {
+      "bytes": 2769,
+      "path": "installed-v3-a1/stderr.log",
+      "sha256": "f537480b6ea73808ca9182351762aec5390f398bba9a0f68218ae1614e6391d7"
+    },
+    {
+      "bytes": 543,
+      "path": "installed-v3-a1/stdout.log",
+      "sha256": "5d536c2bcf694b863002cf90916f8f02d6df1e16db680c2df08b4c3e0a82611c"
+    },
+    {
+      "bytes": 661,
+      "path": "installed-v4-a1/junit.xml",
+      "sha256": "85ad3dde1f6e72a1f5db084cbebe1b0fb5d8cc1330ef4b104517522dac4db620"
+    },
+    {
+      "bytes": 48902,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/activity.json",
+      "sha256": "673c41abe1f1c98f650bcdc5f27243d53514a5c8fa52d84e83813d9b51cb8316"
+    },
+    {
+      "bytes": 4174,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/cancelled-candidate.npz",
+      "sha256": "3d2dbb8eaa31509bc13cea88277bef0652c9a6c843bea3310b55dbc5ef9807a1"
+    },
+    {
+      "bytes": 18639,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/chart-after/checkpoint.bin",
+      "sha256": "2159772315f9e54d698563b9309d6244f6f355038fdbcbe54e883029dde6367a"
+    },
+    {
+      "bytes": 64031,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/chart-after/material.json",
+      "sha256": "1b69615ab524b2e15c11d157741b3fb0d4c42b1cd2e32e98703424266bc18d7d"
+    },
+    {
+      "bytes": 6066,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/chart-after/state.npz",
+      "sha256": "8215fd09d81c67aa1f56be1a45b224d95646877763f8dd19e440c05e65b07112"
+    },
+    {
+      "bytes": 17542,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/chart-before/checkpoint.bin",
+      "sha256": "ccbab9aae91eceb8f1d1ac0d601c8cc8e0d9a303fddc9a57bb6e84c0f25da49a"
+    },
+    {
+      "bytes": 61859,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/chart-before/material.json",
+      "sha256": "b142531322e244d67f747cfc79f48ec25095343c035fb23ba18902790b0c74f7"
+    },
+    {
+      "bytes": 6172,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/chart-before/state.npz",
+      "sha256": "42483355ab5be3635dc541229e1cf151a37ea8d222c0f1b155f2f62df1a435b3"
+    },
+    {
+      "bytes": 241,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/control-0/balance.json",
+      "sha256": "145bacbce799fbfe74876cd5ef5659c4fd7afd09fd3b41ef44670976a3e4b2b8"
+    },
+    {
+      "bytes": 17523,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/control-0/checkpoint.bin",
+      "sha256": "47b478e26d94e0f27c2a18a2123c75d7233dc8dca0bb0137b72ed33f1065f1f6"
+    },
+    {
+      "bytes": 61429,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/control-0/material.json",
+      "sha256": "448227ba741acb4a5cc759b4244bf891bd21b4cb960c62a864bb33bb447f6bbb"
+    },
+    {
+      "bytes": 5991,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/control-0/state.npz",
+      "sha256": "5f8413801b89c49a5d31df5d96b3a938c7a8d7276db1866e98761b31b9017464"
+    },
+    {
+      "bytes": 240,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/control-1/balance.json",
+      "sha256": "ae68a5a94936afb82f543de985b14b00423ca3d581abb1bdc12cb44a2e15c261"
+    },
+    {
+      "bytes": 17766,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/control-1/checkpoint.bin",
+      "sha256": "6e63d9b2ded87006bb49f82274170807067f4328ddcd5eb8ff705e770eab913b"
+    },
+    {
+      "bytes": 62369,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/control-1/material.json",
+      "sha256": "285ed7f5b94195239e0d9336ac5c43bf85d62831f73ac3af9501a84be15c0a45"
+    },
+    {
+      "bytes": 5994,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/control-1/state.npz",
+      "sha256": "8e61612d72be1d45c24dc63f0535108e1c5790eaebb56c800683a53acf36d250"
+    },
+    {
+      "bytes": 240,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/control-2/balance.json",
+      "sha256": "79286b8fe39a13e68049a66d252c87bf2921de26bb6db5161c4669b77d84dfc6"
+    },
+    {
+      "bytes": 17536,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/control-2/checkpoint.bin",
+      "sha256": "bf10028107ce69b04224c982c0cec7d13ed902d23181ce64abb1e79ce9a08f74"
+    },
+    {
+      "bytes": 62076,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/control-2/material.json",
+      "sha256": "8bb084805871cb6076d190adc7c5e922e1e8bbd283548664e0d2c24ec36970b4"
+    },
+    {
+      "bytes": 6126,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/control-2/state.npz",
+      "sha256": "cc710ed04cec804e8fdac5405c272c121aec343ff8fd534e2bff183bad5735a3"
+    },
+    {
+      "bytes": 239,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/control-3/balance.json",
+      "sha256": "60b9ed5bcbda78ac266f2ef6dab673b732f06a24fc2386a1abdc383b903b9dfc"
+    },
+    {
+      "bytes": 17542,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/control-3/checkpoint.bin",
+      "sha256": "ccbab9aae91eceb8f1d1ac0d601c8cc8e0d9a303fddc9a57bb6e84c0f25da49a"
+    },
+    {
+      "bytes": 61859,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/control-3/material.json",
+      "sha256": "57d5ce4ef50f0138e028ebce568c0f27d98d4fa1996a840b44a1a8d73ff3455d"
+    },
+    {
+      "bytes": 6172,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/control-3/state.npz",
+      "sha256": "42483355ab5be3635dc541229e1cf151a37ea8d222c0f1b155f2f62df1a435b3"
+    },
+    {
+      "bytes": 237,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/control-4/balance.json",
+      "sha256": "2fa112020b44e393af7fb35041a35fc2766baf9f380e648167bd0db514b20079"
+    },
+    {
+      "bytes": 17550,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/control-4/checkpoint.bin",
+      "sha256": "5550c9523ce609bc60f2210e72c808ff0718cd83a92515e13f08f45b39176b74"
+    },
+    {
+      "bytes": 62124,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/control-4/material.json",
+      "sha256": "94f95c4ed2f48083bf92ad06a42924812a3545e7b37ee5327f5d9875dbd5cb00"
+    },
+    {
+      "bytes": 6176,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/control-4/state.npz",
+      "sha256": "7a38c5f08e5e0d96d3bcb0724ac53fdfccb4dc1dfeb92d33e5580d946fd9ac51"
+    },
+    {
+      "bytes": 121,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/noncommuting-chart.json",
+      "sha256": "153410fb6e93713b5954ddc031ec1103b5d16839ef0036eb93f31976f2d27110"
+    },
+    {
+      "bytes": 521,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/numerical-rejection.json",
+      "sha256": "5f96b0b712e7471f5c706d288106d38d4877b5b5afc35401dfc978263e8f8513"
+    },
+    {
+      "bytes": 780,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/programme.json",
+      "sha256": "66011e591cc4d4d71e7b521b8bf25d3bc46e4c2b5adae27a4bd06dc4f9910499"
+    },
+    {
+      "bytes": 239,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/rebased-1/balance.json",
+      "sha256": "7cdab01b57f20b6741e0e0e6efd21af6e2ec87ceb216f36219bd98f764839007"
+    },
+    {
+      "bytes": 18647,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/rebased-1/checkpoint.bin",
+      "sha256": "e22bbf8fb7e2cba673834756fbf562608f68f25986c60f98e3032db10c59bc5a"
+    },
+    {
+      "bytes": 64554,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/rebased-1/material.json",
+      "sha256": "d62cff810bee8d53ed280b01ecd924e989d6393b9978ea2efcfa084d5d1ca33e"
+    },
+    {
+      "bytes": 6188,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/rebased-1/state.npz",
+      "sha256": "9a9cf57a374a9e6656344434b19f5c32cf5c58267acfdb64964bc1fda5ece4a8"
+    },
+    {
+      "bytes": 239,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/rebased-restored-1/balance.json",
+      "sha256": "7cdab01b57f20b6741e0e0e6efd21af6e2ec87ceb216f36219bd98f764839007"
+    },
+    {
+      "bytes": 18647,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/rebased-restored-1/checkpoint.bin",
+      "sha256": "e22bbf8fb7e2cba673834756fbf562608f68f25986c60f98e3032db10c59bc5a"
+    },
+    {
+      "bytes": 64554,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/rebased-restored-1/material.json",
+      "sha256": "d62cff810bee8d53ed280b01ecd924e989d6393b9978ea2efcfa084d5d1ca33e"
+    },
+    {
+      "bytes": 6188,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/rebased-restored-1/state.npz",
+      "sha256": "9a9cf57a374a9e6656344434b19f5c32cf5c58267acfdb64964bc1fda5ece4a8"
+    },
+    {
+      "bytes": 15856,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/rejected-candidate-material.json",
+      "sha256": "ce99992eeb16d96d398d995d70ed2f509be40c57d9287e2f1c9e8f3cde1d5d7e"
+    },
+    {
+      "bytes": 17766,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/restored-prefix/checkpoint.bin",
+      "sha256": "6e63d9b2ded87006bb49f82274170807067f4328ddcd5eb8ff705e770eab913b"
+    },
+    {
+      "bytes": 62369,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/restored-prefix/material.json",
+      "sha256": "0ca301c0906a536675c6442488fffc9e585728a45520813fedbe8b41454dd436"
+    },
+    {
+      "bytes": 5994,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/restored-prefix/state.npz",
+      "sha256": "8e61612d72be1d45c24dc63f0535108e1c5790eaebb56c800683a53acf36d250"
+    },
+    {
+      "bytes": 240,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-1/balance.json",
+      "sha256": "79286b8fe39a13e68049a66d252c87bf2921de26bb6db5161c4669b77d84dfc6"
+    },
+    {
+      "bytes": 17536,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-1/checkpoint.bin",
+      "sha256": "bf10028107ce69b04224c982c0cec7d13ed902d23181ce64abb1e79ce9a08f74"
+    },
+    {
+      "bytes": 62076,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-1/material.json",
+      "sha256": "8bb084805871cb6076d190adc7c5e922e1e8bbd283548664e0d2c24ec36970b4"
+    },
+    {
+      "bytes": 6126,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-1/state.npz",
+      "sha256": "cc710ed04cec804e8fdac5405c272c121aec343ff8fd534e2bff183bad5735a3"
+    },
+    {
+      "bytes": 239,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-2/balance.json",
+      "sha256": "60b9ed5bcbda78ac266f2ef6dab673b732f06a24fc2386a1abdc383b903b9dfc"
+    },
+    {
+      "bytes": 17542,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-2/checkpoint.bin",
+      "sha256": "ccbab9aae91eceb8f1d1ac0d601c8cc8e0d9a303fddc9a57bb6e84c0f25da49a"
+    },
+    {
+      "bytes": 61859,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-2/material.json",
+      "sha256": "57d5ce4ef50f0138e028ebce568c0f27d98d4fa1996a840b44a1a8d73ff3455d"
+    },
+    {
+      "bytes": 6172,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-2/state.npz",
+      "sha256": "42483355ab5be3635dc541229e1cf151a37ea8d222c0f1b155f2f62df1a435b3"
+    },
+    {
+      "bytes": 237,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-3/balance.json",
+      "sha256": "2fa112020b44e393af7fb35041a35fc2766baf9f380e648167bd0db514b20079"
+    },
+    {
+      "bytes": 17550,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-3/checkpoint.bin",
+      "sha256": "5550c9523ce609bc60f2210e72c808ff0718cd83a92515e13f08f45b39176b74"
+    },
+    {
+      "bytes": 62124,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-3/material.json",
+      "sha256": "94f95c4ed2f48083bf92ad06a42924812a3545e7b37ee5327f5d9875dbd5cb00"
+    },
+    {
+      "bytes": 6176,
+      "path": "installed-v4-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-3/state.npz",
+      "sha256": "7a38c5f08e5e0d96d3bcb0724ac53fdfccb4dc1dfeb92d33e5580d946fd9ac51"
+    },
+    {
+      "bytes": 2120,
+      "path": "installed-v4-a1/receipt.json",
+      "sha256": "c0b57421499ac6e29b8e46fcfd0ffcfa0608976eeeb99ee15833b46f356977a1"
+    },
+    {
+      "bytes": 353,
+      "path": "installed-v4-a1/stderr.log",
+      "sha256": "374adeb242383206c1812ceba9a71dc478481a1446836d60b91963411a30486a"
+    },
+    {
+      "bytes": 1412,
+      "path": "installed-v4-a1/stdout.log",
+      "sha256": "f1ff7da1996fa5664fdc7b7a88cb92dd5aebb187c00d6f1b0eb8e21af45c5372"
+    },
+    {
+      "bytes": 600,
+      "path": "replay-predicate-v1.json",
+      "sha256": "d07dbb311231b8ca2d7940427c7c364ca04fb384fb16ec4255031a587a1ac0b2"
+    },
+    {
+      "bytes": 719,
+      "path": "replay-predicate-v2.json",
+      "sha256": "82bbdc6cf2f0639c598c2adabd366716a4bc1bb1c75009380bc658327d024c72"
+    },
+    {
+      "bytes": 1280,
+      "path": "review-v1.md",
+      "sha256": "8188711a61eacae2f0296d65dbb7fd8b7e01b7eeebfc271d0257debf0cad0a32"
+    },
+    {
+      "bytes": 3950,
+      "path": "run-v1.py",
+      "sha256": "2abe94e898259a4122bb71a7d8f4250a125ff84ce357704491882c6b8bbdcf0a"
+    },
+    {
+      "bytes": 3950,
+      "path": "run-v2.py",
+      "sha256": "bbac0b9438bca319b2e22a31b7fce836be4a8c649bf73b922b6a3f4caafbdd00"
+    },
+    {
+      "bytes": 4282,
+      "path": "run-v3.py",
+      "sha256": "27a4c0bababd7486891c32b7d6dde416585d04f2027e77b370bd1de387945eb8"
+    },
+    {
+      "bytes": 4350,
+      "path": "run-v4.py",
+      "sha256": "89bbd2dd985bd37f9832c52cc0e49d4cb878eb04032b8f8e06c5e8a02100f1d6"
+    },
+    {
+      "bytes": 658,
+      "path": "source-v1-a1/junit.xml",
+      "sha256": "319cefa0fd1f27b07b37a93306b01e72304ad9040b8f35bd488e640e82a910e2"
+    },
+    {
+      "bytes": 48902,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/activity.json",
+      "sha256": "673c41abe1f1c98f650bcdc5f27243d53514a5c8fa52d84e83813d9b51cb8316"
+    },
+    {
+      "bytes": 4174,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/cancelled-candidate.npz",
+      "sha256": "3d2dbb8eaa31509bc13cea88277bef0652c9a6c843bea3310b55dbc5ef9807a1"
+    },
+    {
+      "bytes": 18639,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/chart-after/checkpoint.bin",
+      "sha256": "2159772315f9e54d698563b9309d6244f6f355038fdbcbe54e883029dde6367a"
+    },
+    {
+      "bytes": 64031,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/chart-after/material.json",
+      "sha256": "1b69615ab524b2e15c11d157741b3fb0d4c42b1cd2e32e98703424266bc18d7d"
+    },
+    {
+      "bytes": 6066,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/chart-after/state.npz",
+      "sha256": "8215fd09d81c67aa1f56be1a45b224d95646877763f8dd19e440c05e65b07112"
+    },
+    {
+      "bytes": 17542,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/chart-before/checkpoint.bin",
+      "sha256": "ccbab9aae91eceb8f1d1ac0d601c8cc8e0d9a303fddc9a57bb6e84c0f25da49a"
+    },
+    {
+      "bytes": 61859,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/chart-before/material.json",
+      "sha256": "b142531322e244d67f747cfc79f48ec25095343c035fb23ba18902790b0c74f7"
+    },
+    {
+      "bytes": 6172,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/chart-before/state.npz",
+      "sha256": "42483355ab5be3635dc541229e1cf151a37ea8d222c0f1b155f2f62df1a435b3"
+    },
+    {
+      "bytes": 241,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/control-0/balance.json",
+      "sha256": "145bacbce799fbfe74876cd5ef5659c4fd7afd09fd3b41ef44670976a3e4b2b8"
+    },
+    {
+      "bytes": 17523,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/control-0/checkpoint.bin",
+      "sha256": "47b478e26d94e0f27c2a18a2123c75d7233dc8dca0bb0137b72ed33f1065f1f6"
+    },
+    {
+      "bytes": 61429,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/control-0/material.json",
+      "sha256": "448227ba741acb4a5cc759b4244bf891bd21b4cb960c62a864bb33bb447f6bbb"
+    },
+    {
+      "bytes": 5991,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/control-0/state.npz",
+      "sha256": "5f8413801b89c49a5d31df5d96b3a938c7a8d7276db1866e98761b31b9017464"
+    },
+    {
+      "bytes": 240,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/control-1/balance.json",
+      "sha256": "ae68a5a94936afb82f543de985b14b00423ca3d581abb1bdc12cb44a2e15c261"
+    },
+    {
+      "bytes": 17766,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/control-1/checkpoint.bin",
+      "sha256": "6e63d9b2ded87006bb49f82274170807067f4328ddcd5eb8ff705e770eab913b"
+    },
+    {
+      "bytes": 62369,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/control-1/material.json",
+      "sha256": "285ed7f5b94195239e0d9336ac5c43bf85d62831f73ac3af9501a84be15c0a45"
+    },
+    {
+      "bytes": 5994,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/control-1/state.npz",
+      "sha256": "8e61612d72be1d45c24dc63f0535108e1c5790eaebb56c800683a53acf36d250"
+    },
+    {
+      "bytes": 240,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/control-2/balance.json",
+      "sha256": "79286b8fe39a13e68049a66d252c87bf2921de26bb6db5161c4669b77d84dfc6"
+    },
+    {
+      "bytes": 17536,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/control-2/checkpoint.bin",
+      "sha256": "bf10028107ce69b04224c982c0cec7d13ed902d23181ce64abb1e79ce9a08f74"
+    },
+    {
+      "bytes": 62076,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/control-2/material.json",
+      "sha256": "8bb084805871cb6076d190adc7c5e922e1e8bbd283548664e0d2c24ec36970b4"
+    },
+    {
+      "bytes": 6126,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/control-2/state.npz",
+      "sha256": "cc710ed04cec804e8fdac5405c272c121aec343ff8fd534e2bff183bad5735a3"
+    },
+    {
+      "bytes": 239,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/control-3/balance.json",
+      "sha256": "60b9ed5bcbda78ac266f2ef6dab673b732f06a24fc2386a1abdc383b903b9dfc"
+    },
+    {
+      "bytes": 17542,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/control-3/checkpoint.bin",
+      "sha256": "ccbab9aae91eceb8f1d1ac0d601c8cc8e0d9a303fddc9a57bb6e84c0f25da49a"
+    },
+    {
+      "bytes": 61859,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/control-3/material.json",
+      "sha256": "57d5ce4ef50f0138e028ebce568c0f27d98d4fa1996a840b44a1a8d73ff3455d"
+    },
+    {
+      "bytes": 6172,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/control-3/state.npz",
+      "sha256": "42483355ab5be3635dc541229e1cf151a37ea8d222c0f1b155f2f62df1a435b3"
+    },
+    {
+      "bytes": 237,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/control-4/balance.json",
+      "sha256": "2fa112020b44e393af7fb35041a35fc2766baf9f380e648167bd0db514b20079"
+    },
+    {
+      "bytes": 17550,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/control-4/checkpoint.bin",
+      "sha256": "5550c9523ce609bc60f2210e72c808ff0718cd83a92515e13f08f45b39176b74"
+    },
+    {
+      "bytes": 62124,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/control-4/material.json",
+      "sha256": "94f95c4ed2f48083bf92ad06a42924812a3545e7b37ee5327f5d9875dbd5cb00"
+    },
+    {
+      "bytes": 6176,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/control-4/state.npz",
+      "sha256": "7a38c5f08e5e0d96d3bcb0724ac53fdfccb4dc1dfeb92d33e5580d946fd9ac51"
+    },
+    {
+      "bytes": 521,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/numerical-rejection.json",
+      "sha256": "5f96b0b712e7471f5c706d288106d38d4877b5b5afc35401dfc978263e8f8513"
+    },
+    {
+      "bytes": 780,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/programme.json",
+      "sha256": "66011e591cc4d4d71e7b521b8bf25d3bc46e4c2b5adae27a4bd06dc4f9910499"
+    },
+    {
+      "bytes": 239,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/rebased-1/balance.json",
+      "sha256": "7cdab01b57f20b6741e0e0e6efd21af6e2ec87ceb216f36219bd98f764839007"
+    },
+    {
+      "bytes": 18647,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/rebased-1/checkpoint.bin",
+      "sha256": "e22bbf8fb7e2cba673834756fbf562608f68f25986c60f98e3032db10c59bc5a"
+    },
+    {
+      "bytes": 64554,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/rebased-1/material.json",
+      "sha256": "d62cff810bee8d53ed280b01ecd924e989d6393b9978ea2efcfa084d5d1ca33e"
+    },
+    {
+      "bytes": 6188,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/rebased-1/state.npz",
+      "sha256": "9a9cf57a374a9e6656344434b19f5c32cf5c58267acfdb64964bc1fda5ece4a8"
+    },
+    {
+      "bytes": 239,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/rebased-restored-1/balance.json",
+      "sha256": "7cdab01b57f20b6741e0e0e6efd21af6e2ec87ceb216f36219bd98f764839007"
+    },
+    {
+      "bytes": 18647,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/rebased-restored-1/checkpoint.bin",
+      "sha256": "e22bbf8fb7e2cba673834756fbf562608f68f25986c60f98e3032db10c59bc5a"
+    },
+    {
+      "bytes": 64554,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/rebased-restored-1/material.json",
+      "sha256": "d62cff810bee8d53ed280b01ecd924e989d6393b9978ea2efcfa084d5d1ca33e"
+    },
+    {
+      "bytes": 6188,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/rebased-restored-1/state.npz",
+      "sha256": "9a9cf57a374a9e6656344434b19f5c32cf5c58267acfdb64964bc1fda5ece4a8"
+    },
+    {
+      "bytes": 15856,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/rejected-candidate-material.json",
+      "sha256": "ce99992eeb16d96d398d995d70ed2f509be40c57d9287e2f1c9e8f3cde1d5d7e"
+    },
+    {
+      "bytes": 17766,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/restored-prefix/checkpoint.bin",
+      "sha256": "6e63d9b2ded87006bb49f82274170807067f4328ddcd5eb8ff705e770eab913b"
+    },
+    {
+      "bytes": 62369,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/restored-prefix/material.json",
+      "sha256": "0ca301c0906a536675c6442488fffc9e585728a45520813fedbe8b41454dd436"
+    },
+    {
+      "bytes": 5994,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/restored-prefix/state.npz",
+      "sha256": "8e61612d72be1d45c24dc63f0535108e1c5790eaebb56c800683a53acf36d250"
+    },
+    {
+      "bytes": 240,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-1/balance.json",
+      "sha256": "79286b8fe39a13e68049a66d252c87bf2921de26bb6db5161c4669b77d84dfc6"
+    },
+    {
+      "bytes": 17536,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-1/checkpoint.bin",
+      "sha256": "bf10028107ce69b04224c982c0cec7d13ed902d23181ce64abb1e79ce9a08f74"
+    },
+    {
+      "bytes": 62076,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-1/material.json",
+      "sha256": "8bb084805871cb6076d190adc7c5e922e1e8bbd283548664e0d2c24ec36970b4"
+    },
+    {
+      "bytes": 6126,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-1/state.npz",
+      "sha256": "cc710ed04cec804e8fdac5405c272c121aec343ff8fd534e2bff183bad5735a3"
+    },
+    {
+      "bytes": 239,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-2/balance.json",
+      "sha256": "60b9ed5bcbda78ac266f2ef6dab673b732f06a24fc2386a1abdc383b903b9dfc"
+    },
+    {
+      "bytes": 17542,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-2/checkpoint.bin",
+      "sha256": "ccbab9aae91eceb8f1d1ac0d601c8cc8e0d9a303fddc9a57bb6e84c0f25da49a"
+    },
+    {
+      "bytes": 61859,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-2/material.json",
+      "sha256": "57d5ce4ef50f0138e028ebce568c0f27d98d4fa1996a840b44a1a8d73ff3455d"
+    },
+    {
+      "bytes": 6172,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-2/state.npz",
+      "sha256": "42483355ab5be3635dc541229e1cf151a37ea8d222c0f1b155f2f62df1a435b3"
+    },
+    {
+      "bytes": 237,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-3/balance.json",
+      "sha256": "2fa112020b44e393af7fb35041a35fc2766baf9f380e648167bd0db514b20079"
+    },
+    {
+      "bytes": 17550,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-3/checkpoint.bin",
+      "sha256": "5550c9523ce609bc60f2210e72c808ff0718cd83a92515e13f08f45b39176b74"
+    },
+    {
+      "bytes": 62124,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-3/material.json",
+      "sha256": "94f95c4ed2f48083bf92ad06a42924812a3545e7b37ee5327f5d9875dbd5cb00"
+    },
+    {
+      "bytes": 6176,
+      "path": "source-v1-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-3/state.npz",
+      "sha256": "7a38c5f08e5e0d96d3bcb0724ac53fdfccb4dc1dfeb92d33e5580d946fd9ac51"
+    },
+    {
+      "bytes": 1788,
+      "path": "source-v1-a1/receipt.json",
+      "sha256": "e1db16f584660299a71c23a2516ed95064db2dc63c084a39da042800ef4d538b"
+    },
+    {
+      "bytes": 63,
+      "path": "source-v1-a1/stderr.log",
+      "sha256": "1157668966c4eb30a71373e8d188fc22a8a1de5a449d71be141179f0892e8d18"
+    },
+    {
+      "bytes": 1241,
+      "path": "source-v1-a1/stdout.log",
+      "sha256": "850d2080ec512e816ac252cc2b2c047615f3adcc162bf08fe970b840f06589c7"
+    },
+    {
+      "bytes": 658,
+      "path": "source-v2-a1/junit.xml",
+      "sha256": "13df7c822ac325ebdbdc5caa01d61857f1058cfd179531c185f1149436dbaeae"
+    },
+    {
+      "bytes": 48902,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/activity.json",
+      "sha256": "673c41abe1f1c98f650bcdc5f27243d53514a5c8fa52d84e83813d9b51cb8316"
+    },
+    {
+      "bytes": 4174,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/cancelled-candidate.npz",
+      "sha256": "3d2dbb8eaa31509bc13cea88277bef0652c9a6c843bea3310b55dbc5ef9807a1"
+    },
+    {
+      "bytes": 18639,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/chart-after/checkpoint.bin",
+      "sha256": "2159772315f9e54d698563b9309d6244f6f355038fdbcbe54e883029dde6367a"
+    },
+    {
+      "bytes": 64031,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/chart-after/material.json",
+      "sha256": "1b69615ab524b2e15c11d157741b3fb0d4c42b1cd2e32e98703424266bc18d7d"
+    },
+    {
+      "bytes": 6066,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/chart-after/state.npz",
+      "sha256": "8215fd09d81c67aa1f56be1a45b224d95646877763f8dd19e440c05e65b07112"
+    },
+    {
+      "bytes": 17542,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/chart-before/checkpoint.bin",
+      "sha256": "ccbab9aae91eceb8f1d1ac0d601c8cc8e0d9a303fddc9a57bb6e84c0f25da49a"
+    },
+    {
+      "bytes": 61859,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/chart-before/material.json",
+      "sha256": "b142531322e244d67f747cfc79f48ec25095343c035fb23ba18902790b0c74f7"
+    },
+    {
+      "bytes": 6172,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/chart-before/state.npz",
+      "sha256": "42483355ab5be3635dc541229e1cf151a37ea8d222c0f1b155f2f62df1a435b3"
+    },
+    {
+      "bytes": 241,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/control-0/balance.json",
+      "sha256": "145bacbce799fbfe74876cd5ef5659c4fd7afd09fd3b41ef44670976a3e4b2b8"
+    },
+    {
+      "bytes": 17523,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/control-0/checkpoint.bin",
+      "sha256": "47b478e26d94e0f27c2a18a2123c75d7233dc8dca0bb0137b72ed33f1065f1f6"
+    },
+    {
+      "bytes": 61429,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/control-0/material.json",
+      "sha256": "448227ba741acb4a5cc759b4244bf891bd21b4cb960c62a864bb33bb447f6bbb"
+    },
+    {
+      "bytes": 5991,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/control-0/state.npz",
+      "sha256": "5f8413801b89c49a5d31df5d96b3a938c7a8d7276db1866e98761b31b9017464"
+    },
+    {
+      "bytes": 240,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/control-1/balance.json",
+      "sha256": "ae68a5a94936afb82f543de985b14b00423ca3d581abb1bdc12cb44a2e15c261"
+    },
+    {
+      "bytes": 17766,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/control-1/checkpoint.bin",
+      "sha256": "6e63d9b2ded87006bb49f82274170807067f4328ddcd5eb8ff705e770eab913b"
+    },
+    {
+      "bytes": 62369,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/control-1/material.json",
+      "sha256": "285ed7f5b94195239e0d9336ac5c43bf85d62831f73ac3af9501a84be15c0a45"
+    },
+    {
+      "bytes": 5994,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/control-1/state.npz",
+      "sha256": "8e61612d72be1d45c24dc63f0535108e1c5790eaebb56c800683a53acf36d250"
+    },
+    {
+      "bytes": 240,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/control-2/balance.json",
+      "sha256": "79286b8fe39a13e68049a66d252c87bf2921de26bb6db5161c4669b77d84dfc6"
+    },
+    {
+      "bytes": 17536,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/control-2/checkpoint.bin",
+      "sha256": "bf10028107ce69b04224c982c0cec7d13ed902d23181ce64abb1e79ce9a08f74"
+    },
+    {
+      "bytes": 62076,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/control-2/material.json",
+      "sha256": "8bb084805871cb6076d190adc7c5e922e1e8bbd283548664e0d2c24ec36970b4"
+    },
+    {
+      "bytes": 6126,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/control-2/state.npz",
+      "sha256": "cc710ed04cec804e8fdac5405c272c121aec343ff8fd534e2bff183bad5735a3"
+    },
+    {
+      "bytes": 239,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/control-3/balance.json",
+      "sha256": "60b9ed5bcbda78ac266f2ef6dab673b732f06a24fc2386a1abdc383b903b9dfc"
+    },
+    {
+      "bytes": 17542,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/control-3/checkpoint.bin",
+      "sha256": "ccbab9aae91eceb8f1d1ac0d601c8cc8e0d9a303fddc9a57bb6e84c0f25da49a"
+    },
+    {
+      "bytes": 61859,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/control-3/material.json",
+      "sha256": "57d5ce4ef50f0138e028ebce568c0f27d98d4fa1996a840b44a1a8d73ff3455d"
+    },
+    {
+      "bytes": 6172,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/control-3/state.npz",
+      "sha256": "42483355ab5be3635dc541229e1cf151a37ea8d222c0f1b155f2f62df1a435b3"
+    },
+    {
+      "bytes": 237,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/control-4/balance.json",
+      "sha256": "2fa112020b44e393af7fb35041a35fc2766baf9f380e648167bd0db514b20079"
+    },
+    {
+      "bytes": 17550,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/control-4/checkpoint.bin",
+      "sha256": "5550c9523ce609bc60f2210e72c808ff0718cd83a92515e13f08f45b39176b74"
+    },
+    {
+      "bytes": 62124,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/control-4/material.json",
+      "sha256": "94f95c4ed2f48083bf92ad06a42924812a3545e7b37ee5327f5d9875dbd5cb00"
+    },
+    {
+      "bytes": 6176,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/control-4/state.npz",
+      "sha256": "7a38c5f08e5e0d96d3bcb0724ac53fdfccb4dc1dfeb92d33e5580d946fd9ac51"
+    },
+    {
+      "bytes": 121,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/noncommuting-chart.json",
+      "sha256": "153410fb6e93713b5954ddc031ec1103b5d16839ef0036eb93f31976f2d27110"
+    },
+    {
+      "bytes": 521,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/numerical-rejection.json",
+      "sha256": "5f96b0b712e7471f5c706d288106d38d4877b5b5afc35401dfc978263e8f8513"
+    },
+    {
+      "bytes": 780,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/programme.json",
+      "sha256": "66011e591cc4d4d71e7b521b8bf25d3bc46e4c2b5adae27a4bd06dc4f9910499"
+    },
+    {
+      "bytes": 239,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/rebased-1/balance.json",
+      "sha256": "7cdab01b57f20b6741e0e0e6efd21af6e2ec87ceb216f36219bd98f764839007"
+    },
+    {
+      "bytes": 18647,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/rebased-1/checkpoint.bin",
+      "sha256": "e22bbf8fb7e2cba673834756fbf562608f68f25986c60f98e3032db10c59bc5a"
+    },
+    {
+      "bytes": 64554,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/rebased-1/material.json",
+      "sha256": "d62cff810bee8d53ed280b01ecd924e989d6393b9978ea2efcfa084d5d1ca33e"
+    },
+    {
+      "bytes": 6188,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/rebased-1/state.npz",
+      "sha256": "9a9cf57a374a9e6656344434b19f5c32cf5c58267acfdb64964bc1fda5ece4a8"
+    },
+    {
+      "bytes": 239,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/rebased-restored-1/balance.json",
+      "sha256": "7cdab01b57f20b6741e0e0e6efd21af6e2ec87ceb216f36219bd98f764839007"
+    },
+    {
+      "bytes": 18647,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/rebased-restored-1/checkpoint.bin",
+      "sha256": "e22bbf8fb7e2cba673834756fbf562608f68f25986c60f98e3032db10c59bc5a"
+    },
+    {
+      "bytes": 64554,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/rebased-restored-1/material.json",
+      "sha256": "d62cff810bee8d53ed280b01ecd924e989d6393b9978ea2efcfa084d5d1ca33e"
+    },
+    {
+      "bytes": 6188,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/rebased-restored-1/state.npz",
+      "sha256": "9a9cf57a374a9e6656344434b19f5c32cf5c58267acfdb64964bc1fda5ece4a8"
+    },
+    {
+      "bytes": 15856,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/rejected-candidate-material.json",
+      "sha256": "ce99992eeb16d96d398d995d70ed2f509be40c57d9287e2f1c9e8f3cde1d5d7e"
+    },
+    {
+      "bytes": 17766,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/restored-prefix/checkpoint.bin",
+      "sha256": "6e63d9b2ded87006bb49f82274170807067f4328ddcd5eb8ff705e770eab913b"
+    },
+    {
+      "bytes": 62369,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/restored-prefix/material.json",
+      "sha256": "0ca301c0906a536675c6442488fffc9e585728a45520813fedbe8b41454dd436"
+    },
+    {
+      "bytes": 5994,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/restored-prefix/state.npz",
+      "sha256": "8e61612d72be1d45c24dc63f0535108e1c5790eaebb56c800683a53acf36d250"
+    },
+    {
+      "bytes": 240,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-1/balance.json",
+      "sha256": "79286b8fe39a13e68049a66d252c87bf2921de26bb6db5161c4669b77d84dfc6"
+    },
+    {
+      "bytes": 17536,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-1/checkpoint.bin",
+      "sha256": "bf10028107ce69b04224c982c0cec7d13ed902d23181ce64abb1e79ce9a08f74"
+    },
+    {
+      "bytes": 62076,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-1/material.json",
+      "sha256": "8bb084805871cb6076d190adc7c5e922e1e8bbd283548664e0d2c24ec36970b4"
+    },
+    {
+      "bytes": 6126,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-1/state.npz",
+      "sha256": "cc710ed04cec804e8fdac5405c272c121aec343ff8fd534e2bff183bad5735a3"
+    },
+    {
+      "bytes": 239,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-2/balance.json",
+      "sha256": "60b9ed5bcbda78ac266f2ef6dab673b732f06a24fc2386a1abdc383b903b9dfc"
+    },
+    {
+      "bytes": 17542,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-2/checkpoint.bin",
+      "sha256": "ccbab9aae91eceb8f1d1ac0d601c8cc8e0d9a303fddc9a57bb6e84c0f25da49a"
+    },
+    {
+      "bytes": 61859,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-2/material.json",
+      "sha256": "57d5ce4ef50f0138e028ebce568c0f27d98d4fa1996a840b44a1a8d73ff3455d"
+    },
+    {
+      "bytes": 6172,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-2/state.npz",
+      "sha256": "42483355ab5be3635dc541229e1cf151a37ea8d222c0f1b155f2f62df1a435b3"
+    },
+    {
+      "bytes": 237,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-3/balance.json",
+      "sha256": "2fa112020b44e393af7fb35041a35fc2766baf9f380e648167bd0db514b20079"
+    },
+    {
+      "bytes": 17550,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-3/checkpoint.bin",
+      "sha256": "5550c9523ce609bc60f2210e72c808ff0718cd83a92515e13f08f45b39176b74"
+    },
+    {
+      "bytes": 62124,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-3/material.json",
+      "sha256": "94f95c4ed2f48083bf92ad06a42924812a3545e7b37ee5327f5d9875dbd5cb00"
+    },
+    {
+      "bytes": 6176,
+      "path": "source-v2-a1/pytest-temp/test_two_stiffener_simultaneou0/resumed-3/state.npz",
+      "sha256": "7a38c5f08e5e0d96d3bcb0724ac53fdfccb4dc1dfeb92d33e5580d946fd9ac51"
+    },
+    {
+      "bytes": 1788,
+      "path": "source-v2-a1/receipt.json",
+      "sha256": "671897b191164d34ecb832146dc36456eef18cd6f42c2556aad9f9ea4894a373"
+    },
+    {
+      "bytes": 63,
+      "path": "source-v2-a1/stderr.log",
+      "sha256": "1157668966c4eb30a71373e8d188fc22a8a1de5a449d71be141179f0892e8d18"
+    },
+    {
+      "bytes": 1241,
+      "path": "source-v2-a1/stdout.log",
+      "sha256": "c4e1412b26b784257801ce973f9f780aae0eb723416bf871dd1f8ab8914007e2"
+    }
+  ],
+  "qualification": false,
+  "raw_bytes": 3629935,
+  "schema": "r8-f06-chart-evidence-v1"
+}

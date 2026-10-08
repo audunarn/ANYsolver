@@ -652,3 +652,5 @@ tests/data/b3_e4_f03_primal_ritz_e7908c1a.py.txt -text
 
 # Preserve the audit-bound corrected reader source bytes across platforms.
 scripts/b3_e4_f03_primal_ritz.py text eol=lf
+
+tests/test_stiffened_shell_physical_fibre_j2_history.py text eol=lf

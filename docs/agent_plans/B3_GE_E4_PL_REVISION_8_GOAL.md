@@ -112,10 +112,16 @@ The near-term path is now:
    3branches/12positions, matching-cell active noncommutation and generation4->5;
    exact event history and typed-unit material/paired-energy/restart parity pass.
    Elastic shell only; executed v2 and stronger v3 saved-state checks are distinct.
-4. Next ready mandatory gap is simultaneous shell-J2/native-fibre loaded chart
-   transport on that existing point owner. Require actual same-substep activity,
-   noncommuting physical coverage and durable history; no inference from the
-   elastic-shell case. Point zero-load norm remains unresolved; no relaxed check.
+4. IN PROGRESS simultaneous shell-J2/native-fibre loaded chart transport on
+   the existing point owner. Focused source and byte-identical installed
+   development tests pass actual same-step activity, adjacent noncommuting
+   physical rotations, rebase/restore, continuation and atomic rejection on
+   the two-stiffener history. Independent read-only review found no blocking
+   small-rotation defect; its same-node assertion correction passes saved-state
+   replay, with the full test not repeated after that test-only edit. Larger
+   rotation sensitivity and required broader independent acceptance remain
+   before aggregate F06/V18/G3. Point zero-load norm
+   remains unresolved; no relaxed check.
    Unresolved BL5/mixed-system, converged physical transfer, external comparisons,
    material/topology/load/stability/capacity/scale/platform and independent
    acceptance remain visible. Do not repeat completed campaigns automatically.
