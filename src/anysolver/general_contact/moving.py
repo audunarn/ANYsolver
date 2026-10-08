@@ -172,12 +172,12 @@ def bound_swept_moving_mortar_gap(
         *, gap_tolerance: float) -> MovingSweptGapBound:
     """Certify a linear trial path against missed projected overlap.
 
-    For each time in the swept overlap interval, the physical gap is at least
-    plane separation plus the lowest source nodal height minus the highest
-    target nodal height. Its minimum over the interval occurs at an endpoint:
-    it is the minimum of affine source/target nodal-pair differences. A failed
-    bound means unresolved, not confirmed penetration. Event subdivision is
-    still required before this path can enter the nonlinear solver.
+    The normal position difference of every source/target nodal pair is affine
+    in time. Its outward-rounded minimum over the complete [0,1] path bounds
+    every convexly interpolated physical gap. The separating-axis entry/exit
+    times are diagnostics; they cannot certify absence of overlap. Only an
+    outward swept-projection separation proof certifies an empty path. A failed
+    bound means unresolved, not confirmed penetration.
     """
 
     tolerance = float(gap_tolerance)
@@ -214,23 +214,265 @@ def bound_swept_moving_mortar_gap(
     interval = swept_planar_overlap_interval(
         source_face, target_face, *translations,
     )
-    if interval is None:
+    if _sweep_faces_disjoint(source_face, target_face, translations):
         return MovingSweptGapBound(None, float("inf"), True)
 
-    reference_gap = float((source_face.corners[0] - target_face.corners[0])
-                          @ direction)
+    origin = tuple(map(_sweep_point, source_face.corners[0]))
+    axis = tuple(map(_sweep_point, direction))
     bounds = []
-    for time in interval:
-        source_translation = (1.0 - time) * translations[0] + time * translations[1]
-        target_translation = (1.0 - time) * translations[2] + time * translations[3]
-        source_height = (1.0 - time) * heights[0] + time * heights[1]
-        target_height = (1.0 - time) * heights[2] + time * heights[3]
-        bounds.append(
-            reference_gap + float((source_translation - target_translation) @ direction)
-            + float(np.min(source_height)) - float(np.max(target_height))
-        )
+    for endpoint in (0, 1):
+        positions = []
+        for body, face in enumerate((source_face, target_face)):
+            shift = _sweep_dot(tuple(map(_sweep_point,
+                                        translations[2*body+endpoint])), axis)
+            values = []
+            for corner, height in zip(face.corners, heights[2*body+endpoint]):
+                point = tuple(_sweep_sub(_sweep_point(x), y)
+                              for x, y in zip(corner, origin))
+                values.append(_sweep_add(_sweep_add(_sweep_dot(point, axis),
+                    _sweep_point(height)), shift))
+            positions.append(values)
+        bounds.append(_sweep_sub(
+            (min(item[0] for item in positions[0]),
+             min(item[1] for item in positions[0])),
+            (max(item[0] for item in positions[1]),
+             max(item[1] for item in positions[1])))[0])
     lower = min(bounds)
-    return MovingSweptGapBound(interval, lower, lower >= -tolerance)
+    return MovingSweptGapBound(interval, lower,
+                               bool(np.isfinite(lower) and lower >= -tolerance))
+
+
+def _sweep_add(a, b):
+    lo, hi = a[0] + b[0], a[1] + b[1]
+    if np.isnan(lo) or np.isnan(hi):
+        return -float("inf"), float("inf")
+    return (float(np.nextafter(lo, -np.inf)),
+            float(np.nextafter(hi, np.inf)))
+
+
+def _sweep_sub(a, b):
+    return _sweep_add(a, (-b[1], -b[0]))
+
+
+def _sweep_mul(a, b):
+    products = (a[0]*b[0], a[0]*b[1], a[1]*b[0], a[1]*b[1])
+    if any(np.isnan(value) for value in products):
+        return -float("inf"), float("inf")
+    return (float(np.nextafter(min(products), -np.inf)),
+            float(np.nextafter(max(products), np.inf)))
+
+
+def _sweep_dot(a, b):
+    result = (0.0, 0.0)
+    for first, second in zip(a, b):
+        result = _sweep_add(result, _sweep_mul(first, second))
+    return result
+
+
+def _sweep_point(value):
+    return float(value), float(value)
+
+
+def _sweep_field(start, end, time):
+    return _sweep_add(start, _sweep_mul(time, _sweep_sub(end, start)))
+
+
+def _sweep_faces_disjoint(source, target, translations):
+    """Fixed projected axes, all corners and both endpoints: empty-path proof."""
+    origin = source.corners[0]
+    tangent = source.corners[1] - origin
+    tangent /= np.linalg.norm(tangent)
+    normal = np.cross(source.corners[1] - origin, source.corners[-1] - origin)
+    normal /= np.linalg.norm(normal)
+    axes = (tangent, np.cross(normal, tangent))
+    if not np.all(np.isfinite(axes)):
+        return False
+    origin_i = tuple(map(_sweep_point, origin))
+    for axis in axes:
+        direction = tuple(map(_sweep_point, axis))
+        extents = []
+        for body, face in enumerate((source, target)):
+            points = []
+            for endpoint in (0, 1):
+                shift = _sweep_dot(tuple(map(_sweep_point,
+                    translations[2*body+endpoint])), direction)
+                for corner in face.corners:
+                    point = tuple(_sweep_sub(_sweep_point(x), y)
+                                  for x, y in zip(corner, origin_i))
+                    points.append(_sweep_add(_sweep_dot(point, direction), shift))
+            extents.append((min(p[0] for p in points), max(p[1] for p in points)))
+        first, second = extents
+        if first[1] < second[0] or second[1] < first[0]:
+            return True
+    return False
+
+
+def certify_swept_moving_mortar_gap(
+        source_face: PlanarFace, target_face: PlanarFace, normal: np.ndarray,
+        source_start: np.ndarray, source_end: np.ndarray,
+        target_start: np.ndarray, target_end: np.ndarray,
+        source_heights_start: np.ndarray, source_heights_end: np.ndarray,
+        target_heights_start: np.ndarray, target_heights_end: np.ndarray,
+        *, gap_tolerance: float, maximum_boxes: int) -> MovingSweptGapBound:
+    """Enclose the entire linear path on its changing projected overlap.
+
+    Subdivision boxes cover projected position and path fraction together.
+    Material-coordinate interval constraints prune only provably empty boxes;
+    all remaining gaps are bounded using the original S3/Q4 interpolation.
+    Neither endpoint checks nor sampled positions certify a time interval.
+
+    For Q4, x=c0+A(u,v)+d*u*v. Thus A^-1(x-c0-translation)
+    encloses (u,v)+(A^-1*d)*u*v. With u,v in [0,1], interval
+    subtraction encloses the true inverse even for non-affine quadrilaterals.
+    A wide enclosure or exhausted budget is explicit non-certification.
+    All scalar interval operations round outwards; no gap tolerance is added.
+    """
+    if type(maximum_boxes) is not int or maximum_boxes < 1:
+        raise ValueError("maximum_boxes must be a positive integer")
+    coarse = bound_swept_moving_mortar_gap(
+        source_face, target_face, normal, source_start, source_end,
+        target_start, target_end, source_heights_start, source_heights_end,
+        target_heights_start, target_heights_end, gap_tolerance=gap_tolerance,
+    )
+    if coarse.tolerance_certified:
+        return coarse
+    direction = np.asarray(normal, dtype=float)
+    direction = direction / np.linalg.norm(direction)
+    origin = source_face.corners[0]
+    tangent = source_face.corners[1] - origin
+    tangent /= np.linalg.norm(tangent)
+    face_normal = np.cross(source_face.corners[1] - origin,
+                           source_face.corners[-1] - origin)
+    face_normal /= np.linalg.norm(face_normal)
+    binormal = np.cross(face_normal, tangent)
+    if not np.all(np.isfinite((direction, tangent, binormal))):
+        return coarse
+    axes = tuple(tuple(map(_sweep_point, axis))
+                 for axis in (tangent, binormal, direction))
+    origin_i = tuple(map(_sweep_point, origin))
+
+    def prepare(face, start, end, h_start, h_end):
+        corners = [tuple(_sweep_sub(_sweep_point(x), y)
+                         for x, y in zip(point, origin_i))
+                   for point in face.corners]
+        xy = [tuple(_sweep_dot(point, axis) for axis in axes[:2])
+              for point in corners]
+        columns = tuple(tuple(_sweep_sub(xy[index][j], xy[0][j])
+                              for j in range(2))
+                        for index in (1, len(corners)-1))
+        a, c = columns[0]
+        b, d = columns[1]
+        determinant = _sweep_sub(_sweep_mul(a, d), _sweep_mul(b, c))
+        if (not np.all(np.isfinite(determinant))
+                or determinant[0] <= 0.0 <= determinant[1]):
+            return None
+        reciprocal = (float(np.nextafter(1.0/determinant[1], -np.inf)),
+                      float(np.nextafter(1.0/determinant[0], np.inf)))
+        inverse = ((_sweep_mul(d, reciprocal),
+                    _sweep_mul((-b[1], -b[0]), reciprocal)),
+                   (_sweep_mul((-c[1], -c[0]), reciprocal),
+                    _sweep_mul(a, reciprocal)))
+        defect = ((0.0, 0.0), (0.0, 0.0))
+        if len(corners) == 4:
+            defect = tuple(_sweep_add(_sweep_sub(xy[2][j], xy[1][j]),
+                                     _sweep_sub(xy[0][j], xy[3][j]))
+                           for j in range(2))
+        correction = tuple(_sweep_dot(row, defect) for row in inverse)
+        translations = [tuple(_sweep_dot(tuple(map(_sweep_point, value)), axis)
+                              for axis in axes) for value in (start, end)]
+        heights = []
+        for field in (h_start, h_end):
+            heights.append([_sweep_add(_sweep_dot(point, axes[2]),
+                                      _sweep_point(height))
+                            for point, height in zip(corners, field)])
+        coefficients = []
+        for values in heights:
+            coefficients.append((values[0], _sweep_sub(values[1], values[0]),
+                _sweep_sub(values[-1], values[0]),
+                (_sweep_add(_sweep_sub(values[2], values[1]),
+                            _sweep_sub(values[0], values[3]))
+                 if len(corners) == 4 else (0.0, 0.0))))
+        return xy, inverse, correction, translations, coefficients
+
+    prepared = [prepare(*values) for values in (
+        (source_face, source_start, source_end,
+         source_heights_start, source_heights_end),
+        (target_face, target_start, target_end,
+         target_heights_start, target_heights_end))]
+    if any(item is None for item in prepared):
+        return coarse
+    # The intersection of the two swept AABBs contains every physical overlap
+    # point, including contact born and lost strictly inside the path.
+    # Cover all of [0,1]; the reported coarse overlap interval is diagnostic.
+    # Refinement does not depend on rounded entry/exit times for coverage.
+    time = (0.0, 1.0)
+    extents = []
+    for xy, _, _, translations, _ in prepared:
+        shift = tuple(_sweep_field(translations[0][j], translations[1][j], time)
+                      for j in range(2))
+        extents.append(tuple((min(_sweep_add(p[j], shift[j])[0] for p in xy),
+                              max(_sweep_add(p[j], shift[j])[1] for p in xy))
+                             for j in range(2)))
+    box = tuple((max(first[0], second[0]), min(first[1], second[1]))
+                for first, second in zip(*extents)) + (time,)
+    if not np.all(np.isfinite(box)):
+        return coarse
+    if any(lo > hi for lo, hi in box):
+        return MovingSweptGapBound(coarse.overlap_interval, float("inf"), True)
+
+    def height(data, cell):
+        xy, inverse, correction, translations, coefficients = data
+        time = cell[2]
+        point = tuple(_sweep_sub(_sweep_sub(cell[j], xy[0][j]),
+            _sweep_field(translations[0][j], translations[1][j], time))
+            for j in range(2))
+        affine = tuple(_sweep_dot(row, point) for row in inverse)
+        uv = (0.0, 1.0)
+        for _ in range(2):
+            natural = tuple(_sweep_sub(value, _sweep_mul(error, uv))
+                            for value, error in zip(affine, correction))
+            natural = tuple((max(0.0, lo), min(1.0, hi))
+                            for lo, hi in natural)
+            if any(lo > hi for lo, hi in natural):
+                return None
+            if len(xy) == 3 and _sweep_add(*natural)[0] > 1.0:
+                return None
+            uv = _sweep_mul(*natural)
+        values = tuple(_sweep_field(a, b, time)
+                       for a, b in zip(*coefficients))
+        result = _sweep_add(values[0], _sweep_field(
+            translations[0][2], translations[1][2], time))
+        for coefficient, coordinate in zip(values[1:], (*natural, uv)):
+            result = _sweep_add(result, _sweep_mul(coefficient, coordinate))
+        return result
+
+    pending = [box]
+    widths = tuple(hi-lo for lo, hi in box)
+    lower = float("inf")
+    checked = 0
+    while pending:
+        if checked >= maximum_boxes:
+            return coarse
+        cell = pending.pop()
+        checked += 1
+        heights = tuple(height(data, cell) for data in prepared)
+        if any(value is None for value in heights):
+            continue
+        bound = _sweep_sub(*heights)[0]
+        if np.isfinite(bound) and bound >= -gap_tolerance:
+            lower = min(lower, bound)
+            continue
+        axis = int(np.argmax([(hi-lo)/width if width > 0.0 else 0.0
+                              for (lo, hi), width in zip(cell, widths)]))
+        lo, hi = cell[axis]
+        midpoint = lo + 0.5*(hi-lo)
+        if not lo < midpoint < hi:
+            return coarse
+        for interval in ((lo, midpoint), (midpoint, hi)):
+            child = list(cell)
+            child[axis] = interval
+            pending.append(tuple(child))
+    return MovingSweptGapBound(coarse.overlap_interval, lower, True)
 
 
 _TRIANGLE_RULE = (

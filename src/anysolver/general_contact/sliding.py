@@ -17,6 +17,7 @@ from .core import ContactDefinition, ContactSolverSettings, ContactValidationRep
 from .moving import (
     MovingSweptGapBound,
     bound_swept_moving_mortar_gap,
+    certify_swept_moving_mortar_gap,
     certify_moving_mortar_gap,
     moving_mortar_reduced_system,
     moving_mortar_state,
@@ -226,7 +227,13 @@ class _RestrictedSlidingPairFEManager:
                            - (first[:3] - first[3:6]))
         tangent_motion = relative_motion - self.normal * float(relative_motion @ self.normal)
         if np.any(tangent_motion != 0.0):
-            return global_bound
+            return certify_swept_moving_mortar_gap(
+                *self.faces, self.normal,
+                first[:3], last[:3], first[3:6], last[3:6],
+                first[6:split], last[6:split], first[split:], last[split:],
+                gap_tolerance=self.gap_tolerance,
+                maximum_boxes=self.maximum_gap_triangles,
+            )
         certificates = tuple(
             certify_moving_mortar_gap(
                 *self.faces, self.normal,

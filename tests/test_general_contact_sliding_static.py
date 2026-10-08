@@ -104,6 +104,158 @@ def test_restricted_sliding_pair_runs_through_nonlinear_static():
         )
 
 
+def test_overlap_aware_swept_gap_excludes_distant_deep_source_nodes():
+    """Independent linear height field is safe throughout nonzero sliding."""
+    from anysolver.general_contact.overlap import PlanarFace
+    from anysolver.general_contact.moving import (
+        bound_swept_moving_mortar_gap, certify_swept_moving_mortar_gap,
+    )
+    from anysolver.general_contact.sliding import _RestrictedSlidingPairFEManager
+
+    source = PlanarFace((1, 1), np.array(
+        ((0., 0., 0.), (2., 0., 0.), (2., 1., 0.), (0., 1., 0.))))
+    target = PlanarFace((2, 1), np.array(
+        ((0., 0., 0.), (.8, 0., 0.), (.8, 1., 0.), (0., 1., 0.))))
+    heights = np.array((0., -1e-5, -1e-5, 0.))
+    zero = np.zeros(3)
+    arguments = (source, target, np.array((0., 0., 1.)), zero,
+                 np.array((.1, 0., 0.)), zero, zero,
+                 heights, heights, np.zeros(4), np.zeros(4))
+    coarse = bound_swept_moving_mortar_gap(*arguments, gap_tolerance=6e-6)
+    assert not coarse.tolerance_certified
+    certificate = certify_swept_moving_mortar_gap(
+        *arguments, gap_tolerance=6e-6, maximum_boxes=4096)
+    # h=-5e-6*x_material; overlap x_material lies in [0,.8] at all times.
+    assert certificate.tolerance_certified
+    assert -6e-6 <= certificate.conservative_lower_gap <= -4e-6
+
+    model = FEModel("overlap_aware_nonuniform_height")
+    model.add_material("elastic", 1e5, .3, density=1.)
+    for index, (face, z) in enumerate(((target, 0.), (source, .05))):
+        for local, point in enumerate(face.corners):
+            model.add_node(1+4*index+local, point[0], point[1], z)
+    for eid, nodes in ((1, (1, 2, 3, 4)), (2, (5, 6, 7, 8))):
+        model.add_element(eid, create_shell_element(
+            eid, nodes, "elastic", thickness=.05))
+    definition = ContactDefinition(
+        (ContactSurface("source", (2,), "bottom"),
+         ContactSurface("target", (1,), "top")), (),
+        (ContactInteraction("pair", "source", "target", 1e6, 6e-6),))
+    manager = _RestrictedSlidingPairFEManager(model, definition,
+        ContactSolverSettings(pair_motion="restricted_sliding",
+                              sliding_difference_step=1e-8))
+    start = np.zeros(model.mesh.dof_manager.total_dofs)
+    end = start.copy()
+    for node, height in zip((5, 6, 7, 8), heights):
+        dofs = model.mesh.dof_manager.get_node_dofs(node)
+        start[dofs[2]] = end[dofs[2]] = height
+        end[dofs[0]] = .1
+    assert manager.swept_trial_bound(start, end).tolerance_certified
+    assert manager.admissible_step_fraction(start, end) == 1.
+
+
+def test_overlap_aware_swept_gap_refuses_hidden_temporal_penetration():
+    from anysolver.general_contact.overlap import PlanarFace
+    from anysolver.general_contact.moving import (
+        certify_moving_mortar_gap, certify_swept_moving_mortar_gap,
+    )
+    source = PlanarFace((1, 1), np.array(
+        ((-1., 0., 0.), (2., 0., 0.), (2., 1., 0.), (-1., 1., 0.))))
+    target = PlanarFace((2, 1), np.array(
+        ((.49, 0., 0.), (.51, 0., 0.), (.51, 1., 0.), (.49, 1., 0.))))
+    zero = np.zeros(3)
+    direction = np.array((0., 0., 1.))
+    last = np.array((.5, 0., 0.))
+    heights = np.array((1e-4, -2e-4, -2e-4, 1e-4))
+    for translation, field in ((zero, np.zeros(4)), (last, heights)):
+        assert certify_moving_mortar_gap(source, target, direction,
+            translation, zero, field, np.zeros(4), gap_tolerance=6e-6,
+            maximum_triangles=4096).tolerance_met
+    # At x=.5, gap(t)=5e-5*t*(t-1), with -12.5um at t=.5.
+    certificate = certify_swept_moving_mortar_gap(source, target, direction,
+        zero, last, zero, zero, np.zeros(4), heights,
+        np.zeros(4), np.zeros(4), gap_tolerance=6e-6, maximum_boxes=256)
+    assert not certificate.tolerance_certified
+
+
+def test_overlap_aware_swept_gap_keeps_nonaffine_q4_and_s3_interpolation():
+    from anysolver.general_contact.overlap import PlanarFace
+    from anysolver.general_contact.moving import certify_swept_moving_mortar_gap
+    source = PlanarFace((1, 1), np.array(
+        ((0., 0., 0.), (2., 0., 0.), (2.5, 1., 0.), (0., 1., 0.))))
+    target = PlanarFace((2, 1), np.array(
+        ((0., 0., 0.), (.8, 0., 0.), (0., 1., 0.))))
+    zero = np.zeros(3)
+    heights = np.array((0., -1e-5, -1e-5, 0.))
+    certificate = certify_swept_moving_mortar_gap(source, target,
+        np.array((0., 0., 1.)), zero, np.array((.1, 0., 0.)), zero, zero,
+        heights, heights, np.zeros(3), np.zeros(3),
+        gap_tolerance=6e-6, maximum_boxes=4096)
+    # The original map is x=(2+.5*v)*u, y=v. On the entire overlap,
+    # u<=.8/2=.4, hence h=-1e-5*u>=-4e-6 even while translating.
+    assert certificate.tolerance_certified
+    assert -6e-6 <= certificate.conservative_lower_gap <= -4e-6
+
+
+def test_overlap_aware_swept_gap_budget_exhaustion_is_non_success():
+    from anysolver.general_contact.overlap import PlanarFace
+    from anysolver.general_contact.moving import certify_swept_moving_mortar_gap
+    face = PlanarFace((1, 1), np.array(
+        ((0., 0., 0.), (1., 0., 0.), (1., 1., 0.), (0., 1., 0.))))
+    zero = np.zeros(3)
+    heights = np.array((0., -1e-5, -1e-5, 0.))
+    arguments = (face, face, np.array((0., 0., 1.)), zero,
+                 np.array((.01, 0., 0.)), zero, zero,
+                 heights, heights, heights, heights)
+    # The actual gap is +1e-7*t, but one dependency-wide interval cannot
+    # establish it. An exhausted certificate never becomes a physical pass.
+    assert not certify_swept_moving_mortar_gap(
+        *arguments, gap_tolerance=6e-6, maximum_boxes=1).tolerance_certified
+    assert certify_swept_moving_mortar_gap(
+        *arguments, gap_tolerance=6e-6, maximum_boxes=4096).tolerance_certified
+
+
+def test_swept_gap_fast_path_refuses_catastrophic_normal_cancellation():
+    from anysolver.general_contact.overlap import PlanarFace
+    from anysolver.general_contact.moving import (
+        bound_swept_moving_mortar_gap, certify_swept_moving_mortar_gap,
+    )
+    xy = np.array(((0., 0.), (1., 0.), (1., 1.), (0., 1.)))
+    source = PlanarFace((1, 1), np.column_stack((xy, -np.ones(4))))
+    target = PlanarFace((2, 1), np.column_stack((xy, np.zeros(4))))
+    zero = np.zeros(3)
+    huge = np.full(4, 1e16)
+    arguments = (source, target, np.array((0., 0., 1.)), zero,
+                 np.array((.01, 0., 0.)), zero, zero, huge, huge, huge, huge)
+    # Exact gap=-1: (-1+1e16)-1e16 must not round to a certified zero.
+    assert not bound_swept_moving_mortar_gap(
+        *arguments, gap_tolerance=6e-6).tolerance_certified
+    assert not certify_swept_moving_mortar_gap(
+        *arguments, gap_tolerance=6e-6, maximum_boxes=64).tolerance_certified
+
+
+def test_swept_gap_fast_path_refuses_tiny_closing_overlap():
+    from anysolver.general_contact.overlap import PlanarFace
+    from anysolver.general_contact.moving import (
+        bound_swept_moving_mortar_gap, certify_swept_moving_mortar_gap,
+    )
+    right = 1e-4
+    left = np.nextafter(right, np.inf)
+    source = PlanarFace((1, 1), np.array(
+        ((0., 0., 0.), (right, 0., 0.), (right, 1., 0.), (0., 1., 0.))))
+    target = PlanarFace((2, 1), np.array(
+        ((left, 0., 0.), (1.0001, 0., 0.), (1.0001, 1., 0.), (left, 1., 0.))))
+    zero = np.zeros(3)
+    arguments = (source, target, np.array((0., 0., 1.)), zero,
+                 np.array((1e-16, 0., 0.)), zero, zero,
+                 np.full(4, -1e-3), np.full(4, -1e-3), np.zeros(4), np.zeros(4))
+    assert right + 1e-16 > left  # Positive projected overlap exists at t=1.
+    assert not bound_swept_moving_mortar_gap(
+        *arguments, gap_tolerance=6e-6).tolerance_certified
+    assert not certify_swept_moving_mortar_gap(
+        *arguments, gap_tolerance=6e-6, maximum_boxes=64).tolerance_certified
+
+
 def test_restricted_sliding_pair_follows_prescribed_lateral_path():
     model = FEModel("restricted_sliding_displacement_path")
     model.add_material("elastic", 1.0e5, 0.3, density=1.0)

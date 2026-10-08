@@ -282,3 +282,13 @@ Contact author is correcting these before execution; no certificate acceptance.
 Pivot Read review narrowed empty Schur capture to response eligibility refusal;
 base/perturbed clip topology/support or factorization needs an unchanged-input
 trace to identify the rejecting guard. No arbitrary fixture change is adopted.
+
+Contact repair delivered and independently reviewed at exact source hashes in
+contact-sliding-handoff.md. It bounds the full changing-overlap path using
+outward intervals and the original Q4/S3 interpolation; uncertain or exhausted
+bounds still refuse. Fast-path rounding and tiny-overlap counterexamples are
+covered. No profile, schema, physical tolerance or iteration cap was changed.
+sliding-overlap-source-v1 passed8/8 including the unchanged failing CI path;
+sliding-shared-impact-source-v1 passed5/5 including patch restart and hidden
+crossings. Both retained exact input hashes. Remaining124.6193586 seconds with
+60 reserved. Other CI failures still block common-main acceptance and merge.
