@@ -1,0 +1,25 @@
+{
+  "status": "PAUSED_USER_INSTRUCTION",
+  "review_kind": "SAME_FAMILY_SUPPORTING_NOT_ENGINEERING_ACCEPTANCE",
+  "report": "supporting_paused_handoff_v2.md",
+  "report_sha256": "4e4910ae1f3e3b443ff067c543e646f9cfbc7603cf8c374e3d5f93c2e6167454",
+  "reviewed_owner_sha256": "68e3b6eb65e3ba4180a775c47744b94da17fd469205a6b50f5dcf398e6417882",
+  "manifest": "native_multi_shell_guard_manifest_v5.json",
+  "manifest_sha256": "689ee70952e0a4ac3a9d003c1974a880fa12b95592f3e6af056456766898edbf",
+  "source_check": "author_guard_repair_source_check_v5.json",
+  "new_v5_impact": "LEAD_REPORTED_PASS_AND_EXACT_ORIGINAL_JSON_CAPSULE_PARITY_NOT_REVIEWER_INSPECTED_FINAL_ROOT_AUDIT_PENDING",
+  "unmet": [
+    "FRESH_FINAL_RESTART",
+    "AUTHENTICATED_TAMPER",
+    "DEFAULT_FULL_CLI",
+    "ENGINEERING_ACCEPTANCE"
+  ],
+  "preserved_failures": [
+    "nms8_restart_full_v1_TIMEOUT_EXIT15",
+    "V4_IMPACT_TIMEOUT",
+    "HISTORICAL_LEGACY_SELECTOR_V1_AUDIT_DEFECT"
+  ],
+  "reviewer_numerical_jobs": 0,
+  "reviewer_product_edits": 0,
+  "stopped_after_pause": true
+}

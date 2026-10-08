@@ -1,0 +1,19 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 83.65933819999918,
+  "peak_process_tree_memory_mb": 288.70656,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_overlap.py",
+    "tests/test_general_contact_q4_source_overlap.py",
+    "tests/test_general_contact_q4_s3_pair_resolution.py",
+    "tests/test_general_contact_q4_s3_overlap_derivatives.py",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d1_anchored_overlap_tests_20260929.log"
+}

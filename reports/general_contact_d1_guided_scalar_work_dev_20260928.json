@@ -1,0 +1,42 @@
+[
+  {
+    "nx": 16,
+    "ny": 1,
+    "relative_frobenius_error": 5.079027541609148e-16,
+    "maximum_absolute_error_n_per_m": 5.4569682106375694e-12,
+    "actual_uniform_translation_work_n_m": 0.0,
+    "expected_uniform_translation_work_n_m": 0.0
+  },
+  {
+    "nx": 64,
+    "ny": 1,
+    "relative_frobenius_error": 3.5611021449323644e-16,
+    "maximum_absolute_error_n_per_m": 1.4551915228366852e-11,
+    "actual_uniform_translation_work_n_m": 0.0,
+    "expected_uniform_translation_work_n_m": 0.0
+  },
+  {
+    "nx": 128,
+    "ny": 1,
+    "relative_frobenius_error": 6.419985918508675e-16,
+    "maximum_absolute_error_n_per_m": 5.820766091346741e-11,
+    "actual_uniform_translation_work_n_m": 0.0,
+    "expected_uniform_translation_work_n_m": -1.4551915228366852e-11
+  },
+  {
+    "nx": 128,
+    "ny": 2,
+    "relative_frobenius_error": 3.5611021449323644e-16,
+    "maximum_absolute_error_n_per_m": 1.4551915228366852e-11,
+    "actual_uniform_translation_work_n_m": 0.0,
+    "expected_uniform_translation_work_n_m": 0.0
+  },
+  {
+    "nx": 128,
+    "ny": 4,
+    "relative_frobenius_error": 6.130733847189903e-16,
+    "maximum_absolute_error_n_per_m": 1.0913936421275139e-11,
+    "actual_uniform_translation_work_n_m": 0.0,
+    "expected_uniform_translation_work_n_m": -1.0913936421275139e-11
+  }
+]

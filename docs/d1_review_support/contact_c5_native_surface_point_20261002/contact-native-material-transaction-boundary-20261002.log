@@ -1,0 +1,10 @@
+[development] exact targets=2; record=C:\ANYworkspaceWork\contact-native-material-transaction-boundary-20261002\anysolver-portable-ci-ony7okmy\P01
+[portable-ci] starting P01/01 with 2 modules
+..                                                                       [100%]
+============================ slowest 10 durations =============================
+0.72s call     tests/test_general_contact_native_surface_transaction.py::test_unresolved_rotating_activation_driver_does_not_commit_a_partial_increment
+0.35s call     tests/test_general_contact_native_surface_transaction.py::test_cancellation_at_atomic_commit_discards_staged_native_and_friction_state
+
+(4 durations < 0.005s hidden.  Use -vv to show these durations.)
+2 passed in 4.99s
+[portable-ci] P01 exit=0

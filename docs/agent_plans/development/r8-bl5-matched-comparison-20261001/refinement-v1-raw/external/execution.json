@@ -1,0 +1,276 @@
+{
+  "results": [
+    {
+      "nx": 16,
+      "case": "mz",
+      "reuse": true,
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_seconds": 0.2048771999834571,
+      "sampled_process_tree_peak_rss_bytes": 23990272,
+      "sampled_total_process_tree_max_OS_threads": 4,
+      "sampled_max_numerical_or_unresolved_starts": 1,
+      "verified_before_child_code_CPU_affinity": [
+        0
+      ],
+      "sampling_seconds": 0.01,
+      "command": [
+        "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "-u",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\b3_e4_bl5_external_p0_refinement_dev.py",
+        "--site",
+        "C:\\Python\\Python314\\Lib\\site-packages",
+        "--output-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\n16\\mz",
+        "--completed-first-level-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-enforcement-v2\\case",
+        "--nx",
+        "16",
+        "--case",
+        "mz",
+        "--reuse-completed-first-level"
+      ]
+    },
+    {
+      "nx": 16,
+      "case": "fy",
+      "reuse": false,
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_seconds": 0.3028041000070516,
+      "sampled_process_tree_peak_rss_bytes": 37650432,
+      "sampled_total_process_tree_max_OS_threads": 4,
+      "sampled_max_numerical_or_unresolved_starts": 1,
+      "verified_before_child_code_CPU_affinity": [
+        0
+      ],
+      "sampling_seconds": 0.01,
+      "command": [
+        "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "-u",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\b3_e4_bl5_external_p0_refinement_dev.py",
+        "--site",
+        "C:\\Python\\Python314\\Lib\\site-packages",
+        "--output-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\n16\\fy",
+        "--completed-first-level-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-enforcement-v2\\case",
+        "--nx",
+        "16",
+        "--case",
+        "fy"
+      ]
+    },
+    {
+      "nx": 16,
+      "case": "mx",
+      "reuse": false,
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_seconds": 0.2954015999857802,
+      "sampled_process_tree_peak_rss_bytes": 37076992,
+      "sampled_total_process_tree_max_OS_threads": 4,
+      "sampled_max_numerical_or_unresolved_starts": 1,
+      "verified_before_child_code_CPU_affinity": [
+        0
+      ],
+      "sampling_seconds": 0.01,
+      "command": [
+        "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "-u",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\b3_e4_bl5_external_p0_refinement_dev.py",
+        "--site",
+        "C:\\Python\\Python314\\Lib\\site-packages",
+        "--output-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\n16\\mx",
+        "--completed-first-level-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-enforcement-v2\\case",
+        "--nx",
+        "16",
+        "--case",
+        "mx"
+      ]
+    },
+    {
+      "nx": 32,
+      "case": "fy",
+      "reuse": false,
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_seconds": 0.4171422000217717,
+      "sampled_process_tree_peak_rss_bytes": 49680384,
+      "sampled_total_process_tree_max_OS_threads": 8,
+      "sampled_max_numerical_or_unresolved_starts": 1,
+      "verified_before_child_code_CPU_affinity": [
+        0
+      ],
+      "sampling_seconds": 0.01,
+      "command": [
+        "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "-u",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\b3_e4_bl5_external_p0_refinement_dev.py",
+        "--site",
+        "C:\\Python\\Python314\\Lib\\site-packages",
+        "--output-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\n32\\fy",
+        "--completed-first-level-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-enforcement-v2\\case",
+        "--nx",
+        "32",
+        "--case",
+        "fy"
+      ]
+    },
+    {
+      "nx": 32,
+      "case": "mx",
+      "reuse": false,
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_seconds": 0.38301550000323914,
+      "sampled_process_tree_peak_rss_bytes": 51064832,
+      "sampled_total_process_tree_max_OS_threads": 8,
+      "sampled_max_numerical_or_unresolved_starts": 1,
+      "verified_before_child_code_CPU_affinity": [
+        0
+      ],
+      "sampling_seconds": 0.01,
+      "command": [
+        "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "-u",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\b3_e4_bl5_external_p0_refinement_dev.py",
+        "--site",
+        "C:\\Python\\Python314\\Lib\\site-packages",
+        "--output-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\n32\\mx",
+        "--completed-first-level-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-enforcement-v2\\case",
+        "--nx",
+        "32",
+        "--case",
+        "mx"
+      ]
+    },
+    {
+      "nx": 32,
+      "case": "mz",
+      "reuse": false,
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_seconds": 0.40738669998245314,
+      "sampled_process_tree_peak_rss_bytes": 51347456,
+      "sampled_total_process_tree_max_OS_threads": 7,
+      "sampled_max_numerical_or_unresolved_starts": 1,
+      "verified_before_child_code_CPU_affinity": [
+        0
+      ],
+      "sampling_seconds": 0.01,
+      "command": [
+        "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "-u",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\b3_e4_bl5_external_p0_refinement_dev.py",
+        "--site",
+        "C:\\Python\\Python314\\Lib\\site-packages",
+        "--output-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\n32\\mz",
+        "--completed-first-level-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-enforcement-v2\\case",
+        "--nx",
+        "32",
+        "--case",
+        "mz"
+      ]
+    },
+    {
+      "nx": 64,
+      "case": "fy",
+      "reuse": false,
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_seconds": 0.8766166999994311,
+      "sampled_process_tree_peak_rss_bytes": 119828480,
+      "sampled_total_process_tree_max_OS_threads": 7,
+      "sampled_max_numerical_or_unresolved_starts": 1,
+      "verified_before_child_code_CPU_affinity": [
+        0
+      ],
+      "sampling_seconds": 0.01,
+      "command": [
+        "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "-u",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\b3_e4_bl5_external_p0_refinement_dev.py",
+        "--site",
+        "C:\\Python\\Python314\\Lib\\site-packages",
+        "--output-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\n64\\fy",
+        "--completed-first-level-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-enforcement-v2\\case",
+        "--nx",
+        "64",
+        "--case",
+        "fy"
+      ]
+    },
+    {
+      "nx": 64,
+      "case": "mx",
+      "reuse": false,
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_seconds": 0.8725088000064716,
+      "sampled_process_tree_peak_rss_bytes": 119603200,
+      "sampled_total_process_tree_max_OS_threads": 7,
+      "sampled_max_numerical_or_unresolved_starts": 1,
+      "verified_before_child_code_CPU_affinity": [
+        0
+      ],
+      "sampling_seconds": 0.01,
+      "command": [
+        "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "-u",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\b3_e4_bl5_external_p0_refinement_dev.py",
+        "--site",
+        "C:\\Python\\Python314\\Lib\\site-packages",
+        "--output-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\n64\\mx",
+        "--completed-first-level-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-enforcement-v2\\case",
+        "--nx",
+        "64",
+        "--case",
+        "mx"
+      ]
+    },
+    {
+      "nx": 64,
+      "case": "mz",
+      "reuse": false,
+      "status": "passed",
+      "exit_code": 0,
+      "elapsed_seconds": 0.84457200000179,
+      "sampled_process_tree_peak_rss_bytes": 120016896,
+      "sampled_total_process_tree_max_OS_threads": 8,
+      "sampled_max_numerical_or_unresolved_starts": 1,
+      "verified_before_child_code_CPU_affinity": [
+        0
+      ],
+      "sampling_seconds": 0.01,
+      "command": [
+        "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "-u",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\b3_e4_bl5_external_p0_refinement_dev.py",
+        "--site",
+        "C:\\Python\\Python314\\Lib\\site-packages",
+        "--output-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\n64\\mz",
+        "--completed-first-level-dir",
+        "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-enforcement-v2\\case",
+        "--nx",
+        "64",
+        "--case",
+        "mz"
+      ]
+    }
+  ],
+  "status": "COMPLETED_DEVELOPMENT_ONLY"
+}

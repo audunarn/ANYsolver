@@ -1,0 +1,9 @@
+[development] exact targets=2; record=C:\ANYworkspaceWork\contact-native-surface-contract-20261002\anysolver-portable-ci-oit97l7q\P01
+[portable-ci] starting P01/01 with 2 modules
+..                                                                       [100%]
+============================ slowest 10 durations =============================
+0.01s call     tests/test_general_contact_native_surface_s3_friction.py::test_native_surface_point_rejects_transfer_and_unresolved_first_touch
+
+(5 durations < 0.005s hidden.  Use -vv to show these durations.)
+2 passed in 3.46s
+[portable-ci] P01 exit=0

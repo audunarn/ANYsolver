@@ -1,0 +1,26 @@
+# F03 classical stiffness-versus-trace attribution design
+
+22 September 2026. **Design before implementation/registration, not an executed acceptance gate.** The registered Ny16→32→64 checkerboard diagnostic triggered its stop rule because the Q4↔CST-CB beam-root moment difference reversed sign and grew at Ny64, while the left-edge vertical-force difference contracted. The source-frozen roots and adverse comparisons remain unchanged in `B3_GE_E4_PL_G0_F03_CST_CB_Y_REFINEMENT_RESULTS.md`. The new 24-case bounded port tests at source commit `fbc4dbc` verify hand P1 force/moment resultants, yaw work and adjoint signs for Q4/old CST/CST-CB; they do **not** diagnose the solved-state partition.
+
+First separate interpolation from transfer. On the same fixed reference axes, test affine/rigid fields and a dimensionally defined nonaffine field such as `u_x=0, u_y=U0[(x/L0)^2+0.4(x/L0)(y/W0)^2]`, with `L0=W0=1 m`. At every one of the four material offsets and on both sides of rising/falling diagonal crossings, compare direct analytical field values with independently interpolated Q4/CST-CB nodal fields; recover each pose component and its branchwise derivative along the line. Assert continuous trace across branches, exact affine response, adjoint virtual-work equality and nonnegative elastic strain energy under registered x/y refinement. Virtual work itself may have either sign. The nonaffine polynomial is a diagnostic, **not** a substitute for the actual loaded solution.
+
+For a fresh solved diagnostic, retain the physical shell/beam vectors `q` and signed multiplier vector `λ` under the run's own source identity. Record shapes, `float64` dtype, contiguous byte order, finite checks, SHA-256 hashes and bounded binary payloads, including any complete accepted phase before a later failure, so reaction and port terms can be recomputed independently without replaying a complete solve. Resolve each supported reaction into `Ks qs−Csᵀλ` on the left/right shell edges and `Kb qb+Cbᵀλ−fb` at the beam root, with `xFy−yFx` moments about `(0,0)` and the supported section-rotation contribution. The free Hermite slope is not a support reaction. Sum signed edge contributions over fixed physical y bands and report port-force/port-moment distributions along s. Require reconstruction of the existing grouped reactions, global force/moment balance and virtual work before interpreting any attribution.
+
+If these identities pass, register a bounded **diagnostic-only** 2×2 operator experiment at each Ny32 and Ny64, fixed `Ns=128,Nb=512,Nm=64`, P1 smooth, fixed supports/scales/backends:
+
+| Shell stiffness | Shell trace/port | Meaning |
+|---|---|---|
+| Q4 | Q4 | Natural Q4 control |
+| Q4 | CST-CB | Port swap only |
+| CST-CB | Q4 | Stiffness swap only |
+| CST-CB | CST-CB | Natural checkerboard control |
+
+The two mixed matrices use the same nodal grid and global numbering but are **not physical formulation candidates**. Construct both Q4 and CST-CB panels and assert identical reference nodes, numbered DOFs and support mask. Assemble `C=[−Cs,Cb]` from the selected **trace panel** and `K=diag(Ks,Kb)` from the separately selected **stiffness panel**; keep the other operators, loading, support mask and signed saddle scaling fixed. Pass the trace panel into `recover_solved` so station poses, integrated gap, `G_motion` and exact-rational bounds refer to the actual chosen port; use the selected `Ks` for shell energy and elastic support reactions. Use four separate source-frozen runs per Ny under one-thread 8 GiB/900 s supervisors. New natural controls require their own identities if the runner changes; they do not overwrite or convert earlier Ny evidence. Before interpreting hybrids, require fresh natural controls to reproduce same-input earlier Ny32/64 observables within a **pre-execution frozen** stringent numerical tolerance; a failure aborts attribution while preserving its raw root. Pre-register exact source/dependency/thread identities, parity tolerance, complete raw-root names, a single-use runner, failure handling and independent review before execution.
+
+For each of all 23 physical output channels, calculate the Q4→CST-CB total shift and the symmetric two-factor attribution
+
+`ΔC=½[(Y(KQ,CCB)−Y(KQ,CQ))+(Y(KCB,CCB)−Y(KCB,CQ))]`,
+
+`ΔK=½[(Y(KCB,CQ)−Y(KQ,CQ))+(Y(KCB,CCB)−Y(KQ,CCB))]`.
+
+The sum must reconstruct the total shift. Define the signed interaction `I=Y(KCB,CCB)−Y(KCB,CQ)−Y(KQ,CCB)+Y(KQ,CQ)` and calculate `ΔC`, `ΔK` and `I` from **signed outputs before** applying any absolute/floored percentage; `I` need not be allocated twice or disguised by normalization. Report both one-factor paths, the left-edge `Fy` and root `Mz` absolute and signed values, `G2`, exact field bounds, energy/work, all support/port decompositions, fill/runtime/RSS and failed work. C-dominant nonmonotonicity would direct investigation to the trace/host/port; K-dominant behavior with exact work would direct it to shell stiffness and support partition. Neither conclusion by itself proves continuum convergence, changes the draft 1% rule, qualifies native B3-GE/E4-PL, or opens the 96-case G0B inventory. Any failed numerical run remains failed evidence under its original identity.

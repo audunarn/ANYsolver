@@ -1,0 +1,578 @@
+{
+  "disposition": "PASS_NAMED_BENCHMARK_CHECKS_PENDING_FINAL_ASSESSMENT",
+  "candidate_commit": "8be4c35522d7eb5fa72f9ebe4a5a65a03e452976",
+  "manifest_sha256": "559e839c2d0aa660b5082b1bec7ebd5f80e4eee686f4cbc436dc46466b389838",
+  "specification_sha256": "f78771109572b5fd6f745615af57028b831a72515d7a7a6680048f28466955e0",
+  "wheel_sha256": "f6a1b3dc3318d4e8ec5faea8c4b26c933a61970c0e2cbe422440b19df185dfab",
+  "unchanged_package_files": 515,
+  "groups": {
+    "formal_mesh01": {
+      "path": "C:\\ANYworkspaceWork\\contact_coupled_tool_staging_20261004\\formal_mesh01",
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 57.233002299966756,
+        "peak_bytes": 202543104
+      },
+      "passed": 9,
+      "loaded_modules": 216,
+      "effective_pools": [
+        {
+          "user_api": "blas",
+          "internal_api": "openblas",
+          "num_threads": 1,
+          "prefix": "libscipy_openblas",
+          "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+          "version": "0.3.31.188.0",
+          "threading_layer": "pthreads",
+          "architecture": "SkylakeX"
+        },
+        {
+          "user_api": "blas",
+          "internal_api": "openblas",
+          "num_threads": 1,
+          "prefix": "libscipy_openblas",
+          "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+          "version": "0.3.30",
+          "threading_layer": "pthreads",
+          "architecture": "SkylakeX"
+        },
+        {
+          "user_api": "openmp",
+          "internal_api": "openmp",
+          "num_threads": 1,
+          "prefix": "vcomp",
+          "filepath": "C:\\Windows\\System32\\vcomp140.dll",
+          "version": null
+        }
+      ],
+      "records": {
+        "bending_B2_32_10000_10.json": "45ca4a14c1257630ef37f10481b055da014988ca3648c76f70280b7b82a36162",
+        "bending_B2_64_10000_10.json": "83896f8ce66cd1a892531c36201311b1142b8a0ecb4b7daee6056e93f2d2b88f",
+        "bending_B3_32_10000_10.json": "dd04696bb3e397474cecef43a8fb6d8e147333e510f0432d3077e5891c3ffef6",
+        "bending_B3_64_10000_10.json": "4881fc2fd56b5984c43b8a147485730a47d71f9724f5807b7fb82fe07dd20436",
+        "endpoint_reference_1.json": "25d733a574d8a6d5f25b5a6519dbb15cd40d63d69086f310ef9aec20ebb642d3",
+        "endpoint_reference_10.json": "87eb39d135910893b9185d74c5487118c8122e9059e6631b6a3ef09e25ab7248",
+        "imports.json": "f3bfd0e2e2bf4d6b6fe9d8d3d8a0edd309fcc8c387814ee073c2fef3fde121e5",
+        "inputs.json": "12b15e5c778bef40e4afbc477e023e16a34a93e7de8dd1cce5ac929009204b2b",
+        "resource.json": "757c7f3a19b62c9f2454643643ca0f5992339a8a4ac93eccf5b913e0c67faea7",
+        "runtime.json": "bddb914fa28cc2fac500e841c753d198cad52f5425bd7689cfe6462be6f38591"
+      },
+      "log_sha256": "081e4294177e2565582b2f921c77e47431b4715e2f77517037a3596b18f4733f"
+    },
+    "formal_field_cycle01": {
+      "path": "C:\\ANYworkspaceWork\\contact_coupled_tool_staging_20261004\\formal_field_cycle01",
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 81.50912360002985,
+        "peak_bytes": 203911168
+      },
+      "passed": 5,
+      "loaded_modules": 219,
+      "effective_pools": [
+        {
+          "user_api": "blas",
+          "internal_api": "openblas",
+          "num_threads": 1,
+          "prefix": "libscipy_openblas",
+          "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+          "version": "0.3.31.188.0",
+          "threading_layer": "pthreads",
+          "architecture": "SkylakeX"
+        },
+        {
+          "user_api": "blas",
+          "internal_api": "openblas",
+          "num_threads": 1,
+          "prefix": "libscipy_openblas",
+          "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+          "version": "0.3.30",
+          "threading_layer": "pthreads",
+          "architecture": "SkylakeX"
+        },
+        {
+          "user_api": "openmp",
+          "internal_api": "openmp",
+          "num_threads": 1,
+          "prefix": "vcomp",
+          "filepath": "C:\\Windows\\System32\\vcomp140.dll",
+          "version": null
+        }
+      ],
+      "records": {
+        "bending_B2_64_100000_100.json": "8a668b333195b584d2ebd4520ac5ea8d08af6ff457f45a6e248fb741fe8ad049",
+        "bending_B2_64_10000_10.json": "c53c49bbe6f08e4bfccfa3b0bd1892d1dd6b27292cd6ae9572d2133bc96d3d23",
+        "bending_B3_64_100000_100.json": "a729b0b2653e0c0954486a794411e21d84435d91176d35d751d259f0c106e684",
+        "bending_B3_64_10000_10.json": "1079ed177b9c1509812d2c0509137c0daced8233470bab9100424c31f220d15a",
+        "fixed_cycle_B2.json": "bf828e1503e838525beead28190da479365db52de52786ea63460b388937526d",
+        "fixed_cycle_B3.json": "6176ff5473f5aacd044f0cb23384cfbf19a8c6a68cc49a8b653e970f26ae36bf",
+        "imports.json": "3b72a2ab2815cf1455ae857c3d425030facf2d9dc62794a9f601485831846644",
+        "inputs.json": "270a4039ddc012458b5e05a716c3497a239af2390909669ca03a12920315028d",
+        "resource.json": "d30aff6bc84a8370acc80a916032ba7d541ed1ceef505fa8fb3488123344a332",
+        "runtime.json": "46bad23bd08f944d70fc7f50bbba3c7bc889bb19d6d27ae3dfdb309beec25731"
+      },
+      "log_sha256": "bc80a45d432383364172ddfba53aa255eb7dc8654e30cb782f3e04e91b534cd4"
+    },
+    "formal_axial01": {
+      "path": "C:\\ANYworkspaceWork\\contact_coupled_tool_staging_20261004\\formal_axial01",
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 10.539336399990134,
+        "peak_bytes": 184131584
+      },
+      "passed": 2,
+      "loaded_modules": 217,
+      "effective_pools": [
+        {
+          "user_api": "blas",
+          "internal_api": "openblas",
+          "num_threads": 1,
+          "prefix": "libscipy_openblas",
+          "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+          "version": "0.3.31.188.0",
+          "threading_layer": "pthreads",
+          "architecture": "SkylakeX"
+        },
+        {
+          "user_api": "blas",
+          "internal_api": "openblas",
+          "num_threads": 1,
+          "prefix": "libscipy_openblas",
+          "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+          "version": "0.3.30",
+          "threading_layer": "pthreads",
+          "architecture": "SkylakeX"
+        },
+        {
+          "user_api": "openmp",
+          "internal_api": "openmp",
+          "num_threads": 1,
+          "prefix": "vcomp",
+          "filepath": "C:\\Windows\\System32\\vcomp140.dll",
+          "version": null
+        }
+      ],
+      "records": {
+        "continuum_B2.json": "d85616bb77ae3fadbdb020b2342e842be7645b329c1970515ff53b3f57a3f0d8",
+        "continuum_B3.json": "d38b954ba8f437df21d3e395973840de650b39d62304bff6015ee02257eaeb18",
+        "imports.json": "3a0bbc296904674e5b583ce06cba93b161a21cb0954797d6a393a79a16733f72",
+        "inputs.json": "89b4e777c5ba88c7d95d7826795b01b29fc426d97186a2dbdeb0411d2bd4f2cf",
+        "resource.json": "60e7941a40e4e9bf966f4b4a099ff0bf2cda98537b475d321c1bc2bc17255a84",
+        "runtime.json": "7d7a720d80ee01f23c9f8388e8fe84638deda99611cc12d835c388c92e8d8b46"
+      },
+      "log_sha256": "baf442f1bc11f09d41b4ebf50550a76f3614234a1a0767cc20e61d0c22ab3ba5"
+    },
+    "formal_curved_control01": {
+      "path": "C:\\ANYworkspaceWork\\contact_coupled_tool_staging_20261004\\formal_curved_control01",
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 27.64410480001243,
+        "peak_bytes": 187695104
+      },
+      "passed": 17,
+      "loaded_modules": 220,
+      "effective_pools": [
+        {
+          "user_api": "blas",
+          "internal_api": "openblas",
+          "num_threads": 1,
+          "prefix": "libscipy_openblas",
+          "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+          "version": "0.3.31.188.0",
+          "threading_layer": "pthreads",
+          "architecture": "SkylakeX"
+        },
+        {
+          "user_api": "blas",
+          "internal_api": "openblas",
+          "num_threads": 1,
+          "prefix": "libscipy_openblas",
+          "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+          "version": "0.3.30",
+          "threading_layer": "pthreads",
+          "architecture": "SkylakeX"
+        },
+        {
+          "user_api": "openmp",
+          "internal_api": "openmp",
+          "num_threads": 1,
+          "prefix": "vcomp",
+          "filepath": "C:\\Windows\\System32\\vcomp140.dll",
+          "version": null
+        }
+      ],
+      "records": {
+        "axial_B2_displacement.json": "5adc517ba726f046ef18d863dd5582582437b45a1e7ea6781a33995f880d3f6f",
+        "axial_B2_force.json": "2079ab585ac3d49ff9ed38859c3510c18f192ee34b45cf720ad85ff8ae78a46a",
+        "axial_B3_displacement.json": "41602881e9cd13623436d8a733ccb326f6cdb02145abf0f0c16fb6c34eda3faf",
+        "axial_B3_force.json": "381ea8da2ad24f3a69506099035097fbe8ce9e097ee0ed6881e16470aaa8eceb",
+        "coupled_B2.json": "5c99b4532e814f6236685715fb3db80a6d78fb2f4e09ba8bd01b05e7a43e8595",
+        "coupled_B3.json": "de89b760c92b3a6b762d71a4e4a6c8947859085723197975a05297554263a740",
+        "curved_fixed.json": "9d46326431225eeec300b87c1e9ad5786be73bc33f1b4b4a1bd711d97521e1a8",
+        "curved_moving.json": "15f2d91aaec9e8360e71abeaa778eaa01dc532adbd977877008c676a3314e84c",
+        "curved_rim.json": "77f27826479f778d13483f43e82da1ef50b34c9aa26ff678e6f19e9495fbd9f8",
+        "imports.json": "2e55429569c3698cbd79c45fc22d52c9a906f7537494c8e50cebc51ffc67ea2a",
+        "inputs.json": "8fd2b0cb949ef1a7ea72c468cb6e0db183188bda84487ea7a9dd79e26c6aadd4",
+        "resource.json": "0d08a65ab72214c77e7f176cf7026949b39d6de4dd5d18363b4c41733b97dd91",
+        "runtime.json": "c316bee81b873efbb97c36245ef014cd4461b555b88154581c2085cc2b0c672f"
+      },
+      "log_sha256": "4204f4964dbb944319008290b802cc22682164225405d63c18ab4a72e1eb0c8e"
+    }
+  },
+  "passed": 33,
+  "spatial": [
+    {
+      "file": "C:\\ANYworkspaceWork\\contact_coupled_tool_staging_20261004\\formal_mesh01\\bending_B2_32_10000_10.json",
+      "cells": 32,
+      "quadratic": false,
+      "response_errors": {
+        "tip": 1.5650879217376835e-05,
+        "reaction": 0.0008554435829772051
+      },
+      "gap": -4.75741922855398e-06
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\contact_coupled_tool_staging_20261004\\formal_mesh01\\bending_B2_64_10000_10.json",
+      "cells": 64,
+      "quadratic": false,
+      "response_errors": {
+        "tip": 1.3208052094346016e-05,
+        "reaction": 0.00019795183613714824
+      },
+      "gap": -4.755556583404749e-06
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\contact_coupled_tool_staging_20261004\\formal_mesh01\\bending_B3_32_10000_10.json",
+      "cells": 32,
+      "quadratic": true,
+      "response_errors": {
+        "tip": 1.2124630578987299e-05,
+        "reaction": 0.0001308759659592993
+      },
+      "gap": -4.753693938255518e-06
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\contact_coupled_tool_staging_20261004\\formal_mesh01\\bending_B3_64_10000_10.json",
+      "cells": 64,
+      "quadratic": true,
+      "response_errors": {
+        "tip": 1.2380851483477009e-05,
+        "reaction": 2.9078771014024027e-05
+      },
+      "gap": -4.753693938255518e-06
+    }
+  ],
+  "line_fields": [
+    {
+      "file": "C:\\ANYworkspaceWork\\contact_coupled_tool_staging_20261004\\formal_field_cycle01\\bending_B2_64_100000_100.json",
+      "response_errors": {
+        "tip": 1.2695815520095056e-05,
+        "reaction": 0.00019760077012421912
+      },
+      "pressure": {
+        "relative_l1": 4.178648660431974e-05,
+        "relative_l2": 4.206194670891381e-05,
+        "actual_line_reaction": 3.9922367064652425e-05,
+        "reference_line_reaction": 3.992165758684321e-05,
+        "actual_active_length": 0.0008038347768888343,
+        "reference_active_length": 0.0008038607066336301,
+        "quadrature_estimated_errors": {
+          "l1_N": 5.566993922848495e-19,
+          "difference_l2_N2_per_m": 4.078814632725552e-24,
+          "reference_l2_N2_per_m": 2.934851864415397e-20,
+          "actual_line_N": 4.432273111271415e-19
+        },
+        "relative_l1_estimated_integration_error": 1.394479653240446e-14,
+        "relative_l2_estimated_integration_error": 1.834189538533343e-14,
+        "independent_minimum_line_gap_m": -9.935213383770252e-07,
+        "combined_radius_roundoff_m": -2.2351741811588166e-10,
+        "effective_clearance_m": 0.000999999940395355
+      },
+      "maximum_displaced_axis_offset_m": 0.5,
+      "displaced_geometry_height_bound_m": 1.25e-08
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\contact_coupled_tool_staging_20261004\\formal_field_cycle01\\bending_B2_64_10000_10.json",
+      "response_errors": {
+        "tip": 1.3208052094346016e-05,
+        "reaction": 0.00019795183613714824
+      },
+      "pressure": {
+        "relative_l1": 0.00021009199973316095,
+        "relative_l2": 0.00018432953105086374,
+        "actual_line_reaction": 9.10054083550832e-05,
+        "reference_line_reaction": 9.09862928628679e-05,
+        "actual_active_length": 0.0038286521630652715,
+        "reference_active_length": 0.003828377158125451,
+        "quadrature_estimated_errors": {
+          "l1_N": 8.029546505274017e-20,
+          "difference_l2_N2_per_m": 7.802332585377026e-25,
+          "reference_l2_N2_per_m": 3.201016300137214e-20,
+          "actual_line_N": 1.0103629972122796e-18
+        },
+        "relative_l1_estimated_integration_error": 8.825006770388958e-16,
+        "relative_l2_estimated_integration_error": 7.350619678908599e-16,
+        "independent_minimum_line_gap_m": -4.754136897251298e-06,
+        "combined_radius_roundoff_m": -2.2351741811588166e-10,
+        "effective_clearance_m": 0.000999999940395355
+      },
+      "maximum_displaced_axis_offset_m": 0.5,
+      "displaced_geometry_height_bound_m": 1.25e-08
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\contact_coupled_tool_staging_20261004\\formal_field_cycle01\\bending_B3_64_100000_100.json",
+      "response_errors": {
+        "tip": 1.2492571961351751e-05,
+        "reaction": 2.9031364873145465e-05
+      },
+      "pressure": {
+        "relative_l1": 0.00026311084073106,
+        "relative_l2": 0.0002291968734800592,
+        "actual_line_reaction": 3.9911153765969803e-05,
+        "reference_line_reaction": 3.992165758684321e-05,
+        "actual_active_length": 0.0008037724108760358,
+        "reference_active_length": 0.0008038607066336301,
+        "quadrature_estimated_errors": {
+          "l1_N": 3.4792592066787687e-19,
+          "difference_l2_N2_per_m": 1.0022739176402907e-23,
+          "reference_l2_N2_per_m": 2.934851863165208e-20,
+          "actual_line_N": 4.43102818503347e-19
+        },
+        "relative_l1_estimated_integration_error": 8.715217295549901e-15,
+        "relative_l2_estimated_integration_error": 8.272543891227335e-15,
+        "independent_minimum_line_gap_m": -9.933178929478792e-07,
+        "combined_radius_roundoff_m": -2.2351741811588166e-10,
+        "effective_clearance_m": 0.000999999940395355
+      },
+      "maximum_displaced_axis_offset_m": 0.5,
+      "displaced_geometry_height_bound_m": 1.25e-08
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\contact_coupled_tool_staging_20261004\\formal_field_cycle01\\bending_B3_64_10000_10.json",
+      "response_errors": {
+        "tip": 1.2380851483477009e-05,
+        "reaction": 2.9078771014024027e-05
+      },
+      "pressure": {
+        "relative_l1": 4.4196943706563105e-05,
+        "relative_l2": 4.186168403920769e-05,
+        "actual_line_reaction": 9.098227154680242e-05,
+        "reference_line_reaction": 9.09862928628679e-05,
+        "actual_active_length": 0.003828327676387744,
+        "reference_active_length": 0.003828377158125451,
+        "quadrature_estimated_errors": {
+          "l1_N": 4.303114106754648e-20,
+          "difference_l2_N2_per_m": 1.4165453951923797e-26,
+          "reference_l2_N2_per_m": 3.201016300152743e-20,
+          "actual_line_N": 1.0101061270395831e-18
+        },
+        "relative_l1_estimated_integration_error": 4.729409201493884e-16,
+        "relative_l2_estimated_integration_error": 5.891961181100913e-17,
+        "independent_minimum_line_gap_m": -4.753305764704347e-06,
+        "combined_radius_roundoff_m": -2.2351741811588166e-10,
+        "effective_clearance_m": 0.000999999940395355
+      },
+      "maximum_displaced_axis_offset_m": 0.5,
+      "displaced_geometry_height_bound_m": 1.25e-08
+    }
+  ],
+  "axial": [
+    {
+      "file": "C:\\ANYworkspaceWork\\contact_coupled_tool_staging_20261004\\formal_axial01\\continuum_B2.json",
+      "cases": 5,
+      "maximum_equilibrium": 4.517046459096008e-12
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\contact_coupled_tool_staging_20261004\\formal_axial01\\continuum_B3.json",
+      "cases": 5,
+      "maximum_equilibrium": 6.891882897708257e-12
+    }
+  ],
+  "cycles": [
+    {
+      "file": "C:\\ANYworkspaceWork\\contact_coupled_tool_staging_20261004\\formal_field_cycle01\\fixed_cycle_B2.json",
+      "states": [
+        {
+          "factor": 0.5,
+          "u": [
+            -0.002,
+            0.0
+          ],
+          "reference_u": [
+            -0.002,
+            0.0
+          ],
+          "contact_force_N": -0.0,
+          "actual_contact_force_N": 5.204170427930421e-13,
+          "active_endpoints": 1,
+          "active_line_length": 0.0,
+          "gap_m": 0.0,
+          "reaction_N": 0.01,
+          "applied_N": -0.01,
+          "storage_J": 0.0
+        },
+        {
+          "factor": 1.0,
+          "u": [
+            -0.002000099995000245,
+            0.0
+          ],
+          "reference_u": [
+            -0.0020000999949997527,
+            0.0
+          ],
+          "contact_force_N": 0.009999500024766144,
+          "actual_contact_force_N": 0.009999500073858818,
+          "active_endpoints": 1,
+          "active_line_length": 9.900490172119645e-08,
+          "gap_m": -9.999499975266168e-08,
+          "reaction_N": 0.010000499974998755,
+          "applied_N": -0.02,
+          "storage_J": 4.999500004266572e-10
+        },
+        {
+          "factor": 2.0,
+          "u": [
+            0.004,
+            0.0
+          ],
+          "reference_u": [
+            0.004,
+            0.0
+          ],
+          "contact_force_N": -0.0,
+          "actual_contact_force_N": 0.0,
+          "active_endpoints": 0,
+          "active_line_length": 0.0,
+          "gap_m": 0.006000000000000005,
+          "reaction_N": -0.02,
+          "applied_N": 0.02,
+          "storage_J": 0.0
+        },
+        {
+          "factor": 3.0,
+          "u": [
+            -0.002000099995000245,
+            0.0
+          ],
+          "reference_u": [
+            -0.0020000999949997527,
+            0.0
+          ],
+          "contact_force_N": 0.009999500024766144,
+          "actual_contact_force_N": 0.009999500073858818,
+          "active_endpoints": 1,
+          "active_line_length": 9.900490172119645e-08,
+          "gap_m": -9.999499975266168e-08,
+          "reaction_N": 0.010000499974998755,
+          "applied_N": -0.02,
+          "storage_J": 4.999500004266572e-10
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\contact_coupled_tool_staging_20261004\\formal_field_cycle01\\fixed_cycle_B3.json",
+      "states": [
+        {
+          "factor": 0.5,
+          "u": [
+            -0.0019999999999999996,
+            -0.0009999999999999996,
+            0.0
+          ],
+          "reference_u": [
+            -0.002000000000000001,
+            -0.0010000000000000005,
+            0.0
+          ],
+          "contact_force_N": -0.0,
+          "actual_contact_force_N": 5.204170427930421e-13,
+          "active_endpoints": 1,
+          "active_line_length": 0.0,
+          "gap_m": 0.0,
+          "reaction_N": 0.010000000000000004,
+          "applied_N": -0.01,
+          "storage_J": 0.0
+        },
+        {
+          "factor": 1.0,
+          "u": [
+            -0.0020000999950002445,
+            -0.001000049997500122,
+            0.0
+          ],
+          "reference_u": [
+            -0.0020000999949997527,
+            -0.0010000499974998753,
+            0.0
+          ],
+          "contact_force_N": 0.009999500024766144,
+          "actual_contact_force_N": 0.009999500073858818,
+          "active_endpoints": 1,
+          "active_line_length": 9.900490172119645e-08,
+          "gap_m": -9.999499975266168e-08,
+          "reaction_N": 0.010000499974998757,
+          "applied_N": -0.02,
+          "storage_J": 4.999500004266572e-10
+        },
+        {
+          "factor": 2.0,
+          "u": [
+            0.003999999999999998,
+            0.0019999999999999983,
+            0.0
+          ],
+          "reference_u": [
+            0.004000000000000002,
+            0.002000000000000001,
+            0.0
+          ],
+          "contact_force_N": -0.0,
+          "actual_contact_force_N": 0.0,
+          "active_endpoints": 0,
+          "active_line_length": 0.0,
+          "gap_m": 0.006000000000000005,
+          "reaction_N": -0.020000000000000007,
+          "applied_N": 0.02,
+          "storage_J": 0.0
+        },
+        {
+          "factor": 3.0,
+          "u": [
+            -0.0020000999950002445,
+            -0.001000049997500122,
+            0.0
+          ],
+          "reference_u": [
+            -0.0020000999949997527,
+            -0.0010000499974998753,
+            0.0
+          ],
+          "contact_force_N": 0.009999500024766144,
+          "actual_contact_force_N": 0.009999500073858818,
+          "active_endpoints": 1,
+          "active_line_length": 9.900490172119645e-08,
+          "gap_m": -9.999499975266168e-08,
+          "reaction_N": 0.010000499974998757,
+          "applied_N": -0.02,
+          "storage_J": 4.999500004266572e-10
+        }
+      ]
+    }
+  ],
+  "elapsed_groups_s": 176.92556709999917,
+  "maximum_peak_bytes": 203911168,
+  "profile_admission": false,
+  "release": false,
+  "full_programme_complete": false,
+  "limitations": [
+    "Named literal fixtures only; no continuous parameter-range admission",
+    "Plane-limit linear continuum versus von Karman/curve/load discretization",
+    "Reference/quad controls are numerical adequacy evidence, not outward certificates",
+    "No integrated fixed-cycle work claim; moving-tool staged programme remains excluded",
+    "Independent mathematical references plus supporting source review; no human approval claim"
+  ]
+}

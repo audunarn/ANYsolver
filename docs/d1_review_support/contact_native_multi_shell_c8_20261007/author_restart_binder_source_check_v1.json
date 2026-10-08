@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "source_checkpoint": "6362bdfb",
+  "binder_file": "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\native_multi_shell_bind_restart_v1.py",
+  "binder_sha256": "9f1b249e3a9dd6b4d99e7a0a0e4106ae8069e9e02b265c2f2d6ec36889f259e3",
+  "binder_size": 26709,
+  "AST": "PASS",
+  "whitespace": "PASS",
+  "imports": [
+    "argparse",
+    "hashlib",
+    "json",
+    "math",
+    "pathlib",
+    "zipfile"
+  ],
+  "held_product_files_unchanged": 12,
+  "solver_imports": 0,
+  "binder_invocations": 0,
+  "runner_invocations": 0,
+  "numerical_attempts": 0,
+  "producer_artifacts_created": 0,
+  "checks": "STDLIB_SOURCE_AST_HASH_INSPECTION_ONLY_NO_HELPER_IMPORT_OR_INVOCATION"
+}

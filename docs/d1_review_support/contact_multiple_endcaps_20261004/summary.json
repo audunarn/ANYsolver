@@ -1,0 +1,131 @@
+{
+  "scope": "D3 explicit fixed multiple classical beam physical-end work composition; developmental code verification, not engineering acceptance",
+  "source_parent": "98350a4590e1b9974b3273bb42ac5d433bd16b96",
+  "source_files": {
+    "src/anysolver/general_contact/multiple_beam_rigid.py": "335eeac3d12d2d211360a5844557b20ca0131a5c4c8bdfb52aa50cd75e46d062",
+    "tests/test_general_contact_multiple_beam_ends.py": "4a69891ff36268cc03ffded0a23e0aa7f816d7c67d2833a0ffa5d5ef789aa3fb",
+    "examples/general_contact_multiple_beam_ends.py": "1ff62b99bb682a422cf93126669af6d830f4cde0b2fe8e67e7cd75bb56b0da0f"
+  },
+  "wheels": {
+    "anyfem-0.4.1-py3-none-any.whl": "05c24380f1658ab0dcc3447bd4de6f1ab44715ad107ed99cba8bd4ceaf160dea",
+    "anysolver-0.4.7-py3-none-any.whl": "4f0c841628bf2dda2005768513957a8db08792ef0a8fe896df4e2c6d1e0e0ca3"
+  },
+  "runs": {
+    "body_count_cleanup": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 2.4861344000091776,
+        "peak_bytes": 179777536
+      },
+      "outcomes": {
+        "passed": 5
+      }
+    },
+    "build": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 10.1776239000028,
+        "peak_bytes": 110338048
+      },
+      "outcomes": null
+    },
+    "build_counted_prefix": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 9.92965590005042,
+        "peak_bytes": 110505984
+      },
+      "outcomes": null
+    },
+    "initial_source": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 5.418334799993318,
+        "peak_bytes": 181518336
+      },
+      "outcomes": {
+        "passed": 11
+      }
+    },
+    "install_counted_prefix": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 3.8413750999607146,
+        "peak_bytes": 81604608
+      },
+      "outcomes": null
+    },
+    "installed_final": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 9.227635899966117,
+        "peak_bytes": 326455296
+      },
+      "outcomes": {
+        "passed": 27
+      }
+    },
+    "regularity_integration": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 7.388854899967555,
+        "peak_bytes": 329940992
+      },
+      "outcomes": {
+        "passed": 25
+      }
+    }
+  },
+  "installed_modules_matching": 212,
+  "installed_package_files_matching": 494,
+  "effective_jit_disabled": true,
+  "effective_numba_threads": 1,
+  "effective_pools": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "version": "0.3.31.188.0",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "version": "0.3.30",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "openmp",
+      "internal_api": "openmp",
+      "num_threads": 1,
+      "prefix": "vcomp",
+      "filepath": "C:\\Windows\\System32\\vcomp140.dll",
+      "version": null
+    }
+  ],
+  "independent_bar_relative_errors": {
+    "sphere": 5.849427773285989e-15,
+    "cylinder": 5.849427773285989e-15,
+    "capped_cylinder": 2.014802899687396e-14
+  },
+  "bar_relative_target": 1e-06,
+  "gap_budget_m": 1e-05,
+  "raw_records": 46,
+  "raw_sha256": "e04d96a75927e5c4279964ce9c2b85a7acda69c069eae093c0a10fa05c0bb51c",
+  "review_disposition": "plane endpoint candidate spelling normalized; regular-prefix rejection now counted; supporting same-family source review only",
+  "limits": "180s/953MiB process tree; child elastic scalar/von-Karman geometry/work/ownership bounds; fixed analytic tools only; no moving multi-tool, native, friction, dynamics, normal application admission, release or independent engineering acceptance"
+}

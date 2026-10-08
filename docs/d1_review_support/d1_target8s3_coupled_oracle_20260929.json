@@ -1,0 +1,30 @@
+{
+  "source_q4_faces": 64,
+  "target_s3_faces": 8,
+  "load_shape": "physical_bump",
+  "fixed_middle_left_node_id": 85,
+  "integrated_normal_force_n": 0.0057790314760247635,
+  "active_node_ids": [
+    40
+  ],
+  "independent_projected_lower_gap_m": -1.4272225266808948e-05,
+  "sample_xy_m": [
+    [
+      0.6,
+      0.6
+    ],
+    [
+      0.6,
+      0.7
+    ],
+    [
+      0.6,
+      0.9
+    ]
+  ],
+  "source_vertical_displacement_m": [
+    -0.00030881905835682843,
+    -0.0002854182607023355,
+    -0.00016549065514752362
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 61.110636199999135,
+  "peak_process_tree_memory_mb": 399.130624,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_general_contact_monolithic_cycle_restart.py::test_free_target_press_slide_open_recontact_split_restart"
+  ],
+  "log": "reports\\d1_same_side_search_cycle_test_20260928.txt"
+}

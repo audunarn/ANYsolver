@@ -1,0 +1,55 @@
+{
+  "scope": "development saved complete active/open boundary; not coupled solve or installed candidate qualification",
+  "order": [
+    "candidate1",
+    "baseline1",
+    "baseline2",
+    "candidate2"
+  ],
+  "elapsed_seconds": {
+    "candidate": [
+      23.124004900018917,
+      22.7691754999978
+    ],
+    "baseline": [
+      32.27496589999646,
+      31.79830039999797
+    ]
+  },
+  "median_elapsed_seconds": {
+    "candidate": 22.94659020000836,
+    "baseline": 32.036633149997215
+  },
+  "peak_memory_mb": {
+    "candidate": [
+      250.04032,
+      248.315904
+    ],
+    "baseline": [
+      251.748352,
+      252.55936
+    ]
+  },
+  "producer_seconds": {
+    "candidate": [
+      8.145125399983954,
+      8.200659800029825
+    ],
+    "baseline": [
+      15.069971399992937,
+      15.016794399998616
+    ]
+  },
+  "complete_canonical_sha256": {
+    "active": "6e478bc6b98667a7411ad4ab2bb70a3d07f8e2c5e1df4fc59a1826e853c6d62a",
+    "open": "9fa0661e6391c15eaf7bd4fd7717a9c56c2fee16ba5213d43cbb84cd4e8664dd"
+  },
+  "actual_imports": {
+    "1_candidate": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+    "1_baseline": "C:\\ANYworkspaceWork\\general-contact-final-90baf01a\\target\\anysolver\\__init__.py",
+    "2_candidate": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+    "2_baseline": "C:\\ANYworkspaceWork\\general-contact-final-90baf01a\\target\\anysolver\\__init__.py"
+  },
+  "all_four_complete_parity": true,
+  "median_elapsed_reduction_fraction": 0.2837390217451625
+}

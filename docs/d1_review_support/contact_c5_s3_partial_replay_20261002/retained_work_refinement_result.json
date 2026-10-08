@@ -1,0 +1,30 @@
+{
+  "scope": "fixed-path total-dissipation development refinement, not all-work/coupled/acceptance/release",
+  "source_sha256": {
+    "src\\anysolver\\general_contact\\s3_friction_replay.py": "c99daf4dde5fd0ee737b6ba08c25c5dc26558c0647bf80a712b4e52d2ab602b6",
+    "src\\anysolver\\general_contact\\s3_friction_prepared_path.py": "c8f4c046b6453c3247b982d67d48f6b79e646a45d71b39afe05fc798733eec6c",
+    "tests\\test_general_contact_s3_friction_replay.py": "54a69e836b6efb1e98d7710a4a7df94d590c5a3dbf06605b1f38dc0370aa9a6d"
+  },
+  "refinement_resource": {
+    "peak_sampled_bytes": 221978624,
+    "limit_mib": 953,
+    "elapsed_seconds": 45.77769359998638,
+    "status": "terminal",
+    "child_exit_codes": [
+      0
+    ]
+  },
+  "step_resource": {
+    "peak_sampled_bytes": 191774720,
+    "limit_mib": 953,
+    "elapsed_seconds": 15.396268200012855,
+    "status": "terminal",
+    "child_exit_codes": [
+      0
+    ]
+  },
+  "raw_roots": [
+    "C:/ANYworkspaceWork/contact-friction-retained-work-bound-20261002",
+    "C:/ANYworkspaceWork/contact-friction-retained-step-bound-20261002"
+  ]
+}

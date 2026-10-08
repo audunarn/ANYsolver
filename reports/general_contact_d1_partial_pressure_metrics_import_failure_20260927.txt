@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import sys,numpy as np;sys.path.insert(0,'tests');from test_general_contact_q4_s3_partial_pressure_oracle import _independent_pressure_integrals;from anysolver.general_contact.pressure_space import supported_pressure_gram;[(lambda d,s,g,p:print(f'divisions={d} supported={p.supported_modes} rank={p.scaled_rank} condition={p.scaled_condition:.6g} area={s.sum():.9g}'))(d,*_independent_pressure_integrals(d),supported_pressure_gram(*reversed(_independent_pressure_integrals(d)))) for d in (4,8,16)]
+                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\tests\test_general_contact_q4_s3_partial_pressure_oracle.py", line 6, in <module>
+    from anysolver.general_contact.pressure_space import supported_pressure_gram
+ModuleNotFoundError: No module named 'anysolver.general_contact'

@@ -1,0 +1,207 @@
+{
+  "status": "development_scalar_selfcheck_consistent",
+  "accepted": false,
+  "released": false,
+  "summary": {
+    "regime": "partial_contact",
+    "D_n_per_m": 1602.5641025641025,
+    "q_pa": 0.5,
+    "initial_gap_m": 0.0001,
+    "kappa_pa_per_m": 1000000.0,
+    "length_m": 1.0,
+    "supported_length_m": 0.9,
+    "width_m": 1.0,
+    "beta_per_m": 24.979991993593593,
+    "front_m": 0.7564271912760346,
+    "front_bracket_m": [
+      0.7564271912760345,
+      0.7564271912760346
+    ],
+    "front_equation_gap_residual_m": 0.0,
+    "contact_reaction_n": 0.09903353861433664,
+    "clamp_reaction_n": 0.40096646138566333,
+    "total_downward_load_n": 0.5,
+    "balance_residual_n": 0.0,
+    "minimum_covered_gap_m": -1.7194095417734878e-06,
+    "uncovered_tip_gap_m": -3.279409541773487e-06,
+    "free_tip_displacement_m": -0.0001032794095417735,
+    "pressure_at_cut_covered_side_pa": 1.7194095417734878,
+    "contact_force_sign": "positive upward on source, opposite on fixed target",
+    "scope": "guided scalar continuum, linear transverse shear, fixed partial foundation; no general nonlinear qualification"
+  },
+  "checks": {
+    "maximum_analytic_ode_residual_pa": 3.3306690738754696e-16,
+    "maximum_fd_ode_relative_load_error": 8.10078359947397e-09,
+    "clamp_displacement_m": 0.0,
+    "free_tip_slope": 0.0,
+    "front_gap_m": -0.0,
+    "front_slope_mismatch": 3.3881317890172014e-21,
+    "cut_slope_mismatch": 0.0,
+    "bin_additivity_error_n": 0.0,
+    "maximum_bin_integral_quadrature_error_n": 2.0816681711721685e-17,
+    "contact_closed_formula_error_n": 0.0,
+    "clamp_closed_formula_error_n": 5.551115123125783e-17,
+    "force_balance_error_n": 0.0,
+    "open_covered_minimum_gap_m": -0.0,
+    "active_maximum_gap_m": -0.0,
+    "active_minimum_pressure_pa": 0.0,
+    "uncovered_maximum_pressure_pa": 0.0
+  },
+  "finite_difference_checks": [
+    {
+      "s_m": 0.18910679781900866,
+      "perturbation_m": 0.0001,
+      "derivative_absolute_error": 6.792526610621685e-17,
+      "independently_differenced_ode_relative_load_error": 3.0845237475318754e-09
+    },
+    {
+      "s_m": 0.567320393457026,
+      "perturbation_m": 0.0001,
+      "derivative_absolute_error": 2.8406096919120216e-17,
+      "independently_differenced_ode_relative_load_error": 3.0845237475318754e-09
+    },
+    {
+      "s_m": 0.7851417530208277,
+      "perturbation_m": 0.0001,
+      "derivative_absolute_error": 5.622435297284595e-17,
+      "independently_differenced_ode_relative_load_error": 9.1448026928731e-10
+    },
+    {
+      "s_m": 0.8282135956380173,
+      "perturbation_m": 0.0001,
+      "derivative_absolute_error": 9.015225767511695e-17,
+      "independently_differenced_ode_relative_load_error": 8.10078359947397e-09
+    },
+    {
+      "s_m": 0.871285438255207,
+      "perturbation_m": 0.0001,
+      "derivative_absolute_error": 2.216515816375053e-17,
+      "independently_differenced_ode_relative_load_error": 5.757968546404868e-09
+    },
+    {
+      "s_m": 0.925,
+      "perturbation_m": 0.0001,
+      "derivative_absolute_error": 2.1958482124620482e-17,
+      "independently_differenced_ode_relative_load_error": 5.352751575316006e-10
+    },
+    {
+      "s_m": 0.975,
+      "perturbation_m": 0.0001,
+      "derivative_absolute_error": 3.7425303741484006e-17,
+      "independently_differenced_ode_relative_load_error": 4.532443309557266e-09
+    }
+  ],
+  "bin_integrals": [
+    {
+      "interval_m": [
+        0.0,
+        0.5
+      ],
+      "force_n": 0.0
+    },
+    {
+      "interval_m": [
+        0.5,
+        0.75
+      ],
+      "force_n": 0.0
+    },
+    {
+      "interval_m": [
+        0.75,
+        0.8
+      ],
+      "force_n": 0.0102982608104584
+    },
+    {
+      "interval_m": [
+        0.8,
+        0.85
+      ],
+      "force_n": 0.029970172697314376
+    },
+    {
+      "interval_m": [
+        0.85,
+        0.9
+      ],
+      "force_n": 0.05876510510656387
+    },
+    {
+      "interval_m": [
+        0.9,
+        1.0
+      ],
+      "force_n": 0.0
+    }
+  ],
+  "decimal80_front_m": "0.7564271912760346432620416428501579054516373698490142853213080037553877470665776",
+  "binary64_front_absolute_error_m": 4.905634684512983e-18,
+  "sites_m": [
+    0.18910679781900866,
+    0.567320393457026,
+    0.7851417530208277,
+    0.8282135956380173,
+    0.871285438255207,
+    0.925,
+    0.975
+  ],
+  "displacements_m": [
+    -4.1736326299276215e-05,
+    -9.173632629927622e-05,
+    -0.00010030931641520261,
+    -0.00010061649950859992,
+    -0.0001010720692679468,
+    -0.00010240190954177349,
+    -0.0001031819095417735
+  ],
+  "pressures_pa": [
+    0.0,
+    0.0,
+    0.3093164152026107,
+    0.6164995085999081,
+    1.0720692679467976,
+    0.0,
+    0.0
+  ],
+  "numerical_check_tolerances": {
+    "analytic_residual_pa": 1e-12,
+    "force_n": 1e-12,
+    "fd_relative_load": 1e-05
+  },
+  "scope": "one fixed-candidate continuum scalar selfcheck; not a finite-element or nonlinear qualification",
+  "inputs": {
+    "parameters": {
+      "D": 1602.5641025641025,
+      "q": 0.5,
+      "gap": 0.0001,
+      "kappa": 1000000.0,
+      "length": 1.0,
+      "supported_length": 0.9,
+      "width": 1.0
+    },
+    "source": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_guided_partial_foundation_reference.py",
+    "source_sha256": "ce407a6078eb76e01b552a6cb2353cf1b09bef847a1b2ccd5dc3adeb3c6373c1",
+    "resource_caps": {
+      "seconds": 180,
+      "process_tree_bytes": 1073741824
+    },
+    "argv": [
+      "docs/d1_review_support/d2_guided_partial_foundation_reference.py",
+      "--output",
+      "docs/d1_review_support/d2_guided_partial_foundation_reference_v1_20260930.json",
+      "--inputs-output",
+      "docs/d1_review_support/d2_guided_partial_foundation_reference_v1_20260930.inputs.json"
+    ],
+    "environment": {
+      "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+      "executable": "C:\\Python\\Python314\\python.exe",
+      "numpy": "2.4.6",
+      "platform": "Windows-11-10.0.26200-SP0"
+    },
+    "production_contact_calls": 0,
+    "accepted": false,
+    "released": false
+  },
+  "elapsed_seconds": 0.0978049999976065
+}

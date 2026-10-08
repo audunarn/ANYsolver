@@ -1,0 +1,64 @@
+{
+  "status": "development_two_body_work_transfer",
+  "source_commit": "c1c4e042670dbea12a35a94748e2a792bb0a9ae0",
+  "probe_sha256": "a6c9011b0ed49af96ba05809b5650283629e3b35cd189cedebb7ee1c86a36c6a",
+  "saved_source_sha256": "ba2e0be212ee6ac25b9d208a7f2fb9644cba69330dd357810caef1ef41094bdb",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "runtime_identity": {
+    "python": "3.14.2",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "openblas_threads": "1",
+    "omp_threads": "1"
+  },
+  "source_q4_faces": 4,
+  "coarse_target_s3_faces": 128,
+  "fine_target_s3_faces": 512,
+  "target_reference_grid": "true_midpoint_nested",
+  "pressure_modes": 10,
+  "active_pressure_modes": [
+    2,
+    7
+  ],
+  "pose_prolongation_maximum_error": 1.3552527156068805e-20,
+  "source_skin_maximum_error_m": 0.0,
+  "target_skin_maximum_error_m": 2.482594761251414e-16,
+  "coarse_saved_support_relative_error": 0.0,
+  "support_l2_relative_error": 3.696961440402751e-16,
+  "normalized_gap_maximum_error_m": 2.1006417091906648e-19,
+  "structural_prolongation_reconstruction_relative": 0.0,
+  "pressure_work_prolongation_relative_error": 4.1163424928279253e-16,
+  "diagnostic_work_delta": {
+    "source_free_relative": 3.397001020720501e-16,
+    "target_free_relative": 2.378177059053546e-16,
+    "active_free_relative": 2.4537168487902096e-16,
+    "inactive_free_relative": 3.3428454473618357e-16,
+    "per_mode_free_relative": [
+      5.3935847611011554e-17,
+      1.2356630121585677e-16,
+      2.0891472449835094e-16,
+      1.7821765019101177e-16,
+      7.772007394308678e-17,
+      7.72438782632062e-17,
+      1.036377386399267e-16,
+      1.2869305198085744e-16,
+      1.8237760775173038e-16,
+      7.614144898597492e-17
+    ],
+    "coarse_integration_triangles": 888,
+    "fine_integration_triangles": 2416
+  },
+  "coarse_free_coordinates": 448,
+  "fine_free_coordinates": 1648,
+  "coarse_response_relative_residual": 4.864414624369861e-13,
+  "fine_response_relative_residual": 3.1357884256184615e-12,
+  "restricted_response_relative_residual": 5.268103696139046e-13,
+  "pressure_work_bridge_compliance_relative": 5.39118519390234e-16,
+  "active_fine_minus_restricted_scaled_minimum_eigenvalue": 0.05972187314546487,
+  "active_reference_scaled_minimum_eigenvalue": 0.09193402086110675,
+  "active_same_energy_squared_ratio_range": [
+    0.32357108791934436,
+    0.49516551418342014
+  ],
+  "elapsed_seconds": 37.24515219999739
+}

@@ -1,0 +1,110 @@
+{
+  "cases": {
+    "tip_fz_1000n": {
+      "drilling_equilibrium_max": 5.115907697472721e-13,
+      "full_free_equilibrium_ratio": 4.729705892745026e-11,
+      "orientation_max_rad": 7.380502913392273e-07,
+      "orientation_rms_rad": 2.7943214976595746e-07,
+      "position_max_m": 9.687243507260892e-08,
+      "position_rms_m": 2.6426028761990624e-08,
+      "shell_physical_work_j": 0.013695979846860376,
+      "status": "BOUNDED_SOLVE_PASSED",
+      "support_force_balance_n": 3.1687214671083035e-08,
+      "support_moment_balance_nm": 3.0062426278785964e-08,
+      "tip_rotation_rad": [
+        -3.4964469573398983e-15,
+        -6.243137543588916e-05,
+        1.0443280801838569e-16
+      ],
+      "tip_translation_m": [
+        -2.630943556613157e-06,
+        2.3318644824300964e-16,
+        7.032401328163924e-05
+      ],
+      "weak_constraint_max": 2.0328790734103208e-20,
+      "work_relative_error": 5.085113819616023e-11
+    },
+    "tip_mx_100nm": {
+      "drilling_equilibrium_max": 1.902644708451362e-14,
+      "full_free_equilibrium_ratio": 4.415772734007648e-11,
+      "orientation_max_rad": 1.5257089084041718e-05,
+      "orientation_rms_rad": 6.855923171131591e-06,
+      "position_max_m": 5.930321639622065e-08,
+      "position_rms_m": 2.0212688387839582e-08,
+      "shell_physical_work_j": 0.0019797676349121713,
+      "status": "BOUNDED_SOLVE_PASSED",
+      "support_force_balance_n": 3.238405281220974e-09,
+      "support_moment_balance_nm": 3.6662418968409486e-09,
+      "tip_rotation_rad": [
+        4.9553118918730276e-05,
+        3.389012750164537e-16,
+        -1.3814208960804108e-06
+      ],
+      "tip_translation_m": [
+        1.4282923704647183e-17,
+        -3.1847170816303867e-06,
+        -4.56859956197156e-16
+      ],
+      "weak_constraint_max": 8.046812998915853e-21,
+      "work_relative_error": 1.847513001044856e-11
+    }
+  },
+  "classification": "bounded exact-drill loaded 8:1 material-line P0 diagnostic",
+  "drill_partition_rows": 286,
+  "drill_test_relative_residual": 1.228536876551415e-15,
+  "elapsed_s": 64.44162420002976,
+  "full_kkt_rows": 1956,
+  "limits": [
+    "private exact algebraic elimination, not production condensation",
+    "one 8:1 level and two terminal nodal loads, not mesh-uniform stability",
+    "no physical connection accuracy or multiplier-space selection"
+  ],
+  "max_rows": 1900,
+  "max_seconds": 120.0,
+  "model": "C1 Q4 x16/y4 35 mm shell, B3-12, material-line P0 m4, original full equations reconstructed",
+  "provenance": {
+    "anysolver_import": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\__init__.py",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMBA_DISABLE_JIT": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1"
+    },
+    "numpy": "2.4.6",
+    "python": "3.14.2",
+    "scipy": "1.17.1",
+    "threadpools": [
+      {
+        "architecture": "SkylakeX",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "threading_layer": "pthreads",
+        "user_api": "blas",
+        "version": "0.3.31.188.0"
+      },
+      {
+        "architecture": "SkylakeX",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "threading_layer": "pthreads",
+        "user_api": "blas",
+        "version": "0.3.30"
+      }
+    ]
+  },
+  "quotient_kkt_rows": 1670,
+  "quotient_nnz": 347789,
+  "row_diagnostic": {
+    "active_primal_columns": 100,
+    "rank_tolerance": 3.2643090471090844e-14,
+    "scaled_row_rank": 24
+  },
+  "runner_sha256": "255cad54bc11aa58883a950b457b3fb56556cc2bfb26385b1f25b24325093bba",
+  "schur_test_relative_residual": 9.235178608591897e-16,
+  "source_git": "16cbbb95329afd172af6d598a292362009158d6d",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE"
+}

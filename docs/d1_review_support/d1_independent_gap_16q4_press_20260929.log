@@ -1,0 +1,20 @@
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_independent_gap_saved_dev.py", line 42, in <module>
+    main(Path(sys.argv[1]), Path(sys.argv[2]))
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_independent_gap_saved_dev.py", line 25, in main
+    lower = _independent_projected_gap_bound(
+        model, definition, saved["displacements"],
+        definition.interactions[0].gap_tolerance,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\examples\general_contact_free_target_cycle_dev.py", line 152, in _independent_projected_gap_bound
+    sources = [_physical_skin_vertices(
+               ~~~~~~~~~~~~~~~~~~~~~~~^
+        model, model.mesh.elements[element_id], displacement,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        source_surface.side) for element_id in source_surface.element_ids]
+        ^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\examples\general_contact_free_target_cycle_dev.py", line 136, in _physical_skin_vertices
+    rotation = displacement[dofs[3:6]]
+               ~~~~~~~~~~~~^^^^^^^^^^^
+TypeError: list indices must be integers or slices, not list

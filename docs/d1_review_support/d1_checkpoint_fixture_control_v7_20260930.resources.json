@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 1.8115311000146903,
+  "peak_process_tree_memory_mb": 153.853952,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_nonlinear_checkpoint_guarded_normalization.py::test_module_getattribute_descriptor_is_rejected_without_observation"
+  ],
+  "log": "docs\\d1_review_support\\d1_checkpoint_fixture_control_v7_20260930.log"
+}

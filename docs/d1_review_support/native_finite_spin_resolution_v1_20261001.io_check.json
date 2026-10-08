@@ -1,0 +1,6 @@
+{
+  "status": "PASS",
+  "source_sha256": "6ed644db18deea782ad344bf9fe2ffc1ee42c59c8533bd4f2fc14b50e8a72acc",
+  "checks": "Extracted actual save function; independent JSON reader verifies initial/before/after rows, nonretroactive status, LF-inclusive offsets/length/hash and aggregate; no production imports or mechanical evaluations",
+  "records": 3
+}

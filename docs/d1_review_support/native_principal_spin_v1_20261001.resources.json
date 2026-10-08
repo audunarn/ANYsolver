@@ -1,0 +1,15 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 26.525187899998855,
+  "peak_process_tree_memory_mb": 164.868096,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "C:/Python/Python314/python.exe",
+    "docs/d1_review_support/native_principal_spin_v1_20261001.entry.py",
+    "docs/d1_review_support/native_principal_spin_v1_20261001.inputs.v2.json",
+    "fc71fd7a719c2eeac3250462c95d65d77e09a4eb4f6ac36c4593304119b57492"
+  ],
+  "log": "docs\\d1_review_support\\native_principal_spin_v1_20261001.log"
+}

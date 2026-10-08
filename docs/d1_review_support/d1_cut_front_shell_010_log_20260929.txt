@@ -1,0 +1,55 @@
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 1214, in _jet2_s3_work
+    derivative = q4_s3_overlap_derivatives(
+        self.geometry.source_faces[source_face].reference_positions,
+    ...<5 lines>...
+        **derivative_options,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_s3_overlap_derivatives.py", line 907, in q4_s3_overlap_derivatives
+    return _evaluate(
+        reference_source, current_source, current_target,
+    ...<5 lines>...
+        derivative_tolerances=derivative_tolerances,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_s3_overlap_derivatives.py", line 654, in _evaluate
+    polygon, polygon_errors, clipping_signature = _clip(
+                                                  ~~~~~^
+        quad_xy, triangle_xy, coordinate_error,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_s3_overlap_derivatives.py", line 438, in _clip
+    raise UnsupportedQ4S3Branch("vertex lies on a clipping boundary")
+anysolver.general_contact.q4_s3_overlap_derivatives.UnsupportedQ4S3Branch: vertex lies on a clipping boundary
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_cut_front_shell_work.py", line 176, in <module>
+    main()
+    ~~~~^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_cut_front_shell_work.py", line 104, in main
+    state = linearize(manager, zero_pose, np.zeros(count), tangent=False)
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\semismooth.py", line 50, in linearize
+    raw = manager.law.nodal_force_linearization(
+        source, target, nodal_forces, tangent=tangent,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 360, in nodal_force_linearization
+    return self._nodal_force_unresolved(current_source, current_target,
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                        z, tangent=tangent)
+                                        ^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 400, in _nodal_force_unresolved
+    return self._jet2_s3_work(
+           ~~~~~~~~~~~~~~~~~~^
+        current_source, current_target, base, tangent=tangent,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        tiny_wedge_pair=tiny_wedge_pair, nodal_force_mode=True,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 1224, in _jet2_s3_work
+    raise UnsupportedQ4S3Branch(
+    ...<3 lines>...
+    ) from exc
+anysolver.general_contact.q4_s3_overlap_derivatives.UnsupportedQ4S3Branch: pair=0, overlap_area_m2=0.472159090909, reference_overlap_area_m2=0.472159090909, integration_triangles=12: vertex lies on a clipping boundary

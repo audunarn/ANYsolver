@@ -1,0 +1,20 @@
+# Preserve newly delivered evidence bytes; historical files retain original filters.
+c8_authority_v1.json -text whitespace=cr-at-eol
+c8_authority_extension_v1.json -text whitespace=cr-at-eol
+source_checks_v20.json -text whitespace=cr-at-eol
+source_checks_v24.json -text whitespace=cr-at-eol
+execution_manifest_v21.json -text whitespace=cr-at-eol
+execution_manifest_v23.json -text whitespace=cr-at-eol
+author_final_handoff_v12.json -text whitespace=cr-at-eol
+author_final_handoff_v12.md -text whitespace=cr-at-eol
+author_all_attempts_v11.json -text whitespace=cr-at-eol
+author_source_installed_v3k.json -text whitespace=cr-at-eol
+supporting_execution_review_v1.md -text whitespace=cr-at-eol
+supporting_execution_review_v1_identity.json -text whitespace=cr-at-eol
+endpoint_kkt_equations_v2.md -text whitespace=cr-at-eol
+lead_artifact_audit_v3k.json -text whitespace=cr-at-eol
+lead_final_execution_audit.json -text whitespace=cr-at-eol
+evidence_index.json -text whitespace=cr-at-eol
+native_pair_development.md -text whitespace=cr-at-eol
+restart_history_pre_endpoint_inventory.md -text whitespace=cr-at-eol
+.gitattributes -text whitespace=cr-at-eol

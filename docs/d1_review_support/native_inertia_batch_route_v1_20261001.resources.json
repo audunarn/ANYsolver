@@ -1,0 +1,15 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 57.22367529998883,
+  "peak_process_tree_memory_mb": 178.688,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "C:/Python/Python314/python.exe",
+    "docs/d1_review_support/native_inertia_batch_route_v1_20261001.entry.py",
+    "docs/d1_review_support/native_inertia_batch_route_v1_20261001.inputs.json",
+    "8afde3788d8d0ec2a20b26c66924c5826f6f53b55ce9c3e7f59b1bfbc66714ca"
+  ],
+  "log": "docs\\d1_review_support\\native_inertia_batch_route_v1_20261001.log"
+}

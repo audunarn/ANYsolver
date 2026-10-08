@@ -1,0 +1,117 @@
+{
+  "parent": "8e2b8875",
+  "scope": "development evidence; native engineering acceptance/release incomplete",
+  "source_hash": "69C9D7C784550B87C5C08D769BAFBE7EC3D228E2FD2B047F1FFC78D6A4424ECB",
+  "test_hash": "ABFC0E39A214159BEC184B41825E2386912936DA01D6AA06D8BB4EC1DB6F13C6",
+  "wheel_hash": "DDFEF095B44711E46644ED5FA72A67DC41D55800743456544CCE8F3E5D71D762",
+  "fixture_sha256": "5C72A14E4288010A7F9407ADA3CD1C5334E37AE071A7BAF2281DE75615A7D50A",
+  "production_files": 526,
+  "import_count": 220,
+  "import_errors": [],
+  "runtime_errors": [],
+  "effective_pools": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "version": "0.3.31.188.0",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "version": "0.3.30",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    }
+  ],
+  "jit_disabled": true,
+  "controls_resources": {
+    "status": "completed",
+    "returncode": 0,
+    "elapsed_s": 10.839002399938181,
+    "peak_bytes": 188522496
+  },
+  "coupled_resources": {
+    "status": "completed",
+    "returncode": 0,
+    "elapsed_s": 14.678794499952346,
+    "peak_bytes": 180629504
+  },
+  "coupled": {
+    "stiffness_Pa_per_m": 80000000.0,
+    "seeded": true,
+    "integration_budget_policy": "certified_active",
+    "source_integration_budget_policy": "certified_active",
+    "root_tangent_enclosure_policy": "componentwise",
+    "status": "paused",
+    "failure": null,
+    "completed": 1,
+    "candidates": 16,
+    "pair_evaluations": 6,
+    "contact_reuse_hits": 10,
+    "trial_failures": []
+  },
+  "comparison": {
+    "stiffness_Pa_per_m": 80000000.0,
+    "previous_stiffness_Pa_per_m": 40000000.0,
+    "response_relative_errors": {
+      "contact_force_n": 0.0018734035828005334,
+      "contact_moment_nm": 0.0007114844360295613,
+      "tip_z_m": 0.017441624976068482,
+      "target_z_m": 0.00130180044212964
+    },
+    "response_target": 0.02,
+    "production_gap_lower_m": -6.302183730616266E-06,
+    "independent_sampled_refined_gap_m": -6.3016086522243125E-06,
+    "previous_gap_lower_m": -8.39358029894308E-06,
+    "quantities": {
+      "contact_force_n": [
+        2.1817578107281218E-08,
+        -7.2725260357604E-09,
+        0.005362357129065184
+      ],
+      "contact_moment_nm": [
+        0.0002205179199380271,
+        -0.01014160106695115,
+        -1.4651434593968786E-08
+      ],
+      "tip_z_m": -0.00014923981490251538,
+      "target_z_m": -4.068654433518497E-05
+    }
+  },
+  "independent": {
+    "checkpoint_sha256": "5c72a14e4288010a7f9407ada3cd1c5334e37ae071a7baf2281de75615a7d50a",
+    "scope": "fixed-pose independent residual and local sensitivity only",
+    "elapsed_s": 3.4621312000090256,
+    "controls": [
+      {
+        "error_estimate": 1.0746592972956562E-11,
+        "evaluations": 567,
+        "angular_order": 12,
+        "tolerance": 1E-10
+      },
+      {
+        "error_estimate": 3.0941529496544926E-14,
+        "evaluations": 651,
+        "angular_order": 24,
+        "tolerance": 1E-12
+      }
+    ],
+    "relative_residual_difference": 1.107886849050437E-12,
+    "residual_refinement_norm": 7.501848123363865E-14,
+    "tip_correction_m": -2.8698848708908924E-19,
+    "tip_relative_correction": 1.923002164513219E-15,
+    "refinement_tip_correction_m": 4.9308490187737395E-19,
+    "refinement_tip_relative_correction": 3.3039769058911046E-15,
+    "log_stiffness_tip_derivative_m": 3.239054840090359E-06,
+    "log_stiffness_tip_relative_derivative": 0.02170369108408594
+  },
+  "raw_root": "C:/ANYworkspaceWork/contact_native_fibre_s3_20261005/candidate11"
+}

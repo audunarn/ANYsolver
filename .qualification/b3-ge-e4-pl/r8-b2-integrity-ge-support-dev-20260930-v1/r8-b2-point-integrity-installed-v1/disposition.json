@@ -1,0 +1,4 @@
+{
+  "status": "BUILT_NOT_TESTED",
+  "reason": "Independent affine-cancellation finding required source repair before numerical testing; preliminary wheel/site preserved."
+}

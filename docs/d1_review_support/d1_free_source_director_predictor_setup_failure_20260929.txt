@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_free_source_director_predictor.py", line 113, in <module>
+    "guided": predict(False),
+              ~~~~~~~^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_free_source_director_predictor.py", line 95, in predict
+    "minimum_independent_gap_m": float(state.minimum_gap),
+                                       ^^^^^^^^^^^^^^^^^
+AttributeError: 'MovingS3PatchMortarState' object has no attribute 'minimum_gap'

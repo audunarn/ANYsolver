@@ -1,0 +1,221 @@
+{
+  "status": "COMPLETED_DEVELOPMENT_ONLY",
+  "predicates": {
+    "reference_error": true,
+    "inverse_residual": true,
+    "eigen_residual": true,
+    "gram_symmetry": true,
+    "conditioning": true,
+    "all_eigenvalues_positive": true,
+    "case_floor": true,
+    "absolute_floor": true,
+    "variational_ceiling": true
+  },
+  "source_sha256": "9c3f361876bf90ca43cc00a839a759eafc38c424779a4540733770f11233ddc9",
+  "nx": 16,
+  "ny": 4,
+  "beam_halfcells": 64,
+  "policy": {
+    "c_lambda": 2,
+    "span_halfcells": 8,
+    "shape_aspect": 1.25,
+    "shell_trace_segments": 16,
+    "beam_halfcells": 64,
+    "support_membership": [
+      [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      [
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      [
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23
+      ],
+      [
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31
+      ],
+      [
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39
+      ],
+      [
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47
+      ],
+      [
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55
+      ],
+      [
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ]
+    ],
+    "support_endpoints_m": [
+      0.0,
+      0.125,
+      0.25,
+      0.375,
+      0.5,
+      0.625,
+      0.75,
+      0.875,
+      1.0
+    ],
+    "shell_spacing_m": 0.0625,
+    "beam_spacing_m": 0.015625
+  },
+  "rows": 1668,
+  "constraint_rows": 40,
+  "norm_rows": 784,
+  "native_physical_pairing_max_abs": 2.168404344971009e-19,
+  "omitted_C_max_abs": 0.0,
+  "omitted_slots": 856,
+  "native_inverse_residual": 2.2823210428233843e-14,
+  "gram_relative_skew": 1.9678734521353616e-15,
+  "eigen_relative_residual": 1.0782654262666229e-13,
+  "conditions": {
+    "native": 44.703185305615975,
+    "reference": 35.105403839665755
+  },
+  "reference_refinements": [
+    {
+      "beam": {
+        "rows": 1728,
+        "subdivisions": 8,
+        "inverse_residual_max": 2.6833518321232074e-12,
+        "relative_loewner_error_bound": 0.00023577934760880728
+      },
+      "total_relative_loewner_error": 4.9583438217526444e-05
+    }
+  ],
+  "shell_reference": {
+    "modes": 4096,
+    "supports": 8,
+    "relative_loewner_tail_bound": 1.369673255741123e-05,
+    "lower_min_eigenvalue": 0.0053425410839050835
+  },
+  "all_generalized_eigenvalues": [
+    0.783731850477175,
+    0.7837318895434499,
+    0.7846326243489905,
+    0.8180506183521078,
+    0.8180506653306243,
+    0.8188853526862115,
+    0.8694308124047462,
+    0.8694308701839211,
+    0.8701281319184576,
+    0.9190235594689267,
+    0.9190236264386853,
+    0.9195366165508568,
+    0.9566871158786806,
+    0.9566871891338595,
+    0.9570137004259814,
+    0.9806695735281604,
+    0.980669651082153,
+    0.9808415857782378,
+    0.9896541714508541,
+    0.9897048199314534,
+    0.9902678457806131,
+    0.9903152928592991,
+    0.9914148277641514,
+    0.9914563152180749,
+    0.9929339852617065,
+    0.9929676242747516,
+    0.9937125505256097,
+    0.9937126303521804,
+    0.993775430409187,
+    0.9945962821679817,
+    0.994621374377191,
+    0.996174599871795,
+    0.9961915550455537,
+    0.9976485447682107,
+    0.9976578511164829,
+    0.9989752603870885,
+    0.9989753713153389,
+    0.9989852738566873,
+    0.9991577537806197,
+    0.9991600806195637
+  ],
+  "beta": 0.8852863098891651,
+  "safe_case_floor": 0.4315772657074615,
+  "frozen_scalar_sha256": "0c83f708ad726e2237f7b02b5d559124740f53357fa91caed035455cbe50cb98",
+  "imported_anysolver": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-aggregation-installed-v1\\site\\anysolver\\__init__.py",
+  "elapsed_seconds": 3.6706979000009596,
+  "limitation": "finite reference inf-sup development only; actual indefinite KKT, locking, physical accuracy and F03/M2 acceptance remain open",
+  "threads": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "version": "0.3.31.188.0",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "version": "0.3.30",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    }
+  ],
+  "jit_disabled": true
+}

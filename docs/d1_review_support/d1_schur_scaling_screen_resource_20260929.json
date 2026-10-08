@@ -1,0 +1,20 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 4.25878869999724,
+  "peak_process_tree_memory_mb": 173.416448,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "scripts/general_contact_d1_schur_scaling_screen.py",
+    "--theta",
+    ".1",
+    ".05",
+    ".025",
+    ".0125",
+    "--output",
+    "docs/d1_review_support/d1_schur_scaling_screen_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_schur_scaling_screen_20260929.log"
+}

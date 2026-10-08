@@ -1,0 +1,27 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 8.652609399985522,
+  "peak_process_tree_memory_mb": 251.65824,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "docs/d1_review_support/d1_installed_entry.py",
+    "--expected-root",
+    "C:\\ANYworkspaceWork\\general-contact-final-0b2ac9be\\target",
+    "--identity-output",
+    "docs/d1_review_support/d1_final_installed_workflow_v1_20260930_assess.import.json",
+    "--script",
+    "docs/d1_review_support/d1_installed_workflow_assessment.py",
+    "--",
+    "docs/d1_review_support/d1_final_installed_workflow_v1_20260930_assess.json",
+    "--reference",
+    "docs/d1_review_support/d1_final_lifecycle_v1_20260930_active_prefix.json",
+    "--candidate",
+    "docs/d1_review_support/d1_final_installed_workflow_v1_20260930_prefix.json",
+    "--expected-steps",
+    "2"
+  ],
+  "log": "docs\\d1_review_support\\d1_final_installed_workflow_v1_20260930_assess.log"
+}

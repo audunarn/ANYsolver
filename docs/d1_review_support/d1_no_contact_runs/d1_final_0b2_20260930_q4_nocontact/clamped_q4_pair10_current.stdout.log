@@ -1,0 +1,29 @@
+{
+  "case": "clamped_q4",
+  "warm_before_measure": false,
+  "label": "current",
+  "source": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src",
+  "module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "thread_environment": {
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_NUM_THREADS": "1",
+    "NUMBA_DISABLE_JIT": null
+  },
+  "numpy": "2.4.6",
+  "scipy": "1.17.1",
+  "status": "completed",
+  "load_factor": 1.0,
+  "steps": 40,
+  "newton_iterations": 145,
+  "solver_seconds": 2.252232074737549,
+  "whole_route_seconds": 2.333654700021725,
+  "peak_process_working_set_bytes": 229224448,
+  "displacement_norm_m": 0.025953617111726435,
+  "displacement_digest_13dp": "1ef94957f54910ca8a932abb41b4a207dc6fac3eea7f328ef49b43f7eefe1b93",
+  "contact_key_present": false,
+  "contact_core_module_loaded": false
+}

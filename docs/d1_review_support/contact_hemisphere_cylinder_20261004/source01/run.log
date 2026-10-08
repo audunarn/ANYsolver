@@ -1,0 +1,31 @@
+........................F....                                            [100%]
+================================== FAILURES ===================================
+________ test_exterior_and_regular_geometry_rejects_unsupported_inputs ________
+
+    def test_exterior_and_regular_geometry_rejects_unsupported_inputs():
+        args = list(_fixture(3, 0, "rim"))
+        for change in ("inside_cylinder", "inside_cap_radius", "zero_tangent", "zero_axis"):
+            invalid = args.copy()
+            invalid[0] = args[0].copy()
+            if change == "inside_cylinder":
+                invalid[-1] = 1.1  # Endpoint radial distance is below this radius.
+            elif change == "inside_cap_radius":
+                invalid[3] = 1.1
+            elif change == "zero_tangent":
+                invalid[0][:] = args[0][0]
+            else:
+                invalid[5] = np.zeros(3)
+>           with pytest.raises(HemispherePlaneGeometryError):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE <class 'anysolver.general_contact.beam_hemisphere_support.HemispherePlaneGeometryError'>
+
+tests\test_general_contact_hemisphere_cylinder_work.py:243: Failed
+============================= slowest 5 durations =============================
+0.02s call     tests/test_general_contact_hemisphere_cylinder_work.py::test_complete_virtual_work_and_hessian[3-0-rim]
+0.02s call     tests/test_general_contact_hemisphere_cylinder_work.py::test_complete_virtual_work_and_hessian[3-2-rim]
+0.02s call     tests/test_general_contact_hemisphere_cylinder_work.py::test_complete_virtual_work_and_hessian[2-0-rim]
+0.02s call     tests/test_general_contact_hemisphere_cylinder_work.py::test_complete_virtual_work_and_hessian[2-1-rim]
+0.02s call     tests/test_general_contact_hemisphere_cylinder_work.py::test_complete_virtual_work_and_hessian[3-2-sphere]
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_hemisphere_cylinder_work.py::test_exterior_and_regular_geometry_rejects_unsupported_inputs
+1 failed, 28 passed in 2.01s

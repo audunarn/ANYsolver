@@ -1,0 +1,12 @@
+{
+  "status": "development_coarse_pressure_on_fine_structure",
+  "coarse_active_modes": 48,
+  "fine_settled_active_modes": 96,
+  "transferred_gram_relative_oracle_error": 1.3291213446800614e-15,
+  "transferred_work_relative_oracle_error": 3.082219685043637e-13,
+  "minimum_squared_dual_ratio_interval": [
+    0.5916981208438551,
+    0.5932206984255847
+  ],
+  "elapsed_seconds": 21.18816230000084
+}

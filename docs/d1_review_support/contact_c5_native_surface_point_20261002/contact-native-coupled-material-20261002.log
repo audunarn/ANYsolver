@@ -1,0 +1,80 @@
+[development] exact targets=3; record=C:\ANYworkspaceWork\contact-native-coupled-material-20261002\anysolver-portable-ci-b4efr2r6\P01
+[portable-ci] starting P01/01 with 3 modules
+FF.................                                                      [100%]
+================================== FAILURES ===================================
+_ test_coupled_material_contributor_full_retained_tangent_and_no_line_double_count[1e-05-stick] _
+
+slide = 1e-05, branch = 'stick'
+
+    @pytest.mark.parametrize('slide,branch',[(.00001,'stick'),(.001,'slip')])
+    def test_coupled_material_contributor_full_retained_tangent_and_no_line_double_count(slide,branch):
+        owner,bridge,history=_contributor()
+        increment=np.zeros(owner.context.count); increment[6]=increment[12]=slide
+        shell=np.zeros(owner.shell_stiffness.shape[0]); shell[owner.shell_free[0]]=-1e-6
+        origin=owner.initial
+        candidate=bridge.evaluate(origin,history,increment,shell,1.)
+        assert candidate.material.contribution.trial.branch==branch
+        # Compare assembled contact against the local mapped work, independently of
+        # the old line-contact assembly. No second normal law is added.
+        structural_r,structural_j,_=owner.context.assemble(candidate.mechanical,1.,origin.native_histories)[:3]
+        expected=np.r_[structural_r,owner.shell_stiffness@candidate.shell_displacement]
+        slots=np.r_[owner.context.slots[0],owner.context.count+np.arange(len(shell))]
+        np.add.at(expected,slots,candidate.material.contribution.residual)
+        np.testing.assert_allclose(candidate.residual,expected,rtol=0.,atol=1e-13)
+        assert candidate.tangent.shape==(60,60)
+        assert np.linalg.norm(candidate.tangent[18:24,42:])>0.
+        assert np.linalg.norm(candidate.tangent[42:,18:24])>0.
+        # Physical retained rotations and algebraic resultant blocks are both kept.
+        np.testing.assert_allclose(candidate.tangent[:42,24:42],structural_j[:,24:42],rtol=0.,atol=1e-13)
+        direction=np.random.default_rng(135).normal(size=60)*.01
+>       direction[owner.context.fixed]=0.
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       IndexError: too many indices for array: array is 1-dimensional, but 6 were indexed
+
+tests\test_general_contact_native_surface_contributor.py:50: IndexError
+_ test_coupled_material_contributor_full_retained_tangent_and_no_line_double_count[0.001-slip] _
+
+slide = 0.001, branch = 'slip'
+
+    @pytest.mark.parametrize('slide,branch',[(.00001,'stick'),(.001,'slip')])
+    def test_coupled_material_contributor_full_retained_tangent_and_no_line_double_count(slide,branch):
+        owner,bridge,history=_contributor()
+        increment=np.zeros(owner.context.count); increment[6]=increment[12]=slide
+        shell=np.zeros(owner.shell_stiffness.shape[0]); shell[owner.shell_free[0]]=-1e-6
+        origin=owner.initial
+        candidate=bridge.evaluate(origin,history,increment,shell,1.)
+        assert candidate.material.contribution.trial.branch==branch
+        # Compare assembled contact against the local mapped work, independently of
+        # the old line-contact assembly. No second normal law is added.
+        structural_r,structural_j,_=owner.context.assemble(candidate.mechanical,1.,origin.native_histories)[:3]
+        expected=np.r_[structural_r,owner.shell_stiffness@candidate.shell_displacement]
+        slots=np.r_[owner.context.slots[0],owner.context.count+np.arange(len(shell))]
+        np.add.at(expected,slots,candidate.material.contribution.residual)
+        np.testing.assert_allclose(candidate.residual,expected,rtol=0.,atol=1e-13)
+        assert candidate.tangent.shape==(60,60)
+        assert np.linalg.norm(candidate.tangent[18:24,42:])>0.
+        assert np.linalg.norm(candidate.tangent[42:,18:24])>0.
+        # Physical retained rotations and algebraic resultant blocks are both kept.
+        np.testing.assert_allclose(candidate.tangent[:42,24:42],structural_j[:,24:42],rtol=0.,atol=1e-13)
+        direction=np.random.default_rng(135).normal(size=60)*.01
+>       direction[owner.context.fixed]=0.
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       IndexError: too many indices for array: array is 1-dimensional, but 6 were indexed
+
+tests\test_general_contact_native_surface_contributor.py:50: IndexError
+============================ slowest 10 durations =============================
+1.17s call     tests/test_general_contact_native_retained_s3_static.py::test_coupled_native_s3_static_contact_and_wrench
+0.20s call     tests/test_general_contact_native_surface_contributor.py::test_coupled_material_contributor_full_retained_tangent_and_no_line_double_count[1e-05-stick]
+0.19s call     tests/test_general_contact_native_surface_contributor.py::test_coupled_material_contributor_full_retained_tangent_and_no_line_double_count[0.001-slip]
+0.13s call     tests/test_general_contact_native_surface_contributor.py::test_material_contributor_rejects_foreign_geometry_and_supported_state_changes
+0.03s call     tests/test_general_contact_native_surface_path.py::test_certified_contribution_release_and_recontact_reset_traction
+0.02s call     tests/test_general_contact_native_surface_path.py::test_certified_contribution_uses_committed_history_and_rejects_hidden_opening
+0.02s call     tests/test_general_contact_native_surface_path.py::test_exact_touch_affine_activation_and_release_do_not_stall
+0.01s call     tests/test_general_contact_native_surface_path.py::test_affine_target_tilt_and_edge_contraction_with_rotating_source
+0.01s call     tests/test_general_contact_native_surface_path.py::test_rounded_zero_does_not_override_compensated_affine_gap_sign
+0.01s call     tests/test_general_contact_native_surface_path.py::test_affine_event_includes_target_motion_and_preserves_geometric_path[0.0--0.02-first_touch-0.5]
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_native_surface_contributor.py::test_coupled_material_contributor_full_retained_tangent_and_no_line_double_count[1e-05-stick]
+FAILED tests/test_general_contact_native_surface_contributor.py::test_coupled_material_contributor_full_retained_tangent_and_no_line_double_count[0.001-slip]
+2 failed, 17 passed in 7.69s
+[portable-ci] P01 exit=1

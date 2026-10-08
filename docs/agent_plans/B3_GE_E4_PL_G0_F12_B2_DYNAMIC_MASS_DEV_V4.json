@@ -1,0 +1,141 @@
+{
+  "b2_cases": [
+    {
+      "elements": 1,
+      "first_omega_rad_per_s": 13.18642333454993,
+      "mass_symmetry_relative": 0.0,
+      "minimum_reduced_mass_eigenvalue": 0.00029655555555555555,
+      "nodal_z_mode_error": 0.0,
+      "scaled_eigen_equation_residual": 3.3825089793911906e-14,
+      "second_omega_rad_per_s": 52.73144277693325,
+      "stiffness_symmetry_relative": 0.0
+    },
+    {
+      "elements": 2,
+      "first_omega_rad_per_s": 13.130356610818744,
+      "mass_symmetry_relative": 1.301283465299929e-17,
+      "minimum_reduced_mass_eigenvalue": 0.00011756844450051563,
+      "nodal_z_mode_error": 9.704128776100163e-07,
+      "scaled_eigen_equation_residual": 8.218672235866858e-12,
+      "second_omega_rad_per_s": 52.50630736626864,
+      "stiffness_symmetry_relative": 0.0
+    },
+    {
+      "elements": 4,
+      "first_omega_rad_per_s": 13.124434127930765,
+      "mass_symmetry_relative": 3.293252879641386e-18,
+      "minimum_reduced_mass_eigenvalue": 5.57706953405455e-05,
+      "nodal_z_mode_error": 7.015429078771618e-06,
+      "scaled_eigen_equation_residual": 8.648148934724813e-11,
+      "second_omega_rad_per_s": 52.48219827979885,
+      "stiffness_symmetry_relative": 0.0
+    },
+    {
+      "elements": 8,
+      "first_omega_rad_per_s": 13.124030218328823,
+      "mass_symmetry_relative": 4.292005583399771e-18,
+      "minimum_reduced_mass_eigenvalue": 2.780240155877066e-05,
+      "nodal_z_mode_error": 7.111381869762123e-06,
+      "scaled_eigen_equation_residual": 6.953841550376206e-10,
+      "second_omega_rad_per_s": 52.48046404128684,
+      "stiffness_symmetry_relative": 0.0
+    }
+  ],
+  "b2_relative_errors_to_matched_reference": [
+    0.004756257652790419,
+    0.0004841824974750608,
+    3.29113990455987e-05,
+    2.1349944223647555e-06
+  ],
+  "classification": "bounded F12 high-precision continuum comparison, not spectral admission",
+  "elapsed_s": 0.14793499998631887,
+  "high_precision_ritz_upper_bounds_monotone": true,
+  "limits": [
+    "one slender homogeneous cantilever with centered mass",
+    "no attached shell, buckling, prestress or production eigensolver",
+    "Ritz and B2 share physical Timoshenko assumptions but not shape functions or mass assembly"
+  ],
+  "order_10_to_12_relative_change": 1.0146931822332122e-17,
+  "order_10_to_12_relative_change_decimal": "1.014693182233212288898976922790468899972830E-17",
+  "passed_bounded_screen": true,
+  "provenance": {
+    "effective_threadpools": [
+      {
+        "architecture": "SkylakeX",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "threading_layer": "pthreads",
+        "user_api": "blas",
+        "version": "0.3.31.188.0"
+      },
+      {
+        "architecture": "SkylakeX",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "threading_layer": "pthreads",
+        "user_api": "blas",
+        "version": "0.3.30"
+      }
+    ],
+    "env": {
+      "NUMBA_DISABLE_JIT": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONPATH": "src;."
+    },
+    "executable": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\.venv\\Scripts\\python.exe",
+    "numpy": "2.4.6",
+    "python": "3.14.2",
+    "scipy": "1.17.1",
+    "sha256": {
+      "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\probe_b3_ge_e4_pl_g0_f12_b2_dynamic_mass.py": "151196dde30feedf433eb9528786dd90aec00a447ffeaccb1d898171ecccce06",
+      "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\probe_b3_ge_e4_pl_g0_f12_b2_dynamic_mass_v4.py": "0400d20722e791b6b31d3d3cf095b6460d325124ad8df4f16d78137135470fb0",
+      "src\\anysolver\\_b2_physical_flexibility_linear.py": "4951a9cada5a779489fe8d031d09e71da00199d76cf31ea2177c389c8f1ed237",
+      "src\\anysolver\\_b2_physical_linear_definition.py": "17fd9e2edb5c7e56b8c6afddc938807e0e4377b76178aaf2307cf2c2fcc7748c"
+    },
+    "source_git": "d614ee203bb327abf1e871db3ac9393615c5e3a2"
+  },
+  "question": "Does the B2 static-trace mass converge to a separately derived Timoshenko continuum frequency?",
+  "reference_method": "60-digit Decimal conforming monomial w/theta Ritz energies and inverse iteration",
+  "references": [
+    {
+      "eigenvalue_decimal": "172.343210509051258580163278646872375039771210416425868776965",
+      "first_omega_rad_per_s": 13.127955305722642,
+      "iterations": 16,
+      "order": 4,
+      "scaled_equation_residual_decimal": "3.01387873365816612665560340735447991834167845804973069939773E-26"
+    },
+    {
+      "eigenvalue_decimal": "172.239446915731200326762102694149728538127392955026093975985",
+      "first_omega_rad_per_s": 13.124002701757234,
+      "iterations": 16,
+      "order": 6,
+      "scaled_equation_residual_decimal": "4.22365074233816539126108293045427271461193461361734653323214E-26"
+    },
+    {
+      "eigenvalue_decimal": "172.239433710732891233014305030701827158753151017609577009349",
+      "first_omega_rad_per_s": 13.124002198671445,
+      "iterations": 16,
+      "order": 8,
+      "scaled_equation_residual_decimal": "4.22714101595855475823766700837468609441877372245689965210697E-26"
+    },
+    {
+      "eigenvalue_decimal": "172.239433710362434051335318874813201138511258158986249231198",
+      "first_omega_rad_per_s": 13.12400219865733,
+      "iterations": 16,
+      "order": 10,
+      "scaled_equation_residual_decimal": "4.22714415127678239061303841180401106295785841314546395810979E-26"
+    },
+    {
+      "eigenvalue_decimal": "172.239433710362430555931736922531711238507720316037304915375",
+      "first_omega_rad_per_s": 13.12400219865733,
+      "iterations": 16,
+      "order": 12,
+      "scaled_equation_residual_decimal": "4.22714415211908499165582504189555835454204271405223568286693E-26"
+    }
+  ]
+}

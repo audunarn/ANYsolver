@@ -1,0 +1,76 @@
+{
+  "status": "development_enriched_shell_pair_value_non_success",
+  "source_commit": "102121f778a55bb313c7b8329df03c5df20d346d",
+  "probe_sha256": "811d060c881849c111f93c8c6706d24c3e37221bfdfc94927d77047658c291ee",
+  "saved_source_sha256": "8293e528837cc2a8a25444aa079944c9f8371f5a5b50280bb6dc91816d19b852",
+  "saved_runtime_identity": {
+    "python": "3.14.2",
+    "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+    "anymaterial_module": "C:\\Github\\ANYmaterial\\src\\anymaterial\\__init__.py",
+    "compiled_bjet_mul_enabled": false
+  },
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "coarse_source_cells": [
+    16,
+    8
+  ],
+  "fine_source_cells": [
+    32,
+    8
+  ],
+  "pressure_modes": 153,
+  "settled_active_modes": 48,
+  "source_skin_interpolation_error_m": 2.220446049250313e-16,
+  "pressure_support_l2_relative": 1.1249952115410608e-13,
+  "normalized_gap_maximum_error_m": 1.3965879234328904e-17,
+  "reference_overlap_area_relative_error": 3.194975148643156e-14,
+  "pair_guard": {
+    "error": "pressure response derivative disagrees with mortar geometry (pair=50, overlap_area_m2=0.00624759615698, support_error_m2=4.03323208165e-17, weighted_gap_error_m3=1.39746328182e-21)",
+    "pair": 50,
+    "source_face": 25,
+    "target_face": 0,
+    "local_overlap_area_m2": 0.00624759615697691,
+    "derivative_overlap_area_m2": 0.00624759615697691,
+    "area_resolution_m2": 3.009575545257777e-13,
+    "integration_triangles": 12,
+    "value_rtol": 1e-09,
+    "support": {
+      "local": [
+        0.0015624998459077368,
+        0.0015624924494722098,
+        0.0015601678099449792,
+        0.001562436051653523
+      ],
+      "derivative": [
+        0.0015624998459077,
+        0.0015624924494722502,
+        0.001560167809945018,
+        0.0015624360516534887
+      ],
+      "maximum_absolute_difference": 4.0332320816460765e-17,
+      "value_scale": 0.0015624998459077368,
+      "roundoff_atol": 2.1316279970611554e-15,
+      "agrees": true
+    },
+    "weighted_gap": {
+      "local": [
+        1.2515347284223822e-12,
+        -4.588860365630448e-13,
+        -4.531862824672086e-13,
+        1.253295693979928e-12
+      ],
+      "derivative": [
+        1.2515347276684099e-12,
+        -4.588860379605081e-13,
+        -4.5318628300883517e-13,
+        1.2532956934667951e-12
+      ],
+      "maximum_absolute_difference": 1.3974632818231284e-21,
+      "value_scale": 1.253295693979928e-12,
+      "roundoff_atol": 1.7097986901443546e-24,
+      "agrees": false
+    }
+  },
+  "elapsed_seconds": 22.552233599999454,
+  "peak_process_working_set_mb": 224.800768
+}

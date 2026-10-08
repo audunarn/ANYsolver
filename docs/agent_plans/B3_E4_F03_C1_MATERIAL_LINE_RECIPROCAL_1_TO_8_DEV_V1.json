@@ -1,0 +1,124 @@
+{
+  "anysolver_import_path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\__init__.py",
+  "beam_half_cells": 26,
+  "classification": "private fixed-primal material-line row-growth screen",
+  "numba_disable_jit": "1",
+  "numpy_version": "2.4.6",
+  "policy_p0_only": true,
+  "python_version": "3.14.2",
+  "qualification": "development only; not a multiplier selection or G0B pass",
+  "result": {
+    "p0_policy_m2": {
+      "basis_integrals_m": [
+        0.04999999999999993,
+        0.050000000000000044
+      ],
+      "loads": {
+        "tip_fz_1000n": {
+          "constraint_max": 1.0425395000073326e-20,
+          "dimension": 1272,
+          "free_residual_ratio": 4.234516203044985e-12,
+          "nnz": 19113,
+          "orientation_max_rad": 1.1030928445737373e-06,
+          "orientation_rms_rad": 3.340161211922325e-07,
+          "position_max_m": 2.1374436445815388e-07,
+          "position_rms_m": 1.0031682325068655e-07,
+          "row_rank": 12,
+          "shell_physical_work_j": 0.013684488521167984,
+          "status": "BOUNDED_SOLVE_PASSED",
+          "support_force_balance_n": 1.9381647412586875e-09,
+          "support_moment_balance_nm": 2.1642424487498484e-09,
+          "tip_rotation_rad": [
+            -5.39767338186184e-16,
+            -6.291909235439479e-05,
+            5.077953910701303e-18
+          ],
+          "tip_translation_m": [
+            -2.6199025432502094e-06,
+            3.608532210916697e-17,
+            7.034443580444198e-05
+          ],
+          "work_absolute_error_j": 2.9283520053269285e-13,
+          "work_relative_error": 4.1628765258246835e-12
+        },
+        "tip_mx_100nm": {
+          "constraint_max": 6.776263578034403e-21,
+          "dimension": 1272,
+          "free_residual_ratio": 3.1948694114822837e-12,
+          "nnz": 19113,
+          "orientation_max_rad": 1.6960851673898448e-06,
+          "orientation_rms_rad": 8.364813027085722e-07,
+          "position_max_m": 4.771193660476128e-08,
+          "position_rms_m": 1.7287569980304122e-08,
+          "row_rank": 12,
+          "shell_physical_work_j": 0.0018476535723017612,
+          "status": "BOUNDED_SOLVE_PASSED",
+          "support_force_balance_n": 2.051026334155099e-11,
+          "support_moment_balance_nm": 1.0933768303534152e-11,
+          "tip_rotation_rad": [
+            4.8953995761655935e-05,
+            1.3529074162273953e-17,
+            -6.443021127875611e-07
+          ],
+          "tip_translation_m": [
+            5.577920275822239e-19,
+            -3.1580644208379697e-06,
+            -1.2196075512965573e-17
+          ],
+          "work_absolute_error_j": 3.2335245592207684e-15,
+          "work_relative_error": 6.60523111323526e-13
+        }
+      },
+      "row_count": 12,
+      "row_diagnostic": {
+        "active_primal_columns": 114,
+        "left_null_modes": [],
+        "left_smallest_mode": [
+          -2.8916442248206646e-17,
+          0.4747536866809387,
+          1.1971553507841387e-16,
+          0.010894928686445097,
+          6.0730391520301405e-18,
+          -0.5239181591735241,
+          5.826806387105157e-17,
+          -0.47475368668093804,
+          -7.236524047553137e-18,
+          -0.01089492868644526,
+          -6.083150435120757e-18,
+          -0.5239181591735248
+        ],
+        "meaning": "bounded unit-row, physical-coordinate rank diagnostic; not inf-sup or mixed-system stability",
+        "rank_tolerance": 3.496496007150552e-14,
+        "scaled_row_norm_max": 0.003849089963141485,
+        "scaled_row_norm_min": 0.0001068860977038821,
+        "scaled_row_rank": 12,
+        "scaled_row_singular_values": [
+          1.3812998346408467,
+          1.1908006150726365,
+          1.1880203723267078,
+          1.1830796261527796,
+          1.1803389870571763,
+          1.001729257506243,
+          0.9982682950633766,
+          0.7750877365623551,
+          0.7746596631909118,
+          0.7672076608954768,
+          0.7668329488266081,
+          0.30370162488133035
+        ]
+      },
+      "space": "piecewise_constant"
+    }
+  },
+  "runner_sha256": "8dba14d60b0ab7353c51339fb26a8371b61c765e1263c220ef900d0a5f5ce4bc",
+  "scipy_version": "1.17.1",
+  "shell_cells": 2,
+  "shell_nodes": 143,
+  "source_git": "7dd0d50068e3c8f92bb8d86afd80274997c9fcb5",
+  "station_count": 48,
+  "thread_settings": {
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  }
+}

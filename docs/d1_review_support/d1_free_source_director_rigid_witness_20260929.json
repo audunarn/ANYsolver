@@ -1,0 +1,48 @@
+{
+  "status": "development_free_ry_linear_predictor",
+  "source_commit": "085d53d8a436fc6f28d5ddaf142bb82482622499",
+  "probe_sha256": "ee820bf5acee6ebb452cc387704ef53d5f70d750c36d306e99a2b7e931599b05",
+  "load_fraction": 0.5,
+  "guided": {
+    "free_ry": false,
+    "left_ry_clamp": false,
+    "status": "linear_predictor_complete",
+    "scaled_stiffness_minimum": 0.052843511870541926,
+    "free_coordinates": 28,
+    "linear_solve_relative_residual": 1.366502469471182e-15,
+    "maximum_source_ry_rad": 0.0,
+    "minimum_sampled_physical_gap_m": -6.800000000470144e-06,
+    "minimum_normalized_gap_m": -5.825000000401683e-06,
+    "maximum_normalized_gap_m": 3.317500011125864e-05,
+    "source_uz_range_m": [
+      -4.680000000000002e-05,
+      0.0
+    ]
+  },
+  "free_ry": {
+    "free_ry": true,
+    "left_ry_clamp": false,
+    "scaled_stiffness_minimum": 5.084761001032546e-16,
+    "status": "structural_metric_nonpositive",
+    "ideal_rigid_y_constraint_error": 0.0,
+    "ideal_rigid_y_scaled_energy": -3.4177325776936406e-17,
+    "ideal_rigid_y_reduced_force_ratio": 1.3012967261996113e-16
+  },
+  "free_interior_ry": {
+    "free_ry": true,
+    "left_ry_clamp": true,
+    "status": "linear_predictor_complete",
+    "scaled_stiffness_minimum": 0.0003505287087620325,
+    "free_coordinates": 36,
+    "linear_solve_relative_residual": 3.043171936996898e-13,
+    "maximum_source_ry_rad": 0.022522500000001527,
+    "minimum_sampled_physical_gap_m": -0.016390866468107317,
+    "minimum_normalized_gap_m": -0.014533883887722794,
+    "maximum_normalized_gap_m": -0.0005000386510966192,
+    "source_uz_range_m": [
+      -0.01642680000000137,
+      0.0
+    ]
+  },
+  "elapsed_seconds": 0.627244299997983
+}

@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 1.443873900017934,
+  "peak_process_tree_memory_mb": 138.375168,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "C:/Python/Python314/python.exe",
+    "docs/d1_review_support/d2_fixed_geometry_penalty_reference_dev.py",
+    "--spatial",
+    "--baseline-reference",
+    "docs/d1_review_support/d2_fixed_geometry_penalty_reference_v1_20260930.json",
+    "--output",
+    "docs/d1_review_support/d2_fixed_geometry_penalty_spatial_v1_20260930.json"
+  ],
+  "log": "docs\\d1_review_support\\d2_fixed_geometry_penalty_spatial_v1_20260930.log"
+}

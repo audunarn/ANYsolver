@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 4.119404299999587,
+  "peak_process_tree_memory_mb": 212.692992,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_general_contact_d1_interior_profile.py",
+    "-k",
+    "interior_trial_swept_cutback"
+  ],
+  "log": "docs\\d1_review_support\\d1_swept_cutback_current_20260929.log"
+}

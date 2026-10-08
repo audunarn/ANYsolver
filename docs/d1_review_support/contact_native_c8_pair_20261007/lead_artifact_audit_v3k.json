@@ -1,0 +1,11 @@
+{
+  "state": "SUPPORTING_ARTIFACT_AUDIT_NOT_QUALIFICATION",
+  "artifact": "v3k",
+  "wheel_sha256": "487af8778274b5fcf8efaf082e8d57299bdf67af1ef7ef52409000fef01cb88e",
+  "manifest_sha256": "be25269726b1321d838e166633c05135f961734dcb0fc942828af03987419e51",
+  "product_payloads": 553,
+  "metadata_files": 6,
+  "wheel_records": 560,
+  "installed_records": 563,
+  "errors": []
+}

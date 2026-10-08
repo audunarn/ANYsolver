@@ -1,0 +1,134 @@
+{
+  "classification": "bounded F12 physical metadata feasibility; not mass or spectral admission",
+  "limits": [
+    "four-point physical cross section and one station",
+    "metadata origin is the beam reference axis in every probe",
+    "no nonzero-origin metadata transformation, coupled shell, prestress or eigensolver"
+  ],
+  "mass_per_m": 8.0,
+  "passed_bounded_screen": true,
+  "points_global_m": [
+    [
+      0.0,
+      -0.04999999999999999,
+      -0.525
+    ],
+    [
+      0.0,
+      -0.04999999999999999,
+      0.275
+    ],
+    [
+      0.0,
+      0.55,
+      -0.525
+    ],
+    [
+      0.0,
+      0.55,
+      0.275
+    ]
+  ],
+  "probes": [
+    {
+      "frame_rows": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "mass_center_local_m": [
+        0.0,
+        0.25,
+        -0.125
+      ],
+      "minimum_mass_eigenvalue": 0.6731747391864807,
+      "relative_global_matrix_error": 3.370106114216488e-17,
+      "relative_kinetic_energy_error": 3.6715697342372293e-16,
+      "translation_rotation_coupling_norm": 3.1622776601683795
+    },
+    {
+      "frame_rows": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.7071067811865476,
+          0.7071067811865476
+        ],
+        [
+          0.0,
+          -0.7071067811865476,
+          0.7071067811865476
+        ]
+      ],
+      "mass_center_local_m": [
+        0.0,
+        0.08838834764831845,
+        -0.26516504294495535
+      ],
+      "minimum_mass_eigenvalue": 0.6731747391864799,
+      "relative_global_matrix_error": 1.9026416926646718e-16,
+      "relative_kinetic_energy_error": 3.6715697342372293e-16,
+      "translation_rotation_coupling_norm": 3.1622776601683795
+    },
+    {
+      "frame_rows": [
+        [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          -1.0
+        ]
+      ],
+      "mass_center_local_m": [
+        0.0,
+        0.25,
+        0.125
+      ],
+      "minimum_mass_eigenvalue": 0.6731747391864804,
+      "relative_global_matrix_error": 3.370106114216488e-17,
+      "relative_kinetic_energy_error": 3.6715697342372293e-16,
+      "translation_rotation_coupling_norm": 3.1622776601683795
+    }
+  ],
+  "provenance": {
+    "env": {
+      "NUMBA_DISABLE_JIT": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONPATH": "src;."
+    },
+    "executable": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\.venv\\Scripts\\python.exe",
+    "numpy": "2.4.6",
+    "python": "3.14.2",
+    "sha256": {
+      "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\probe_b3_ge_e4_pl_g0_f12_b2_mass_metadata.py": "bdf8b43a1ee1c442ab83e496c34dad53a4e051c9bdb90ca59d89402fe5358878",
+      "src\\anysolver\\_b2_physical_linear_definition.py": "17fd9e2edb5c7e56b8c6afddc938807e0e4377b76178aaf2307cf2c2fcc7748c"
+    },
+    "source_git": "75733405ff81df2b8562fa7a61a63a22a397bebe"
+  },
+  "question": "Can eccentric-section inertia at the beam reference axis retain direct particle kinetic work under frame rotation and reversal?"
+}

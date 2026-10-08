@@ -1,0 +1,22 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 733.1186719000107,
+  "peak_process_tree_memory_mb": 568.045568,
+  "time_limit_seconds": 900.0,
+  "memory_limit_bytes": 4000000000,
+  "command": [
+    "python",
+    "docs/d1_review_support/d1_installed_entry.py",
+    "--expected-root",
+    "C:\\ANYworkspaceWork\\general-contact-final-0b2ac9be\\target",
+    "--identity-output",
+    "docs/d1_review_support/d1_final_spatial_v7_20260930_radial.import.json",
+    "--script",
+    "docs/d1_review_support/d1_radial_recovery_trace_dev.py",
+    "--",
+    "--output",
+    "docs/d1_review_support/d1_final_spatial_v7_20260930_radial.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_final_spatial_v7_20260930_radial.log"
+}

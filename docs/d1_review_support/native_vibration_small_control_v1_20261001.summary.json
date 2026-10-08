@@ -1,0 +1,176 @@
+{
+  "status": "NONPASS",
+  "accepted_steps_total": 20,
+  "last_stage": "failure",
+  "elapsed_seconds": 36.31958229999873,
+  "failure_type": "AssertionError",
+  "comparisons": {
+    "continuum_time": {
+      "coarse": 0.01973645887887787,
+      "fine": 0.005023669019669281,
+      "floor": 1e-06,
+      "ratio": 0.2545375059679857,
+      "disposition": "bounded_comparison",
+      "passes": true
+    },
+    "amplitude": {
+      "coarse": 0.0011902126960966425,
+      "fine": 0.0005950472126812739,
+      "floor": 1e-06,
+      "ratio": 0.4999503152947021,
+      "disposition": "bounded_comparison",
+      "passes": true
+    },
+    "linear": {
+      "coarse": 3.2101513500611656e-09,
+      "fine": 2.9660320545159716e-09,
+      "floor": 1e-10,
+      "ratio": 0.9239539607562296,
+      "disposition": "bounded_comparison",
+      "passes": false
+    },
+    "angular": {
+      "coarse": 7.568390893888088e-11,
+      "fine": 2.654120800299652e-10,
+      "floor": 1e-10,
+      "ratio": null,
+      "disposition": "unresolved_NONPASS",
+      "passes": false
+    },
+    "energy": {
+      "coarse": 2.737737162276376e-07,
+      "fine": 2.3071058879769236e-08,
+      "floor": 1e-10,
+      "ratio": 0.08427053991036193,
+      "disposition": "bounded_comparison",
+      "passes": true
+    }
+  },
+  "resolution_metrics": {
+    "coarse": {
+      "amplitude": 2.5e-05,
+      "accepted_steps": 4,
+      "dt_seconds": 0.1497822861394327,
+      "actual_initial_energy_j": 1.7072804901711993e-09,
+      "initial_mode9_remainder": -1.220952123096664e-05,
+      "initial_physical_balance": 4.3837450543307055e-20,
+      "initial_algebraic_balance": 4.2999909618909284e-17,
+      "initial_checks": {
+        "algebraic_condition": 46900.210922593775,
+        "algebraic_rank": 27,
+        "algebraic_sigma_max": 1.6173357097178507,
+        "algebraic_sigma_min": 3.4484614842930547e-05,
+        "physical_mass_condition": 17.433616214148586,
+        "physical_mass_max_eigenvalue": 2.168576100923165,
+        "physical_mass_min_eigenvalue": 0.12439049215521997
+      },
+      "maximum_step_defects": {
+        "linear": 3.2101189508155126e-09,
+        "angular": 7.572980379004565e-11,
+        "energy": 2.8756227051052327e-07
+      },
+      "maximum_cumulative_defects": {
+        "linear": 3.2101513500611656e-09,
+        "angular": 7.568390893888088e-11,
+        "energy": 2.737737162276376e-07
+      },
+      "maximum_stage_residual": 6.304113694064335e-12,
+      "maximum_algebraic_residual": 7.008215522138256e-17,
+      "maximum_nonlinear_to_discrete": 0.0006726792156254112,
+      "maximum_witness_over_E0": 2.1880478391807426e-16,
+      "maximum_absolute_cumulative_linear_n_s": 4.415463888782282e-13,
+      "maximum_absolute_cumulative_angular_nm_s": 2.0820175153121534e-14
+    },
+    "fine": {
+      "amplitude": 2.5e-05,
+      "accepted_steps": 8,
+      "dt_seconds": 0.07489114306971635,
+      "actual_initial_energy_j": 1.7072804901711993e-09,
+      "initial_mode9_remainder": -1.220952123096664e-05,
+      "initial_physical_balance": 4.3837450543307055e-20,
+      "initial_algebraic_balance": 4.2999909618909284e-17,
+      "initial_checks": {
+        "algebraic_condition": 46900.210922593775,
+        "algebraic_rank": 27,
+        "algebraic_sigma_max": 1.6173357097178507,
+        "algebraic_sigma_min": 3.4484614842930547e-05,
+        "physical_mass_condition": 17.433616214148586,
+        "physical_mass_max_eigenvalue": 2.168576100923165,
+        "physical_mass_min_eigenvalue": 0.12439049215521997
+      },
+      "maximum_step_defects": {
+        "linear": 2.0663903433358215e-09,
+        "angular": 1.6910544552663557e-10,
+        "energy": 2.762852971963382e-08
+      },
+      "maximum_cumulative_defects": {
+        "linear": 2.9660320545159716e-09,
+        "angular": 2.654120800299652e-10,
+        "energy": 4.3047228258398744e-08
+      },
+      "maximum_stage_residual": 2.4629941405041178e-12,
+      "maximum_algebraic_residual": 7.274453873009084e-17,
+      "maximum_nonlinear_to_discrete": 0.0011902126960966425,
+      "maximum_witness_over_E0": 2.3412764464799996e-16,
+      "maximum_absolute_cumulative_linear_n_s": 4.0796853486164937e-13,
+      "maximum_absolute_cumulative_angular_nm_s": 7.301322132344788e-14
+    },
+    "half_fine": {
+      "amplitude": 1.25e-05,
+      "accepted_steps": 8,
+      "dt_seconds": 0.07489114306971635,
+      "actual_initial_energy_j": 4.268209790784753e-10,
+      "initial_mode9_remainder": -3.0523766442056577e-06,
+      "initial_physical_balance": 1.4526263885060505e-20,
+      "initial_algebraic_balance": 6.61755966058987e-17,
+      "initial_checks": {
+        "algebraic_condition": 46900.21092263966,
+        "algebraic_rank": 27,
+        "algebraic_sigma_max": 1.6173357097177175,
+        "algebraic_sigma_min": 3.448461484289397e-05,
+        "physical_mass_condition": 17.433616430596928,
+        "physical_mass_max_eigenvalue": 2.168576101436762,
+        "physical_mass_min_eigenvalue": 0.12439049064030083
+      },
+      "maximum_step_defects": {
+        "linear": 4.570371898010417e-09,
+        "angular": 4.874261026930351e-10,
+        "energy": 9.611124511407005e-09
+      },
+      "maximum_cumulative_defects": {
+        "linear": 1.8512055620604905e-08,
+        "angular": 1.8389247303691606e-09,
+        "energy": 1.98304365965812e-08
+      },
+      "maximum_stage_residual": 2.5771284553514917e-12,
+      "maximum_algebraic_residual": 6.492378886669365e-17,
+      "maximum_nonlinear_to_discrete": 0.0005950472126812739,
+      "maximum_witness_over_E0": 2.5225517199608094e-16,
+      "maximum_absolute_cumulative_linear_n_s": 1.2731392729329267e-12,
+      "maximum_absolute_cumulative_angular_nm_s": 2.529386624783779e-13
+    }
+  },
+  "resource": {
+    "status": "completed",
+    "exit_code": 1,
+    "elapsed_seconds": 40.404871099977754,
+    "peak_process_tree_memory_mb": 209.833984,
+    "time_limit_seconds": 180.0,
+    "memory_limit_bytes": 1073741824,
+    "command": [
+      "C:/Python/Python314/python.exe",
+      "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_vibration_small_control_v1_20261001.entry.source.py"
+    ],
+    "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_vibration_small_control_v1_20261001.log"
+  },
+  "hashes": {
+    "raw.json": "6546ec7c5d7acbf2956a4aa9756a7a04504009e6f246c4c42b2dc6457d875c5d",
+    "execution.json": "8d3d503ac68f9890650c2053abd6ca52019314ab2ae9c117d22f1380bc6c157c",
+    "log": "25230c3e3af7f38bb3698e7b1bca83d2dde548958e44594c5d5739c6ad39639f",
+    "resource.json": "29e5d2ab8d783b3f222b96bd5744cbfabb9f74de935c4aa18f3d195e24d47f99",
+    "xml": "adc4153eaaf11c8e27ddd60cebbd54afa3bd9f0b85e497127a41511b44557f4b",
+    "inputs.json": "9bb06c066c1521004a4b7f0c70f3a72be87c5374baf04b8fd32f03e005fa68ed",
+    "test.source.py": "07a7688302a3481729d7842ba943d4062c4db9d31898e55501b52c64d7b0c1e5",
+    "entry.source.py": "f86e45748c6484cb156220c7f6fd91cfeb32e5ec266ba5417dbaeb0af7836777"
+  }
+}

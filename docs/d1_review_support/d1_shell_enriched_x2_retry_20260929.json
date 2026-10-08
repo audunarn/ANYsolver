@@ -1,0 +1,89 @@
+{
+  "status": "development_enriched_shell_source_x2",
+  "source_commit": "102121f778a55bb313c7b8329df03c5df20d346d",
+  "probe_sha256": "811d060c881849c111f93c8c6706d24c3e37221bfdfc94927d77047658c291ee",
+  "saved_source_sha256": "8293e528837cc2a8a25444aa079944c9f8371f5a5b50280bb6dc91816d19b852",
+  "saved_runtime_identity": {
+    "python": "3.14.2",
+    "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+    "anymaterial_module": "C:\\Github\\ANYmaterial\\src\\anymaterial\\__init__.py",
+    "compiled_bjet_mul_enabled": false
+  },
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "coarse_source_cells": [
+    16,
+    8
+  ],
+  "fine_source_cells": [
+    32,
+    8
+  ],
+  "pressure_modes": 153,
+  "settled_active_modes": 48,
+  "source_skin_interpolation_error_m": 2.220446049250313e-16,
+  "pressure_support_l2_relative": 1.1249952115410608e-13,
+  "normalized_gap_maximum_error_m": 1.3965879234328904e-17,
+  "reference_overlap_area_relative_error": 3.194975148643156e-14,
+  "coarse_free_coordinates": 295,
+  "fine_free_coordinates": 583,
+  "coarse_metric_scaled_minimum_eigenvalue": 0.0016688263429592803,
+  "fine_metric_scaled_minimum_eigenvalue": 0.00048434964650055217,
+  "coarse_response_relative_residual": 5.375173902691149e-15,
+  "fine_response_relative_residual": 1.7227790449527385e-14,
+  "full_supported": {
+    "modes": 153,
+    "beta_reference_squared": -1.0447511838000902e-14,
+    "reference_scaled_minimum_eigenvalue": 5.513339158162994e-06,
+    "weakest_pressure_mode_ij": [
+      [
+        0,
+        8
+      ],
+      [
+        1,
+        8
+      ],
+      [
+        2,
+        8
+      ],
+      [
+        3,
+        8
+      ],
+      [
+        0,
+        7
+      ]
+    ]
+  },
+  "settled_active": {
+    "modes": 48,
+    "beta_reference_squared": 0.8547519013317854,
+    "reference_scaled_minimum_eigenvalue": 0.00323196676800262,
+    "weakest_pressure_mode_ij": [
+      [
+        16,
+        8
+      ],
+      [
+        13,
+        8
+      ],
+      [
+        15,
+        8
+      ],
+      [
+        12,
+        8
+      ],
+      [
+        14,
+        8
+      ]
+    ]
+  },
+  "elapsed_seconds": 32.62531519999902,
+  "peak_process_working_set_mb": 239.67744
+}

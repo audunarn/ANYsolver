@@ -1,0 +1,32 @@
+{
+  "case_id": "general_contact_d1_distributed_24q4_installed_v1",
+  "status": "registered_pending_execution",
+  "claim_boundary": "Installed wheel can run the accepted bounded elastic planar 24-Q4/S3 twelve-step cycle with matching integrated force, gap, pressure change and active counts; complete C1 and release remain open",
+  "policy": "ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1/2026-09-24.2",
+  "installed_source_commit": "c55c3860",
+  "wheel_path": "C:/ANYworkspaceWork/general-contact-evidence/wheel-c55c3860-20260927/anysolver-0.4.7-py3-none-any.whl",
+  "wheel_sha256": "dcade18155bd1e5f1e2b98b6869711c07f7ba06435877f75a13a05062f304c81",
+  "install_target": "C:/ANYworkspaceWork/general-contact-evidence/install-c55c3860-20260927",
+  "example_blob": "28491cd5460d3c2790c7235b3d89f6cf543d3db0",
+  "case_builder_blob": "e70097501c4b9407b777601aa4a68459237fd2c4",
+  "reference_report": "reports/general_contact_d1_distributed_cycle_response_v1_formal_20260927.json",
+  "reference_sha256": "f4a3942b2bf3c0112f4774b6593464a80c8da479582b586eff7962570f935815",
+  "execution": {
+    "command": "python -m examples.general_contact_distributed_q4_s3_cycle --columns 24 --output reports/general_contact_d1_distributed_cycle_24q4_installed_v1_20260927.json",
+    "pythonpath_order": ["install_target", "worktree"],
+    "maximum_wall_seconds": 1200,
+    "run_once": true
+  },
+  "criteria": {
+    "status": "completed",
+    "columns": 24,
+    "steps": 12,
+    "checkpoint_present": true,
+    "maximum_absolute_normal_force_difference_n": 1e-8,
+    "maximum_absolute_minimum_gap_difference_m": 1e-8,
+    "maximum_absolute_pressure_change_difference_pa": 1e-5,
+    "active_pressure_mode_counts": "exact_match",
+    "installed_module": "inside_install_target",
+    "all_independent_gaps_m": ">= -5e-5"
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "status": "development_16x16_active_local_cost_preflight",
+  "old_linearization_seconds": 6.204759100000956,
+  "fine_linearization_seconds": 18.60338359999878
+}

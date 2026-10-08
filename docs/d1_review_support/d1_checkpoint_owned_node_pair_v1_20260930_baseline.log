@@ -1,0 +1,19 @@
+{"stage": "saved_root", "kind": "active", "expected_step": 2}
+{"stage": "load_integrity", "kind": "cycle", "expected_step": 2, "elapsed_from_root_start_s": 2.1999876480549574e-06}
+{"stage": "original_canonical_and_saved_parity", "kind": "cycle", "expected_step": 2, "elapsed_from_root_start_s": 0.025469599990174174}
+{"stage": "reconstruct_and_fingerprint", "kind": "cycle", "expected_step": 2, "elapsed_from_root_start_s": 0.038568299991311505}
+{"stage": "preconsumer_validation", "kind": "cycle", "expected_step": 2, "elapsed_from_root_start_s": 1.384756399987964}
+{"stage": "producer_including_its_validation", "kind": "cycle", "expected_step": 2, "elapsed_from_root_start_s": 5.790419800003292}
+{"stage": "postconsumer_validation", "kind": "cycle", "expected_step": 2, "elapsed_from_root_start_s": 13.3693326000066}
+{"stage": "final_canonical_parity_and_model_identity", "kind": "cycle", "expected_step": 2, "elapsed_from_root_start_s": 16.12297039999976}
+{"stage": "complete", "kind": "cycle", "expected_step": 2, "elapsed_from_root_start_s": 16.15483200000017}
+{"stage": "saved_root", "kind": "open", "expected_step": 6}
+{"stage": "load_integrity", "kind": "cycle", "expected_step": 6, "elapsed_from_root_start_s": 8.00006091594696e-07}
+{"stage": "original_canonical_and_saved_parity", "kind": "cycle", "expected_step": 6, "elapsed_from_root_start_s": 0.04409099998883903}
+{"stage": "reconstruct_and_fingerprint", "kind": "cycle", "expected_step": 6, "elapsed_from_root_start_s": 0.057993700000224635}
+{"stage": "preconsumer_validation", "kind": "cycle", "expected_step": 6, "elapsed_from_root_start_s": 1.386059699987527}
+{"stage": "producer_including_its_validation", "kind": "cycle", "expected_step": 6, "elapsed_from_root_start_s": 4.1233874000026844}
+{"stage": "postconsumer_validation", "kind": "cycle", "expected_step": 6, "elapsed_from_root_start_s": 11.614447400002973}
+{"stage": "final_canonical_parity_and_model_identity", "kind": "cycle", "expected_step": 6, "elapsed_from_root_start_s": 14.30892050001421}
+{"stage": "complete", "kind": "cycle", "expected_step": 6, "elapsed_from_root_start_s": 14.345202299999073}
+{"roundtrip_checks_met": true, "failures": [], "output": "docs\\d1_review_support\\d1_checkpoint_owned_node_pair_v1_20260930_baseline.json"}

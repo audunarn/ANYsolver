@@ -1,0 +1,1086 @@
+{
+  "anysolver_import_path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\__init__.py",
+  "beam_half_cells": 12,
+  "classification": "private channel-compatible material-line loaded screen",
+  "material_line_y_m": 0.0,
+  "numba_disable_jit": "1",
+  "numpy_version": "2.4.6",
+  "off_edge": true,
+  "python_version": "3.14.2",
+  "qualification": "development only; no multiplier selection or G0B pass",
+  "scipy_version": "1.17.1",
+  "shell_nodes": 143,
+  "thread_settings": {
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "topologies": {
+    "mixed_s3_bl_tr": {
+      "multiplier_knots": [
+        0.0,
+        0.5,
+        1.0
+      ],
+      "spaces": {
+        "dual_non_yaw_p0_yaw": {
+          "channel_basis_fx_fy_fz_mx_my_mz": [
+            "dual_linear",
+            "dual_linear",
+            "dual_linear",
+            "dual_linear",
+            "dual_linear",
+            "piecewise_constant"
+          ],
+          "channel_rows_fx_fy_fz_mx_my_mz": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            2
+          ],
+          "loads": {
+            "tip_fz_1000n": {
+              "constraint_max": 1.3552527156068805e-20,
+              "dimension": 1025,
+              "free_residual_ratio": 3.147831539935964e-12,
+              "nnz": 18343,
+              "orientation_rms_rad": 6.239495372184846e-07,
+              "position_rms_m": 2.690702001688214e-08,
+              "row_rank": 17,
+              "shell_physical_work_j": 0.013200227454641021,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 2.5317214602239964e-10,
+              "support_moment_balance_nm": 2.535488770126316e-10,
+              "tip_rotation_rad": [
+                1.0680936008395059e-08,
+                -6.05685505619452e-05,
+                -6.892073604912387e-08
+              ],
+              "tip_translation_m": [
+                -2.6179328983297195e-06,
+                -4.075842573984733e-09,
+                6.950570900280415e-05
+              ],
+              "work_absolute_error_j": 6.81538159241768e-14,
+              "work_relative_error": 9.805498987346088e-13
+            },
+            "tip_mx_100nm": {
+              "constraint_max": 6.776263578034403e-21,
+              "dimension": 1025,
+              "free_residual_ratio": 3.385798623336047e-12,
+              "nnz": 18343,
+              "orientation_rms_rad": 8.626735146875503e-07,
+              "position_rms_m": 3.322372914707459e-08,
+              "row_rank": 17,
+              "shell_physical_work_j": 0.0018950230196106146,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 9.315430028463565e-11,
+              "support_moment_balance_nm": 9.21747130626445e-11,
+              "tip_rotation_rad": [
+                4.9099569247412796e-05,
+                7.904501035148095e-09,
+                -6.951956249868001e-07
+              ],
+              "tip_translation_m": [
+                2.6981687423949686e-10,
+                -3.1284516246290038e-06,
+                1.0680936426596986e-09
+              ],
+              "work_absolute_error_j": 3.795574965437254e-15,
+              "work_relative_error": 7.730363063495215e-13
+            }
+          },
+          "rank": {
+            "left_null_modes": [],
+            "left_smallest_mode": [
+              2.5409508309566954e-16,
+              -2.9041080724392004e-16,
+              -1.1731639317549598e-16,
+              0.34094753320489407,
+              -0.014376857055778264,
+              -0.36046036729864434,
+              -1.5514442280924948e-16,
+              -1.5730631879242786e-16,
+              8.04916478647262e-18,
+              0.018348422617698364,
+              -0.001464969872808194,
+              -0.017977266223133438,
+              6.745604151394502e-16,
+              -7.692477717809944e-16,
+              5.294502394689433e-16,
+              -0.6076647110266138,
+              -0.6194336246220558
+            ],
+            "meaning": "bounded unit-row, physical-coordinate rank diagnostic; not inf-sup or mixed-system stability",
+            "rank_tolerance": 3.198290157861156e-13,
+            "scaled_row_norm_max": 0.0029812968228114345,
+            "scaled_row_norm_min": 0.00014664220772366902,
+            "scaled_row_rank": 17,
+            "scaled_row_singular_values": [
+              1.4289502344410938,
+              1.2390799853956838,
+              1.2390706776925775,
+              1.1145540313260018,
+              1.0130513662751996,
+              1.0050597887683874,
+              1.002524852987781,
+              1.002147167938196,
+              0.9999999999999997,
+              0.9995307866148131,
+              0.9959903888538509,
+              0.994914479239722,
+              0.9865978886293277,
+              0.6842792797387295,
+              0.6840901911915755,
+              0.6707419457300029,
+              0.5089997685552994
+            ]
+          },
+          "row_count": 17
+        },
+        "p0_two": {
+          "channel_basis_fx_fy_fz_mx_my_mz": [
+            "piecewise_constant",
+            "piecewise_constant",
+            "piecewise_constant",
+            "piecewise_constant",
+            "piecewise_constant",
+            "piecewise_constant"
+          ],
+          "channel_rows_fx_fy_fz_mx_my_mz": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "loads": {
+            "tip_fz_1000n": {
+              "constraint_max": 1.3552527156068805e-20,
+              "dimension": 1020,
+              "free_residual_ratio": 3.447322949884326e-12,
+              "nnz": 18201,
+              "orientation_rms_rad": 6.284050243910573e-07,
+              "position_rms_m": 5.561121795159219e-08,
+              "row_rank": 12,
+              "shell_physical_work_j": 0.013310252753746905,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 3.487959535131132e-10,
+              "support_moment_balance_nm": 8.089692298758103e-10,
+              "tip_rotation_rad": [
+                -7.61182022917502e-08,
+                -6.23616425144261e-05,
+                -3.408897768161846e-08
+              ],
+              "tip_translation_m": [
+                -2.630874280322936e-06,
+                3.109762601693746e-09,
+                6.967768685727256e-05
+              ],
+              "work_absolute_error_j": 1.86614612651681e-13,
+              "work_relative_error": 2.6782549919307952e-12
+            },
+            "tip_mx_100nm": {
+              "constraint_max": 1.0164395367051604e-20,
+              "dimension": 1020,
+              "free_residual_ratio": 3.4088350487471314e-12,
+              "nnz": 18201,
+              "orientation_rms_rad": 1.1060252241860206e-06,
+              "position_rms_m": 1.651731733021246e-08,
+              "row_rank": 12,
+              "shell_physical_work_j": 0.0018806379347751912,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 3.264018942718567e-11,
+              "support_moment_balance_nm": 4.7127320411359045e-11,
+              "tip_rotation_rad": [
+                4.820554302177769e-05,
+                2.2417010047371004e-08,
+                -7.608890281831868e-07
+              ],
+              "tip_translation_m": [
+                7.545291138230019e-10,
+                -3.1236786842207817e-06,
+                -7.611820218149494e-09
+              ],
+              "work_absolute_error_j": 3.052245955981192e-15,
+              "work_relative_error": 6.331732337507924e-13
+            }
+          },
+          "rank": {
+            "left_null_modes": [],
+            "left_smallest_mode": [
+              -3.637699993311203e-18,
+              5.509282298929357e-18,
+              0.504304902744511,
+              -0.5107045598697093,
+              2.413924790291541e-16,
+              -4.025739446535934e-16,
+              0.03734897124798593,
+              -0.038908400146484515,
+              -1.4112637814259483e-17,
+              -4.606896481188039e-17,
+              -0.4679038284607802,
+              -0.5128495058519985
+            ],
+            "meaning": "bounded unit-row, physical-coordinate rank diagnostic; not inf-sup or mixed-system stability",
+            "rank_tolerance": 3.061708856240344e-13,
+            "scaled_row_norm_max": 0.0029812968228114345,
+            "scaled_row_norm_min": 0.00012137994165983277,
+            "scaled_row_rank": 12,
+            "scaled_row_singular_values": [
+              1.3679276650873968,
+              1.2315115663284,
+              1.2304644184087834,
+              1.0819239573365684,
+              1.0601592826118447,
+              1.0507835555452483,
+              0.938702134341991,
+              0.9366448384936562,
+              0.8724214918423031,
+              0.6971063871676516,
+              0.6943615801687927,
+              0.46020366858473516
+            ]
+          },
+          "row_count": 12
+        },
+        "p1_non_yaw_p0_yaw": {
+          "channel_basis_fx_fy_fz_mx_my_mz": [
+            "continuous_linear",
+            "continuous_linear",
+            "continuous_linear",
+            "continuous_linear",
+            "continuous_linear",
+            "piecewise_constant"
+          ],
+          "channel_rows_fx_fy_fz_mx_my_mz": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            2
+          ],
+          "loads": {
+            "tip_fz_1000n": {
+              "constraint_max": 1.3552527156068805e-20,
+              "dimension": 1025,
+              "free_residual_ratio": 3.944754178931133e-12,
+              "nnz": 18343,
+              "orientation_rms_rad": 3.7767048012653583e-07,
+              "position_rms_m": 1.2091727807482063e-08,
+              "row_rank": 17,
+              "shell_physical_work_j": 0.0131617512329437,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 6.392231646358256e-10,
+              "support_moment_balance_nm": 7.680981679306449e-10,
+              "tip_rotation_rad": [
+                -1.3014698791110842e-08,
+                -6.137835789142477e-05,
+                -7.45292924112864e-08
+              ],
+              "tip_translation_m": [
+                -2.6282460838793537e-06,
+                -3.50970459748832e-09,
+                6.93423291353759e-05
+              ],
+              "work_absolute_error_j": 1.3475331961387838e-14,
+              "work_relative_error": 1.9433053561094215e-13
+            },
+            "tip_mx_100nm": {
+              "constraint_max": 1.3552527156068805e-20,
+              "dimension": 1025,
+              "free_residual_ratio": 4.08236088401531e-12,
+              "nnz": 18343,
+              "orientation_rms_rad": 7.588564837129345e-07,
+              "position_rms_m": 2.0299989282548813e-08,
+              "row_rank": 17,
+              "shell_physical_work_j": 0.0018850156927990162,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 8.827913014297569e-11,
+              "support_moment_balance_nm": 1.1935924740274628e-10,
+              "tip_rotation_rad": [
+                4.841928923954556e-05,
+                1.317233569896954e-08,
+                -7.875287171865054e-07
+              ],
+              "tip_translation_m": [
+                5.285189069996345e-10,
+                -3.123884822968129e-06,
+                -1.3014699120895437e-09
+              ],
+              "work_absolute_error_j": 7.86697096355482e-16,
+              "work_relative_error": 1.6247596953838837e-13
+            }
+          },
+          "rank": {
+            "left_null_modes": [],
+            "left_smallest_mode": [
+              -1.4524229347325305e-16,
+              5.715047541724328e-16,
+              -2.3583852400890624e-16,
+              -0.003055586170101195,
+              0.0017504293863685634,
+              -0.001463566435882208,
+              6.110817267578354e-17,
+              -1.4015926242728293e-16,
+              2.218690019916564e-18,
+              -0.5000109636681436,
+              0.7177127952967016,
+              -0.48460746477618083,
+              -4.475497763075832e-14,
+              6.424369434903869e-14,
+              -4.3379947136589616e-14,
+              0.003693173891975513,
+              -0.0021914817505445747
+            ],
+            "meaning": "bounded unit-row, physical-coordinate rank diagnostic; not inf-sup or mixed-system stability",
+            "rank_tolerance": 3.3346986936428426e-13,
+            "scaled_row_norm_max": 0.0029812968228114345,
+            "scaled_row_norm_min": 0.00012391595427052593,
+            "scaled_row_rank": 17,
+            "scaled_row_singular_values": [
+              1.4898956144923399,
+              1.4386336966631053,
+              1.4203787376580916,
+              1.4080223927350572,
+              1.392823903581737,
+              1.178346224699543,
+              1.0205058357599273,
+              0.9758152944346148,
+              0.9657630728100168,
+              0.8871546215548636,
+              0.881464999186342,
+              0.49960858477007497,
+              0.44213224160046855,
+              0.44168526087951177,
+              0.34548931285650575,
+              0.2570851164799107,
+              0.25706438359277883
+            ]
+          },
+          "row_count": 17
+        }
+      },
+      "station_count": 6
+    },
+    "mixed_s3_br_tl": {
+      "multiplier_knots": [
+        0.0,
+        0.5,
+        1.0
+      ],
+      "spaces": {
+        "dual_non_yaw_p0_yaw": {
+          "channel_basis_fx_fy_fz_mx_my_mz": [
+            "dual_linear",
+            "dual_linear",
+            "dual_linear",
+            "dual_linear",
+            "dual_linear",
+            "piecewise_constant"
+          ],
+          "channel_rows_fx_fy_fz_mx_my_mz": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            2
+          ],
+          "loads": {
+            "tip_fz_1000n": {
+              "constraint_max": 3.388131230676451e-20,
+              "dimension": 1025,
+              "free_residual_ratio": 3.560173233284272e-12,
+              "nnz": 18338,
+              "orientation_rms_rad": 7.924289287778217e-07,
+              "position_rms_m": 2.7255078890541714e-08,
+              "row_rank": 17,
+              "shell_physical_work_j": 0.013263763846982643,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 1.56864257542682e-09,
+              "support_moment_balance_nm": 1.973040081004226e-09,
+              "tip_rotation_rad": [
+                2.257738181618422e-08,
+                -6.05993151753915e-05,
+                9.091899476711151e-08
+              ],
+              "tip_translation_m": [
+                -2.6211098073264273e-06,
+                4.053938441235976e-09,
+                6.968813642948604e-05
+              ],
+              "work_absolute_error_j": 2.736838533579089e-13,
+              "work_relative_error": 3.9272660653630185e-12
+            },
+            "tip_mx_100nm": {
+              "constraint_max": 1.1858461261560205e-20,
+              "dimension": 1025,
+              "free_residual_ratio": 2.6277309624969662e-12,
+              "nnz": 18338,
+              "orientation_rms_rad": 8.711574411018394e-07,
+              "position_rms_m": 3.382815575133356e-08,
+              "row_rank": 17,
+              "shell_physical_work_j": 0.0019008317124404952,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 6.559574571505367e-11,
+              "support_moment_balance_nm": 1.0923691715597236e-10,
+              "tip_rotation_rad": [
+                4.917398584179071e-05,
+                -5.6112444659854026e-09,
+                -7.182598734921889e-07
+              ],
+              "tip_translation_m": [
+                -4.110076871613338e-10,
+                -3.133785363565185e-06,
+                2.2577381708757237e-09
+              ],
+              "work_absolute_error_j": 1.519617764955683e-15,
+              "work_relative_error": 3.0902879621042026e-13
+            }
+          },
+          "rank": {
+            "left_null_modes": [],
+            "left_smallest_mode": [
+              1.4826370264979304e-16,
+              5.260821026473457e-17,
+              7.76342818473867e-17,
+              -0.38041863247412566,
+              0.014038439794902604,
+              0.3319978331951114,
+              5.899679284711467e-17,
+              -1.5452969988901708e-16,
+              -2.5606184256138006e-16,
+              -0.015823924567077596,
+              -0.0021697371810577306,
+              0.01812124182934184,
+              -1.2252698558028427e-16,
+              6.152391980734606e-17,
+              -1.0357047489139677e-17,
+              0.6364627431840634,
+              0.5824033978381568
+            ],
+            "meaning": "bounded unit-row, physical-coordinate rank diagnostic; not inf-sup or mixed-system stability",
+            "rank_tolerance": 3.208169910908784e-13,
+            "scaled_row_norm_max": 0.0029812968228114345,
+            "scaled_row_norm_min": 0.00014064490490625577,
+            "scaled_row_rank": 17,
+            "scaled_row_singular_values": [
+              1.4333643665982179,
+              1.2329517110813104,
+              1.2329306155982518,
+              1.120531125388662,
+              1.0123351430330634,
+              1.0072873417904677,
+              1.0044671962294962,
+              0.9999999999999999,
+              0.9997432505751398,
+              0.9942864738370348,
+              0.9938971147165999,
+              0.9926591615799923,
+              0.987083998038608,
+              0.6952157628198997,
+              0.6950632178309977,
+              0.6747981537187346,
+              0.49372374854185486
+            ]
+          },
+          "row_count": 17
+        },
+        "p0_two": {
+          "channel_basis_fx_fy_fz_mx_my_mz": [
+            "piecewise_constant",
+            "piecewise_constant",
+            "piecewise_constant",
+            "piecewise_constant",
+            "piecewise_constant",
+            "piecewise_constant"
+          ],
+          "channel_rows_fx_fy_fz_mx_my_mz": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "loads": {
+            "tip_fz_1000n": {
+              "constraint_max": 1.4823118304153788e-20,
+              "dimension": 1020,
+              "free_residual_ratio": 3.194479813163289e-12,
+              "nnz": 18196,
+              "orientation_rms_rad": 5.643175128648504e-07,
+              "position_rms_m": 4.135647132426554e-08,
+              "row_rank": 12,
+              "shell_physical_work_j": 0.013294254781701457,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 2.476573029725343e-11,
+              "support_moment_balance_nm": 2.347964976940202e-10,
+              "tip_rotation_rad": [
+                7.047648175957739e-08,
+                -6.221641216697701e-05,
+                7.763879467101851e-08
+              ],
+              "tip_translation_m": [
+                -2.633388838838454e-06,
+                4.4547433383200137e-10,
+                6.966763842858202e-05
+              ],
+              "work_absolute_error_j": 8.694434061595757e-14,
+              "work_relative_error": 1.2479874813768278e-12
+            },
+            "tip_mx_100nm": {
+              "constraint_max": 1.6940860048467746e-21,
+              "dimension": 1020,
+              "free_residual_ratio": 2.9361836244276324e-12,
+              "nnz": 18196,
+              "orientation_rms_rad": 7.41380206211162e-07,
+              "position_rms_m": 1.8108850317090647e-08,
+              "row_rank": 12,
+              "shell_physical_work_j": 0.0018696167368136326,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 1.7399754986193677e-11,
+              "support_moment_balance_nm": 2.6347189575693654e-11,
+              "tip_rotation_rad": [
+                4.8027220268331874e-05,
+                -1.6986272046652095e-08,
+                -6.825962101853357e-07
+              ],
+              "tip_translation_m": [
+                -8.495477506877254e-10,
+                -3.1114119875128716e-06,
+                7.047648160218464e-09
+              ],
+              "work_absolute_error_j": 2.6020852139652106e-15,
+              "work_relative_error": 5.417938409566814e-13
+            }
+          },
+          "rank": {
+            "left_null_modes": [],
+            "left_smallest_mode": [
+              -6.010170763234643e-18,
+              -1.3193356152716448e-17,
+              -0.4901439713050426,
+              0.48446922496640843,
+              3.991381819664335e-16,
+              5.116815349513036e-16,
+              -0.033840141531427594,
+              0.034595997255652086,
+              2.607971469206581e-16,
+              -1.6996985238586874e-16,
+              0.5347316137040932,
+              0.4865886564175174
+            ],
+            "meaning": "bounded unit-row, physical-coordinate rank diagnostic; not inf-sup or mixed-system stability",
+            "rank_tolerance": 2.9377193559492775e-13,
+            "scaled_row_norm_max": 0.0029812968228114345,
+            "scaled_row_norm_min": 0.00012137994165983277,
+            "scaled_row_rank": 12,
+            "scaled_row_singular_values": [
+              1.3125309322194703,
+              1.2112771017180253,
+              1.2100052184733932,
+              1.1194306838463788,
+              1.0453017222526513,
+              1.0438599658888303,
+              0.9568501438518795,
+              0.9530645345679691,
+              0.9088251897292956,
+              0.7320432851048874,
+              0.7292599572566464,
+              0.4392817368944847
+            ]
+          },
+          "row_count": 12
+        },
+        "p1_non_yaw_p0_yaw": {
+          "channel_basis_fx_fy_fz_mx_my_mz": [
+            "continuous_linear",
+            "continuous_linear",
+            "continuous_linear",
+            "continuous_linear",
+            "continuous_linear",
+            "piecewise_constant"
+          ],
+          "channel_rows_fx_fy_fz_mx_my_mz": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            2
+          ],
+          "loads": {
+            "tip_fz_1000n": {
+              "constraint_max": 1.6940658945086007e-20,
+              "dimension": 1025,
+              "free_residual_ratio": 4.263547924993272e-12,
+              "nnz": 18338,
+              "orientation_rms_rad": 5.760611601972814e-07,
+              "position_rms_m": 1.445395016626539e-08,
+              "row_rank": 17,
+              "shell_physical_work_j": 0.013244852032539091,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 1.0326358671517196e-09,
+              "support_moment_balance_nm": 1.6177588718520087e-09,
+              "tip_rotation_rad": [
+                4.010716465470892e-08,
+                -6.135084810769014e-05,
+                8.944796825069513e-08
+              ],
+              "tip_translation_m": [
+                -2.6298451102509654e-06,
+                3.0618055347497405e-09,
+                6.95319080972788e-05
+              ],
+              "work_absolute_error_j": 2.269434640211898e-13,
+              "work_relative_error": 3.263875107579156e-12
+            },
+            "tip_mx_100nm": {
+              "constraint_max": 3.3881317890172014e-21,
+              "dimension": 1025,
+              "free_residual_ratio": 3.2269738684361948e-12,
+              "nnz": 18338,
+              "orientation_rms_rad": 6.952350808036568e-07,
+              "position_rms_m": 2.1127719646824212e-08,
+              "row_rank": 17,
+              "shell_physical_work_j": 0.001886184160442499,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 5.361452610749625e-11,
+              "support_moment_balance_nm": 5.986738974108199e-11,
+              "tip_rotation_rad": [
+                4.8448087580960775e-05,
+                -1.0966929172453652e-08,
+                -7.764461117694742e-07
+              ],
+              "tip_translation_m": [
+                -5.681655777648585e-10,
+                -3.1261129223191375e-06,
+                4.0107165243600845e-09
+              ],
+              "work_absolute_error_j": 4.391452479435287e-15,
+              "work_relative_error": 9.064243190397982e-13
+            }
+          },
+          "rank": {
+            "left_null_modes": [],
+            "left_smallest_mode": [
+              1.254394387932868e-16,
+              -2.1407789951454092e-16,
+              7.288371117874458e-17,
+              0.00025951178494746204,
+              -0.0013980677777249856,
+              0.0029856299729343148,
+              -1.9311767859576276e-15,
+              3.081808151261191e-15,
+              -1.6903842867737584e-15,
+              0.4905132477180024,
+              -0.7139590881730935,
+              0.49962632757178627,
+              1.5309328484769542e-14,
+              -2.22805682168804e-14,
+              1.558959281611412e-14,
+              -0.0017346054988594093,
+              0.0043315404722947285
+            ],
+            "meaning": "bounded unit-row, physical-coordinate rank diagnostic; not inf-sup or mixed-system stability",
+            "rank_tolerance": 3.2367119108765943e-13,
+            "scaled_row_norm_max": 0.0029812968228114345,
+            "scaled_row_norm_min": 0.00012054112850820368,
+            "scaled_row_rank": 17,
+            "scaled_row_singular_values": [
+              1.4461165233858606,
+              1.426333568229957,
+              1.4039467274071795,
+              1.393917928005232,
+              1.3800799667305905,
+              1.2224549457927452,
+              1.0458864907266223,
+              0.9866150877298149,
+              0.9783399885227381,
+              0.9079075476434121,
+              0.9023396765167365,
+              0.47937099044167586,
+              0.4523687340376136,
+              0.4519112424685518,
+              0.3484670201830222,
+              0.262872294750491,
+              0.2628501874137669
+            ]
+          },
+          "row_count": 17
+        }
+      },
+      "station_count": 6
+    },
+    "q4": {
+      "multiplier_knots": [
+        0.0,
+        0.5,
+        1.0
+      ],
+      "spaces": {
+        "dual_non_yaw_p0_yaw": {
+          "channel_basis_fx_fy_fz_mx_my_mz": [
+            "dual_linear",
+            "dual_linear",
+            "dual_linear",
+            "dual_linear",
+            "dual_linear",
+            "piecewise_constant"
+          ],
+          "channel_rows_fx_fy_fz_mx_my_mz": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            2
+          ],
+          "loads": {
+            "tip_fz_1000n": {
+              "constraint_max": 1.3552528128820123e-20,
+              "dimension": 1025,
+              "free_residual_ratio": 3.469013914255492e-12,
+              "nnz": 18438,
+              "orientation_rms_rad": 5.844916605345548e-07,
+              "position_rms_m": 2.9224583026728066e-08,
+              "row_rank": 17,
+              "shell_physical_work_j": 0.013226508289379187,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 4.2045185346419823e-10,
+              "support_moment_balance_nm": 1.12726646962837e-09,
+              "tip_rotation_rad": [
+                -1.503444953652769e-09,
+                -6.0553298209820716e-05,
+                -3.833250783326812e-09
+              ],
+              "tip_translation_m": [
+                -2.6210045610678265e-06,
+                1.6697312781241034e-10,
+                6.961316275862941e-05
+              ],
+              "work_absolute_error_j": 2.4077961846558082e-14,
+              "work_relative_error": 3.4588231438419057e-13
+            },
+            "tip_mx_100nm": {
+              "constraint_max": 8.470329472543003e-21,
+              "dimension": 1025,
+              "free_residual_ratio": 3.8786538650903315e-12,
+              "nnz": 18438,
+              "orientation_rms_rad": 6.930235204658257e-07,
+              "position_rms_m": 3.465117602329122e-08,
+              "row_rank": 17,
+              "shell_physical_work_j": 0.0018917108199797382,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 8.9759888606616e-11,
+              "support_moment_balance_nm": 9.944817245161905e-11,
+              "tip_rotation_rad": [
+                4.903610656587657e-05,
+                -2.4137948956473296e-10,
+                -6.669718920581793e-07
+              ],
+              "tip_translation_m": [
+                -4.207996215553095e-12,
+                -3.1255050869563663e-06,
+                -1.5034449012157605e-10
+              ],
+              "work_absolute_error_j": 2.9412236535186764e-15,
+              "work_relative_error": 5.998077456592825e-13
+            }
+          },
+          "rank": {
+            "left_null_modes": [],
+            "left_smallest_mode": [
+              -7.7142099598273e-17,
+              -1.789268971030323e-17,
+              -1.1983391248805963e-16,
+              0.35319649111797186,
+              -4.479696481942625e-15,
+              -0.3531964911179709,
+              8.860970823312718e-17,
+              -3.659606166136236e-16,
+              -9.575791619111573e-19,
+              0.01793207642223848,
+              -3.6789102642602185e-16,
+              -0.01793207642223843,
+              -1.9581764114846177e-16,
+              2.7337851756894623e-16,
+              -1.752352036519741e-16,
+              -0.6123158329629745,
+              -0.6123158329629729
+            ],
+            "meaning": "bounded unit-row, physical-coordinate rank diagnostic; not inf-sup or mixed-system stability",
+            "rank_tolerance": 3.193368538074252e-13,
+            "scaled_row_norm_max": 0.0029640335197166764,
+            "scaled_row_norm_min": 0.00014216461456100852,
+            "scaled_row_rank": 17,
+            "scaled_row_singular_values": [
+              1.426751325211098,
+              1.2409141131878978,
+              1.240898070093125,
+              1.1177120867724284,
+              1.0123650028050506,
+              1.0000000000000007,
+              1.0000000000000004,
+              0.9999999999999997,
+              0.9996177391391454,
+              0.9996040837492942,
+              0.9987822891327142,
+              0.998686895777886,
+              0.9874801775709381,
+              0.682352257126056,
+              0.6808237829945171,
+              0.6784751174079338,
+              0.5025583087067313
+            ]
+          },
+          "row_count": 17
+        },
+        "p0_two": {
+          "channel_basis_fx_fy_fz_mx_my_mz": [
+            "piecewise_constant",
+            "piecewise_constant",
+            "piecewise_constant",
+            "piecewise_constant",
+            "piecewise_constant",
+            "piecewise_constant"
+          ],
+          "channel_rows_fx_fy_fz_mx_my_mz": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "loads": {
+            "tip_fz_1000n": {
+              "constraint_max": 1.4907366076883218e-20,
+              "dimension": 1020,
+              "free_residual_ratio": 2.9808961035795325e-12,
+              "nnz": 18300,
+              "orientation_rms_rad": 4.802471799748241e-07,
+              "position_rms_m": 5.1408534957472164e-08,
+              "row_rank": 12,
+              "shell_physical_work_j": 0.013263578798363759,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 5.817848327513542e-10,
+              "support_moment_balance_nm": 2.556041480192133e-10,
+              "tip_rotation_rad": [
+                -1.1602742689358683e-09,
+                -6.231045671324974e-05,
+                8.605308338579362e-09
+              ],
+              "tip_translation_m": [
+                -2.6316226263527664e-06,
+                8.255014447999415e-10,
+                6.961081973317654e-05
+              ],
+              "work_absolute_error_j": 2.746414207166481e-14,
+              "work_relative_error": 3.945384090711317e-13
+            },
+            "tip_mx_100nm": {
+              "constraint_max": 1.6940671064107677e-21,
+              "dimension": 1020,
+              "free_residual_ratio": 2.4561245725881946e-12,
+              "nnz": 18300,
+              "orientation_rms_rad": 6.229934869567367e-07,
+              "position_rms_m": 1.826728662085019e-08,
+              "row_rank": 12,
+              "shell_physical_work_j": 0.0018493725404399013,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 1.4840821215463553e-10,
+              "support_moment_balance_nm": 1.455196404826631e-10,
+              "tip_rotation_rad": [
+                4.788617274630801e-05,
+                1.4799590738005842e-09,
+                -5.569987208089396e-07
+              ],
+              "tip_translation_m": [
+                -1.5009732945664447e-11,
+                -3.100534322462587e-06,
+                -1.160274345140799e-10
+              ],
+              "work_absolute_error_j": 1.244664094013359e-15,
+              "work_relative_error": 2.599213974788415e-13
+            }
+          },
+          "rank": {
+            "left_null_modes": [],
+            "left_smallest_mode": [
+              1.979118210633146e-18,
+              -4.618810421112611e-18,
+              0.5003915010702251,
+              -0.5003915010702252,
+              1.1707519519918112e-16,
+              -3.094779572554185e-16,
+              0.03678871951107309,
+              -0.03678871951107331,
+              4.900951031348488e-18,
+              7.64782676187534e-17,
+              -0.4982518798493605,
+              -0.4982518798493613
+            ],
+            "meaning": "bounded unit-row, physical-coordinate rank diagnostic; not inf-sup or mixed-system stability",
+            "rank_tolerance": 3.0060485752991026e-13,
+            "scaled_row_norm_max": 0.0029640335197166764,
+            "scaled_row_norm_min": 0.00012137994165983277,
+            "scaled_row_rank": 12,
+            "scaled_row_singular_values": [
+              1.3430594487673262,
+              1.2259155036539562,
+              1.224744871391589,
+              1.098106320079165,
+              1.0534414975143942,
+              1.0497181292365512,
+              0.9473419587112681,
+              0.9441392060708483,
+              0.8919951519065004,
+              0.7071067811865459,
+              0.7042679523983798,
+              0.4419655396877759
+            ]
+          },
+          "row_count": 12
+        },
+        "p1_non_yaw_p0_yaw": {
+          "channel_basis_fx_fy_fz_mx_my_mz": [
+            "continuous_linear",
+            "continuous_linear",
+            "continuous_linear",
+            "continuous_linear",
+            "continuous_linear",
+            "piecewise_constant"
+          ],
+          "channel_rows_fx_fy_fz_mx_my_mz": [
+            3,
+            3,
+            3,
+            3,
+            3,
+            2
+          ],
+          "loads": {
+            "tip_fz_1000n": {
+              "constraint_max": 1.6940660045578e-20,
+              "dimension": 1025,
+              "free_residual_ratio": 3.8208218996351864e-12,
+              "nnz": 18438,
+              "orientation_rms_rad": 2.958783706022423e-07,
+              "position_rms_m": 1.4793918530111914e-08,
+              "row_rank": 17,
+              "shell_physical_work_j": 0.01319750246952296,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 1.4489860367425945e-09,
+              "support_moment_balance_nm": 1.2032807408432682e-09,
+              "tip_rotation_rad": [
+                -1.6010905066601579e-09,
+                -6.133502290142469e-05,
+                -3.456233478845937e-09
+              ],
+              "tip_translation_m": [
+                -2.6297445014566147e-06,
+                1.9363990331019965e-10,
+                6.944229359615831e-05
+              ],
+              "work_absolute_error_j": 5.025146965209615e-14,
+              "work_relative_error": 7.236435758348305e-13
+            },
+            "tip_mx_100nm": {
+              "constraint_max": 6.776263578034403e-21,
+              "dimension": 1025,
+              "free_residual_ratio": 4.050725669338223e-12,
+              "nnz": 18438,
+              "orientation_rms_rad": 4.3354403192079317e-07,
+              "position_rms_m": 2.1677201596039566e-08,
+              "row_rank": 17,
+              "shell_physical_work_j": 0.0018712109442731433,
+              "status": "BOUNDED_SOLVE_PASSED",
+              "support_force_balance_n": 5.851627128994466e-11,
+              "support_moment_balance_nm": 6.159713529258718e-11,
+              "tip_rotation_rad": [
+                4.827575506482568e-05,
+                -2.2389395720040523e-10,
+                -6.978184165489495e-07
+              ],
+              "tip_translation_m": [
+                -3.5610569272535058e-12,
+                -3.115401692812823e-06,
+                -1.6010905984984136e-10
+              ],
+              "work_absolute_error_j": 6.983996714282625e-15,
+              "work_relative_error": 1.4466882402780382e-12
+            }
+          },
+          "rank": {
+            "left_null_modes": [],
+            "left_smallest_mode": [
+              3.2680329717173155e-17,
+              -8.368377068061812e-17,
+              3.285631450927358e-17,
+              0.0018842996041780993,
+              -0.0014410695753412587,
+              0.0018842996041778621,
+              -1.894790512366452e-16,
+              1.8195075515817153e-16,
+              3.296714925180904e-17,
+              0.4935193194801535,
+              -0.7161358553144401,
+              0.49351931948015415,
+              6.368675243522644e-15,
+              -9.240331987860854e-15,
+              6.366918711910768e-15,
+              -0.002968289173007029,
+              0.002968289173007203
+            ],
+            "meaning": "bounded unit-row, physical-coordinate rank diagnostic; not inf-sup or mixed-system stability",
+            "rank_tolerance": 3.2881050921365745e-13,
+            "scaled_row_norm_max": 0.0029640335197166764,
+            "scaled_row_norm_min": 0.0001213799416598328,
+            "scaled_row_rank": 17,
+            "scaled_row_singular_values": [
+              1.4690782606846535,
+              1.4346218072763823,
+              1.4142135623730943,
+              1.4028353743765924,
+              1.3876775303720281,
+              1.197411977975491,
+              1.0353022626417365,
+              0.9805023692010181,
+              0.9713016651156805,
+              0.8944271909999155,
+              0.8886454727277676,
+              0.4866738736940659,
+              0.44721359549995754,
+              0.44675347933710174,
+              0.34985905691608304,
+              0.2560214801134264,
+              0.25600002471105654
+            ]
+          },
+          "row_count": 17
+        }
+      },
+      "station_count": 6
+    }
+  },
+  "transverse_grid_m": [
+    -0.5,
+    -0.25,
+    -0.1,
+    -0.05,
+    -0.025,
+    0.01,
+    0.02500000000000001,
+    0.05,
+    0.1,
+    0.25,
+    0.5
+  ]
+}

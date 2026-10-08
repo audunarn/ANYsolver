@@ -1,0 +1,698 @@
+{
+  "cases": [
+    {
+      "algebraic_residual_ratio": 1.3529747598188534e-14,
+      "beam_elements": 128,
+      "beam_energy_j": 0.0002642026357116322,
+      "beam_root_interface_discrepancy": [
+        -1.5043042367324233e-09,
+        9.087677628146056e-28,
+        2.745235950169121e-28
+      ],
+      "beam_root_wrench": [
+        -9849.501673959156,
+        -8.040110793768354e-14,
+        -9.425970007491052e-16
+      ],
+      "beam_tip_axial_m": -3.0248018423853917e-07,
+      "continuous_gap_l2_m": 5.404089975230646e-10,
+      "elapsed_seconds": 0.7868756999996549,
+      "external_work_j": 0.008311596353753229,
+      "interface_wrench_on_shell": [
+        -9849.501673957651,
+        -8.040110793768445e-14,
+        -9.425970007493797e-16
+      ],
+      "kkt_dimension": 1348,
+      "kkt_nnz": 246833,
+      "limitations": [
+        "classical planar Fourier/Legendre shell",
+        "not native E4-PL or B3-GE",
+        "finite-order edge traction may not balance",
+        "no continuum convergence claim",
+        "not formal F03 assessment"
+      ],
+      "multiplier_intervals": 64,
+      "sampled_gap_component_max_m": 1.0801534541658598e-08,
+      "shell_coordinates": 384,
+      "shell_energy_j": 0.0038915955411646403,
+      "shell_left_stress_traction": [
+        -453.2519476207908,
+        4.485979814198579e-14,
+        -1.2833177785617297e-14
+      ],
+      "shell_modes_x": 24,
+      "shell_modes_y": 8,
+      "shell_right_stress_traction": [
+        10300.262464477848,
+        -2.8424388092593804e-14,
+        -4.3296118249919024e-14
+      ],
+      "shell_tangent_relative_skew": 6.200344854153841e-17,
+      "station_fields": [
+        {
+          "beam_pose": [
+            -9.133213603517655e-09,
+            3.856179516333057e-24,
+            4.297171324573836e-25
+          ],
+          "s": 0.25,
+          "shell_pose": [
+            -9.133154174785572e-09,
+            3.377389691104809e-24,
+            1.5348514088401384e-23
+          ]
+        },
+        {
+          "beam_pose": [
+            -1.7195980971343855e-07,
+            6.200396811072469e-24,
+            7.689433531300008e-24
+          ],
+          "s": 0.5,
+          "shell_pose": [
+            -1.7195993043448309e-07,
+            6.323514013541567e-24,
+            2.760257038135554e-23
+          ]
+        },
+        {
+          "beam_pose": [
+            -3.031430224356091e-07,
+            6.879682349439865e-24,
+            6.225079804691264e-24
+          ],
+          "s": 0.75,
+          "shell_pose": [
+            -3.0314315230068065e-07,
+            6.793430041291082e-24,
+            3.081364548202885e-23
+          ]
+        }
+      ],
+      "status": "UNREGISTERED_SPECTRAL_AXIAL_REFERENCE_DIAGNOSTIC",
+      "truncated_stress_traction_balance": [
+        -2.491157102098441,
+        -6.396569788829155e-14,
+        -5.707189303628543e-14
+      ],
+      "weak_gap_l2": 2.760063287906148e-23,
+      "work_relative_error": 8.223222356391568e-14
+    },
+    {
+      "algebraic_residual_ratio": 1.3493810982744994e-14,
+      "beam_elements": 128,
+      "beam_energy_j": 0.0003069301237714468,
+      "beam_root_interface_discrepancy": [
+        -1.4224497135728598e-09,
+        -5.955899834418639e-29,
+        -1.396283802241191e-28
+      ],
+      "beam_root_wrench": [
+        -9841.601149248276,
+        3.0052540405919842e-15,
+        6.644950673406645e-15
+      ],
+      "beam_tip_axial_m": -3.190718340975392e-07,
+      "continuous_gap_l2_m": 5.392709363619107e-10,
+      "elapsed_seconds": 1.0961614000007103,
+      "external_work_j": 0.0090316766857645,
+      "interface_wrench_on_shell": [
+        -9841.601149246853,
+        3.0052540405920438e-15,
+        6.644950673406785e-15
+      ],
+      "kkt_dimension": 1732,
+      "kkt_nnz": 778367,
+      "limitations": [
+        "classical planar Fourier/Legendre shell",
+        "not native E4-PL or B3-GE",
+        "finite-order edge traction may not balance",
+        "no continuum convergence claim",
+        "not formal F03 assessment"
+      ],
+      "multiplier_intervals": 64,
+      "sampled_gap_component_max_m": 1.0778107297784086e-08,
+      "shell_coordinates": 768,
+      "shell_energy_j": 0.00420890821911039,
+      "shell_left_stress_traction": [
+        -121.30113993274108,
+        -6.910937271846585e-16,
+        9.104140021888195e-15
+      ],
+      "shell_modes_x": 32,
+      "shell_modes_y": 12,
+      "shell_right_stress_traction": [
+        10309.886121546604,
+        -3.0672798895721807e-14,
+        -5.6441333957281115e-14
+      ],
+      "shell_tangent_relative_skew": 7.555856475011076e-17,
+      "station_fields": [
+        {
+          "beam_pose": [
+            9.68410198643075e-10,
+            -5.44486659982214e-25,
+            -1.0028732904855345e-24
+          ],
+          "s": 0.25,
+          "shell_pose": [
+            9.689160913126357e-10,
+            -1.0212726393119145e-24,
+            1.3135364873356797e-23
+          ]
+        },
+        {
+          "beam_pose": [
+            -1.7601982085108684e-07,
+            -1.0244043592513103e-24,
+            1.951619111892296e-24
+          ],
+          "s": 0.5,
+          "shell_pose": [
+            -1.7602001131324718e-07,
+            -9.628785502759776e-25,
+            2.1694617695761038e-23
+          ]
+        },
+        {
+          "beam_pose": [
+            -3.1954557549348517e-07,
+            -7.79629264268848e-26,
+            3.8143790606374696e-24
+          ],
+          "s": 0.75,
+          "shell_pose": [
+            -3.1954572272724207e-07,
+            -1.782094919062739e-25,
+            2.869018415123459e-23
+          ]
+        }
+      ],
+      "status": "UNREGISTERED_SPECTRAL_AXIAL_REFERENCE_DIAGNOSTIC",
+      "truncated_stress_traction_balance": [
+        346.98383236558766,
+        -2.8358638582314484e-14,
+        -4.0692243261986274e-14
+      ],
+      "weak_gap_l2": 3.727046063011111e-23,
+      "work_relative_error": 9.142581198311188e-14
+    },
+    {
+      "algebraic_residual_ratio": 1.2182324216415122e-14,
+      "beam_elements": 128,
+      "beam_energy_j": 0.0003934548325807691,
+      "beam_root_interface_discrepancy": [
+        -2.4429027689620852e-09,
+        1.1044052673094165e-28,
+        1.408116715819506e-28
+      ],
+      "beam_root_wrench": [
+        -9059.514229825727,
+        -8.658327231040854e-15,
+        -2.3474529166412024e-15
+      ],
+      "beam_tip_axial_m": -3.232738727426617e-07,
+      "continuous_gap_l2_m": 1.4347401728537056e-09,
+      "elapsed_seconds": 1.6914999000000535,
+      "external_work_j": 0.009708342082947961,
+      "interface_wrench_on_shell": [
+        -9059.514229823284,
+        -8.658327231040964e-15,
+        -2.3474529166413432e-15
+      ],
+      "kkt_dimension": 2404,
+      "kkt_nnz": 2395027,
+      "limitations": [
+        "classical planar Fourier/Legendre shell",
+        "not native E4-PL or B3-GE",
+        "finite-order edge traction may not balance",
+        "no continuum convergence claim",
+        "not formal F03 assessment"
+      ],
+      "multiplier_intervals": 32,
+      "sampled_gap_component_max_m": 2.0809618977768975e-08,
+      "shell_coordinates": 1536,
+      "shell_energy_j": 0.004460716208892634,
+      "shell_left_stress_traction": [
+        -793.383009193277,
+        -4.806327053585632e-15,
+        4.540495392633784e-15
+      ],
+      "shell_modes_x": 48,
+      "shell_modes_y": 16,
+      "shell_right_stress_traction": [
+        10087.43702524921,
+        -2.0099965581774338e-14,
+        -2.536414125566237e-14
+      ],
+      "shell_tangent_relative_skew": 1.1892546991893643e-16,
+      "station_fields": [
+        {
+          "beam_pose": [
+            2.5197999584117952e-08,
+            2.9225894793719823e-25,
+            6.49629128269651e-24
+          ],
+          "s": 0.25,
+          "shell_pose": [
+            2.516691397486727e-08,
+            -1.9615518284425379e-25,
+            1.9625082342413003e-23
+          ]
+        },
+        {
+          "beam_pose": [
+            -1.6659936605494676e-07,
+            3.4618588528849002e-25,
+            -3.933164040802109e-24
+          ],
+          "s": 0.5,
+          "shell_pose": [
+            -1.6657332810699065e-07,
+            1.6447066238557024e-25,
+            1.4848221789862853e-23
+          ]
+        },
+        {
+          "beam_pose": [
+            -3.219563591207722e-07,
+            7.405019862740413e-25,
+            -1.3600774061092414e-23
+          ],
+          "s": 0.75,
+          "shell_pose": [
+            -3.2195003798492596e-07,
+            7.968474568806394e-25,
+            7.497005058941129e-24
+          ]
+        }
+      ],
+      "status": "UNREGISTERED_SPECTRAL_AXIAL_REFERENCE_DIAGNOSTIC",
+      "truncated_stress_traction_balance": [
+        234.5397862302052,
+        -3.3564619866400826e-14,
+        -2.3171098779669788e-14
+      ],
+      "weak_gap_l2": 1.2248594270128906e-22,
+      "work_relative_error": 1.190034122334651e-13
+    },
+    {
+      "algebraic_residual_ratio": 1.2354543799930863e-14,
+      "beam_elements": 128,
+      "beam_energy_j": 0.00034906415877099635,
+      "beam_root_interface_discrepancy": [
+        -2.5556801119819283e-09,
+        -1.8932661725304283e-29,
+        4.9698237028923744e-29
+      ],
+      "beam_root_wrench": [
+        -9504.259647626357,
+        -5.271155331766201e-15,
+        -4.572989539805311e-15
+      ],
+      "beam_tip_axial_m": -3.261539977109251e-07,
+      "continuous_gap_l2_m": 5.233822417710758e-10,
+      "elapsed_seconds": 1.7245354000006046,
+      "external_work_j": 0.00960268561716165,
+      "interface_wrench_on_shell": [
+        -9504.259647623801,
+        -5.271155331766182e-15,
+        -4.572989539805361e-15
+      ],
+      "kkt_dimension": 2500,
+      "kkt_nnz": 2567361,
+      "limitations": [
+        "classical planar Fourier/Legendre shell",
+        "not native E4-PL or B3-GE",
+        "finite-order edge traction may not balance",
+        "no continuum convergence claim",
+        "not formal F03 assessment"
+      ],
+      "multiplier_intervals": 64,
+      "sampled_gap_component_max_m": 1.0457995561456312e-08,
+      "shell_coordinates": 1536,
+      "shell_energy_j": 0.004452278649809227,
+      "shell_left_stress_traction": [
+        -440.68041591135994,
+        -9.644212794565688e-15,
+        9.687896024783395e-15
+      ],
+      "shell_modes_x": 48,
+      "shell_modes_y": 16,
+      "shell_right_stress_traction": [
+        10181.622302934193,
+        -1.767484246621237e-14,
+        -2.3182147094361696e-14
+      ],
+      "shell_tangent_relative_skew": 1.1892546991893643e-16,
+      "station_fields": [
+        {
+          "beam_pose": [
+            1.6838607328828113e-08,
+            6.150586341444774e-26,
+            3.2689717101409546e-24
+          ],
+          "s": 0.25,
+          "shell_pose": [
+            1.683796070356392e-08,
+            -4.410140945737309e-25,
+            1.7601979823024658e-23
+          ]
+        },
+        {
+          "beam_pose": [
+            -1.7368843994640986e-07,
+            -2.8470995842296795e-25,
+            -4.5070069566087806e-24
+          ],
+          "s": 0.5,
+          "shell_pose": [
+            -1.7368734122505475e-07,
+            -2.0954648815779695e-25,
+            1.4720469229738595e-23
+          ]
+        },
+        {
+          "beam_pose": [
+            -3.2692121324149955e-07,
+            5.265943094951185e-25,
+            -1.6473915958913152e-23
+          ],
+          "s": 0.75,
+          "shell_pose": [
+            -3.2692086236129436e-07,
+            4.526776967540766e-25,
+            7.65476900419071e-24
+          ]
+        }
+      ],
+      "status": "UNREGISTERED_SPECTRAL_AXIAL_REFERENCE_DIAGNOSTIC",
+      "truncated_stress_traction_balance": [
+        236.68223939647578,
+        -3.259021059254426e-14,
+        -1.806724060938361e-14
+      ],
+      "weak_gap_l2": 5.979344848479893e-23,
+      "work_relative_error": 1.2537097852879107e-13
+    },
+    {
+      "algebraic_residual_ratio": 1.163011987441703e-14,
+      "beam_elements": 128,
+      "beam_energy_j": 0.00032057046411996333,
+      "beam_root_interface_discrepancy": [
+        -2.6266206987202168e-09,
+        -4.417621069237666e-29,
+        6.839424048266172e-28
+      ],
+      "beam_root_wrench": [
+        -9759.513067611222,
+        -1.0135873062001324e-15,
+        -6.856245753640188e-15
+      ],
+      "beam_tip_axial_m": -3.2780183234828993e-07,
+      "continuous_gap_l2_m": 2.0861141865197742e-10,
+      "elapsed_seconds": 1.8625037999991036,
+      "external_work_j": 0.009542059918578646,
+      "interface_wrench_on_shell": [
+        -9759.513067608596,
+        -1.0135873062000882e-15,
+        -6.856245753640872e-15
+      ],
+      "kkt_dimension": 2692,
+      "kkt_nnz": 2889059,
+      "limitations": [
+        "classical planar Fourier/Legendre shell",
+        "not native E4-PL or B3-GE",
+        "finite-order edge traction may not balance",
+        "no continuum convergence claim",
+        "not formal F03 assessment"
+      ],
+      "multiplier_intervals": 128,
+      "sampled_gap_component_max_m": 4.531192192903198e-09,
+      "shell_coordinates": 1536,
+      "shell_energy_j": 0.004450459495168881,
+      "shell_left_stress_traction": [
+        -235.8277557829958,
+        -1.8352533839113444e-14,
+        1.5486936859738936e-14
+      ],
+      "shell_modes_x": 48,
+      "shell_modes_y": 16,
+      "shell_right_stress_traction": [
+        10238.448152801102,
+        -1.302440411476485e-14,
+        -1.8592714823382355e-14
+      ],
+      "shell_tangent_relative_skew": 1.1892546991893643e-16,
+      "station_fields": [
+        {
+          "beam_pose": [
+            1.2074572846196386e-08,
+            -3.213601789390765e-25,
+            -2.0561303750984926e-25
+          ],
+          "s": 0.25,
+          "shell_pose": [
+            1.207451058693481e-08,
+            -7.068740502096974e-25,
+            1.663526969000322e-23
+          ]
+        },
+        {
+          "beam_pose": [
+            -1.7778272519806836e-07,
+            -5.823047166446141e-25,
+            -8.495598845127988e-25
+          ],
+          "s": 0.5,
+          "shell_pose": [
+            -1.777826125052574e-07,
+            -6.0353005288572955e-25,
+            1.5629754137562304e-23
+          ]
+        },
+        {
+          "beam_pose": [
+            -3.29774753416829e-07,
+            1.4643519845068382e-25,
+            -1.7643733144014664e-23
+          ],
+          "s": 0.75,
+          "shell_pose": [
+            -3.297747076196393e-07,
+            2.680758662022468e-26,
+            9.428783912284127e-24
+          ]
+        }
+      ],
+      "status": "UNREGISTERED_SPECTRAL_AXIAL_REFERENCE_DIAGNOSTIC",
+      "truncated_stress_traction_balance": [
+        243.10732940688467,
+        -3.2390525260078424e-14,
+        -9.962023717283606e-15
+      ],
+      "weak_gap_l2": 7.05106194921785e-23,
+      "work_relative_error": 1.0035226847347586e-13
+    },
+    {
+      "algebraic_residual_ratio": 4.591619746126655e-15,
+      "beam_elements": 64,
+      "beam_energy_j": 0.0003426855330540718,
+      "beam_root_interface_discrepancy": [
+        -1.964508555829525e-10,
+        4.68583377701281e-28,
+        2.7422777217745423e-28
+      ],
+      "beam_root_wrench": [
+        -9562.289546324231,
+        -3.2327242772502275e-16,
+        -5.948251045534533e-16
+      ],
+      "beam_tip_axial_m": -3.26529385555289e-07,
+      "continuous_gap_l2_m": 5.812195755991456e-10,
+      "elapsed_seconds": 1.2202517999976408,
+      "external_work_j": 0.009588905704296217,
+      "interface_wrench_on_shell": [
+        -9562.289546324035,
+        -3.2327242772549134e-16,
+        -5.948251045537275e-16
+      ],
+      "kkt_dimension": 2116,
+      "kkt_nnz": 2557587,
+      "limitations": [
+        "classical planar Fourier/Legendre shell",
+        "not native E4-PL or B3-GE",
+        "finite-order edge traction may not balance",
+        "no continuum convergence claim",
+        "not formal F03 assessment"
+      ],
+      "multiplier_intervals": 64,
+      "sampled_gap_component_max_m": 8.941473161726948e-09,
+      "shell_coordinates": 1536,
+      "shell_energy_j": 0.004451767319093963,
+      "shell_left_stress_traction": [
+        -393.0814002569002,
+        -1.6350851878546429e-15,
+        -8.899644759916456e-17
+      ],
+      "shell_modes_x": 48,
+      "shell_modes_y": 16,
+      "shell_right_stress_traction": [
+        10194.278360703447,
+        -3.0846346294315235e-14,
+        -4.6325851954466556e-14
+      ],
+      "shell_tangent_relative_skew": 1.1892546991893643e-16,
+      "station_fields": [
+        {
+          "beam_pose": [
+            1.5754823840379514e-08,
+            3.266219510534678e-25,
+            1.4474041911816518e-23
+          ],
+          "s": 0.25,
+          "shell_pose": [
+            1.5753557759747996e-08,
+            -1.7558126990993636e-25,
+            1.7441706787278525e-23
+          ]
+        },
+        {
+          "beam_pose": [
+            -1.7462271215710235e-07,
+            9.635518520876333e-25,
+            1.4539267748693732e-24
+          ],
+          "s": 0.5,
+          "shell_pose": [
+            -1.7462073039827385e-07,
+            2.0607083480168755e-25,
+            1.4245065675725762e-23
+          ]
+        },
+        {
+          "beam_pose": [
+            -3.275716546334719e-07,
+            1.114881540375928e-24,
+            -1.4416409529105455e-23
+          ],
+          "s": 0.75,
+          "shell_pose": [
+            -3.2757087607205864e-07,
+            9.393635788744075e-25,
+            7.72821940501719e-24
+          ]
+        }
+      ],
+      "status": "UNREGISTERED_SPECTRAL_AXIAL_REFERENCE_DIAGNOSTIC",
+      "truncated_stress_traction_balance": [
+        238.90741412231546,
+        -3.28047039098949e-14,
+        -4.700967350661918e-14
+      ],
+      "weak_gap_l2": 5.2793919195747755e-23,
+      "work_relative_error": 1.537730164475018e-14
+    },
+    {
+      "algebraic_residual_ratio": 3.126736736555282e-14,
+      "beam_elements": 256,
+      "beam_energy_j": 0.0003494168571908289,
+      "beam_root_interface_discrepancy": [
+        -2.3610482458025217e-09,
+        6.02689731588853e-28,
+        1.6566079009641248e-29
+      ],
+      "beam_root_wrench": [
+        -9501.026210284825,
+        -8.16065156234657e-15,
+        -4.317450430154899e-15
+      ],
+      "beam_tip_axial_m": -3.261330816631206e-07,
+      "continuous_gap_l2_m": 5.172050852127033e-10,
+      "elapsed_seconds": 2.8037084999996296,
+      "external_work_j": 0.009603453427448592,
+      "interface_wrench_on_shell": [
+        -9501.026210282464,
+        -8.160651562347173e-15,
+        -4.317450430154916e-15
+      ],
+      "kkt_dimension": 3268,
+      "kkt_nnz": 2582821,
+      "limitations": [
+        "classical planar Fourier/Legendre shell",
+        "not native E4-PL or B3-GE",
+        "finite-order edge traction may not balance",
+        "no continuum convergence claim",
+        "not formal F03 assessment"
+      ],
+      "multiplier_intervals": 64,
+      "sampled_gap_component_max_m": 1.0678835781981973e-08,
+      "shell_coordinates": 1536,
+      "shell_energy_j": 0.0044523098565321766,
+      "shell_left_stress_traction": [
+        -443.33612965958514,
+        -5.202854063132252e-15,
+        -1.166083550964694e-15
+      ],
+      "shell_modes_x": 48,
+      "shell_modes_y": 16,
+      "shell_right_stress_traction": [
+        10180.917465875826,
+        -1.9155023685591945e-14,
+        -2.064378925887544e-14
+      ],
+      "shell_tangent_relative_skew": 1.1892546991893643e-16,
+      "station_fields": [
+        {
+          "beam_pose": [
+            1.6898993871241284e-08,
+            2.757465107271281e-25,
+            7.855999449579507e-24
+          ],
+          "s": 0.25,
+          "shell_pose": [
+            1.689838599819537e-08,
+            -2.962304749315503e-25,
+            1.9092097149068208e-23
+          ]
+        },
+        {
+          "beam_pose": [
+            -1.7363637019109868e-07,
+            6.521411973613953e-25,
+            -4.804821405690965e-24
+          ],
+          "s": 0.5,
+          "shell_pose": [
+            -1.7363532544187858e-07,
+            7.464913366745552e-26,
+            1.512499149117566e-23
+          ]
+        },
+        {
+          "beam_pose": [
+            -3.268849644447076e-07,
+            7.438223857003434e-25,
+            -1.3358268001750006e-23
+          ],
+          "s": 0.75,
+          "shell_pose": [
+            -3.26884639308307e-07,
+            7.626800261180591e-25,
+            7.196147680400855e-24
+          ]
+        }
+      ],
+      "status": "UNREGISTERED_SPECTRAL_AXIAL_REFERENCE_DIAGNOSTIC",
+      "truncated_stress_traction_balance": [
+        236.55512593141611,
+        -3.2518529311070766e-14,
+        -2.6127323239995034e-14
+      ],
+      "weak_gap_l2": 7.369511245710176e-23,
+      "work_relative_error": 2.6878544804264965e-13
+    }
+  ],
+  "suite": "UNREGISTERED_SPECTRAL_AXIAL_RESOLUTION_V1"
+}

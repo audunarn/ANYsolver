@@ -1,0 +1,2851 @@
+{
+  "status": "development_finite_projected_penalty_strip_discriminator",
+  "accepted": false,
+  "released": false,
+  "inputs": {
+    "theta": [
+      0.1,
+      0.05,
+      0.025,
+      0.001,
+      1e-05,
+      1e-07
+    ],
+    "epsilon_pa_per_m": [
+      1000.0,
+      10000.0,
+      100000.0
+    ],
+    "source_diffusivity_n": 1.0,
+    "target_diffusivity_n": 5.0,
+    "width_m": 1.0,
+    "source_prescribed_m": -1e-06,
+    "target_prescribed_m": 0.0,
+    "source_end_load_n": -0.001,
+    "vanishing_overlap_length_m": [
+      0.1,
+      0.01,
+      0.001,
+      0.0001,
+      1e-05
+    ],
+    "constant_gap_m": -1e-06,
+    "derivative_step_normal_m": 1e-08,
+    "derivative_step_cut_m": 1e-05,
+    "maximum_newton_iterations": 20
+  },
+  "criteria": {
+    "smooth_jacobian_relative": 1e-05,
+    "full_virtual_work_relative": 1e-10,
+    "equilibrium_and_normal_balance_relative": 1e-06,
+    "normal_constant_gap_cut_work_absolute_n": 1e-14,
+    "fixed_epsilon_cut_response_bound_factor": 10.0,
+    "last_two_epsilon_response_relative": 0.02
+  },
+  "cap": {
+    "time_limit_seconds": 180,
+    "memory_limit_bytes": 1073741824,
+    "maximum_executions": 1
+  },
+  "source": {
+    "adapter": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_penalty_cut_discriminator_dev.py",
+      "sha256": "d6f68c4d94a3f278d20f8b4bd2b4c56de95a39964c775cb4acac2d4e4b12b267"
+    },
+    "jet2": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_mixed_ad.py",
+      "sha256": "c71cea89056ccb671d37d3169085844b7012e7fa8b7d78545dfc45fadaec105b"
+    },
+    "read_only_production_work": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_augmented.py",
+      "sha256": "a1d960c3dfe7f5920a13aff4365ed7223d19fcf1c7a83e031ed477ed8c231660"
+    },
+    "historical_counterexample": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d1_cut_front_two_hat_counterexample_20260929.md",
+      "sha256": "900821762892d67e7934efbe33dee8dce162bfb71e40a607223c7de852053890"
+    }
+  },
+  "python_executable": "C:\\Python\\Python314\\python.exe",
+  "numpy_version": "2.4.6",
+  "effective_thread_environment": {
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1"
+  },
+  "rows": [
+    {
+      "theta": 0.1,
+      "epsilon_pa_per_m": 1000.0,
+      "coordinates": [
+        -1e-06,
+        -0.00015125638668082582,
+        -0.0011288151664996244,
+        0.0,
+        -0.0001744369667000752,
+        1.1
+      ],
+      "support_m2": [
+        0.5,
+        0.5950000000000001,
+        0.005000000000000009
+      ],
+      "normalized_gap_m": [
+        1.7742246518687242e-06,
+        -1.431977610979949e-06,
+        -4.7275973989885026e-05
+      ],
+      "pressure_pa": [
+        0.0,
+        0.001431977610979949,
+        0.04727597398988503
+      ],
+      "all_three_pressure_modes_retained": true,
+      "supported_count": 3,
+      "residual_full_normal_and_cut": [
+        -0.0002386629351633239,
+        -0.0008273023931379667,
+        -2.2441220181201475e-05,
+        0.0002955112453003378,
+        0.0007928953031821541,
+        3.4906244279202906e-07
+      ],
+      "jacobian_full_normal_and_cut": [
+        [
+          46.68534080298786,
+          118.67413632119518,
+          1.3071895424836624,
+          -56.4043799337917,
+          -110.26228673287498,
+          -0.035924782379350435
+        ],
+        [
+          118.67413632119518,
+          306.0252100840338,
+          3.6339869281045827,
+          -143.52134793311268,
+          -284.8119854002208,
+          -0.10000108353101234
+        ],
+        [
+          1.3071895424836624,
+          3.6339869281045827,
+          0.05882352941176494,
+          -1.5894236482471804,
+          -3.4105763517528294,
+          -0.0018407850028460116
+        ],
+        [
+          -56.4043799337917,
+          -143.52134793311268,
+          -1.5894236482471804,
+          68.15133767005426,
+          133.36381384509727,
+          0.04423050706455223
+        ],
+        [
+          -110.26228673287498,
+          -284.8119854002208,
+          -3.4105763517528294,
+          133.36381384509727,
+          265.1210346397513,
+          0.09353614384865654
+        ],
+        [
+          -0.03556377962027986,
+          -0.09467099027839901,
+          -0.0015155037656594678,
+          0.043651089567487616,
+          0.0880991840968507,
+          3.429946414322195e-05
+        ]
+      ],
+      "jacobian_oracle_relative": 6.530560438190415e-13,
+      "residual_oracle_relative": 2.9089780437854194e-15,
+      "full_virtual_work_relative": 2.0470165654256375e-15,
+      "equilibrium_relative": 8.359613576977406e-15,
+      "fixed_source_normal_reaction_n": -8.840654848249807e-05,
+      "fixed_target_normal_reaction_n": 0.0010884065484824978,
+      "normal_global_balance_relative": 2.0,
+      "both_body_contact_balance_relative": 0.0,
+      "normal_contact_force_n": 0.0010884065484824954,
+      "minimum_full_supported_space_tangent_eigenvalue": 0.8391949152049543,
+      "full_jacobian_nonsymmetry_l2": 0.010820561994234628,
+      "free_response_l2_m": 0.0011521850675923714,
+      "iterations": 3,
+      "oracle_perturbation_intervals": [
+        {
+          "coordinate": 0,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.005000000000000009
+        },
+        {
+          "coordinate": 1,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.005000000000000009
+        },
+        {
+          "coordinate": 2,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.005000000000000009
+        },
+        {
+          "coordinate": 3,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.005000000000000009
+        },
+        {
+          "coordinate": 4,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.005000000000000009
+        },
+        {
+          "coordinate": 5,
+          "half_interval": 1e-05,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.004999000050000002
+        }
+      ],
+      "free_tangent_condition_number": 684.3874093384153,
+      "represented_overlap_endpoint_gaps_m": [
+        -1e-06,
+        7.322673955606176e-06,
+        -7.457529796263057e-05
+      ],
+      "uncovered_source_tip_gap_excluded": true
+    },
+    {
+      "theta": 0.1,
+      "epsilon_pa_per_m": 10000.0,
+      "coordinates": [
+        -1e-06,
+        -0.00013390401968826898,
+        -0.0010760976210008202,
+        0.0,
+        -0.00018498047579983595,
+        1.1
+      ],
+      "support_m2": [
+        0.5,
+        0.5950000000000001,
+        0.005000000000000009
+      ],
+      "normalized_gap_m": [
+        1.0753349740224258e-05,
+        1.831246487110025e-05,
+        -1.7341919606234592e-05
+      ],
+      "pressure_pa": [
+        0.0,
+        0.0,
+        0.17341919606234593
+      ],
+      "all_three_pressure_modes_retained": true,
+      "supported_count": 3,
+      "residual_full_normal_and_cut": [
+        0.0,
+        -0.0008092895816242818,
+        -5.78063986874488e-05,
+        2.627563576702205e-05,
+        0.0008408203445447086,
+        5.888343678198821e-07
+      ],
+      "jacobian_full_normal_and_cut": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          43.55555555555562,
+          3.111111111111122,
+          -1.414141414141412,
+          -45.25252525252534,
+          -0.04729849520637054
+        ],
+        [
+          0.0,
+          3.111111111111122,
+          0.2222222222222234,
+          -0.10101010101010104,
+          -3.2323232323232443,
+          -0.003997818214963424
+        ],
+        [
+          0.0,
+          -1.414141414141412,
+          -0.10101010101010104,
+          0.04591368227731842,
+          1.4692378328741946,
+          0.0017933031561042558
+        ],
+        [
+          0.0,
+          -45.25252525252534,
+          -3.2323232323232443,
+          1.4692378328741946,
+          47.01561065197438,
+          0.04950301026522971
+        ],
+        [
+          0.0,
+          -0.031112703573884928,
+          -0.002841690241214449,
+          0.0012677904407638156,
+          0.032686603374335564,
+          3.4754366037528365e-05
+        ]
+      ],
+      "jacobian_oracle_relative": 4.544767089289368e-12,
+      "residual_oracle_relative": 6.527989083221398e-16,
+      "full_virtual_work_relative": 5.777872643884276e-16,
+      "equilibrium_relative": 4.84869951806108e-16,
+      "fixed_source_normal_reaction_n": 0.000132904019688269,
+      "fixed_target_normal_reaction_n": 0.0008670959803117308,
+      "normal_global_balance_relative": 2.0,
+      "both_body_contact_balance_relative": 0.0,
+      "normal_contact_force_n": 0.0008670959803117312,
+      "minimum_full_supported_space_tangent_eigenvalue": 0.8757711764366289,
+      "full_jacobian_nonsymmetry_l2": 0.03305704726668802,
+      "free_response_l2_m": 0.0011000609768732981,
+      "iterations": 4,
+      "oracle_perturbation_intervals": [
+        {
+          "coordinate": 0,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.005000000000000009
+        },
+        {
+          "coordinate": 1,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.005000000000000009
+        },
+        {
+          "coordinate": 2,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.005000000000000009
+        },
+        {
+          "coordinate": 3,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.005000000000000009
+        },
+        {
+          "coordinate": 4,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.005000000000000009
+        },
+        {
+          "coordinate": 5,
+          "half_interval": 1e-05,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.004999000050000002
+        }
+      ],
+      "free_tangent_condition_number": 107.40944856537875,
+      "represented_overlap_endpoint_gaps_m": [
+        -1e-06,
+        3.426004922067277e-05,
+        -4.314290401968824e-05
+      ],
+      "uncovered_source_tip_gap_excluded": true
+    },
+    {
+      "theta": 0.1,
+      "epsilon_pa_per_m": 100000.0,
+      "coordinates": [
+        -1e-06,
+        -0.00012104029371118296,
+        -0.0010623763132919296,
+        0.0,
+        -0.00018772473734161317,
+        1.1
+      ],
+      "support_m2": [
+        0.5,
+        0.5950000000000001,
+        0.005000000000000009
+      ],
+      "normalized_gap_m": [
+        1.5872852805852093e-05,
+        2.939516370993372e-05,
+        -1.7599194125776119e-06
+      ],
+      "pressure_pa": [
+        0.0,
+        0.0,
+        0.1759919412577612
+      ],
+      "all_three_pressure_modes_retained": true,
+      "supported_count": 3,
+      "residual_full_normal_and_cut": [
+        0.0,
+        -0.0008212957258695559,
+        -5.8663980419254093e-05,
+        2.6665445645115363e-05,
+        0.0008532942606436946,
+        5.97732121659201e-07
+      ],
+      "jacobian_full_normal_and_cut": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          435.55555555555617,
+          31.111111111111217,
+          -14.141414141414119,
+          -452.52525252525334,
+          -0.3328329447423844
+        ],
+        [
+          0.0,
+          31.111111111111217,
+          2.2222222222222334,
+          -1.0101010101010104,
+          -32.32323232323244,
+          -0.024402324414662363
+        ],
+        [
+          0.0,
+          -14.141414141414119,
+          -1.0101010101010104,
+          0.4591368227731842,
+          14.692378328741945,
+          0.011067724328805461
+        ],
+        [
+          0.0,
+          -452.52525252525334,
+          -32.32323232323244,
+          14.692378328741945,
+          470.15610651974384,
+          0.3461675448282413
+        ],
+        [
+          0.0,
+          -0.3164070302249933,
+          -0.023229044806277282,
+          0.010534415415903156,
+          0.3291016596153674,
+          0.0002425772294612901
+        ]
+      ],
+      "jacobian_oracle_relative": 4.622884409317373e-12,
+      "residual_oracle_relative": 2.8639937854266352e-15,
+      "full_virtual_work_relative": 3.0364844050979173e-15,
+      "equilibrium_relative": 7.894600083639303e-15,
+      "fixed_source_normal_reaction_n": 0.00012004029371118296,
+      "fixed_target_normal_reaction_n": 0.0008799597062888115,
+      "normal_global_balance_relative": 1.999999999999995,
+      "both_body_contact_balance_relative": 0.0,
+      "normal_contact_force_n": 0.0008799597062888074,
+      "minimum_full_supported_space_tangent_eigenvalue": 0.8880997386785668,
+      "full_jacobian_nonsymmetry_l2": 0.03354746217726942,
+      "free_response_l2_m": 0.0010856034085960763,
+      "iterations": 4,
+      "oracle_perturbation_intervals": [
+        {
+          "coordinate": 0,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.005000000000000009
+        },
+        {
+          "coordinate": 1,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.005000000000000009
+        },
+        {
+          "coordinate": 2,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.005000000000000009
+        },
+        {
+          "coordinate": 3,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.005000000000000009
+        },
+        {
+          "coordinate": 4,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.005000000000000009
+        },
+        {
+          "coordinate": 5,
+          "half_interval": 1e-05,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.004999000050000002
+        }
+      ],
+      "free_tangent_condition_number": 1025.9924288459572,
+      "represented_overlap_endpoint_gaps_m": [
+        -1e-06,
+        4.961855841755627e-05,
+        -2.7449158327644534e-05
+      ],
+      "uncovered_source_tip_gap_excluded": true
+    },
+    {
+      "theta": 0.05,
+      "epsilon_pa_per_m": 1000.0,
+      "coordinates": [
+        -1e-06,
+        -0.0001603816381246712,
+        -0.0011569706130642933,
+        0.0,
+        -0.00016880587738713886,
+        1.05
+      ],
+      "support_m2": [
+        0.5,
+        0.5487500000000001,
+        0.0012500000000000022
+      ],
+      "normalized_gap_m": [
+        -5.380452837352099e-07,
+        -1.8755086152524307e-06,
+        -2.7474851606744184e-05
+      ],
+      "pressure_pa": [
+        0.0005380452837352099,
+        0.0018755086152524307,
+        0.027474851606744184
+      ],
+      "all_three_pressure_modes_retained": true,
+      "supported_count": 3,
+      "residual_full_normal_and_cut": [
+        -0.0004919331971204708,
+        -0.0008372073368149441,
+        -3.411025060377648e-06,
+        0.0005287140476284598,
+        0.0008038375113673325,
+        2.1879905452398904e-07
+      ],
+      "jacobian_full_normal_and_cut": [
+        [
+          272.842318400405,
+          226.79068590230327,
+          0.36699569729182385,
+          -283.3098311458221,
+          -216.690168854178,
+          -0.04624242159531339
+        ],
+        [
+          226.79068590230327,
+          321.0803594026829,
+          0.8789546950139182,
+          -241.28498210218032,
+          -307.46501789781973,
+          -0.07916622580386443
+        ],
+        [
+          0.36699569729182385,
+          0.8789546950139182,
+          0.0040496076942545915,
+          -0.40518675199768484,
+          -0.8448132480023116,
+          -0.0003995007789050644
+        ],
+        [
+          -283.3098311458221,
+          -241.28498210218032,
+          -0.40518675199768484,
+          294.43299466078514,
+          230.56700533921494,
+          0.050416348320647425
+        ],
+        [
+          -216.690168854178,
+          -307.46501789781973,
+          -0.8448132480023116,
+          230.56700533921494,
+          294.43299466078514,
+          0.07539179985743545
+        ],
+        [
+          -0.04570127256433699,
+          -0.07660161381983299,
+          -0.00034978602908591227,
+          0.049798054921220185,
+          0.07285461749203569,
+          2.123987595567134e-05
+        ]
+      ],
+      "jacobian_oracle_relative": 1.0758586675862838e-12,
+      "residual_oracle_relative": 1.1094677140532841e-14,
+      "full_virtual_work_relative": 1.507398788901764e-14,
+      "equilibrium_relative": 8.27268282390142e-15,
+      "fixed_source_normal_reaction_n": -0.0003325515589957996,
+      "fixed_target_normal_reaction_n": 0.0013325515589957876,
+      "normal_global_balance_relative": 1.9999999999999878,
+      "both_body_contact_balance_relative": 2.1684043449710089e-16,
+      "normal_contact_force_n": 0.0013325515589958066,
+      "minimum_full_supported_space_tangent_eigenvalue": 0.8204867835715765,
+      "full_jacobian_nonsymmetry_l2": 0.005232997141559465,
+      "free_response_l2_m": 0.0011801689258671242,
+      "iterations": 2,
+      "oracle_perturbation_intervals": [
+        {
+          "coordinate": 0,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0012500000000000022
+        },
+        {
+          "coordinate": 1,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0012500000000000022
+        },
+        {
+          "coordinate": 2,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0012500000000000022
+        },
+        {
+          "coordinate": 3,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0012500000000000022
+        },
+        {
+          "coordinate": 4,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0012500000000000022
+        },
+        {
+          "coordinate": 5,
+          "half_interval": 1e-05,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.001249500049999999
+        }
+      ],
+      "free_tangent_condition_number": 754.2289742106996,
+      "represented_overlap_endpoint_gaps_m": [
+        -1e-06,
+        3.858641487943686e-07,
+        -4.1405209484513504e-05
+      ],
+      "uncovered_source_tip_gap_excluded": true
+    },
+    {
+      "theta": 0.05,
+      "epsilon_pa_per_m": 10000.0,
+      "coordinates": [
+        -1e-06,
+        -0.00015968326807996958,
+        -0.0011477185598627636,
+        0.0,
+        -0.0001706562880274472,
+        1.05
+      ],
+      "support_m2": [
+        0.5,
+        0.5487500000000001,
+        0.0012500000000000022
+      ],
+      "normalized_gap_m": [
+        2.8217668046956995e-07,
+        -1.3948206806859054e-07,
+        -2.4670319747305143e-05
+      ],
+      "pressure_pa": [
+        0.0,
+        0.0013948206806859054,
+        0.24670319747305144
+      ],
+      "all_three_pressure_modes_retained": true,
+      "supported_count": 3,
+      "residual_full_normal_and_cut": [
+        -0.00023247011344763348,
+        -0.0008293520237028063,
+        -1.1964708217205712e-05,
+        0.0002611378547607715,
+        0.0008126489906068741,
+        3.5252836958997434e-07
+      ],
+      "jacobian_full_normal_and_cut": [
+        [
+          506.2009617818274,
+          1156.7957479119211,
+          3.669956972918239,
+          -557.9660363259453,
+          -1108.7006303407218,
+          -0.29067464040814095
+        ],
+        [
+          1156.7957479119211,
+          2655.248038471274,
+          8.789546950139181,
+          -1275.2836834556656,
+          -2545.549649877669,
+          -0.6858240835866083
+        ],
+        [
+          3.669956972918239,
+          8.789546950139181,
+          0.040496076942545915,
+          -4.051867519976849,
+          -8.448132480023117,
+          -0.0030863560172368124
+        ],
+        [
+          -557.9660363259453,
+          -1275.2836834556656,
+          -4.051867519976849,
+          615.027855400998,
+          1222.2737319005896,
+          0.32131446417343845
+        ],
+        [
+          -1108.7006303407218,
+          -2545.549649877669,
+          -8.448132480023117,
+          1222.2737319005896,
+          2440.424680797824,
+          0.6582706158385477
+        ],
+        [
+          -0.2902721864531974,
+          -0.6729803878082096,
+          -0.002672266230275056,
+          0.32067505832201276,
+          0.6452497821696694,
+          0.00018303344160490798
+        ]
+      ],
+      "jacobian_oracle_relative": 9.26863909853014e-13,
+      "residual_oracle_relative": 5.283373049504472e-14,
+      "full_virtual_work_relative": 4.202731792224631e-14,
+      "equilibrium_relative": 2.5076028255793744e-14,
+      "fixed_source_normal_reaction_n": -7.378684536766389e-05,
+      "fixed_target_normal_reaction_n": 0.001073786845367663,
+      "normal_global_balance_relative": 1.9999999999999991,
+      "both_body_contact_balance_relative": 0.0,
+      "normal_contact_force_n": 0.0010737868453677055,
+      "minimum_full_supported_space_tangent_eigenvalue": 0.8262391180882067,
+      "full_jacobian_nonsymmetry_l2": 0.02589381818353581,
+      "free_response_l2_m": 0.001171272900481123,
+      "iterations": 3,
+      "oracle_perturbation_intervals": [
+        {
+          "coordinate": 0,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0012500000000000022
+        },
+        {
+          "coordinate": 1,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0012500000000000022
+        },
+        {
+          "coordinate": 2,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0012500000000000022
+        },
+        {
+          "coordinate": 3,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0012500000000000022
+        },
+        {
+          "coordinate": 4,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0012500000000000022
+        },
+        {
+          "coordinate": 5,
+          "half_interval": 1e-05,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.001249500049999999
+        }
+      ],
+      "free_tangent_condition_number": 6171.337045961426,
+      "represented_overlap_endpoint_gaps_m": [
+        -1e-06,
+        2.8465300414086923e-06,
+        -3.84287446416621e-05
+      ],
+      "uncovered_source_tip_gap_excluded": true
+    },
+    {
+      "theta": 0.05,
+      "epsilon_pa_per_m": 100000.0,
+      "coordinates": [
+        -1e-06,
+        -0.00014793971949974262,
+        -0.001119504376816401,
+        0.0,
+        -0.00017629912463671985,
+        1.05
+      ],
+      "support_m2": [
+        0.5,
+        0.5487500000000001,
+        0.0012500000000000022
+      ],
+      "normalized_gap_m": [
+        5.9880695752349565e-06,
+        1.1827306975783474e-05,
+        -6.824482244002167e-06
+      ],
+      "pressure_pa": [
+        0.0,
+        0.0,
+        0.6824482244002167
+      ],
+      "all_three_pressure_modes_retained": true,
+      "supported_count": 3,
+      "residual_full_normal_and_cut": [
+        0.0,
+        -0.000824624937816917,
+        -2.8435342683341865e-05,
+        1.3540639373020117e-05,
+        0.0008395196411272388,
+        5.98006010224742e-07
+      ],
+      "jacobian_full_normal_and_cut": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          116.80555555555529,
+          4.027777777777754,
+          -1.9179894179894321,
+          -118.91534391534361,
+          -0.11712198053880131
+        ],
+        [
+          0.0,
+          4.027777777777754,
+          0.1388888888888876,
+          -0.0661375661375664,
+          -4.100529100529075,
+          -0.004627006418924347
+        ],
+        [
+          0.0,
+          -1.9179894179894321,
+          -0.0661375661375664,
+          0.03149407911312727,
+          1.9526329050138713,
+          0.002190440542942077
+        ],
+        [
+          0.0,
+          -118.91534391534361,
+          -4.100529100529075,
+          1.9526329050138713,
+          121.0632401108588,
+          0.11955854641478357
+        ],
+        [
+          0.0,
+          -0.08413698302612459,
+          -0.0034895927115906715,
+          0.0016488149680212714,
+          0.08597776076969398,
+          8.526096407821924e-05
+        ]
+      ],
+      "jacobian_oracle_relative": 1.918032622427981e-11,
+      "residual_oracle_relative": 1.577248794289965e-14,
+      "full_virtual_work_relative": 1.5837260591483448e-14,
+      "equilibrium_relative": 2.0050413162357085e-15,
+      "fixed_source_normal_reaction_n": 0.00014693971949974262,
+      "fixed_target_normal_reaction_n": 0.0008530602805002576,
+      "normal_global_balance_relative": 2.0,
+      "both_body_contact_balance_relative": 1.0842021724855044e-16,
+      "normal_contact_force_n": 0.0008530602805002723,
+      "minimum_full_supported_space_tangent_eigenvalue": 0.8457581876439393,
+      "full_jacobian_nonsymmetry_l2": 0.06659228624484646,
+      "free_response_l2_m": 0.0011429162662524384,
+      "iterations": 4,
+      "oracle_perturbation_intervals": [
+        {
+          "coordinate": 0,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0012500000000000022
+        },
+        {
+          "coordinate": 1,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0012500000000000022
+        },
+        {
+          "coordinate": 2,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0012500000000000022
+        },
+        {
+          "coordinate": 3,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0012500000000000022
+        },
+        {
+          "coordinate": 4,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0012500000000000022
+        },
+        {
+          "coordinate": 5,
+          "half_interval": 1e-05,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.001249500049999999
+        }
+      ],
+      "free_tangent_condition_number": 285.41098393916866,
+      "represented_overlap_endpoint_gaps_m": [
+        -1e-06,
+        1.9964208725704852e-05,
+        -2.021882772885574e-05
+      ],
+      "uncovered_source_tip_gap_excluded": true
+    },
+    {
+      "theta": 0.025,
+      "epsilon_pa_per_m": 1000.0,
+      "coordinates": [
+        -1e-06,
+        -0.00016473497679124905,
+        -0.0011641052178867936,
+        0.0,
+        -0.0001673789564226462,
+        1.025
+      ],
+      "support_m2": [
+        0.5,
+        0.5246874999999999,
+        0.0003124999999999978
+      ],
+      "normalized_gap_m": [
+        -1.1461446466289697e-06,
+        -1.7888256623409926e-06,
+        -1.5372995577289877e-05
+      ],
+      "pressure_pa": [
+        0.0011461446466289698,
+        0.0017888256623409926,
+        0.015372995577289878
+      ],
+      "all_three_pressure_modes_retained": true,
+      "supported_count": 3,
+      "residual_full_normal_and_cut": [
+        -0.0006801858259331531,
+        -0.0008356352643043142,
+        -6.297589044552453e-07,
+        0.0006999681348851178,
+        0.0008164827142568046,
+        1.7185039237524667e-07
+      ],
+      "jacobian_full_normal_and_cut": [
+        [
+          275.1637879690293,
+          224.73860101912516,
+          0.0976110118456747,
+          -280.5523677631059,
+          -219.4476322368942,
+          -0.042199991665417685
+        ],
+        [
+          224.73860101912516,
+          299.7342767685791,
+          0.2146222122956771,
+          -231.84504029934578,
+          -292.8424597006542,
+          -0.0637276365193311
+        ],
+        [
+          0.0976110118456747,
+          0.2146222122956771,
+          0.00026677585864601477,
+          -0.10259193754832055,
+          -0.20990806245167726,
+          -0.00010212642256571075
+        ],
+        [
+          -280.5523677631059,
+          -231.84504029934578,
+          -0.10259193754832055,
+          286.1095373907878,
+          226.39046260921214,
+          0.0444537481193089
+        ],
+        [
+          -219.4476322368942,
+          -292.8424597006542,
+          -0.20990806245167726,
+          226.39046260921214,
+          286.10953739078786,
+          0.061576006488005576
+        ],
+        [
+          -0.04164597776165514,
+          -0.06216064739083787,
+          -9.46995446067779e-05,
+          0.043868579559739156,
+          0.060032745137360614,
+          1.4660325299284546e-05
+        ]
+      ],
+      "jacobian_oracle_relative": 5.678158967703243e-13,
+      "residual_oracle_relative": 3.2088161042109536e-15,
+      "full_virtual_work_relative": 1.84924898491387e-15,
+      "equilibrium_relative": 1.9753318577189762e-14,
+      "fixed_source_normal_reaction_n": -0.000516450849141904,
+      "fixed_target_normal_reaction_n": 0.0015164508491419286,
+      "normal_global_balance_relative": 2.0000000000000244,
+      "both_body_contact_balance_relative": 1.0842021724855044e-16,
+      "normal_contact_force_n": 0.0015164508491419273,
+      "minimum_full_supported_space_tangent_eigenvalue": 0.8153328881619687,
+      "full_jacobian_nonsymmetry_l2": 0.0033125577224850985,
+      "free_response_l2_m": 0.001187558118974733,
+      "iterations": 2,
+      "oracle_perturbation_intervals": [
+        {
+          "coordinate": 0,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0003124999999999978
+        },
+        {
+          "coordinate": 1,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0003124999999999978
+        },
+        {
+          "coordinate": 2,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0003124999999999978
+        },
+        {
+          "coordinate": 3,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0003124999999999978
+        },
+        {
+          "coordinate": 4,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0003124999999999978
+        },
+        {
+          "coordinate": 5,
+          "half_interval": 1e-05,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.00031225004999999614
+        }
+      ],
+      "free_tangent_condition_number": 722.7145913066711,
+      "represented_overlap_endpoint_gaps_m": [
+        -1e-06,
+        -1.438433939886908e-06,
+        -2.2340276395991387e-05
+      ],
+      "uncovered_source_tip_gap_excluded": true
+    },
+    {
+      "theta": 0.025,
+      "epsilon_pa_per_m": 10000.0,
+      "coordinates": [
+        -1e-06,
+        -0.00016268369953182458,
+        -0.0011617736549049337,
+        0.0,
+        -0.00016784526901901314,
+        1.025
+      ],
+      "support_m2": [
+        0.5,
+        0.5246874999999999,
+        0.0003124999999999978
+      ],
+      "normalized_gap_m": [
+        -3.107391873518891e-07,
+        -7.827680312192452e-08,
+        -1.2854525452111266e-05
+      ],
+      "pressure_pa": [
+        0.003107391873518891,
+        0.0007827680312192453,
+        0.12854525452111265
+      ],
+      "all_three_pressure_modes_retained": true,
+      "supported_count": 3,
+      "residual_full_normal_and_cut": [
+        -0.0011662586297094897,
+        -0.0008374062558412393,
+        -9.100446268908613e-07,
+        0.0011858175203288187,
+        0.0008187574098488011,
+        1.715068844527297e-07
+      ],
+      "jacobian_full_normal_and_cut": [
+        [
+          2751.6378796902927,
+          2247.386010191252,
+          0.9761101184567469,
+          -2805.523677631059,
+          -2194.476322368942,
+          -0.4204770962659706
+        ],
+        [
+          2247.386010191252,
+          2997.3427676857914,
+          2.146222122956771,
+          -2318.450402993458,
+          -2928.4245970065417,
+          -0.6163211842859596
+        ],
+        [
+          0.9761101184567469,
+          2.146222122956771,
+          0.0026677585864601475,
+          -1.0259193754832054,
+          -2.0990806245167724,
+          -0.0005848585145264314
+        ],
+        [
+          -2805.523677631059,
+          -2318.450402993458,
+          -1.0259193754832054,
+          2861.095373907878,
+          2263.904626092122,
+          0.4357517791589797
+        ],
+        [
+          -2194.476322368942,
+          -2928.4245970065417,
+          -2.0990806245167724,
+          2263.904626092122,
+          2861.0953739078786,
+          0.601631359907477
+        ],
+        [
+          -0.42023466661961323,
+          -0.6126407912412279,
+          -0.0005308510121488307,
+          0.435470956818671,
+          0.597935352054319,
+          0.00013012284706226407
+        ]
+      ],
+      "jacobian_oracle_relative": 5.690524646200044e-13,
+      "residual_oracle_relative": 1.1130289398653327e-14,
+      "full_virtual_work_relative": 3.9319073026351406e-14,
+      "equilibrium_relative": 6.279889539159281e-14,
+      "fixed_source_normal_reaction_n": -0.0010045749301776652,
+      "fixed_target_normal_reaction_n": 0.0020045749301776635,
+      "normal_global_balance_relative": 1.9999999999999982,
+      "both_body_contact_balance_relative": 3.2526065174565133e-16,
+      "normal_contact_force_n": 0.0020045749301776405,
+      "minimum_full_supported_space_tangent_eigenvalue": 0.8174288921063747,
+      "full_jacobian_nonsymmetry_l2": 0.007395446862073562,
+      "free_response_l2_m": 0.001185055292236018,
+      "iterations": 2,
+      "oracle_perturbation_intervals": [
+        {
+          "coordinate": 0,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0003124999999999978
+        },
+        {
+          "coordinate": 1,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0003124999999999978
+        },
+        {
+          "coordinate": 2,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0003124999999999978
+        },
+        {
+          "coordinate": 3,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0003124999999999978
+        },
+        {
+          "coordinate": 4,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0003124999999999978
+        },
+        {
+          "coordinate": 5,
+          "half_interval": 1e-05,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.00031225004999999614
+        }
+      ],
+      "free_tangent_condition_number": 7171.073592320288,
+      "represented_overlap_endpoint_gaps_m": [
+        -1e-06,
+        1.067782437944346e-06,
+        -1.981567939713909e-05
+      ],
+      "uncovered_source_tip_gap_excluded": true
+    },
+    {
+      "theta": 0.025,
+      "epsilon_pa_per_m": 100000.0,
+      "coordinates": [
+        -1e-06,
+        -0.00016283734705339008,
+        -0.0011566387066525307,
+        0.0,
+        -0.00016887225866949365,
+        1.025
+      ],
+      "support_m2": [
+        0.5,
+        0.5246874999999999,
+        0.0003124999999999978
+      ],
+      "normalized_gap_m": [
+        -2.797465373371417e-08,
+        5.042410031082296e-07,
+        -1.1901389569650263e-05
+      ],
+      "pressure_pa": [
+        0.002797465373371417,
+        0.0,
+        1.1901389569650263
+      ],
+      "all_three_pressure_modes_retained": true,
+      "supported_count": 3,
+      "residual_full_normal_and_cut": [
+        -0.0009324884577903601,
+        -0.000831964012545887,
+        -6.19864040085938e-06,
+        0.0009468839952760275,
+        0.0008237671154610788,
+        3.412772534422369e-07
+      ],
+      "jacobian_full_normal_and_cut": [
+        [
+          22222.222222222226,
+          11111.111111111113,
+          0.0,
+          -22493.224932249326,
+          -10840.108401084015,
+          -1.7859449657689863
+        ],
+        [
+          11111.111111111113,
+          5585.772569444445,
+          0.5121527777777694,
+          -11246.86229674797,
+          -5450.533536585368,
+          -0.9439876630509549
+        ],
+        [
+          0.0,
+          0.5121527777777694,
+          0.008680555555555332,
+          -0.004234417344173396,
+          -0.5165989159891513,
+          -0.0011168121547207436
+        ],
+        [
+          -22493.224932249326,
+          -11246.86229674797,
+          -0.004234417344173396,
+          22767.53461894375,
+          10972.556844470886,
+          1.8087103968332612
+        ],
+        [
+          -10840.108401084015,
+          -5450.533536585368,
+          -0.5165989159891513,
+          10972.556844470886,
+          5318.601692114484,
+          0.9223390441414002
+        ],
+        [
+          -1.7859449657689863,
+          -0.9147300803588982,
+          -0.0006209209226519913,
+          1.8084684986712765,
+          0.8928274683792596,
+          0.00018067924051806087
+        ]
+      ],
+      "jacobian_oracle_relative": 2.529392230972665e-13,
+      "residual_oracle_relative": 1.0107152739773312e-13,
+      "full_virtual_work_relative": 2.112811101491874e-12,
+      "equilibrium_relative": 1.9128648093552112e-13,
+      "fixed_source_normal_reaction_n": -0.00077065111073697,
+      "fixed_target_normal_reaction_n": 0.0017706511107369724,
+      "normal_global_balance_relative": 2.0000000000000027,
+      "both_body_contact_balance_relative": 0.0,
+      "normal_contact_force_n": 0.0017706511107372766,
+      "minimum_full_supported_space_tangent_eigenvalue": 0.8197274869014897,
+      "full_jacobian_nonsymmetry_l2": 0.05877488701447095,
+      "free_response_l2_m": 0.0011801893657673592,
+      "iterations": 3,
+      "oracle_perturbation_intervals": [
+        {
+          "coordinate": 0,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0003124999999999978
+        },
+        {
+          "coordinate": 1,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0003124999999999978
+        },
+        {
+          "coordinate": 2,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0003124999999999978
+        },
+        {
+          "coordinate": 3,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0003124999999999978
+        },
+        {
+          "coordinate": 4,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.0003124999999999978
+        },
+        {
+          "coordinate": 5,
+          "half_interval": 1e-05,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 0.00031225004999999614
+        }
+      ],
+      "free_tangent_condition_number": 13306.570237255424,
+      "represented_overlap_endpoint_gaps_m": [
+        -1e-06,
+        1.916076038798874e-06,
+        -1.881012237387486e-05
+      ],
+      "uncovered_source_tip_gap_excluded": true
+    },
+    {
+      "theta": 0.001,
+      "epsilon_pa_per_m": 1000.0,
+      "coordinates": [
+        -1e-06,
+        -0.000168518646673427,
+        -0.0011685177493701805,
+        0.0,
+        -0.00016649645012596363,
+        1.001
+      ],
+      "support_m2": [
+        0.5,
+        0.5009994999999999,
+        4.999999999998899e-07
+      ],
+      "normalized_gap_m": [
+        -1.3961755558231092e-06,
+        -1.793972937755303e-06,
+        -2.744305989263149e-06
+      ],
+      "pressure_pa": [
+        0.0013961755558231093,
+        0.001793972937755303,
+        0.002744305989263149
+      ],
+      "all_three_pressure_modes_retained": true,
+      "supported_count": 3,
+      "residual_full_normal_and_cut": [
+        -0.0007643873415669122,
+        -0.0008324804560233069,
+        -8.973032465612717e-10,
+        0.0007652180948636953,
+        0.0008316506000297704,
+        1.4053050162952208e-07
+      ],
+      "jacobian_full_normal_and_cut": [
+        [
+          277.66694377938506,
+          222.33288999733978,
+          0.00016622327522833753,
+          -277.88888866744236,
+          -222.11111133255767,
+          -0.03735195000959994
+        ],
+        [
+          222.33288999733978,
+          278.666276226656,
+          0.00033377600421195114,
+          -222.61094477655894,
+          -278.38855522344096,
+          -0.048916618909500297
+        ],
+        [
+          0.00016622327522833753,
+          0.00033377600421195114,
+          7.205596013565713e-10,
+          -0.0001665559986700659,
+          -0.00033344400132982407,
+          -1.851794041593547e-06
+        ],
+        [
+          -277.88888866744236,
+          -222.61094477655894,
+          -0.0001665559986700659,
+          278.1111110004432,
+          222.38888899955674,
+          0.03822978944685439
+        ],
+        [
+          -222.11111133255767,
+          -278.38855522344096,
+          -0.00033344400132982407,
+          222.38888899955674,
+          278.11111100044315,
+          0.04804063126628742
+        ],
+        [
+          -0.03675574882749048,
+          -0.047717900437751454,
+          -1.8481770931234078e-06,
+          0.03763239435351592,
+          0.04684310308881912,
+          9.580058005482555e-06
+        ]
+      ],
+      "jacobian_oracle_relative": 3.40070062983133e-13,
+      "residual_oracle_relative": 1.3739300290118163e-14,
+      "full_virtual_work_relative": 3.49055185432581e-14,
+      "equilibrium_relative": 2.646808206613314e-14,
+      "fixed_source_normal_reaction_n": -0.0005968686948934852,
+      "fixed_target_normal_reaction_n": 0.0015968686948934837,
+      "normal_global_balance_relative": 1.9999999999999982,
+      "both_body_contact_balance_relative": 0.0,
+      "normal_contact_force_n": 0.001596868694893487,
+      "minimum_full_supported_space_tangent_eigenvalue": 0.8119389129008049,
+      "full_jacobian_nonsymmetry_l2": 0.002677064234361631,
+      "free_response_l2_m": 0.0011922891145919026,
+      "iterations": 2,
+      "oracle_perturbation_intervals": [
+        {
+          "coordinate": 0,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 4.999999999998899e-07
+        },
+        {
+          "coordinate": 1,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 4.999999999998899e-07
+        },
+        {
+          "coordinate": 2,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 4.999999999998899e-07
+        },
+        {
+          "coordinate": 3,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 4.999999999998899e-07
+        },
+        {
+          "coordinate": 4,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 4.999999999998899e-07
+        },
+        {
+          "coordinate": 5,
+          "half_interval": 1e-05,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 4.900499999998261e-07
+        }
+      ],
+      "free_tangent_condition_number": 690.0498352937367,
+      "represented_overlap_endpoint_gaps_m": [
+        -1e-06,
+        -2.1885266674693204e-06,
+        -3.0221956501600127e-06
+      ],
+      "uncovered_source_tip_gap_excluded": true
+    },
+    {
+      "theta": 0.001,
+      "epsilon_pa_per_m": 10000.0,
+      "coordinates": [
+        -1e-06,
+        -0.00016627826721377027,
+        -0.0011662782655313855,
+        0.0,
+        -0.00016694434689373716,
+        1.001
+      ],
+      "support_m2": [
+        0.5,
+        0.5009994999999999,
+        4.999999999998899e-07
+      ],
+      "normalized_gap_m": [
+        -5.002326297858372e-07,
+        -2.992234522246315e-10,
+        -5.6179508686266365e-08
+      ],
+      "pressure_pa": [
+        0.005002326297858372,
+        2.992234522246315e-06,
+        0.0005617950868626637
+      ],
+      "all_three_pressure_modes_retained": true,
+      "supported_count": 3,
+      "residual_full_normal_and_cut": [
+        -0.0016679408050397737,
+        -0.0008347217311039341,
+        -1.6823848784144678e-12,
+        0.0016687746912040107,
+        0.0008338878466220816,
+        1.3907494145650665e-07
+      ],
+      "jacobian_full_normal_and_cut": [
+        [
+          2776.6694377938506,
+          2223.3288999733977,
+          0.0016622327522833752,
+          -2778.8888866744237,
+          -2221.1111133255763,
+          -0.37154025455089157
+        ],
+        [
+          2223.3288999733977,
+          2786.662762266559,
+          0.0033377600421195114,
+          -2226.1094477655893,
+          -2783.8855522344097,
+          -0.466520118264849
+        ],
+        [
+          0.0016622327522833752,
+          0.0033377600421195114,
+          7.2055960135657145e-09,
+          -0.0016655599867006587,
+          -0.0033344400132982403,
+          -5.648364513772732e-07
+        ],
+        [
+          -2778.8888866744237,
+          -2226.1094477655893,
+          -0.0016655599867006587,
+          2781.111110004432,
+          2223.8888899955673,
+          0.37283879969901546
+        ],
+        [
+          -2221.1111133255763,
+          -2783.8855522344097,
+          -0.0033344400132982403,
+          2223.8888899955673,
+          2781.111110004432,
+          0.4652221379531766
+        ],
+        [
+          -0.3715392601246538,
+          -0.46651756203122385,
+          -5.644589400295044e-07,
+          0.3728378030958548,
+          0.4652195835189629,
+          7.782743700046508e-05
+        ]
+      ],
+      "jacobian_oracle_relative": 0.33849119103421615,
+      "residual_oracle_relative": 6.520280453736226e-14,
+      "full_virtual_work_relative": 9.59175205853369e-14,
+      "equilibrium_relative": 9.098446082629873e-14,
+      "fixed_source_normal_reaction_n": -0.0015026625378260034,
+      "fixed_target_normal_reaction_n": 0.0025026625378260746,
+      "normal_global_balance_relative": 2.000000000000071,
+      "both_body_contact_balance_relative": 0.0,
+      "normal_contact_force_n": 0.0025026625378262576,
+      "minimum_full_supported_space_tangent_eigenvalue": 0.81376584717158,
+      "full_jacobian_nonsymmetry_l2": 5.48480921144214e-06,
+      "free_response_l2_m": 0.0011898419515878095,
+      "iterations": 2,
+      "oracle_perturbation_intervals": [
+        {
+          "coordinate": 0,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": false,
+          "minimum_positive_support_m2": 4.999999999998899e-07
+        },
+        {
+          "coordinate": 1,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": false,
+          "minimum_positive_support_m2": 4.999999999998899e-07
+        },
+        {
+          "coordinate": 2,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 4.999999999998899e-07
+        },
+        {
+          "coordinate": 3,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": false,
+          "minimum_positive_support_m2": 4.999999999998899e-07
+        },
+        {
+          "coordinate": 4,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": false,
+          "minimum_positive_support_m2": 4.999999999998899e-07
+        },
+        {
+          "coordinate": 5,
+          "half_interval": 1e-05,
+          "active_branch_unchanged": false,
+          "minimum_positive_support_m2": 4.900499999998261e-07
+        }
+      ],
+      "free_tangent_condition_number": 6846.281878670365,
+      "represented_overlap_endpoint_gaps_m": [
+        -1e-06,
+        4.993021106424887e-07,
+        -3.3392031835061966e-07
+      ],
+      "uncovered_source_tip_gap_excluded": true
+    },
+    {
+      "theta": 0.001,
+      "epsilon_pa_per_m": 100000.0,
+      "coordinates": [
+        -1e-06,
+        -0.00016515287504993635,
+        -0.0011651528750499364,
+        0.0,
+        -0.00016716942499001277,
+        1.001
+      ],
+      "support_m2": [
+        0.5,
+        0.5009994999999999,
+        4.999999999998899e-07
+      ],
+      "normalized_gap_m": [
+        -5.015082749700872e-08,
+        9.007625239623575e-07,
+        1.2942157992206485e-06
+      ],
+      "pressure_pa": [
+        0.005015082749700872,
+        0.0,
+        0.0
+      ],
+      "all_three_pressure_modes_retained": true,
+      "supported_count": 3,
+      "residual_full_normal_and_cut": [
+        -0.0016716942498998916,
+        -0.0008358471249499458,
+        0.0,
+        0.0016725292620127286,
+        0.0008350121128371086,
+        1.3944904571695817e-07
+      ],
+      "jacobian_full_normal_and_cut": [
+        [
+          22222.222222222226,
+          11111.111111111113,
+          0.0,
+          -22233.32223332224,
+          -11100.011100011101,
+          -1.853728744227388
+        ],
+        [
+          11111.111111111113,
+          5555.555555555557,
+          0.0,
+          -11116.66111666112,
+          -5550.0055500055505,
+          -0.926864372113694
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          -22233.32223332224,
+          -11116.66111666112,
+          0.0,
+          22244.427788883335,
+          11105.555561100018,
+          1.85548886059597
+        ],
+        [
+          -11100.011100011101,
+          -5550.0055500055505,
+          0.0,
+          11105.555561100018,
+          5544.461088916633,
+          0.9251042557451116
+        ],
+        [
+          -1.853728744227388,
+          -0.926864372113694,
+          0.0,
+          1.85548886059597,
+          0.9251042557451116,
+          0.00015435534210090618
+        ]
+      ],
+      "jacobian_oracle_relative": 4.1527848612345333e-13,
+      "residual_oracle_relative": 2.38699898933191e-13,
+      "full_virtual_work_relative": 2.384363818081089e-13,
+      "equilibrium_relative": 1.668226055903205e-13,
+      "fixed_source_normal_reaction_n": -0.0015075413748499552,
+      "fixed_target_normal_reaction_n": 0.002507541374849955,
+      "normal_global_balance_relative": 2.0,
+      "both_body_contact_balance_relative": 0.0,
+      "normal_contact_force_n": 0.002507541374850436,
+      "minimum_full_supported_space_tangent_eigenvalue": 0.8138662879899,
+      "full_jacobian_nonsymmetry_l2": 0.0,
+      "free_response_l2_m": 0.0011886136088005573,
+      "iterations": 3,
+      "oracle_perturbation_intervals": [
+        {
+          "coordinate": 0,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 4.999999999998899e-07
+        },
+        {
+          "coordinate": 1,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 4.999999999998899e-07
+        },
+        {
+          "coordinate": 2,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 4.999999999998899e-07
+        },
+        {
+          "coordinate": 3,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 4.999999999998899e-07
+        },
+        {
+          "coordinate": 4,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 4.999999999998899e-07
+        },
+        {
+          "coordinate": 5,
+          "half_interval": 1e-05,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 4.900499999998261e-07
+        }
+      ],
+      "free_tangent_condition_number": 13642.92029438357,
+      "represented_overlap_endpoint_gaps_m": [
+        -1e-06,
+        1.8495475175089805e-06,
+        1.0165499400765284e-06
+      ],
+      "uncovered_source_tip_gap_excluded": true
+    },
+    {
+      "theta": 1e-05,
+      "epsilon_pa_per_m": 1000.0,
+      "coordinates": [
+        -1e-06,
+        -0.00016866223078764695,
+        -0.0011686622306977682,
+        0.0,
+        -0.00016646755386045032,
+        1.00001
+      ],
+      "support_m2": [
+        0.5,
+        0.5000099999500001,
+        5.000000000065512e-11
+      ],
+      "normalized_gap_m": [
+        -1.3987805286962146e-06,
+        -1.7975691161548158e-06,
+        -2.201898480160067e-06
+      ],
+      "pressure_pa": [
+        0.0013987805286962147,
+        0.0017975691161548157,
+        0.002201898480160067
+      ],
+      "all_three_pressure_modes_retained": true,
+      "supported_count": 3,
+      "residual_full_normal_and_cut": [
+        -0.0007658550289245405,
+        -0.0008323377691224731,
+        -8.987859058537297e-14,
+        0.0007658633521291216,
+        0.0008323294460077701,
+        1.3928625850953082e-07
+      ],
+      "jacobian_full_normal_and_cut": [
+        [
+          277.7766666944438,
+          222.22333328889005,
+          1.666622223299589e-08,
+          -277.7788888888887,
+          -222.22111111111136,
+          -0.03712793339316664
+        ],
+        [
+          222.22333328889005,
+          277.78666662777636,
+          3.3333777760437187e-08,
+          -222.22611109444478,
+          -277.78388885555535,
+          -0.04831050248293295
+        ],
+        [
+          1.666622223299589e-08,
+          3.3333777760437187e-08,
+          7.222055559812225e-18,
+          -1.666655556021823e-08,
+          -3.3333444440436884e-08,
+          -1.7981321370589442e-08
+        ],
+        [
+          -277.7788888888887,
+          -222.22611109444478,
+          -1.666655556021823e-08,
+          277.781111111111,
+          222.223888888889,
+          0.03796071963519525
+        ],
+        [
+          -222.22111111111136,
+          -277.78388885555535,
+          -3.3333444440436884e-08,
+          222.223888888889,
+          277.781111111111,
+          0.04747773422222569
+        ],
+        [
+          -0.03652876166305344,
+          -0.04711210105392423,
+          -1.7980994827036735e-08,
+          0.037361535921514144,
+          0.04627934477645834,
+          9.406261628479633e-06
+        ]
+      ],
+      "jacobian_oracle_relative": 6.496253764015134e-13,
+      "residual_oracle_relative": 8.465801058562818e-16,
+      "full_virtual_work_relative": 1.320644996170029e-15,
+      "equilibrium_relative": 2.13873821851922e-14,
+      "fixed_source_normal_reaction_n": -0.0005981927981368935,
+      "fixed_target_normal_reaction_n": 0.0015981927981369131,
+      "normal_global_balance_relative": 2.0000000000000195,
+      "both_body_contact_balance_relative": 3.2526065174565133e-16,
+      "normal_contact_force_n": 0.0015981927981368934,
+      "minimum_full_supported_space_tangent_eigenvalue": 0.811824124917819,
+      "full_jacobian_nonsymmetry_l2": 0.002679675776538735,
+      "free_response_l2_m": 0.0011924469816482538,
+      "iterations": 2,
+      "oracle_perturbation_intervals": [
+        {
+          "coordinate": 0,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 5.000000000065512e-11
+        },
+        {
+          "coordinate": 1,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 5.000000000065512e-11
+        },
+        {
+          "coordinate": 2,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 5.000000000065512e-11
+        },
+        {
+          "coordinate": 3,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 5.000000000065512e-11
+        },
+        {
+          "coordinate": 4,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 5.000000000065512e-11
+        },
+        {
+          "coordinate": 5,
+          "half_interval": 2.5e-06,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 2.8125000001201173e-11
+        }
+      ],
+      "free_tangent_condition_number": 688.6623117490421,
+      "represented_overlap_endpoint_gaps_m": [
+        -1e-06,
+        -2.1963415860886423e-06,
+        -2.2046769271958104e-06
+      ],
+      "uncovered_source_tip_gap_excluded": true
+    },
+    {
+      "theta": 1e-05,
+      "epsilon_pa_per_m": 10000.0,
+      "coordinates": [
+        -1e-06,
+        -0.0001664156609128434,
+        -0.0011664156609126942,
+        0.0,
+        -0.0001669168678174611,
+        1.00001
+      ],
+      "support_m2": [
+        0.5,
+        0.5000099999500001,
+        5.000000000065512e-11
+      ],
+      "normalized_gap_m": [
+        -5.001540824563292e-07,
+        -2.9825155048177957e-10,
+        4.939838539554045e-07
+      ],
+      "pressure_pa": [
+        0.005001540824563292,
+        2.9825155048177956e-06,
+        0.0
+      ],
+      "all_three_pressure_modes_retained": true,
+      "supported_count": 3,
+      "residual_full_normal_and_cut": [
+        -0.0016676773607718597,
+        -0.0008345843390869568,
+        -1.4912478106415517e-16,
+        0.0016676857065316437,
+        0.0008345759933273217,
+        1.393019518205759e-07
+      ],
+      "jacobian_full_normal_and_cut": [
+        [
+          2777.7666669444384,
+          2222.2333328889003,
+          1.6666222232995888e-07,
+          -2777.7888888888865,
+          -2222.2111111111135,
+          -0.3692825077165447
+        ],
+        [
+          2222.2333328889003,
+          2777.8666657777703,
+          3.3333444429326066e-07,
+          -2222.261110944446,
+          -2777.838888055558,
+          -0.46038981127684653
+        ],
+        [
+          1.6666222232995888e-07,
+          3.3333444429326066e-07,
+          4.99983333751981e-17,
+          -1.666655555910713e-07,
+          -3.333311110821464e-07,
+          -8.49713982883508e-11
+        ],
+        [
+          -2777.7888888888865,
+          -2222.261110944446,
+          -1.666655555910713e-07,
+          2777.8111111111098,
+          2222.238888888888,
+          0.37012167913130006
+        ],
+        [
+          -2222.2111111111135,
+          -2777.838888055558,
+          -3.333311110821464e-07,
+          2222.238888888888,
+          2777.811110611114,
+          0.45955063994706236
+        ],
+        [
+          -0.36928151357453426,
+          -0.46038782293317776,
+          -8.497110004773595e-11,
+          0.3701206849694067,
+          0.45954865162327624,
+          7.602724495800464e-05
+        ]
+      ],
+      "jacobian_oracle_relative": 0.33798493165199994,
+      "residual_oracle_relative": 3.649972028004238e-14,
+      "full_virtual_work_relative": 3.3199731047491475e-14,
+      "equilibrium_relative": 7.137484971989179e-14,
+      "fixed_source_normal_reaction_n": -0.0015022616998590162,
+      "fixed_target_normal_reaction_n": 0.0025022616998590158,
+      "normal_global_balance_relative": 1.9999999999999996,
+      "both_body_contact_balance_relative": 1.0842021724855044e-16,
+      "normal_contact_force_n": 0.002502261699859061,
+      "minimum_full_supported_space_tangent_eigenvalue": 0.813656099265099,
+      "full_jacobian_nonsymmetry_l2": 4.44603603914792e-06,
+      "free_response_l2_m": 0.0011899919776962565,
+      "iterations": 3,
+      "oracle_perturbation_intervals": [
+        {
+          "coordinate": 0,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": false,
+          "minimum_positive_support_m2": 5.000000000065512e-11
+        },
+        {
+          "coordinate": 1,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": false,
+          "minimum_positive_support_m2": 5.000000000065512e-11
+        },
+        {
+          "coordinate": 2,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 5.000000000065512e-11
+        },
+        {
+          "coordinate": 3,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": false,
+          "minimum_positive_support_m2": 5.000000000065512e-11
+        },
+        {
+          "coordinate": 4,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": false,
+          "minimum_positive_support_m2": 5.000000000065512e-11
+        },
+        {
+          "coordinate": 5,
+          "half_interval": 2.5e-06,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 2.8125000001201173e-11
+        }
+      ],
+      "free_tangent_condition_number": 6832.34383211566,
+      "represented_overlap_endpoint_gaps_m": [
+        -1e-06,
+        4.995377526310224e-07,
+        4.912069046176311e-07
+      ],
+      "uncovered_source_tip_gap_excluded": true
+    },
+    {
+      "theta": 1e-05,
+      "epsilon_pa_per_m": 100000.0,
+      "coordinates": [
+        -1e-06,
+        -0.0001652906302371098,
+        -0.00116529063023711,
+        0.0,
+        -0.00016714187395257797,
+        1.00001
+      ],
+      "support_m2": [
+        0.5,
+        0.5000099999500001,
+        5.000000000065512e-11
+      ],
+      "normalized_gap_m": [
+        -5.014256218577866e-08,
+        8.997337890185137e-07,
+        1.8440199147929332e-06
+      ],
+      "pressure_pa": [
+        0.005014256218577866,
+        0.0,
+        0.0
+      ],
+      "all_three_pressure_modes_retained": true,
+      "supported_count": 3,
+      "residual_full_normal_and_cut": [
+        -0.0016714187395260463,
+        -0.0008357093697630232,
+        0.0,
+        0.0016714270965361734,
+        0.0008357010127528954,
+        1.3967923654322078e-07
+      ],
+      "jacobian_full_normal_and_cut": [
+        [
+          22222.222222222226,
+          11111.111111111113,
+          0.0,
+          -22222.333332222235,
+          -11111.0000011111,
+          -1.857094790724898
+        ],
+        [
+          11111.111111111113,
+          5555.555555555557,
+          0.0,
+          -11111.166666111118,
+          -5555.50000055555,
+          -0.928547395362449
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          -22222.333332222235,
+          -11111.166666111118,
+          0.0,
+          22222.44444277779,
+          11111.05555555556,
+          1.8579397687618242
+        ],
+        [
+          -11111.0000011111,
+          -5555.50000055555,
+          0.0,
+          11111.05555555556,
+          5555.444446111087,
+          0.9277024173255227
+        ],
+        [
+          -1.857094790724898,
+          -0.928547395362449,
+          0.0,
+          1.8579397687618242,
+          0.9277024173255227,
+          0.0001549166920986602
+        ]
+      ],
+      "jacobian_oracle_relative": 4.220949308763042e-13,
+      "residual_oracle_relative": 5.4371752160225033e-14,
+      "full_virtual_work_relative": 5.4361459927249194e-14,
+      "equilibrium_relative": 1.8813516470843395e-13,
+      "fixed_source_normal_reaction_n": -0.0015071281092889366,
+      "fixed_target_normal_reaction_n": 0.0025071281092889355,
+      "normal_global_balance_relative": 1.9999999999999991,
+      "both_body_contact_balance_relative": 6.505213034913027e-16,
+      "normal_contact_force_n": 0.002507128109288933,
+      "minimum_full_supported_space_tangent_eigenvalue": 0.8137582423166212,
+      "full_jacobian_nonsymmetry_l2": 0.0,
+      "free_response_l2_m": 0.00118876391743313,
+      "iterations": 3,
+      "oracle_perturbation_intervals": [
+        {
+          "coordinate": 0,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 5.000000000065512e-11
+        },
+        {
+          "coordinate": 1,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 5.000000000065512e-11
+        },
+        {
+          "coordinate": 2,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 5.000000000065512e-11
+        },
+        {
+          "coordinate": 3,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 5.000000000065512e-11
+        },
+        {
+          "coordinate": 4,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 5.000000000065512e-11
+        },
+        {
+          "coordinate": 5,
+          "half_interval": 2.5e-06,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 2.8125000001201173e-11
+        }
+      ],
+      "free_tangent_condition_number": 13658.233651208851,
+      "represented_overlap_endpoint_gaps_m": [
+        -1e-06,
+        1.8495723134426517e-06,
+        1.84124371546812e-06
+      ],
+      "uncovered_source_tip_gap_excluded": true
+    },
+    {
+      "theta": 1e-07,
+      "epsilon_pa_per_m": 1000.0,
+      "coordinates": [
+        -1e-06,
+        -0.00016866366119177084,
+        -0.0011686636611917618,
+        0.0,
+        -0.0001664672677616476,
+        1.0000001
+      ],
+      "support_m2": [
+        0.5,
+        0.5000000999999951,
+        5.000000005838672e-15
+      ],
+      "normalized_gap_m": [
+        -1.3988033589494568e-06,
+        -1.7976067976679021e-06,
+        -2.1964656456982997e-06
+      ],
+      "pressure_pa": [
+        0.0013988033589494569,
+        0.0017976067976679022,
+        0.0021964656456983
+      ],
+      "all_three_pressure_modes_retained": true,
+      "supported_count": 3,
+      "residual_full_normal_and_cut": [
+        -0.0007658689192611321,
+        -0.0008323363388082113,
+        -8.988034151745478e-18,
+        0.0007658690024947486,
+        0.0008323362555746036,
+        1.3927376971909465e-07
+      ],
+      "jacobian_full_normal_and_cut": [
+        [
+          277.7777666666695,
+          222.22223333332894,
+          1.6666662278692933e-12,
+          -277.77778888888895,
+          -222.22221111111116,
+          -0.037125682791276496
+        ],
+        [
+          222.22223333332894,
+          277.7778666666629,
+          3.333333789071537e-12,
+          -222.2222611111095,
+          -277.77783888888564,
+          -0.04830444433990944
+        ],
+        [
+          1.6666662278692933e-12,
+          3.333333789071537e-12,
+          7.222220608958534e-26,
+          -1.6666665612025664e-12,
+          -3.3333334557383355e-12,
+          -1.797612429398158e-10
+        ],
+        [
+          -277.77778888888895,
+          -222.2222611111095,
+          -1.6666665612025664e-12,
+          277.7778111111112,
+          222.2222388888889,
+          0.03795802361430023
+        ],
+        [
+          -222.22221111111116,
+          -277.77783888888564,
+          -3.3333334557383355e-12,
+          222.2222388888889,
+          277.77781111111113,
+          0.04747210369664696
+        ],
+        [
+          -0.036526480705147836,
+          -0.04710603958848436,
+          -1.7976121032065e-10,
+          0.03735882140833114,
+          0.04627369906506227,
+          9.404540344814093e-06
+        ]
+      ],
+      "jacobian_oracle_relative": 3.908733547719943e-13,
+      "residual_oracle_relative": 5.6757520281417565e-15,
+      "full_virtual_work_relative": 9.464833526415843e-15,
+      "equilibrium_relative": 1.2498457676080428e-14,
+      "fixed_source_normal_reaction_n": -0.0005982052580693613,
+      "fixed_target_normal_reaction_n": 0.0015982052580693611,
+      "normal_global_balance_relative": 2.0,
+      "both_body_contact_balance_relative": 0.0,
+      "normal_contact_force_n": 0.0015982052580693616,
+      "minimum_full_supported_space_tangent_eigenvalue": 0.8118229867506389,
+      "full_jacobian_nonsymmetry_l2": 0.002679714176139315,
+      "free_response_l2_m": 0.0011924485459896262,
+      "iterations": 2,
+      "oracle_perturbation_intervals": [
+        {
+          "coordinate": 0,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 5.000000005838672e-15
+        },
+        {
+          "coordinate": 1,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 5.000000005838672e-15
+        },
+        {
+          "coordinate": 2,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 5.000000005838672e-15
+        },
+        {
+          "coordinate": 3,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 5.000000005838672e-15
+        },
+        {
+          "coordinate": 4,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 5.000000005838672e-15
+        },
+        {
+          "coordinate": 5,
+          "half_interval": 2.5e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 2.8124999991209165e-15
+        }
+      ],
+      "free_tangent_condition_number": 688.6484216308932,
+      "represented_overlap_endpoint_gaps_m": [
+        -1e-06,
+        -2.196410076848364e-06,
+        -2.1964934301233027e-06
+      ],
+      "uncovered_source_tip_gap_excluded": true
+    },
+    {
+      "theta": 1e-07,
+      "epsilon_pa_per_m": 10000.0,
+      "coordinates": [
+        -1e-06,
+        -0.00016641702774848903,
+        -0.001166417027748489,
+        0.0,
+        -0.0001669165944502903,
+        1.0000001
+      ],
+      "support_m2": [
+        0.5,
+        0.5000000999999951,
+        5.000000005838672e-15
+      ],
+      "normalized_gap_m": [
+        -5.001499966188425e-07,
+        -2.9989327605618716e-10,
+        4.994944712486479e-07
+      ],
+      "pressure_pa": [
+        0.005001499966188425,
+        2.9989327605618717e-06,
+        0.0
+      ],
+      "all_three_pressure_modes_retained": true,
+      "supported_count": 3,
+      "residual_full_normal_and_cut": [
+        -0.0016676664775228582,
+        -0.0008345829722513991,
+        -1.499466285269565e-20,
+        0.0016676665609811473,
+        0.0008345828887931101,
+        1.3930422088699468e-07
+      ],
+      "jacobian_full_normal_and_cut": [
+        [
+          2777.777666666695,
+          2222.2223333332895,
+          1.666666227869293e-11,
+          -2777.7778888888897,
+          -2222.222111111111,
+          -0.3692598216557397
+        ],
+        [
+          2222.2223333332895,
+          2777.778666666579,
+          3.333333455738224e-11,
+          -2222.222611111095,
+          -2777.778388888806,
+          -0.46032848407685384
+        ],
+        [
+          1.666666227869293e-11,
+          3.333333455738224e-11,
+          4.999998367215529e-25,
+          -1.6666665612025555e-11,
+          -3.3333331224050115e-11,
+          -3.0540715548128535e-13
+        ],
+        [
+          -2777.7778888888897,
+          -2222.222611111095,
+          -1.6666665612025555e-11,
+          2777.778111111112,
+          2222.2223888888893,
+          0.3700944504936129
+        ],
+        [
+          -2222.222111111111,
+          -2777.778388888806,
+          -3.3333331224050115e-11,
+          2222.2223888888893,
+          2777.7781111110617,
+          0.4594938552392859
+        ],
+        [
+          -0.3692588220117861,
+          -0.4603264847883469,
+          -3.0540712549196866e-13,
+          0.37009345084945944,
+          0.4594918559509789,
+          7.600937234808583e-05
+        ]
+      ],
+      "jacobian_oracle_relative": 0.337840338745578,
+      "residual_oracle_relative": 5.148261473210931e-14,
+      "full_virtual_work_relative": 8.098367439024555e-14,
+      "equilibrium_relative": 1.2338754237902587e-13,
+      "fixed_source_normal_reaction_n": -0.0015022494497743692,
+      "fixed_target_normal_reaction_n": 0.00250224944977431,
+      "normal_global_balance_relative": 1.999999999999941,
+      "both_body_contact_balance_relative": 1.0842021724855044e-16,
+      "normal_contact_force_n": 0.002502249449774387,
+      "minimum_full_supported_space_tangent_eigenvalue": 0.8136550117042558,
+      "full_jacobian_nonsymmetry_l2": 4.470544650413235e-06,
+      "free_response_l2_m": 0.0011899934702548343,
+      "iterations": 2,
+      "oracle_perturbation_intervals": [
+        {
+          "coordinate": 0,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": false,
+          "minimum_positive_support_m2": 5.000000005838672e-15
+        },
+        {
+          "coordinate": 1,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": false,
+          "minimum_positive_support_m2": 5.000000005838672e-15
+        },
+        {
+          "coordinate": 2,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 5.000000005838672e-15
+        },
+        {
+          "coordinate": 3,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": false,
+          "minimum_positive_support_m2": 5.000000005838672e-15
+        },
+        {
+          "coordinate": 4,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": false,
+          "minimum_positive_support_m2": 5.000000005838672e-15
+        },
+        {
+          "coordinate": 5,
+          "half_interval": 2.5e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 2.8124999991209165e-15
+        }
+      ],
+      "free_tangent_condition_number": 6832.204303199845,
+      "represented_overlap_endpoint_gaps_m": [
+        -1e-06,
+        4.995500101434645e-07,
+        4.994667018011977e-07
+      ],
+      "uncovered_source_tip_gap_excluded": true
+    },
+    {
+      "theta": 1e-07,
+      "epsilon_pa_per_m": 100000.0,
+      "coordinates": [
+        -1e-06,
+        -0.00016529200893686103,
+        -0.0011652920089368609,
+        0.0,
+        -0.0001671415982126278,
+        1.0000001
+      ],
+      "support_m2": [
+        0.5,
+        0.5000000999999951,
+        5.000000005838672e-15
+      ],
+      "normalized_gap_m": [
+        -5.0142479463799604e-08,
+        8.997152310355336e-07,
+        1.849517037714026e-06
+      ],
+      "pressure_pa": [
+        0.005014247946379961,
+        0.0,
+        0.0
+      ],
+      "all_three_pressure_modes_retained": true,
+      "supported_count": 3,
+      "residual_full_normal_and_cut": [
+        -0.0016714159821263931,
+        -0.0008357079910631966,
+        0.0,
+        0.001671416065697184,
+        0.0008357079074924056,
+        1.3968154132905742e-07
+      ],
+      "jacobian_full_normal_and_cut": [
+        [
+          22222.222222222226,
+          11111.111111111113,
+          0.0,
+          -22222.22333333323,
+          -11111.110000000113,
+          -1.8571284976034794
+        ],
+        [
+          11111.111111111113,
+          5555.555555555557,
+          0.0,
+          -11111.111666666615,
+          -5555.555000000057,
+          -0.9285642488017397
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          -22222.22333333323,
+          -11111.111666666615,
+          0.0,
+          22222.224444444288,
+          11111.110555555559,
+          1.8579642982838172
+        ],
+        [
+          -11111.110000000113,
+          -5555.555000000057,
+          0.0,
+          11111.110555555559,
+          5555.554444444611,
+          0.9277284481214024
+        ],
+        [
+          -1.8571284976034794,
+          -0.9285642488017397,
+          0.0,
+          1.8579642982838172,
+          0.9277284481214024,
+          0.0001549223184927712
+        ]
+      ],
+      "jacobian_oracle_relative": 3.8105039770407807e-13,
+      "residual_oracle_relative": 1.5581121756236043e-13,
+      "full_virtual_work_relative": 1.5582161189528892e-13,
+      "equilibrium_relative": 8.149573508527567e-14,
+      "fixed_source_normal_reaction_n": -0.001507123973189532,
+      "fixed_target_normal_reaction_n": 0.0025071239731895324,
+      "normal_global_balance_relative": 2.0000000000000004,
+      "both_body_contact_balance_relative": 0.0,
+      "normal_contact_force_n": 0.0025071239731899804,
+      "minimum_full_supported_space_tangent_eigenvalue": 0.8137571609349885,
+      "full_jacobian_nonsymmetry_l2": 0.0,
+      "free_response_l2_m": 0.0011887654218404738,
+      "iterations": 3,
+      "oracle_perturbation_intervals": [
+        {
+          "coordinate": 0,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 5.000000005838672e-15
+        },
+        {
+          "coordinate": 1,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 5.000000005838672e-15
+        },
+        {
+          "coordinate": 2,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 5.000000005838672e-15
+        },
+        {
+          "coordinate": 3,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 5.000000005838672e-15
+        },
+        {
+          "coordinate": 4,
+          "half_interval": 1e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 5.000000005838672e-15
+        },
+        {
+          "coordinate": 5,
+          "half_interval": 2.5e-08,
+          "active_branch_unchanged": true,
+          "minimum_positive_support_m2": 2.8124999991209165e-15
+        }
+      ],
+      "free_tangent_condition_number": 13658.387023359397,
+      "represented_overlap_endpoint_gaps_m": [
+        -1e-06,
+        1.8495725616086143e-06,
+        1.8494892757667139e-06
+      ],
+      "uncovered_source_tip_gap_excluded": true
+    }
+  ],
+  "vanishing_overlap_constant_gap_controls": [
+    {
+      "overlap_length_m": 0.1,
+      "support_m2": [
+        0.095,
+        0.005000000000000001,
+        0.0
+      ],
+      "pressure_pa": [
+        0.01,
+        0.010000000000000002,
+        0.0
+      ],
+      "normal_force_n": 0.001,
+      "projected_cut_work_n": 7.940933880509065e-25,
+      "storage_derivative_n": 5e-09,
+      "pressure_modes_retained": 3
+    },
+    {
+      "overlap_length_m": 0.01,
+      "support_m2": [
+        0.00995,
+        5e-05,
+        0.0
+      ],
+      "pressure_pa": [
+        0.01,
+        0.01,
+        0.0
+      ],
+      "normal_force_n": 0.0001,
+      "projected_cut_work_n": -2.117582368135751e-24,
+      "storage_derivative_n": 5e-09,
+      "pressure_modes_retained": 3
+    },
+    {
+      "overlap_length_m": 0.001,
+      "support_m2": [
+        0.0009995,
+        5e-07,
+        0.0
+      ],
+      "pressure_pa": [
+        0.01,
+        0.009999999999999997,
+        0.0
+      ],
+      "normal_force_n": 1e-05,
+      "projected_cut_work_n": 2.0679515313825685e-27,
+      "storage_derivative_n": 5e-09,
+      "pressure_modes_retained": 3
+    },
+    {
+      "overlap_length_m": 0.0001,
+      "support_m2": [
+        9.999500000000001e-05,
+        5e-09,
+        0.0
+      ],
+      "pressure_pa": [
+        0.01,
+        0.01,
+        0.0
+      ],
+      "normal_force_n": 1e-06,
+      "projected_cut_work_n": 0.0,
+      "storage_derivative_n": 5e-09,
+      "pressure_modes_retained": 3
+    },
+    {
+      "overlap_length_m": 1e-05,
+      "support_m2": [
+        9.99995e-06,
+        5.000000000000001e-11,
+        0.0
+      ],
+      "pressure_pa": [
+        0.01,
+        0.01,
+        0.0
+      ],
+      "normal_force_n": 1.0000000000000001e-07,
+      "projected_cut_work_n": -1.6155871338926322e-29,
+      "storage_derivative_n": 5e-09,
+      "pressure_modes_retained": 3
+    }
+  ],
+  "finite_regularization_sensitivity": [
+    {
+      "theta": 0.1,
+      "epsilon_pair_pa_per_m": [
+        10000.0,
+        100000.0
+      ],
+      "free_response_relative": 0.01750859045424664,
+      "force_relative": 0.01461853978670048
+    },
+    {
+      "theta": 0.05,
+      "epsilon_pair_pa_per_m": [
+        10000.0,
+        100000.0
+      ],
+      "free_response_relative": 0.02719114759221288,
+      "force_relative": 0.25874673796556247
+    },
+    {
+      "theta": 0.025,
+      "epsilon_pair_pa_per_m": [
+        10000.0,
+        100000.0
+      ],
+      "free_response_relative": 0.0044390281849696536,
+      "force_relative": 0.13211175144659695
+    },
+    {
+      "theta": 0.001,
+      "epsilon_pair_pa_per_m": [
+        10000.0,
+        100000.0
+      ],
+      "free_response_relative": 0.001352315236413854,
+      "force_relative": 0.0019456656121853739
+    },
+    {
+      "theta": 1e-05,
+      "epsilon_pair_pa_per_m": [
+        10000.0,
+        100000.0
+      ],
+      "free_response_relative": 0.0013517109549340137,
+      "force_relative": 0.0019410294240018808
+    },
+    {
+      "theta": 1e-07,
+      "epsilon_pair_pa_per_m": [
+        10000.0,
+        100000.0
+      ],
+      "free_response_relative": 0.0013516949898450949,
+      "force_relative": 0.0019442689981506727
+    }
+  ],
+  "criterion_results": {
+    "jacobian": false,
+    "residual": true,
+    "full_work": true,
+    "equilibrium": true,
+    "reactions": false,
+    "both_body_balance": true,
+    "positive_pressure": true,
+    "coercive_supported_response": true,
+    "zero_constant_gap_cut_work": true,
+    "last_two_epsilon_response": false,
+    "bounded_cut_response_epsilon_1000": true,
+    "bounded_cut_response_epsilon_10000": true,
+    "bounded_cut_response_epsilon_100000": true
+  },
+  "elapsed_seconds": 0.07957920001354069,
+  "limits": [
+    "Independent scalar strip, not the retained 2D shell counterexample or a shell solve.",
+    "No cut-uniform exact-pressure inf-sup or method acceptance claim.",
+    "Projection/offset shell work, physical gap accuracy and moving active rims remain untested."
+  ]
+}

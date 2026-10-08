@@ -1,0 +1,20 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 3.0928687999985414,
+  "peak_process_tree_memory_mb": 71.938048,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pip",
+    "install",
+    "--no-deps",
+    "--no-index",
+    "--target",
+    "reports/d1_installed_c0dfc7a1/target",
+    "reports/d1_installed_c0dfc7a1/dist/anysolver-0.4.7-py3-none-any.whl"
+  ],
+  "log": "docs\\d1_review_support\\d1_current_wheel_install_20260929.log"
+}

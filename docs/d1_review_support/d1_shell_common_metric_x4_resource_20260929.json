@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 2,
+  "elapsed_seconds": 56.83438079999905,
+  "peak_process_tree_memory_mb": 344.584192,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-u",
+    "-m",
+    "docs.d1_review_support.d1_saved_active_compliance",
+    "--enriched-source-x4",
+    "--output",
+    "docs/d1_review_support/d1_shell_common_metric_x4_20260929.json"
+  ],
+  "log": "reports\\d1_shell_common_metric_x4_log_dev_20260929.txt"
+}

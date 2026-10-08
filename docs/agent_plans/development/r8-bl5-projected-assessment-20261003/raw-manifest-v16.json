@@ -1,0 +1,156 @@
+{
+  "identity": "BL5_ONE_POSITIVE_PART_GRAM_RAW_V16",
+  "source_parent": "301d73bf",
+  "previous_manifest": "raw-manifest-v15.json",
+  "previous_manifest_sha256": "32898e1c8ca3fd63fcda312b171ff2118020a46c07071f60d8707bf5cbb6fb64",
+  "formal_f03_authority_consumed": false,
+  "qualification_claim": false,
+  "files": [
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/audit-v1.json",
+      "sha256": "35709f75c746ba4376d953455e4e9c452c69b17c08c49257f313ef3c47fd2823",
+      "bytes": 409
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/audit-v1.py",
+      "sha256": "6497a3cfcff88e070404a9dd80623d8a7c6fe1e234f74a0d1aa554b23336c443",
+      "bytes": 2907
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/bindings-v1.json",
+      "sha256": "beff1aadb79d6a5227281509b6ef6b2f25f841746f898fb7f9e4a136072906d3",
+      "bytes": 2599
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/case-v1/execution.json",
+      "sha256": "ddc0c8cd506387ead5f04a25ac7eae758847bc2f61c4556fda5958d6b5341560",
+      "bytes": 967
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/case-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/case-v1/stdout.log",
+      "sha256": "19b369123249c05a875106eafb4e45bde8cecb2bf1d3e62f0516a557e0c672da",
+      "bytes": 134
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/case-v1/thread-samples.json",
+      "sha256": "f030ce92aea11731f9a8b9aea4b32bd5c7de5207c7a97ecfb5350a1c21677e65",
+      "bytes": 10308
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/design-v1.md",
+      "sha256": "4f8acb0b3e5b57b1989a72525b84aac67ace1c977f61a7f4f2a9e5db6f1861ec",
+      "bytes": 1882
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/helper-draft-v1.py",
+      "sha256": "39bd57f9a24a8dd25a1eec6196725d5812cbdfd8e5be70096a6f87b9249a6e7d",
+      "bytes": 7477
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/helper-v2.py",
+      "sha256": "cfbad170012b4b8b7ada99142703ac854d78e31b8d317771656c890bd171c98c",
+      "bytes": 7490
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/kernel-v1.json",
+      "sha256": "94864d7991e54cbf3460399d514d0078ff7327d269ecb9496ac47294bac39e93",
+      "bytes": 80014
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/kernel-v1.npz",
+      "sha256": "874ab68f844dd3d123ff8a610e1c50e95531306dd060bc8633e5d7525e1ccb0d",
+      "bytes": 5335631
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/probe-v1.py",
+      "sha256": "c6dc5b3e711c2ccc901391f2dabd619f08ff0cfc8ad3853260cac993bfdfe80f",
+      "bytes": 3958
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/review-after-run-v1.md",
+      "sha256": "e12365bd5cffc66e08ddcef22f95f88933d95cab545ca915f23e4ebc0612c122",
+      "bytes": 1490
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/review-before-run-v1.md",
+      "sha256": "21f40139a3f1e8ff598ad2463d014aeca74ce64c139601b61329bc99bf44f0a7",
+      "bytes": 1687
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/run-v1.py",
+      "sha256": "459fe25882656f58c63416cc3d8eac3f2968080c87913cbc51bab3244f488e49",
+      "bytes": 1570
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/run-v2.py",
+      "sha256": "7d1c1f9d33f04e7404729b4d2fee3233c721d4b0b35cd8ad2a51017d583cc7ba",
+      "bytes": 1570
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/test-v1/execution.json",
+      "sha256": "d9751ca2228d5d97d55f9910d5f9fdce5d5c1a626207d380b9264ca88ba21923",
+      "bytes": 1171
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/test-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/test-v1/stdout.log",
+      "sha256": "a862682102089c0d26ee5eab65a5bcdae2aa89d4a5f8fb7d1bc7e9892e8ce9ba",
+      "bytes": 12252
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/test-v1/thread-samples.json",
+      "sha256": "d7ab719257ce9e73c3b1b6cecf0ff3aaf3b0008caf63d149ef41178f24912c4d",
+      "bytes": 10303
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/test-v2/execution.json",
+      "sha256": "903130a4e893e58004b069b41f548879239c8cf91cc6a8dd0eea302a52ee11a3",
+      "bytes": 1174
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/test-v2/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/test-v2/stdout.log",
+      "sha256": "3cfa7e238de2f0a64b5884dc77192921714d09d060f5b8e39df62c46634038cf",
+      "bytes": 101
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/test-v2/thread-samples.json",
+      "sha256": "4169055ba97b70a9ffde1d4056db54fe6ff2d9673203f5b88e07f55d2bb16684",
+      "bytes": 9585
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/tests-draft-v1.py",
+      "sha256": "a137121c007ded140553b6ee1e11d6db40707fe99277ad3136095265ccfa44c7",
+      "bytes": 9329
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/tests-v2.py",
+      "sha256": "09c222115e1e506ae85e5a2394ed61dafe06190e2d2cd925337017fc566013aa",
+      "bytes": 10333
+    },
+    {
+      "path": "scripts/r8_bl5_positive_part_gram_dev.py",
+      "sha256": "cfbad170012b4b8b7ada99142703ac854d78e31b8d317771656c890bd171c98c",
+      "bytes": 7490
+    },
+    {
+      "path": "tests/test_r8_bl5_positive_part_gram_dev.py",
+      "sha256": "09c222115e1e506ae85e5a2394ed61dafe06190e2d2cd925337017fc566013aa",
+      "bytes": 10333
+    }
+  ],
+  "scope": "One fixed original-target method correction, controls with preserved failure, resource HOLD, complete factor retention; route closed unresolved, seven fine cases not run"
+}

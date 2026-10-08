@@ -1,0 +1,238 @@
+{
+  "beam_free_dofs": 216,
+  "cases": {
+    "p0_m4": {
+      "line_norm": {
+        "basis_integrals_m": [
+          0.02500000000000003,
+          0.024999999999999918,
+          0.02500000000000003,
+          0.02500000000000003
+        ],
+        "density_gram_ordering_defect": 2.710505071948774e-20,
+        "moment_to_force_equivalent_length_m": 0.1,
+        "physical_density_units": [
+          "N/m",
+          "N/m",
+          "N/m",
+          "Nm/m",
+          "Nm/m",
+          "Nm/m"
+        ]
+      },
+      "mixed_nnz": 349749,
+      "mixed_rows": 1670,
+      "norm_cases": {
+        "pulled_full": {
+          "beta_min": 0.000409449313921921,
+          "constraint_euclidean": 4.155528441790778e-13,
+          "metric_norm_sq": 1.0,
+          "metric_shares": {
+            "beam_complementary": 2.2786704917879871e-10,
+            "beam_kinematic": 2.813421628034692e-10,
+            "line_dual": 2.0223858665352002e-09,
+            "shell_chart_induced": 0.9998607860544944,
+            "shell_physical": 0.00013921141391052015
+          },
+          "nearest_signed_eigenvalues": [
+            0.000409449313921921,
+            0.0004179843487147028,
+            0.0006118699258400794,
+            0.0007308708145820802,
+            0.0008637336240119887,
+            0.0009679586025141293
+          ],
+          "relative_eigen_residual": 7.086643168870142e-14,
+          "work_J": 8.280645054955352e-13,
+          "work_transpose_J": 8.280645054939036e-13
+        },
+        "restricted_physical": {
+          "beta_min": 0.015196304111750674,
+          "constraint_euclidean": 1.307711890043462e-08,
+          "metric_norm_sq": 1.0000000000003348,
+          "metric_shares": {
+            "beam_complementary": 0.01208058993768949,
+            "beam_kinematic": 0.9840061019452785,
+            "line_dual": 0.001205084351816382,
+            "shell_chart_induced": 0.0,
+            "shell_physical": 0.002708223765499226
+          },
+          "nearest_signed_eigenvalues": [
+            0.015196304111750674,
+            0.06475772228752387,
+            0.08582738224153207,
+            -0.12212555980829007,
+            0.1293071297606244,
+            -0.1350589544758407
+          ],
+          "relative_eigen_residual": 1.2478779260006517e-11,
+          "work_J": 1.8312828290556487e-05,
+          "work_transpose_J": 1.8312828290559333e-05
+        }
+      },
+      "reference_gap_m_rad": 2.3672672832469767e-16,
+      "row_count": 24,
+      "row_rank": 24,
+      "row_tail_relative": [
+        0.36665523608501616,
+        0.2462684755801732,
+        0.1926993857958485,
+        0.14252864179911015,
+        0.14234868005219167,
+        0.13960816763011588
+      ]
+    },
+    "p0_m8": {
+      "line_norm": {
+        "basis_integrals_m": [
+          0.012499999999999959,
+          0.01250000000000007,
+          0.012499999999999959,
+          0.012499999999999959,
+          0.01250000000000007,
+          0.012499999999999959,
+          0.01250000000000007,
+          0.012499999999999959
+        ],
+        "density_gram_ordering_defect": -1.016438284170338e-20,
+        "moment_to_force_equivalent_length_m": 0.1,
+        "physical_density_units": [
+          "N/m",
+          "N/m",
+          "N/m",
+          "Nm/m",
+          "Nm/m",
+          "Nm/m"
+        ]
+      },
+      "mixed_nnz": 350405,
+      "mixed_rows": 1694,
+      "norm_cases": {
+        "pulled_full": {
+          "beta_min": 0.00040945127384141555,
+          "constraint_euclidean": 9.415468095486133e-13,
+          "metric_norm_sq": 0.9999999999999991,
+          "metric_shares": {
+            "beam_complementary": 4.594323853844781e-10,
+            "beam_kinematic": 6.019024864362063e-10,
+            "line_dual": 6.939713167360774e-09,
+            "shell_chart_induced": 0.9998607893632669,
+            "shell_physical": 0.00013920263568393363
+          },
+          "nearest_signed_eigenvalues": [
+            0.00040945127384141555,
+            0.00041798527209903287,
+            0.0006118867670464937,
+            0.0007308709178565569,
+            0.0008637339390121464,
+            0.0009680995295270725
+          ],
+          "relative_eigen_residual": 7.301420730034662e-14,
+          "work_J": 2.841474396477182e-12,
+          "work_transpose_J": 2.841474396468777e-12
+        },
+        "restricted_physical": {
+          "beta_min": 0.007139530314156322,
+          "constraint_euclidean": 1.090213179491646e-06,
+          "metric_norm_sq": 1.0000000000000016,
+          "metric_shares": {
+            "beam_complementary": 4.819294696710369e-06,
+            "beam_kinematic": 1.2388336810133774e-05,
+            "line_dual": 0.9929487602155624,
+            "shell_chart_induced": 0.0,
+            "shell_physical": 0.0070340321529322085
+          },
+          "nearest_signed_eigenvalues": [
+            -0.007139530314156322,
+            0.015224795416994067,
+            -0.017407342023471637,
+            -0.02755303247708163,
+            -0.03903329055699646,
+            -0.05119015441847407
+          ],
+          "relative_eigen_residual": 2.0732978217009012e-12,
+          "work_J": -0.007089187773962863,
+          "work_transpose_J": -0.007089187773962862
+        }
+      },
+      "reference_gap_m_rad": 3.232993416167595e-16,
+      "row_count": 48,
+      "row_rank": 48,
+      "row_tail_relative": [
+        0.12214336459009328,
+        0.11990025632759574,
+        0.11981482377443725,
+        0.11143087818540917,
+        0.10561542735213923,
+        0.06768353540778055
+      ]
+    }
+  },
+  "classification": "same-primal exact-Schur P0 and norm sensitivity diagnostic; not F03/G0B acceptance",
+  "elapsed_s_not_benchmark": 65.87509489999502,
+  "layout": {
+    "cell_rotations": 36,
+    "complementary_min_diagonal_J_per_resultant_squared": 1.7857142859640813e-11,
+    "free": 216,
+    "nodal": 78,
+    "resultants": 108
+  },
+  "limitations": [
+    "one fixed shell/beam model, not mesh-uniform stability",
+    "inherited dual norm is a diagnostic, not independently qualified",
+    "near mode alone does not measure locking or physical accuracy"
+  ],
+  "limits": {
+    "max_dense_rows": 1900,
+    "rss_bytes": 2147483648,
+    "wall_s": 120.0
+  },
+  "model": "C1 Q4 x16/y4 35 mm, B3-12 2 um tangent, fixed left roots",
+  "norms": {
+    "pulled_full": "same metric with exact full shell chart norm pulled along static Schur lift",
+    "restricted_physical": "inherited physical shell+beam+P0 dual metric, excluding eliminated chart norm"
+  },
+  "numpy": "2.4.6",
+  "peak_rss_bytes": 466329600,
+  "pulled_chart_over_restricted_shell_norm_frobenius": 8.377498539834514,
+  "python": "3.14.2",
+  "question": "On one native x16 primal, does four-to-eight P0 growth create a weaker line mode and does its interpretation depend on chart norm?",
+  "shell_drill_dofs_eliminated": 286,
+  "shell_physical_dofs": 1430,
+  "source_git": "32aa67efd3647109c0fb936d3f0da3394373c973",
+  "source_sha256": {
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b3_e4_f03_top_face_fixed_primal_spaces.py": "6c6de5c6df2190f558c0bd29806f618527e18c009a13cf2551b50f5da4c6878c",
+    "scripts\\_b3_e4_f03_native_fixture.py": "94d9e1a3532c3b2c061153e73942ccd73283eae0ef895b5ca4ef4014e5caa3fb",
+    "scripts\\b3_e4_f03_c1_native_mixed_metric.py": "9e5be04e9757b9ad365d0f89c74ee9027447dbf74773da43b9a4ced3ee47c390",
+    "scripts\\b3_e4_f03_distributed_surface_finite.py": "2cedbdc73564d6ffee0efa54825065dd10cb02329ca505ef49815d636ccc7cca",
+    "scripts\\b3_e4_f03_plate_patch_work.py": "61226436c029b6ebd80a7d63fb5b7038493fb29dfd06ee245fe3ca7fd78507ea"
+  },
+  "thread_env": {
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_DISABLE_JIT": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "threadpool_info": [
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.31.188.0"
+    },
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.30"
+    }
+  ]
+}

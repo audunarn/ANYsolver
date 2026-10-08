@@ -1,0 +1,1 @@
+{"theta": 0.05, "source_full_work_l2": 1.0978336421043303e-05, "target_full_work_l2": 2.1722161110770456e-05, "all_full_work_l2": 2.4338778808639395e-05, "virtual_work_residual_l2": 1.0875903867348912e-19, "elapsed_s": 1.671313699989696}

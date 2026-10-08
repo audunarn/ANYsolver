@@ -1,0 +1,165 @@
+{
+  "prior_head": "90435dd9c3edafa73d5a24cbf74de8d95dc8b833",
+  "owned_paths": [
+    {
+      "path": ".gitattributes",
+      "sha256": "48156cfced7ac8cc6a531e919686349cb84a9673846d79ceb82e3350695d714a"
+    },
+    {
+      "path": "GENERAL_CONTACT_PLAN.md",
+      "sha256": "0e1a9f6ddf4687db5ad7da0fb9bd3a4b443abf124fbd8826b2a8e47e69116534"
+    },
+    {
+      "path": "GENERAL_CONTACT_RESTART.md",
+      "sha256": "609ee97fb137cae500ae81d617d587c1c180b7f1a7765df1bc4247ccf5e9a2b2"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_CAPABILITIES.md",
+      "sha256": "e0862c564e3b17c43e359794c3e297a10f967b73020667ef0a3e45155a0474c2"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_NATIVE_DYNAMIC_DEVELOPMENT.md",
+      "sha256": "bed1910488a8d316080ca73b835aaa850add9349e5cff7488abf3da9e68f9ab2"
+    },
+    {
+      "path": "docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART31.md",
+      "sha256": "e0348697f96196dce3c758e1d74ee699e53362240c810f4c2b0eb933a7ee85dd"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_angle_review_20261001.md",
+      "sha256": "180e40c695d9d6336108173940737fca57f637b1bee6ea8d6b2fae9eb273f2c1"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_acceleration_chart_v1_20261001.derivation.json",
+      "sha256": "40c04da35a0f5b6bf7f8c027bedc99b735f0d8e5ee2303213dcdd9e888821e1b"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_acceleration_chart_v1_20261001.inputs.json",
+      "sha256": "cf8f5c9da45ce761ad9529601cfdc49ea669cbfed1c5408a28549609dc7a8585"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_acceleration_chart_v1_20261001.log",
+      "sha256": "d5a8130163ac5c127e5420cc881eb92c96e640fcf684045292f4cc0bc6a386c0"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_acceleration_chart_v1_20261001.proposal.json",
+      "sha256": "8ce3bb757441e28b2e3ad6f3b7726e32b9f808dcfdce72d2ed4161b044a8bafe"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_acceleration_chart_v1_20261001.raw.json",
+      "sha256": "b0f44dbe2c04c47fe72dc5b3abaef3df07fe2d90e0fab74223e6ce13383e3090"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_acceleration_chart_v1_20261001.resources.json",
+      "sha256": "3f21bb2ae9b11ac45d852e88a5f36caf4b84e071d0894807b325f9c98d819db3"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_acceleration_chart_v1_20261001.test.source.py",
+      "sha256": "589a69e110fc18595827062887ee996f8a97a1c8cf6556383885a9c586c01378"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_acceleration_chart_v1_20261001.xml",
+      "sha256": "b5c9005c22bc467558af4363c7991e6cfb51f1c0dfe335f1d45ccfdce5d27458"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_acceleration_chart_v2_20261001.disposition.json",
+      "sha256": "45dd71f5e306621f81b1c4a1017a71d7a519d6679283008982764bfc3dbb5139"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_acceleration_chart_v2_20261001.inputs.json",
+      "sha256": "d2355dd4ad01a9845b37fb8d933f6e56eb4eaf26b3e5eeecec3850fc6b4a54de"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_acceleration_chart_v2_20261001.log",
+      "sha256": "539e31e7c04364d23f13364ac3ebfbc27f41ec69b869b0e331e43ad8a4e59fbf"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_acceleration_chart_v2_20261001.raw.json",
+      "sha256": "63643016d676f459fa4c2bc39e5a9c880a26069cfd742732aeaece30f48b913c"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_acceleration_chart_v2_20261001.resources.json",
+      "sha256": "736530c7e5b04b959d019d20d54380623367c4aafe09d4c1559927f688928782"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_acceleration_chart_v2_20261001.review.md",
+      "sha256": "180e40c695d9d6336108173940737fca57f637b1bee6ea8d6b2fae9eb273f2c1"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_acceleration_chart_v2_20261001.summary.json",
+      "sha256": "396e79c75d191ddeb6a62686e7020e321986c74f9302401c70b5adbf926b9890"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_acceleration_chart_v2_20261001.xml",
+      "sha256": "1fa4528e6d819e49819af805c7891203d3b6725232445b7eb7af11bef1925b8e"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_step_v1_20261001.proposal.json",
+      "sha256": "9198d7c52bdbd763e586f0ef19a436bcc537beb9f47aa883085e79dd58faab02"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_step_v1_20261001.test.source.py",
+      "sha256": "4ad3312ce37baf3d802bfec6c1e9cbb80a78fe534e0cd8720f1ed95d6c39fe02"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_step_v2_20261001.inputs.json",
+      "sha256": "991f4bd14edcfd14367a258bedd1638c9ea75d132d3c72407cd658ddb518667d"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_step_v2_20261001.log",
+      "sha256": "c85757e549b1e0a1c89db2b8017edc747d1ea6110f1297b34d6f01f6b3f6245f"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_step_v2_20261001.proposal.frozen.json",
+      "sha256": "e91555fe4848a124501788fa9f10b601082599accd416131107c68c68c8b132d"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_step_v2_20261001.proposal.json",
+      "sha256": "e91555fe4848a124501788fa9f10b601082599accd416131107c68c68c8b132d"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_step_v2_20261001.raw.json",
+      "sha256": "63338a2594bd43c8bb996211ff12187e1e896bc88cf41d49ddecc4b102762d6f"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_step_v2_20261001.resources.json",
+      "sha256": "9392a664d7732d5ae502cda1f11fad0ce44f43cd465c039f17d807e954360b7a"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_step_v2_20261001.review.md",
+      "sha256": "4d58990a0245072492cf202dccf2ef819bf8339359169c3bbf7056bea9d9a11c"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_step_v2_20261001.summary.json",
+      "sha256": "0fe70ed041a1dd038a03f1f248dc3a5d21f0c6806e676e747973ac21f9ac1b35"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_step_v2_20261001.test.source.py",
+      "sha256": "fd6236f0a26f0cada2ecd335d67d1343cdba97e90af4015b9b2f3bae5480d6f0"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_spin_step_v2_20261001.xml",
+      "sha256": "a6dc5ea9d3aa30c8d07133e43705156b4040e3a8ac6932a7dca6f29d838d6128"
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_native_dynamic_restart.py",
+      "sha256": "5bbbb4f7c99ef04483183f112c2c96dce19bc55f9f58cb9f3eecefe2065cf320"
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_native_midpoint.py",
+      "sha256": "2c8e243e74f0b6eafff485b536f08242a51154d31dd8500afe689e10b2f265df"
+    },
+    {
+      "path": "src/anysolver/ge_beam3_native_dynamics.py",
+      "sha256": "aeba9bb1dbc7aa2daa0eb9df0f6a1ac49e43f476bafefeb76dbbc4239654326b"
+    }
+  ],
+  "include_manifest_itself": true,
+  "changed_production_paths": [
+    "src/anysolver/_ge_beam3_native_midpoint.py",
+    "src/anysolver/ge_beam3_native_dynamics.py",
+    "src/anysolver/_ge_beam3_native_dynamic_restart.py"
+  ],
+  "active_exclusions": "native_finite_spin_trajectory* source-only worker ownership; unrelated dirty files",
+  "scope": "One independently reviewed development step; not installed or C7 acceptance"
+}

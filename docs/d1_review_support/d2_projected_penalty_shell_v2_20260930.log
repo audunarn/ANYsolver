@@ -1,0 +1,6 @@
+{"stage": "fixture", "stiffness_pa_per_m": 10000000.0}
+{"stage": "solve", "stiffness_pa_per_m": 10000000.0}
+{"stage": "pose_checks", "stiffness_pa_per_m": 10000000.0, "step": 1}
+{"stage": "pose_checks", "stiffness_pa_per_m": 10000000.0, "step": 2}
+{"stage": "pose_checks", "stiffness_pa_per_m": 10000000.0, "step": 3}
+{"development_checks_met": true, "failures": [], "output": "docs\\d1_review_support\\d2_projected_penalty_shell_v2_20260930.json"}

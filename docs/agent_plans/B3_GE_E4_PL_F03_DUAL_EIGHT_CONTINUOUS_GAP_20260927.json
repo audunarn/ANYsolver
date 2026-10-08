@@ -1,0 +1,216 @@
+{
+  "cases": {
+    "b3_half_12_continuous_linear_8": {
+      "max_relative_pointwise_action": 2.4047458120740793e-13,
+      "quadrature_order_per_interval": 16,
+      "relative_continuous_l2_action": 4.3804446046665486e-16,
+      "smooth_field_pairings": {
+        "cosine": {
+          "relative_to_absolute_terms": 1.449315172858582e-17,
+          "signed_action": -8.6095032741485e-13
+        },
+        "polynomial_degree_0": {
+          "relative_to_absolute_terms": 9.394965259364595e-17,
+          "signed_action": 8.766582258205832e-12
+        },
+        "polynomial_degree_1": {
+          "relative_to_absolute_terms": 1.5550702355653145e-17,
+          "signed_action": -9.673728258357894e-13
+        },
+        "polynomial_degree_2": {
+          "relative_to_absolute_terms": 6.315992668151817e-17,
+          "signed_action": 2.946773497240315e-12
+        },
+        "polynomial_degree_3": {
+          "relative_to_absolute_terms": 5.82834245701392e-18,
+          "signed_action": 2.1754053226530834e-13
+        },
+        "polynomial_degree_4": {
+          "relative_to_absolute_terms": 5.182539328720513e-17,
+          "signed_action": 1.611968257371655e-12
+        },
+        "polynomial_degree_5": {
+          "relative_to_absolute_terms": 2.1502100064595683e-17,
+          "signed_action": 5.73255153878637e-13
+        },
+        "polynomial_degree_6": {
+          "relative_to_absolute_terms": 6.24306986405498e-17,
+          "signed_action": 1.4563754094888975e-12
+        },
+        "sine": {
+          "relative_to_absolute_terms": 5.2693675304269934e-17,
+          "signed_action": -3.1302119687619816e-12
+        }
+      }
+    },
+    "b3_half_12_dual_linear_8": {
+      "max_relative_pointwise_action": 1.0,
+      "quadrature_order_per_interval": 16,
+      "relative_continuous_l2_action": 0.06921883471862324,
+      "smooth_field_pairings": {
+        "cosine": {
+          "relative_to_absolute_terms": 1.3587793025569174e-15,
+          "signed_action": 6.273914721077745e-11
+        },
+        "polynomial_degree_0": {
+          "relative_to_absolute_terms": 2.570054827130393e-16,
+          "signed_action": 1.6210144337946986e-11
+        },
+        "polynomial_degree_1": {
+          "relative_to_absolute_terms": 3.4119149205779313e-16,
+          "signed_action": 1.596589527252945e-11
+        },
+        "polynomial_degree_2": {
+          "relative_to_absolute_terms": 4.647605200966397e-16,
+          "signed_action": -1.800781745942004e-11
+        },
+        "polynomial_degree_3": {
+          "relative_to_absolute_terms": 2.3523052857583517e-16,
+          "signed_action": 7.950973213155521e-12
+        },
+        "polynomial_degree_4": {
+          "relative_to_absolute_terms": 4.30565558055648e-16,
+          "signed_action": -1.3075762694825244e-11
+        },
+        "polynomial_degree_5": {
+          "relative_to_absolute_terms": 6.017661946501128e-06,
+          "signed_action": -0.16720976103054674
+        },
+        "polynomial_degree_6": {
+          "relative_to_absolute_terms": 3.5294699636383573e-16,
+          "signed_action": -9.08162434143378e-12
+        },
+        "sine": {
+          "relative_to_absolute_terms": 1.3358469306928462e-06,
+          "signed_action": -0.04062955907572004
+        }
+      }
+    },
+    "b3_half_24_continuous_linear_8": {
+      "max_relative_pointwise_action": 5.280155512605038e-14,
+      "quadrature_order_per_interval": 16,
+      "relative_continuous_l2_action": 4.805139569966988e-16,
+      "smooth_field_pairings": {
+        "cosine": {
+          "relative_to_absolute_terms": 4.963706068229472e-17,
+          "signed_action": -3.2866393994727877e-12
+        },
+        "polynomial_degree_0": {
+          "relative_to_absolute_terms": 5.073457210061222e-17,
+          "signed_action": 5.276790835798332e-12
+        },
+        "polynomial_degree_1": {
+          "relative_to_absolute_terms": 1.0126331271794454e-16,
+          "signed_action": -7.021449062294442e-12
+        },
+        "polynomial_degree_2": {
+          "relative_to_absolute_terms": 7.032643415296028e-17,
+          "signed_action": 3.6572485771318544e-12
+        },
+        "polynomial_degree_3": {
+          "relative_to_absolute_terms": 1.2373800191574265e-16,
+          "signed_action": -5.147886559517127e-12
+        },
+        "polynomial_degree_4": {
+          "relative_to_absolute_terms": 9.281959865261011e-17,
+          "signed_action": 3.2179871783239733e-12
+        },
+        "polynomial_degree_5": {
+          "relative_to_absolute_terms": 1.5436738798622062e-16,
+          "signed_action": -4.5872603492795465e-12
+        },
+        "polynomial_degree_6": {
+          "relative_to_absolute_terms": 1.2268369701542476e-16,
+          "signed_action": 3.1900151184335893e-12
+        },
+        "sine": {
+          "relative_to_absolute_terms": 7.365156421687579e-17,
+          "signed_action": -4.876721736956698e-12
+        }
+      }
+    },
+    "b3_half_24_dual_linear_8": {
+      "max_relative_pointwise_action": 1.0,
+      "quadrature_order_per_interval": 16,
+      "relative_continuous_l2_action": 0.06921883471862256,
+      "smooth_field_pairings": {
+        "cosine": {
+          "relative_to_absolute_terms": 1.7130503537034874e-15,
+          "signed_action": 7.980016647479715e-11
+        },
+        "polynomial_degree_0": {
+          "relative_to_absolute_terms": 1.3471906382667984e-16,
+          "signed_action": 8.572698106945609e-12
+        },
+        "polynomial_degree_1": {
+          "relative_to_absolute_terms": 4.553531001977765e-16,
+          "signed_action": 2.149747047042183e-11
+        },
+        "polynomial_degree_2": {
+          "relative_to_absolute_terms": 7.216138826723765e-16,
+          "signed_action": -2.8208546609675977e-11
+        },
+        "polynomial_degree_3": {
+          "relative_to_absolute_terms": 3.655720552046969e-16,
+          "signed_action": 1.2466472298910958e-11
+        },
+        "polynomial_degree_4": {
+          "relative_to_absolute_terms": 6.972068275628426e-16,
+          "signed_action": -2.1361579172207712e-11
+        },
+        "polynomial_degree_5": {
+          "relative_to_absolute_terms": 6.017661946372802e-06,
+          "signed_action": -0.16869631903974724
+        },
+        "polynomial_degree_6": {
+          "relative_to_absolute_terms": 6.267980876952582e-16,
+          "signed_action": -1.6271428648906294e-11
+        },
+        "sine": {
+          "relative_to_absolute_terms": 1.3358469306511784e-06,
+          "signed_action": -0.040990771220360295
+        }
+      }
+    }
+  },
+  "classification": "bounded continuous-gap action of saved null tractions; no F03 selection",
+  "elapsed_s_not_benchmark": 0.00838429998839274,
+  "limitations": [
+    "scalar smooth-gap check isolates mean-z/first-y channels only",
+    "not a proof of uniform stability or physical locking"
+  ],
+  "model": "same normalized saved P1/dual-eight left modes; scalar normal gap over x=.9..1",
+  "numpy": "2.4.6",
+  "python": "3.14.2",
+  "question": "Does the dual-eight discrete null act on a smooth gap that the current primal trace cannot represent?",
+  "source_null_modes_sha256": "0d52019cfe842819b162c61b414e8db1890853f3d452104e6721057a53d08ed7",
+  "source_sha256": "202188ea54cb437495e5a9a5cade66dc26fa0711d87b4a5fb283f20e0e81b1bf",
+  "thread_env": {
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_DISABLE_JIT": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "threadpool_info": [
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.31.188.0"
+    },
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.30"
+    }
+  ]
+}

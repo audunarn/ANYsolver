@@ -1,0 +1,46 @@
+{
+  "status": "DEVELOPMENT_PASS_INDEPENDENTLY_ASSESSED",
+  "solver_committed_steps": 4,
+  "gate_passing_steps": 4,
+  "returned_stage_observations": 20,
+  "complete_route_seconds": 23.103256900009,
+  "peak_process_tree_memory_mb": 255.881216,
+  "comparison": {
+    "common_time_seconds": 0.001,
+    "coarse_step": 2,
+    "fine_step": 4,
+    "coarse_fixture_status": "NONPASS retained; step3 energy failure is not regraded",
+    "coarse_prefix_gate_status": "DEVELOPMENT_GATES_PASS",
+    "coarse_normalized_cumulative_energy_error": 9.196673444294518e-07,
+    "fine_normalized_cumulative_energy_error": 2.299427593031352e-07,
+    "normalized_energy_resolution_floor": 1e-10,
+    "resolved": true,
+    "energy_ratio": 0.2500281875788341,
+    "prospective_energy_ratio_limit": 0.4,
+    "disposition": "DECREASE_SUPPORTS_TEMPORAL_TRUNCATION",
+    "normalized_position_difference": 1.3793824909599266e-07,
+    "frozen_initial_mass_velocity_difference_norm": 1.261709193749669e-05,
+    "cell_geodesic_difference_rad": [
+      5.885108538219676e-07,
+      4.546643909993811e-07
+    ],
+    "claim_boundary": "One common-time energy prefix discriminator; no general order, accuracy, causal proof or finite-angle coverage"
+  },
+  "final_normalized_cumulative_defects": {
+    "P": 3.092421742297806e-08,
+    "H": 2.487864480796878e-09,
+    "E": 2.299427593031352e-07
+  },
+  "decision": "Shared-time reduction supports timestep dependence. Preserve N16 NONPASS and full-angle requirement. Next optimize duplicate native stage assembly while preserving mathematical stages, then choose a bounded full-trajectory route; no tighter solver tolerance or automatic refinement sweep.",
+  "claim_boundary": "No universal order/accuracy, full-angle, continuum, installed new-chart or C7 admission.",
+  "bindings": {
+    "inputs.json": "8a2b189fdc33b054ed761d0a4082a7bc93450bf25db15403b1ee1aafe464bc6a",
+    "proposal.json": "5fb6393b48dfc13dd5f08f3ac0e9b3321193260c2b52cf80a9ee6d3795b6795e",
+    "test.source.py": "cb8c820750f16c85eb9682750b5266bcd9fcd7160da5da225e909a341d5873be",
+    "raw.json": "2e232aa32e5f535bc6b50f28f2f3ef13d4aa18fc1e3667fc26c160b69f893846",
+    "resources.json": "ff8668f57f05f13d079917e3cfe5d08c55915353190b12e9a39051d43bdfc88d",
+    "log": "cbf98d991dc749e9aafe43d1ec41e8c79adf86548e8a8043a1695b0921ccb940",
+    "xml": "0b44abbf5e53c3d5fc634ce91654caf500a0f740df510916e2bdca6f8400ea9e",
+    "review.md": "cdcf2907a15953b27c99693d440dfb7d3c69bb27af892371dff75cc6eaee3332"
+  }
+}

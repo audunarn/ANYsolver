@@ -1,0 +1,31 @@
+{
+  "checks": 7,
+  "effective_threadpools": [
+    {
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "internal_api": "openblas",
+      "num_threads": 1
+    },
+    {
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "internal_api": "openblas",
+      "num_threads": 1
+    }
+  ],
+  "installed_package": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\anysolver-l1-fa9d9e4d\\site\\anysolver\\__init__.py",
+  "numpy": "2.4.6",
+  "python": "3.14.2",
+  "qualification": "not accepted",
+  "runner_sha256": "1e38b6e5c2b2abcd66e43f2d1cf0dd07caccad92a6b4b4b350af229ca361781c",
+  "scipy": "1.17.1",
+  "scope": "experimental L1 reference-linear installed wiring",
+  "source_commit": "fa9d9e4d70066bcf70382c235f676885ab82dfa4",
+  "status": "passed",
+  "test_sha256": "bb38c54a69b35521ee785c639f2420f93181b83d8ff495ff8fb37fbe60dc6890",
+  "thread_environment": {
+    "NUMBA_DISABLE_JIT": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "wheel_sha256": "4f7aa7cc3ff5b1c527fa6057fc7f2b904649aff9893a517815646827606d3c01"
+}

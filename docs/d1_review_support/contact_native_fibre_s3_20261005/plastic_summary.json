@@ -1,0 +1,192 @@
+{
+  "wheel_sha256": "813b08560894ae4b68f84b8e4eb55c91da845c91bca5ae9ff9a093d273c3f6a1",
+  "reference_hashes": {
+    "tests/test_ge_beam3_fibre_section.py": "48cc242a2ab0199cffc5adae6379119060c2bdb52dbb511600193f5ba8e76d9f",
+    "src/anysolver/general_contact/native_fibre_context.py": "5f834fadd34c4230e87e1b7b8f61543a42ca39819295394da4803cb65f7d62ce",
+    "src/anysolver/_ge_beam3_retained_fibre.py": "b484e356a4acfa681647b669fbce51985bd56919a7356e23437e75d947561ee9",
+    "src/anysolver/_ge_beam3_fibre_section.py": "2c8ba8c72252515bad3051c0bb0e8ed61a5563c2ce1854601c87ba6e09248824"
+  },
+  "production_core": "e8d2cf63",
+  "development_only": true,
+  "cases": [
+    {
+      "case": "plastic_local",
+      "imports": 218,
+      "runtime_errors": [],
+      "jit_disabled": true,
+      "effective_pools": [
+        {
+          "user_api": "blas",
+          "internal_api": "openblas",
+          "num_threads": 1,
+          "prefix": "libscipy_openblas",
+          "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+          "version": "0.3.31.188.0",
+          "threading_layer": "pthreads",
+          "architecture": "SkylakeX"
+        },
+        {
+          "user_api": "blas",
+          "internal_api": "openblas",
+          "num_threads": 1,
+          "prefix": "libscipy_openblas",
+          "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+          "version": "0.3.30",
+          "threading_layer": "pthreads",
+          "architecture": "SkylakeX"
+        }
+      ],
+      "raw": "C:\\ANYworkspaceWork\\contact_native_fibre_s3_20261005\\candidate02\\plastic_local",
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 3.9124581000069156,
+        "peak_bytes": 181760000
+      }
+    },
+    {
+      "case": "plastic_first_contact",
+      "imports": 219,
+      "runtime_errors": [],
+      "jit_disabled": true,
+      "effective_pools": [
+        {
+          "user_api": "blas",
+          "internal_api": "openblas",
+          "num_threads": 1,
+          "prefix": "libscipy_openblas",
+          "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+          "version": "0.3.31.188.0",
+          "threading_layer": "pthreads",
+          "architecture": "SkylakeX"
+        },
+        {
+          "user_api": "blas",
+          "internal_api": "openblas",
+          "num_threads": 1,
+          "prefix": "libscipy_openblas",
+          "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+          "version": "0.3.30",
+          "threading_layer": "pthreads",
+          "architecture": "SkylakeX"
+        }
+      ],
+      "raw": "C:\\ANYworkspaceWork\\contact_native_fibre_s3_20261005\\candidate02\\plastic_first_contact",
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 105.69473420002032,
+        "peak_bytes": 181829632
+      }
+    },
+    {
+      "case": "installed_plastic_prefix",
+      "imports": 218,
+      "runtime_errors": [],
+      "jit_disabled": true,
+      "effective_pools": [
+        {
+          "user_api": "blas",
+          "internal_api": "openblas",
+          "num_threads": 1,
+          "prefix": "libscipy_openblas",
+          "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+          "version": "0.3.31.188.0",
+          "threading_layer": "pthreads",
+          "architecture": "SkylakeX"
+        },
+        {
+          "user_api": "blas",
+          "internal_api": "openblas",
+          "num_threads": 1,
+          "prefix": "libscipy_openblas",
+          "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+          "version": "0.3.30",
+          "threading_layer": "pthreads",
+          "architecture": "SkylakeX"
+        }
+      ],
+      "raw": "C:\\ANYworkspaceWork\\contact_native_fibre_s3_20261005\\candidate02\\installed_plastic_prefix",
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 15.143109900061972,
+        "peak_bytes": 181432320
+      }
+    },
+    {
+      "case": "installed_plastic_unloading",
+      "imports": 219,
+      "runtime_errors": [],
+      "jit_disabled": true,
+      "effective_pools": [
+        {
+          "user_api": "blas",
+          "internal_api": "openblas",
+          "num_threads": 1,
+          "prefix": "libscipy_openblas",
+          "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+          "version": "0.3.31.188.0",
+          "threading_layer": "pthreads",
+          "architecture": "SkylakeX"
+        },
+        {
+          "user_api": "blas",
+          "internal_api": "openblas",
+          "num_threads": 1,
+          "prefix": "libscipy_openblas",
+          "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+          "version": "0.3.30",
+          "threading_layer": "pthreads",
+          "architecture": "SkylakeX"
+        }
+      ],
+      "raw": "C:\\ANYworkspaceWork\\contact_native_fibre_s3_20261005\\candidate02\\installed_plastic_unloading",
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 44.401911999913864,
+        "peak_bytes": 182288384
+      }
+    },
+    {
+      "case": "installed_plastic_recontact",
+      "imports": 219,
+      "runtime_errors": [],
+      "jit_disabled": true,
+      "effective_pools": [
+        {
+          "user_api": "blas",
+          "internal_api": "openblas",
+          "num_threads": 1,
+          "prefix": "libscipy_openblas",
+          "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+          "version": "0.3.31.188.0",
+          "threading_layer": "pthreads",
+          "architecture": "SkylakeX"
+        },
+        {
+          "user_api": "blas",
+          "internal_api": "openblas",
+          "num_threads": 1,
+          "prefix": "libscipy_openblas",
+          "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+          "version": "0.3.30",
+          "threading_layer": "pthreads",
+          "architecture": "SkylakeX"
+        }
+      ],
+      "raw": "C:\\ANYworkspaceWork\\contact_native_fibre_s3_20261005\\candidate02\\installed_plastic_recontact",
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 100.65857710002456,
+        "peak_bytes": 182091776
+      }
+    }
+  ],
+  "fixture_hashes": {
+    "tests/data/general_contact_native_fibre_s3_plastic_open_v1.checkpoint": "7a7e1005b404abcb8513d55cb2711b5ec36c8f9bf87ebe8d11ff31b9671af0e5",
+    "tests/data/general_contact_native_fibre_s3_plastic_active_v1.checkpoint": "85ce39912212cb092aa0ecc5d2d375ebdc2fd89121a86c528a8c8df66d932343"
+  }
+}

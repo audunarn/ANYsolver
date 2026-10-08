@@ -1,0 +1,107 @@
+{
+  "ast_count": 14,
+  "check": "FINAL_STDLIB_AST_WHITESPACE_SOURCE_WHEEL_SITE_HASH",
+  "errors": [],
+  "files": [
+    {
+      "bytes": 23943,
+      "owned": true,
+      "path": "src/anysolver/_ge_beam3_native_shell_contact.py",
+      "sha256": "791447c155f4b45db21fcb6ff4f7cd7bafcfdfd25ebd246d743eace5b7284bf6"
+    },
+    {
+      "bytes": 3237,
+      "owned": true,
+      "path": "src/anysolver/general_contact/native_transient_shell.py",
+      "sha256": "0cbbb335e71cb0a82a0e94cc58e4e51b0f0d7483a9947afe7975da52279d8d27"
+    },
+    {
+      "bytes": 30875,
+      "owned": true,
+      "path": "src/anysolver/_ge_beam3_connected_dynamic.py",
+      "sha256": "fc479d74504544e02a3f86145f7c7a7c63aa1baee620b37a4227f83140c792d6"
+    },
+    {
+      "bytes": 20702,
+      "owned": true,
+      "path": "src/anysolver/_ge_beam3_connected_trajectory.py",
+      "sha256": "f6869a6c67908767b70612b3b893cdc4d4aeaf1c1100893b0c2fc4b054db9e19"
+    },
+    {
+      "bytes": 14045,
+      "owned": true,
+      "path": "tests/test_general_contact_native_transient_shell.py",
+      "sha256": "ffb802b524e46dac138a72fec653175bed1394a7f5432c0c179513c42dfab4db"
+    },
+    {
+      "bytes": 3941,
+      "owned": true,
+      "path": "examples/general_contact_native_shell_impact_dev.py",
+      "sha256": "5edf2597138564377af9cb531469de12dac887c03fc601cc8a18f01bf1a2f9a3"
+    },
+    {
+      "bytes": 14263,
+      "owned": true,
+      "path": "docs/GENERAL_CONTACT_NATIVE_SHELL_TRANSIENT_DEV.md",
+      "sha256": "50bbae90b0c15578ed5b2f1ce726ffa27b11955fb02d2e7269473d168d442513"
+    },
+    {
+      "bytes": 32645,
+      "owned": false,
+      "path": "src/anysolver/__init__.py",
+      "sha256": "f5e1f33cf0e991e2968dd28dff64ffe10d80c4e1f4fd2d4a32094b651b1e9447"
+    },
+    {
+      "bytes": 5440,
+      "owned": false,
+      "path": "src/anysolver/general_contact/__init__.py",
+      "sha256": "03d2e676fb056b7b6191bcc7604b496f742897731ab8ddfd0f0cfd7a8678ffee"
+    },
+    {
+      "bytes": 20365,
+      "owned": false,
+      "path": "src/anysolver/general_contact/native_retained_line_s3.py",
+      "sha256": "d7d1ca7a88a3c0573b62792ef6538a5e22575430c13766fdc5476e18c5dd4c25"
+    },
+    {
+      "bytes": 3542,
+      "owned": false,
+      "path": "src/anysolver/general_contact/native_retained_line_s3_work.py",
+      "sha256": "470c036e015c6e18181233cf1a36b3ee6a74e9b42e36a769d53aa37b73c3633c"
+    },
+    {
+      "bytes": 4685,
+      "owned": false,
+      "path": "src/anysolver/general_contact/s3_skin_work.py",
+      "sha256": "6a90f38d00ec2e6d81c8baa22742d76927527711c5c569a2ad4a8c794159d184"
+    },
+    {
+      "bytes": 20224,
+      "owned": false,
+      "path": "src/anysolver/general_contact/overlap.py",
+      "sha256": "3c6d98ac0e346669cff3f423d52367766e12d7c9a9d476f761fda2bf1c62deca"
+    },
+    {
+      "bytes": 104098,
+      "owned": false,
+      "path": "src/anysolver/e4_pl_s3_v2d_element.py",
+      "sha256": "13ba4b7ba3a34df714ab0a981e770a005242a88bf175dc6328bd3ebcaad90a59"
+    },
+    {
+      "bytes": 5062,
+      "owned": false,
+      "path": "src/anysolver/_native_midpoint_controller.py",
+      "sha256": "ed9352bfc4e883367b1c9712d997581391f579657075371c39920b8342042b45"
+    }
+  ],
+  "final_test_example_non_docstring_AST_equivalence": {
+    "examples/general_contact_native_shell_impact_dev.py": true,
+    "tests/test_general_contact_native_transient_shell.py": true
+  },
+  "new_numerical_checks": 0,
+  "product_payload_count": 555,
+  "source_snapshot": "C:\\ANYworkspaceWork\\contact_native_shell_c8_20261007\\author_source_snapshot_v4",
+  "source_wheel_site_matching_files": 555,
+  "status": "PASS",
+  "tested_input_snapshot": "C:\\ANYworkspaceWork\\contact_native_shell_c8_20261007\\author_source_snapshot_v3"
+}

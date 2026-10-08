@@ -1,0 +1,23 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 1.6023177999886684,
+  "peak_process_tree_memory_mb": 161.189888,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "scripts.general_contact_d1_interior_press_dev",
+    "docs/d1_review_support/d1_radial_complete_assessment_v11_20260930.json",
+    "--radial-spatial-assess",
+    "docs/d1_review_support/d1_radial_nonmatching_swept_search_coupled_v8_20260930.json",
+    "--radial-bin-evidence",
+    "docs/d1_review_support/d1_radial_saved_physical_bins_v10_20260930.json",
+    "--radial-wrench-evidence",
+    "docs/d1_review_support/d1_radial_saved_wrench_v9_20260930.json",
+    "--radial-linear-assessment",
+    "docs/d1_review_support/d1_radial_linear_saved_assessment_v2_20260930.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_radial_complete_assessment_v11_20260930.log"
+}

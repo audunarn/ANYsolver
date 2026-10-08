@@ -1,0 +1,20 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_free_source_director_press.py", line 64, in <module>
+    result = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=18,
+        record_increment_snapshots=True,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_static.py", line 7713, in solve_static_nonlinear
+    return solve_static_contact_path(
+        model, contact, contact_settings, contact_path_program,
+    ...<5 lines>...
+        cancellation_token=cancellation_token,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 410, in solve_static_contact_path
+    raise ValueError(
+    ...<3 lines>...
+    )
+ValueError: monolithic_active_set force scale must be bounded by the declared maximum absolute path load; displacement-only paths need a separate physical force reference

@@ -1,0 +1,178 @@
+{
+  "status": "SOURCE_ONLY_PREPARATION_NOT_EXECUTION_INPUT",
+  "claim": "Finite-angle temporal self-convergence/control of one shared elastic spatial fixture; no independent-code/continuum/spatial/fullC7 acceptance",
+  "design_path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.md",
+  "design_sha256": "acb0dbf57cd284e0ac9a173948d0e93cf83a147a48eb1223a9ab3fa00271e3f9",
+  "coarse_reuse": {
+    "original_N": 192,
+    "original_T_seconds": 0.008,
+    "reused_steps": 108,
+    "T_seconds": 0.0045,
+    "stored_final_time": 0.004500000000000004,
+    "cell_attitude_rad": [
+      0.2132521238514867,
+      0.21335742027427998
+    ],
+    "gate_passing_steps": 108,
+    "prefix_elapsed_seconds": 383.49032089998946,
+    "asset_sha256": {
+      "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_resolution_v1_20261001.inputs.json": "fbbdb41a0aced4af7e181f8c7c629f1f18f67a25f55f068895aa7205d4f0b8bc",
+      "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_resolution_v1_20261001.test.source.py": "6ed644db18deea782ad344bf9fe2ffc1ee42c59c8533bd4f2fc14b50e8a72acc",
+      "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_resolution_v1_20261001.raw.json": "6a8bad55b4e1ab5ead553531329671e76167134dab4f019980b809a1845aa737",
+      "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_resolution_v1_20261001.endpoints.jsonl": "b0032c6d84cfa1b2cdcb591137c8932c6ffb839b0a183a9445c439b6d7aa0931",
+      "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_resolution_v1_20261001.stages.jsonl": "69de3f5ebcab79734d18b8d511cc8aac9e6bd6681fbc5951b6971a77a232f5eb",
+      "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_resolution_v1_20261001.summary.json": "fb2f13e3853d227a050d5f86b8c822adf02ea85af6ae16d797859429af69bbf7",
+      "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_resolution_v1_20261001.review.md": "a4bad86e4440c7cee88306d3410af30f3d556a769f7ccd929f1058f73f626495",
+      "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_inertia_batch_route_v1_20261001.inputs.json": "8afde3788d8d0ec2a20b26c66924c5826f6f53b55ce9c3e7f59b1bfbc66714ca",
+      "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_inertia_batch_route_v1_20261001.raw.json": "3274b0892230ece83b6152af5f9bc8bf97ea6aa87de9542e6782d85acab993b9",
+      "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_inertia_batch_route_v1_20261001.summary.json": "2e9a1a0220a9eeebb4be9d752f0760d368d29c70c06b48712a511b8a6c1106e7",
+      "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_inertia_batch_route_v1_20261001.review.md": "3c4c67fd9fcdf94bd702cae3630ea5c5a2ed349fc4b05e5774f7c3bec7c4c12c"
+    }
+  },
+  "resource_decision": {
+    "external_seconds_per_case": 900,
+    "external_memory_bytes_per_case": 4294967296,
+    "programme_external_seconds": 1800,
+    "captured_owner_seconds_per_case": 840,
+    "owner_count_per_case": 1,
+    "segments": 0,
+    "restorations": 0,
+    "renewals": 0,
+    "execution_authority": "No launch; lead retains decision after distinct input freezes and independent scrutiny"
+  },
+  "fixture": {
+    "spatial_spin_rad_per_s": [
+      35.0,
+      -25.0,
+      20.0
+    ],
+    "stage_coordinates": "acceleration",
+    "loads": null,
+    "supports": [],
+    "origin_high_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "origin_low_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "inertia_order": 24,
+    "structural_order": 4,
+    "initial_state": "Authentic full virgin q/v/a/histories from exact existing consistent initializer; match retained initial physics/scales before steps"
+  },
+  "physical_gates": {
+    "explicit_stage_solve": 1e-12,
+    "scientific_stage": 1e-11,
+    "endpoint_balance": 1e-11,
+    "correction": 1e-11,
+    "step_and_cumulative_EPH": 1e-06,
+    "elastic_witness": 1e-10,
+    "final_each_cell_angle_rad_min": 0.2,
+    "algebraic_inertia_velocity_acceleration": "exact zero",
+    "history": "unchanged virgin origins"
+  },
+  "common_grid": {
+    "intervals": 54,
+    "indices": "j=0..54: coarse2j/middle3j/fine4j",
+    "time": "j*T/54",
+    "interpolation": false,
+    "stored_time_tolerance": "(4*N+4)*machine_epsilon*T"
+  },
+  "positive_fixed_scales": {
+    "initial": {
+      "angular_momentum": 247.5486470877602,
+      "energy": 1382.4974638566337,
+      "mass": 5.540727404304961,
+      "momentum": 123.7743235438801,
+      "velocity": 22.33900253741261
+    },
+    "length_m": 2.0,
+    "Omega_reference_per_s": 47.43416490252569,
+    "attitude_rad": 0.21345374206136558,
+    "velocity_metric": "Initial SPD reference M15=authenticated M42[P,P]; retain all physical coordinates",
+    "P": [
+      0,
+      1,
+      2,
+      6,
+      7,
+      8,
+      12,
+      13,
+      14,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+    ]
+  },
+  "observables": {
+    "velocity": "sqrt(delta_v15.T M15 delta_v15/(2*E0))",
+    "position": "sqrt(sum_nodes compensated_delta_r^2/3)/L",
+    "cell_rotation": "sqrt(sum_cells principal_geodesic(Ra Rb.T)^2/2)/(Omega_reference*T)",
+    "aggregate": "RMS over54 nonzero common times; retain all times, max and final values"
+  },
+  "prospective_temporal_criteria": {
+    "diagnostic_floor": 1e-10,
+    "resolved_both_pair_differences_minimum": 1e-09,
+    "ratio_expected": 2.857142857142857,
+    "ratio_band": [
+      2.2857142857142856,
+      3.4285714285714284
+    ],
+    "required_resolved": [
+      "velocity",
+      "cell_rotation"
+    ],
+    "position_rule": "Require ratio if resolved, otherwise record unresolved/no order claim",
+    "unresolved_ratio": null,
+    "conditional_fine_error_multiplier": 1.2857142857142858,
+    "fine_error_claim": "Conditional leading h^2 estimate, not a certified bound",
+    "later_mechanical_reference_target": 0.02
+  },
+  "stop_policy": "Physical/source/state/finite-data failure stops before a further trajectory. After both valid cases, required unresolved evidence or resolved ratio outside band retains unresolved/NONPASS temporal disposition; no automatic campaign.",
+  "recording": "Existing complete original-stage and initial/endpoint append-only journals,128 original observations per trial, terminal raw once, best-effort progress; no repeated FD or cost study",
+  "new_cases": [
+    {
+      "N": 162,
+      "T_seconds": 0.0045,
+      "h_seconds": 2.7777777777777776e-05,
+      "owner_seconds": 840,
+      "external_seconds": 900,
+      "external_memory_bytes": 4294967296,
+      "maximum_original_stage_observations": 20736,
+      "maximum_endpoint_events": 325,
+      "prefix_based_forecast_seconds": 417.2921012882933,
+      "operations_forecast_seconds": 409.54148167464155,
+      "planning_whole_route_seconds": 420,
+      "forecast_not_guarantee": true
+    },
+    {
+      "N": 216,
+      "T_seconds": 0.0045,
+      "h_seconds": 2.0833333333333333e-05,
+      "owner_seconds": 840,
+      "external_seconds": 900,
+      "external_memory_bytes": 4294967296,
+      "maximum_original_stage_observations": 27648,
+      "maximum_endpoint_events": 433,
+      "prefix_based_forecast_seconds": 556.3894683843911,
+      "operations_forecast_seconds": 546.0553088995221,
+      "planning_whole_route_seconds": 560,
+      "forecast_not_guarantee": true
+    }
+  ],
+  "current_production_sha256": {
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_centered_finite_inertia.py": "86d340b182d21880b1a255b1f59d75f385903e229d62c63cc245e87a18fe636f",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_centered_batched_finite_inertia.py": "9ee021df59f5974092e94a002ed6da8b8143e0a9ed891982992a60e50d194682",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py": "5467683fdd7d708c32e268dd3474cf9c164da8e9977b3e4f1a7db46bcff7ce2a",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py": "027fe102aaedcef19af658a8ffb4394100760e2a150bc7dc16c057459ac868e9",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\ge_beam3_native_dynamics.py": "32462df5b94cfcd6b4ccb344e97d48385928a48bd2f658598ddee8f5000df1ab",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_dynamic_restart.py": "ceb2790dc9385f6db57ec8cb0e8ec034aa03a1c22b41489d37fdb42869c01658"
+  }
+}

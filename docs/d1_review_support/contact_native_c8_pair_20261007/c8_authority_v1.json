@@ -1,0 +1,18 @@
+{
+  "scope": "C8_NATIVE_PAIR_DEV",
+  "status": "USER_AUTHORIZED",
+  "source_checkpoint": "3c5db6377ffee1e362315c23147fe1fc71b9dce6",
+  "source_inventory_sha256": "c626ae9a1f61fe3c0f5ebf4f96666e835fe4464b3ec0d8e12754a12cebf45d86",
+  "user_answer": "Authorize 750 seconds",
+  "question_item": "call_e445a3935f4b4d4a9b7603180f557795",
+  "authorized_measured_process_wall_seconds": 750,
+  "maximum_process_tree_seconds": 60,
+  "maximum_process_tree_memory_mib": 953,
+  "concurrent_numerical_jobs": 1,
+  "initial_consumed_seconds": 0,
+  "integration_verification_reserve_seconds": 60,
+  "scope_details": "Eight focused native contact selectors, changed legacy routes, public example, fresh private build/install and scoped repairs",
+  "effective_runtime": "NUMBA_DISABLE_JIT=1, NUMBA_NUM_THREADS=1, BLAS/OpenMP pools one, pytest plugin autoload disabled; verify actual settings and private import hashes",
+  "accounting": "All guarded child attempts including failure/timeout/build/install charge exact process wall time; unique retained evidence and bounded process-tree termination",
+  "preserved": "Every prior scope/balance/evidence and scientific criterion unchanged; no pooling, publication, merging, defaults or broader qualification"
+}

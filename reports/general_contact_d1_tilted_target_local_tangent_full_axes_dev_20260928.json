@@ -1,0 +1,29 @@
+{
+  "candidate": "tilted_target_local_tangent_dev",
+  "reference": "reports\\general_contact_d1_mixed_8q4_interior_distributed_0p3n_press_20260927.json",
+  "target_dz_dx": 1e-05,
+  "pressure_replay_error_pa": 0.0,
+  "base_active_pressure_modes": 8,
+  "base_minimum_gap_m": -4.496908749521492e-06,
+  "base_overlap_area_m2": 0.9000000000001483,
+  "runs": [
+    {
+      "step_m": 1e-06,
+      "smooth_observed_branch": true,
+      "mapped_force_action": 0.1091294757624057,
+      "mapped_force_relative_error": 3.38974809585022e-10,
+      "mapped_moment_action": 1.660009759757286e-08,
+      "mapped_moment_relative_error": 6.168995697993631e-08
+    },
+    {
+      "step_m": 5e-07,
+      "smooth_observed_branch": true,
+      "mapped_force_action": 0.10912947585326527,
+      "mapped_force_relative_error": 1.9225262098665706e-09,
+      "mapped_moment_action": 1.6600097713558304e-08,
+      "mapped_moment_relative_error": 1.2551903291578313e-07
+    }
+  ],
+  "status": "passed_development",
+  "elapsed_seconds": 9.513956099981442
+}

@@ -1,0 +1,34 @@
+{
+  "arrays_sha256": "03564b9a3d49a19da291899e6b0ddc3255a37734385e25f884765ecc456995f9",
+  "counts": {
+    "beam_nodes": 129,
+    "full_q": 8940,
+    "members": 64,
+    "multipliers": 160,
+    "physical_dofs": 7404,
+    "retained_cell_rotations": 384,
+    "retained_dofs": 1536,
+    "retained_resultants": 1152,
+    "shell_nodes": 1105
+  },
+  "fixed_free_layout": "../operators.npz and ../layout.json",
+  "forces_sign": "Kq internal resisting; +Ct lambda connection resisting; -Ct lambda exerted; reactions actual ground on fixed slots",
+  "generation": 3,
+  "preflight_after": {
+    "constraint_norm": "reference_row_scaled_max",
+    "constraints": 160,
+    "equilibrium_norm": "frozen_work_weighted_l2_plus_active_load_rows",
+    "experimental_line_samples": 256,
+    "identity": "deb01405d52ea4aa163d5a924f3d36eee0009d143124d24854a6caf46fe25bf4",
+    "matrix_nnz": 448701,
+    "physical_dofs": 7404,
+    "production_qualified": false,
+    "reference_length_m": 0.3008686983131212,
+    "reference_linear_factorizations": 1,
+    "reference_linear_refinements": 3,
+    "retained_dofs": 1536,
+    "stress_free_scaled_max": 0.0,
+    "unsupported_modes": []
+  },
+  "status": "completed"
+}

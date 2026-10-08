@@ -1,0 +1,25 @@
+{
+  "status": "development_coarse_pressure_on_fine_structure",
+  "source_commit": "2c454310274e7a22cd1a5985178ad57bb7789d57",
+  "probe_sha256": "bd1315c3ef397ec112f0aab223fcb7bbdefb14d37b2efd040d365a6f95eccc46",
+  "fine_saved_sha256": "fda79a813d4235594af6cd0e7d367e62e98d57210d67e1152d435f00a845a72a",
+  "coarse_saved_sha256": "8293e528837cc2a8a25444aa079944c9f8371f5a5b50280bb6dc91816d19b852",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "coarse_active_modes": 48,
+  "fine_settled_active_modes": 96,
+  "pressure_transfer_rank": 48,
+  "transferred_gram_relative_oracle_error": 1.3291213446800614e-15,
+  "transferred_work_relative_oracle_error": 3.082219685043637e-13,
+  "response_relative_residual": 2.3462391170007427e-14,
+  "fourier_modes_each_axis": 512,
+  "shear_stiffness_n_per_m": 1602.5641025641025,
+  "maximum_relative_tail_bound": 0.012841271704823826,
+  "minimum_squared_dual_ratio_interval": [
+    0.5916981208438551,
+    0.5932206984255847
+  ],
+  "maximum_squared_dual_ratio_upper": 0.9994369528944117,
+  "interpretation_scope": "same coarse physical pressure subspace on saved fine structure; not the fine settled KKT critical cone",
+  "elapsed_seconds": 20.781951799996023,
+  "peak_process_working_set_mb": 412.889088
+}

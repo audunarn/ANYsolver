@@ -1,0 +1,9 @@
+{
+  "status": "development_enriched_shell_reference_singular",
+  "pressure_support_l2_relative": 7.12677314948191e-16,
+  "normalized_gap_maximum_error_m": 3.148929684712587e-17,
+  "full_supported": {
+    "reference_scaled_minimum_eigenvalue": -4.2938441934617387e-16
+  },
+  "elapsed_seconds": 28.84487010000157
+}

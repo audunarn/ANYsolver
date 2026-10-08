@@ -1,0 +1,20 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 10.82065560000774,
+  "peak_process_tree_memory_mb": 265.302016,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "scripts/general_contact_d1_proportional_plate_dev.py",
+    "docs/d1_review_support/d1_proportional_plate_4q4_3s3_tie_20260929.json",
+    "--source-cells",
+    "4",
+    "--target-cells",
+    "3",
+    "--force-n",
+    "0.04"
+  ],
+  "log": "docs\\d1_review_support\\d1_proportional_plate_4q4_3s3_tie_20260929.log"
+}

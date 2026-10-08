@@ -1,0 +1,84 @@
+{
+  "status": "completed",
+  "capability_profile": "Q4_S3_PATCH_REFINED_PROJECTED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0",
+  "qualification_status": "development_only",
+  "source_q4_faces": 4,
+  "deformable_target_s3_faces": 2,
+  "gap_tolerance_m": 5e-05,
+  "has_restart_checkpoint": true,
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\reports\\install-free-target-39b2c598\\anysolver\\__init__.py",
+  "steps": [
+    {
+      "step": 1,
+      "normal_force_n": 1.512342740294702e-05,
+      "minimum_gap_m": -4.978543500404022e-07,
+      "active_pressure_modes": 2,
+      "complementarity_relative_force": 1.321789861488475e-15,
+      "pair_force_balance_n": 1.694079859920952e-21,
+      "pair_moment_balance_nm": 3.388144286128614e-21
+    },
+    {
+      "step": 2,
+      "normal_force_n": 0.0001700500527128915,
+      "minimum_gap_m": -2.3330294865876854e-06,
+      "active_pressure_modes": 1,
+      "complementarity_relative_force": 7.916424936741918e-16,
+      "pair_force_balance_n": 7.431869396999332e-24,
+      "pair_moment_balance_nm": 1.406207041340147e-23
+    },
+    {
+      "step": 3,
+      "normal_force_n": 0.00016051358401293072,
+      "minimum_gap_m": -1.9881459496225504e-06,
+      "active_pressure_modes": 1,
+      "complementarity_relative_force": 1.2960088635930186e-13,
+      "pair_force_balance_n": 3.0646763573623126e-23,
+      "pair_moment_balance_nm": 2.710507159134137e-20
+    },
+    {
+      "step": 4,
+      "normal_force_n": 0.00015173370873320814,
+      "minimum_gap_m": -1.949777970308602e-06,
+      "active_pressure_modes": 2,
+      "complementarity_relative_force": 3.6295294844068505e-13,
+      "pair_force_balance_n": 2.658777710080629e-23,
+      "pair_moment_balance_nm": 1.355253725348463e-20
+    },
+    {
+      "step": 5,
+      "normal_force_n": 1.374067755799e-05,
+      "minimum_gap_m": -5.201138702840699e-07,
+      "active_pressure_modes": 2,
+      "complementarity_relative_force": 1.7289619169717754e-15,
+      "pair_force_balance_n": 1.6940671831508644e-21,
+      "pair_moment_balance_nm": 3.388132212068487e-21
+    },
+    {
+      "step": 6,
+      "normal_force_n": 0.0,
+      "minimum_gap_m": 3.9999999963048415e-05,
+      "active_pressure_modes": 0,
+      "complementarity_relative_force": 0.0,
+      "pair_force_balance_n": 0.0,
+      "pair_moment_balance_nm": 0.0
+    },
+    {
+      "step": 7,
+      "normal_force_n": 1.3740677557991085e-05,
+      "minimum_gap_m": -5.201138702867387e-07,
+      "active_pressure_modes": 2,
+      "complementarity_relative_force": 7.528645221434146e-16,
+      "pair_force_balance_n": 2.3245326546907087e-24,
+      "pair_moment_balance_nm": 2.39577301373248e-21
+    },
+    {
+      "step": 8,
+      "normal_force_n": 0.0001517337087341796,
+      "minimum_gap_m": -1.9497779702605637e-06,
+      "active_pressure_modes": 2,
+      "complementarity_relative_force": 8.587452918191857e-16,
+      "pair_force_balance_n": 4.0785410160029524e-23,
+      "pair_moment_balance_nm": 1.355254169634521e-20
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+# Corrected-integral enforcement screen
+
+One prospective180s/953MiB source-development comparison, JIT off, completed:1check passed71.23s; process72.893s, peak202125312B. Raw runtime/source selection, saved configurations and diagnostics in segmented_enforcement_raw.zip. Test/source identity in segmented_enforcement_results.json and preceding segmented_normal_results.json.
+
+Same8x8 material rule, geometry, loading and settings; friction disabled to isolate normal enforcement. Stiffness1e5: reaction.00308642774008N, continuous penetration307.864um. Stiffness1e6: reaction.00311343931963N, penetration122.569um. Reaction change.875%. Both reequilibrated residuals pass existing fixture gates. Each endpoint integral used4angular intervals/96evaluations, with tiny Gauss8/16 estimates. Those estimates do not independently certify integration error.
+
+Interpretation: corrected integral exhibits enforcement improvement and less than1% reaction change, but neither case meets the programme49um radius-based starting gap budget. No qualification claim. The fixed-point friction rule remains unresolved and must not inherit continuous-normal accuracy. Next implement material-history-aware pressure integration/refinement; retain these endpoint poses for a cheap independent integration discriminator, without resolving them. General swept continuous-patch admission and installed native delivery remain open. No penalty-budget escalation authorized by this result.

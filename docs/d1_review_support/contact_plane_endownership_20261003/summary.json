@@ -1,0 +1,123 @@
+{
+  "scope": "D3 exact affine plane-hemisphere ownership guard and coupled static endpoint code verification; not engineering acceptance",
+  "source_parent": "6158f882",
+  "source_files": {
+    "src/anysolver/general_contact/beam_plane.py": "2d6c63eb16edbc581046f481aa4e9d6627b9341568ddd804727941563f61b856",
+    "tests/test_general_contact_plane_end_ownership.py": "18ba1e2738036da2df9d49022e370b9d9096aa4785873a658f57669b73fb098b",
+    "examples/general_contact_beam_end_capped_cylinder.py": "8c228cd8df11ff81fb5526da3ed84943a0bf5aa09f45a2bb0855b00c7eae17f9"
+  },
+  "wheels": {
+    "anyfem-0.4.1-py3-none-any.whl": "2697facbf0cdd97d06de89e0da24e056057b7370ac8b6ce2a3b4cc4098dd3175",
+    "anysolver-0.4.7-py3-none-any.whl": "bd6dadf514ebb507625d00e57bb3b3c138f9bfe43ef5bba585e88976957057b4"
+  },
+  "runs": {
+    "ownership_source": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 3.959840300027281,
+        "peak_bytes": 180432896
+      },
+      "outcomes": {
+        "passed": 15
+      }
+    },
+    "corrected_contract_covariance": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 2.4420277000172064,
+        "peak_bytes": 182321152
+      },
+      "outcomes": {
+        "passed": 4
+      }
+    },
+    "build": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 12.10115980001865,
+        "peak_bytes": 110616576
+      },
+      "outcomes": null
+    },
+    "install": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 3.945483100018464,
+        "peak_bytes": 102895616
+      },
+      "outcomes": null
+    },
+    "build_legacy_arithmetic": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 9.501224799954798,
+        "peak_bytes": 110186496
+      },
+      "outcomes": null
+    },
+    "install_legacy_arithmetic": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 3.808388000004925,
+        "peak_bytes": 85233664
+      },
+      "outcomes": null
+    },
+    "installed_final": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 4.612890999997035,
+        "peak_bytes": 320753664
+      },
+      "outcomes": {
+        "passed": 23
+      }
+    }
+  },
+  "installed_modules_matching": 208,
+  "installed_package_files_matching": 492,
+  "effective_jit_disabled": true,
+  "effective_numba_threads": 1,
+  "effective_pools": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "version": "0.3.31.188.0",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "version": "0.3.30",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "openmp",
+      "internal_api": "openmp",
+      "num_threads": 1,
+      "prefix": "vcomp",
+      "filepath": "C:\\Windows\\System32\\vcomp140.dll",
+      "version": null
+    }
+  ],
+  "independent_bar_relative_target": 1e-06,
+  "normal_gap_budget_m": 1e-05,
+  "raw_records": 31,
+  "raw_sha256": "f5ba8969cd1ccdc2b37a410900853d8e97236e619167d0f89a6c182db8898845",
+  "limits": "180s/953MiB process tree; fixed plane and elastic small-motion structural scope; exact declared affine end paths; closed ownership switches reject; no generalized-tangent/native/dynamic/friction/application/engineering acceptance"
+}

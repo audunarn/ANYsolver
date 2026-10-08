@@ -1,0 +1,102 @@
+"""Independent continuum discriminator for the declared B2 round-tube owner.
+
+Level A only: uniform dead nodal loading converges to the continuum load.
+The reference uses small motion; this does not qualify general beam contact.
+"""
+import json
+import math
+import sys
+from pathlib import Path
+
+import numpy as np
+from scipy.integrate import quad
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]/"docs/d1_review_support"))
+from d3_beam_foundation_reference import cantilever_foundation_reference
+
+from anysolver import (BoundaryCondition, ContactDefinition, ContactInteraction,
+                       ContactSolverSettings, ContactSurface, LoadCase,
+                       RigidContactBody, solve_static_nonlinear)
+from anysolver.elements import BeamElement
+from anysolver.fe_core import FEModel
+
+
+RADIUS, YOUNG, NU, LENGTH = .01, 1.e7, .3, 1.
+CLEARANCE, LOAD, LINE_STIFFNESS = .001, .001, 1.e4
+AREA = math.pi*RADIUS**2
+INERTIA = math.pi*RADIUS**4/4
+BENDING = YOUNG*INERTIA
+SHEAR = (5/6)*YOUNG/(2*(1+NU))*AREA
+
+
+def reference():
+    return cantilever_foundation_reference(
+        length=LENGTH, clearance=CLEARANCE, bending=BENDING, shear=SHEAR,
+        load=LOAD, line_stiffness=LINE_STIFFNESS)
+
+
+def test_reference_open_polynomial_and_foundation_force():
+    ref = reference()
+    # Independent integration of Q'= -q, M'=-Q, theta'=M/D,
+    # w'=theta+Q/S on the open branch, using the returned root resultants.
+    m0, q0 = ref.state(0)[2:]
+    for x in (0., ref.front*.37, ref.front):
+        expected = (m0*x*x/(2*BENDING)-q0*x**3/(6*BENDING)
+                    +LOAD*x**4/(24*BENDING)+(q0*x-LOAD*x*x/2)/SHEAR)
+        assert abs(ref.state(x)[0]-expected) < 1.e-14
+    reaction = quad(lambda x: LINE_STIFFNESS*(ref.state(x)[0]-CLEARANCE),
+                    ref.front, LENGTH, epsabs=1.e-14, epsrel=1.e-11)[0]
+    assert abs(reaction-ref.reaction)/ref.reaction < 1.e-9
+    assert ref.boundary_residual < 1.e-9 and ref.front_residual < 1.e-9
+    assert ref.contact_velocity_lower > 0
+
+
+def test_b2_foundation_coupled_continuum_discriminator():
+    cells = 16
+    model = FEModel("b2_foundation_continuum_discriminator")
+    model.add_material("elastic", YOUNG, NU, density=1.)
+    for node in range(1, cells+2):
+        model.add_node(node, (node-1)*LENGTH/cells, 0., 0.)
+    section = {"area": AREA, "Iy": INERTIA, "Iz": INERTIA,
+               "J": 2*INERTIA, "shear_factor_y": 5/6, "shear_factor_z": 5/6}
+    for cell in range(1, cells+1):
+        model.add_element(cell, BeamElement(cell, [cell, cell+1], "elastic", section))
+    model.add_boundary_condition(BoundaryCondition(
+        "root", (1,), {dof: 0. for dof in ("ux", "uy", "uz", "rx", "ry", "rz")}))
+    model.add_boundary_condition(BoundaryCondition(
+        "planar", tuple(range(2, cells+2)), {dof: 0. for dof in ("uy", "rx", "rz")}))
+    definition = ContactDefinition(
+        surfaces=(ContactSurface("tube", tuple(range(1, cells+1)),
+                                 beam_radius=RADIUS, beam_end_caps="none"),),
+        rigid_bodies=(RigidContactBody("plane", "plane", (0., 0., -RADIUS-CLEARANCE),
+                                      normal=(0., 0., 1.)),),
+        interactions=(ContactInteraction("tube_plane", "tube", "plane", None,
+                                         1.e-3*RADIUS, line_stiffness=LINE_STIFFNESS),))
+    load = LoadCase("uniform_dead_nodal_load")
+    for node in range(1, cells+2):
+        force = LOAD*LENGTH/cells*(.5 if node in (1, cells+1) else 1.)
+        load.add_nodal_load(node, forces=(0., 0., -force))
+    result = solve_static_nonlinear(
+        model, load, contact=definition,
+        contact_settings=ContactSolverSettings(pair_motion="general"),
+        num_steps=4, max_iterations=18, tolerance=1.e-9,
+        emit_restart_checkpoint=True)
+    assert result.status == "completed", result.failure_reason
+    summary = result.info["general_contact"]
+    assert summary["gap_tolerance_met"]
+    ref = reference()
+    q = np.asarray(result.displacements)
+    tip = -float(q[model.mesh.dof_manager.get_node_dofs(cells+1)[2]])
+    force = float(summary["beam_force"][2])
+    force_error = abs(force-ref.reaction)/ref.reaction
+    tip_error = abs(tip-ref.state(LENGTH)[0])/ref.state(LENGTH)[0]
+    record = {"cells": cells, "tip_m": tip, "reference_tip_m": float(ref.state(LENGTH)[0]),
+              "reaction_N": force, "reference_reaction_N": float(ref.reaction),
+              "reaction_relative_error": float(force_error), "tip_relative_error": float(tip_error),
+              "reference_front_m": float(ref.front), "contact": summary,
+              "steps": [step.to_dict() for step in result.steps]}
+    print("B2_FOUNDATION_RESPONSE "+json.dumps(record, sort_keys=True), flush=True)
+    # Prospective development discriminator, not mesh/enforcement qualification.
+    assert force_error <= .02
+    assert tip_error <= .02
+    assert np.linalg.norm(np.asarray(summary["beam_force"])+summary["rigid_force"])/LOAD < 1.e-6

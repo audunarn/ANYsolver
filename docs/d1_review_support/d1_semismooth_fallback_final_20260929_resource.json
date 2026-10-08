@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 151.28268600000592,
+  "peak_process_tree_memory_mb": 480.129024,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_monolithic_restart.py",
+    "tests/test_general_contact_eccentric_source_director.py",
+    "tests/test_general_contact_d1_interior_profile.py",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d1_semismooth_fallback_final_20260929.log"
+}

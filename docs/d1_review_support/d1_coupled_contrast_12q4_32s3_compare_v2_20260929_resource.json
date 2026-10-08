@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 2.065684599991073,
+  "peak_process_tree_memory_mb": 158.84288,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "scripts/general_contact_d1_interior_two_body_oracle_dev.py",
+    "--coupled-contrast-comparison",
+    "docs/d1_review_support/d1_coupled_contrast_12q4_32s3_compare_v2_20260929.json",
+    "docs/d1_review_support/d1_fixed_bump_contrast_source12_20260929.json",
+    "docs/d1_review_support/d1_coupled_contrast_12q4_32s3_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_coupled_contrast_12q4_32s3_compare_v2_20260929.log"
+}

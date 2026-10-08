@@ -1,0 +1,79 @@
+{"stage": "entry", "elapsed_seconds": 0.000889300019480288}
+{"stage": "445_source_bindings_verified", "elapsed_seconds": 0.09317310000187717}
+{"stage": "before_anysolver", "elapsed_seconds": 0.09323210001457483}
+Timeout (0:00:15)!
+Thread 0x00012040 (most recent call first):
+  File "C:\Python\Python314\Lib\tempfile.py", line 257 in _mkstemp_inner
+  File "C:\Python\Python314\Lib\tempfile.py", line 600 in opener
+  File "C:\Python\Python314\Lib\tempfile.py", line 603 in NamedTemporaryFile
+  File "C:\Python\Python314\Lib\site-packages\numba\core\caching.py", line 112 in ensure_cache_path
+  File "C:\Python\Python314\Lib\site-packages\numba\core\caching.py", line 185 in from_function
+  File "C:\Python\Python314\Lib\site-packages\numba\core\caching.py", line 419 in __init__
+  File "C:\Python\Python314\Lib\site-packages\numba\core\caching.py", line 687 in __init__
+  File "C:\Python\Python314\Lib\site-packages\numba\core\dispatcher.py", line 811 in enable_caching
+  File "C:\Python\Python314\Lib\site-packages\numba\core\decorators.py", line 227 in wrapper
+  File "C:\Users\AudunArnesenNyhus\.codex\worktrees\general-contact-native-dynamics\ANYsolver\src\anysolver\vectorized_stiffness.py", line 15 in <module>
+  File "<frozen importlib._bootstrap>", line 491 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 759 in exec_module
+  File "<frozen importlib._bootstrap>", line 938 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1342 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1371 in _find_and_load
+  File "C:\Users\AudunArnesenNyhus\.codex\worktrees\general-contact-native-dynamics\ANYsolver\src\anysolver\recovery_s4.py", line 16 in <module>
+  File "<frozen importlib._bootstrap>", line 491 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 759 in exec_module
+  File "<frozen importlib._bootstrap>", line 938 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1342 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1371 in _find_and_load
+  File "C:\Users\AudunArnesenNyhus\.codex\worktrees\general-contact-native-dynamics\ANYsolver\src\anysolver\recovery.py", line 25 in <module>
+  File "<frozen importlib._bootstrap>", line 491 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 759 in exec_module
+  File "<frozen importlib._bootstrap>", line 938 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1342 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1371 in _find_and_load
+  File "C:\Users\AudunArnesenNyhus\.codex\worktrees\general-contact-native-dynamics\ANYsolver\src\anysolver\assembly.py", line 53 in <module>
+  File "<frozen importlib._bootstrap>", line 491 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 759 in exec_module
+  File "<frozen importlib._bootstrap>", line 938 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1342 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1371 in _find_and_load
+  File "C:\Users\AudunArnesenNyhus\.codex\worktrees\general-contact-native-dynamics\ANYsolver\src\anysolver\_native_reference_modal.py", line 14 in <module>
+  File "<frozen importlib._bootstrap>", line 491 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 759 in exec_module
+  File "<frozen importlib._bootstrap>", line 938 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1342 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1371 in _find_and_load
+  File "C:\Users\AudunArnesenNyhus\.codex\worktrees\general-contact-native-dynamics\ANYsolver\src\anysolver\_ge_beam3_retained_fibre.py", line 19 in <module>
+  File "<frozen importlib._bootstrap>", line 491 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 759 in exec_module
+  File "<frozen importlib._bootstrap>", line 938 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1342 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1371 in _find_and_load
+  File "C:\Users\AudunArnesenNyhus\.codex\worktrees\general-contact-native-dynamics\ANYsolver\src\anysolver\_ge_beam3_native_fibre_static_element.py", line 13 in <module>
+  File "<frozen importlib._bootstrap>", line 491 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 759 in exec_module
+  File "<frozen importlib._bootstrap>", line 938 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1342 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1371 in _find_and_load
+  File "C:\Users\AudunArnesenNyhus\.codex\worktrees\general-contact-native-dynamics\ANYsolver\src\anysolver\_ge_beam3_native_definition.py", line 17 in <module>
+  File "<frozen importlib._bootstrap>", line 491 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 759 in exec_module
+  File "<frozen importlib._bootstrap>", line 938 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1342 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1371 in _find_and_load
+  File "C:\Users\AudunArnesenNyhus\.codex\worktrees\general-contact-native-dynamics\ANYsolver\src\anysolver\ge_beam3_native.py", line 13 in <module>
+  File "<frozen importlib._bootstrap>", line 491 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 759 in exec_module
+  File "<frozen importlib._bootstrap>", line 938 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1342 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1371 in _find_and_load
+  File "<frozen importlib._bootstrap>", line 491 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1426 in _handle_fromlist
+  File "C:\Users\AudunArnesenNyhus\.codex\worktrees\general-contact-native-dynamics\ANYsolver\src\anysolver\b3_ge.py", line 14 in <module>
+  File "<frozen importlib._bootstrap>", line 491 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 759 in exec_module
+  File "<frozen importlib._bootstrap>", line 938 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1342 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1371 in _find_and_load
+  File "<frozen importlib._bootstrap>", line 491 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1426 in _handle_fromlist
+  File "C:\Users\AudunArnesenNyhus\.codex\worktrees\general-contact-native-dynamics\ANYsolver\src\anysolver\__init__.py", line 147 in <module>

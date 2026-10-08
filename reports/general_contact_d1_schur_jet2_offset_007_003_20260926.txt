@@ -1,0 +1,10 @@
+additional_target_shift_m=(0.07, 0.03)
+status=diverged reason=maximum_augmentations_reached accepted_steps=0
+augmentation=1 pressure_change_pa=0.042875497663127 schur_proposed=None schur_ineligible=None schur_condition=None schur_singular_values=None weak_rhs_fraction=None weak_right_mode=None pressure_gram_rank=4 schur_applied=None schur_rejected=None
+augmentation=2 pressure_change_pa=0.037084208810276166 schur_proposed=True schur_ineligible=None schur_condition=344971175936.0219 schur_singular_values=[3.841507632959129, 0.08359469008912124, 0.026537132279484087, 1.113573510173955e-11] weak_rhs_fraction=0.13355048113963572 weak_right_mode=[0.676462167567101, -0.45401505581862883, -0.5058929784169568, 0.2834458666638963] pressure_gram_rank=4 schur_applied=None schur_rejected=None
+augmentation=3 pressure_change_pa=0.03695880147797109 schur_proposed=None schur_ineligible=None schur_condition=None schur_singular_values=None weak_rhs_fraction=None weak_right_mode=None pressure_gram_rank=None schur_applied=None schur_rejected=nonlinear_verification
+augmentation=4 pressure_change_pa=0.03237633868530837 schur_proposed=None schur_ineligible=None schur_condition=None schur_singular_values=None weak_rhs_fraction=None weak_right_mode=None pressure_gram_rank=4 schur_applied=None schur_rejected=None
+augmentation=5 pressure_change_pa=0.02854889543039535 schur_proposed=None schur_ineligible=None schur_condition=None schur_singular_values=None weak_rhs_fraction=None weak_right_mode=None pressure_gram_rank=4 schur_applied=None schur_rejected=None
+augmentation=6 pressure_change_pa=0.02543692083551477 schur_proposed=None schur_ineligible=None schur_condition=None schur_singular_values=None weak_rhs_fraction=None weak_right_mode=None pressure_gram_rank=4 schur_applied=None schur_rejected=None
+augmentation=7 pressure_change_pa=0.022906364150413888 schur_proposed=None schur_ineligible=None schur_condition=None schur_singular_values=None weak_rhs_fraction=None weak_right_mode=None pressure_gram_rank=4 schur_applied=None schur_rejected=None
+gap_tolerance_met=True active_modes=4 schur_attempts=1 schur_applied=0

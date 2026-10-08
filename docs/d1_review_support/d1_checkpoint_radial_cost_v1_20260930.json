@@ -1,0 +1,79 @@
+{
+  "status": "development_complete_saved_checkpoint_roundtrip",
+  "scope": "complete 432-element radial-2 development root; no solve; does not substitute for formal spatial evidence",
+  "roundtrip_checks_met": false,
+  "independently_accepted": false,
+  "released": false,
+  "python_executable": "C:\\Python\\Python314\\python.exe",
+  "python_version": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+  "actual_modules": {
+    "anysolver": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+      "sha256": "677237ea706773bfa0e511c77e368f37f55a3289b073a872437909be51d82ebe"
+    },
+    "anysolver.nonlinear_restart": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\nonlinear_restart.py",
+      "sha256": "67ee3a63738d257e919ae7046c5464c3fac3156665105e03b6893a1305892445"
+    },
+    "anysolver.current_state_tangent": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\current_state_tangent.py",
+      "sha256": "6da6ef5b3bf32a96b7a875863281e2c719546bd2c8646c89f834acb2c65ddf82"
+    },
+    "anysolver.e4_pl_s3_state": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\e4_pl_s3_state.py",
+      "sha256": "aec299d8f419cec2bc1d7fe9ad6a527363a9ca4f94003a39f98b15407c4b0d81"
+    },
+    "anysolver.general_contact.s3_patch_static": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_static.py",
+      "sha256": "0ffc7c926e8d7c95022629e9247f25c8d30bc9a6109b5557a7eacca8e547a7f6"
+    },
+    "anysolver.general_contact.static_path": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\static_path.py",
+      "sha256": "9438abc791ebfa5c485fde89d573fa19ce943b1c566f7b0b00e50d0e9defb51b"
+    },
+    "scripts.general_contact_d1_interior_press_dev": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\scripts\\general_contact_d1_interior_press_dev.py",
+      "sha256": "89fb91a83c3575038dabba16106cf48a13ab2d21073ea6c282362acc3bcad4e8"
+    }
+  },
+  "adapter": {
+    "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d1_saved_checkpoint_roundtrip_dev.py",
+    "sha256": "d91a4956eff3bee2aec611a2d58c3d60f4e3953d37670e39391ca7b30fd26c5c"
+  },
+  "contract_reconstruction_reference": {
+    "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d1_cycle_restart_check_dev.py",
+    "sha256": "dcef702f9bcdd5af3d43b3447f0e63eaf2ac6e953ba634f182aef8bb1a40af89"
+  },
+  "rows": [
+    {
+      "kind": "radial",
+      "input_path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d1_radial_nonmatching_swept_search_coupled_v8_20260930.json",
+      "expected_step": 2,
+      "input_sha256": "96f0bcec3b5a3fcc6bd913d3cff192e8b66a7ba9d34e2d3d0dedeaea7c0fc001",
+      "timings_s": {
+        "load_integrity_s": 0.2091558999964036,
+        "original_canonical_and_saved_parity_s": 0.11042900002212264
+      },
+      "adapter_checkpoint_calls": {
+        "load_nonlinear_checkpoint": 1,
+        "validate_nonlinear_checkpoint": 0,
+        "create_nonlinear_checkpoint": 0
+      },
+      "last_stage": "reconstruct_and_fingerprint",
+      "failure": {
+        "type": "ValueError",
+        "message": "reconstructed current path contract differs from the saved root"
+      },
+      "traceback": "Traceback (most recent call last):\n  File \"docs\\d1_review_support\\d1_saved_checkpoint_roundtrip_dev.py\", line 277, in main\n    row.update(roundtrip_saved_checkpoint(saved, expected_step=step,\n               ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                                          radial=name == \"radial\",\n                                          ^^^^^^^^^^^^^^^^^^^^^^^^\n                                          diagnostics=row))\n                                          ^^^^^^^^^^^^^^^^\n  File \"docs\\d1_review_support\\d1_saved_checkpoint_roundtrip_dev.py\", line 174, in roundtrip_saved_checkpoint\n    _require(observed_analysis == root[\"analysis_fingerprint\"],\n    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n             \"reconstructed current path contract differs from the saved root\")\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"docs\\d1_review_support\\d1_saved_checkpoint_roundtrip_dev.py\", line 37, in _require\n    raise ValueError(message)\nValueError: reconstructed current path contract differs from the saved root\n",
+      "elapsed_s": 41.555910000024596
+    }
+  ],
+  "failures": [
+    {
+      "kind": "radial",
+      "type": "ValueError",
+      "message": "reconstructed current path contract differs from the saved root"
+    }
+  ],
+  "elapsed_s": 41.58416319999378
+}

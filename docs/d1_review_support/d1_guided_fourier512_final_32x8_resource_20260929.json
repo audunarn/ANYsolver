@@ -1,0 +1,22 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 22.58583930000168,
+  "peak_process_tree_memory_mb": 628.006912,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-u",
+    "-m",
+    "docs.d1_review_support.d1_saved_active_compliance",
+    "--saved",
+    "docs/d1_review_support/d1_32x8_near_rim_direct_result_20260928.json",
+    "--source-transverse-witness",
+    "--fourier-modes",
+    "512",
+    "--output",
+    "docs/d1_review_support/d1_guided_fourier512_final_32x8_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_guided_fourier512_final_32x8_log_20260929.txt"
+}

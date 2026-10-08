@@ -1,0 +1,50 @@
+{
+  "scope": "fixed-path development discriminator; not coupled or spatial qualification",
+  "saved_cumulative_dissipation_j": 0.04562560436890991,
+  "rows": [
+    {
+      "subdivisions": 4,
+      "integration_level": 0,
+      "points": 147,
+      "seconds": 2.982713299978059,
+      "dissipation_j": 0.04562563619665991,
+      "storage_j": 2.516317382813524e-15,
+      "released_storage_j": 7.041855061298559e-06,
+      "prepared_partial_samples": 1451,
+      "ordinary_stages": 0
+    },
+    {
+      "subdivisions": 4,
+      "integration_level": 1,
+      "points": 588,
+      "seconds": 11.153021300036926,
+      "dissipation_j": 0.0456256065231643,
+      "storage_j": 2.5167312729180994e-15,
+      "released_storage_j": 7.0391479084404425e-06,
+      "prepared_partial_samples": 5540,
+      "ordinary_stages": 0
+    },
+    {
+      "subdivisions": 12,
+      "integration_level": 0,
+      "points": 147,
+      "seconds": 7.010085900023114,
+      "dissipation_j": 0.045923428249942756,
+      "storage_j": 2.492597033986426e-15,
+      "released_storage_j": 6.586837618854789e-06,
+      "prepared_partial_samples": 3774,
+      "ordinary_stages": 0
+    },
+    {
+      "subdivisions": 32,
+      "integration_level": 0,
+      "points": 147,
+      "seconds": 17.167849299963564,
+      "dissipation_j": 0.04600833537250637,
+      "storage_j": 2.4667243193014988e-15,
+      "released_storage_j": 6.526438252246942e-06,
+      "prepared_partial_samples": 9588,
+      "ordinary_stages": 0
+    }
+  ]
+}

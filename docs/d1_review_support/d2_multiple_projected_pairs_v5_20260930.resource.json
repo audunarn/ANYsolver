@@ -1,0 +1,20 @@
+{
+  "status": "time_limit_exceeded",
+  "exit_code": 15,
+  "elapsed_seconds": 180.04410810000263,
+  "peak_process_tree_memory_mb": 416.600064,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_multiple_projected_pairs.py",
+    "-k",
+    "ordinary_force_control or shared_source_coordinates",
+    "-q",
+    "--junitxml=docs/d1_review_support/d2_multiple_projected_pairs_v5_20260930.xml",
+    "--basetemp=docs/d1_review_support/pytest_tmp_d2_multi_v5_20260930"
+  ],
+  "log": "docs\\d1_review_support\\d2_multiple_projected_pairs_v5_20260930.log"
+}

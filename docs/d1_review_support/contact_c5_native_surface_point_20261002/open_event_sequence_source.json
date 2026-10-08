@@ -1,0 +1,6 @@
+{
+  "src/anysolver/general_contact/native_surface_event_sequence.py": "71f3bbed7340e06541237ce66ebeeadf9be3a782e470885f3371854088a3a20c",
+  "src/anysolver/general_contact/native_surface_support.py": "cb0a3fbccd58a50e6b7e8d8742ff786550343331d57dfdce27ced36d197a0cd4",
+  "src/anysolver/general_contact/native_surface_s3_friction.py": "5ad0c8d03f349d55a86aae296d4114ae87300c942a9f251bf6b48948233f290c",
+  "tests/test_general_contact_native_surface_event_sequence.py": "dfff4f2dc9c7b2326a71ab0043d5be7a2a8a9b78abf85bbf92cb6aebaffd3b6f"
+}

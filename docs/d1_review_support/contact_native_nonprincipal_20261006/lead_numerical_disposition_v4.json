@@ -1,0 +1,127 @@
+{
+  "status": "DEVELOPMENT_CORRECTIVE16_PASS",
+  "steps": 16,
+  "horizon": 0.0625,
+  "dt": 0.00390625,
+  "H_error": 5.108152488863217e-07,
+  "H_target": 1e-06,
+  "P_error": 3.607856700170062e-17,
+  "energy_defect": 4.5115691231816134e-05,
+  "response_error": 0.00012603624368333867,
+  "state_error": 3.312599237060881e-13,
+  "balance_error": 2.8573269290198036e-13,
+  "impulse_error": 2.1276671813119586e-16,
+  "cumulative_impulse_error": 3.4422005628812953e-16,
+  "capture_reconstruction_error": 3.920235783504001e-15,
+  "captured_stages": 16,
+  "checkpoint_chain": {
+    "capture_overlap": false,
+    "initial_equal": true,
+    "new_steps": 8,
+    "prefix_capsule_sha256": "c56142aa416b7abbbc949843b70a9e3e25e1d7d18710d0ea534452a6a819e889",
+    "prefix_outputs_equal": true,
+    "prefix_steps": 8,
+    "prefix_steps_equal": true,
+    "restored_predecessor_equal": true
+  },
+  "baseline_convergence": 3.454450633278831e-12,
+  "all_calls": [
+    {
+      "nodeid": "tests/test_ge_beam3_native_nonprincipal.py::test_public_nonprincipal_corrective_resumed_sixteen",
+      "phase": "call",
+      "outcome": "passed",
+      "pytest_duration_s": 35.61532400001306,
+      "failure": null
+    }
+  ],
+  "record_sha256": "cefe1743df686965738487f750629d1c7716150f2d9d6ba5d2e3e5ee509edf71",
+  "import_count": 196,
+  "import_errors": [],
+  "runtime_errors": [],
+  "jit_disabled": true,
+  "numba_threads": 1,
+  "pool_threads": [
+    1,
+    1
+  ],
+  "remaining_scope_s": 37.10232409986202,
+  "scientific_acceptance": false,
+  "unchanged_original_NONPASS": [
+    8.141713955288152e-06,
+    2.0416609389404326e-06
+  ],
+  "resources": [
+    {
+      "attempt": "nonprincipal_cli_v3b",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_s": 20.128917300025932,
+      "peak_tree_bytes": 151244800,
+      "cap_s": 40.0,
+      "spent_before_s": 99.02089640009217,
+      "total_spent_s": 119.1498137001181
+    },
+    {
+      "attempt": "nonprincipal_coarse_replay_v3b",
+      "status": "completed",
+      "exit_code": 1,
+      "elapsed_s": 5.143309099948965,
+      "peak_tree_bytes": 171102208,
+      "cap_s": 60.0,
+      "spent_before_s": 29.178968400112353,
+      "total_spent_s": 34.32227750006132
+    },
+    {
+      "attempt": "nonprincipal_corrective_prefix_v4",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_s": 44.87309310003184,
+      "peak_tree_bytes": 172503040,
+      "cap_s": 55.0,
+      "spent_before_s": 119.1498137001181,
+      "total_spent_s": 164.02290680014994
+    },
+    {
+      "attempt": "nonprincipal_corrective_resumed_v4",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_s": 38.87476909998804,
+      "peak_tree_bytes": 173232128,
+      "cap_s": 55.0,
+      "spent_before_s": 164.02290680014994,
+      "total_spent_s": 202.89767590013798
+    },
+    {
+      "attempt": "nonprincipal_local_coarse_v2",
+      "status": "completed",
+      "exit_code": 1,
+      "elapsed_s": 29.178968400112353,
+      "peak_tree_bytes": 169783296,
+      "cap_s": 60.0,
+      "spent_before_s": 0,
+      "total_spent_s": 29.178968400112353
+    },
+    {
+      "attempt": "nonprincipal_restart_v3b",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_s": 24.747751099988818,
+      "peak_tree_bytes": 171405312,
+      "cap_s": 60.0,
+      "spent_before_s": 74.27314530010335,
+      "total_spent_s": 99.02089640009217
+    },
+    {
+      "attempt": "nonprincipal_temporal_v3b",
+      "status": "completed",
+      "exit_code": 1,
+      "elapsed_s": 39.95086780004203,
+      "peak_tree_bytes": 171397120,
+      "cap_s": 60.0,
+      "spent_before_s": 34.32227750006132,
+      "total_spent_s": 74.27314530010335
+    }
+  ],
+  "measured_execution_s": 202.89767590013798,
+  "peak_tree_bytes": 173232128
+}

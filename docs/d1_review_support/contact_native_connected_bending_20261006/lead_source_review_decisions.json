@@ -1,0 +1,20 @@
+{
+  "status": "prospective source repairs; numerical execution NONE",
+  "source_parent": "6295a34163c50ae6d17278f0cd03c8d3399f6f38",
+  "original_source_hold": "source_preparation.json, final_manifest and snapshots V1 preserved",
+  "decisions": [
+    "Keep AMP and meaningful lowest-mode/dyadic phase inputs unchanged; no post-execution tuning.",
+    "Repair response/resultant and dual compatibility grouping using each element's 6-force then 12-moment ordering.",
+    "Separate descriptor exact-zero resultant rates from angular frame rates; preserve length/angle and force/moment dimensions.",
+    "Use actual production semidiscrete analytical q/v error <=0.001; retain conditional remainder bound separately. This preserves original response criterion, not a newly invented worst-case certification requirement.",
+    "Include exact-rational Kq - omega^2 Mq eigen-residual in conditional forcing enclosure; no claim that a binary eigensolve is exact.",
+    "Check actual native stage energy alongside independent stage energy before invoking the conditional energy box.",
+    "Compare all 27 physical mass coordinates, with separate translational/rotary/cross units and unexcited rotated rotary blocks; no production physical inertia condensation.",
+    "Preserve actual results and metrics before assertions, including bound violations."
+  ],
+  "scientific_thresholds_changed": false,
+  "production_changed": false,
+  "historical_evidence_regraded": false,
+  "execution_authority": "not requested or granted for new bending slice yet",
+  "ownership": "same implementation author completes revisions; lead adopts contract interpretation; same-family source reviewer supplies supporting scrutiny only"
+}

@@ -1,0 +1,165 @@
+{
+  "status": "development_clamp_work_probe",
+  "rows": [
+    {
+      "step": 4,
+      "node": 11,
+      "axis": 2,
+      "force_action_norm": 1.2120745293641507e-05,
+      "relative_directional_error": 3.1094763427706734e-09,
+      "branch_equal": true,
+      "triangles_equal": true,
+      "mapped_contact_generalized_force": 9.623492757714922e-07
+    },
+    {
+      "step": 4,
+      "node": 11,
+      "axis": 3,
+      "force_action_norm": 2.0414535854302947e-08,
+      "relative_directional_error": 1.6236319711167407e-06,
+      "branch_equal": true,
+      "triangles_equal": true,
+      "mapped_contact_generalized_force": 3.6723657646498854e-32
+    },
+    {
+      "step": 4,
+      "node": 11,
+      "axis": 4,
+      "force_action_norm": 1.5703446569608106e-08,
+      "relative_directional_error": 4.701681763538234e-06,
+      "branch_equal": true,
+      "triangles_equal": true,
+      "mapped_contact_generalized_force": 7.336378145439455e-13
+    },
+    {
+      "step": 4,
+      "node": 11,
+      "axis": 5,
+      "force_action_norm": 0.0,
+      "relative_directional_error": null,
+      "branch_equal": true,
+      "triangles_equal": true,
+      "mapped_contact_generalized_force": 0.0
+    },
+    {
+      "step": 4,
+      "node": 14,
+      "axis": 2,
+      "force_action_norm": 8.571625033818791e-05,
+      "relative_directional_error": 1.233613047306934e-09,
+      "branch_equal": true,
+      "triangles_equal": true,
+      "mapped_contact_generalized_force": 4.572510300843713e-05
+    },
+    {
+      "step": 4,
+      "node": 14,
+      "axis": 3,
+      "force_action_norm": 5.562566042974095e-07,
+      "relative_directional_error": 3.065885795474231e-07,
+      "branch_equal": true,
+      "triangles_equal": true,
+      "mapped_contact_generalized_force": -1.5153708816201405e-13
+    },
+    {
+      "step": 4,
+      "node": 14,
+      "axis": 4,
+      "force_action_norm": 7.023662960254637e-07,
+      "relative_directional_error": 3.6767162015545237e-07,
+      "branch_equal": true,
+      "triangles_equal": true,
+      "mapped_contact_generalized_force": 3.4850376877822185e-11
+    },
+    {
+      "step": 4,
+      "node": 14,
+      "axis": 5,
+      "force_action_norm": 0.0,
+      "relative_directional_error": null,
+      "branch_equal": true,
+      "triangles_equal": true,
+      "mapped_contact_generalized_force": 0.0
+    },
+    {
+      "step": 8,
+      "node": 11,
+      "axis": 2,
+      "force_action_norm": 1.2120745293378078e-05,
+      "relative_directional_error": 4.978020983227056e-09,
+      "branch_equal": true,
+      "triangles_equal": true,
+      "mapped_contact_generalized_force": 9.623492757406888e-07
+    },
+    {
+      "step": 8,
+      "node": 11,
+      "axis": 3,
+      "force_action_norm": 2.0414535854301067e-08,
+      "relative_directional_error": 1.569744193174021e-06,
+      "branch_equal": true,
+      "triangles_equal": true,
+      "mapped_contact_generalized_force": 3.614596756031829e-32
+    },
+    {
+      "step": 8,
+      "node": 11,
+      "axis": 4,
+      "force_action_norm": 1.570347869992269e-08,
+      "relative_directional_error": 5.746060224466117e-06,
+      "branch_equal": true,
+      "triangles_equal": true,
+      "mapped_contact_generalized_force": 7.336378145212339e-13
+    },
+    {
+      "step": 8,
+      "node": 11,
+      "axis": 5,
+      "force_action_norm": 0.0,
+      "relative_directional_error": null,
+      "branch_equal": true,
+      "triangles_equal": true,
+      "mapped_contact_generalized_force": 0.0
+    },
+    {
+      "step": 8,
+      "node": 14,
+      "axis": 2,
+      "force_action_norm": 8.57162503389069e-05,
+      "relative_directional_error": 1.3265279435868058e-09,
+      "branch_equal": true,
+      "triangles_equal": true,
+      "mapped_contact_generalized_force": 4.5725103008766854e-05
+    },
+    {
+      "step": 8,
+      "node": 14,
+      "axis": 3,
+      "force_action_norm": 5.562566043023048e-07,
+      "relative_directional_error": 2.6862014624988444e-07,
+      "branch_equal": true,
+      "triangles_equal": true,
+      "mapped_contact_generalized_force": -1.5153708816247255e-13
+    },
+    {
+      "step": 8,
+      "node": 14,
+      "axis": 4,
+      "force_action_norm": 7.023663199334551e-07,
+      "relative_directional_error": 3.811752951171697e-07,
+      "branch_equal": true,
+      "triangles_equal": true,
+      "mapped_contact_generalized_force": 3.485037687810208e-11
+    },
+    {
+      "step": 8,
+      "node": 14,
+      "axis": 5,
+      "force_action_norm": 0.0,
+      "relative_directional_error": null,
+      "branch_equal": true,
+      "triangles_equal": true,
+      "mapped_contact_generalized_force": 0.0
+    }
+  ]
+}

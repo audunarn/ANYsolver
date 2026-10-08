@@ -1,0 +1,8 @@
+{
+  "source_cells": 8,
+  "target_cells": 4,
+  "cartesian_pairs": 2048,
+  "overlapping_pairs": 185,
+  "preparation_seconds": 2.7743371999968076,
+  "evaluation_seconds": 3.6923463999992236
+}

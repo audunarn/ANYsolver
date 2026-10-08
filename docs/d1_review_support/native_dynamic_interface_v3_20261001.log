@@ -1,0 +1,24 @@
+{"stage": "effective_environment_preimport", "environment": {"PYTHONDONTWRITEBYTECODE": "1", "OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1", "NUMBA_NUM_THREADS": "1", "PYTHONPATH": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src;C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests;C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\examples;C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver", "NUMBA_CACHE_DIR": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_dynamic_interface_v3_20261001.numba_cache", "NATIVE_DYNAMIC_INTERFACE_INPUTS": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_dynamic_interface_v3_20261001.inputs.json", "NATIVE_DYNAMIC_INTERFACE_RAW_OUTPUT": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_dynamic_interface_v3_20261001.raw.json"}, "source_file_count": 446}
+{"stage": "effective_import_verified", "identity": {"anysolver": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\__init__.py", "module_paths": {"ge_beam3_native_dynamics.py": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\ge_beam3_native_dynamics.py", "_ge_beam3_native_midpoint.py": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_midpoint.py", "_ge_beam3_dynamic_elastic_state.py": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py", "_ge_beam3_centered_finite_inertia.py": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_centered_finite_inertia.py"}, "python": "C:\\Python\\Python314\\python.exe", "numpy_version": "2.4.6", "pytest_version": "9.0.3", "environment": {"PYTHONDONTWRITEBYTECODE": "1", "OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1", "NUMBA_NUM_THREADS": "1", "PYTHONPATH": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src;C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests;C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\examples;C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver", "NUMBA_CACHE_DIR": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_dynamic_interface_v3_20261001.numba_cache", "NATIVE_DYNAMIC_INTERFACE_INPUTS": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_dynamic_interface_v3_20261001.inputs.json", "NATIVE_DYNAMIC_INTERFACE_RAW_OUTPUT": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_dynamic_interface_v3_20261001.raw.json"}, "source_count": 446, "input_sha256": "a350502f87a436b2daa6d82b12127fc4f29a86cf5ba125413df7cafc75f5611b", "entry_sha256": "99179aadabd4ebc1c30241b972c71590e4abc2ad74febf78ccba10f087242950"}}
+{"stage": "failure", "elapsed_seconds": 3.879734499991173}
+F
+================================== FAILURES ===================================
+___________________ test_two_step_native_dynamic_interface ____________________
+tests\test_ge_beam3_native_dynamic_analysis.py:98: in test_two_step_native_dynamic_interface
+    candidate = analysis.trial(state,dt=.001)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_native_dynamic_analysis.py:88: in trial
+    return self._owner().trial(accepted, dt=dt, cancellation_token=cancellation_token)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_native_midpoint.py:582: in trial
+    raise ValueError('midpoint stage residual backtracking failed')
+E   ValueError: midpoint stage residual backtracking failed
+============================== warnings summary ===============================
+tests/test_ge_beam3_native_dynamic_analysis.py::test_two_step_native_dynamic_interface
+  tests\test_ge_beam3_native_dynamic_analysis.py:25: PytestWarning: record_property is incompatible with junit_family 'xunit2' (use 'legacy' or 'xunit1')
+    def test_two_step_native_dynamic_interface(record_property):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_ge_beam3_native_dynamic_analysis.py::test_two_step_native_dynamic_interface
+1 failed, 1 warning in 4.37s

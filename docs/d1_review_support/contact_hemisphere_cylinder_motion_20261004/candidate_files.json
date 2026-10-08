@@ -1,0 +1,7 @@
+{
+  "src/anysolver/general_contact/beam_hemisphere_cylinder_motion.py": "2e7448da1efe7e7905754a16739fb67f670163c1649e174e5deff557068a4049",
+  "src/anysolver/general_contact/core.py": "33eb8ee8f23c27a8840bbf6fc9ba4b2c3fa52844e0dec492c67627546f63b169",
+  "tests/test_general_contact_hemisphere_cylinder_motion.py": "5cc22628c57842b427bd9e57bd3c1d12ad9d2a8ec8af442095885a7aebdc7507",
+  "tests/test_general_contact_hemisphere_cylinder_static.py": "66331aa0d6278a16349babae3607963246465ada6e90db9dd1ca03911e82e41b",
+  "examples/general_contact_hemisphere_cylinder_motion.py": "2e1f5af60c9a9cc6eecf6710fb7cf71b960e62924399bb393e31418c2d7fe903"
+}

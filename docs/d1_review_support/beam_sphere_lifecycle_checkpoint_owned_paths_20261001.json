@@ -1,0 +1,106 @@
+{
+  "base": "2dd335e9ece8a28ee1f67f3440535f627e9cf198",
+  "status": "local simultaneous sphere/plane lifecycle; no scientific admission",
+  "excluded_worker_paths": [
+    "docs/d1_review_support/D6_NATIVE_MIDPOINT_DEVELOPMENT_20260930.md",
+    "docs/d1_review_support/D6_NATIVE_FREE_TEMPORAL_REVIEW_20260930.md"
+  ],
+  "paths": [
+    {
+      "path": ".gitattributes",
+      "sha256": "38917a45db7b482e901ac266dce175c1a177d5b49e10a6ff17519bff6eca3209"
+    },
+    {
+      "path": "GENERAL_CONTACT_PLAN.md",
+      "sha256": "299987a0caa9c82275dc4abd7404bfcc5958ab7bca219de57eb853a1da1fe9b9"
+    },
+    {
+      "path": "GENERAL_CONTACT_RESTART.md",
+      "sha256": "2f5b4a2b8a7d0228f810c738516edd9c2d4c1fef9b53a9dc5f73b2aedaf659eb"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_C2_MULTIPLE_FIXED_TOOLS.md",
+      "sha256": "d4c76f7bebda42ec95be38ff4952bdb61803299751c4f36b70ad1182f9ce8918"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_CAPABILITIES.md",
+      "sha256": "2dffb0dbcf91e17f871446ecb07994b3ece7992533c68ec437e9b57cf2c9f40b"
+    },
+    {
+      "path": "docs/d1_review_support/D3_BEAM_FOUNDATION_REVIEW_20260930.md",
+      "sha256": "1b210a6a3eeafc635505222075252d9c860e875e87f21c03831137599384e363"
+    },
+    {
+      "path": "docs/d1_review_support/GENERAL_CONTACT_DEVELOPMENT_20260929.md",
+      "sha256": "76daac7dc441ef9fc1225588e2960750cb419dd70c7900830206fa4c89f5a923"
+    },
+    {
+      "path": "docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART27.md",
+      "sha256": "19594a4bc8a7991d97f6126ee7f144f9d8900a747845399f8af88a93a0ca90e3"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_sphere_lifecycle_summary_v1_20261001.json",
+      "sha256": "85c9a781adcdc078436cc509dffb919591f5f1b357dc0cb48148fbe34d6a7ff4"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_sphere_lifecycle_v1_20261001.inputs.json",
+      "sha256": "e1ddade97c095044c40f45d30a3b264308d7d92c4be2923c2dac2757f6e5291b"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_sphere_lifecycle_v1_20261001.log",
+      "sha256": "f516320c0566dd72d7bb2ba97649adc943fb0739e8083bc8050168e9cdbd799e"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_sphere_lifecycle_v1_20261001.resources.json",
+      "sha256": "7ba369f4befb751cdb358106c3573b8c623d50501761cf8532a6cde1cd529163"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_sphere_lifecycle_v1_20261001.test.source.py",
+      "sha256": "ab89e891f6a3637c0238e43120eba5c86ebb6178bbfb69ef08c5e2ce5d36be8d"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_sphere_lifecycle_v1_20261001.xml",
+      "sha256": "fdc20c2b0f55d710b9f435f9ed8734bcffe58c85114138c41f6ff9aa2eb19bf2"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_sphere_lifecycle_v2_20261001.inputs.json",
+      "sha256": "811089ac6b97eed9d0c912c03f8b489aff606b2804de3744318bb48a171bbd39"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_sphere_lifecycle_v2_20261001.log",
+      "sha256": "4bb05c3a846b7b1b605f05185b02e44de2b60084592c6e9f63eaa3dc892a9781"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_sphere_lifecycle_v2_20261001.resources.json",
+      "sha256": "1511e9bcac559889997ebc7021b070a93c6ed14ff186819d3c111c9805fc3e0f"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_sphere_lifecycle_v2_20261001.test.source.py",
+      "sha256": "02b7b1f2a704cb53590f20f5fa9f004702690fded7fa6ff6c23be1b5bd46c30e"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_sphere_lifecycle_v2_20261001.xml",
+      "sha256": "1a8568a673a0ef3e32a7acb5a097688406c2e7b989c55fe4748b6318115c8183"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_sphere_lifecycle_v3_20261001.inputs.json",
+      "sha256": "ba8c9e9856583c6e7ab66f51cf57a06ec8d3ca547fc57b80b11b93f161910a00"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_sphere_lifecycle_v3_20261001.log",
+      "sha256": "9742ead238e42ca3cf06c1604cb9e22cf635bac13f9c2288b7c4d50b45055ef7"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_sphere_lifecycle_v3_20261001.resources.json",
+      "sha256": "e67f4eb7f7a94b6da75739e54538e64fad2afd8e810c740f46530cbbbc7b43b6"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_sphere_lifecycle_v3_20261001.xml",
+      "sha256": "084920135a55d2f64e81e89118937fbd8209177ba18812aadf1c54aef388f00a"
+    },
+    {
+      "path": "tests/test_general_contact_multiple_beam_sphere_lifecycle.py",
+      "sha256": "0264de6400ade75c83cafa4ada4b49ae76f5071f2b7e82a8a6b72ca38c9f924c"
+    }
+  ]
+}

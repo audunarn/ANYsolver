@@ -1,0 +1,30 @@
+...F                                                                     [100%]
+================================== FAILURES ===================================
+_________________ test_sweep_cannot_prune_a_midpath_crossing __________________
+
+    def test_sweep_cannot_prune_a_midpath_crossing():
+        source = np.asarray((
+            (0.0, 0.0, 0.0), (1.0, 0.0, 0.0),
+            (1.0, 1.0, 0.0), (0.0, 1.0, 0.0),
+        ))
+        target = np.asarray((
+            (1.1, 0.1, -0.01), (1.2, 0.1, -0.01),
+            (1.1, 0.2, -0.01),
+        ))
+        target_end = target + np.array((-1.3, 0.0, 0.0))
+        assert q4_source_planar_overlap_gap_lower(source, target) is None
+        assert q4_source_planar_overlap_gap_lower(source, target_end) is None
+        assert q4_source_planar_overlap_gap_lower(
+            source, 0.5*(target+target_end),
+        ) is not None
+        swept, _ = overlap_local_swept_lower(
+            source, source, target, target_end, 3,
+        )
+        assert np.isfinite(swept)
+>       assert swept <= -0.01 + 1.0e-11
+E       assert np.float64(-2.7284841053187846e-13) <= (-0.01 + 1e-11)
+
+tests\test_general_contact_d1_overlap_gap_bound_dev.py:94: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_d1_overlap_gap_bound_dev.py::test_sweep_cannot_prune_a_midpath_crossing
+1 failed, 3 passed in 1.48s

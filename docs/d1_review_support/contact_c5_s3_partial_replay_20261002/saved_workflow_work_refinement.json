@@ -1,0 +1,54 @@
+{
+  "scope": "fixed-path development discriminator; not coupled or spatial qualification",
+  "saved_cumulative_dissipation_j": 0.04562560436890991,
+  "rows": [
+    {
+      "subdivisions": 4,
+      "integration_level": 0,
+      "points": 147,
+      "input_identity": "0164af43da5bb173b81c9148a2e3e4a110cc12166c184452ba6142a600987bd0",
+      "seconds": 3.2848921999684535,
+      "dissipation_j": 0.04562563619665991,
+      "storage_j": 2.516317382813524e-15,
+      "released_storage_j": 7.041855061298559e-06,
+      "prepared_partial_samples": 1451,
+      "ordinary_stages": 0
+    },
+    {
+      "subdivisions": 4,
+      "integration_level": 1,
+      "points": 588,
+      "input_identity": "960d519bdbb129574471896c4932c55b8b669f7c34af34ae967a888a8589e8c9",
+      "seconds": 11.647853400034364,
+      "dissipation_j": 0.0456256065231643,
+      "storage_j": 2.5167312729180994e-15,
+      "released_storage_j": 7.0391479084404425e-06,
+      "prepared_partial_samples": 5540,
+      "ordinary_stages": 0
+    },
+    {
+      "subdivisions": 12,
+      "integration_level": 0,
+      "points": 147,
+      "input_identity": "0164af43da5bb173b81c9148a2e3e4a110cc12166c184452ba6142a600987bd0",
+      "seconds": 7.077163600013591,
+      "dissipation_j": 0.045923428249942756,
+      "storage_j": 2.492597033986426e-15,
+      "released_storage_j": 6.586837618854789e-06,
+      "prepared_partial_samples": 3774,
+      "ordinary_stages": 0
+    },
+    {
+      "subdivisions": 32,
+      "integration_level": 0,
+      "points": 147,
+      "input_identity": "0164af43da5bb173b81c9148a2e3e4a110cc12166c184452ba6142a600987bd0",
+      "seconds": 17.62534520000918,
+      "dissipation_j": 0.04600833537250637,
+      "storage_j": 2.4667243193014988e-15,
+      "released_storage_j": 6.526438252246942e-06,
+      "prepared_partial_samples": 9588,
+      "ordinary_stages": 0
+    }
+  ]
+}

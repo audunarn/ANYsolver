@@ -1,0 +1,94 @@
+{
+  "schema": "CONTACT_DEVELOPMENT_CHECK_V1",
+  "workspace": "C:\\ANYworkspaceWork\\ANYsolver-general-contact",
+  "base_commit": "09f1c522f5d3d4fd3db28028986197fb18951d66",
+  "risk_level": "A",
+  "accepted": false,
+  "question": "Pure prescribed-source press with genuinely deforming Q4 target and no external target load; independently derived fixed-geometry KKT reference",
+  "mechanical_gate_relative": 1e-06,
+  "time_limit_seconds": 180,
+  "memory_limit_bytes": 1073741824,
+  "environment": {
+    "PYTHONPATH": "src;tests;.",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_CACHE_DIR": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_s3_q4_pure_press_v2_20260930.numba_cache"
+  },
+  "sources": [
+    {
+      "path": "src/anysolver/general_contact/core.py",
+      "sha256": "207a0fd46e27fc762cd6d992e55293a4ad17058d418d1bd011b9f101b2b0bfe2",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.core.source.py"
+    },
+    {
+      "path": "src/anysolver/general_contact/static_path.py",
+      "sha256": "0efd511056dfc00c983cdd35ff50513fb295899c28e40c60349f6aa751c98c45",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.static_path.source.py"
+    },
+    {
+      "path": "src/anysolver/general_contact/s3_patch_static.py",
+      "sha256": "325ac0c75887f40f22d08ae4263fe30c7ed67f30bf5b59b3560db94ed62dcf8a",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.s3_patch_static.source.py"
+    },
+    {
+      "path": "src/anysolver/general_contact/s3_patch_augmented.py",
+      "sha256": "9c0189fc6cc549c5bdb0d555f0cf9b933c467d05214ff3e29f26a306c8b1cb64",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.s3_patch_augmented.source.py"
+    },
+    {
+      "path": "src/anysolver/general_contact/s3_q4_overlap_derivatives.py",
+      "sha256": "1f712469590e616873d513076d0428eebe2f6f418f573a8da37ee39bb05712df",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.s3_q4_overlap_derivatives.source.py"
+    },
+    {
+      "path": "src/anysolver/general_contact/s3_q4_gap_resolution.py",
+      "sha256": "22f63a8d764513e2592b6968ccc4aa6e4d35d360875ec2bf7fcbf80da55c8d87",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.s3_q4_gap_resolution.source.py"
+    },
+    {
+      "path": "src/anysolver/general_contact/s3_q4_swept.py",
+      "sha256": "35aa736fddafeef067bc341c84cdd0a91b62d339e98726efc08e225e506a0c76",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.s3_q4_swept.source.py"
+    },
+    {
+      "path": "src/anysolver/general_contact/s3_patch_mortar_energy.py",
+      "sha256": "ef8d44042beab99d1fe7b97adabbd1bbbefab8f5b96fef7395e6f5aff1cf6f09",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.s3_patch_mortar_energy.source.py"
+    },
+    {
+      "path": "src/anysolver/general_contact/q4_target_overlap.py",
+      "sha256": "eaa2362bb534150c26eef85fc31e400405b62766bcf26c867948981df79f0a87",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.q4_target_overlap.source.py"
+    },
+    {
+      "path": "src/anysolver/general_contact/triangle_mortar_energy.py",
+      "sha256": "4c8c8195873baf2caac3a6df710332bf6758d08c8f0e17a0412fa6b59cb90da3",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.triangle_mortar_energy.source.py"
+    },
+    {
+      "path": "src/anysolver/general_contact/q4_s3_overlap_derivatives.py",
+      "sha256": "5327364afa12236bff97fb16131e8feb9b5563eaf72ea2084c21c510e18e51eb",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.q4_s3_overlap_derivatives.source.py"
+    },
+    {
+      "path": "tests/test_general_contact_s3_q4_static_dev.py",
+      "sha256": "9dc7a2dc3383faeb54856b82db9d1e4a822af5049955dc2c5b100fb63e011430",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.test_general_contact_s3_q4_static_dev.source.py"
+    },
+    {
+      "path": "docs/d1_review_support/contact_development_check.py",
+      "sha256": "21af21515e9dcdf3372e49f9fe4d04d00ee9a2f50b19a459cd8cc08e45aaa80f",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.contact_development_check.source.py"
+    }
+  ],
+  "pytest_args": [
+    "tests/test_general_contact_s3_q4_static_dev.py",
+    "-q",
+    "-s",
+    "-k",
+    "pure_press",
+    "--basetemp=docs/d1_review_support/pytest_tmp_s3_q4_pure_press_v2",
+    "--junitxml=docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.xml"
+  ]
+}

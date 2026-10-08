@@ -1,0 +1,33 @@
+{
+  "classification": "same physical P0 action, isolated-domain development control; no engineering or F03 acceptance",
+  "source_parent": "9eaff89029fb3a582655d128bbec6f83bdc8e0d9",
+  "control_sha256": "594c8b73f7ca9b8fa5ecb809c7debbc4ee0e0fc5ae0f26dc0a1934c448a18d51",
+  "files": {
+    "common-action-v1-raw/complete-review.md": "db3563a2b8f113041a637bbba222fcdde19f9e27fcaa6af39e0f8cce98ee4c93",
+    "common-action-v1-raw/control.py": "594c8b73f7ca9b8fa5ecb809c7debbc4ee0e0fc5ae0f26dc0a1934c448a18d51",
+    "common-action-v1-raw/design.md": "3257f16b8b709b53200621c536dac183323c6d2153474379202f98e9f2707297",
+    "common-action-v1-raw/fy/execution.json": "c4af884fb50aff7a36aad8644bfeab98a67b026e3c9aa8bc9411aa82880bf169",
+    "common-action-v1-raw/fy/execution.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "common-action-v1-raw/fy/run/fy-external_common.npz": "58eff18e3f787fec4bc089f6724241b99f8912238253cf6a934c4a16b4773394",
+    "common-action-v1-raw/fy/run/fy-native_self.npz": "767f7db598210bf5b65c9f714ca31a09f356ef162af0b4db2051f3320e2c6fe1",
+    "common-action-v1-raw/fy/run/fy-prepared.npz": "28ff959044e81a2168ab752e5ec541a4fa42df7f65a2d74741a301d7312cecd8",
+    "common-action-v1-raw/fy/run/result.json": "7021ea1a161a7be48f38205231020453c79d65ebc370d60df34065f9727c19bc",
+    "common-action-v1-raw/moments/execution.json": "fb6ab300fe78d7ccf69342b592c14a8446e4ed38792ad4807e6f75fad6f7ea33",
+    "common-action-v1-raw/moments/execution.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "common-action-v1-raw/moments/run/mx-external_common.npz": "28e2869e186b150cd15514f665d696089373b7ef3195b94b3e6b15fd6386e827",
+    "common-action-v1-raw/moments/run/mx-native_self.npz": "914f36ce31730585faef561ec70fd11e6765fd49a8c54dd80e0fcbb8b64388c2",
+    "common-action-v1-raw/moments/run/mx-prepared.npz": "90fc315cabdefcd7074e664189da076ba82f0dfc3ce217fc975e36faf1cdd4a9",
+    "common-action-v1-raw/moments/run/mz-external_common.npz": "3792918df73ca8f47c6792a7b817d96c709518fdac3af73c3be093a3d8cf14ab",
+    "common-action-v1-raw/moments/run/mz-native_self.npz": "7484b1032aa8514456e2ba43c6cd869223cd32ea050fa74d0be321f3133c1749",
+    "common-action-v1-raw/moments/run/mz-prepared.npz": "e6abc36994080ee2b5f7d56d2db1a558011fd38424fe012e2e0239c271db71eb",
+    "common-action-v1-raw/moments/run/result.json": "447c9fbef924c2b1fe81315e2816739f042b228703b19190d283a4a9ef05958d",
+    "common-action-v1-raw/prepared-v1-control.py": "ec5008ae02288d61da42c08508eb71db10c3136f0a117a1724178c5da0c10c8d",
+    "common-action-v1-raw/prepared-v1-design.md": "350970979b5e09b4e8ded7892e3aafbeae08bc5a058ee74cc8ce3133b6d9d240",
+    "common-action-v1-raw/prerun-review.md": "730d3198aa72855bd018197904f7246bf2e6ded69c1dd3577193176a83c6b76c",
+    "common-action-v1-raw/screen/execution.json": "1cc63cec132c503cc71c391b88723f864161cc8d899477a6fee7ffffb49f77c8",
+    "common-action-v1-raw/screen/execution.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "common-action-v1-raw/screen/run/fy-prepared.npz": "28ff959044e81a2168ab752e5ec541a4fa42df7f65a2d74741a301d7312cecd8",
+    "common-action-v1-raw/screen/run/result.json": "9289bfc17c2097801554f37eabc395b41200eb6506805ca6d389a7de54be4f4a",
+    "common-action-v1-raw/supervisor.py": "8866357ab5469286172d07c519c99fe2bcdb44f241ebb9c878d32ab133f208eb"
+  }
+}

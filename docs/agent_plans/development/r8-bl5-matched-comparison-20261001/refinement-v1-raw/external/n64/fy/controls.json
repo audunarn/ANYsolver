@@ -1,0 +1,29 @@
+{
+  "actual_left_exp_derivative_relative": [
+    4.3950113927553714e-11,
+    1.0960011483254483e-10,
+    4.67026336893078e-10
+  ],
+  "actual_left_exp_derivative_steps": [
+    0.0001,
+    3e-05,
+    1e-05
+  ],
+  "derivative_integrated_gap_denominator": 0.0004033203125000001,
+  "normal_spin_columns_zero": true,
+  "objective_average_gap_scaled": {
+    "common_finite_pose": 1.3349239248727773e-16,
+    "reference": 0.0,
+    "released_spin": 0.0
+  },
+  "positive_exact_shape_integrals": true,
+  "scope": "Virgin integrated derivative exact on segmented P1/Q1; finite left-Exp quadrature is only a derivative/objectivity control, not finite mechanics.",
+  "six_common_rigid_field_average_gap_scaled": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    2.168404344971009e-19,
+    2.168404344971009e-19
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "source_commit": "9913525d",
+  "wheel": "anysolver-0.4.7-py3-none-any.whl",
+  "wheel_sha256": "92a050a1a19fcf171795ef075962d4baa18cd57e7371baac553091e0f25a930c",
+  "installed_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\reports\\general_contact_d1_installed\\anysolver\\__init__.py",
+  "source_status": "completed",
+  "installed_status": "completed",
+  "accepted_steps": 4,
+  "identical_final_nodal_displacements": true,
+  "identical_force_displacement_history": true,
+  "source_checkpoint": true,
+  "installed_checkpoint": true,
+  "installed_elapsed_seconds": 153.70926050000708
+}

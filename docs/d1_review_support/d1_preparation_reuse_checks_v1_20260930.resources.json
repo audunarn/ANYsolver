@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 14.671654300007503,
+  "peak_process_tree_memory_mb": 292.397056,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_preparation_reuse.py",
+    "tests/test_general_contact_zero_weight_derivatives.py",
+    "tests/test_general_contact_jet2_candidate_budget.py",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d1_preparation_reuse_checks_v1_20260930.log"
+}

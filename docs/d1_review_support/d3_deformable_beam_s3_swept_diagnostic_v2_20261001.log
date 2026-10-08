@@ -1,0 +1,24 @@
+{"anysolver_file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py", "input_sha256": "9550c47542f79c46a5dca4f9ace35dd32f5b061915b473a1bb7f0828646cd8b2", "numpy": "2.4.6", "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]", "scipy": "1.17.1", "threadpools": [{"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.31.188.0"}, {"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.30"}]}
+SWEPT_RESOURCE_DISCRIMINATOR {"budgets": {"128": false, "512": false}, "minimum_gap": -1.2555757490926786e-05, "reference": [-0.001029948114116536, -0.0029021910901031677]}
+F
+================================== FAILURES ===================================
+________ test_independent_linearized_path_locates_swept_resource_limit ________
+
+    def test_independent_linearized_path_locates_swept_resource_limit():
+        m,d,s=fixture();constraints(m)
+        indices=np.array([m.mesh.dof_manager.get_node_dofs(n)[2] for n in (2,5)])
+        K,_=assemble_stiffness_matrix(m);K2=K[indices][:,indices].toarray()
+        reference=root(lambda y:K2@y+independent_contact_gradient(y)-np.array((-.001,0.)),(-.00102946,-.00290194),jac=lambda y:K2+independent_contact_hessian(y),tol=1.e-11)
+        assert reference.success
+        manager=DeformableBeamS3Manager(m,d,s);u=np.zeros(m.mesh.dof_manager.total_dofs);u[indices]=reference.x
+        b0,s0=manager._positions(np.zeros_like(u));b1,s1=manager._positions(u)
+        outcomes={str(cap):manager.kernel.swept_admissible(b0,s0,b1,s1,gap_tolerance=manager.gap_tolerance,maximum_intervals=cap) for cap in (128,512)}
+        print('SWEPT_RESOURCE_DISCRIMINATOR '+json.dumps({'reference':reference.x.tolist(),'minimum_gap':manager.kernel.evaluate(b1,s1).minimum_gap,'budgets':outcomes},sort_keys=True))
+>       assert outcomes['512']
+E       assert False
+
+tests\test_general_contact_deformable_beam_s3_static.py:155: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_deformable_beam_s3_static.py::test_independent_linearized_path_locates_swept_resource_limit
+1 failed, 3 deselected in 0.90s
+{"pytest_exit_code": 1, "verified_source_count": 442}

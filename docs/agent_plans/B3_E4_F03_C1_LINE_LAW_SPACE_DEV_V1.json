@@ -1,0 +1,57 @@
+{
+  "beam_free_variables": 216,
+  "beam_supported": {
+    "first_outside_second_relative": 7.040221901643649e-16,
+    "first_rank": 15,
+    "first_rows": 24,
+    "first_smallest_retained_singular": 0.6795881882203848,
+    "same_row_space_at_1e-9": true,
+    "second_outside_first_relative": 1.134479788936275e-15,
+    "second_rank": 15,
+    "second_rows": 24,
+    "second_smallest_retained_singular": 0.6795881882203854,
+    "union_rank": 15
+  },
+  "classification": "fixed C1 P0 m4 material-line versus finite-strip row-space identity",
+  "full_supported": {
+    "first_outside_second_relative": 0.844483678116943,
+    "first_rank": 24,
+    "first_rows": 24,
+    "first_smallest_retained_singular": 0.1251057431185875,
+    "same_row_space_at_1e-9": false,
+    "second_outside_first_relative": 0.8432594047665619,
+    "second_rank": 24,
+    "second_rows": 24,
+    "second_smallest_retained_singular": 0.3890302374089722,
+    "union_rank": 44
+  },
+  "geometry": "Q4 x4/y4, native B3-12, 35 mm shell, 100 mm section, 67.5 mm axis",
+  "limitations": [
+    "row-space identity only; neither law is selected",
+    "finite fixed supported fixture, not mesh-uniform stability",
+    "no loaded response or physical accuracy inference"
+  ],
+  "measure_m": [
+    0.02500000000000003,
+    0.02499999999999991,
+    0.02500000000000003,
+    0.02500000000000003
+  ],
+  "p0_intervals": 4,
+  "physical_free_variables": 1140,
+  "shell_free_variables": 924,
+  "shell_supported": {
+    "first_outside_second_relative": 0.8863920751146928,
+    "first_rank": 21,
+    "first_rows": 24,
+    "first_smallest_retained_singular": 0.38769569192873904,
+    "same_row_space_at_1e-9": false,
+    "second_outside_first_relative": 0.887618413405344,
+    "second_rank": 24,
+    "second_rows": 24,
+    "second_smallest_retained_singular": 0.5105474794440694,
+    "union_rank": 41
+  },
+  "source_commit": "d88f94f003303b833b9012fd9a163d7fd39751f1",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE"
+}

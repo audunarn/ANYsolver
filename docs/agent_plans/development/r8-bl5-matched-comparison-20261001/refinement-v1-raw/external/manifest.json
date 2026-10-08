@@ -1,0 +1,233 @@
+{
+  "classification": "bounded matched growing-space development; formalF03 unconsumed",
+  "parent_source": "f887c32a03962fbd520f64fb67bfc1cd0935f1a6",
+  "sources": {
+    "b3_e4_bl5_external_p0_refinement_dev.py": "0e5435e0d38952642662eb1aad7dd374c341c866c9d099c87d2e66ce135a21c0",
+    "b3_e4_bl5_external_p0_enforcement_dev.py": "180e2c33d1df17239fbf30f66d9c6b400eebbfa9e5f961d83e7c9b68bdc5fdac",
+    "b3_e4_bl5_matched_mz_reference_dev.py": "6e1b3f25c2b479e1ade3700b57d996cef2f9709812a72108ce7e6a41e346293a",
+    "b3_e4_bl5_matched_reference_actions.py": "506c5259afddfab1872c50c2a2544a7cb706b4cf14e6e7c6b4771d80a0ff98cc",
+    "b3_e4_f03_bl5_opensees_line_reference.py": "5d3616e5fc6f198adc8c0442e01c27c5b7b719e73059f5088561d0027e826f47",
+    "supervisor.py": "6f6f7f73c426e601868207700508b1b1f97c36e44d56347ef88e6f2eec28f57b"
+  },
+  "commands": [
+    [
+      "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+      "-u",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\b3_e4_bl5_external_p0_refinement_dev.py",
+      "--site",
+      "C:\\Python\\Python314\\Lib\\site-packages",
+      "--output-dir",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\n16\\mz",
+      "--completed-first-level-dir",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-enforcement-v2\\case",
+      "--nx",
+      "16",
+      "--case",
+      "mz",
+      "--reuse-completed-first-level"
+    ],
+    [
+      "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+      "-u",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\b3_e4_bl5_external_p0_refinement_dev.py",
+      "--site",
+      "C:\\Python\\Python314\\Lib\\site-packages",
+      "--output-dir",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\n16\\fy",
+      "--completed-first-level-dir",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-enforcement-v2\\case",
+      "--nx",
+      "16",
+      "--case",
+      "fy"
+    ],
+    [
+      "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+      "-u",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\b3_e4_bl5_external_p0_refinement_dev.py",
+      "--site",
+      "C:\\Python\\Python314\\Lib\\site-packages",
+      "--output-dir",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\n16\\mx",
+      "--completed-first-level-dir",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-enforcement-v2\\case",
+      "--nx",
+      "16",
+      "--case",
+      "mx"
+    ],
+    [
+      "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+      "-u",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\b3_e4_bl5_external_p0_refinement_dev.py",
+      "--site",
+      "C:\\Python\\Python314\\Lib\\site-packages",
+      "--output-dir",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\n32\\fy",
+      "--completed-first-level-dir",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-enforcement-v2\\case",
+      "--nx",
+      "32",
+      "--case",
+      "fy"
+    ],
+    [
+      "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+      "-u",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\b3_e4_bl5_external_p0_refinement_dev.py",
+      "--site",
+      "C:\\Python\\Python314\\Lib\\site-packages",
+      "--output-dir",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\n32\\mx",
+      "--completed-first-level-dir",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-enforcement-v2\\case",
+      "--nx",
+      "32",
+      "--case",
+      "mx"
+    ],
+    [
+      "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+      "-u",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\b3_e4_bl5_external_p0_refinement_dev.py",
+      "--site",
+      "C:\\Python\\Python314\\Lib\\site-packages",
+      "--output-dir",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\n32\\mz",
+      "--completed-first-level-dir",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-enforcement-v2\\case",
+      "--nx",
+      "32",
+      "--case",
+      "mz"
+    ],
+    [
+      "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+      "-u",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\b3_e4_bl5_external_p0_refinement_dev.py",
+      "--site",
+      "C:\\Python\\Python314\\Lib\\site-packages",
+      "--output-dir",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\n64\\fy",
+      "--completed-first-level-dir",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-enforcement-v2\\case",
+      "--nx",
+      "64",
+      "--case",
+      "fy"
+    ],
+    [
+      "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+      "-u",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\b3_e4_bl5_external_p0_refinement_dev.py",
+      "--site",
+      "C:\\Python\\Python314\\Lib\\site-packages",
+      "--output-dir",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\n64\\mx",
+      "--completed-first-level-dir",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-enforcement-v2\\case",
+      "--nx",
+      "64",
+      "--case",
+      "mx"
+    ],
+    [
+      "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+      "-u",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\b3_e4_bl5_external_p0_refinement_dev.py",
+      "--site",
+      "C:\\Python\\Python314\\Lib\\site-packages",
+      "--output-dir",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\n64\\mz",
+      "--completed-first-level-dir",
+      "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-enforcement-v2\\case",
+      "--nx",
+      "64",
+      "--case",
+      "mz"
+    ]
+  ],
+  "jobs": [
+    [
+      16,
+      "mz",
+      true
+    ],
+    [
+      16,
+      "fy",
+      false
+    ],
+    [
+      16,
+      "mx",
+      false
+    ],
+    [
+      32,
+      "fy",
+      false
+    ],
+    [
+      32,
+      "mx",
+      false
+    ],
+    [
+      32,
+      "mz",
+      false
+    ],
+    [
+      64,
+      "fy",
+      false
+    ],
+    [
+      64,
+      "mx",
+      false
+    ],
+    [
+      64,
+      "mz",
+      false
+    ]
+  ],
+  "physical_cases": {
+    "fy": [
+      0,
+      100,
+      0,
+      0,
+      0,
+      0
+    ],
+    "mx": [
+      0,
+      0,
+      0,
+      10,
+      0,
+      0
+    ],
+    "mz": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      10
+    ]
+  },
+  "limits": {
+    "rows": 100000,
+    "seconds_per_child": 600,
+    "process_tree_bytes": 8589934592,
+    "numerical_or_unresolved_thread_starts": 8,
+    "one_heavy_job": true
+  },
+  "criteria": "Frozen helper physical/work/gap1e-8/1e-9, derivative1e-6 and existing floors unchanged. Three prescribed levels only. Programme1% requires demonstrated converged matched quantities, not single coarse agreement. No automatic fourth grid or space selection.",
+  "outcome_actions": "Converging common work/fields/transfer advances envelope; persistent disagreement/nonconvergence identifies obstruction, no automatic extra grid.",
+  "thread_scope": "Single CPU set while process suspended before child code. Sampled OS support starts do not prove thread work/lifetime or effective library settings; no general resource-qualified claim."
+}

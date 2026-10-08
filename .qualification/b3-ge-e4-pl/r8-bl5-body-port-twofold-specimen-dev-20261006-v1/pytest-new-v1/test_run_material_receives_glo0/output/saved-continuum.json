@@ -1,0 +1,10 @@
+{
+  "body": {
+    "shell": {
+      "paired_work_J": 1.0
+    },
+    "beam": {
+      "paired_work_J": 1.0
+    }
+  }
+}

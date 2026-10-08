@@ -1,0 +1,27 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 83.77318150000065,
+  "peak_process_tree_memory_mb": 493.6704,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "scripts/general_contact_d1_profile_coupled.py",
+    "--output",
+    "reports/d1_16x8_near_rim_profile_search_8ac42c56_20260928.json",
+    "--candidate-rows",
+    "8",
+    "--candidate-columns",
+    "16",
+    "--candidate-y-profile",
+    "near_rim8",
+    "--monolithic-route",
+    "--omit-checkpoint",
+    "--monolithic-maximum-pivots",
+    "32",
+    "--monolithic-linear-solver",
+    "block_response_dev"
+  ],
+  "log": "reports\\d1_16x8_near_rim_profile_search_8ac42c56_20260928.txt"
+}

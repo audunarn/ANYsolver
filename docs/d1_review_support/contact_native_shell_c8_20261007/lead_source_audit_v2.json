@@ -1,0 +1,11 @@
+{
+  "source_report_sha256": "25a42ee5c82ee5b3ab92c7c1b993643248b94a61f7a7742e9a1b7ece4cde8a85",
+  "files_checked": 15,
+  "changed_from_v1": [
+    "docs/GENERAL_CONTACT_NATIVE_SHELL_TRANSIENT_DEV.md"
+  ],
+  "errors": [],
+  "ast_reused_from_matching_v1_python_hashes": 14,
+  "numerical_jobs": 0,
+  "engineering_acceptance": false
+}

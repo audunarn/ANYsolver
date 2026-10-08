@@ -1,0 +1,366 @@
+{
+  "status": "development_discriminator",
+  "accepted_steps": 8,
+  "records": [
+    {
+      "step": 4,
+      "direction": "source_slide_x",
+      "active_pressure_modes": 2,
+      "pose_constraint_error": 0.0,
+      "trials": [
+        {
+          "size": 2e-07,
+          "branch_checks": [
+            {
+              "active": true,
+              "support": true,
+              "overlap": true,
+              "pair": true
+            },
+            {
+              "active": true,
+              "support": true,
+              "overlap": true,
+              "pair": true
+            }
+          ],
+          "smooth": true,
+          "coupled_source_relative_error": 2.795492133859911e-11,
+          "coupled_source_action_scale": 19033.525443331462,
+          "coupled_target_relative_error": 5.3237214703978616e-08,
+          "coupled_target_action_scale": 0.004771005489145112,
+          "contact_source_relative_error": 5.0294588507225195e-08,
+          "contact_source_action_scale": 0.00478765044231545,
+          "contact_target_relative_error": 5.3237214703978616e-08,
+          "contact_target_action_scale": 0.004771005489145112
+        },
+        {
+          "size": 1e-07,
+          "branch_checks": [
+            {
+              "active": true,
+              "support": true,
+              "overlap": true,
+              "pair": true
+            },
+            {
+              "active": true,
+              "support": true,
+              "overlap": true,
+              "pair": true
+            }
+          ],
+          "smooth": true,
+          "coupled_source_relative_error": 3.047407847934051e-11,
+          "coupled_source_action_scale": 19033.52544339093,
+          "coupled_target_relative_error": 6.288953293684016e-08,
+          "coupled_target_action_scale": 0.00477100553628184,
+          "contact_source_relative_error": 6.379761106061514e-08,
+          "contact_source_action_scale": 0.004787650503447762,
+          "contact_target_relative_error": 6.288953293684016e-08,
+          "contact_target_action_scale": 0.00477100553628184
+        }
+      ]
+    },
+    {
+      "step": 4,
+      "direction": "target_normal_z",
+      "active_pressure_modes": 2,
+      "pose_constraint_error": 0.0,
+      "trials": [
+        {
+          "size": 2e-07,
+          "branch_checks": [
+            {
+              "active": false,
+              "support": true,
+              "overlap": true,
+              "pair": true
+            },
+            {
+              "active": true,
+              "support": true,
+              "overlap": true,
+              "pair": true
+            }
+          ],
+          "smooth": false,
+          "coupled_source_relative_error": 0.27579883745730593,
+          "coupled_source_action_scale": 391.36475083327883,
+          "coupled_target_relative_error": 0.28683939274636994,
+          "coupled_target_action_scale": 393.003838457729,
+          "contact_source_relative_error": 0.27579883745730593,
+          "contact_source_action_scale": 391.36475083327883,
+          "contact_target_relative_error": 0.2887070586958418,
+          "contact_target_action_scale": 390.46146941966396
+        },
+        {
+          "size": 1e-07,
+          "branch_checks": [
+            {
+              "active": false,
+              "support": true,
+              "overlap": true,
+              "pair": true
+            },
+            {
+              "active": true,
+              "support": true,
+              "overlap": true,
+              "pair": true
+            }
+          ],
+          "smooth": false,
+          "coupled_source_relative_error": 0.26209486873511517,
+          "coupled_source_action_scale": 391.36475083327883,
+          "coupled_target_relative_error": 0.2725868378662715,
+          "coupled_target_action_scale": 393.003838457729,
+          "contact_source_relative_error": 0.26209486873511517,
+          "contact_source_action_scale": 391.36475083327883,
+          "contact_target_relative_error": 0.27436170271479365,
+          "contact_target_action_scale": 390.46146941966396
+        }
+      ]
+    },
+    {
+      "step": 4,
+      "direction": "target_director_ry",
+      "active_pressure_modes": 2,
+      "pose_constraint_error": 0.0,
+      "trials": [
+        {
+          "size": 2e-07,
+          "branch_checks": [
+            {
+              "active": true,
+              "support": true,
+              "overlap": true,
+              "pair": true
+            },
+            {
+              "active": true,
+              "support": true,
+              "overlap": true,
+              "pair": true
+            }
+          ],
+          "smooth": true,
+          "coupled_source_relative_error": 1.4033082198758046e-06,
+          "coupled_source_action_scale": 0.00029829866996430757,
+          "coupled_target_relative_error": 2.5733613169308025e-11,
+          "coupled_target_action_scale": 16.213886052296434,
+          "contact_source_relative_error": 1.4033082198758046e-06,
+          "contact_source_action_scale": 0.00029829866996430757,
+          "contact_target_relative_error": 1.4037231346857522e-06,
+          "contact_target_action_scale": 0.0002972730932932097
+        },
+        {
+          "size": 1e-07,
+          "branch_checks": [
+            {
+              "active": true,
+              "support": true,
+              "overlap": true,
+              "pair": true
+            },
+            {
+              "active": true,
+              "support": true,
+              "overlap": true,
+              "pair": true
+            }
+          ],
+          "smooth": true,
+          "coupled_source_relative_error": 8.117555490952447e-07,
+          "coupled_source_action_scale": 0.00029829888620266063,
+          "coupled_target_relative_error": 1.801118149694336e-11,
+          "coupled_target_action_scale": 16.21388605231983,
+          "contact_source_relative_error": 8.117555490952447e-07,
+          "contact_source_action_scale": 0.00029829888620266063,
+          "contact_target_relative_error": 9.822508735044154e-07,
+          "contact_target_action_scale": 0.0002972733533263174
+        }
+      ]
+    },
+    {
+      "step": 7,
+      "direction": "source_slide_x",
+      "active_pressure_modes": 2,
+      "pose_constraint_error": 0.0,
+      "trials": [
+        {
+          "size": 2e-07,
+          "branch_checks": [
+            {
+              "active": true,
+              "support": true,
+              "overlap": true,
+              "pair": true
+            },
+            {
+              "active": true,
+              "support": true,
+              "overlap": true,
+              "pair": true
+            }
+          ],
+          "smooth": true,
+          "coupled_source_relative_error": 2.4800573582009997e-11,
+          "coupled_source_action_scale": 19033.525379640265,
+          "coupled_target_relative_error": 0.0,
+          "coupled_target_action_scale": 1e-12,
+          "contact_source_relative_error": 0.0,
+          "contact_source_action_scale": 1e-12,
+          "contact_target_relative_error": 0.0,
+          "contact_target_action_scale": 1e-12
+        },
+        {
+          "size": 1e-07,
+          "branch_checks": [
+            {
+              "active": true,
+              "support": true,
+              "overlap": true,
+              "pair": true
+            },
+            {
+              "active": true,
+              "support": true,
+              "overlap": true,
+              "pair": true
+            }
+          ],
+          "smooth": true,
+          "coupled_source_relative_error": 3.165076436359888e-11,
+          "coupled_source_action_scale": 19033.52537962488,
+          "coupled_target_relative_error": 0.0,
+          "coupled_target_action_scale": 1e-12,
+          "contact_source_relative_error": 0.0,
+          "contact_source_action_scale": 1e-12,
+          "contact_target_relative_error": 0.0,
+          "contact_target_action_scale": 1e-12
+        }
+      ]
+    },
+    {
+      "step": 7,
+      "direction": "target_normal_z",
+      "active_pressure_modes": 2,
+      "pose_constraint_error": 0.0,
+      "trials": [
+        {
+          "size": 2e-07,
+          "branch_checks": [
+            {
+              "active": false,
+              "support": true,
+              "overlap": true,
+              "pair": true
+            },
+            {
+              "active": true,
+              "support": true,
+              "overlap": true,
+              "pair": true
+            }
+          ],
+          "smooth": false,
+          "coupled_source_relative_error": 0.42712934641111244,
+          "coupled_source_action_scale": 244.46532299566107,
+          "coupled_target_relative_error": 0.42315084836977035,
+          "coupled_target_action_scale": 271.3535118343135,
+          "contact_source_relative_error": 0.42712934641111244,
+          "contact_source_action_scale": 244.46532299566107,
+          "contact_target_relative_error": 0.42723767335926205,
+          "contact_target_action_scale": 268.75782708481285
+        },
+        {
+          "size": 1e-07,
+          "branch_checks": [
+            {
+              "active": false,
+              "support": true,
+              "overlap": true,
+              "pair": true
+            },
+            {
+              "active": true,
+              "support": true,
+              "overlap": true,
+              "pair": true
+            }
+          ],
+          "smooth": false,
+          "coupled_source_relative_error": 0.3548569256239595,
+          "coupled_source_action_scale": 244.46532299566107,
+          "coupled_target_relative_error": 0.3519192991133472,
+          "coupled_target_action_scale": 271.3535118343135,
+          "contact_source_relative_error": 0.3548569256239595,
+          "contact_source_action_scale": 244.46532299566107,
+          "contact_target_relative_error": 0.35531816406054473,
+          "contact_target_action_scale": 268.75782708481285
+        }
+      ]
+    },
+    {
+      "step": 7,
+      "direction": "target_director_ry",
+      "active_pressure_modes": 2,
+      "pose_constraint_error": 0.0,
+      "trials": [
+        {
+          "size": 2e-07,
+          "branch_checks": [
+            {
+              "active": true,
+              "support": true,
+              "overlap": true,
+              "pair": true
+            },
+            {
+              "active": true,
+              "support": true,
+              "overlap": true,
+              "pair": true
+            }
+          ],
+          "smooth": true,
+          "coupled_source_relative_error": 7.3798362528964445e-06,
+          "coupled_source_action_scale": 1.9998822480623834e-05,
+          "coupled_target_relative_error": 1.0528318720049672e-11,
+          "coupled_target_action_scale": 16.21385810814006,
+          "contact_source_relative_error": 7.3798362528964445e-06,
+          "contact_source_action_scale": 1.9998822480623834e-05,
+          "contact_target_relative_error": 7.779563480648683e-06,
+          "contact_target_action_scale": 2.1943937680582482e-05
+        },
+        {
+          "size": 1e-07,
+          "branch_checks": [
+            {
+              "active": true,
+              "support": true,
+              "overlap": true,
+              "pair": true
+            },
+            {
+              "active": true,
+              "support": true,
+              "overlap": true,
+              "pair": true
+            }
+          ],
+          "smooth": true,
+          "coupled_source_relative_error": 3.461478554712588e-05,
+          "coupled_source_action_scale": 1.9999514412257985e-05,
+          "coupled_target_relative_error": 4.648181865754892e-11,
+          "coupled_target_action_scale": 16.213858108217625,
+          "contact_source_relative_error": 3.461478554712588e-05,
+          "contact_source_action_scale": 1.9999514412257985e-05,
+          "contact_target_relative_error": 3.434416491961402e-05,
+          "contact_target_action_scale": 2.1944690629279766e-05
+        }
+      ]
+    }
+  ]
+}

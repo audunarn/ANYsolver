@@ -1,0 +1,18 @@
+{
+  "versions": {
+    "ANYsolver": "0.4.7",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "ANYmaterial": "0.2.0",
+    "ANYmesher": "0.5.0",
+    "ANYfileio": "0.3.2",
+    "ANYgeometry": "0.4.3",
+    "threadpoolctl": "3.6.0"
+  },
+  "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+  "python_executable": "C:\\Python\\Python314\\python.exe",
+  "solver_import": "C:\\ANYworkspaceWork\\general-contact-partial-swept-dev\\target\\anysolver\\__init__.py",
+  "numpy_import": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\__init__.py",
+  "scipy_import": "C:\\Python\\Python314\\Lib\\site-packages\\scipy\\__init__.py",
+  "pythonpath": "C:/ANYworkspaceWork/general-contact-partial-swept-dev/target"
+}

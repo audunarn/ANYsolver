@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="3" time="2.774" timestamp="2026-09-30T23:53:36.181082+02:00" hostname="WORK_STABEIST1"><testcase classname="tests.test_general_contact_multiple_beam_rigid" name="test_displacement_control_preserves_two_active_pair_gates_and_reactions" time="0.389"><failure message="AssertionError: assert 6.280425779436882e-08 &lt;= 1e-08&#10; +  where 6.280425779436882e-08 = NonlinearStaticStep(step_index=4, load_factor=1.927101298218102, iterations=6, residual_norm=6.280425779436882e-08, di...nds': (0.0, -0.5364897567045245, -0.46434384735418316, 0.0, 0.0, 0.0), 'middle_guide': (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)}).residual_norm">def test_displacement_control_preserves_two_active_pair_gates_and_reactions():
+        model, definition, settings = fixture()
+        load = LoadCase("two_component_control_reference")
+        load.add_nodal_load(2, forces=(0., -10., -12.))
+        result = solve_static_nonlinear(
+            model, load, contact=definition, contact_settings=settings,
+            control="displacement", displacement_control=DisplacementControl(
+                node_id=2, dof="uy", target_displacement=-.0058),
+            num_steps=4, max_iterations=22, tolerance=1.e-8, emit_restart_checkpoint=True)
+        assert result.status == "completed", result.failure_reason
+        summary = result.info["general_contact"]
+        assert summary["gap_tolerance_met"]
+        assert all(pair["contact"]["active_line_length"] &gt; 0 for pair in summary["pairs"])
+        assert "normal_stiffness" not in summary
+        assert result.steps[-1].control_value == pytest.approx(-.0058, abs=1.e-12)
+        np.testing.assert_allclose(np.array(summary["beam_force"])+summary["rigid_force"], 0., atol=1.e-12)
+&gt;       assert result.steps[-1].residual_norm &lt;= 1.e-8
+E       AssertionError: assert 6.280425779436882e-08 &lt;= 1e-08
+E        +  where 6.280425779436882e-08 = NonlinearStaticStep(step_index=4, load_factor=1.927101298218102, iterations=6, residual_norm=6.280425779436882e-08, di...nds': (0.0, -0.5364897567045245, -0.46434384735418316, 0.0, 0.0, 0.0), 'middle_guide': (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)}).residual_norm
+
+tests\test_general_contact_multiple_beam_rigid.py:168: AssertionError</failure></testcase><testcase classname="tests.test_general_contact_multiple_beam_rigid" name="test_named_pair_order_is_deterministic_and_unused_external_features_rejected" time="0.003" /><testcase classname="tests.test_general_contact_multiple_beam_rigid" name="test_development_example_runs_with_the_declared_profile" time="1.653" /></testsuite></testsuites>

@@ -1,0 +1,48 @@
+{
+  "source_base": "0c747f4c",
+  "branch": "codex/contact-main-reconcile-20261001",
+  "owned_source_sha256": {
+    "src/anysolver/general_contact/native_surface_friction_integral.py": "e639a76881e2b4ef0cea176b05291d79d931ca9c69c38d7f3d99872760962fe8",
+    "src/anysolver/general_contact/native_surface_front_work.py": "f367c9c710cf34ac4b47bcd0aa1583882b62071e683e85b76d900a28fee142c6",
+    "tests/test_general_contact_native_surface_local_fronts.py": "a266753a0537f691c18c7e51de801bbfed3a1432354f1d55e75d05e360929e16"
+  },
+  "resources": {
+    "contact-native-multisegment-front-controls-20261002": {
+      "peak_sampled_bytes": 184356864,
+      "limit_mib": 953,
+      "elapsed_seconds": 5.437342500023078,
+      "status": "terminal",
+      "child_exit_codes": [
+        1
+      ]
+    },
+    "contact-native-multisegment-front-rejection-20261002": {
+      "peak_sampled_bytes": 182816768,
+      "limit_mib": 953,
+      "elapsed_seconds": 5.405463100003544,
+      "status": "terminal",
+      "child_exit_codes": [
+        0
+      ]
+    },
+    "contact-native-multisegment-front-integral-20261002": {
+      "peak_sampled_bytes": 218202112,
+      "limit_mib": 953,
+      "elapsed_seconds": 72.15753590001259,
+      "status": "terminal",
+      "child_exit_codes": [
+        1
+      ]
+    },
+    "contact-native-multisegment-front-integral-corrected-20261002": {
+      "peak_sampled_bytes": 217526272,
+      "limit_mib": 953,
+      "elapsed_seconds": 74.93668520002393,
+      "status": "terminal",
+      "child_exit_codes": [
+        0
+      ]
+    }
+  },
+  "scope": "single stationary branch across multisegment history; developmental helper, not owner/acceptance"
+}

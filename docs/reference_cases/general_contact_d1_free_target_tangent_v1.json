@@ -1,0 +1,44 @@
+{
+  "case_id": "general_contact_d1_free_target_tangent_v1",
+  "status": "registered_pending_execution",
+  "claim_boundary": "Selected negative one-sided mixed source/target directional tangent at the accepted 24-Q4/S3 geometry after changing target support to a left-edge clamp; this pose is admissible but not shown to equilibrate under the changed support",
+  "policy": "ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1/2026-09-24.2",
+  "source_commit": "4fcfe726e9c289bfd921ff5dfa7bb3fc46383d60",
+  "source_blobs": {
+    "scripts/general_contact_d1_free_target_tangent_probe.py": "e0ddd016f9e2942850cd3a8c6cce5e603d4d7f96",
+    "scripts/general_contact_d1_mixed_mesh_jet2_schur_press.py": "e70097501c4b9407b777601aa4a68459237fd2c4",
+    "scripts/general_contact_d1_distributed_coupled_tangent_probe.py": "cfd7522dff18675b596ee38d1ad3e98a4a7b2ff7",
+    "scripts/general_contact_d1_distributed_tangent_probe.py": "8e21292ae13f8eac1ed3414ab88b5a22add43245",
+    "src/anysolver/general_contact/s3_patch_static.py": "b69d4b271ce7c7bbbca1f76a3c6e48d8a641387b",
+    "src/anysolver/general_contact/q4_s3_overlap_derivatives.py": "7a7497f7a2f4e2fe864c6b2bd8a0b2573a6253ec"
+  },
+  "saved_pose_report": "reports/general_contact_d1_distributed_cycle_response_v1_formal_20260927.json",
+  "saved_pose_sha256": "f4a3942b2bf3c0112f4774b6593464a80c8da479582b586eff7962570f935815",
+  "supports": "target nodes 51 and 54 fully clamped; nodes 52 and 53 free; source supports unchanged",
+  "direction": {
+    "target_nodes_52_53_uz_weights": [0.5, 0.5],
+    "source_nodes_18_43_ux_uz_weight": 0.1,
+    "difference": "negative one-sided from the saved active-set state"
+  },
+  "execution": {
+    "command": "python scripts/general_contact_d1_free_target_tangent_probe.py reports/general_contact_d1_distributed_cycle_response_v1_formal_20260927.json reports/general_contact_d1_free_target_tangent_v1_formal_20260927.json --source-weight 0.1",
+    "maximum_wall_seconds": 180,
+    "run_once": true
+  },
+  "criteria": {
+    "status": "passed_development",
+    "free_dofs": 110,
+    "free_force_rows": 104,
+    "free_moment_rows": 6,
+    "base_active_modes": 18,
+    "overlap_pair_branches": 48,
+    "pressure_replay_error_pa": 1e-6,
+    "pose_constraint_error_m": 1e-12,
+    "steps_m": [1e-6, 5e-7],
+    "smooth_branch": true,
+    "minimum_force_action_n_per_m": 1e-8,
+    "minimum_moment_action_nm_per_m": 1e-8,
+    "maximum_relative_force_error": 1e-5,
+    "maximum_relative_moment_error": 1e-5
+  }
+}

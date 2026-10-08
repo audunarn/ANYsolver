@@ -1,0 +1,526 @@
+"""Bounded saved-component composition over one manufactured state."""
+from dataclasses import replace
+from fractions import Fraction as F
+
+import numpy as np
+import pytest
+from scipy import sparse
+
+from scripts import _b3_e4_f03_action_enclosure as enclosure
+from scripts import _b3_e4_f03_local_grid as grid
+from scripts import _b3_e4_f03_local_primal_assembly as assembly
+from scripts import _b3_e4_f03_local_recovery as rec
+from scripts import _b3_e4_f03_local_support_recovery as support
+from scripts import _b3_e4_f03_local_scientific_adjudication_bindings as adjudication
+from scripts import _b3_e4_f03_local_scientific_balance_adjudication as balance_adjudication
+from scripts import _b3_e4_f03_local_scientific_result_storage as result_storage
+from scripts import _b3_e4_f03_saved_interface_checks as interface
+from scripts import _b3_e4_f03_saved_norm_checks as norm
+from scripts import _b3_e4_f03_saved_recovery_composition as composition
+from scripts import _b3_e4_f03_saved_work_checks as work
+from scripts import _b3_e4_f03_sparse_certificate as sparse_common
+from scripts import _b3_e4_f03_sparse_equilibrium_checks as equilibrium
+from scripts import _b3_e4_f03_sparse_state_binding as binding
+from scripts import _b3_e4_f03_spatial_contract as c
+
+
+Z=F(0)
+RB=rec.RecoveryBudget(assembly.AssemblyBudget(512,1,128*1024**2,8_000_000),
+    1024,128,8_000_000,256*1024**2,1_000_000_000)
+AB=enclosure.ActionBudget(64,128,65536,200_000_000,2_000_000,256*1024**2)
+IB=interface.InterfaceBudget(RB,AB,128,256,500_000_000,50_000_000_000,
+                             1024*1024**2)
+SB=support.SupportBudget(RB,1024,128,1_000_000_000,80_000_000,512*1024**2)
+WB=work.WorkBudget(SB,AB,4096,30000,10**12,10**14,2*1024**3)
+NB=norm.NormBudget(128,32_000_000,1_000_000_000,128*1024**2)
+SP=sparse_common.SparseBudget(64,4096,4,16*1024**2)
+BB=binding.BindingBudget(SP,8192,16384,16_000_000,64*1024**2)
+EB=equilibrium.EquilibriumBudget(BB,8192,16384,32_000_000,128*1024**2)
+CB=composition.CompositionBudget(EB,IB,WB,NB,256*1024**2,40000,
+    2*10**12,2*10**14,4*1024**3)
+
+
+def _numerical_virtual(value,rows):
+    nodes,weights=np.polynomial.legendre.leggauss(48)
+    tau=(nodes+1)/2;weights=weights/2;terms=np.zeros(4)
+    for a,b,row,stress,density in zip(value.cuts,value.cuts[1:],rows,
+                                      value.resultants,value.interface.coefficients):
+        h=float(b-a);s=float(a)+h*tau
+        test=np.array([np.polynomial.polynomial.polyval(tau,np.array(p,float)) for p in row])
+        dt=np.array([np.polynomial.polynomial.polyval(tau,
+            np.arange(1,6)*np.array(p[1:],float))/h for p in row])
+        nqm=np.array([np.polynomial.polynomial.polyval(tau,np.array(p,float)) for p in stress])
+        mu=np.array([np.polynomial.polynomial.polyval(tau,np.array(p,float))+
+                     float(amp)*np.cos(c.OMEGA*s) for p,amp in zip(density,value.interface.cosine)])
+        terms[0]+=h*np.sum(weights*np.sum(mu*test,axis=0))
+        terms[1]+=h*np.sum(weights*(nqm[0]*dt[0]+nqm[1]*(dt[1]-test[2])+nqm[2]*dt[2]))
+        terms[2]+=h*np.sum(weights*c.F0*(1+.25*np.cos(c.OMEGA*s))*test[1])
+    endpoint0=np.array([float(p[0]) for p in rows[0]])
+    endpoint1=np.array([float(sum(p)) for p in rows[-1]])
+    terms[0]+=np.array(value.interface.atoms[0],float)@endpoint0
+    terms[0]+=np.array(value.interface.atoms[1],float)@endpoint1
+    terms[3]=np.array(value.eta,float)@endpoint0
+    return terms
+
+
+def _saved_interface(value):
+    density=np.asarray(value.interface.coefficients,dtype=np.float64)
+    cosine=np.asarray(value.interface.cosine,dtype=np.float64)
+    atoms=np.asarray(value.interface.atoms,dtype=np.float64)
+    total=[];line=[]
+    for left,right in interface.BANDS:
+        actions=rec.band(value,left,right);atom=interface._atom_action(value.interface,left,right)
+        total.append([float(action.decimal_value()) for action in actions])
+        line.append([float((action-a).decimal_value()) for action,a in zip(actions,atom)])
+    total=np.asarray(total);line=np.asarray(line)
+    return interface.SavedInterface(value.cuts,density,cosine,atoms,total,
+                                    total.copy(),total.copy(),line)
+
+
+def _saved_work(g,value):
+    result=support.support_recovery(g,value,SB)
+    terms=np.array([_numerical_virtual(value,rows)
+                    for _,rows in work.virtual_inventory(value.cuts,g.p)]).reshape(3,-1,4)
+    defects=terms[:,:,0]+terms[:,:,1]-terms[:,:,2]+terms[:,:,3]
+    values=lambda actions:np.asarray([float(a.decimal_value()) for a in actions],dtype=np.float64)
+    return work.SavedWork(g.p,value.cuts,result.lift_family,
+        np.array([support.lift_pose(value.cuts,side,ch,g.p)
+                  for side in ('left','right') for ch in range(3)],float),
+        np.array(result.shell_work,float),values(result.interface_work),
+        values(result.route1),values(result.route2),
+        values((result.first_free_route1_residual,result.first_free_route2_residual)),
+        values((result.shift_route1_delta,result.shift_route2_delta)),terms,defects)
+
+
+def _case(scale=.25):
+    g=grid.compile_grid((F(-1,2),F(1,2),F(3,2)),(F(-1,2),Z,F(1,2)),1)
+    n=g.free_dofs;shell=sparse.diags([1e7]*n,format='csr');beam=shell.copy()
+    root=sparse.csr_matrix(np.eye(3,n));stiffness=shell+beam
+    d=np.sqrt(c.E0/stiffness.diagonal());r=np.array((1/c.U0,1/c.U0,.46/c.U0))
+    kbar=((stiffness.toarray()*d[:,None])*d[None,:])/c.E0
+    cbar=(root.toarray()*r[:,None])*d[None,:]
+    h=sparse.csr_matrix(np.block([[kbar,cbar.T],[cbar,np.zeros((3,3))]]))
+    z=np.zeros(n+3);z[3]=scale;q=d*z[:n];eta=c.E0*r*z[n:]
+    f=stiffness@q;b=np.r_[d*f/c.E0,np.zeros(3)];h_z=h@z
+    q_exact=tuple(F.from_float(float(v)) for v in q)
+    eta_exact=tuple(F.from_float(float(v)) for v in eta)
+    recovered=rec.recover(g,q_exact,eta_exact,RB)
+    si=_saved_interface(recovered);sw=_saved_work(g,recovered)
+    saved_functional=interface._saved_functional(si)
+    sn=norm._pack(tuple(rec.functional.norm_observation_at_order(saved_functional,order)
+                        for order in (48,64)))
+    args=(g,shell,beam,shell.copy(),beam.copy(),root,f,d,h,b,q,eta,z,h_z,si,sw,sn)
+    return args
+
+
+def _verify(args,**kwargs):
+    return composition.verify_composition(*args,budget=kwargs.pop('budget',CB),**kwargs)
+
+
+def _replace_interface(result,**updates):
+    replacement=object.__new__(interface.InterfaceResult)
+    for name in result.__dataclass_fields__:
+        object.__setattr__(replacement,name,updates.get(name,getattr(result,name)))
+    return replacement
+
+
+def _replace_grid(result,**updates):
+    replacement=object.__new__(grid.CompiledGrid)
+    for name in result.__dataclass_fields__:
+        object.__setattr__(replacement,name,updates.get(name,getattr(result,name)))
+    return replacement
+
+
+def test_complete_composition_passes_and_reports_fixed_work_counts(monkeypatch):
+    args=_case();recoveries=observations=0
+    original_recover=rec.recover;original_observe=rec.functional.norm_observation_at_order
+    def counted_recover(*values,**options):
+        nonlocal recoveries;recoveries+=1;return original_recover(*values,**options)
+    def counted_observe(*values,**options):
+        nonlocal observations;observations+=1;return original_observe(*values,**options)
+    monkeypatch.setattr(rec,'recover',counted_recover)
+    monkeypatch.setattr(rec.functional,'norm_observation_at_order',counted_observe)
+    result=_verify(args)
+    assert type(result) is composition.CompositionResult
+    assert result['status']=='COMPONENT_CHECKS_PASSED'
+    assert all(result['cross_bindings'].values())
+    assert set(result['component_statuses'].values())=={'NUMERICAL_MECHANICAL_CHECKS_PASSED','PASSED'}
+    assert recoveries==result['diagnostics']['recovery_recomputations']==3
+    assert observations==result['diagnostics']['norm_evaluations']==2
+    assert result['diagnostics']['equilibrium_solves']==0
+    assert result['diagnostics']['factorizations']==0
+    assert result['diagnostics']['actual_comparisons']<=result['diagnostics']['comparisons']
+    assert result['canonical_saved_sha256s']['compiled_grid']==composition._hash_grid(args[0])
+    with pytest.raises(TypeError):result['cross_bindings']['recovery_q']=False
+
+
+def test_solve_free_receipt_bindings_capture_exact_sources_without_more_work(monkeypatch):
+    args=_case();result=_verify(args)
+    def forbidden(*values,**options):
+        pytest.fail('receipt binding repeated a scientific evaluation')
+    monkeypatch.setattr(rec,'recover',forbidden)
+    monkeypatch.setattr(rec.functional,'norm_observation_at_order',forbidden)
+    bindings=adjudication.make_bindings(result,args[0],args[-3],args[-2],args[-1])
+    settling=bindings.settling;functional_record=bindings.functional
+    assert len(settling.values)==len(settling.lower)==len(settling.upper)==45
+    assert settling.scales==adjudication.receipt.SETTLING_SCALES
+    assert all(low<=value<=high for value,low,high in
+               zip(settling.values,settling.lower,settling.upper))
+    assert settling.values[3:9]==tuple(float(value) for value in args[-2].edge_route1)
+    assert settling.values[15:21]==tuple(float(value) for value in args[-3].atoms.flat)
+    assert settling.values[21:]==tuple(float(value) for value in args[-3].band_analytic.flat)
+    assert functional_record.functional_sha256==result['components']['norm']['input_sha256']
+    assert functional_record.numerically_admissible
+    assert result['diagnostics']['recovery_recomputations']==3
+    assert result['diagnostics']['norm_evaluations']==2
+
+
+def test_receipt_binding_rejects_broken_norm_chain_and_band_inventory():
+    args=_case();result=_verify(args)
+    broken=dict(result)
+    canonical=dict(result['canonical_saved_sha256s'])
+    canonical['norm_functional_saved']='cd'*32
+    broken['canonical_saved_sha256s']=canonical
+    with pytest.raises(ValueError,match='factory-owned immutable'):
+        adjudication.functional_record(broken,args[-1])
+    interface_result=result['components']['interface']
+    damaged=_replace_interface(interface_result,comparisons=tuple(
+        item for item in interface_result.comparisons
+        if not (item['name']=='recovered_band_analytic' and item['index']==23)
+    ))
+    broken=dict(result);components=dict(result['components']);components['interface']=damaged
+    broken['components']=components
+    with pytest.raises(ValueError,match='factory-owned immutable'):
+        adjudication.settling_record(broken,args[0],args[-3],args[-2])
+    original_interface=args[-3]
+    atoms=original_interface.atoms.copy();atoms[0,0]+=1.0
+    altered_interface=interface.SavedInterface(
+        original_interface.cuts,original_interface.density,original_interface.cosine,
+        atoms,original_interface.band_analytic,original_interface.band48,
+        original_interface.band64,original_interface.line_band_analytic,
+    )
+    with pytest.raises(ValueError,match='saved-interface identity chain'):
+        adjudication.settling_record(result,args[0],altered_interface,args[-2])
+    shell_work=args[-2].shell_work.copy();shell_work[0]+=1.0
+    altered_work=replace(args[-2],shell_work=shell_work)
+    with pytest.raises(ValueError,match='saved-work identity chain'):
+        adjudication.settling_record(result,args[0],args[-3],altered_work)
+    original_norm=args[-1];channels=original_norm.channels.copy();channels[0,0]+=1.0
+    altered_norm=norm.SavedNorm(
+        channels,original_norm.totals,original_norm.components,
+        original_norm.channel_flags,original_norm.total_flags,
+        original_norm.exact_zero,original_norm.failures,
+    )
+    with pytest.raises(ValueError,match='identity chain'):
+        adjudication.functional_record(result,altered_norm)
+
+
+def test_copied_composition_cannot_forge_receipt_enclosures_or_energy():
+    args=_case();result=_verify(args)
+    forged=dict(result);components=dict(result['components'])
+    worked=dict(components['work']);comparisons=dict(worked['comparisons'])
+    edge=dict(comparisons['edge_route1/0']);bounded=dict(edge['enclosure'])
+    bounded.update(lower=F(-10**30),upper=F(10**30),input_sha256='aa'*32)
+    edge['enclosure']=bounded;comparisons['edge_route1/0']=edge
+    worked['comparisons']=comparisons;components['work']=worked
+    numerical=dict(components['numerical']);raw=dict(numerical['raw'])
+    raw['physical_shell_work_exact']+=F(123456789)
+    numerical['raw']=raw;components['numerical']=numerical;forged['components']=components
+    with pytest.raises(ValueError,match='factory-owned immutable'):
+        adjudication.make_bindings(forged,args[0],args[-3],args[-2],args[-1])
+
+
+def test_saved_balance_adjudication_reuses_composed_actions_without_recovery(monkeypatch):
+    args=_case();result=_verify(args)
+    q=tuple(F.from_float(float(value)) for value in args[10])
+    eta=tuple(F.from_float(float(value)) for value in args[11])
+    recovered=rec.recover(args[0],q,eta,RB)
+    supported=support.support_recovery(args[0],recovered,SB)
+    snapshot=result_storage.balance_snapshot(supported,args[-3])
+    monkeypatch.setattr(rec,'recover',lambda *a,**k: pytest.fail('repeated recovery'))
+    monkeypatch.setattr(support,'support_recovery',lambda *a,**k: pytest.fail('repeated support recovery'))
+    checked=balance_adjudication.verify_balance(result,args[-3],snapshot)
+    assert checked.status=='PASSED' and not checked.reasons
+    assert checked.action_sha256s==snapshot.action_sha256s
+    assert not checked.display_values_are_acceptance_evidence
+
+
+def test_saved_balance_adjudication_rejects_stale_actions_and_arrays():
+    args=_case();result=_verify(args)
+    q=tuple(F.from_float(float(value)) for value in args[10])
+    eta=tuple(F.from_float(float(value)) for value in args[11])
+    recovered=rec.recover(args[0],q,eta,RB)
+    supported=support.support_recovery(args[0],recovered,SB)
+    snapshot=result_storage.balance_snapshot(supported,args[-3])
+    stale_actions=result_storage.BalanceSnapshot(
+        snapshot.display_values,('ab'*32,)+snapshot.action_sha256s[1:],
+        snapshot.endpoint_atoms,snapshot.total_bands,snapshot.line_bands,
+    )
+    with pytest.raises(ValueError,match='Action identities'):
+        balance_adjudication.verify_balance(result,args[-3],stale_actions)
+    atoms=snapshot.endpoint_atoms.copy();atoms[0,0]+=1.0
+    stale_arrays=result_storage.BalanceSnapshot(
+        snapshot.display_values,snapshot.action_sha256s,atoms,
+        snapshot.total_bands,snapshot.line_bands,
+    )
+    with pytest.raises(ValueError,match='balance arrays'):
+        balance_adjudication.verify_balance(result,args[-3],stale_arrays)
+
+
+def test_saved_balance_adjudication_result_requires_canonical_action_hashes():
+    invalid=('G'*64,)+('ab'*32,)*(len(result_storage.BALANCE_ACTION_NAMES)-1)
+    with pytest.raises(ValueError,match='invalid F03 balance adjudication'):
+        balance_adjudication.BalanceAdjudication('PASSED',(),invalid)
+    aliased=['ab'*32]*len(result_storage.BALANCE_ACTION_NAMES)
+    with pytest.raises(ValueError,match='invalid F03 balance adjudication'):
+        balance_adjudication.BalanceAdjudication('PASSED',(),aliased)
+
+
+@pytest.mark.parametrize(('changed','expected','reason'),(
+    ({},'PASSED',None),
+    ({'force_actual/1':'HOLD_UNRESOLVED'},'HOLD_UNRESOLVED','unresolved: force_actual/1'),
+    ({'moment_actual':'FAILED','moment_nominal':'HOLD_UNRESOLVED'},'FAILED','failed: moment_actual'),
+))
+def test_balance_comparison_terminal_status_mapping(changed,expected,reason):
+    comparisons={name:{'status':'PASSED'} for name in balance_adjudication.BALANCE_COMPARISONS}
+    for name,status in changed.items(): comparisons[name]={'status':status}
+    status,reasons=balance_adjudication._adjudicate_comparisons(comparisons)
+    assert status==expected
+    assert (not reasons) if reason is None else reason in reasons[0]
+
+
+def test_compiled_grid_identity_binds_execution_and_incidence_maps():
+    value=_case()[0];baseline=composition._hash_grid(value)
+    full_to_free=value.full_to_free.copy();full_to_free[0]+=1
+    root=value.root_incidence.copy();root[0]+=1
+    trace=list(value.trace_incidence);changed=trace[0].copy();changed[0]+=1;trace[0]=changed
+    for candidate in (_replace_grid(value,full_to_free=full_to_free),
+                      _replace_grid(value,root_incidence=root),
+                      _replace_grid(value,trace_incidence=tuple(trace))):
+        assert composition._hash_grid(candidate)!=baseline
+
+
+def test_aggregate_preflight_stops_every_component(monkeypatch):
+    args=_case()
+    def forbidden(*values,**options):pytest.fail('component started after failed composition preflight')
+    for module,name in ((equilibrium,'verify_equilibrium'),(interface,'verify_interface'),
+                        (work,'verify_work'),(norm,'verify_norm')):
+        monkeypatch.setattr(module,name,forbidden)
+    with pytest.raises(ValueError,match='owned/workspace envelope'):
+        _verify(args,budget=replace(CB,max_owned_bytes=1))
+
+
+def test_every_nested_resource_preflight_stops_all_components(monkeypatch):
+    args=_case()
+    def forbidden(*values,**options):pytest.fail('component started after nested preflight failure')
+    for module,name in ((equilibrium,'verify_equilibrium'),(interface,'verify_interface'),
+                        (work,'verify_work'),(norm,'verify_norm')):
+        monkeypatch.setattr(module,name,forbidden)
+    budgets=(
+        replace(CB,equilibrium_budget=replace(EB,max_six_block_nnz=1)),
+        replace(CB,interface_budget=replace(IB,max_comparisons=1)),
+        replace(CB,work_budget=replace(WB,max_comparisons=1)),
+        replace(CB,norm_budget=replace(NB,max_operations=1)),
+        replace(CB,work_budget=replace(WB,
+            support_budget=replace(SB,max_operations=1))),
+    )
+    for budget in budgets:
+        with pytest.raises(ValueError,match='saved composition'):_verify(args,budget=budget)
+
+
+def test_deep_nested_resource_guards_stop_all_components(monkeypatch):
+    args=_case();g=args[0];active=max(map(len,g.trace_incidence))
+    trace_bits=3*active*(g.p+3)
+    trace_workspace=768*3*active*(g.p+3)+RB.trace_budget.max_trace_integer_bits//8
+    def forbidden(*values,**options):pytest.fail('component started after deep preflight failure')
+    for module,name in ((equilibrium,'verify_equilibrium'),(interface,'verify_interface'),
+                        (work,'verify_work'),(norm,'verify_norm')):
+        monkeypatch.setattr(module,name,forbidden)
+    def interface_recovery(value):
+        return replace(CB,interface_budget=replace(IB,recovery_budget=value))
+    def work_recovery(value):
+        return replace(CB,work_budget=replace(WB,support_budget=replace(SB,
+            recovery_budget=value)))
+    trace_variants=(
+        replace(RB.trace_budget,max_trace_dofs=active-1),
+        replace(RB.trace_budget,max_trace_integer_bits=trace_bits-1),
+        replace(RB.trace_budget,max_work_bytes=trace_workspace-1),
+    )
+    budgets=[]
+    for trace_budget in trace_variants:
+        budgets.extend((interface_recovery(replace(RB,trace_budget=trace_budget)),
+                        work_recovery(replace(RB,trace_budget=trace_budget))))
+    budgets.extend((
+        interface_recovery(replace(RB,max_integer_bits=122)),
+        work_recovery(replace(RB,max_integer_bits=122)),
+        replace(CB,work_budget=replace(WB,
+            support_budget=replace(SB,max_integer_bits=1000))),
+        replace(CB,equilibrium_budget=replace(EB,binding_budget=replace(BB,
+            sparse_budget=replace(SP,max_work_bytes=6500)))),
+    ))
+    for budget in budgets:
+        with pytest.raises(ValueError):_verify(args,budget=budget)
+
+
+def test_partition_mismatch_is_rejected_before_components(monkeypatch):
+    args=list(_case());saved=args[15];ni=len(saved.cuts)-1
+    args[15]=replace(saved,cuts=tuple(F(i*i,ni*ni) for i in range(ni+1)))
+    def forbidden(*values,**options):pytest.fail('component started after partition mismatch')
+    for module,name in ((equilibrium,'verify_equilibrium'),(interface,'verify_interface'),
+                        (work,'verify_work'),(norm,'verify_norm')):
+        monkeypatch.setattr(module,name,forbidden)
+    with pytest.raises(ValueError,match='degree or partition mismatch'):_verify(tuple(args))
+
+
+def test_retained_workspace_cap_is_checked_before_components(monkeypatch):
+    args=_case();baseline=_verify(args)
+    def forbidden(*values,**options):pytest.fail('component started after retained workspace failure')
+    for module,name in ((equilibrium,'verify_equilibrium'),(interface,'verify_interface'),
+                        (work,'verify_work'),(norm,'verify_norm')):
+        monkeypatch.setattr(module,name,forbidden)
+    with pytest.raises(ValueError,match='owned/workspace envelope'):
+        _verify(args,budget=replace(CB,
+            max_work_bytes=baseline['diagnostics']['workspace_envelope_bytes']-1))
+
+
+def test_caller_mutation_during_first_component_cannot_change_later_bindings(monkeypatch):
+    args=list(_case());external_shell=args[1];external_q=args[10];external_eta=args[11]
+    original=equilibrium.verify_equilibrium
+    def hostile(*values,**options):
+        external_shell.data[:]=123.;external_q[:]=99.;external_eta[:]=-77.
+        return original(*values,**options)
+    monkeypatch.setattr(equilibrium,'verify_equilibrium',hostile)
+    result=_verify(tuple(args))
+    assert result['status']=='COMPONENT_CHECKS_PASSED'
+    assert all(result['cross_bindings'].values())
+    assert (external_shell.data==123.).all()
+    assert (external_q==99.).all()
+    assert (external_eta==-77.).all()
+
+
+def test_norm_receives_exact_interface_owned_functional(monkeypatch):
+    args=_case();seen={};original_interface=interface.verify_interface;original_norm=norm.verify_norm
+    def capture_interface(*values,**options):
+        result=original_interface(*values,**options);seen['functional']=result.saved_functional;return result
+    def capture_norm(value,*values,**options):
+        assert value is seen['functional'];return original_norm(value,*values,**options)
+    monkeypatch.setattr(interface,'verify_interface',capture_interface)
+    monkeypatch.setattr(norm,'verify_norm',capture_norm)
+    assert _verify(args)['status']=='COMPONENT_CHECKS_PASSED'
+
+
+def test_consistent_q_change_rebinds_every_state_identity():
+    first=_verify(_case(.25));second=_verify(_case(.5))
+    assert first['status']==second['status']=='COMPONENT_CHECKS_PASSED'
+    assert first['canonical_snapshot_sha256']!=second['canonical_snapshot_sha256']
+    assert (first['components']['numerical']['input_sha256']['q']!=
+            second['components']['numerical']['input_sha256']['q'])
+    assert (first['components']['interface'].input_sha256['grid_q_eta']!=
+            second['components']['interface'].input_sha256['grid_q_eta'])
+    assert (first['components']['work']['input_sha256']!=
+            second['components']['work']['input_sha256'])
+    assert all(first['cross_bindings'].values()) and all(second['cross_bindings'].values())
+
+
+def test_passing_component_status_cannot_waive_stale_identity(monkeypatch):
+    args=_case();original=equilibrium.verify_equilibrium
+    def stale(*values,**options):
+        result=original(*values,**options);identities=dict(result['input_sha256'])
+        identities['q']='0'*64
+        return {**result,'status':'NUMERICAL_MECHANICAL_CHECKS_PASSED',
+                'input_sha256':identities}
+    monkeypatch.setattr(equilibrium,'verify_equilibrium',stale)
+    result=_verify(args)
+    assert result['status']=='COMPOSITION_FAILED'
+    assert not result['cross_bindings']['numerical_q']
+
+
+@pytest.mark.parametrize('component',('interface','work','norm'))
+def test_passing_saved_component_cannot_waive_stale_identity(monkeypatch,component):
+    args=_case()
+    if component=='interface':
+        original=interface.verify_interface
+        def stale(*values,**options):
+            result=original(*values,**options);identities=dict(result.input_sha256)
+            identities['saved_interface']='0'*64
+            return _replace_interface(result,input_sha256=identities,status='PASSED')
+        monkeypatch.setattr(interface,'verify_interface',stale)
+        failed_key='interface_saved'
+    elif component=='work':
+        original=work.verify_work
+        def stale(*values,**options):
+            result=original(*values,**options)
+            return {**result,'input_sha256':'0'*64,'status':'PASSED'}
+        monkeypatch.setattr(work,'verify_work',stale)
+        failed_key='work_state_saved'
+    else:
+        original=norm.verify_norm
+        def stale(*values,**options):
+            result=dict(original(*values,**options))
+            result.update(input_sha256='0'*64,status='PASSED')
+            return result
+        monkeypatch.setattr(norm,'verify_norm',stale)
+        failed_key='norm_functional_saved'
+    result=_verify(args)
+    assert result['status']=='COMPOSITION_FAILED'
+    assert not result['cross_bindings'][failed_key]
+
+
+def test_passing_interface_cannot_substitute_an_unbound_functional(monkeypatch):
+    args=_case();original=interface.verify_interface
+    def stale(*values,**options):
+        result=original(*values,**options);value=result.saved_functional
+        altered=rec.functional.Functional(value.cuts,value.coefficients,
+            (value.cosine[0]+1,*value.cosine[1:]),value.atoms)
+        return _replace_interface(result,saved_functional=altered,status='PASSED')
+    monkeypatch.setattr(interface,'verify_interface',stale)
+    result=_verify(args)
+    assert result['status']=='COMPOSITION_FAILED'
+    assert not result['cross_bindings']['functional_chain']
+
+
+def test_component_reported_work_counts_are_enforced(monkeypatch):
+    args=_case();original=work.verify_work
+    def misreported(*values,**options):
+        result=original(*values,**options);diagnostics=dict(result['diagnostics'])
+        diagnostics['state_recoveries']=1
+        return {**result,'diagnostics':diagnostics}
+    monkeypatch.setattr(work,'verify_work',misreported)
+    with pytest.raises(ArithmeticError,match='work count'):_verify(args)
+
+
+def test_corrupted_saved_norm_dominates_as_composition_failure():
+    args=list(_case());saved=args[16];channels=saved.channels.copy();channels[0,0]+=1.
+    args[16]=replace(saved,channels=channels)
+    result=_verify(tuple(args))
+    assert result['component_statuses']['norm']=='FAILED'
+    assert result['status']=='COMPOSITION_FAILED'
+
+
+def test_numerical_hold_precedes_unresolved_component_hold(monkeypatch):
+    args=_case();original_equilibrium=equilibrium.verify_equilibrium;original_norm=norm.verify_norm
+    def held_equilibrium(*values,**options):
+        result=original_equilibrium(*values,**options);return {**result,'status':'HOLD',
+            'failures':('injected numerical hold',)}
+    def held_norm(*values,**options):
+        result=dict(original_norm(*values,**options));result['status']='HOLD_UNRESOLVED';return result
+    monkeypatch.setattr(equilibrium,'verify_equilibrium',held_equilibrium)
+    monkeypatch.setattr(norm,'verify_norm',held_norm)
+    result=_verify(args)
+    assert result['status']=='HOLD_NUMERICAL'
+
+
+def test_unresolved_norm_remains_component_hold(monkeypatch):
+    args=_case();original=norm.verify_norm
+    def held(*values,**options):
+        result=dict(original(*values,**options));result['status']='HOLD_UNRESOLVED';return result
+    monkeypatch.setattr(norm,'verify_norm',held)
+    result=_verify(args)
+    assert result['status']=='HOLD_UNRESOLVED'
+
+
+def test_programming_error_propagates(monkeypatch):
+    args=_case()
+    def failure(*values,**options):raise RuntimeError('programming failure')
+    monkeypatch.setattr(norm,'verify_norm',failure)
+    with pytest.raises(RuntimeError,match='programming failure'):_verify(args)

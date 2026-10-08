@@ -1,0 +1,39 @@
+{
+  "case_id": "general_contact_d1_linear_coupled_v2",
+  "status": "independently_accepted_narrow_numerical_gate",
+  "formal_status": "passed_numerical_gate",
+  "registered_source_commit": "3251fcf39869bd6bb0b3360a4e6ed6c942c7f179",
+  "execution_head": "8ff9cf9bd28b37c081f22e9c4cd84a62980dd6de",
+  "contract_sha256": "bee013e4868ba2e1ce74810c1a3185626da548c5b19723b1c7ea169916dbfd9c",
+  "formal_report_sha256": "eab7969ab86ad6c30162d7ea4d401b4afc73603322aa5fe8182f16d6b3692d0d",
+  "independent_review": {
+    "role": "read-only mechanics and evidence reviewer, separate from kernel author",
+    "disposition": "pass for frozen v2 numerical gate",
+    "checked": [
+      "Q1 support, pressure, force and tangent signs",
+      "physical shell skin gap and manufactured load sign",
+      "contract and raw-result hashes",
+      "registered source and runtime identities",
+      "all 15 frozen numerical checks",
+      "retained consumed v1 execution failure"
+    ],
+    "limits": [
+      "The contact mass reference is independent; the structural stiffness in the manufactured load comes from the production Q4 element.",
+      "The claim uses opt-in supported_schur_dev acceleration and a small-slope full-overlap profile.",
+      "The runner does not directly compare the frozen support array; the focused local test compares production support with the analytic mass support."
+    ]
+  },
+  "observed": {
+    "checks_passed": 15,
+    "checks_total": 15,
+    "maximum_absolute_uz_error_m": 2.851982295075037e-14,
+    "relative_integrated_force_error": 2.737492829640864e-8,
+    "maximum_absolute_pressure_error_pa": 2.93018435e-9,
+    "equilibrium_residual_norm_n": 2.888074978650114e-14,
+    "normal_multiplier_change_pa": 2.2618115713690656e-11,
+    "force_wrench_balance_n": 3.46945534698169e-18,
+    "moment_wrench_balance_nm": 1.734729712487124e-18,
+    "elapsed_seconds": 25.14886889999616
+  },
+  "claim_boundary": "Accepted numerical benchmark for one planar two-Q4/two-S3 full-overlap partial-active augmented force-control profile. General C1, finite sliding, central partial-overlap refinement, independent structural stiffness, release and application integration remain open."
+}

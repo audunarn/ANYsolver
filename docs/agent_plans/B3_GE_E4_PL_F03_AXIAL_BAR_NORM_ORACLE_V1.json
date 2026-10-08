@@ -1,0 +1,59 @@
+{
+  "status": "UNREGISTERED_INDEPENDENT_AXIAL_BAR_NORM_DIAGNOSTIC",
+  "boundary": "u(0)=0, free tip",
+  "length_m": 1.0,
+  "axial_rigidity_n": 1.0,
+  "density_amplitude_n_per_m": 1.0,
+  "last_neumann_mode": 4095,
+  "cases": [
+    {
+      "cells": 2,
+      "exact_unit_ea_compliance": 0.08333333333333333,
+      "h_minus_half_norm_squared_lower": 0.25916376145945136,
+      "h_minus_half_norm_squared_upper": 0.2591637691488162,
+      "compliance_quotient_lower": 0.3215470032984507,
+      "compliance_quotient_upper": 0.3215470128387206
+    },
+    {
+      "cells": 4,
+      "exact_unit_ea_compliance": 0.020833333333333332,
+      "h_minus_half_norm_squared_lower": 0.11231394130670802,
+      "h_minus_half_norm_squared_upper": 0.11231396437479735,
+      "compliance_quotient_lower": 0.1854919239054856,
+      "compliance_quotient_upper": 0.18549196200355447
+    },
+    {
+      "cells": 8,
+      "exact_unit_ea_compliance": 0.005208333333333333,
+      "h_minus_half_norm_squared_lower": 0.04849306346557159,
+      "h_minus_half_norm_squared_upper": 0.04849311729106477,
+      "compliance_quotient_lower": 0.107403557953842,
+      "compliance_quotient_upper": 0.10740367716778856
+    },
+    {
+      "cells": 16,
+      "exact_unit_ea_compliance": 0.0013020833333333333,
+      "h_minus_half_norm_squared_lower": 0.02146825376722109,
+      "h_minus_half_norm_squared_upper": 0.021468369107136114,
+      "compliance_quotient_lower": 0.060651245878780756,
+      "compliance_quotient_upper": 0.0606515717324632
+    },
+    {
+      "cells": 32,
+      "exact_unit_ea_compliance": 0.0003255208333333333,
+      "h_minus_half_norm_squared_lower": 0.009823107724468262,
+      "h_minus_half_norm_squared_upper": 0.009823346090040947,
+      "compliance_quotient_lower": 0.033137469692058504,
+      "compliance_quotient_upper": 0.03313827379928832
+    },
+    {
+      "cells": 64,
+      "exact_unit_ea_compliance": 8.138020833333333e-05,
+      "h_minus_half_norm_squared_lower": 0.00462961972379287,
+      "h_minus_half_norm_squared_upper": 0.004630104114806489,
+      "compliance_quotient_lower": 0.017576323623715,
+      "compliance_quotient_upper": 0.01757816261130442
+    }
+  ],
+  "scientific_registration": false
+}

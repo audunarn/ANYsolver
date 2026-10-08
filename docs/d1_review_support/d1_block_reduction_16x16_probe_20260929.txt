@@ -1,0 +1,22 @@
+{
+  "status": "passed",
+  "setup_seconds": 10.383326800001669,
+  "old_median_seconds": 12.959090849999484,
+  "new_median_seconds": 15.841731599997729,
+  "speed_ratio": 0.8180349962501159,
+  "branch_parity": true,
+  "triangle_parity": true,
+  "evaluation_parity": true,
+  "scaled_errors": {
+    "support": 0.0,
+    "weighted_gap": 0.0,
+    "normalized_gap": 0.0,
+    "pressure_gram": 0.0,
+    "force": 1.3552527156068805e-20,
+    "local_force": 1.3552527156068805e-20,
+    "gap_gradient": 1.1102230246251565e-16,
+    "tangent": 3.4281425314022626e-20
+  },
+  "rss_mb": 305.954816,
+  "elapsed_seconds": 68.02905949999695
+}

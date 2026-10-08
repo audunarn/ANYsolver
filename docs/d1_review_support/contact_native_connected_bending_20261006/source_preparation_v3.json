@@ -1,0 +1,67 @@
+{
+  "status": "IMPLEMENTED_SOURCE_ONLY_UNVERIFIED_V3",
+  "files": [
+    {
+      "path": "examples/native_connected_bending_reference.py",
+      "sha256": "28242c6a93e5e039ce6950e08a34df3e7840e7bfb2f117e641deca1dadcb71a5",
+      "bytes": 14563,
+      "previous_sha256": "9a29b985b3b2e2e2847099012beb3e0e4dd709093d78650706aefb5945a1b421",
+      "trailing_whitespace_lines": [],
+      "one_final_newline": true,
+      "ast": "PASS",
+      "imports": [
+        "from fractions import Fraction as F",
+        "import math",
+        "import numpy as np"
+      ]
+    },
+    {
+      "path": "examples/native_connected_bending_dev.py",
+      "sha256": "43f984835ab5cc7fa8bcc44541c987aa4a8d469f674830e2e9c456af4b7d5118",
+      "bytes": 2727,
+      "previous_sha256": "07c6d585d961bbe2fe52a5e15eb5179c64a566ed160bd34bcd335f09bcfabdf4",
+      "trailing_whitespace_lines": [],
+      "one_final_newline": true,
+      "ast": "PASS"
+    },
+    {
+      "path": "tests/test_ge_beam3_native_connected_bending.py",
+      "sha256": "a7207022c88b8043502dc24d400c5397275324f598ab29b3e8b861b1ce46a4e2",
+      "bytes": 15066,
+      "previous_sha256": "60d3de135d27cb741e74fd1080e6042847f92207a0dc40335384a88f8586c3a4",
+      "trailing_whitespace_lines": [],
+      "one_final_newline": true,
+      "ast": "PASS",
+      "tests": [
+        "test_public_bending_stage_support_response_and_semidiscrete_bound",
+        "test_independent_bending_mass_complete_virtual_work_and_tangent_interval",
+        "test_fresh_bending_four_equals_two_plus_two_complete_restart",
+        "test_linear_midpoint_modal_phase_refinement"
+      ],
+      "gate_source_checks": "PASS"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_NATIVE_CONNECTED_BENDING_DEV.md",
+      "sha256": "5bbe2446e20f19c100b11ca86fd765705c998d957eb3e062d0d14ffa850147f3",
+      "bytes": 12285,
+      "previous_sha256": "1af43b3d68d4744be8adc5a031f8732ca4a853790ecd3570e780d0dc0e0b5dd1",
+      "trailing_whitespace_lines": [],
+      "one_final_newline": true
+    }
+  ],
+  "numerical_jobs": 0,
+  "solver_imports": 0,
+  "product_files_changed": [],
+  "snapshots": "C:\\ANYworkspaceWork\\contact_native_connected_bending_20261006\\source_snapshots_v3",
+  "prior_records_preserved": true,
+  "final_changes": [
+    "Actual saved production q/v analytical response gate<=.001, bound separate diagnostic",
+    "Exact rational binary modal Kq-omega^2Mq forcing enclosure",
+    "All27 physical mass coordinates with separately scaled kg,kgm2,kgm blocks and rotated off-diagonal control",
+    "Save bound Boolean/error diagnostics before assertions"
+  ],
+  "new_execution_authority": false,
+  "proposed_total_s": 260,
+  "proposed_perjob_max_s": 60,
+  "proposed_reserve_s": 20
+}

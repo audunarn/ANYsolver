@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 1.0293220000021392,
+  "peak_process_tree_memory_mb": 85.159936,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-m",
+    "scripts.general_contact_d1_fixed_structure_pressure_probe",
+    "--enrichment-qp",
+    "reports/d1_pressure_enrichment_qp_c_6c4d1887_20260928.json"
+  ],
+  "log": "reports\\d1_pressure_enrichment_qp_c_6c4d1887_20260928.txt"
+}

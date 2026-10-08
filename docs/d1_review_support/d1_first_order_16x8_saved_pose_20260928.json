@@ -1,0 +1,76 @@
+{
+  "method": "process-local single active uniform-close candidate; not a coupled solve or acceptance",
+  "source_grid": [
+    16,
+    8
+  ],
+  "source_y_profile": "near_rim8",
+  "target_s3_faces": 2,
+  "closing_shift_m": null,
+  "saved_coupled_sha256": "8293e528837cc2a8a25444aa079944c9f8371f5a5b50280bb6dc91816d19b852",
+  "elapsed_seconds": 11.706216099999438,
+  "tangent_elapsed_seconds": 3.359410899996874,
+  "unwrapped_seconds": 4.160330199993041,
+  "timings": {
+    "aggregate_pair_geometry": {
+      "calls": 2,
+      "inclusive_seconds": 3.5244856999997864,
+      "exclusive_seconds": 3.5244856999997864,
+      "exceptions": 0
+    },
+    "contact_evaluate": {
+      "calls": 2,
+      "inclusive_seconds": 7.545885900006397,
+      "exclusive_seconds": 0.4148178000032203,
+      "exceptions": 0
+    },
+    "jet2_contact_work": {
+      "calls": 2,
+      "inclusive_seconds": 3.6049061000012443,
+      "exclusive_seconds": 0.04341660001955461,
+      "exceptions": 0
+    },
+    "prepare_projected_state": {
+      "calls": 2,
+      "inclusive_seconds": 3.524626900005387,
+      "exclusive_seconds": 0.00014120000560069457,
+      "exceptions": 0
+    },
+    "pressure_rank_diagnostics": {
+      "calls": 2,
+      "inclusive_seconds": 0.0015350999965448864,
+      "exclusive_seconds": 0.0015350999965448864,
+      "exceptions": 0
+    },
+    "q4_s3_first_pair": {
+      "calls": 52,
+      "inclusive_seconds": 2.2526037999487016,
+      "exclusive_seconds": 2.2526037999487016,
+      "exceptions": 0
+    },
+    "q4_s3_jet2_pair": {
+      "calls": 52,
+      "inclusive_seconds": 1.308885700032988,
+      "exclusive_seconds": 1.308885700032988,
+      "exceptions": 0
+    }
+  },
+  "overlapping_pairs": 148,
+  "active_pressure_dofs": 38,
+  "contact_force_z_n": 1.24634395986761e-15,
+  "minimum_gap_m": -8.578474510285848e-07,
+  "force_norm_n": 7.589377534610434e-16,
+  "tangent_nonzeros": 36253,
+  "residual_only_comparison": {
+    "elapsed_seconds": 4.186484699996072,
+    "force_max_difference_n": 4.930380657631324e-32,
+    "force_l2_difference_n": 7.252152564634314e-32,
+    "integration_force_max_difference_n": 1.9721522630525295e-31,
+    "pressure_max_difference_pa": 0.0,
+    "paired_derivative_calls": 52,
+    "different_branch_signatures": 0,
+    "different_triangle_counts": 0,
+    "maximum_support_gradient_difference": 2.0816681711721685e-17,
+    "maximum_gap_gradient_difference": 1.3010426069826053e-18
+  }
+}

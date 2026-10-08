@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 9.117700300004799,
+  "peak_process_tree_memory_mb": 274.612224,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "scripts.general_contact_d1_interior_press_dev",
+    "docs/d1_review_support/d1_interior_press_target2_20260929.json",
+    "--target-columns",
+    "2"
+  ],
+  "log": "docs\\d1_review_support\\d1_interior_press_target2_20260929.log"
+}

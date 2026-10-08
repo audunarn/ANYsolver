@@ -1,0 +1,19 @@
+{
+  "status": "SOURCE_REPAIR_ADOPTED_NUMERICAL_UNEXECUTED",
+  "old_source": "2c8d8f0370d2119f3fdcc91c616e00e83ae61af9",
+  "old_failure": "bending_response1",
+  "discriminator": "bending_saved_acceleration_diagnostic_v1_result.json",
+  "equation": "Proper SO3: S=(U-U.T)/2,c=(trU-1)/2,D=U-I=S+S\u00b2/(1+c). Near c>.5 under roundoff orthogonality certificate; original U-I elsewhere. Compose Dmade=Dbase+E+E*Dbase with full Jet2 and preserve D in precise scalar work.",
+  "reserved_decision": "New explicit arithmetic successor and reconstructible schema/policy identity; old profiles/defaults/bytes unchanged. Not bit-equivalent to literal rounded-matrix mechanics.",
+  "product_ownership": [
+    "src/anysolver/_ge_beam3_centered_so3_strain.py",
+    "src/anysolver/_ge_beam3_retained_generalized.py",
+    "src/anysolver/_ge_beam3_native_definition.py",
+    "src/anysolver/_ge_beam3_precise_geometric_work.py"
+  ],
+  "preserved": "Physical fixture, independent reference, scales and numerical gates; copied P5 mechanics; previous source/evidence/authority.",
+  "execution": "Existing user260 scoped repairs; no additional authority. Required revised private artifact from repaired product, bound to successor manifest. Original package preserved, all job costs charged to same260. No wider qualification/release.",
+  "used_s": 22.444416500045918,
+  "remaining_s": 237.55558349995408,
+  "source_review": "repair_source_review_proposal_v1.md, supporting same-family only"
+}

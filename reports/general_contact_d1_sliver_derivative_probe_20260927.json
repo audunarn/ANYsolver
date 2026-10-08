@@ -1,0 +1,38 @@
+{
+  "pair": 2,
+  "overlap_area_m2": 4.500000007752807e-16,
+  "support_sum_m2": 4.500000011916139e-16,
+  "cases": [
+    {
+      "relative_branch_tolerance": 1e-10,
+      "status": "unsupported",
+      "reason": "zero projected overlap"
+    },
+    {
+      "relative_branch_tolerance": 1e-14,
+      "status": "unsupported",
+      "reason": "zero projected overlap"
+    },
+    {
+      "relative_branch_tolerance": 1e-16,
+      "status": "unsupported",
+      "reason": "degenerate integration triangle"
+    },
+    {
+      "relative_branch_tolerance": 1e-17,
+      "status": "evaluated",
+      "support_error_m2": 4.163338658972594e-25,
+      "weighted_gap_error_m3": 1.6653901415105306e-29,
+      "maximum_support_gradient": 2.999999462584298e-08,
+      "maximum_support_hessian": 0.999999460000085
+    },
+    {
+      "relative_branch_tolerance": 1e-18,
+      "status": "evaluated",
+      "support_error_m2": 4.163338658972594e-25,
+      "weighted_gap_error_m3": 1.6653901415105306e-29,
+      "maximum_support_gradient": 2.999999462584298e-08,
+      "maximum_support_hessian": 0.999999460000085
+    }
+  ]
+}

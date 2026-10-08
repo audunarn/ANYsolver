@@ -1,0 +1,12 @@
+{
+  "anysolver_module": "C:\\ANYworkspaceWork\\general-contact-final-0b2ac9be\\target\\anysolver\\__init__.py",
+  "anysolver_file_sha256": "677237ea706773bfa0e511c77e368f37f55a3289b073a872437909be51d82ebe",
+  "script": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d1_radial_linear_saved_assessment.py",
+  "script_sha256": "d30948a33c8667020b25dbc45c6ca9115ec90e600e6bface79b7c8ed41cd030c",
+  "python_executable": "C:\\Python\\Python314\\python.exe",
+  "python_version": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1",
+  "pythonpath": "C:/ANYworkspaceWork/general-contact-final-0b2ac9be/target;C:/ANYworkspaceWork/ANYsolver-general-contact",
+  "wrapper_sha256": "843dc2e36904c8d587ab4840aa16d287300134c70ed6c689e24016a45ed1cec5"
+}

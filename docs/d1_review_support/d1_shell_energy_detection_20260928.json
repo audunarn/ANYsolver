@@ -1,0 +1,49 @@
+{
+  "status": "development_shell_structural_energy_detection",
+  "source_commit": "5682a3c5a45065540adf05d5f24868387d690afc",
+  "probe_sha256": "e2c0104c83c08b1df362686d452ebf0d6541674a0714a545f2c8994d45258c5f",
+  "saved_source_sha256": "8293e528837cc2a8a25444aa079944c9f8371f5a5b50280bb6dc91816d19b852",
+  "saved_runtime_identity": {
+    "python": "3.14.2",
+    "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+    "anymaterial_module": "C:\\Github\\ANYmaterial\\src\\anymaterial\\__init__.py",
+    "compiled_bjet_mul_enabled": false
+  },
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "structural_metric_symmetry_relative": 0.0,
+  "structural_metric_scaled_minimum_eigenvalue": 0.0016688263429536214,
+  "free_structural_coordinates": 295,
+  "supported_pressure_modes": 153,
+  "settled_active_pressure_modes": 48,
+  "geometry_seconds": 10.445565400004853,
+  "full_supported": {
+    "scaled_smallest_eigenvalue": -4.342789322147582e-16,
+    "scaled_largest_eigenvalue": 68.57307239601502,
+    "scaled_rank_1e_10": 144,
+    "modes": 153,
+    "weakest_pressure_node_ids": [
+      137,
+      138,
+      120,
+      103,
+      139
+    ],
+    "relative_linear_solve_residual": 5.3751739026911495e-15
+  },
+  "settled_active": {
+    "scaled_smallest_eigenvalue": 0.0031555961096346305,
+    "scaled_largest_eigenvalue": 32.30478373530346,
+    "scaled_rank_1e_10": 48,
+    "modes": 48,
+    "weakest_pressure_node_ids": [
+      152,
+      151,
+      153,
+      150,
+      149
+    ],
+    "relative_linear_solve_residual": 7.062993399675664e-15
+  },
+  "elapsed_seconds": 10.737097500001255,
+  "peak_process_working_set_mb": 211.836928
+}

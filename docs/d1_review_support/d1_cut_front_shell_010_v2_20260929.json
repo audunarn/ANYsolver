@@ -1,0 +1,44 @@
+{
+  "status": "development_fixed_pose_work_map",
+  "theta": 0.1,
+  "source_commit": "4a3ba157b5d8c174569045c97cca9a27c40f155a",
+  "probe_sha256": "1eb356d639c34120441179a59465bc247eb01209320d87613fa316416fca4667",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "environment": {
+    "python": "3.14.2",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "openblas_threads": "1",
+    "omp_threads": "1"
+  },
+  "source_faces": 8,
+  "target_faces": 2,
+  "pressure_modes": 15,
+  "pressure_node_ids": [
+    3,
+    8,
+    13
+  ],
+  "pressure_coefficients": [
+    0.006856023506366309,
+    -0.013712047012732619,
+    1.0
+  ],
+  "pressure_support_m2": [
+    0.24999999999999994,
+    0.29749999999999976,
+    0.0024999999999999814
+  ],
+  "minimum_gap_m": 3.9999999999996534e-05,
+  "expected_scalar_last_y_work": 0.00026934378060724785,
+  "expected_scalar_continuous_witness_work": -0.00011426705843943849,
+  "source_full_work_l2": 9.522740686890333e-05,
+  "target_full_work_l2": 0.00048736557707702724,
+  "all_full_work_l2": 0.000496581780514146,
+  "source_normal_work_l2": 9.522740686890333e-05,
+  "source_rotation_work_l2": 3.0316713935718124e-22,
+  "target_normal_work_l2": 0.0004873655770770273,
+  "target_rotation_work_l2": 2.00414631612216e-22,
+  "virtual_work_residual_l2": 2.5026347791827317e-19,
+  "elapsed_s": 1.242967400001362
+}

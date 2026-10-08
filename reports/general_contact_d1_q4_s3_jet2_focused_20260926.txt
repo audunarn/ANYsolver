@@ -1,0 +1,20 @@
+................F....                                                    [100%]
+================================== FAILURES ===================================
+_____ test_jet2_s3_development_mode_maps_full_static_residual_and_tangent _____
+
+    def test_jet2_s3_development_mode_maps_full_static_residual_and_tangent():
+        model, definition, settings = _augmented_case()
+        selected = replace(settings, general_s3_differentiation="jet2_s3_dev")
+        assert validate_general_contact(model, definition, selected).valid
+        reference = GeneralS3PatchManager(model, definition, settings)
+        candidate = GeneralS3PatchManager(model, definition, selected)
+>       assert candidate.law.geometry.differentiation == "jet2_s3"
+E       AssertionError: assert 'global' == 'jet2_s3'
+E         
+E         - jet2_s3
+E         + global
+
+tests\test_general_contact_s3_jet2_static_owner.py:21: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_s3_jet2_static_owner.py::test_jet2_s3_development_mode_maps_full_static_residual_and_tangent
+1 failed, 20 passed in 239.70s (0:03:59)

@@ -11,12 +11,14 @@ inventory is `dependency-licenses.json`.
 | SciPy | `scipy>=1.11` | BSD-3-Clause and bundled-component licences | Runtime dependency; not bundled |
 | threadpoolctl | `threadpoolctl>=3.5` | BSD-3-Clause | Runtime dependency; not bundled |
 | ANYmaterial | `ANYmaterial>=0.2,<0.3` | MPL-2.0 | Runtime dependency; separately distributed |
-| ANYmesher | `ANYmesher>=0.4,<0.5` | MPL-2.0 | Runtime dependency; separately distributed |
-| ANYfileio | `ANYfileio>=0.3.1,<0.4` | MPL-2.0 | Runtime dependency; separately distributed |
+| ANYmesher | `ANYmesher>=0.4,<0.6` | MPL-2.0 | Runtime dependency; separately distributed |
+| ANYfileio | `ANYfileio>=0.3.2,<0.4` | MPL-2.0 | Runtime dependency; separately distributed |
+| ANYgeometry | `ANYgeometry>=0.4.3,<0.5` | MPL-2.0 | Optional general-contact dependency; separately distributed |
 | Numba | `numba>=0.59` | BSD | Optional accelerator; not bundled |
 | pypardiso | `pypardiso>=0.4` | BSD-3-Clause | Optional accelerator; not bundled |
 | mpmath | `mpmath==1.3.0` | BSD-3-Clause | Development/research dependency; not bundled |
 | pytest | `pytest>=8` | MIT | Development dependency; not bundled |
+| psutil | `psutil>=5.9` | BSD-3-Clause | Development resource-monitor dependency; not bundled |
 | build | `build>=1.2` | MIT | Development dependency; not bundled |
 | Twine | `twine>=5` | Apache-2.0 | Development dependency; not bundled |
 

@@ -1,0 +1,1 @@
+{"status": "diverged", "failure_reason": "contact_semismooth_candidate_failed: raw shared-edge tie smooth neighbor unresolved (offset_m=-3e-08): tiny seam wedge needs 1 to 12 resolved local tangent coordinates (present=17)", "accepted_steps": 0, "elapsed_seconds": 6.30717509999522, "contact_failure": null}

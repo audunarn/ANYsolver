@@ -1,0 +1,15 @@
+{
+  "status": "ABORTED_RESOURCE_SCREEN",
+  "qualification_status": "F03_G0B_OPEN",
+  "start_utc": "2026-09-23T22:12:05Z",
+  "stop_utc": "2026-09-23T22:27:27Z",
+  "elapsed_wall_s_approx": 922,
+  "runner": "scripts/b3_e4_f03_qp_nested_x2_spatial.py",
+  "runner_sha256": "fd57a496e50c25fff2ad07599840e4d260f2431b7cb94e9b7180fde6e94035b2",
+  "state": "docs/agent_plans/B3_GE_E4_PL_G0_F03_QP_NESTED_X2_Q6_20260923.json",
+  "state_sha256": "32526d3f02ca2945c294b42ebf48ed29764dffb73f2434de53cd03240b1edc84",
+  "phase_at_abort": "unknown; original runner emitted no intermediate phase checkpoint",
+  "numerical_result": null,
+  "resource_observation": "Owned Python process consumed more than 900 CPU seconds and produced no numerical output before it was stopped; a phase-checkpointed runner is required for this route.",
+  "raw_log": "C:/Users/AUDUNA~1/AppData/Local/Temp/f03-qp-x2-spatial-20260924.log"
+}

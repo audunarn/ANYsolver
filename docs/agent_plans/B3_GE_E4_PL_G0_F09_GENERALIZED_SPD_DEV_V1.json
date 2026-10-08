@@ -1,0 +1,197 @@
+{
+  "all_declared_cases_passed": true,
+  "cases": [
+    {
+      "coupling_sign": 1,
+      "free_force_residual_ratio": 2.5465851649641993e-13,
+      "free_moment_residual_ratio": 1.5298873279334657e-13,
+      "passed_declared_diagnostic": true,
+      "rounded_vs_independent_component_error": 1.4389500694282303e-13,
+      "scale_max": 0.001801639205587426,
+      "scale_min": 3.338801334984214e-05,
+      "scaled_vs_independent_component_error": 3.7239334326889623e-13,
+      "scaled_vs_rounded_component_error": 2.284983363260403e-13,
+      "stiffness_N_Nm": [
+        [
+          1344000000.0,
+          0.0,
+          0.0,
+          0.0,
+          5586903.08489417,
+          0.0
+        ],
+        [
+          0.0,
+          430769230.7692308,
+          0.0,
+          0.0,
+          0.0,
+          -2108640.685005754
+        ],
+        [
+          0.0,
+          0.0,
+          430769230.7692308,
+          1132328.4789308864,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1132328.4789308864,
+          465072.0199378669,
+          0.0,
+          0.0
+        ],
+        [
+          5586903.08489417,
+          0.0,
+          0.0,
+          0.0,
+          716800.0,
+          0.0
+        ],
+        [
+          0.0,
+          -2108640.685005754,
+          0.0,
+          0.0,
+          0.0,
+          716800.0
+        ]
+      ],
+      "tip_exact_rounded_m_rad": [
+        0.0004991392200726009,
+        -0.00031268903010674663,
+        0.0015431922304219787,
+        0.0008229935143416426,
+        -0.000308202431167587,
+        -0.000353034071388295
+      ],
+      "tip_independent_force_method_m_rad": [
+        0.0004991392200725501,
+        -0.00031268903010670164,
+        0.0015431922304219834,
+        0.0008229935143416459,
+        -0.0003082024311675872,
+        -0.0003530340713882611
+      ],
+      "tip_scaled_m_rad": [
+        0.0004991392200726818,
+        -0.0003126890301068181,
+        0.0015431922304219726,
+        0.0008229935143416402,
+        -0.00030820243116758546,
+        -0.00035303407138834896
+      ]
+    },
+    {
+      "coupling_sign": -1,
+      "free_force_residual_ratio": 4.669598041573409e-15,
+      "free_moment_residual_ratio": 3.597122599785507e-14,
+      "passed_declared_diagnostic": true,
+      "rounded_vs_independent_component_error": 1.4038345817764168e-13,
+      "scale_max": 0.001801639205587426,
+      "scale_min": 3.338801334984214e-05,
+      "scaled_vs_independent_component_error": 3.5794289709473317e-13,
+      "scaled_vs_rounded_component_error": 2.1755943891706092e-13,
+      "stiffness_N_Nm": [
+        [
+          1344000000.0,
+          0.0,
+          0.0,
+          0.0,
+          -5586903.08489417,
+          0.0
+        ],
+        [
+          0.0,
+          430769230.7692308,
+          0.0,
+          0.0,
+          0.0,
+          2108640.685005754
+        ],
+        [
+          0.0,
+          0.0,
+          430769230.7692308,
+          -1132328.4789308864,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          -1132328.4789308864,
+          465072.0199378669,
+          0.0,
+          0.0
+        ],
+        [
+          -5586903.08489417,
+          0.0,
+          0.0,
+          0.0,
+          716800.0,
+          0.0
+        ],
+        [
+          0.0,
+          2108640.685005754,
+          0.0,
+          0.0,
+          0.0,
+          716800.0
+        ]
+      ],
+      "tip_exact_rounded_m_rad": [
+        0.00049396767286563,
+        -0.00031047053477462343,
+        0.0015492185794446578,
+        0.0008258083168014226,
+        -0.00030529719513856785,
+        -0.0003511632902623982
+      ],
+      "tip_independent_force_method_m_rad": [
+        0.0004939676728655804,
+        -0.00031047053477457984,
+        0.0015492185794446624,
+        0.0008258083168014258,
+        -0.00030529719513856785,
+        -0.00035116329026236507
+      ],
+      "tip_scaled_m_rad": [
+        0.0004939676728657063,
+        -0.000310470534774691,
+        0.0015492185794446528,
+        0.0008258083168014206,
+        -0.0003052971951385662,
+        -0.0003511632902624491
+      ]
+    }
+  ],
+  "classification": "F09_GENERALIZED_SPD_DEV_NOT_ADMISSION",
+  "limits": [
+    "one rooted elbow and two modest SPD coupling signs, not a generalized-section admission range",
+    "independent rational compliance and cut-wrench force method do not validate new shell attachments, mass, prestress or installed B2 dispatch"
+  ],
+  "operator_sha256": "4951a9cada5a779489fe8d031d09e71da00199d76cf31ea2177c389c8f1ed237",
+  "question": "Does scaled sparse B2 preserve off-diagonal generalized-section work under fixed mixed loads and oriented elbow members?",
+  "section": "0.08 m square isotropic diagonal, dimensionally scaled symmetric N-My, Vy-Mz, Vz-T couplings of both signs",
+  "source_sha256": "5cec1934316f829de59dfe872dd9ae935b82a7bb23c390a84680c718f69555a9",
+  "terminal_wrench_N_Nm": [
+    50.0,
+    -30.0,
+    100.0,
+    2.0,
+    -3.0,
+    5.0
+  ],
+  "thresholds": {
+    "component_floor_m_rad": 1e-08,
+    "component_relative": 1e-08,
+    "separate_residual_relative": 1e-10
+  }
+}

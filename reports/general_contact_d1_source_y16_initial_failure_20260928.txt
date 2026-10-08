@@ -1,0 +1,17 @@
+Development diagnostic failure, 2026-09-28
+
+Command:
+  python scripts/general_contact_d1_source_y_resolution.py --ny 16
+
+Result before support-admission correction:
+  ValueError: clipped Q1 pressure support is invalid
+  at scripts/general_contact_d1_source_y_resolution.py, run(),
+  while checking all registered pressure modes for positive support.
+
+Diagnosis: the 16-row source grid places its top pressure-node row at y=1.0,
+entirely outside the represented overlap y<=0.9. Those nodes correctly have
+zero clipped Q1 support. The diagnostic was corrected to omit only exactly
+zero-support modes from the quadratic problem and to report their count.
+Its corrected 16x16 and 32x16 cases are in
+general_contact_d1_source_y16_dev_20260928.json. This failure is retained
+as development history, not a mechanical contact failure.

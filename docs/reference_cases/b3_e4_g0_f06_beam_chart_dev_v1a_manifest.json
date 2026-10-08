@@ -1,0 +1,25 @@
+{
+  "floors": {
+    "curvature": 1e-12,
+    "force": 1e-09,
+    "mixed_solver": 1e-09,
+    "moment": 1e-09,
+    "rotation": 1e-09,
+    "strain": 1e-12,
+    "translation": 1e-09
+  },
+  "imported_package": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\__init__.py",
+  "module_sha256": {
+    "_ge_beam3_generalized_static_boundary.py": "8ea10a90290ab89a413d7c947a6cd3a50c71331f2a89e41e4b94f7248f1b2085",
+    "_ge_beam3_pose_joint.py": "f3fce05e6d65dfac9a9783e6fb466b8a0067ab4831ba00a74df9c579461abf71",
+    "_ge_beam3_retained_generalized_state.py": "e4965fd3cc8cd8c498a8fd21247bc8ce09a073fdf245dca1b3b10b084cfde719",
+    "_ge_beam3_shell_joint_state.py": "df6159bf5df3ca9ad1aa54633ab388d911511e43285961bf5240ab5d7352ab4d",
+    "_ge_beam3_shell_joint_trial.py": "1c6176921eadc2ef132c516caf706bced799b95f4f1009d97fab17c41103b504"
+  },
+  "numba_jit_disabled": true,
+  "numpy": "2.4.6",
+  "purpose": "F06_DEV_LOADED_BEAM_CHART_DESCRIPTION_NOT_ACCEPTANCE",
+  "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+  "source_sha256": "01ee45da71c01ac68dbcc5247568daf3d78a0f64bee6d9937364df81d6f680b0",
+  "tolerance": 1e-08
+}

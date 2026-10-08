@@ -18,6 +18,7 @@ import json
 import math
 from dataclasses import fields, is_dataclass
 from enum import Enum
+from types import ModuleType
 from typing import Any, Dict, Mapping, NamedTuple, Optional, Sequence
 
 import numpy as np
@@ -26,10 +27,13 @@ from .current_state_tangent import (
     require_exact_qualified_component_lifecycle_api as _EXACT_QUALIFIED_COMPONENT_LIFECYCLE_GUARD,
 )
 from .element_capabilities import ElementCapabilityError
+from .fe_core import Node as _CHECKPOINT_NODE_TYPE
 
 
 NONLINEAR_CHECKPOINT_SCHEMA = "ANYSOLVER_NONLINEAR_CHECKPOINT_V1"
 NONLINEAR_CHECKPOINT_VERSION = 1
+NONLINEAR_CONTACT_CHECKPOINT_SCHEMA = "ANYSOLVER_NONLINEAR_CHECKPOINT_V2"
+NONLINEAR_CONTACT_CHECKPOINT_VERSION = 2
 NONLINEAR_CHECKPOINT_INTEGRITY_ID = "SHA256_CANONICAL_JSON_EXCLUDING_SELF_V1"
 QUALIFIED_CHECKPOINT_LIFECYCLE_POLICY_ID = (
     "EXACT_Q4_S3_ACTIVE_OR_DELETED_SEAL_NO_FAILED_DOWNGRADE_V1"
@@ -50,6 +54,120 @@ _CHECKPOINT_KEYS = {
     "path_state",
     _CHECKPOINT_HASH_KEY,
 }
+_CONTACT_CHECKPOINT_KEYS = _CHECKPOINT_KEYS | {"contact_state"}
+
+# Exact ndarray observations through the original NumPy C conversion invoke no
+# caller code. Capture dependencies once; changed functions and subclasses keep
+# their existing post-observation authority check.
+_INERT_ARRAY_TYPE = np.ndarray
+_INERT_ASARRAY = np.asarray
+_INERT_FLOAT64 = np.float64
+_INERT_INT64 = np.int64
+_INERT_FLOAT64_DTYPE = np.dtype(np.float64)
+_INERT_INT64_DTYPE = np.dtype(np.int64)
+_INERT_NUMPY_LOOKUP_BINDINGS = tuple(
+    (name, getattr(np, name)) for name in
+    ("integer", "floating", "bool_", "ndarray", "asarray", "array", "float64", "int64")
+)
+_INERT_NODE_NAMESPACE = type.__getattribute__(_CHECKPOINT_NODE_TYPE, "__dict__")
+_INERT_NODE_COORDS = _INERT_NODE_NAMESPACE["coords"]
+_INERT_NODE_DICT = _INERT_NODE_NAMESPACE["__dict__"]
+_INERT_NODE_COORDS_CODE = _INERT_NODE_COORDS.__code__
+_INERT_NODE_COORDS_DEFAULTS = _INERT_NODE_COORDS.__defaults__
+_INERT_NODE_COORDS_KWDEFAULTS = _INERT_NODE_COORDS.__kwdefaults__
+_INERT_NODE_COORDS_CLOSURE = _INERT_NODE_COORDS.__closure__
+_INERT_GETATTR = getattr
+
+
+def _numpy_lookup_inert() -> bool:
+    kind = type(np)
+    if type(kind) is not type:
+        return False
+    names = {name for name, _ in _INERT_NUMPY_LOOKUP_BINDINGS}
+    getter_found = False
+    for owner in type.__getattribute__(kind, "__mro__"):
+        if type(owner) is not type:
+            return False
+        namespace = type.__getattribute__(owner, "__dict__")
+        if any(type(key) is not str for key in namespace):
+            return False
+        if not getter_found and "__getattribute__" in namespace:
+            if namespace["__getattribute__"] is not ModuleType.__getattribute__:
+                return False
+            getter_found = True
+        if names.intersection(namespace) or (owner is not ModuleType
+                                             and "__dict__" in namespace):
+            return False
+    if not getter_found:
+        return False
+    namespace = ModuleType.__getattribute__(np, "__dict__")
+    if type(namespace) is not dict or any(type(key) is not str for key in namespace):
+        return False
+    return all(namespace.get(name) is expected
+               for name, expected in _INERT_NUMPY_LOOKUP_BINDINGS)
+
+
+def _inert_array_conversion(value: Any, conversion: Any, dtype: Any = None,
+                            *, _lookup_inert: Optional[bool] = None) -> bool:
+    if _lookup_inert is None:
+        _lookup_inert = _numpy_lookup_inert()
+    if (not _lookup_inert or type(value) is not _INERT_ARRAY_TYPE
+            or conversion is not _INERT_ASARRAY or np.ndarray is not _INERT_ARRAY_TYPE):
+        return False
+    if dtype is None:
+        return True
+    # Restrict explicit casts to unchanged same-dtype arrays: object conversions
+    # can call Python, and other casts can issue warning callbacks.
+    return ((dtype is _INERT_FLOAT64 and value.dtype is _INERT_FLOAT64_DTYPE)
+            or (dtype is _INERT_INT64 and value.dtype is _INERT_INT64_DTYPE))
+
+
+def _inert_node_observation(node: Any) -> bool:
+    """Prove only the built-in node's stored-field reads and coords call inert."""
+    kind = type(node)
+    if kind is not _CHECKPOINT_NODE_TYPE or type(kind) is not type:
+        return False
+    getter_found = coords_found = dict_found = False
+    for owner in type.__getattribute__(kind, "__mro__"):
+        if type(owner) is not type:
+            return False
+        namespace = type.__getattribute__(owner, "__dict__")
+        if any(type(key) is not str for key in namespace):
+            return False
+        if {"x", "y", "z", "dofs"}.intersection(namespace):
+            return False
+        if not getter_found and "__getattribute__" in namespace:
+            if namespace["__getattribute__"] is not object.__getattribute__:
+                return False
+            getter_found = True
+        if not coords_found and "coords" in namespace:
+            if namespace["coords"] is not _INERT_NODE_COORDS:
+                return False
+            coords_found = True
+        if not dict_found and "__dict__" in namespace:
+            if namespace["__dict__"] is not _INERT_NODE_DICT:
+                return False
+            dict_found = True
+    if not (getter_found and coords_found and dict_found):
+        return False
+    values = object.__getattribute__(node, "__dict__")
+    if (type(values) is not dict or any(type(key) is not str for key in values)
+            or "coords" in values or "dofs" not in values):
+        return False
+    for name in ("x", "y", "z"):
+        value = values.get(name)
+        if not (type(value) is float or (type(value) is int and value.bit_length() <= 53)):
+            return False
+    kernel = _INERT_NODE_COORDS
+    if (kernel.__code__ is not _INERT_NODE_COORDS_CODE
+            or kernel.__defaults__ is not _INERT_NODE_COORDS_DEFAULTS
+            or kernel.__kwdefaults__ is not _INERT_NODE_COORDS_KWDEFAULTS
+            or kernel.__closure__ is not _INERT_NODE_COORDS_CLOSURE):
+        return False
+    namespace = kernel.__globals__
+    if any(type(key) is not str for key in namespace) or namespace.get("np") is not np:
+        return False
+    return _numpy_lookup_inert()
 
 
 class NonlinearCheckpointError(ValueError):
@@ -174,6 +292,18 @@ def _normalize_json(
     }
     if value is None or type(value) in {str, bool}:
         return value
+    # Exact Python scalars are already owned and their conversion invokes no
+    # caller code. Subclasses and NumPy scalars retain the post-conversion
+    # guard because their conversion may execute implementation-specific work.
+    if type(value) is int:
+        return value
+    if type(value) is float:
+        if not math.isfinite(value):
+            raise NonlinearCheckpointError(f"{path} contains a nonfinite value")
+        return 0.0 if value == 0.0 else value
+    # Capture the lookup boundary before observing any NumPy module attributes:
+    # a custom getter may restore itself while returning a conversion function.
+    numpy_lookup_inert = type(value) is _INERT_ARRAY_TYPE and _numpy_lookup_inert()
     if isinstance(value, (int, np.integer)) and not isinstance(value, (bool, np.bool_)):
         result = int(value)
         _checkpoint_observation_guard(
@@ -201,12 +331,16 @@ def _normalize_json(
         )
         return result
     if isinstance(value, np.ndarray):
-        observed = np.asarray(value)
-        _checkpoint_observation_guard(
-            _exact_guard,
-            _guard_model,
-            context=f"nonlinear checkpoint array observation at {path}",
-        )
+        conversion = np.asarray
+        inert = _inert_array_conversion(value, conversion,
+                                        _lookup_inert=numpy_lookup_inert)
+        observed = conversion(value)
+        if not inert:
+            _checkpoint_observation_guard(
+                _exact_guard,
+                _guard_model,
+                context=f"nonlinear checkpoint array observation at {path}",
+            )
         if observed.dtype.kind in {"O", "V", "S", "U"}:
             return _normalize_json(observed.tolist(), path=path, **guard_arguments)
         if observed.dtype.kind in {"f", "c"} and not np.all(np.isfinite(observed)):
@@ -224,11 +358,15 @@ def _normalize_json(
         return _normalize_json(observed, path=path, **guard_arguments)
     if isinstance(value, Mapping):
         observed_items = tuple(value.items())
-        _checkpoint_observation_guard(
-            _exact_guard,
-            _guard_model,
-            context=f"nonlinear checkpoint mapping observation at {path}",
-        )
+        # Snapshotting an exact dict with exact string keys invokes no caller
+        # methods. Every member still follows its own guarded normalization;
+        # subclasses and effectful keys retain the observation boundary.
+        if type(value) is not dict or any(type(key) is not str for key, _ in observed_items):
+            _checkpoint_observation_guard(
+                _exact_guard,
+                _guard_model,
+                context=f"nonlinear checkpoint mapping observation at {path}",
+            )
         result: Dict[str, Any] = {}
         for key, item in observed_items:
             if not isinstance(key, str):
@@ -245,11 +383,15 @@ def _normalize_json(
         return result
     if isinstance(value, (list, tuple)):
         observed_items = tuple(value)
-        _checkpoint_observation_guard(
-            _exact_guard,
-            _guard_model,
-            context=f"nonlinear checkpoint sequence observation at {path}",
-        )
+        # Copying an exact built-in sequence cannot invoke caller code.  Its
+        # members are still normalized and guarded according to their types.
+        # Keep the post-observation check for subclasses with custom iteration.
+        if type(value) not in {list, tuple}:
+            _checkpoint_observation_guard(
+                _exact_guard,
+                _guard_model,
+                context=f"nonlinear checkpoint sequence observation at {path}",
+            )
         return [
             _normalize_json(
                 item,
@@ -479,30 +621,45 @@ def model_configuration_descriptor(
     )
     node_records = []
     for node_id, node in sorted(node_items, key=lambda item: int(item[0])):
+        inert_node = _inert_node_observation(node)
         observed_coords = node.coords()
-        _checkpoint_observation_guard(
-            _exact_guard,
-            model,
-            context=f"nonlinear checkpoint node {node_id} coordinate observation",
-        )
-        coords = np.asarray(observed_coords, dtype=np.float64)
-        _checkpoint_observation_guard(
-            _exact_guard,
-            model,
-            context=f"nonlinear checkpoint node {node_id} coordinate array observation",
-        )
-        observed_dofs = getattr(node, "dofs", ())
-        _checkpoint_observation_guard(
-            _exact_guard,
-            model,
-            context=f"nonlinear checkpoint node {node_id} DOF observation",
-        )
-        dofs = np.asarray(observed_dofs, dtype=np.int64)
-        _checkpoint_observation_guard(
-            _exact_guard,
-            model,
-            context=f"nonlinear checkpoint node {node_id} DOF array observation",
-        )
+        if not inert_node:
+            _checkpoint_observation_guard(
+                _exact_guard,
+                model,
+                context=f"nonlinear checkpoint node {node_id} coordinate observation",
+            )
+        lookup_inert = _numpy_lookup_inert()
+        conversion, dtype = np.asarray, np.float64
+        inert = _inert_array_conversion(observed_coords, conversion, dtype,
+                                        _lookup_inert=lookup_inert)
+        coords = conversion(observed_coords, dtype=dtype)
+        if not inert:
+            _checkpoint_observation_guard(
+                _exact_guard,
+                model,
+                context=f"nonlinear checkpoint node {node_id} coordinate array observation",
+            )
+        getter = getattr
+        inert_dofs = inert_node and getter is _INERT_GETATTR
+        observed_dofs = getter(node, "dofs", ())
+        if not inert_dofs:
+            _checkpoint_observation_guard(
+                _exact_guard,
+                model,
+                context=f"nonlinear checkpoint node {node_id} DOF observation",
+            )
+        lookup_inert = _numpy_lookup_inert()
+        conversion, dtype = np.asarray, np.int64
+        inert = _inert_array_conversion(observed_dofs, conversion, dtype,
+                                        _lookup_inert=lookup_inert)
+        dofs = conversion(observed_dofs, dtype=dtype)
+        if not inert:
+            _checkpoint_observation_guard(
+                _exact_guard,
+                model,
+                context=f"nonlinear checkpoint node {node_id} DOF array observation",
+            )
         if coords.shape != (3,) or not np.all(np.isfinite(coords)):
             raise NonlinearCheckpointError(f"node {node_id} has invalid coordinates")
         node_records.append(
@@ -764,9 +921,20 @@ def create_nonlinear_checkpoint(
             raise NonlinearCheckpointError(
                 "checkpoint qualified element API authority changed during activity serialization"
             ) from exc
+    contact_enabled = (
+        kind == "static"
+        and normalized_analysis_contract.get("schema")
+        == "ANYSOLVER_STATIC_RESTART_CONTRACT_V2"
+    )
     payload: Dict[str, Any] = {
-        "schema": NONLINEAR_CHECKPOINT_SCHEMA,
-        "version": NONLINEAR_CHECKPOINT_VERSION,
+        "schema": (
+            NONLINEAR_CONTACT_CHECKPOINT_SCHEMA
+            if contact_enabled else NONLINEAR_CHECKPOINT_SCHEMA
+        ),
+        "version": (
+            NONLINEAR_CONTACT_CHECKPOINT_VERSION
+            if contact_enabled else NONLINEAR_CHECKPOINT_VERSION
+        ),
         "integrity_id": NONLINEAR_CHECKPOINT_INTEGRITY_ID,
         "analysis_kind": kind,
         "model_fingerprint": model_configuration_fingerprint(
@@ -797,6 +965,11 @@ def create_nonlinear_checkpoint(
             _guard_model=model,
         ),
     }
+    if contact_enabled:
+        # Admitted frictionless penalty profiles have no physical contact
+        # history. Future friction or augmentation profiles must serialize
+        # their committed state here, not in material or path-state slots.
+        payload["contact_state"] = {}
     payload[_CHECKPOINT_HASH_KEY] = _sha256(payload)
     made = _normalize_json(payload)
     # Producer and consumer share one fail-closed lifecycle boundary.  A
@@ -850,16 +1023,32 @@ def load_nonlinear_checkpoint(
     if not isinstance(payload, dict):
         raise NonlinearCheckpointError("checkpoint root must be a JSON object")
     keys = set(payload)
-    if keys != _CHECKPOINT_KEYS:
-        missing = sorted(_CHECKPOINT_KEYS - keys)
-        extra = sorted(keys - _CHECKPOINT_KEYS)
+    version = payload.get("version")
+    if type(version) is not int:
+        raise NonlinearCheckpointError("unsupported nonlinear checkpoint version")
+    expected_keys = (
+        _CONTACT_CHECKPOINT_KEYS
+        if version == NONLINEAR_CONTACT_CHECKPOINT_VERSION
+        else _CHECKPOINT_KEYS
+    )
+    if keys != expected_keys:
+        missing = sorted(expected_keys - keys)
+        extra = sorted(keys - expected_keys)
         raise NonlinearCheckpointError(
             f"checkpoint keys are invalid; missing={missing}, extra={extra}"
         )
-    if payload["schema"] != NONLINEAR_CHECKPOINT_SCHEMA:
+    if payload["schema"] not in {
+        NONLINEAR_CHECKPOINT_SCHEMA,
+        NONLINEAR_CONTACT_CHECKPOINT_SCHEMA,
+    }:
         raise NonlinearCheckpointError("unsupported nonlinear checkpoint schema")
-    if payload["version"] != NONLINEAR_CHECKPOINT_VERSION:
+    if (payload["schema"], payload["version"]) not in {
+        (NONLINEAR_CHECKPOINT_SCHEMA, NONLINEAR_CHECKPOINT_VERSION),
+        (NONLINEAR_CONTACT_CHECKPOINT_SCHEMA, NONLINEAR_CONTACT_CHECKPOINT_VERSION),
+    }:
         raise NonlinearCheckpointError("unsupported nonlinear checkpoint version")
+    if version == NONLINEAR_CONTACT_CHECKPOINT_VERSION and type(payload["contact_state"]) is not dict:
+        raise NonlinearCheckpointError("contact state must be a JSON object")
     if payload["integrity_id"] != NONLINEAR_CHECKPOINT_INTEGRITY_ID:
         raise NonlinearCheckpointError("unsupported nonlinear checkpoint integrity policy")
     claimed = payload[_CHECKPOINT_HASH_KEY]
@@ -930,6 +1119,15 @@ def validate_nonlinear_checkpoint(
     )
     if type(normalized_analysis_contract) is not dict:
         raise NonlinearCheckpointError("analysis_contract must be a JSON object")
+    contact_enabled = (
+        str(analysis_kind) == "static"
+        and normalized_analysis_contract.get("schema")
+        == "ANYSOLVER_STATIC_RESTART_CONTRACT_V2"
+    )
+    if contact_enabled != (payload["version"] == NONLINEAR_CONTACT_CHECKPOINT_VERSION):
+        raise NonlinearCheckpointError("checkpoint contact schema is incompatible")
+    if contact_enabled and payload["contact_state"] != {}:
+        raise NonlinearCheckpointError("this contact profile has no committed contact history")
     observed_analysis_fingerprint = analysis_configuration_fingerprint(
         normalized_analysis_contract
     )

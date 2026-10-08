@@ -1,0 +1,42 @@
+{"anysolver_file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py", "input_sha256": "f516048b79a14fb7a4e5d3e031299b8c200e389e770acef4280026306f667c2f", "numpy": "2.4.6", "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]", "scipy": "1.17.1", "threadpools": [{"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.31.188.0"}, {"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.30"}]}
+..F.
+================================== FAILURES ===================================
+_ test_coupled_deforming_target_independent_contact_equilibrium_and_split_restart _
+
+    def test_coupled_deforming_target_independent_contact_equilibrium_and_split_restart():
+        m,d,s=fixture();constraints(m)
+        load=LoadCase('press');load.add_nodal_load(2,forces=(0.,0.,-.1))
+        kwargs=dict(contact=d,contact_settings=s,kinematics='von_karman',num_steps=4,
+                    max_iterations=20,tolerance=1.e-10)
+        full=solve_static_nonlinear(m,load,**kwargs)
+        assert full.status=='completed',full.failure_reason
+        inds=np.array([m.mesh.dof_manager.get_node_dofs(n)[2] for n in (2,5)])
+        x=full.displacements[inds]
+        assert x[1]<-1.e-7 # Genuinely different target translations, not common motion.
+        contact=full.info['general_contact'];assert contact['profile']==PROFILE and contact['gap_tolerance_met']
+        manager=DeformableBeamS3Manager(m,d,s)
+        r,_,_=manager.evaluate(full.displacements)
+        oracle=independent_contact_gradient(x)
+        np.testing.assert_allclose(r[inds],oracle,rtol=1.e-9,atol=1.e-12)
+        # Structural stiffness belongs to the existing solver. This is an independent
+        # contact oracle with an explicitly bounded linearized structural comparison,
+        # not a new independent qualification of the beam or shell element.
+        K,_=assemble_stiffness_matrix(m);K2=K[inds][:,inds].toarray();f=np.array((-.1,0.))
+        reference=root(lambda y:K2@y+independent_contact_gradient(y)-f,x,tol=1.e-11)
+        assert reference.success
+>       assert np.linalg.norm(reference.x-x)/np.linalg.norm(reference.x)<1.e-3
+E       AssertionError: assert (np.float64(0.012266107768704623) / np.float64(0.30791312344898913)) < 0.001
+E        +  where np.float64(0.012266107768704623) = <function norm at 0x000002061D6A6C70>((array([-0.10294629, -0.29019399]) - array([-0.09902595, -0.27857124])))
+E        +    where <function norm at 0x000002061D6A6C70> = <module 'numpy.linalg' from 'C:\\Python\\Python314\\Lib\\site-packages\\numpy\\linalg\\__init__.py'>.norm
+E        +      where <module 'numpy.linalg' from 'C:\\Python\\Python314\\Lib\\site-packages\\numpy\\linalg\\__init__.py'> = np.linalg
+E        +    and   array([-0.10294629, -0.29019399]) =  message: The solution converged.\n success: True\n  status: 1\n     fun: [ 2.220e-16 -7.633e-17]\n       x: [-1.029e-01 -...-01]\n           [-3.149e-01 -9.491e-01]]\n       r: [-6.379e+01  2.120e+01 -1.053e-01]\n     qtf: [-1.579e-12 -9.122e-15].x
+E        +  and   np.float64(0.30791312344898913) = <function norm at 0x000002061D6A6C70>(array([-0.10294629, -0.29019399]))
+E        +    where <function norm at 0x000002061D6A6C70> = <module 'numpy.linalg' from 'C:\\Python\\Python314\\Lib\\site-packages\\numpy\\linalg\\__init__.py'>.norm
+E        +      where <module 'numpy.linalg' from 'C:\\Python\\Python314\\Lib\\site-packages\\numpy\\linalg\\__init__.py'> = np.linalg
+E        +    and   array([-0.10294629, -0.29019399]) =  message: The solution converged.\n success: True\n  status: 1\n     fun: [ 2.220e-16 -7.633e-17]\n       x: [-1.029e-01 -...-01]\n           [-3.149e-01 -9.491e-01]]\n       r: [-6.379e+01  2.120e+01 -1.053e-01]\n     qtf: [-1.579e-12 -9.122e-15].x
+
+tests\test_general_contact_deformable_beam_s3_static.py:114: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_deformable_beam_s3_static.py::test_coupled_deforming_target_independent_contact_equilibrium_and_split_restart
+1 failed, 3 passed in 1.68s
+{"pytest_exit_code": 1, "verified_source_count": 443}

@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 80.59989959999803,
+  "peak_process_tree_memory_mb": 381.878272,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_general_contact_monolithic_restart.py::test_monolithic_active_contact_split_restart_and_mode_identity",
+    "tests/test_general_contact_monolithic_ordinary_displacement.py::test_ordinary_displacement_contact_and_split_restart",
+    "tests/test_general_contact_monolithic_ordinary_force.py::test_ordinary_force_matches_controlled_path_and_split_restart"
+  ],
+  "log": "docs\\d1_review_support\\d1_per_control_scale_focused_tests_20260929.log"
+}

@@ -1,0 +1,297 @@
+{
+  "all_declared_cases_passed": true,
+  "cases": [
+    {
+      "E_Pa": 1.0,
+      "area_m2": 0.0001,
+      "exact_rounded_tip_m_rad": [
+        0.9533062499999997,
+        2.5832722222222224,
+        3.4315058333333335,
+        1.3751425,
+        -0.62504,
+        1.312360416666667
+      ],
+      "exact_rounded_vs_physical": 3.3306690738754696e-16,
+      "free_force_residual_to_applied_force": 5.421010862427522e-16,
+      "free_moment_residual_to_applied_moment": 5.921189464667501e-16,
+      "independent_force_method_tip_m_rad": [
+        0.95330625,
+        2.5832722222222224,
+        3.4315058333333335,
+        1.3751425,
+        -0.62504,
+        1.3123604166666667
+      ],
+      "name": "numerical_1e-4",
+      "passed_declared_diagnostic": true,
+      "scale_max": 173.2058926538009,
+      "scale_min": 0.9258027413689459,
+      "scaled_tip_m_rad": [
+        0.9533062499999998,
+        2.583272222222224,
+        3.4315058333333335,
+        1.3751425000000008,
+        -0.6250400000000002,
+        1.312360416666667
+      ],
+      "scaled_vs_exact_rounded": 6.876382690602253e-16,
+      "scaled_vs_physical_rotation": 6.458810048414076e-16,
+      "scaled_vs_physical_translation": 6.876382690602253e-16,
+      "terminal_wrench_N_Nm": [
+        5e-05,
+        3.3333333333333335e-05,
+        2e-05,
+        0.25,
+        -0.125,
+        0.375
+      ]
+    },
+    {
+      "E_Pa": 1.0,
+      "area_m2": 1e-08,
+      "exact_rounded_tip_m_rad": [
+        0.9531250181250001,
+        2.5833333272222223,
+        3.4312500255833336,
+        1.3750000142500003,
+        -0.6250000040000001,
+        1.3124999860416668
+      ],
+      "exact_rounded_vs_physical": 1.6917684364682522e-16,
+      "free_force_residual_to_applied_force": 6.617444900424221e-16,
+      "free_moment_residual_to_applied_moment": 5.921189464667501e-16,
+      "independent_force_method_tip_m_rad": [
+        0.953125018125,
+        2.5833333272222223,
+        3.4312500255833336,
+        1.37500001425,
+        -0.625000004,
+        1.3124999860416666
+      ],
+      "name": "numerical_1e-8",
+      "passed_declared_diagnostic": true,
+      "scale_max": 17320.50808380776,
+      "scale_min": 0.9258200980366388,
+      "scaled_tip_m_rad": [
+        0.9531250181249998,
+        2.5833333272222223,
+        3.4312500255833323,
+        1.3750000142499996,
+        -0.6250000040000002,
+        1.3124999860416664
+      ],
+      "scaled_vs_exact_rounded": 4.844609511792911e-16,
+      "scaled_vs_physical_rotation": 3.2297396745286075e-16,
+      "scaled_vs_physical_translation": 3.882747160996215e-16,
+      "terminal_wrench_N_Nm": [
+        5e-09,
+        3.3333333333333334e-09,
+        2e-09,
+        0.25,
+        -0.125,
+        0.375
+      ]
+    },
+    {
+      "E_Pa": 1.0,
+      "area_m2": 9.094947017729282e-13,
+      "exact_rounded_tip_m_rad": [
+        0.9531250000016483,
+        2.5833333333327775,
+        3.431250000002327,
+        1.375000000001296,
+        -0.6250000000003638,
+        1.3124999999987308
+      ],
+      "exact_rounded_vs_physical": 1.6917684184780653e-16,
+      "free_force_residual_to_applied_force": 7.771561172376096e-16,
+      "free_moment_residual_to_applied_moment": 5.921189464667501e-16,
+      "independent_force_method_tip_m_rad": [
+        0.9531250000016485,
+        2.5833333333327775,
+        3.431250000002327,
+        1.375000000001296,
+        -0.6250000000003638,
+        1.3124999999987306
+      ],
+      "name": "numerical_2^-40",
+      "passed_declared_diagnostic": true,
+      "scale_max": 1816186.9075974207,
+      "scale_min": 0.9258200997723935,
+      "scaled_tip_m_rad": [
+        0.9531250000016473,
+        2.583333333332778,
+        3.431250000002327,
+        1.375000000001296,
+        -0.6250000000003639,
+        1.3124999999987315
+      ],
+      "scaled_vs_exact_rounded": 9.992007221626409e-16,
+      "scaled_vs_physical_rotation": 6.767073673912261e-16,
+      "scaled_vs_physical_translation": 1.1102230246251565e-15,
+      "terminal_wrench_N_Nm": [
+        4.547473508864641e-13,
+        3.0316490059097606e-13,
+        1.8189894035458566e-13,
+        0.25,
+        -0.125,
+        0.375
+      ]
+    },
+    {
+      "E_Pa": 1.0,
+      "area_m2": 8.271806125530277e-25,
+      "exact_rounded_tip_m_rad": [
+        0.9531249999999999,
+        2.5833333333333335,
+        3.4312500000000004,
+        1.375,
+        -0.625,
+        1.3125000000000002
+      ],
+      "exact_rounded_vs_physical": 1.7190550058712103e-16,
+      "free_force_residual_to_applied_force": 3.3306690738754696e-16,
+      "free_moment_residual_to_applied_moment": 2.9605947323337506e-16,
+      "independent_force_method_tip_m_rad": [
+        0.953125,
+        2.583333333333333,
+        3.43125,
+        1.375,
+        -0.625,
+        1.3125
+      ],
+      "name": "numerical_2^-80",
+      "passed_declared_diagnostic": true,
+      "scale_max": 1904410002820.7917,
+      "scale_min": 0.9258200997725515,
+      "scaled_tip_m_rad": [
+        0.9531250000000001,
+        2.5833333333333335,
+        3.4312500000000017,
+        1.3750000000000002,
+        -0.6250000000000001,
+        1.3125
+      ],
+      "scaled_vs_exact_rounded": 3.882747189945902e-16,
+      "scaled_vs_physical_rotation": 1.6148698540002277e-16,
+      "scaled_vs_physical_translation": 5.176996253261204e-16,
+      "terminal_wrench_N_Nm": [
+        4.1359030627651384e-25,
+        2.757268708510092e-25,
+        1.6543612251060554e-25,
+        0.25,
+        -0.125,
+        0.375
+      ]
+    },
+    {
+      "E_Pa": 210000000000.0,
+      "area_m2": 1e-08,
+      "exact_rounded_tip_m_rad": [
+        0.9531250181250001,
+        2.5833333272222214,
+        3.431250025583333,
+        1.37500001425,
+        -0.625000004,
+        1.3124999860416666
+      ],
+      "exact_rounded_vs_physical": 3.4381100198755835e-16,
+      "free_force_residual_to_applied_force": 8.661854302599317e-16,
+      "free_moment_residual_to_applied_moment": 7.750496031746032e-16,
+      "independent_force_method_tip_m_rad": [
+        0.953125018125,
+        2.5833333272222223,
+        3.431250025583333,
+        1.37500001425,
+        -0.625000004,
+        1.3124999860416666
+      ],
+      "name": "SI_1e-8",
+      "passed_declared_diagnostic": true,
+      "scale_max": 0.037796447318639806,
+      "scale_min": 2.0203050853163495e-06,
+      "scaled_tip_m_rad": [
+        0.9531250181250001,
+        2.583333327222221,
+        3.4312500255833323,
+        1.3750000142499998,
+        -0.625000004,
+        1.3124999860416666
+      ],
+      "scaled_vs_exact_rounded": 2.5884981073308103e-16,
+      "scaled_vs_physical_rotation": 1.6148698372643038e-16,
+      "scaled_vs_physical_translation": 5.157165029813375e-16,
+      "terminal_wrench_N_Nm": [
+        1050.0,
+        700.0,
+        420.0,
+        52500000000.0,
+        -26250000000.0,
+        78750000000.0
+      ]
+    },
+    {
+      "E_Pa": 210000000000.0,
+      "area_m2": 8.271806125530277e-25,
+      "exact_rounded_tip_m_rad": [
+        0.953125,
+        2.5833333333333335,
+        3.43125,
+        1.375,
+        -0.625,
+        1.3125
+      ],
+      "exact_rounded_vs_physical": 0.0,
+      "free_force_residual_to_applied_force": 5.812872023809523e-16,
+      "free_moment_residual_to_applied_moment": 3.875248015873016e-16,
+      "independent_force_method_tip_m_rad": [
+        0.953125,
+        2.5833333333333335,
+        3.43125,
+        1.375,
+        -0.625,
+        1.3125
+      ],
+      "name": "SI_2^-80",
+      "passed_declared_diagnostic": true,
+      "scale_max": 4155763.329598734,
+      "scale_min": 2.0203050891044215e-06,
+      "scaled_tip_m_rad": [
+        0.9531250000000006,
+        2.5833333333333326,
+        3.4312500000000004,
+        1.3749999999999998,
+        -0.625,
+        1.3124999999999993
+      ],
+      "scaled_vs_exact_rounded": 5.551115123125783e-16,
+      "scaled_vs_physical_rotation": 5.075305255429287e-16,
+      "scaled_vs_physical_translation": 5.551115123125783e-16,
+      "terminal_wrench_N_Nm": [
+        8.68539643180679e-14,
+        5.790264287871194e-14,
+        3.474158572722716e-14,
+        52500000000.0,
+        -26250000000.0,
+        78750000000.0
+      ]
+    }
+  ],
+  "classification": "F09_LEVEL_A_PHYSICAL_RANGE_DEV_NOT_ADMISSION",
+  "elapsed_s_not_benchmark": 0.19747100002132356,
+  "limits": [
+    "diagnostic anisotropic sections are not geometric realizability bounds",
+    "one rooted elbow and finite area samples do not establish product admission",
+    "no generalized section, shell attachment, spectra, or installed path"
+  ],
+  "negative_subnormal_coupling_rejection": "diagonal transform erased a nonzero coupling",
+  "negative_zero_diagonal_rejection": "matrix, load, or positive diagonal is not finite",
+  "numpy": "2.4.6",
+  "operator_sha256": "4951a9cada5a779489fe8d031d09e71da00199d76cf31ea2177c389c8f1ed237",
+  "python": "3.14.2",
+  "scipy": "1.17.1",
+  "separate_residual_tolerance": 1e-09,
+  "source_sha256": "36caa2e9ec02940842d3cd7ed7bc7c9a711c6b4a4c84b8e8d031fd5235d2a21d",
+  "tip_tolerance": 1e-09
+}

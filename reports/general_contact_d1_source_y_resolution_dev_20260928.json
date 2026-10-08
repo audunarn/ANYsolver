@@ -1,0 +1,122 @@
+{
+  "method": "source_q4_y_resolution_against_independent_scalar_obstacle_dev",
+  "continuum_grid": [
+    256,
+    320
+  ],
+  "continuum_contact_reaction_n": 0.10380440239149635,
+  "cases": [
+    {
+      "nx": 16,
+      "ny": 1,
+      "pressure_modes": 34,
+      "active_modes": 12,
+      "integrated_reaction_n": 0.10387155974559999,
+      "minimum_weak_gap_m": -8.365757503746176e-21,
+      "minimum_represented_gap_m": -1.940178007687446e-08,
+      "equilibrium_residual_n": 6.928446527319869e-16,
+      "force_difference_n": 6.715735410353987e-05,
+      "x_force_l1_relative": 0.02739940076179145,
+      "x_force_l2_relative": 0.036559025044111654,
+      "cumulative_force_max_relative": 0.011435861160963057
+    },
+    {
+      "nx": 16,
+      "ny": 2,
+      "pressure_modes": 51,
+      "active_modes": 18,
+      "integrated_reaction_n": 0.10387155974560033,
+      "minimum_weak_gap_m": 0.0,
+      "minimum_represented_gap_m": -1.940178007685413e-08,
+      "equilibrium_residual_n": 7.027199402200279e-16,
+      "force_difference_n": 6.715735410388161e-05,
+      "x_force_l1_relative": 0.02739940076182372,
+      "x_force_l2_relative": 0.036559025044137036,
+      "cumulative_force_max_relative": 0.011435861160966683
+    },
+    {
+      "nx": 16,
+      "ny": 4,
+      "pressure_modes": 85,
+      "active_modes": 30,
+      "integrated_reaction_n": 0.10387155974560082,
+      "minimum_weak_gap_m": -1.4731007778335654e-20,
+      "minimum_represented_gap_m": -1.9401780076867684e-08,
+      "equilibrium_residual_n": 4.701952264077372e-16,
+      "force_difference_n": 6.715735410437428e-05,
+      "x_force_l1_relative": 0.027399400761820913,
+      "x_force_l2_relative": 0.03655902504413457,
+      "cumulative_force_max_relative": 0.011435861160966617
+    },
+    {
+      "nx": 16,
+      "ny": 8,
+      "pressure_modes": 153,
+      "active_modes": 48,
+      "integrated_reaction_n": 0.1038163772308234,
+      "minimum_weak_gap_m": -1.3552527156068802e-20,
+      "minimum_represented_gap_m": -6.196782625860717e-08,
+      "equilibrium_residual_n": 5.607214959916322e-16,
+      "force_difference_n": 1.1974839326963499e-05,
+      "x_force_l1_relative": 0.022878308777772215,
+      "x_force_l2_relative": 0.03155504447594901,
+      "cumulative_force_max_relative": 0.009783327976208393
+    },
+    {
+      "nx": 32,
+      "ny": 1,
+      "pressure_modes": 66,
+      "active_modes": 24,
+      "integrated_reaction_n": 0.10385726665700332,
+      "minimum_weak_gap_m": 0.0,
+      "minimum_represented_gap_m": -1.79081153171056e-08,
+      "equilibrium_residual_n": 2.2394372638806163e-15,
+      "force_difference_n": 5.286426550687941e-05,
+      "x_force_l1_relative": 0.03460487124763733,
+      "x_force_l2_relative": 0.06065214297932658,
+      "cumulative_force_max_relative": 0.011923864906501014
+    },
+    {
+      "nx": 32,
+      "ny": 2,
+      "pressure_modes": 99,
+      "active_modes": 36,
+      "integrated_reaction_n": 0.10385726665700276,
+      "minimum_weak_gap_m": -6.914554671463676e-21,
+      "minimum_represented_gap_m": -1.790811531709205e-08,
+      "equilibrium_residual_n": 1.8006658772319286e-15,
+      "force_difference_n": 5.286426550631367e-05,
+      "x_force_l1_relative": 0.03460487124757781,
+      "x_force_l2_relative": 0.060652142979244886,
+      "cumulative_force_max_relative": 0.011923864906496672
+    },
+    {
+      "nx": 32,
+      "ny": 4,
+      "pressure_modes": 165,
+      "active_modes": 60,
+      "integrated_reaction_n": 0.10385726665700946,
+      "minimum_weak_gap_m": -2.8234431575143335e-20,
+      "minimum_represented_gap_m": -1.79081153171056e-08,
+      "equilibrium_residual_n": 1.3700836548012896e-15,
+      "force_difference_n": 5.2864265513028136e-05,
+      "x_force_l1_relative": 0.03460487124757232,
+      "x_force_l2_relative": 0.06065214297921426,
+      "cumulative_force_max_relative": 0.011923864906455651
+    },
+    {
+      "nx": 32,
+      "ny": 8,
+      "pressure_modes": 297,
+      "active_modes": 96,
+      "integrated_reaction_n": 0.10381559861129246,
+      "minimum_weak_gap_m": -1.3552527156068808e-20,
+      "minimum_represented_gap_m": -6.194421807589022e-08,
+      "equilibrium_residual_n": 1.4978783163243067e-15,
+      "force_difference_n": 1.1196219796016883e-05,
+      "x_force_l1_relative": 0.03010151975293584,
+      "x_force_l2_relative": 0.05341983904401506,
+      "cumulative_force_max_relative": 0.008656705488191361
+    }
+  ]
+}

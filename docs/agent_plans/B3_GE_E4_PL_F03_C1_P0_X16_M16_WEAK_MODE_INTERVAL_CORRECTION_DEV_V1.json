@@ -1,0 +1,77 @@
+{
+  "classification": "metadata correction for bounded G0 F03 development evidence; no new numerical solve",
+  "raw_result": "B3_GE_E4_PL_F03_C1_P0_X16_M16_WEAK_MODE_DEV_V1.json",
+  "raw_result_sha256": "359915B5C105A9ECA168A1F5AB256871A5DF5C2095CD0C67BF0C99287709D48A",
+  "reference_line_source_sha256": "14ecadacdcc2243ae3b9c055cdaa19568e3b7e20dd38dd2c58722bebec0d4746",
+  "native_fixture_source_sha256": "94d9e1a3532c3b2c061153e73942ccd73283eae0ef895b5ca4ef4014e5caa3fb",
+  "incorrect_field": "cases.piecewise_constant_m16.weak_mode.line_basis_intervals_m",
+  "cause": "The weighted P0 patches retain the full .9–1.0 parent x_interval; their basis weights, not x_interval, restrict each patch to one physical cell.",
+  "corrected_p0_basis_support_intervals_m": [
+    [
+      0.9,
+      0.90625
+    ],
+    [
+      0.90625,
+      0.9125
+    ],
+    [
+      0.9125,
+      0.9187500000000001
+    ],
+    [
+      0.9187500000000001,
+      0.925
+    ],
+    [
+      0.925,
+      0.93125
+    ],
+    [
+      0.93125,
+      0.9375
+    ],
+    [
+      0.9375,
+      0.94375
+    ],
+    [
+      0.94375,
+      0.9500000000000001
+    ],
+    [
+      0.9500000000000001,
+      0.95625
+    ],
+    [
+      0.95625,
+      0.9625
+    ],
+    [
+      0.9625,
+      0.96875
+    ],
+    [
+      0.96875,
+      0.9750000000000001
+    ],
+    [
+      0.9750000000000001,
+      0.9812500000000001
+    ],
+    [
+      0.9812500000000001,
+      0.9875
+    ],
+    [
+      0.9875,
+      0.99375
+    ],
+    [
+      0.99375,
+      1
+    ]
+  ],
+  "verification": "The unchanged C1 x16 P0 line-space constructor produced 16 patches and 96 rows; every patch quadrature x lay strictly within its corresponding interval, and each basis integral was 0.00625 m within floating-point tolerance.",
+  "numerical_mode_and_operator_values_unchanged": true
+}

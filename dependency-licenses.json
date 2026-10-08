@@ -43,6 +43,13 @@
       "status": "not-bundled"
     },
     {
+      "distribution": "ANYgeometry",
+      "licence": "MPL-2.0",
+      "requirement": "ANYgeometry>=0.4.3,<0.5",
+      "scope": "optional-runtime",
+      "status": "not-bundled"
+    },
+    {
       "distribution": "numba",
       "licence": "BSD",
       "requirement": "numba>=0.59",
@@ -74,6 +81,13 @@
       "distribution": "pytest",
       "licence": "MIT",
       "requirement": "pytest>=8",
+      "scope": "development",
+      "status": "not-bundled"
+    },
+    {
+      "distribution": "psutil",
+      "licence": "BSD-3-Clause",
+      "requirement": "psutil>=5.9",
       "scope": "development",
       "status": "not-bundled"
     },

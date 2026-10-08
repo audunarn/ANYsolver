@@ -1,0 +1,35 @@
+{
+  "scope": "single profiled retained partial residual, not balanced whole-route timing",
+  "measurements": {
+    "partition": {
+      "seconds": 6.263381999975536,
+      "max_force_difference": 0.0,
+      "storage_difference": 0.0,
+      "dissipation_difference": 0.0,
+      "raw": "C:\\ANYworkspaceWork\\contact-friction-replay-partition-reuse-20261002\\anysolver-portable-ci-tf331vre\\P01\\basetemp\\test_saved_partial_replay_resi0\\partial_residual_cost.json"
+    },
+    "union_rejected": {
+      "seconds": 5.046285699994769,
+      "max_force_difference": 0.0,
+      "storage_difference": 0.0,
+      "dissipation_difference": 0.0,
+      "raw": "C:\\ANYworkspaceWork\\contact-friction-partial-moments-20261002\\anysolver-portable-ci-v6ax1uwk\\P01\\basetemp\\test_saved_partial_replay_resi0\\partial_residual_cost.json"
+    },
+    "per_face": {
+      "seconds": 5.439251600007992,
+      "max_force_difference": 0.0,
+      "storage_difference": 0.0,
+      "dissipation_difference": 1.0842021724855044e-19,
+      "raw": "C:\\ANYworkspaceWork\\contact-friction-partial-face-moments-20261002\\anysolver-portable-ci-h1jvyhzg\\P01\\basetemp\\test_saved_partial_replay_resi0\\partial_residual_cost.json"
+    },
+    "guarded": {
+      "seconds": 5.508962299965788,
+      "max_force_difference": 0.0,
+      "storage_difference": 0.0,
+      "dissipation_difference": 0.0,
+      "raw": "C:\\ANYworkspaceWork\\contact-friction-partial-guarded-moments-20261002\\anysolver-portable-ci-t261lc1s\\P01\\basetemp\\test_saved_partial_replay_resi0\\partial_residual_cost.json"
+    }
+  },
+  "disposition": "Convex-union variant rejected by scrutiny despite local parity. Only guarded per-face variant enters integrated candidate.",
+  "focused_checks": "Guarded run4passed,1fixture-failed10.75s; corrected fixture1passed4.02s; numerical implementation unchanged in correction."
+}

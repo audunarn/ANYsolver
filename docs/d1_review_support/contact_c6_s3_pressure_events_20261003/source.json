@@ -1,0 +1,232 @@
+{
+  "parent": "e7b0a1d5c7fcbe417769606e25cb25dde5d2ddb7",
+  "numerical_environment": {
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "numba": "0.65.1",
+    "llvmlite": "0.47.0",
+    "pytest": "9.0.3",
+    "psutil": "7.2.2"
+  },
+  "source_sha256": {
+    "src/anysolver/general_contact/transient.py": "abbc806f258b5a88d8f4a6f46da174d24bacbb9c2c62db88877645a7fe299aa6",
+    "src/anysolver/general_contact/normal_s3_skin_path.py": "74dcfc854d42a79e4f6baef2331e1b4b4a4d1f3b2a2413c2165e61c33c130336",
+    "src/anysolver/general_contact/s3_pressure_hermite_bounds.py": "37dfb1803e0094c68df60b2d84c95a775f8b3b4a23e0892a306589de6cf509cc",
+    "examples/general_contact_deforming_s3_impact_dev.py": "62a32e2c8f02696745859b840b3af31b87933f534c20c6305f9e954b1cf4b814",
+    "tests/test_general_contact_transient_deforming_s3.py": "1b9e44a7f7fed97d7e9605f4f54ed3c7474b2a01ac379bdffd6e17a8488b615e",
+    "tests/test_s3_pressure_hermite_bounds.py": "41685156f3f3eca6384bdf8ca952ec9dc3db78f1bbf62c799428fb1cf6d3a20f"
+  },
+  "wheel_sha256": "58aeb1dd54004a7506952af0600299bc76c9f51942b80dd6d03e0d6027e110b5",
+  "installed_import_hashes": 233,
+  "example_parity": true,
+  "runtimes": [
+    {
+      "label": "contact_s3_pressure_bounds_a_20261003",
+      "outcomes": {
+        "passed": 13
+      },
+      "exit": 0,
+      "imported_modules": 228,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "elapsed_s": 7.4994407999911346,
+      "peak_sampled_bytes": 187281408
+    },
+    {
+      "label": "contact_s3_pressure_driver_b_20261003",
+      "outcomes": {
+        "passed": 3
+      },
+      "exit": 0,
+      "imported_modules": 233,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "elapsed_s": 12.69944990001386,
+      "peak_sampled_bytes": 201338880
+    },
+    {
+      "label": "contact_s3_pressure_state_c_20261003",
+      "outcomes": {
+        "failed": 2,
+        "passed": 3
+      },
+      "exit": 1,
+      "imported_modules": 233,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "elapsed_s": 51.51356480002869,
+      "peak_sampled_bytes": 190988288
+    },
+    {
+      "label": "contact_s3_pressure_event_d_20261003",
+      "outcomes": {
+        "passed": 2
+      },
+      "exit": 0,
+      "imported_modules": 233,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "elapsed_s": 20.3197239000001,
+      "peak_sampled_bytes": 187744256
+    },
+    {
+      "label": "contact_s3_pressure_final_e_20261003",
+      "outcomes": {},
+      "exit": 4,
+      "imported_modules": 222,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "elapsed_s": 7.703999100020155,
+      "peak_sampled_bytes": 186671104
+    },
+    {
+      "label": "contact_s3_pressure_final_f_20261003",
+      "outcomes": {
+        "passed": 5
+      },
+      "exit": 0,
+      "imported_modules": 233,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "elapsed_s": 44.39306410000427,
+      "peak_sampled_bytes": 189534208
+    },
+    {
+      "label": "contact_s3_pressure_budget_g_20261003",
+      "outcomes": {
+        "passed": 1
+      },
+      "exit": 0,
+      "imported_modules": 233,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "elapsed_s": 8.612760399992112,
+      "peak_sampled_bytes": 189616128
+    }
+  ],
+  "package_resources": {
+    "source": {
+      "command": [
+        "C:\\Python\\Python314\\python.exe",
+        "-I",
+        "C:\\ANYworkspaceWork\\contact_s3_pressure_package_20261003\\example_check.py",
+        "C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001/src",
+        "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\examples\\general_contact_deforming_s3_impact_dev.py",
+        "C:\\ANYworkspaceWork\\contact_s3_pressure_package_20261003\\source.json"
+      ],
+      "elapsed_s": 8.369516300037503,
+      "peak_sampled_bytes": 162119680,
+      "exit": 0,
+      "limit_s": 180,
+      "limit_mib": 953
+    },
+    "installed": {
+      "command": [
+        "C:\\Python\\Python314\\python.exe",
+        "-I",
+        "C:\\ANYworkspaceWork\\contact_s3_pressure_package_20261003\\example_check.py",
+        "C:/ANYworkspaceWork/contact_s3_pressure_package_20261003/installed",
+        "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\examples\\general_contact_deforming_s3_impact_dev.py",
+        "C:\\ANYworkspaceWork\\contact_s3_pressure_package_20261003\\installed.json"
+      ],
+      "elapsed_s": 8.262583600007929,
+      "peak_sampled_bytes": 162283520,
+      "exit": 0,
+      "limit_s": 180,
+      "limit_mib": 953
+    }
+  },
+  "temporal": {
+    "reference": {
+      "method": "independent DOP853",
+      "rtol": 2e-11,
+      "max_step_s": 1e-05,
+      "nfev": 5060,
+      "displacement_scale_m": 0.0002,
+      "velocity_scale_m_s": 0.1
+    },
+    "runs": [
+      {
+        "dt_s": 2.5e-05,
+        "states": 123,
+        "cutbacks": 0,
+        "displacement_error_on_gap_scale": 0.0004874048758430542,
+        "velocity_error_on_initial_speed_scale": 0.004702151238518346,
+        "reachable_energy_relative_defect": 7.218306175005296e-09,
+        "minimum_swept_gap_m": -1.2219819919316769e-05
+      },
+      {
+        "dt_s": 1.25e-05,
+        "states": 245,
+        "cutbacks": 1,
+        "displacement_error_on_gap_scale": 0.0001196385609435462,
+        "velocity_error_on_initial_speed_scale": 0.0011829041240405368,
+        "reachable_energy_relative_defect": 7.590145845171037e-09,
+        "minimum_swept_gap_m": -1.2213172016417767e-05
+      }
+    ]
+  },
+  "event_refinement": [
+    {
+      "event_gap_tolerance_m": 1e-10,
+      "event_time_tolerance_s": 1e-10,
+      "reachable_energy_relative_defect": 7.218306175005296e-09,
+      "states": 123,
+      "cutbacks": 0,
+      "endpoint_queries": 60,
+      "stage_evaluations": 297,
+      "localized_events_s": [
+        0.0020000000000000018,
+        0.002374412199630737,
+        0.0023752141953277584,
+        0.0023760228640747065
+      ],
+      "minimum_swept_gap_m": -1.2219819919316769e-05
+    },
+    {
+      "event_gap_tolerance_m": 1e-12,
+      "event_time_tolerance_s": 1e-12,
+      "reachable_energy_relative_defect": 1.4082668364778783e-10,
+      "states": 123,
+      "cutbacks": 0,
+      "endpoint_queries": 81,
+      "stage_evaluations": 354,
+      "localized_events_s": [
+        0.0020000000000000018,
+        0.0023744122130364177,
+        0.0023752142273524403,
+        0.002376022880459428
+      ],
+      "minimum_swept_gap_m": -1.2219819919316769e-05
+    }
+  ],
+  "raw_records": 51
+}

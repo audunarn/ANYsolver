@@ -1,0 +1,10 @@
+[development] exact targets=2; record=C:\ANYworkspaceWork\contact-native-certified-contributor-20261002\anysolver-portable-ci-0l86lmw5\P01
+[portable-ci] starting P01/01 with 2 modules
+..                                                                       [100%]
+============================ slowest 10 durations =============================
+0.02s call     tests/test_general_contact_native_surface_path.py::test_certified_contribution_release_and_recontact_reset_traction
+0.02s call     tests/test_general_contact_native_surface_path.py::test_certified_contribution_uses_committed_history_and_rejects_hidden_opening
+
+(4 durations < 0.005s hidden.  Use -vv to show these durations.)
+2 passed in 3.75s
+[portable-ci] P01 exit=0

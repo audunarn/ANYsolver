@@ -1,0 +1,151 @@
+{
+  "method": "development matching full-width scalar structural/contact discriminator; source-only linearized Q4 versus coupled Q4/S3, not acceptance",
+  "cases": [
+    {
+      "q4": 4,
+      "source_only": {
+        "nx": 4,
+        "ny": 1,
+        "pressure_nx": 4,
+        "obstacle_y_right": 1.0,
+        "pressure_knots": null,
+        "comparison_x_bins": 4,
+        "pressure_modes": 10,
+        "unsupported_pressure_modes": 0,
+        "active_modes": 4,
+        "active_scaled_compliance_minimum_eigenvalue": 0.01886410500634831,
+        "active_scaled_compliance_condition": 194.69671418086548,
+        "integrated_reaction_n": 0.10359422237151499,
+        "minimum_weak_gap_m": 0.0,
+        "minimum_represented_gap_m": -6.0611353711792e-07,
+        "equilibrium_residual_n": 1.2982640824934818e-16,
+        "pressure_qp": {
+          "preliminary_optimizer_success": true,
+          "preliminary_optimizer_message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "active_set_iterations": 1,
+          "minimum_pressure_pa": 0.0,
+          "minimum_gap_m": 0.0,
+          "active_stationarity_gap_m": 6.776263578034403e-21,
+          "inactive_minimum_gap_m": 3.8483624454148415e-06,
+          "maximum_complementarity_pa_m": 2.8256814261914475e-21,
+          "certificate_passed": true
+        },
+        "pressure_grid_pa": [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.20587840107490665,
+            0.4169969768223059
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.20587840107490904,
+            0.4169969768223026
+          ]
+        ],
+        "line_pressure_n_per_m": [
+          0.0,
+          0.0,
+          0.0,
+          0.20587840107490785,
+          0.41699697682230424
+        ],
+        "x_force_n": [
+          0.0,
+          0.0,
+          0.02573480013436348,
+          0.0778594222371515
+        ]
+      },
+      "source_only_seconds": 0.026078199967741966,
+      "coupled_reaction_n": 0.10359422237403791,
+      "coupled_minimum_gap_m": -6.061136834952546e-07,
+      "difference_coupled_minus_source_only_n": 2.522926312309437e-12,
+      "analytical_exact_reaction_n": 0.103883865
+    },
+    {
+      "q4": 8,
+      "source_only": {
+        "nx": 8,
+        "ny": 1,
+        "pressure_nx": 8,
+        "obstacle_y_right": 1.0,
+        "pressure_knots": null,
+        "comparison_x_bins": 8,
+        "pressure_modes": 18,
+        "unsupported_pressure_modes": 0,
+        "active_modes": 6,
+        "active_scaled_compliance_minimum_eigenvalue": 0.004873574908935806,
+        "active_scaled_compliance_condition": 1112.4502263512738,
+        "integrated_reaction_n": 0.10347981515516896,
+        "minimum_weak_gap_m": -6.776263578034403e-21,
+        "minimum_represented_gap_m": -8.037208948408778e-08,
+        "equilibrium_residual_n": 2.482852328763565e-16,
+        "pressure_qp": {
+          "preliminary_optimizer_success": true,
+          "preliminary_optimizer_message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "active_set_iterations": 1,
+          "minimum_pressure_pa": 0.0,
+          "minimum_gap_m": -6.776263578034403e-21,
+          "active_stationarity_gap_m": 6.776263578034403e-21,
+          "inactive_minimum_gap_m": 2.9764210165881763e-07,
+          "maximum_complementarity_pa_m": 2.7393404265969705e-21,
+          "certificate_passed": true
+        },
+        "pressure_grid_pa": [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.4042552942416054,
+            0.26287533802369856,
+            0.32141577795210363
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.40425529424159945,
+            0.262875338023706,
+            0.32141577795208415
+          ]
+        ],
+        "line_pressure_n_per_m": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.40425529424160245,
+          0.2628753380237023,
+          0.32141577795209386
+        ],
+        "x_force_n": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.025265955890100153,
+          0.04169566451658155,
+          0.03651819474848726
+        ]
+      },
+      "source_only_seconds": 0.0262537999660708,
+      "coupled_reaction_n": 0.10347981515520417,
+      "coupled_minimum_gap_m": -8.037223729289306e-08,
+      "difference_coupled_minus_source_only_n": 3.5207947668425277e-14,
+      "analytical_exact_reaction_n": 0.103883865
+    }
+  ]
+}

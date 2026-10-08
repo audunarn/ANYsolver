@@ -1,0 +1,14 @@
+{
+  "candidate": "free_target_left_clamped_press_dev",
+  "columns": 8,
+  "target_support": "left_edge_clamped",
+  "maximum_schur_relinearizations": 0,
+  "steps_per_segment": 3,
+  "equilibrium_tolerance": 1e-08,
+  "four_phase": false,
+  "nonlinear_backtrack": true,
+  "integration_side": "s3",
+  "status": "exception",
+  "failure_reason": "ValueError: unsupported contact path: Jet2 Q4/S3 development derivative requires a refined augmented general patch and four derivative tolerances",
+  "elapsed_seconds": 0.00272910000057891
+}

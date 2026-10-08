@@ -1,0 +1,15 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 601.3386552999727,
+  "peak_process_tree_memory_mb": 543.940608,
+  "time_limit_seconds": 900.0,
+  "memory_limit_bytes": 4294967296,
+  "command": [
+    "C:/Python/Python314/python.exe",
+    "docs/d1_review_support/native_finite_spin_temporal_refinement_v1_20261001.entry.py",
+    "docs/d1_review_support/native_finite_spin_temporal_refinement_v1_20261001.n216.inputs.v2.json",
+    "d0c6af89147394f10eda331393322c790783c7e4835611e2637be1bdf6991612"
+  ],
+  "log": "docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.n216.log"
+}

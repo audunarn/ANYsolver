@@ -1,0 +1,411 @@
+{
+  "parent": "d0bb6a38ea6b7f5c77c8bbd62c83807948b61b65",
+  "status": "implemented/source-tested/installed-tested development; no engineering acceptance",
+  "source_sha256": {
+    "src/anysolver/general_contact/s3_overlap_hermite_gap.py": "1e95b8a930fb8a229e2cda87fb094a61228da5e2fde1975535feeffa755d0165",
+    "src/anysolver/general_contact/s3_pressure_hermite_bounds.py": "9913910a2242d62e14a973239e6e3518ebd94515aca859f7c65dc5d71899b2a2",
+    "src/anysolver/general_contact/normal_s3_skin_path.py": "ad89a0f3a60807f4ecbd9e64593c7399825bdd0564ab55c1ae013f4005d8799f",
+    "src/anysolver/general_contact/transient.py": "e3a95baecfed90483237d5e984cb63990c2fef992cd45900cc3e1a311eef1c17",
+    "examples/general_contact_deforming_s3_impact_dev.py": "3935fecf2c87d8f7b1dd809bcb492338a10c01f881280e01b9ad679e58398f2f",
+    "examples/general_contact_nonuniform_s3_impact_dev.py": "6b80ecb9e8fc126a7404dd3ca0b2212b9e40365e312a9bc59c3a3fa2797ffbfb",
+    "tests/test_s3_overlap_hermite_gap.py": "9076c055cd3fc96cf00ee9e9e6dda1fe5a2e483b2c0af87c5b4b09a7aa1e18a6",
+    "tests/test_general_contact_transient_clipped_s3.py": "8fb75f85575c4fc6e4ff94f242e3d0d0bd3cf9e66c1d28234e76c7bf87f010ec",
+    "tests/test_general_contact_transient_deforming_s3.py": "446608e41417f81b7194a81c5145592e433dbe6fc671640e4999e62f52b7e7b1"
+  },
+  "numerical_environment": {
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "numba": "0.65.1",
+    "llvmlite": "0.47.0",
+    "pytest": "9.0.3",
+    "psutil": "7.2.2"
+  },
+  "runtimes": [
+    {
+      "label": "a",
+      "outcomes": {
+        "passed": 28,
+        "failed": 3
+      },
+      "exit": 1,
+      "imported_modules": 229,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "elapsed_s": 8.281486299994867,
+      "peak_sampled_bytes": 189534208,
+      "runtime_path": "C:\\ANYworkspaceWork\\contact_s3_overlap_local_a_20261003\\anysolver-portable-ci-w0wk9e8m\\P01\\runtime.json",
+      "limit_s": 180,
+      "limit_mib": 953
+    },
+    {
+      "label": "b",
+      "outcomes": {
+        "passed": 3
+      },
+      "exit": 0,
+      "imported_modules": 192,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "elapsed_s": 4.880631100037135,
+      "peak_sampled_bytes": 180125696,
+      "runtime_path": "C:\\ANYworkspaceWork\\contact_s3_overlap_local_b_20261003\\anysolver-portable-ci-hkn6nh8v\\P01\\runtime.json",
+      "limit_s": 180,
+      "limit_mib": 953
+    },
+    {
+      "label": "c",
+      "outcomes": {},
+      "exit": 4,
+      "imported_modules": 224,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "elapsed_s": 7.539094999956433,
+      "peak_sampled_bytes": 188100608,
+      "runtime_path": "C:\\ANYworkspaceWork\\contact_s3_overlap_driver_c_20261003\\anysolver-portable-ci-3flku493\\P01\\runtime.json",
+      "limit_s": 180,
+      "limit_mib": 953
+    },
+    {
+      "label": "d",
+      "outcomes": {
+        "passed": 4
+      },
+      "exit": 0,
+      "imported_modules": 234,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "elapsed_s": 14.953147199994419,
+      "peak_sampled_bytes": 190423040,
+      "runtime_path": "C:\\ANYworkspaceWork\\contact_s3_overlap_driver_d_20261003\\anysolver-portable-ci-vudo3x2x\\P01\\runtime.json",
+      "limit_s": 180,
+      "limit_mib": 953
+    },
+    {
+      "label": "e",
+      "outcomes": {
+        "passed": 1,
+        "failed": 2
+      },
+      "exit": 1,
+      "imported_modules": 234,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "elapsed_s": 8.84309509996092,
+      "peak_sampled_bytes": 198086656,
+      "runtime_path": "C:\\ANYworkspaceWork\\contact_s3_overlap_coupled_e_20261003\\anysolver-portable-ci-nl2jih8h\\P01\\runtime.json",
+      "limit_s": 180,
+      "limit_mib": 953
+    },
+    {
+      "label": "f",
+      "outcomes": {
+        "passed": 2
+      },
+      "exit": 0,
+      "imported_modules": 234,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "elapsed_s": 5.345307899988256,
+      "peak_sampled_bytes": 185925632,
+      "runtime_path": "C:\\ANYworkspaceWork\\contact_s3_overlap_resolution_f_20261003\\anysolver-portable-ci-f4we5m0u\\P01\\runtime.json",
+      "limit_s": 180,
+      "limit_mib": 953
+    },
+    {
+      "label": "g",
+      "outcomes": {
+        "failed": 1
+      },
+      "exit": 1,
+      "imported_modules": 234,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "elapsed_s": 43.158985100046266,
+      "peak_sampled_bytes": 196308992,
+      "runtime_path": "C:\\ANYworkspaceWork\\contact_s3_overlap_refined_g_20261003\\anysolver-portable-ci-yu4rovts\\P01\\runtime.json",
+      "limit_s": 900,
+      "limit_mib": 3814
+    },
+    {
+      "label": "h",
+      "outcomes": {
+        "failed": 1
+      },
+      "exit": 1,
+      "imported_modules": 220,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "elapsed_s": 6.194916500011459,
+      "peak_sampled_bytes": 186974208,
+      "runtime_path": "C:\\ANYworkspaceWork\\contact_s3_overlap_enforcement_h_20261003\\anysolver-portable-ci-r1a_5us2\\P01\\runtime.json",
+      "limit_s": 180,
+      "limit_mib": 953
+    },
+    {
+      "label": "i",
+      "outcomes": {
+        "passed": 2
+      },
+      "exit": 0,
+      "imported_modules": 220,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "elapsed_s": 5.909304499975406,
+      "peak_sampled_bytes": 186621952,
+      "runtime_path": "C:\\ANYworkspaceWork\\contact_s3_overlap_reference_i_20261003\\anysolver-portable-ci-xj_s0w8m\\P01\\runtime.json",
+      "limit_s": 180,
+      "limit_mib": 953
+    },
+    {
+      "label": "j",
+      "outcomes": {
+        "passed": 1
+      },
+      "exit": 0,
+      "imported_modules": 220,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "elapsed_s": 10.103392200020608,
+      "peak_sampled_bytes": 189788160,
+      "runtime_path": "C:\\ANYworkspaceWork\\contact_s3_overlap_preflight_j_20261003\\anysolver-portable-ci-lsqy8912\\P01\\runtime.json",
+      "limit_s": 180,
+      "limit_mib": 953
+    },
+    {
+      "label": "k",
+      "runtime": "absent after forced timeout",
+      "outcomes": {},
+      "exit": 1,
+      "effective_runtime_verified": false,
+      "resource": {
+        "peak_sampled_bytes": 209149952,
+        "limit_mib": 3814,
+        "elapsed_seconds": 910.1271745000267,
+        "status": "timeout",
+        "child_exit_codes": [
+          1
+        ]
+      },
+      "resource_path": "C:\\ANYworkspaceWork\\contact_s3_overlap_coupled_k_20261003\\anysolver-portable-ci-z337bgrp\\P01\\resource.json",
+      "log": "C:\\ANYworkspaceWork\\contact_s3_overlap_coupled_k_20261003.log"
+    },
+    {
+      "label": "l",
+      "outcomes": {
+        "passed": 3
+      },
+      "exit": 0,
+      "imported_modules": 234,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "elapsed_s": 52.07709159998922,
+      "peak_sampled_bytes": 190750720,
+      "runtime_path": "C:\\ANYworkspaceWork\\contact_s3_overlap_state_l_20261003\\anysolver-portable-ci-is80fexp\\P01\\runtime.json",
+      "limit_s": 180,
+      "limit_mib": 953
+    },
+    {
+      "label": "m",
+      "outcomes": {
+        "passed": 1
+      },
+      "exit": 0,
+      "imported_modules": 223,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "elapsed_s": 7.128406499978155,
+      "peak_sampled_bytes": 190070784,
+      "runtime_path": "C:\\ANYworkspaceWork\\contact_s3_overlap_work_m_20261003\\anysolver-portable-ci-t79n8sj3\\P01\\runtime.json",
+      "limit_s": 180,
+      "limit_mib": 953
+    }
+  ],
+  "package": {
+    "imported_hashes": 234,
+    "all_fields_match": true,
+    "profile": "NORMAL_NODAL_S3_MATCHED_OVERLAP_NEWMARK_EVENT_DEV_V3",
+    "states": 123,
+    "events": 4,
+    "cutbacks": 0,
+    "wheel_sha256": "3f2ab164730ff488070b62102a35fc03e8dbfa70bf6ab6811cc0d336c839c470",
+    "resources": {
+      "source": {
+        "command": [
+          "C:\\Python\\Python314\\python.exe",
+          "-I",
+          "C:\\ANYworkspaceWork\\contact_s3_overlap_package_20261003\\example_check.py",
+          "C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001/src",
+          "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\examples\\general_contact_deforming_s3_impact_dev.py",
+          "C:\\ANYworkspaceWork\\contact_s3_overlap_package_20261003\\source.json"
+        ],
+        "elapsed_s": 11.019465200020932,
+        "peak_sampled_bytes": 162738176,
+        "exit": 0,
+        "limit_s": 180,
+        "limit_mib": 953
+      },
+      "installed": {
+        "command": [
+          "C:\\Python\\Python314\\python.exe",
+          "-I",
+          "C:\\ANYworkspaceWork\\contact_s3_overlap_package_20261003\\example_check.py",
+          "C:/ANYworkspaceWork/contact_s3_overlap_package_20261003/installed",
+          "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\examples\\general_contact_deforming_s3_impact_dev.py",
+          "C:\\ANYworkspaceWork\\contact_s3_overlap_package_20261003\\installed.json"
+        ],
+        "elapsed_s": 10.609808599983808,
+        "peak_sampled_bytes": 162254848,
+        "exit": 0,
+        "limit_s": 180,
+        "limit_mib": 953
+      }
+    }
+  },
+  "raw_records": 97,
+  "coarse_discriminator": {
+    "source_columns": 1,
+    "first_physical_gap_violation_s": 0.001225,
+    "minimum_matched_gap_m": -2.2499111068273393e-05,
+    "weighted_pressure_gaps_m": [
+      3.340955227119793e-05,
+      6.74998205495027e-05,
+      5.5000376669550634e-05,
+      2.1347115866797037e-05
+    ],
+    "active_pressure_modes": 0,
+    "gap_budget_m": 2e-05
+  },
+  "refined_discriminator": {
+    "source_columns": 8,
+    "normal_stiffness_pa_per_m": 1000000000.0,
+    "first_physical_gap_violation_s": 0.001225,
+    "minimum_matched_gap_m": -2.0843754867235994e-05,
+    "weighted_pressure_gaps_m": [
+      -1.1700737896714497e-05,
+      7.224143172337786e-06,
+      3.194281765253858e-05,
+      5.693169615766776e-05,
+      8.125356419497763e-05,
+      9.276333444766854e-05,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      9.050406700875307e-05,
+      7.354276192737565e-05,
+      4.860886669936956e-05,
+      2.368357426359696e-05,
+      -6.392249831321441e-07,
+      -1.432099955676103e-05
+    ],
+    "reference_support_m2": [
+      0.04166666666666668,
+      0.06250000000000001,
+      0.06250000000000001,
+      0.06250000000000001,
+      0.060166663146869526,
+      0.010666660409647878,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.029333323946559457,
+      0.06233333294218042,
+      0.06250000000000001,
+      0.06250000000000001,
+      0.06250000000000001,
+      0.02083333333333334
+    ],
+    "active_pressure_modes": 3,
+    "gap_budget_m": 2e-05,
+    "normal_coordinates_m": [
+      -0.00022109159654184985,
+      -0.00019734434171556455,
+      -0.0001724999997825225,
+      -0.0001474999999999998,
+      -0.00012249999999999994,
+      -9.749999999999998e-05,
+      -7.250000000082283e-05,
+      -4.750001236927552e-05,
+      -2.257455084178069e-05,
+      -2.2537284987432952e-05,
+      -4.750000618529344e-05,
+      -7.250000000041144e-05,
+      -9.749999999999996e-05,
+      -0.00012249999999999994,
+      -0.0001474999999999128,
+      -0.00017249958280489828,
+      -0.00019689387590577598,
+      -0.00022019589645124553,
+      -1.5048180237337888e-07,
+      -1.9040012902004144e-07,
+      -3.5703473735431763e-07
+    ]
+  },
+  "independent_stiffer_preflight": {
+    "source_columns": 8,
+    "normal_stiffness_pa_per_m": 20000000000.0,
+    "dt_s": 2.5e-05,
+    "end_s": 0.003,
+    "minimum_matched_gap_m": -1.4974381987027244e-05,
+    "gap_budget_m": 2e-05
+  },
+  "saved_state_profile": [
+    {
+      "component": "production_work_tangent",
+      "status": "completed",
+      "elapsed_s": 0.05715169996256009,
+      "result_status": null,
+      "success": null,
+      "spatial_cells": null,
+      "time_panels": null
+    },
+    {
+      "component": "matched_endpoint",
+      "status": "completed",
+      "elapsed_s": 0.2757219999912195,
+      "result_status": null,
+      "success": null,
+      "spatial_cells": null,
+      "time_panels": null
+    },
+    {
+      "component": "matched_path",
+      "status": "completed",
+      "elapsed_s": 0.27428720000898466,
+      "result_status": null,
+      "success": null,
+      "spatial_cells": null,
+      "time_panels": null
+    },
+    {
+      "component": "weak_phase_path",
+      "status": "completed",
+      "elapsed_s": 0.33711000002222136,
+      "result_status": "resolved",
+      "success": true,
+      "spatial_cells": 48,
+      "time_panels": 1
+    }
+  ],
+  "profile_resource": {
+    "command": [
+      "C:\\Python\\Python314\\python.exe",
+      "-I",
+      "C:\\ANYworkspaceWork\\contact_s3_overlap_package_20261003\\profile_case.py",
+      "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\src"
+    ],
+    "elapsed_s": 2.6746014000382274,
+    "peak_sampled_bytes": 161263616,
+    "exit": 0,
+    "status": "terminal",
+    "limit_s": 180,
+    "limit_mib": 953
+  },
+  "saved_profile_interpretation": "Saved KN1e9 prefix coordinates already exceed20um; evaluating declared KN2e10 does not change that pose. Strong endpoint/path calls reject endpoint penetration. Their costs are rejected-call observations, not successful path certification or an equilibrated KN2e10 trajectory. Weak constant-path phase resolves.",
+  "coupled_candidate": null
+}

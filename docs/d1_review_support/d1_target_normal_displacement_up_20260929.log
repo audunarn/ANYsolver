@@ -1,0 +1,1 @@
+{"status": "diverged", "failure_reason": "contact_d1_interior_profile_rejected", "accepted_steps": 0, "elapsed_seconds": 14.455420099999174, "contact_failure": {"step_index": 1, "issue": "active pressure at physical source rim node 5 (5.97636e-05 N)"}}

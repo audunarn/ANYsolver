@@ -1,0 +1,23 @@
+{
+  "status": "total process-tree OS threads exceed8",
+  "exit_code": 15,
+  "elapsed_seconds": 0.18810140001005493,
+  "sampled_process_tree_peak_rss_bytes": 28807168,
+  "sampled_total_process_tree_max_OS_threads": 9,
+  "verified_child_CPU_affinity": [
+    0
+  ],
+  "sampling_seconds": 0.01,
+  "thread_scope": "No numerical library-thread setting claim; observed bounded total OS threads and verified CPU affinity.",
+  "command": [
+    "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "-u",
+    "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-enforcement-v1\\b3_e4_bl5_external_p0_enforcement_dev.py",
+    "--site",
+    "C:\\Python\\Python314\\Lib\\site-packages",
+    "--output-dir",
+    "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-enforcement-v1\\case",
+    "--strong-reference-dir",
+    "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-matched-mz-reference-v1\\mz"
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "status": "development_fixed_pose_work_map",
+  "theta": 0.05,
+  "source_commit": "664b023ce202a243c72f09f1e4f6ce77c3ebfad2",
+  "probe_sha256": "b41b64b6face763c6484e786544001b53627dd2c206c180386054494c523b788",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "environment": {
+    "python": "3.14.2",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "openblas_threads": "1",
+    "omp_threads": "1"
+  },
+  "source_faces": 8,
+  "target_faces": 2,
+  "two_hat_mode": true,
+  "touching": true,
+  "x_hat_coefficients": [
+    0.3430876589142838,
+    -0.9393033899122882
+  ],
+  "pressure_modes": 15,
+  "pressure_node_ids": [
+    3,
+    8,
+    13,
+    4,
+    9,
+    14
+  ],
+  "pressure_coefficients": [
+    0.0006966490763558489,
+    -0.0019072817747833894,
+    -0.0013932981527116977,
+    0.003814563549566779,
+    0.3430876589142838,
+    -0.9393033899122882
+  ],
+  "pressure_support_m2": [
+    0.24999999999999994,
+    0.24999999999999992,
+    0.27437499999999976,
+    0.2743749999999997,
+    0.0006249999999999901,
+    0.0006249999999999901
+  ],
+  "minimum_gap_m": -1.6718227977012552e-18,
+  "expected_scalar_last_y_work": 3.67595574849461e-05,
+  "expected_scalar_continuous_witness_work": -3.3842132287728154e-05,
+  "source_full_work_l2": 1.0978311566934872e-05,
+  "target_full_work_l2": 2.172162292281057e-05,
+  "all_full_work_l2": 2.433828727050171e-05,
+  "source_normal_work_l2": 1.0978311566934872e-05,
+  "source_rotation_work_l2": 1.3817091411897634e-22,
+  "target_normal_work_l2": 2.172162292281057e-05,
+  "source_normal_work_by_node": [
+    0.0,
+    6.776263578034403e-21,
+    0.0,
+    -2.710505431213761e-20,
+    2.710505431213761e-20,
+    0.0,
+    6.776263578034403e-20,
+    1.1519648082658485e-19,
+    -7.047314121155779e-19,
+    -1.4907779871675686e-19,
+    0.0,
+    1.0509792100195986e-06,
+    1.3265520936379377e-06,
+    -1.045847977574222e-05,
+    -2.8773647464404563e-06
+  ],
+  "target_normal_work_by_node": [
+    8.101071360072266e-07,
+    -9.966129614106424e-06,
+    1.926465499425871e-05,
+    8.496807023662979e-07
+  ],
+  "source_free_normal_work_l2": 1.0978311566934872e-05,
+  "target_free_normal_work_l2": 2.168987486208683e-05,
+  "target_rotation_work_l2": 1.0676944549171529e-22,
+  "energy_check": {
+    "free_coordinates": 84,
+    "stiffness_symmetry_relative": 0.0,
+    "stiffness_minimum_eigenvalue": 0.09306774473613608,
+    "stiffness_maximum_eigenvalue": 30584.513832248907,
+    "reduced_work_l2": 2.4309956733685935e-05,
+    "discrete_energy_dual_work": 2.5563131190309822e-05,
+    "energy_response_relative_residual": 4.280161338927054e-13
+  },
+  "active_baseline_check": {
+    "strict_positive_pressure_modes": 6,
+    "selected_support_minimum_m2": 0.0006249999999999901,
+    "selected_gap_maximum_abs_m": 1.6718227977012552e-18,
+    "selected_complementarity_l1_n": 3.1924392026893407e-14,
+    "selected_projected_active_modes": 6,
+    "signed_half_pascal_perturbation_minimum_pressure_pa": 0.5303483050438559,
+    "free_contact_force_l2": 0.6496157382580967
+  },
+  "virtual_work_residual_l2": 1.1570436923777835e-19,
+  "elapsed_s": 1.6095821999915643
+}

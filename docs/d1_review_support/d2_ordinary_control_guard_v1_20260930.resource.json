@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 4.173214500013273,
+  "peak_process_tree_memory_mb": 212.221952,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_projected_penalty.py::test_ordinary_scope_rejects_unsupported_control_before_mutation",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d2_ordinary_control_guard_v1_20260930.log"
+}

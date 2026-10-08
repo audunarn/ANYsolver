@@ -1,0 +1,36 @@
+[
+  {
+    "divisions": 8,
+    "rows": 4,
+    "elapsed_seconds": 5.604411700012861,
+    "reaction_z_n": 0.1609465388429428,
+    "continuous_local_plane_reference_z_n": 0.17225,
+    "relative_reference_error": 0.06562241600613752,
+    "minimum_gap_m": -2.4999999917173637e-05,
+    "gap_tolerance_met": true,
+    "active_pressure_dofs": 16,
+    "supported_pressure_modes": 28,
+    "scaled_pressure_rank": 28,
+    "overlapping_pairs": 26,
+    "integration_triangles": 200,
+    "area_integration_error_m2": 4.885008413405001e-17,
+    "weighted_gap_integration_error_m3": 6.071345429895541e-20
+  },
+  {
+    "divisions": 16,
+    "rows": 4,
+    "elapsed_seconds": 10.003319099982036,
+    "reaction_z_n": 0.16976139758984216,
+    "continuous_local_plane_reference_z_n": 0.17225,
+    "relative_reference_error": 0.014447619217171732,
+    "minimum_gap_m": -2.4999999917175232e-05,
+    "gap_tolerance_met": true,
+    "active_pressure_dofs": 24,
+    "supported_pressure_modes": 44,
+    "scaled_pressure_rank": 44,
+    "overlapping_pairs": 42,
+    "integration_triangles": 328,
+    "area_integration_error_m2": 8.30227813580775e-17,
+    "weighted_gap_integration_error_m3": 7.470836798637523e-20
+  }
+]

@@ -1,0 +1,23 @@
+# Multiple hemisphere-support integration source review
+
+Source inspection only, 2026-10-04. Inspected `core.py` conditional support/multiple dispatch and `multiple_beam_rigid.py` in `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`. No numerical execution, production edits or acceptance claim. The new single-pair support manager and validator were outside this review scope.
+
+## Findings
+
+No definite aggregation or dispatch defect was established in the inspected code. The route is internally consistent subject to the child protocol and selector checks below.
+
+- `core.py:591-598` routes the explicit support selector to multiple validation for >1 interaction and otherwise to single-pair validation. `1232-1249` mirrors that choice in manager construction and restores the active context token in `finally`. Default `owned_point` remains unchanged (`235-239`).
+- `multiple_beam_rigid.py:58-62` validates every isolated single-pair definition through the same support selector. Recursion terminates at one interaction. Non-plane bodies are permitted by the generic prefilter (`44-45`) but must be rejected by the support child validator; the source review cannot establish that rejection without reading that excluded validator.
+- The contributor chooses `HemispherePlaneManager` only for plane/support combinations (`135-151`). Aggregate residual and full sparse stiffness are sums on authoritative global DOFs (`170-183`), so shared beam nodes and child cross-node blocks are retained. Cell/body feature duplicates are rejected (`53-57`); distinct explicit rigid targets can share the same beam.
+- `PROFILE_SUPPORT` enables common whole-curve regularity at initial state, evaluation and swept path (`155-168`, `170-172`, `185-214`). The common chosen fraction is rechecked against every pair (`208-213`); accepting a minimum of child fractions alone is avoided.
+- Aggregate output includes endpoint/line energies and counts, explicit per-pair bodies and grouped rigid force/moment totals (`104-119`). Restart identity distinguishes the new composition (`216-223`).
+
+## Integration conditions the lead should verify against the child
+
+1. **Selector conflicts:** support dispatch precedes the `consistent_dev` beam-chain and `jet2_deformable_s3_dev` eligibility checks (`core.py:591-609`), and precedes other manager selectors in `contact_scope`. The support validator must explicitly reject incompatible nondefault selections, or those restrictions can be bypassed. This is a concrete dispatch ordering risk, not a demonstrated admitted case.
+2. **Required manager/result protocol:** the child must expose `cells` with `element_id`, `reference`, and translational `dofs` (`multiple.py:154-168`); `stiffness`, `gap_tolerance`, and `endpoint_stiffness` (`225-232`); and result fields `minimum_gap`, `gap_tolerance_met`, `beam_force`, `rigid_force`, `beam_moment`, `rigid_moment`, `algorithmic_contact_potential`, `candidate_cells`, and `line_contact_energy` (`84-110`). Both `candidate_endpoints` and `endpoint_candidates` are accepted for endpoint counts. These accesses are unconditional for the new profile and will fail or misreport if the child schema differs.
+3. **Plane-only failure semantics:** child validation must reject sphere/cylinder/capped-cylinder support selection before contributor construction. Otherwise the generic contributor can construct a legacy radial manager under the aggregate support label (`138-150`), and unconditional support endpoint metadata can then be invalid. No proof of such acceptance was available within the allowed files.
+4. **Shared cell deduplication:** `physical_cells` is keyed by element ID, so a cell shared across targets is checked once. This is appropriate for actual geometry if every child uses the same mesh coordinates/DOFs; verify that invariant in child construction. It must not serve as contact-pair deduplication (the pair assembly remains separate).
+5. **Accounting semantics:** aggregate `active_endpoints` counts endpoint/target pairs, so the same physical end against two bodies appears twice. Preserve the per-pair payload and do not describe that sum as the number of unique physical beam ends.
+
+Recommended narrowly discriminating integration checks, not executed: two inclined planes on a shared B3 beam; aggregate residual/Hessian and force/moment sums against children; support-plus-nonplane rejection; incompatible selector rejection; required summary/restart serialization; duplicate same-cell/same-body rejection; a common clipped increment rejected by one child. Scope remains explicit fixed analytic plane pairs and the child's admitted support domain.

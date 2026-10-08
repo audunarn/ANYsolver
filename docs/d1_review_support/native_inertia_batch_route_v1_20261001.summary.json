@@ -1,0 +1,174 @@
+{
+  "status": "PASS",
+  "scope": "bounded default120 four-step development route; no temporal accuracy or qualification",
+  "resources": {
+    "status": "completed",
+    "exit_code": 0,
+    "elapsed_seconds": 57.22367529998883,
+    "peak_process_tree_memory_mb": 178.688,
+    "time_limit_seconds": 180.0,
+    "memory_limit_bytes": 1073741824,
+    "command": [
+      "C:/Python/Python314/python.exe",
+      "docs/d1_review_support/native_inertia_batch_route_v1_20261001.entry.py",
+      "docs/d1_review_support/native_inertia_batch_route_v1_20261001.inputs.json",
+      "8afde3788d8d0ec2a20b26c66924c5826f6f53b55ce9c3e7f59b1bfbc66714ca"
+    ],
+    "log": "docs\\d1_review_support\\native_inertia_batch_route_v1_20261001.log"
+  },
+  "source_binding_count": 456,
+  "source_postverify_all": true,
+  "source_sha256": {
+    "_ge_beam3_centered_batched_finite_inertia.py": "9ee021df59f5974092e94a002ed6da8b8143e0a9ed891982992a60e50d194682",
+    "_ge_beam3_centered_finite_inertia.py": "86d340b182d21880b1a255b1f59d75f385903e229d62c63cc245e87a18fe636f"
+  },
+  "criteria": {
+    "sequence": [
+      "scalar",
+      "batch",
+      "batch",
+      "scalar"
+    ],
+    "owner_count": 4,
+    "steps_per_owner": 4,
+    "total_new_physical_steps": 16,
+    "dt_seconds": 0.00025,
+    "spatial_spin_rad_per_s": [
+      35.0,
+      -25.0,
+      20.0
+    ],
+    "stage_coordinates": "acceleration",
+    "runtime_limit_seconds": 120.0,
+    "explicit_stage_solve_tolerance": 1e-12,
+    "scientific_stage_gate": 1e-11,
+    "endpoint_balance_gate": 1e-11,
+    "correction_gate": 1e-11,
+    "normalized_step_and_cumulative_E_P_H_limit": 1e-06,
+    "elastic_witness_limit": 1e-10,
+    "stage_observations_per_trial": 128,
+    "maximum_stage_observations": 2048,
+    "supervisor_seconds": 180,
+    "memory_limit_bytes": 1073741824,
+    "physical_parity_limit": 1e-13,
+    "full_callbacks": true
+  },
+  "parity_characteristics": {
+    "length_m": 2.0,
+    "mass_kg": 5.540727404304961,
+    "velocity_m_per_s": 22.33900253741261,
+    "omega_per_s": 11.169501268706306,
+    "acceleration_m_per_s2": 249.51551718326354,
+    "angular_acceleration_per_s2": 124.75775859163177,
+    "force_n": 1382.4974638566337,
+    "moment_nm": 2764.9949277132673,
+    "energy_j": 1382.4974638566337,
+    "work_j": 2764.9949277132673,
+    "momentum_n_s": 123.7743235438801,
+    "angular_momentum_nm_s": 247.5486470877602
+  },
+  "timing_summary": {
+    "batch": {
+      "elapsed_seconds": {
+        "median": 11.672310699999798,
+        "spread": 0.00588940002489835,
+        "values": [
+          11.675255400012247,
+          11.669365999987349
+        ]
+      },
+      "operations_seconds": {
+        "median": 10.11213534999115,
+        "spread": 0.01600849998067133,
+        "values": [
+          10.104131100000814,
+          10.120139599981485
+        ]
+      },
+      "total_including_parity_seconds": {
+        "median": 11.732018049995531,
+        "spread": 0.005785100016510114,
+        "values": [
+          11.734910600003786,
+          11.729125499987276
+        ]
+      }
+    },
+    "scalar": {
+      "elapsed_seconds": {
+        "median": 16.090233300012187,
+        "spread": 0.14648500000475906,
+        "values": [
+          16.016990800009808,
+          16.163475800014567
+        ]
+      },
+      "operations_seconds": {
+        "median": 13.967159549996722,
+        "spread": 0.13100330001907423,
+        "values": [
+          13.901657899987185,
+          14.03266120000626
+        ]
+      },
+      "total_including_parity_seconds": {
+        "median": 16.121069300003,
+        "spread": 0.20815160000347532,
+        "values": [
+          16.016993500001263,
+          16.225145100004738
+        ]
+      }
+    }
+  },
+  "median_saving_fraction": {
+    "elapsed_seconds": 0.2745716931282185,
+    "operations_seconds": 0.2760063122502583,
+    "total_including_parity_seconds": 0.27225559101136376
+  },
+  "total_steps": 16,
+  "total_original_stage_evaluations": 48,
+  "initialization_kernel_calls_per_phase": [
+    4,
+    4,
+    4,
+    4
+  ],
+  "operation_kernel_calls_per_phase": [
+    28,
+    28,
+    28,
+    28
+  ],
+  "parity_maximum": 8.971982225282539e-17,
+  "maximum_stage_residual": 1.61725656163784e-13,
+  "maximum_endpoint_balance": 1.6011153412811023e-13,
+  "maximum_step_EPH": 1.026176685810523e-07,
+  "maximum_cumulative_EPH": 2.299427593031352e-07,
+  "maximum_witness": 5.092447089608643e-22,
+  "journals": {
+    "stage": {
+      "bytes": 4153614,
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_inertia_batch_route_v1_20261001.stages.jsonl",
+      "sha256": "913ec469664b2aef13d7f634ea7863f003ccfb8767f2b151984fa83f07a2ceeb"
+    },
+    "state": {
+      "bytes": 3584258,
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_inertia_batch_route_v1_20261001.states.jsonl",
+      "sha256": "61f306f7cc10b7a50c399408357f20045b7bb511254cf9e2bd31ea79fc202cc4"
+    }
+  },
+  "artifact_sha256": {
+    "runner.py": "2efa27ce2fd7ec8621857aa83eb2fc2507b4840e96d5ebdcfed0605ee70777a4",
+    "runner.source.py": "2efa27ce2fd7ec8621857aa83eb2fc2507b4840e96d5ebdcfed0605ee70777a4",
+    "inputs.json": "8afde3788d8d0ec2a20b26c66924c5826f6f53b55ce9c3e7f59b1bfbc66714ca",
+    "entry.py": "cb5e45f78bd191bfafda24bf676114b02a67a21fd96f5ea8e9fac998dc5320dd",
+    "md": "691f8aba6bbbdd167c8aac47ff75c5091b6f1bc90734947eda662041d8cdde69",
+    "raw.json": "3274b0892230ece83b6152af5f9bc8bf97ea6aa87de9542e6782d85acab993b9",
+    "resources.json": "3d3867c7f7d58be2db04d16c1850d9a248f57ffdb437b2d8c7f9f2c7e24710d2",
+    "log": "f5f47fd0c7c9dbdd8b724f7e28ee5bad6ca948275c1fd6660a9d89072c1dbb88",
+    "stages.jsonl": "913ec469664b2aef13d7f634ea7863f003ccfb8767f2b151984fa83f07a2ceeb",
+    "states.jsonl": "61f306f7cc10b7a50c399408357f20045b7bb511254cf9e2bd31ea79fc202cc4"
+  },
+  "interpretation": "Batch dispatch reduced measured balanced complete-route median including equal evidence overhead by27.46%; four-step operations27.60%. Source checks and full callbacks remain. This measures16 short steps, not affordability or accuracy of a longer finite-angle trajectory. Original V1 cancelled-field kernel failure and all previous native failures remain unchanged; no further numerical work."
+}

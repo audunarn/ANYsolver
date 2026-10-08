@@ -1,0 +1,82 @@
+{
+  "base": "07bd2eec",
+  "final_development_files": {
+    "src/anysolver/general_contact/native_surface_front.py": "68b73351333e04dfedda7e5bbe5aeb36284118b86320ee5d0ea3e7b218a6cdc7",
+    "src/anysolver/general_contact/native_surface_friction_integral.py": "7246a23219c2c610a5e53e71389a0145d0b8cd93eef3f44d914fa8792f851956",
+    "tests/test_general_contact_native_surface_prepared_fronts.py": "679153daf92533246759e42460a8ac1f9ea1b2b41d94a49d21629893247dfedc",
+    "tests/test_general_contact_native_surface_local_fronts.py": "24b02168e8853d713b3820c010d2c85017da11e71f0cfddf1dff67b66c3b447e"
+  },
+  "resources": [
+    {
+      "run": "contact-native-prepared-front-bounds-20261002",
+      "peak_sampled_bytes": 184737792,
+      "limit_mib": 953,
+      "elapsed_seconds": 5.881080200022552,
+      "status": "terminal",
+      "child_exit_codes": [
+        0
+      ]
+    },
+    {
+      "run": "contact-native-prepared-front-integral-20261002",
+      "peak_sampled_bytes": 255971328,
+      "limit_mib": 953,
+      "elapsed_seconds": 79.07623669999884,
+      "status": "terminal",
+      "child_exit_codes": [
+        1
+      ]
+    },
+    {
+      "run": "contact-native-prepared-front-open-proof-20261002",
+      "peak_sampled_bytes": 185151488,
+      "limit_mib": 953,
+      "elapsed_seconds": 6.061024299997371,
+      "status": "terminal",
+      "child_exit_codes": [
+        0
+      ]
+    },
+    {
+      "run": "contact-native-prepared-front-open-integral-20261002",
+      "peak_sampled_bytes": 255688704,
+      "limit_mib": 953,
+      "elapsed_seconds": 78.02229960000841,
+      "status": "terminal",
+      "child_exit_codes": [
+        1
+      ]
+    },
+    {
+      "run": "contact-native-prepared-front-propagated-error-20261002",
+      "peak_sampled_bytes": 184807424,
+      "limit_mib": 953,
+      "elapsed_seconds": 6.113288799999282,
+      "status": "terminal",
+      "child_exit_codes": [
+        0
+      ]
+    },
+    {
+      "run": "contact-native-prepared-front-roundoff-control-20261002",
+      "peak_sampled_bytes": 183087104,
+      "limit_mib": 953,
+      "elapsed_seconds": 5.476816999958828,
+      "status": "terminal",
+      "child_exit_codes": [
+        0
+      ]
+    },
+    {
+      "run": "contact-native-prepared-front-open-edge-20261002",
+      "peak_sampled_bytes": 183095296,
+      "limit_mib": 953,
+      "elapsed_seconds": 5.191489899996668,
+      "status": "terminal",
+      "child_exit_codes": [
+        0
+      ]
+    }
+  ],
+  "note": "Sequential development; final boundary convention and error controls postdate integrated failures. Not a frozen acceptance candidate."
+}

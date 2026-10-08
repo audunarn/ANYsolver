@@ -1,0 +1,64 @@
+{
+  "status": "PASS",
+  "exit_code": 0,
+  "elapsed_seconds": 43.39943530000164,
+  "identity": {
+    "anysolver": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\__init__.py",
+    "module_paths": {
+      "_ge_beam3_native_midpoint.py": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+      "_ge_beam3_dynamic_elastic_state.py": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py",
+      "_ge_beam3_centered_finite_inertia.py": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_centered_finite_inertia.py"
+    },
+    "python": "C:\\Python\\Python314\\python.exe",
+    "numpy_version": "2.4.6",
+    "pytest_version": "9.0.3",
+    "environment": {
+      "PYTHONPATH": "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src;C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/tests;C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMBA_NUM_THREADS": "1",
+      "NUMBA_CACHE_DIR": "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_vibration_solve_control_v1_20261001.numba_cache",
+      "NATIVE_VIBRATION_RAW_OUTPUT": "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_vibration_solve_control_v1_20261001.raw.json",
+      "NATIVE_VIBRATION_INPUTS": "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_vibration_solve_control_v1_20261001.inputs.json"
+    },
+    "source_count": 442,
+    "input_sha256": "fe47b910b01db4276ffc3f4eebfaeead9f383882147fd7263f6dc5b0375c2255",
+    "entry_sha256": "45ce69fcccc5ef438bbf5216bbfc842f63f557f44467a9cac3463d536a800d15"
+  },
+  "reports": [
+    {
+      "nodeid": "tests/test_ge_beam3_native_vibration_solve_control.py::test_explicit_tighter_solve_with_authenticated_stage_impulse_audit",
+      "when": "setup",
+      "outcome": "passed",
+      "duration_seconds": 0.00024980001035146415,
+      "properties": {},
+      "failure": null
+    },
+    {
+      "nodeid": "tests/test_ge_beam3_native_vibration_solve_control.py::test_explicit_tighter_solve_with_authenticated_stage_impulse_audit",
+      "when": "call",
+      "outcome": "passed",
+      "duration_seconds": 41.97105769999325,
+      "properties": {
+        "accepted_steps": 20,
+        "selected_omega_rad_per_s": 2.6217992248640107,
+        "comparisons": "{\"continuum_time\": {\"coarse\": 0.01973646105607683, \"fine\": 0.005023669469943517, \"floor\": 1e-06, \"ratio\": 0.25453750070338654, \"disposition\": \"bounded_comparison\", \"passes\": true}, \"amplitude\": {\"coarse\": 0.0011902055113561085, \"fine\": 0.0005951041944274045, \"floor\": 1e-06, \"ratio\": 0.5000012088243051, \"disposition\": \"bounded_comparison\", \"passes\": true}, \"linear\": {\"coarse\": 1.0627414571866533e-13, \"fine\": 2.7200262904749542e-14, \"floor\": 1e-10, \"ratio\": null, \"disposition\": \"resolution_limited\", \"passes\": true}, \"angular\": {\"coarse\": 6.94271833505305e-14, \"fine\": 1.7831789662578374e-14, \"floor\": 1e-10, \"ratio\": null, \"disposition\": \"resolution_limited\", \"passes\": true}, \"energy\": {\"coarse\": 2.5132891055259877e-07, \"fine\": 2.0998163963767706e-08, \"floor\": 1e-10, \"ratio\": 0.08354854170019232, \"disposition\": \"bounded_comparison\", \"passes\": true}}"
+      },
+      "failure": null
+    },
+    {
+      "nodeid": "tests/test_ge_beam3_native_vibration_solve_control.py::test_explicit_tighter_solve_with_authenticated_stage_impulse_audit",
+      "when": "teardown",
+      "outcome": "passed",
+      "duration_seconds": 0.00015209999401122332,
+      "properties": {
+        "accepted_steps": 20,
+        "selected_omega_rad_per_s": 2.6217992248640107,
+        "comparisons": "{\"continuum_time\": {\"coarse\": 0.01973646105607683, \"fine\": 0.005023669469943517, \"floor\": 1e-06, \"ratio\": 0.25453750070338654, \"disposition\": \"bounded_comparison\", \"passes\": true}, \"amplitude\": {\"coarse\": 0.0011902055113561085, \"fine\": 0.0005951041944274045, \"floor\": 1e-06, \"ratio\": 0.5000012088243051, \"disposition\": \"bounded_comparison\", \"passes\": true}, \"linear\": {\"coarse\": 1.0627414571866533e-13, \"fine\": 2.7200262904749542e-14, \"floor\": 1e-10, \"ratio\": null, \"disposition\": \"resolution_limited\", \"passes\": true}, \"angular\": {\"coarse\": 6.94271833505305e-14, \"fine\": 1.7831789662578374e-14, \"floor\": 1e-10, \"ratio\": null, \"disposition\": \"resolution_limited\", \"passes\": true}, \"energy\": {\"coarse\": 2.5132891055259877e-07, \"fine\": 2.0998163963767706e-08, \"floor\": 1e-10, \"ratio\": 0.08354854170019232, \"disposition\": \"bounded_comparison\", \"passes\": true}}"
+      },
+      "failure": null
+    }
+  ]
+}

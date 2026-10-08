@@ -1,0 +1,47 @@
+{
+  "schema": "B3_E4_F03_FLAT_WEB_UNCOUPLED_CONTROLS_DEV_V2",
+  "classification": "bounded_element_idealization_controls_not_F03_assessment",
+  "source_head_before_changes": "0d83a595b35121a627706d6cbaaf72fa437bbb1a",
+  "external_runner_sha256": "52044f4fa016b23dea001c85b1d22a38dd152306b9aff455ad1e86c970dee8aa",
+  "native_runner_sha256": "f427c37e74f8400eaff4ead91c0c8573b5558d73fa318b86b4226f63d5421016",
+  "calculix_exe_sha256": "27a9426a1ee2f72c38fbe892e0ffaf38e14867628ffd0235770261b6f3ec9c5f",
+  "raw_evidence_directory": ".qualification/b3-ge-e4-pl/f03-flat-web-uncoupled-controls-dev-20260928-v2",
+  "raw_sha256": {
+    "external_plate_deck": "f75c73b370aa2e963e0ad3298fcf1bcd4c717ea7622d5677efbfe8670773da06",
+    "external_plate_result": "d3e20fa0a97146bd58952ddd1bbd67729928520bbed7c33570df876408dec813",
+    "external_web_deck": "34705373572f884ed12c254618806d4772680d663d32e5e6c003da045dd1484b",
+    "external_web_result": "42a3c314d21aa17935991b0828b53ae29ccb3bead48d6bd13d79a077da5bf4fc",
+    "native_result": "4e71095a17d2d3f22121c52c3164ddd9300ac70d64bd9a8ac4ddd432b70f98c2"
+  },
+  "controls": {
+    "plate_only": {
+      "load": "100 N Fy at the physical top of a clamped 1 by 0.2 by 0.035 m plate",
+      "external_s4_work_j": 0.000676453,
+      "native_e4_work_j": 0.000604007153884479,
+      "native_relative_to_external_percent": -10.709664398786177
+    },
+    "web_only": {
+      "load": "10 Nm Mx on a clamped 1 by 0.01 by 0.2 m web",
+      "external_s4_work_j": 0.01525848,
+      "native_b3_work_j": 0.019175701796852615,
+      "native_relative_to_external_percent": 25.672424755628455,
+      "native_uniform_torsion_oracle_j": 0.019175701796852615
+    }
+  },
+  "coupled_to_isolated_work_ratio": {
+    "external_plate": 1.018656137233481,
+    "external_torque": 0.12313434889975935,
+    "native_plate_A": 0.9788721262304751,
+    "native_torque_A": 0.07547114968925289
+  },
+  "focused_tests": "16 passed after metadata correction",
+  "effective_threads": "CalculiX reported one CPU; native process reported two one-thread OpenBLAS pools",
+  "independent_review": "Read-only review found no deck-isolation, load, support or native-block extraction defect. The S4 plate-only result is below the S4 coupled plate work, so removal of the web is not an exact additive counterfactual preserving the S4 plate operator and load map.",
+  "decision": "Isolated element/section differences are material and opposing for web torque, but do not uniquely allocate the coupled gap. Stop refinement and multiplier tuning. A verified sided interface work/action reference or equivalent operator partition is required to decide whether to revise the continuous L1 law or its discrete enforcement.",
+  "limitations": [
+    "The isolated controls do not recover shared-seam traction or rotational support reactions.",
+    "An S4 welded junction and native exact weak L1 line are distinct idealizations.",
+    "One level and these controls do not qualify F03, select A/B, or prove a formulation defect.",
+    "Native controls reuse the exact raw result of V1 because their source and inputs did not change; external V2 output was rerun because the manifest interpretation changed."
+  ]
+}

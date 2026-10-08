@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 4.293666599987773,
+  "peak_process_tree_memory_mb": 220.553216,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_projected_penalty.py::test_planar_cut_pressure_reactions_and_nonpotential_storage",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d2_prescribed_reaction_rows_v1_20260930.log"
+}

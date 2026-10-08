@@ -1,0 +1,29 @@
+{
+  "status": "development_free_target_structural_defect",
+  "saved_comparison_sha256": "ef69c6d174c3c189fc1d3f1f3fe809f5182b5f5b0799abffcfd1330290050311",
+  "model_bc_free_coordinates": 30,
+  "program_controlled_coordinates": [
+    0,
+    9
+  ],
+  "physical_free_coordinates": 28,
+  "reduced_structural_defect_norm_n": 3.182679456143035e-05,
+  "source_and_target_component_norms": {
+    "source": {
+      "ux": 3.1826794561430346e-05,
+      "uy": 0.0,
+      "uz": 5.064401646606966e-13,
+      "rx": 0.0,
+      "ry": 0.0,
+      "rz": 0.0
+    },
+    "target": {
+      "ux": 1.402591675431944e-18,
+      "uy": 1.6347955319122607e-19,
+      "uz": 8.677851511149104e-20,
+      "rx": 3.9736740029044527e-20,
+      "ry": 1.4572905848366505e-20,
+      "rz": 8.731015774769283e-21
+    }
+  }
+}

@@ -1,0 +1,7 @@
+..                                                                       [100%]
+============================= slowest 5 durations =============================
+90.74s call     tests/test_general_contact_hemisphere_cylinder_motion.py::test_tool_solve_work_open_recontact_and_fresh_restart[True]
+46.06s call     tests/test_general_contact_hemisphere_cylinder_motion.py::test_tool_solve_work_open_recontact_and_fresh_restart[False]
+
+(3 durations < 0.005s hidden.  Use -vv to show these durations.)
+2 passed in 138.24s (0:02:18)

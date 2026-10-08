@@ -1,0 +1,382 @@
+{
+  "status": "local_development_PASS",
+  "accepted": false,
+  "released": false,
+  "counts": {
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "old_checks_deselected": 5,
+  "accepted_steps": 12,
+  "resource": {
+    "status": "completed",
+    "exit_code": 0,
+    "elapsed_seconds": 31.41282090000459,
+    "peak_process_tree_memory_mb": 208.756736,
+    "time_limit_seconds": 180.0,
+    "memory_limit_bytes": 1073741824,
+    "command": [
+      "C:/Python/Python314/python.exe",
+      "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/d6_native_loaded_temporal_v2_20260930.entry.source.py"
+    ],
+    "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_loaded_temporal_v2_20260930.log"
+  },
+  "source_sha256": {
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_centered_finite_inertia.py": "3334699c5a4c14ef67cbfcef3ad54c3be8c80a15b98f2c34aa6840be70d32f84",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py": "9586af4379a566f8bfa51c6454bba173dd110966d09a7d7f36ba967aedcd8498",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_midpoint.py": "5931f8d1d5c123e85acaf22bb58ec94a80f4dd86f8e2beeba76f7149a143526c",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_native_midpoint.py": "426f673d40e82a4d554c3964dc9b51b4ca5638f180f3f985e4ba85c974ebc05d"
+  },
+  "in_process_verified_environment": {
+    "PYTHONPATH": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src;C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_CACHE_DIR": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_loaded_temporal_v2_20260930.numba_cache",
+    "D6_LOADED_TEMPORAL_OUTPUT": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_loaded_temporal_v2_20260930.json"
+  },
+  "all_frozen_files_unchanged_postrun": true,
+  "evidence_sha256": {
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_loaded_temporal_v2_20260930.inputs.json": "3e3e38aba71d70492509a538e62c7f6f01a1e3306dffc1607a485ac431fc8ef9",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_loaded_temporal_v2_20260930.entry.source.py": "89e4a00f5c6c96d325410a7ccb3c0831b26913e2e1d8d5142a8eb4492dcca25e",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_loaded_temporal_v2_20260930.midpoint.source.py": "5931f8d1d5c123e85acaf22bb58ec94a80f4dd86f8e2beeba76f7149a143526c",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_loaded_temporal_v2_20260930.dynamic.source.py": "9586af4379a566f8bfa51c6454bba173dd110966d09a7d7f36ba967aedcd8498",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_loaded_temporal_v2_20260930.test.source.py": "426f673d40e82a4d554c3964dc9b51b4ca5638f180f3f985e4ba85c974ebc05d",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_loaded_temporal_v2_20260930.json": "5cd1c21db9db2af2d788e52e7b89066d7423f3a6fdbd71cb6acc62121f6dffc7",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_loaded_temporal_v2_20260930.xml": "5ad59368823677144afd0e99c47027a436866a44b5dc182d365984d3b227b742",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_loaded_temporal_v2_20260930.log": "670e93a9931cf0c471082329942a30aaea423a51c0362ef3201f20dd40ca13ea",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_loaded_temporal_v2_20260930.resource.json": "47924ba566580cc9783a45a3fc3c3f166d7d058973e4bc95458e5f6482d1ce23"
+  },
+  "constructor_controls": [
+    {
+      "kind": "stale_line_signature",
+      "rejected_before_clone": true,
+      "analysis_unchanged": true
+    },
+    {
+      "kind": "stale_couple_signature",
+      "rejected_before_clone": true,
+      "analysis_unchanged": true
+    },
+    {
+      "kind": "forged_distributed_signature",
+      "rejected_before_clone": true,
+      "analysis_unchanged": true
+    }
+  ],
+  "full_loaded_stage_directional": [
+    {
+      "epsilon": 1e-05,
+      "physical_relative": 9.081031800628768e-13,
+      "algebraic_relative": 2.659344481842983e-12
+    },
+    {
+      "epsilon": 2e-06,
+      "physical_relative": 6.012792020340579e-12,
+      "algebraic_relative": 1.127307429470004e-11
+    }
+  ],
+  "rollback_controls": {
+    "exact_owned_pattern": true,
+    "foreign_element_rejected": true,
+    "legacy_loading_rejected": true,
+    "changed_pattern_rejected": true,
+    "canonical_predecessor_and_issuance_preserved": true,
+    "cancelled_commit": true,
+    "same_ready_candidate_reused": true
+  },
+  "resolution_comparison": {
+    "linear": {
+      "coarse": 6.570973616941503e-12,
+      "fine": 1.6444487965112493e-12,
+      "ratio": null,
+      "disposition": "resolution_limited",
+      "passes": true
+    },
+    "path_angular": {
+      "coarse": 1.8185978207290897e-12,
+      "fine": 4.550762771805565e-13,
+      "ratio": null,
+      "disposition": "resolution_limited",
+      "passes": true
+    },
+    "midpoint_angular": {
+      "coarse": 1.6377294660613234e-12,
+      "fine": 4.098712938823299e-13,
+      "ratio": null,
+      "disposition": "resolution_limited",
+      "passes": true
+    },
+    "exact_work_energy": {
+      "coarse": 4.366163299173294e-09,
+      "fine": 1.0919243623174038e-09,
+      "ratio": 0.25008784314690036,
+      "disposition": "decreasing",
+      "passes": true
+    },
+    "midpoint_work_energy": {
+      "coarse": 4.3662072942777125e-09,
+      "fine": 1.091935373003671e-09,
+      "ratio": 0.2500878449895738,
+      "disposition": "decreasing",
+      "passes": true
+    }
+  },
+  "resolutions": {
+    "coarse": {
+      "scales": {
+        "mass": 5.540727404304961,
+        "length": 2.0,
+        "energy": 0.20937287862384768,
+        "velocity": 0.2749108102737312,
+        "momentum": 1.5232058602233443,
+        "angular_momentum": 3.0464117204466885,
+        "angular_velocity": 0.4743416490252569,
+        "force": 0.5525505597274037,
+        "couple": 0.11051011194548076
+      },
+      "initial_rank_mass": {
+        "algebraic_condition": 46900.21092261194,
+        "algebraic_rank": 27,
+        "algebraic_sigma_max": 1.6173357097176737,
+        "algebraic_sigma_min": 3.4484614842913416e-05,
+        "physical_mass_condition": 17.433616647030828,
+        "physical_mass_max_eigenvalue": 2.16857610195012,
+        "physical_mass_min_eigenvalue": 0.1243904891254711
+      },
+      "final_accounting": {
+        "time_seconds": 0.004,
+        "epoch": 4,
+        "state_sha256": "eba01b02b8d523b50bafa85edc94573fc5a63f69a31726399dd2badebcd52478",
+        "linear_momentum": [
+          0.5231703297046726,
+          -0.4306575747253445,
+          0.5460247293801809
+        ],
+        "linear_momentum_low": [
+          3.844965344789355e-17,
+          2.5090111138318897e-17,
+          4.31287113287268e-17
+        ],
+        "angular_momentum": [
+          0.20380007962064198,
+          -0.6536261639289058,
+          0.3000434444853159
+        ],
+        "angular_momentum_low": [
+          -1.1544948890712105e-17,
+          3.051028037761318e-17,
+          -2.6844873142757532e-18
+        ],
+        "kinetic_energy_j": 0.2099073328627947,
+        "elastic_energy_j": 5.45670239052665e-08,
+        "total_energy_j": 0.2099073874298186,
+        "elastic_witness_j": 7.158010394110687e-21,
+        "compatibility18": [
+          3.690280123722041e-23,
+          -5.263653623534659e-23,
+          -5.691562954304026e-23,
+          -8.867978792232818e-23,
+          -5.35048581318526e-24,
+          -9.621857651182608e-23,
+          4.093371590617828e-15,
+          1.6328076580586354e-15,
+          -3.406524913625435e-15,
+          6.577248631230092e-16,
+          7.097281977028361e-16,
+          -1.4173549040296523e-15,
+          -1.7276734462906826e-15,
+          1.1647923792191852e-15,
+          1.1957480284572345e-15,
+          9.317138783660458e-16,
+          3.0923123387734983e-16,
+          -3.798681829447403e-15
+        ],
+        "rank_mass": {
+          "algebraic_condition": 46900.210922631355,
+          "algebraic_rank": 27,
+          "algebraic_sigma_max": 1.6173357097178103,
+          "algebraic_sigma_min": 3.448461484290205e-05,
+          "physical_mass_condition": 17.433616639485894,
+          "physical_mass_max_eigenvalue": 2.168576101933083,
+          "physical_mass_min_eigenvalue": 0.12439048917832765
+        }
+      },
+      "normalized_step_defect_max": {
+        "linear": 1.7276558958243018e-12,
+        "path_angular": 4.585318762674956e-13,
+        "midpoint_angular": 4.1290537521082626e-13,
+        "exact_work_energy": 1.847983193753199e-09,
+        "midpoint_work_energy": 1.847994229554374e-09
+      },
+      "normalized_cumulative_defect_max": {
+        "linear": 6.570973616941503e-12,
+        "path_angular": 1.8185978207290897e-12,
+        "midpoint_angular": 1.6377294660613234e-12,
+        "exact_work_energy": 4.366163299173294e-09,
+        "midpoint_work_energy": 4.3662072942777125e-09
+      },
+      "stage_load_map_errors_max": {
+        "force_map": 6.441681984041105e-17,
+        "load_spatial_jacobian": 4.815336643209075e-18,
+        "force_wrench": 1.1232158349780746e-16,
+        "moment_wrench": 3.466997669261205e-17,
+        "scalar_line_potential": 6.006864539235194e-17
+      },
+      "total_exact_physical_work_j": 0.0005345078918147395,
+      "total_midpoint_generalized_work_j": 0.0005345078918055281,
+      "total_actual_energy_change_j": 0.000534508805970918,
+      "total_physical_energy_defect_j": 9.141561784897084e-10,
+      "max_midpoint_minus_exact_work_j": 2.3105974598924828e-15,
+      "max_scalar_work_error": 4.377738243252972e-15,
+      "max_stage_residual": 1.0401482994122737e-13,
+      "max_endpoint_algebraic_residual": 7.425409491556652e-15,
+      "max_elastic_witness_normalized": 3.418785871961253e-20,
+      "total_path_linear_impulse_n_s": [
+        0.0016416970087759926,
+        -0.0012312727565819942,
+        0.0008208485043879963
+      ],
+      "total_path_angular_impulse_nm_s": [
+        0.0003822030219688,
+        -0.00026985614676381113,
+        -2.0002357940122057e-05
+      ],
+      "total_midpoint_angular_impulse_nm_s": [
+        0.00038220302230567186,
+        -0.0002698561466103676,
+        -2.000235838370039e-05
+      ]
+    },
+    "fine": {
+      "scales": {
+        "mass": 5.540727404304961,
+        "length": 2.0,
+        "energy": 0.20937287862384768,
+        "velocity": 0.2749108102737312,
+        "momentum": 1.5232058602233443,
+        "angular_momentum": 3.0464117204466885,
+        "angular_velocity": 0.4743416490252569,
+        "force": 0.5525505597274037,
+        "couple": 0.11051011194548076
+      },
+      "initial_rank_mass": {
+        "algebraic_condition": 46900.21092261194,
+        "algebraic_rank": 27,
+        "algebraic_sigma_max": 1.6173357097176737,
+        "algebraic_sigma_min": 3.4484614842913416e-05,
+        "physical_mass_condition": 17.433616647030828,
+        "physical_mass_max_eigenvalue": 2.16857610195012,
+        "physical_mass_min_eigenvalue": 0.1243904891254711
+      },
+      "final_accounting": {
+        "time_seconds": 0.004,
+        "epoch": 8,
+        "state_sha256": "b11858451beeab957b841099652ca42b9eba85d2b5d70a14f36df9f91b5e6f3f",
+        "linear_momentum": [
+          0.5231703297018255,
+          -0.4306575747217265,
+          0.5460247293861068
+        ],
+        "linear_momentum_low": [
+          3.478192117734593e-17,
+          1.1778214485013682e-17,
+          5.906222450720067e-18
+        ],
+        "angular_momentum": [
+          0.20380007961870653,
+          -0.6536261639279425,
+          0.30004344448854103
+        ],
+        "angular_momentum_low": [
+          7.300272409183855e-18,
+          -2.8807381410391584e-17,
+          -9.672922255129997e-18
+        ],
+        "kinetic_energy_j": 0.20990733262822603,
+        "elastic_energy_j": 5.5003106870710146e-08,
+        "total_energy_j": 0.2099073876313329,
+        "elastic_witness_j": 1.64280829994804e-21,
+        "compatibility18": [
+          5.748214892813259e-23,
+          7.065536371901914e-24,
+          8.046050450531634e-23,
+          -1.4432867428459264e-23,
+          4.8015325034639045e-23,
+          -7.158127785941053e-23,
+          1.0216618996684187e-15,
+          3.8696968610453007e-16,
+          -8.494537680761275e-16,
+          1.7728034208151536e-16,
+          1.7577254200219833e-16,
+          -3.5358358942099524e-16,
+          -4.3303801356646943e-16,
+          3.123601177654812e-16,
+          2.9086648064484407e-16,
+          2.8398640389674347e-16,
+          5.4931421454464294e-17,
+          -9.47054882136727e-16
+        ],
+        "rank_mass": {
+          "algebraic_condition": 46900.210922601604,
+          "algebraic_rank": 27,
+          "algebraic_sigma_max": 1.61733570971781,
+          "algebraic_sigma_min": 3.4484614842923926e-05,
+          "physical_mass_condition": 17.43361663948358,
+          "physical_mass_max_eigenvalue": 2.168576101933123,
+          "physical_mass_min_eigenvalue": 0.12439048917834646
+        }
+      },
+      "normalized_step_defect_max": {
+        "linear": 2.1683158027444614e-13,
+        "path_angular": 5.754689865384666e-14,
+        "midpoint_angular": 5.1842537810105214e-14,
+        "exact_work_energy": 2.4452418837642184e-10,
+        "midpoint_work_energy": 2.4452557124984876e-10
+      },
+      "normalized_cumulative_defect_max": {
+        "linear": 1.6444487965112493e-12,
+        "path_angular": 4.550762771805565e-13,
+        "midpoint_angular": 4.098712938823299e-13,
+        "exact_work_energy": 1.0919243623174038e-09,
+        "midpoint_work_energy": 1.091935373003671e-09
+      },
+      "stage_load_map_errors_max": {
+        "force_map": 6.030751252745479e-17,
+        "load_spatial_jacobian": 5.026583579648491e-18,
+        "force_wrench": 1.1232158349780746e-16,
+        "moment_wrench": 2.4143948690644636e-17,
+        "scalar_line_potential": 4.0390985694857346e-17
+      },
+      "total_exact_physical_work_j": 0.0005345087788658763,
+      "total_midpoint_generalized_work_j": 0.0005345087788635709,
+      "total_actual_energy_change_j": 0.0005345090074852232,
+      "total_physical_energy_defect_j": 2.286193469779041e-10,
+      "max_midpoint_minus_exact_work_j": 2.8953619016225396e-16,
+      "max_scalar_work_error": 1.5653730687995473e-14,
+      "max_stage_residual": 2.8128288330945343e-13,
+      "max_endpoint_algebraic_residual": 1.8581584107714812e-15,
+      "max_elastic_witness_normalized": 7.846328095337765e-21,
+      "total_path_linear_impulse_n_s": [
+        0.0016416970087759926,
+        -0.0012312727565819942,
+        0.0008208485043879963
+      ],
+      "total_path_angular_impulse_nm_s": [
+        0.00038220302263738016,
+        -0.00026985614587917214,
+        -2.0002357950323766e-05
+      ],
+      "total_midpoint_angular_impulse_nm_s": [
+        0.00038220302272159876,
+        -0.0002698561458408107,
+        -2.0002358061218888e-05
+      ]
+    }
+  },
+  "prior_v1": "NOT_EXECUTED: preclone authority review blocker; snapshots preserved",
+  "limits": "Finite-pose one-element constant reference-measure dead spatial line force and couple; independently reviewed source; local tested, temporal implementation/evidence review pending; no public admission or fullC7 claim"
+}

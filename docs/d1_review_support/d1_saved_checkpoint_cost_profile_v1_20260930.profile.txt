@@ -1,0 +1,38 @@
+Wed Sep 30 09:25:33 2026    docs/d1_review_support/d1_saved_checkpoint_cost_profile_v1_20260930.pstats
+
+         159923603 function calls (145357999 primitive calls) in 78.526 seconds
+
+   Ordered by: cumulative time
+   List reduced from 10007 to 28 due to restriction <28>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+   1869/1    0.214    0.000   78.543   78.543 {built-in method builtins.exec}
+        1    0.000    0.000   78.543   78.543 docs/d1_review_support/d1_installed_entry.py:1(<module>)
+        1    0.000    0.000   78.528   78.528 docs/d1_review_support/d1_installed_entry.py:19(main)
+        1    0.000    0.000   76.930   76.930 <frozen runpy>:262(run_path)
+        1    0.000    0.000   76.928   76.928 <frozen runpy>:91(_run_module_code)
+        1    0.000    0.000   76.928   76.928 <frozen runpy>:65(_run_code)
+        1    0.001    0.001   76.928   76.928 docs\d1_review_support\d1_saved_checkpoint_roundtrip_dev.py:1(<module>)
+        1    0.004    0.004   76.928   76.928 docs\d1_review_support\d1_saved_checkpoint_roundtrip_dev.py:172(main)
+        2    0.004    0.002   76.574   38.287 docs\d1_review_support\d1_saved_checkpoint_roundtrip_dev.py:70(roundtrip_saved_checkpoint)
+     3994    0.027    0.000   63.992    0.016 C:\ANYworkspaceWork\general-contact-final-90baf01a\target\anysolver\current_state_tangent.py:1177(guard)
+     3994    1.524    0.000   63.965    0.016 C:\ANYworkspaceWork\general-contact-final-90baf01a\target\anysolver\current_state_tangent.py:878(_require_exact_qualified_component_lifecycle_api_implementation)
+     5556    0.005    0.000   63.292    0.011 C:\ANYworkspaceWork\general-contact-final-90baf01a\target\anysolver\nonlinear_restart.py:149(_checkpoint_observation_guard)
+       12    0.001    0.000   50.956    4.246 C:\ANYworkspaceWork\general-contact-final-90baf01a\target\anysolver\nonlinear_restart.py:624(model_configuration_fingerprint)
+       12    0.010    0.001   50.865    4.239 C:\ANYworkspaceWork\general-contact-final-90baf01a\target\anysolver\nonlinear_restart.py:478(model_configuration_descriptor)
+        6    0.004    0.001   44.821    7.470 C:\ANYworkspaceWork\general-contact-final-90baf01a\target\anysolver\nonlinear_restart.py:926(validate_nonlinear_checkpoint)
+        2    0.001    0.001   39.931   19.965 C:\ANYworkspaceWork\general-contact-final-90baf01a\target\anysolver\nonlinear_restart.py:704(create_nonlinear_checkpoint)
+   191712    2.353    0.000   38.122    0.000 C:\ANYworkspaceWork\general-contact-final-90baf01a\target\anysolver\current_state_tangent.py:688(_qualified_profile_api_failure)
+      708    0.010    0.000   24.591    0.035 C:\ANYworkspaceWork\general-contact-final-90baf01a\target\anysolver\nonlinear_restart.py:379(_object_payload)
+1454754/1410820    1.087    0.000   21.655    0.000 {built-in method builtins.sorted}
+12381530/1168303   14.423    0.000   21.600    0.000 C:\ANYworkspaceWork\general-contact-final-90baf01a\target\anysolver\e4_pl_s3_state.py:195(signature)
+601760/882    0.816    0.000   17.941    0.020 C:\ANYworkspaceWork\general-contact-final-90baf01a\target\anysolver\nonlinear_restart.py:165(_normalize_json)
+        2    0.001    0.000   12.551    6.276 C:\ANYworkspaceWork\general-contact-final-90baf01a\target\anysolver\nonlinear_restart.py:650(_state_records)
+   371784    0.149    0.000   12.164    0.000 {method 'extend' of 'list' objects}
+   127808    0.286    0.000   12.144    0.000 C:\ANYworkspaceWork\general-contact-final-90baf01a\target\anysolver\current_state_tangent.py:287(_validate_s3_v2d_serialization_authority)
+    47928    0.736    0.000   11.501    0.000 C:\ANYworkspaceWork\general-contact-final-90baf01a\target\anysolver\current_state_tangent.py:1029(<genexpr>)
+     7988    0.660    0.000   11.440    0.001 C:\ANYworkspaceWork\general-contact-final-90baf01a\target\anysolver\current_state_tangent.py:998(<genexpr>)
+ 10288544    6.502    0.000    9.302    0.000 C:\ANYworkspaceWork\general-contact-final-90baf01a\target\anysolver\current_state_tangent.py:860(lookup)
+    64480    1.409    0.000    7.868    0.000 C:\ANYworkspaceWork\general-contact-final-90baf01a\target\anysolver\e4_pl_element.py:1584(_validate_q4_serialization_authority)
+
+

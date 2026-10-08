@@ -1,0 +1,300 @@
+{
+  "status": "EXECUTED_DEVELOPMENT_STRICT_H_NONPASS",
+  "time_utc": "2026-10-07T08:23:37.087894+00:00",
+  "jobs": [
+    {
+      "tag": "nonprincipal_local_coarse_v2",
+      "resource": {
+        "status": "completed",
+        "exit_code": 1,
+        "elapsed_s": 29.178968400112353,
+        "peak_tree_bytes": 169783296,
+        "cap_s": 60.0,
+        "spent_before_s": 0,
+        "total_spent_s": 29.178968400112353
+      },
+      "command": [
+        "C:\\Python\\Python314\\python.exe",
+        "-X",
+        "utf8",
+        "-c",
+        "import sys,os,json,hashlib\nfrom pathlib import Path\nimport anysolver, pytest\ntry:\n class CaseRecord:\n  def pytest_runtest_logreport(self, report):\n   directory=Path(os.environ['C7_CASES']);directory.mkdir(exist_ok=True)\n   key=hashlib.sha256((report.nodeid+report.when).encode()).hexdigest()[:20]\n   row={'nodeid':report.nodeid,'phase':report.when,'outcome':report.outcome,'pytest_duration_s':report.duration,'failure':str(report.longrepr) if report.failed else None}\n   (directory/(key+'.json')).write_text(json.dumps(row,indent=2))\n rc=pytest.main(sys.argv[1:],plugins=[CaseRecord()])\nfinally:\n rows={n:{'path':str(Path(m.__file__).resolve()),'sha256':hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()} for n,m in list(sys.modules.items()) if (n=='anysolver' or n.startswith('anysolver.')) and getattr(m,'__file__',None)}\n errors=[n for n,r in rows.items() if not Path(r['path']).is_relative_to(Path(os.environ['C7_EXPECTED_ROOT']))]\n Path(os.environ['C7_IMPORTS']).write_text(json.dumps({'modules':rows,'errors':errors},indent=2))\nraise SystemExit(rc or bool(errors))\n",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "-p",
+        "scripts.development_test_runtime",
+        "--durations=3",
+        "--basetemp=C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_local_coarse_v2\\temp",
+        "tests/test_ge_beam3_native_nonprincipal.py::test_nonprincipal_closed_spatial_work_inertia_and_geodesic_trace",
+        "tests/test_ge_beam3_native_nonprincipal.py::test_public_nonprincipal_nonlinear_midpoint_and_finite_angle",
+        "-o",
+        "pythonpath="
+      ],
+      "cap_s": 60.0,
+      "mode": "TEST",
+      "input_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_local_coarse_v2\\inputs.json",
+      "runtime_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_local_coarse_v2\\runtime.json",
+      "imports_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_local_coarse_v2\\imports.json",
+      "log_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_local_coarse_v2\\run.log",
+      "runtime": {
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "errors": []
+      },
+      "import_count": 196,
+      "import_errors": [],
+      "call_outcomes": [
+        {
+          "nodeid": "tests/test_ge_beam3_native_nonprincipal.py::test_nonprincipal_closed_spatial_work_inertia_and_geodesic_trace",
+          "outcome": "passed"
+        },
+        {
+          "nodeid": "tests/test_ge_beam3_native_nonprincipal.py::test_public_nonprincipal_nonlinear_midpoint_and_finite_angle",
+          "outcome": "failed"
+        }
+      ]
+    },
+    {
+      "tag": "nonprincipal_coarse_replay_v3b",
+      "resource": {
+        "status": "completed",
+        "exit_code": 1,
+        "elapsed_s": 5.143309099948965,
+        "peak_tree_bytes": 171102208,
+        "cap_s": 60.0,
+        "spent_before_s": 29.178968400112353,
+        "total_spent_s": 34.32227750006132
+      },
+      "command": [
+        "C:\\Python\\Python314\\python.exe",
+        "-X",
+        "utf8",
+        "-c",
+        "import sys,os,json,hashlib\nfrom pathlib import Path\nimport anysolver, pytest\ntry:\n class CaseRecord:\n  def pytest_runtest_logreport(self, report):\n   directory=Path(os.environ['C7_CASES']);directory.mkdir(exist_ok=True)\n   key=hashlib.sha256((report.nodeid+report.when).encode()).hexdigest()[:20]\n   row={'nodeid':report.nodeid,'phase':report.when,'outcome':report.outcome,'pytest_duration_s':report.duration,'failure':str(report.longrepr) if report.failed else None}\n   (directory/(key+'.json')).write_text(json.dumps(row,indent=2))\n rc=pytest.main(sys.argv[1:],plugins=[CaseRecord()])\nfinally:\n rows={n:{'path':str(Path(m.__file__).resolve()),'sha256':hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()} for n,m in list(sys.modules.items()) if (n=='anysolver' or n.startswith('anysolver.')) and getattr(m,'__file__',None)}\n errors=[n for n,r in rows.items() if not Path(r['path']).is_relative_to(Path(os.environ['C7_EXPECTED_ROOT']))]\n Path(os.environ['C7_IMPORTS']).write_text(json.dumps({'modules':rows,'errors':errors},indent=2))\nraise SystemExit(rc or bool(errors))\n",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "-p",
+        "scripts.development_test_runtime",
+        "--durations=3",
+        "--basetemp=C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_coarse_replay_v3b\\temp",
+        "tests/test_ge_beam3_native_nonprincipal.py::test_public_nonprincipal_nonlinear_midpoint_and_finite_angle",
+        "-o",
+        "pythonpath="
+      ],
+      "cap_s": 60.0,
+      "mode": "TEST",
+      "input_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_coarse_replay_v3b\\inputs.json",
+      "runtime_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_coarse_replay_v3b\\runtime.json",
+      "imports_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_coarse_replay_v3b\\imports.json",
+      "log_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_coarse_replay_v3b\\run.log",
+      "runtime": {
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "errors": []
+      },
+      "import_count": 196,
+      "import_errors": [],
+      "call_outcomes": [
+        {
+          "nodeid": "tests/test_ge_beam3_native_nonprincipal.py::test_public_nonprincipal_nonlinear_midpoint_and_finite_angle",
+          "outcome": "failed"
+        }
+      ]
+    },
+    {
+      "tag": "nonprincipal_temporal_v3b",
+      "resource": {
+        "status": "completed",
+        "exit_code": 1,
+        "elapsed_s": 39.95086780004203,
+        "peak_tree_bytes": 171397120,
+        "cap_s": 60.0,
+        "spent_before_s": 34.32227750006132,
+        "total_spent_s": 74.27314530010335
+      },
+      "command": [
+        "C:\\Python\\Python314\\python.exe",
+        "-X",
+        "utf8",
+        "-c",
+        "import sys,os,json,hashlib\nfrom pathlib import Path\nimport anysolver, pytest\ntry:\n class CaseRecord:\n  def pytest_runtest_logreport(self, report):\n   directory=Path(os.environ['C7_CASES']);directory.mkdir(exist_ok=True)\n   key=hashlib.sha256((report.nodeid+report.when).encode()).hexdigest()[:20]\n   row={'nodeid':report.nodeid,'phase':report.when,'outcome':report.outcome,'pytest_duration_s':report.duration,'failure':str(report.longrepr) if report.failed else None}\n   (directory/(key+'.json')).write_text(json.dumps(row,indent=2))\n rc=pytest.main(sys.argv[1:],plugins=[CaseRecord()])\nfinally:\n rows={n:{'path':str(Path(m.__file__).resolve()),'sha256':hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()} for n,m in list(sys.modules.items()) if (n=='anysolver' or n.startswith('anysolver.')) and getattr(m,'__file__',None)}\n errors=[n for n,r in rows.items() if not Path(r['path']).is_relative_to(Path(os.environ['C7_EXPECTED_ROOT']))]\n Path(os.environ['C7_IMPORTS']).write_text(json.dumps({'modules':rows,'errors':errors},indent=2))\nraise SystemExit(rc or bool(errors))\n",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "-p",
+        "scripts.development_test_runtime",
+        "--durations=3",
+        "--basetemp=C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_temporal_v3b\\temp",
+        "tests/test_ge_beam3_native_nonprincipal.py::test_public_nonprincipal_temporal_reference_and_refinement",
+        "-o",
+        "pythonpath="
+      ],
+      "cap_s": 60.0,
+      "mode": "TEST",
+      "input_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_temporal_v3b\\inputs.json",
+      "runtime_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_temporal_v3b\\runtime.json",
+      "imports_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_temporal_v3b\\imports.json",
+      "log_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_temporal_v3b\\run.log",
+      "runtime": {
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "errors": []
+      },
+      "import_count": 196,
+      "import_errors": [],
+      "call_outcomes": [
+        {
+          "nodeid": "tests/test_ge_beam3_native_nonprincipal.py::test_public_nonprincipal_temporal_reference_and_refinement",
+          "outcome": "failed"
+        }
+      ]
+    },
+    {
+      "tag": "nonprincipal_restart_v3b",
+      "resource": {
+        "status": "completed",
+        "exit_code": 0,
+        "elapsed_s": 24.747751099988818,
+        "peak_tree_bytes": 171405312,
+        "cap_s": 60.0,
+        "spent_before_s": 74.27314530010335,
+        "total_spent_s": 99.02089640009217
+      },
+      "command": [
+        "C:\\Python\\Python314\\python.exe",
+        "-X",
+        "utf8",
+        "-c",
+        "import sys,os,json,hashlib\nfrom pathlib import Path\nimport anysolver, pytest\ntry:\n class CaseRecord:\n  def pytest_runtest_logreport(self, report):\n   directory=Path(os.environ['C7_CASES']);directory.mkdir(exist_ok=True)\n   key=hashlib.sha256((report.nodeid+report.when).encode()).hexdigest()[:20]\n   row={'nodeid':report.nodeid,'phase':report.when,'outcome':report.outcome,'pytest_duration_s':report.duration,'failure':str(report.longrepr) if report.failed else None}\n   (directory/(key+'.json')).write_text(json.dumps(row,indent=2))\n rc=pytest.main(sys.argv[1:],plugins=[CaseRecord()])\nfinally:\n rows={n:{'path':str(Path(m.__file__).resolve()),'sha256':hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()} for n,m in list(sys.modules.items()) if (n=='anysolver' or n.startswith('anysolver.')) and getattr(m,'__file__',None)}\n errors=[n for n,r in rows.items() if not Path(r['path']).is_relative_to(Path(os.environ['C7_EXPECTED_ROOT']))]\n Path(os.environ['C7_IMPORTS']).write_text(json.dumps({'modules':rows,'errors':errors},indent=2))\nraise SystemExit(rc or bool(errors))\n",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "-p",
+        "scripts.development_test_runtime",
+        "--durations=3",
+        "--basetemp=C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_restart_v3b\\temp",
+        "tests/test_ge_beam3_native_nonprincipal.py::test_public_nonprincipal_fresh_four_equals_two_plus_two",
+        "-o",
+        "pythonpath="
+      ],
+      "cap_s": 60.0,
+      "mode": "TEST",
+      "input_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_restart_v3b\\inputs.json",
+      "runtime_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_restart_v3b\\runtime.json",
+      "imports_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_restart_v3b\\imports.json",
+      "log_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_restart_v3b\\run.log",
+      "runtime": {
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "errors": []
+      },
+      "import_count": 196,
+      "import_errors": [],
+      "call_outcomes": [
+        {
+          "nodeid": "tests/test_ge_beam3_native_nonprincipal.py::test_public_nonprincipal_fresh_four_equals_two_plus_two",
+          "outcome": "passed"
+        }
+      ]
+    },
+    {
+      "tag": "nonprincipal_cli_v3b",
+      "resource": {
+        "status": "completed",
+        "exit_code": 0,
+        "elapsed_s": 20.128917300025932,
+        "peak_tree_bytes": 151244800,
+        "cap_s": 40.0,
+        "spent_before_s": 99.02089640009217,
+        "total_spent_s": 119.1498137001181
+      },
+      "command": [
+        "C:\\Python\\Python314\\python.exe",
+        "-X",
+        "utf8",
+        "-c",
+        "import os,runpy,json,sys,hashlib\nfrom pathlib import Path\nfrom threadpoolctl import threadpool_limits,threadpool_info\nimport numba\nnumba.set_num_threads(1)\nwith threadpool_limits(limits=1):\n try:\n  runpy.run_module('examples.native_nonprincipal_dev',run_name='__main__')\n finally:\n  rows={n:{'path':str(Path(m.__file__).resolve()),'sha256':hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()} for n,m in list(sys.modules.items()) if (n=='anysolver' or n.startswith('anysolver.')) and getattr(m,'__file__',None)}\n  errors=[n for n,r in rows.items() if not Path(r['path']).is_relative_to(Path(os.environ['C7_EXPECTED_ROOT']))]\n  pools=threadpool_info()\n  if not numba.config.DISABLE_JIT or numba.get_num_threads()!=1 or any(p['num_threads']!=1 for p in pools):\n   errors.append('effective numerical settings differ from held runtime')\n  Path(os.environ['C7_IMPORTS']).write_text(json.dumps({'modules':rows,'errors':errors},indent=2))\n  Path(os.environ['ANYSOLVER_DEVELOPMENT_RECORD']).write_text(json.dumps({'jit_disabled':bool(numba.config.DISABLE_JIT),'numba_threads':numba.get_num_threads(),'pools':pools,'errors':errors},indent=2))\n if errors:raise SystemExit(1)\n",
+        "--steps",
+        "4"
+      ],
+      "cap_s": 40.0,
+      "mode": "EXAMPLE",
+      "input_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_cli_v3b\\inputs.json",
+      "runtime_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_cli_v3b\\runtime.json",
+      "imports_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_cli_v3b\\imports.json",
+      "log_path": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\nonprincipal_cli_v3b\\run.log",
+      "runtime": {
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1,
+          1
+        ],
+        "errors": []
+      },
+      "import_count": 196,
+      "import_errors": [],
+      "call_outcomes": []
+    }
+  ],
+  "total_authorized_s": 240,
+  "total_spent_s": 119.1498137001181,
+  "remaining_s": 120.8501862998819,
+  "guard_attempts": 0,
+  "source": [
+    {
+      "path": "examples/native_nonprincipal_reference.py",
+      "bytes": 9461,
+      "sha256": "6cd821b3ccc49aa73892b9704e541627511fc25b5c4f9f8fe4688ad96ffb8bfb",
+      "whitespace": "PASS",
+      "EOF": "PASS",
+      "AST": "PASS_SOURCE_PARSE_ONLY"
+    },
+    {
+      "path": "examples/native_nonprincipal_dev.py",
+      "bytes": 2403,
+      "sha256": "93fc94c55c507b0247910d8719d15d48083263e61246d3d560fb29983f4cd480",
+      "whitespace": "PASS",
+      "EOF": "PASS",
+      "AST": "PASS_SOURCE_PARSE_ONLY"
+    },
+    {
+      "path": "tests/test_ge_beam3_native_nonprincipal.py",
+      "bytes": 24118,
+      "sha256": "9b3e727538dae82cb61d1b62c165558ae249201a02efee651129fc9042fc6d49",
+      "whitespace": "PASS",
+      "EOF": "PASS",
+      "AST": "PASS_SOURCE_PARSE_ONLY"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_NATIVE_NONPRINCIPAL_DEV.md",
+      "bytes": 13080,
+      "sha256": "70ddc97bde826626b1e00f8b18ba88d3754c0a0f3575974913148cd24cb2840e",
+      "whitespace": "PASS",
+      "EOF": "PASS"
+    }
+  ],
+  "product_changed": false,
+  "numerical_job_live": false,
+  "additional_runs_planned": false,
+  "postexecution_guide_updated": true
+}

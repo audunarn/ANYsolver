@@ -1,0 +1,198 @@
+{
+  "scope": "two curved physical-fibre beams / one deformable S3 interior; tested development, not independently accepted",
+  "source_parent": "30d6a215",
+  "core_wheel_sha256": "51f988cf3be490af2498fc8a4009e51316a637a99ba3bebc513a9192deb0da30",
+  "production_files_matched": 526,
+  "source_config": "Source example/test use installed unchanged core; full-run preflight hashes retained in raw inputs; later CLI-only edits do not change analysis definitions.",
+  "current_files_sha256": {
+    "examples\\general_contact_native_curved_material_s3.py": "70cb58ede7c4c41b2408da541a1a77dc8671f2e8979a1c5c437f7d9f0bb8a346",
+    "tests\\test_general_contact_native_two_fibre_s3.py": "95a3c128e99e14a5fe8c0c1f9b9f274c72c8847287eada5c8dbbbf1f0054581b",
+    "tests\\data\\general_contact_native_fibre_s3_plastic_two_beams_v1.checkpoint": "a8211bce3cf3468fa2c4f10328b031b635f88bb240f9fee0bdb98b09653282da"
+  },
+  "runs": {
+    "source_two_beam_local": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 2.680013000033796,
+        "peak_bytes": 182841344
+      },
+      "import_count": 219,
+      "import_errors": []
+    },
+    "source_two_beam_local_supported": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 11.981648200075142,
+        "peak_bytes": 188760064
+      },
+      "import_count": 219,
+      "import_errors": []
+    },
+    "source_two_beam_saved_partial_pose": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 2.663317099912092,
+        "peak_bytes": 182927360
+      },
+      "import_count": 219,
+      "import_errors": []
+    },
+    "source_two_beam_saved_partial_owned": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 5.277372100041248,
+        "peak_bytes": 183160832
+      },
+      "import_count": 219,
+      "import_errors": []
+    },
+    "source_two_beam_adaptive_reference": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 8.249260000069626,
+        "peak_bytes": 182620160
+      },
+      "import_count": 218,
+      "import_errors": [],
+      "actual_result.json-two-beam-local.json": {
+        "count": 84,
+        "shared_target": 92,
+        "directional_errors": [
+          2.060357579956316e-08,
+          5.225246765876858e-09
+        ],
+        "independent_virtual_work_errors": [
+          1.2492929902244295e-07,
+          3.135916060330073e-08
+        ]
+      }
+    },
+    "installed_two_beam_actual": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 76.16746050002985,
+        "peak_bytes": 183566336
+      },
+      "import_count": 219,
+      "import_errors": [],
+      "actual_result.json-two-beam.json": {
+        "status": "completed",
+        "failure": null,
+        "completed": 1,
+        "candidates": 46,
+        "pair_evaluations": 39,
+        "reuse_hits": 27,
+        "trial_failures": [
+          {
+            "pair": "beam 2 / curved material / top",
+            "error": "ValueError: curved axial front bracket work uncertainty exceeds integration budget",
+            "integration": {
+              "root_brackets": [
+                {
+                  "cell": 1,
+                  "lower": 0.8194415497035163,
+                  "upper": 0.8194415606284389,
+                  "features": [
+                    2
+                  ],
+                  "representation_gap_m": 4.722709568835759e-13,
+                  "active_angular_width_bound": 2.19644570784909e-05,
+                  "angular_fallback": false,
+                  "representative_xi": 0.8194415551659776,
+                  "error_bounds": [
+                    5.781371053922195e-20,
+                    4.576170097200816e-15,
+                    1.0683189532483353e-06
+                  ],
+                  "enclosure_refinement": "declared_material_arc"
+                }
+              ],
+              "error_bounds": [
+                5.781371053922195e-20,
+                4.576170097200816e-15,
+                1.0683189532483353e-06
+              ]
+            }
+          }
+        ],
+        "material": {
+          "yielded": 16,
+          "dissipation_j": 3.924546008722069e-09
+        },
+        "equilibrium": [
+          1.8108684107205057e-12,
+          1.206123748038464e-16,
+          1.375261883540535e-12
+        ],
+        "checkpoint_sha256": "a8211bce3cf3468fa2c4f10328b031b635f88bb240f9fee0bdb98b09653282da",
+        "pair_force_z": [
+          0.005356865140302841,
+          0.003189510742750468
+        ]
+      }
+    },
+    "installed_two_beam_local_and_legacy": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 9.26913859997876,
+        "peak_bytes": 184377344
+      },
+      "import_count": 219,
+      "import_errors": [],
+      "actual_result.json-two-beam-local.json": {
+        "count": 84,
+        "shared_target": 92,
+        "directional_errors": [
+          2.060357579956316e-08,
+          5.225246765876858e-09
+        ],
+        "independent_virtual_work_errors": [
+          1.2492929902244295e-07,
+          3.135916060330073e-08
+        ]
+      }
+    },
+    "installed_two_beam_cli_recovery": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 3.3956012000562623,
+        "peak_bytes": 183144448
+      },
+      "import_count": 219,
+      "import_errors": []
+    },
+    "installed_two_beam_saved_wrench_gap": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 4.484364099917002,
+        "peak_bytes": 185708544
+      },
+      "import_count": 220,
+      "import_errors": [],
+      "actual_result.json-two-beam-recovery.json": {
+        "independent_gap_m": [
+          -6.379241209153021e-06,
+          -4.652081408549037e-06
+        ],
+        "normalized_force_balance": 3.3443798946244724e-10,
+        "normalized_moment_balance": 2.5324703561245787e-10,
+        "checkpoint_sha256": "a8211bce3cf3468fa2c4f10328b031b635f88bb240f9fee0bdb98b09653282da",
+        "element_ids": [
+          1,
+          2
+        ]
+      }
+    }
+  },
+  "review": "same-family supporting source review: fixed original-history equilibrium and per-beam participation assertions; exact legacy identity replay passes. Mistral cached unavailable, no reprobe.",
+  "remaining": "Multiple shell patches with physical fibres, beam-beam mechanics, spatial/enforcement breadth and independent native acceptance remain open; no dynamics/friction admission."
+}

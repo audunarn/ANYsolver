@@ -1,0 +1,42 @@
+{
+  "reference": "reports\\general_contact_d1_distributed_cycle_response_v1_formal_20260927.json",
+  "candidate": "distributed_24q4_free_target_tangent_dev",
+  "free_dofs": 110,
+  "pose_constraint_error_m": 0.0,
+  "pressure_replay_error_pa": 0.0,
+  "base_active_modes": 18,
+  "overlap_pair_branches": 48,
+  "mapped_contact_force_norm_n": 0.06051136370681047,
+  "runs": [
+    {
+      "step_m": 1e-06,
+      "branch_checks": {
+        "pressure_active": true,
+        "reference_support": true,
+        "overlap_signature": true,
+        "pair_derivatives": true
+      },
+      "smooth_branch": true,
+      "relative_coupled_error": 3.8336892928207135e-07,
+      "relative_mapped_contact_error": 3.8465170746627156e-07,
+      "coupled_action_n_per_m": 706.6528958301607,
+      "mapped_contact_action_n_per_m": 704.2962731999252
+    },
+    {
+      "step_m": 5e-07,
+      "branch_checks": {
+        "pressure_active": true,
+        "reference_support": true,
+        "overlap_signature": true,
+        "pair_derivatives": true
+      },
+      "smooth_branch": true,
+      "relative_coupled_error": 1.9168446468672339e-07,
+      "relative_mapped_contact_error": 1.9232585377909523e-07,
+      "coupled_action_n_per_m": 706.6528958302081,
+      "mapped_contact_action_n_per_m": 704.2962731999252
+    }
+  ],
+  "status": "passed_development",
+  "elapsed_seconds": 48.88062789995456
+}

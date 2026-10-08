@@ -1,0 +1,178 @@
+{
+  "scope": "D3 B2/B3 exterior capped-cylinder hemispherical-end point penalty development; not engineering acceptance",
+  "source_parent": "47d4ab19eb8156e9a51e098935f6d6972f12913b",
+  "source_files": {
+    "src/anysolver/general_contact/capped_cylinder.py": "36f866d91ae5afaa71e615bcff80c06a77f930a5f7ba7cb17bbbe4872ce0a31c",
+    "src/anysolver/general_contact/beam_end_topology.py": "0c795994cd9230905d924b7e4fbd9ad50804659775c656a00fee774cfa4785a3",
+    "src/anysolver/general_contact/beam_plane.py": "3e2f379a79c52d92253020c71430d1a5061eb78b3743aa4a01a4fcbdc881b011",
+    "src/anysolver/nonlinear_static.py": "4e05282f4a733eca0cf13275e180759a5a4aa6e6ff9414574e8fc99346ca90b7",
+    "tests/test_general_contact_capped_cylinder_endcaps.py": "cf4e73a5fd01569d2ba10ce80b5f5ac4518f50ef1866867cbe3da35679cdc425",
+    "examples/general_contact_beam_end_capped_cylinder.py": "b0aee30eb4e7c737a00edbf4b0bf1ccce3b758d18c388582eac6a586f1db7930"
+  },
+  "wheels": {
+    "anyfem-0.4.1-py3-none-any.whl": "e1df18bf8c0ad173ce659ea1a7665fba5415aa2712189f7303d9cc909176036e",
+    "anysolver-0.4.7-py3-none-any.whl": "0dc6bc06b37b1007f8eb740544054a0f684de06ec46fb0041e2a9d73058b8f88"
+  },
+  "runs": {
+    "endcaps_first": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 4.51652170001762,
+        "peak_bytes": 214503424
+      },
+      "outcomes": {
+        "failed": 12,
+        "passed": 1
+      }
+    },
+    "endcaps_cap_roots": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 3.4532537999912165,
+        "peak_bytes": 183418880
+      },
+      "outcomes": {
+        "passed": 13
+      }
+    },
+    "endcaps_complete_source": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 24.15240120003,
+        "peak_bytes": 336580608
+      },
+      "outcomes": {
+        "passed": 49,
+        "failed": 1
+      }
+    },
+    "endcaps_tool_discriminator": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 8.89694349997444,
+        "peak_bytes": 195096576
+      },
+      "outcomes": {
+        "failed": 1
+      }
+    },
+    "endcaps_activation_stage": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 13.612265699950512,
+        "peak_bytes": 222527488
+      },
+      "outcomes": {
+        "failed": 1
+      }
+    },
+    "seam_and_restart": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 14.452376200002618,
+        "peak_bytes": 197332992
+      },
+      "outcomes": {
+        "failed": 2,
+        "passed": 1
+      }
+    },
+    "seam_guard": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 2.2016658000065945,
+        "peak_bytes": 181317632
+      },
+      "outcomes": {
+        "passed": 2
+      }
+    },
+    "build": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 11.720523899944965,
+        "peak_bytes": 110403584
+      },
+      "outcomes": null
+    },
+    "install": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 3.829089800012298,
+        "peak_bytes": 101765120
+      },
+      "outcomes": null
+    },
+    "installed_final": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 29.848882299964316,
+        "peak_bytes": 337104896
+      },
+      "outcomes": {
+        "passed": 67
+      }
+    }
+  },
+  "installed_modules_matching": 209,
+  "installed_package_files_matching": 492,
+  "effective_jit_disabled": true,
+  "effective_numba_threads": 1,
+  "effective_pools": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "version": "0.3.31.188.0",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "version": "0.3.30",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "openmp",
+      "internal_api": "openmp",
+      "num_threads": 1,
+      "prefix": "vcomp",
+      "filepath": "C:\\Windows\\System32\\vcomp140.dll",
+      "version": null
+    }
+  ],
+  "prospective_activation_stage_work": {
+    "reported_j": 9.999500025026206e-06,
+    "stored_j": 9.999500025000418e-06,
+    "independent_history_j": 9.9995000243233e-06,
+    "relative_storage_error": 2.579005455035573e-12,
+    "target": 1e-06
+  },
+  "preserved_unaligned_work_nonpass": {
+    "reported_j": 9.99955843478796e-06,
+    "stored_j": 9.999500025000496e-06,
+    "independent_history_j": 9.999558434066394e-06,
+    "relative_storage_error": 5.841270795346186e-06,
+    "target": 1e-06
+  },
+  "raw_records": 63,
+  "raw_sha256": "bc9e2461556f9e5a280aa2cb9d6559478a98b5783bf082d30fb046f56cf92efd",
+  "limits": "180s/953MiB per process tree; additive line+endpoint point model; exterior only; active ownership and atomic feature seams reject; no dynamics/native/friction/application/engineering acceptance"
+}

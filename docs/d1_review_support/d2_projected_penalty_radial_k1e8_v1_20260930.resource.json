@@ -1,0 +1,17 @@
+{
+  "status": "time_limit_exceeded",
+  "exit_code": 15,
+  "elapsed_seconds": 900.0605029000144,
+  "peak_process_tree_memory_mb": 486.518784,
+  "time_limit_seconds": 900.0,
+  "memory_limit_bytes": 4000000000,
+  "command": [
+    "python",
+    "docs/d1_review_support/d2_projected_penalty_radial_dev.py",
+    "--normal-regularization",
+    "1e8",
+    "--output",
+    "docs/d1_review_support/d2_projected_penalty_radial_k1e8_v1_20260930.json"
+  ],
+  "log": "docs\\d1_review_support\\d2_projected_penalty_radial_k1e8_v1_20260930.log"
+}

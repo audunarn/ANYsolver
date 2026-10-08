@@ -1,0 +1,7 @@
+{
+  "status": "completed",
+  "failure_reason": null,
+  "accepted_steps": 1,
+  "has_restart_checkpoint": true,
+  "proposal_calls": 2
+}

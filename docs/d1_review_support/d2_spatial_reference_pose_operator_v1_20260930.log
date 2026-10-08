@@ -1,0 +1,2 @@
+candidate-only production evaluation; no physical commit
+{"status": "reference_candidate_evaluation_no_solve_no_commit", "error": "coupled spatial discriminator check failed", "elapsed_seconds": 4.625070500012953}

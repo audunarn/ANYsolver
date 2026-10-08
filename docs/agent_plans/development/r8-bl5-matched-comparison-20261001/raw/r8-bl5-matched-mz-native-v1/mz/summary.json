@@ -1,0 +1,101 @@
+{
+  "case": "mz",
+  "checks": {
+    "beam_physical_workmap_scaled": 7.105427357601002e-16,
+    "complete_domain_cuts_scaled": 9.524825372864144e-13,
+    "energy_work_relative": 4.576642772317838e-14,
+    "equilibrium_ratio": 1.240513589744923e-13,
+    "global_ground_applied_scaled": 9.526601729703542e-13,
+    "shell_physical_workmap_scaled": 7.105427357601002e-16,
+    "weak_gap": 7.66307507368314e-23
+  },
+  "classification": "fixed-mesh physical-reference development comparison",
+  "expected_wheel_sha256": "0c45666609355e654cb726a0e4e0780d386bccfaafef1209ffd994bdd3b9d09c",
+  "external_thread_scope": "Environment requests only; no effective OpenSees thread claim",
+  "field_errors": {
+    "beam": {
+      "combined_1m_relative_l2": 0.06633234044595836,
+      "component_error_squared": [
+        1.199802726881735e-19,
+        4.9715840943853197e-17,
+        1.155644354118844e-16,
+        5.872591395204256e-16,
+        5.934132183376147e-16,
+        2.930875556636808e-15
+      ],
+      "component_reference_squared": [
+        7.036959535583517e-17,
+        6.49146017285006e-14,
+        5.471793155289652e-14,
+        2.1211421812216e-14,
+        3.369146808788131e-13,
+        4.942092230153442e-13
+      ],
+      "component_units": "translations m; rotations rad; shell measure m2/beam measure m",
+      "denominator_floor": 1e-24,
+      "rotation_relative_l2": 0.06945402733222979,
+      "translation_relative_l2": 0.037171984577435556
+    },
+    "shell": {
+      "combined_1m_relative_l2": 0.04067946110526835,
+      "component_error_squared": [
+        1.5218917456949642e-19,
+        6.048302257477606e-18,
+        1.8276551069632938e-17,
+        4.268372021784501e-17,
+        7.77133806793572e-17,
+        1.1696004211192195e-16
+      ],
+      "component_reference_squared": [
+        2.6067821489637346e-16,
+        1.200875649447652e-14,
+        9.689864537358026e-15,
+        4.253029675518372e-15,
+        5.899865170335772e-14,
+        7.301433331634609e-14
+      ],
+      "component_units": "translations m; rotations rad; shell measure m2/beam measure m",
+      "denominator_floor": 1e-24,
+      "rotation_relative_l2": 0.041735668643308146,
+      "translation_relative_l2": 0.033386449210477974
+    }
+  },
+  "helper_sha256": {
+    "b3_e4_bl5_coherent_aggregation_dev.py": "9bd47696851110764486016f7d91f3de786818e87e4da88829dd76d5931f1fce",
+    "b3_e4_bl5_matched_mz_reference_dev.py": "6e1b3f25c2b479e1ade3700b57d996cef2f9709812a72108ce7e6a41e346293a",
+    "b3_e4_bl5_matched_reference_actions.py": "506c5259afddfab1872c50c2a2544a7cb706b4cf14e6e7c6b4771d80a0ff98cc",
+    "b3_e4_f03_bl5_opensees_line_reference.py": "5d3616e5fc6f198adc8c0442e01c27c5b7b719e73059f5088561d0027e826f47"
+  },
+  "identity_sha256": "907a27d169f59946e8eec19849f1b88f81dcbd1c971d0c289b21c5bd92c5bd5a",
+  "jit_disabled": true,
+  "limits": "No converged1% accuracy, locking, M2/F03 acceptance or equal discrete operators",
+  "model_fixture_path": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-staged-load-installed-v1\\fixtures\\test_stiffened_shell_l1_assembly_experimental.py",
+  "model_fixture_sha256": "0dd98b5a111e92e3cf46b8362c5afb35f9b01436da71a92a6812f9fb48d95b17",
+  "numba_threads": 1,
+  "pools": [
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.31.188.0"
+    },
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.30"
+    }
+  ],
+  "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+  "source_sha256": "92fa4515f1c61008f24bafe932e8fa2c50ea298903f2a1e5499e5be6c7dfaefb",
+  "status": "completed",
+  "work_relative_signed": 0.12747623304128924
+}

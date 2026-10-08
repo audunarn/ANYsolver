@@ -1,0 +1,687 @@
+{
+  "beam_free_dofs": 432,
+  "beam_half_cells": 24,
+  "cases": {
+    "p0_m4": {
+      "line_norm": {
+        "basis_integrals_m": [
+          0.02500000000000003,
+          0.024999999999999918,
+          0.02500000000000003,
+          0.02500000000000003
+        ],
+        "density_gram_ordering_defect": 2.710505071948774e-20,
+        "moment_to_force_equivalent_length_m": 0.1,
+        "physical_density_units": [
+          "N/m",
+          "N/m",
+          "N/m",
+          "Nm/m",
+          "Nm/m",
+          "Nm/m"
+        ]
+      },
+      "mixed_nnz": 350481,
+      "mixed_rows": 1886,
+      "norm_cases": {
+        "physical_traction_L2": {
+          "beta_min": 0.00276895759690946,
+          "constraint_euclidean": 8.697707601111738e-06,
+          "dual_shape": {
+            "adjacent_shape_roughness": 0.5814002432004359,
+            "inherited_dual_norm_sq_J": 0.019550856074076535,
+            "raw_force_and_width_scaled_moment_shape": [
+              [
+                0.000553526945255594,
+                -1.3584499668546568e-16,
+                0.16443960918000136,
+                -9.814937468266936e-16,
+                -0.3936364074270994,
+                -3.180696268503588e-16
+              ],
+              [
+                -0.0005494282625339079,
+                -1.8682377529732454e-17,
+                0.1322799324087515,
+                -4.1501543056111777e-16,
+                -1.0,
+                -1.9926373375240514e-16
+              ],
+              [
+                -0.0005578407965568015,
+                3.3381980719206213e-17,
+                -0.13215460372889842,
+                7.180521858060875e-16,
+                -0.9988097159943372,
+                -4.89089998641004e-16
+              ],
+              [
+                0.0005425940378966159,
+                1.473102761248092e-16,
+                -0.1633741639457087,
+                -1.2241461755131575e-15,
+                -0.39084008372161283,
+                -2.356582047922949e-16
+              ]
+            ],
+            "shape_scale_N_per_m": 15205789.97354878,
+            "traction_dual_norm_sq_J": 0.9972268797992644,
+            "traction_over_inherited_dual_norm_sq": 51.00681402496424
+          },
+          "metric_norm_sq": 1.0000000000000018,
+          "metric_shares": {
+            "beam_complementary": 3.993181015895458e-06,
+            "beam_kinematic": 1.9503762922884802e-05,
+            "line_dual": 0.9972268797992644,
+            "shell_chart_induced": 0.0,
+            "shell_physical": 0.0027496232567983535
+          },
+          "nearest_signed_eigenvalues": [
+            -0.00276895759690946,
+            -0.004983099704827546,
+            -0.009570825241638473,
+            0.015177029511279827,
+            -0.019258245658077187,
+            -0.021723642138109237
+          ],
+          "relative_eigen_residual": 5.1644379073168125e-12,
+          "work_J": -0.002761278944662461,
+          "work_transpose_J": -0.0027612789446624605
+        },
+        "pulled_full": {
+          "beta_min": 0.00040944890596017334,
+          "constraint_euclidean": 2.661389946216822e-13,
+          "dual_shape": {
+            "adjacent_shape_roughness": 1.7232294740516283,
+            "inherited_dual_norm_sq_J": 9.518207709474945e-10,
+            "raw_force_and_width_scaled_moment_shape": [
+              [
+                -5.176154015341886e-14,
+                -0.20824707722775262,
+                -6.113619618694728e-13,
+                0.02913381925046917,
+                1.5451714803049811e-12,
+                0.11570928293479786
+              ],
+              [
+                5.6619602896631395e-14,
+                0.09874640345724692,
+                -4.4866746935886445e-13,
+                -0.05519290281820822,
+                3.1997639748973516e-12,
+                -1.0
+              ],
+              [
+                -5.834001624964266e-14,
+                0.15140182522642473,
+                4.870091511031352e-13,
+                0.0023789903509771754,
+                3.4803467454858447e-12,
+                0.7500802654992564
+              ],
+              [
+                4.7637305369474805e-14,
+                -0.22982845714741,
+                -1.8462475131518023e-14,
+                0.024692286204454763,
+                -1.3120738418955474e-13,
+                0.030412923787138457
+              ]
+            ],
+            "shape_scale_N_per_m": 299.91621153094405,
+            "traction_dual_norm_sq_J": 1.1050894087260376e-08,
+            "traction_over_inherited_dual_norm_sq": 11.610267840929454
+          },
+          "metric_norm_sq": 1.0000000000000009,
+          "metric_shares": {
+            "beam_complementary": 3.38816080159395e-10,
+            "beam_kinematic": 3.9560612861230337e-10,
+            "line_dual": 9.518207709474945e-10,
+            "shell_chart_induced": 0.999860785108745,
+            "shell_physical": 0.00013921320501287903
+          },
+          "nearest_signed_eigenvalues": [
+            0.00040944890596017334,
+            0.0004179841441505638,
+            0.0006118675626042468,
+            0.0007308706172699765,
+            0.0008637334600034957,
+            0.0009679539483976782
+          ],
+          "relative_eigen_residual": 9.907765201051384e-14,
+          "work_J": 3.8972197332250287e-13,
+          "work_transpose_J": 3.8972197332685597e-13
+        },
+        "restricted_physical": {
+          "beta_min": 0.015211516027774988,
+          "constraint_euclidean": 1.3601449342979009e-08,
+          "dual_shape": {
+            "adjacent_shape_roughness": 0.874048568063662,
+            "inherited_dual_norm_sq_J": 0.0012933436183672074,
+            "raw_force_and_width_scaled_moment_shape": [
+              [
+                -0.08955505800881396,
+                -1.0064378315242177e-12,
+                -0.36000420453043647,
+                -4.642306793738058e-12,
+                1.0,
+                -2.0663386346045208e-12
+              ],
+              [
+                0.006132605669251968,
+                -1.0583317048511847e-13,
+                -0.024122800233810276,
+                2.3146371408824047e-13,
+                0.11735710914184828,
+                -1.450278253966876e-12
+              ],
+              [
+                -0.010843469636787407,
+                -2.998299549037911e-14,
+                0.010390910832495322,
+                -1.5263935351061243e-13,
+                0.09018860110411321,
+                -3.373532593727233e-13
+              ],
+              [
+                -0.013279892600009434,
+                9.920032337539263e-13,
+                0.0600640190046542,
+                -3.6375461754084182e-12,
+                0.1765045715575999,
+                -1.985896206742616e-12
+              ]
+            ],
+            "shape_scale_N_per_m": 979027.9221975089,
+            "traction_dual_norm_sq_J": 0.004625842655156155,
+            "traction_over_inherited_dual_norm_sq": 3.576654022537405
+          },
+          "metric_norm_sq": 1.0000000000002602,
+          "metric_shares": {
+            "beam_complementary": 0.012068928967008678,
+            "beam_kinematic": 0.9839054264104609,
+            "line_dual": 0.0012933436183672074,
+            "shell_chart_induced": 0.0,
+            "shell_physical": 0.0027323010044098092
+          },
+          "nearest_signed_eigenvalues": [
+            0.015211516027774988,
+            0.06353728939797205,
+            0.0837134297145246,
+            -0.12330156865121893,
+            0.1245575163767113,
+            0.13252745417884548
+          ],
+          "relative_eigen_residual": 1.2324135140684329e-11,
+          "work_J": 1.9673717180232983e-05,
+          "work_transpose_J": 1.9673717180227097e-05
+        }
+      },
+      "reference_gap_m_rad": 2.3672672832469767e-16,
+      "row_count": 24,
+      "row_rank": 24,
+      "row_tail_relative": [
+        0.5036593656865443,
+        0.36473993865519977,
+        0.3226906869445914,
+        0.23165647391326877,
+        0.22614013741457822,
+        0.2086755530606031
+      ],
+      "smooth_traction_control": {
+        "inherited_dual_norm_sq_J": 1.3605442176870745e-12,
+        "raw_force_N_per_m": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "traction_dual_norm_sq_J": 1.360544217687074e-12
+      },
+      "traction_norm": {
+        "law": "t=phi(x)/W [lambda_F+lambda_M cross (x-.95,y,0)]",
+        "max_centered_raw_work_row_relative_defect": 4.784010652485206e-17,
+        "max_exact_gram_quadrature_relative_defect": 5.377774176231996e-18,
+        "purpose": "independent dimensional L2 traction sensitivity; not H^-1/2, true E4 compliance, or F03 acceptance",
+        "raw_dual_units": [
+          "N/m",
+          "N/m",
+          "N/m",
+          "N/m^2",
+          "N/m^2",
+          "N/m^2"
+        ],
+        "scale_definition": "W^2/(E*t), fixed for all line spaces",
+        "scale_m3_per_N": 1.360544217687075e-12
+      }
+    },
+    "p0_m8": {
+      "line_norm": {
+        "basis_integrals_m": [
+          0.012499999999999959,
+          0.01250000000000007,
+          0.012499999999999959,
+          0.012499999999999959,
+          0.01250000000000007,
+          0.012499999999999959,
+          0.01250000000000007,
+          0.012499999999999959
+        ],
+        "density_gram_ordering_defect": -1.016438284170338e-20,
+        "moment_to_force_equivalent_length_m": 0.1,
+        "physical_density_units": [
+          "N/m",
+          "N/m",
+          "N/m",
+          "Nm/m",
+          "Nm/m",
+          "Nm/m"
+        ]
+      },
+      "mixed_nnz": 351121,
+      "mixed_rows": 1910,
+      "norm_cases": {
+        "physical_traction_L2": {
+          "beta_min": 3.5794479103627935e-05,
+          "constraint_euclidean": 3.251304648016104e-07,
+          "dual_shape": {
+            "adjacent_shape_roughness": 0.353346263716235,
+            "inherited_dual_norm_sq_J": 0.004966299953632645,
+            "raw_force_and_width_scaled_moment_shape": [
+              [
+                -0.00011005504934864864,
+                -9.465673936205563e-19,
+                -0.08846639709727226,
+                6.125831857344534e-17,
+                0.19281750893737643,
+                3.485846312696697e-18
+              ],
+              [
+                8.034376617820126e-05,
+                3.3301141573453455e-17,
+                -0.1795546396563427,
+                4.114770591299573e-17,
+                0.5633398711242003,
+                6.301407900980767e-17
+              ],
+              [
+                3.8714988674173496e-06,
+                -1.9738751171353857e-17,
+                -0.1609754599601531,
+                -7.156547589406284e-17,
+                0.8460566320830892,
+                -5.0550173483238823e-17
+              ],
+              [
+                2.4396660308365035e-05,
+                1.2279911890554057e-17,
+                -0.06332544864977709,
+                8.422213157363848e-17,
+                1.0,
+                3.372186345222415e-17
+              ],
+              [
+                3.3443535606661546e-05,
+                -4.8807191290593394e-18,
+                0.06332005708829247,
+                -1.8198946144193914e-17,
+                0.9999050024780073,
+                -1.520011479520544e-17
+              ],
+              [
+                -5.60476667545684e-06,
+                9.49987026978479e-20,
+                0.16094669840938036,
+                3.146711615989643e-17,
+                0.845903061651891,
+                2.9442995161283685e-17
+              ],
+              [
+                9.129056798127202e-05,
+                4.65775891887129e-18,
+                0.1794540889863432,
+                -4.387583833313895e-17,
+                0.5630190360777604,
+                -3.041227659074839e-17
+              ],
+              [
+                -0.0001166340525436485,
+                -2.1021966819476103e-17,
+                0.08832885812216888,
+                1.0683548468566567e-16,
+                0.19250244930539642,
+                4.9801256804370656e-17
+              ]
+            ],
+            "shape_scale_N_per_m": 32812684.68754925,
+            "traction_dual_norm_sq_J": 0.9999639160158249,
+            "traction_over_inherited_dual_norm_sq": 201.3498832837095
+          },
+          "metric_norm_sq": 1.0000000000000004,
+          "metric_shares": {
+            "beam_complementary": 4.539153153266746e-08,
+            "beam_kinematic": 2.922836654207085e-07,
+            "line_dual": 0.9999639160158249,
+            "shell_chart_induced": 0.0,
+            "shell_physical": 3.574630897865709e-05
+          },
+          "nearest_signed_eigenvalues": [
+            -3.5794479103627935e-05,
+            -0.00014511552673645084,
+            -0.00033578676773555967,
+            -0.0006269438481285861,
+            -0.0010020112624912567,
+            -0.0015076055160328364
+          ],
+          "relative_eigen_residual": 8.151376102591142e-11,
+          "work_J": -3.5793187496209694e-05,
+          "work_transpose_J": -3.5793187496209715e-05
+        },
+        "pulled_full": {
+          "beta_min": 0.0004094510432584821,
+          "constraint_euclidean": 8.320401218732237e-13,
+          "dual_shape": {
+            "adjacent_shape_roughness": 1.6999013588516365,
+            "inherited_dual_norm_sq_J": 6.336219552241739e-09,
+            "raw_force_and_width_scaled_moment_shape": [
+              [
+                6.435939942373085e-14,
+                -0.24499341219053855,
+                2.901104034315014e-11,
+                -0.45932906092470266,
+                -6.328267715227267e-11,
+                0.34364076053508247
+              ],
+              [
+                -5.62899697186017e-14,
+                0.033332936398105716,
+                4.5832391069743975e-11,
+                0.39704352006646404,
+                -1.4495576086865428e-10,
+                -1.0
+              ],
+              [
+                -7.949216722111099e-14,
+                -0.008224831499026674,
+                2.7524862441350773e-11,
+                -0.20170805179056306,
+                -1.4656560151998055e-10,
+                0.27841951313483876
+              ],
+              [
+                4.4929012204745836e-14,
+                0.07256055490191732,
+                1.0265601973943877e-11,
+                0.2718760818381518,
+                -1.701644750959772e-10,
+                -0.396357934838624
+              ],
+              [
+                -2.0814986747135514e-16,
+                0.06491068103742001,
+                -6.914903292318931e-12,
+                0.1269015453612699,
+                -9.449856665093622e-11,
+                0.2880239751937105
+              ],
+              [
+                -2.035131479890921e-14,
+                0.02212898859306898,
+                -4.4085033847792664e-12,
+                -0.07955941818157511,
+                -1.897903322620341e-11,
+                -0.2662389351653953
+              ],
+              [
+                5.615031253228069e-14,
+                0.0776003228801771,
+                7.984739383404263e-12,
+                0.38383355937575697,
+                2.5061605202702985e-11,
+                0.7876971942210117
+              ],
+              [
+                -2.993517532616131e-14,
+                -0.3098096374907657,
+                4.1947190041359806e-12,
+                -0.43561956465526436,
+                9.104080572195886e-12,
+                -0.13044876847497114
+              ]
+            ],
+            "shape_scale_N_per_m": 1001.5553533921626,
+            "traction_dual_norm_sq_J": 1.3439211693881532e-07,
+            "traction_over_inherited_dual_norm_sq": 21.210142077742194
+          },
+          "metric_norm_sq": 0.9999999999999996,
+          "metric_shares": {
+            "beam_complementary": 5.594570320162298e-10,
+            "beam_kinematic": 6.801564205830104e-10,
+            "line_dual": 6.336219552241739e-09,
+            "shell_chart_induced": 0.9998607888118128,
+            "shell_physical": 0.0001392036123537175
+          },
+          "nearest_signed_eigenvalues": [
+            0.0004094510432584821,
+            0.00041798516475291406,
+            0.0006118837182397497,
+            0.0007308708038949699,
+            0.0008637338471500724,
+            0.0009680826879125737
+          ],
+          "relative_eigen_residual": 1.1540055655600413e-13,
+          "work_J": 2.59437170602954e-12,
+          "work_transpose_J": 2.5943717060280797e-12
+        },
+        "restricted_physical": {
+          "beta_min": 0.007142628015201683,
+          "constraint_euclidean": 1.0907597587848003e-06,
+          "dual_shape": {
+            "adjacent_shape_roughness": 0.34864231330767276,
+            "inherited_dual_norm_sq_J": 0.9929426933401686,
+            "raw_force_and_width_scaled_moment_shape": [
+              [
+                -0.00013828196448349543,
+                -5.558219259553328e-18,
+                -0.09291546592355798,
+                7.60729988382082e-17,
+                0.20265787207046448,
+                -2.557407334308332e-17
+              ],
+              [
+                0.00010765066602184647,
+                2.389378385286729e-17,
+                -0.18336022804664914,
+                -4.8626102539786915e-17,
+                0.5755920843844017,
+                9.710488554066903e-17
+              ],
+              [
+                -9.223123061762303e-06,
+                9.632568581979548e-18,
+                -0.16215308392426117,
+                -2.348290447236927e-16,
+                0.8527510686841051,
+                -8.462530572349381e-17
+              ],
+              [
+                3.848399430499146e-05,
+                -3.2884039319822715e-17,
+                -0.06329088683017561,
+                3.1621671475426804e-16,
+                1.0,
+                8.586366425330272e-17
+              ],
+              [
+                4.381174141215032e-05,
+                -3.837525379200897e-18,
+                0.06328938045294467,
+                1.611251109749536e-17,
+                0.9999832913493792,
+                1.4627845483151253e-17
+              ],
+              [
+                -1.4822268234149759e-05,
+                1.619046319972833e-17,
+                0.162155796500753,
+                -3.527534806635463e-17,
+                0.8527683711572713,
+                -3.643387421223387e-17
+              ],
+              [
+                0.00011427877893696578,
+                -1.04586331777294e-17,
+                0.18334313703358932,
+                -5.397019310742099e-18,
+                0.5755376741309799,
+                1.1740718019672499e-17
+              ],
+              [
+                -0.00014206556754530372,
+                -4.259881024925426e-18,
+                0.09288513346222795,
+                4.648985693340683e-17,
+                0.20258537695310522,
+                1.3274101771146148e-17
+              ]
+            ],
+            "shape_scale_N_per_m": 459778874.18073297,
+            "traction_dual_norm_sq_J": 199.1565309468141,
+            "traction_over_inherited_dual_norm_sq": 200.5720292647199
+          },
+          "metric_norm_sq": 0.9999999999999883,
+          "metric_shares": {
+            "beam_complementary": 6.955577065542888e-06,
+            "beam_kinematic": 1.5451589015526557e-05,
+            "line_dual": 0.9929426933401686,
+            "shell_chart_induced": 0.0,
+            "shell_physical": 0.007034899493738682
+          },
+          "nearest_signed_eigenvalues": [
+            -0.007142628015201683,
+            0.015237200001816173,
+            -0.01741904312943681,
+            -0.027616152481770743,
+            -0.03916505366750405,
+            -0.05140563412329201
+          ],
+          "relative_eigen_residual": 1.6695471888166832e-12,
+          "work_J": -0.0070922202989416976,
+          "work_transpose_J": -0.007092220298941697
+        }
+      },
+      "reference_gap_m_rad": 3.232993416167595e-16,
+      "row_count": 48,
+      "row_rank": 48,
+      "row_tail_relative": [
+        0.15350569411168782,
+        0.15254348043559637,
+        0.15180477724220806,
+        0.14277568005957186,
+        0.11678577126363493,
+        0.06727775930630206
+      ],
+      "smooth_traction_control": {
+        "inherited_dual_norm_sq_J": 1.3605442176870745e-12,
+        "raw_force_N_per_m": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "traction_dual_norm_sq_J": 1.3605442176870741e-12
+      },
+      "traction_norm": {
+        "law": "t=phi(x)/W [lambda_F+lambda_M cross (x-.95,y,0)]",
+        "max_centered_raw_work_row_relative_defect": 2.9876956475597737e-17,
+        "max_exact_gram_quadrature_relative_defect": 5.360427794162759e-18,
+        "purpose": "independent dimensional L2 traction sensitivity; not H^-1/2, true E4 compliance, or F03 acceptance",
+        "raw_dual_units": [
+          "N/m",
+          "N/m",
+          "N/m",
+          "N/m^2",
+          "N/m^2",
+          "N/m^2"
+        ],
+        "scale_definition": "W^2/(E*t), fixed for all line spaces",
+        "scale_m3_per_N": 1.360544217687075e-12
+      }
+    }
+  },
+  "classification": "same-primal exact-Schur P0 and norm sensitivity diagnostic; not F03/G0B acceptance",
+  "elapsed_s_not_benchmark": 75.7208030000038,
+  "layout": {
+    "cell_rotations": 72,
+    "complementary_min_diagonal_J_per_resultant_squared": 8.928571428883642e-12,
+    "free": 432,
+    "nodal": 150,
+    "resultants": 216
+  },
+  "limitations": [
+    "one fixed shell/beam model, not mesh-uniform stability",
+    "inherited dual norm is a diagnostic, not independently qualified",
+    "near mode alone does not measure locking or physical accuracy"
+  ],
+  "limits": {
+    "max_dense_rows": 1900,
+    "rss_bytes": 2147483648,
+    "wall_s": 120.0
+  },
+  "model": "C1 Q4 x16/y4 35 mm, B3-24 2 um tangent, fixed left roots",
+  "norms": {
+    "physical_traction_L2": "restricted physical primal metric plus independent finite-width L2 traction Gram; sensitivity only",
+    "pulled_full": "same metric with exact full shell chart norm pulled along static Schur lift",
+    "restricted_physical": "inherited physical shell+beam+P0 dual metric, excluding eliminated chart norm"
+  },
+  "numpy": "2.4.6",
+  "peak_rss_bytes": 488087552,
+  "pulled_chart_over_restricted_shell_norm_frobenius": 8.377498539834514,
+  "python": "3.14.2",
+  "question": "Does the P0-four/eight traction-norm change expose an oscillatory physical traction mode, or chiefly a norm conversion?",
+  "shell_drill_dofs_eliminated": 286,
+  "shell_physical_dofs": 1430,
+  "source_git": "e9751cd3ee8aa362cf6b3752e1cbf509802a3eb6",
+  "source_sha256": {
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b3_e4_f03_top_face_fixed_primal_spaces.py": "7b7579ce9bcd36699b8576703b6aa54c6713c74dbfba1de10c77f0c446984669",
+    "scripts\\_b3_e4_f03_native_fixture.py": "94d9e1a3532c3b2c061153e73942ccd73283eae0ef895b5ca4ef4014e5caa3fb",
+    "scripts\\b3_e4_f03_c1_native_mixed_metric.py": "9e5be04e9757b9ad365d0f89c74ee9027447dbf74773da43b9a4ced3ee47c390",
+    "scripts\\b3_e4_f03_common_trace_p0_metric.py": "66dd8055962b129d62c13b89c20e2c93b1bb58140d51909b62c1c32cb7d5d2e1",
+    "scripts\\b3_e4_f03_distributed_surface_finite.py": "2cedbdc73564d6ffee0efa54825065dd10cb02329ca505ef49815d636ccc7cca",
+    "scripts\\b3_e4_f03_local_footprint_work.py": "a16ba9a8cdab91a029952a2dab50757d0e87f962d60a1ec1a12b17c1417e1c0f",
+    "scripts\\b3_e4_f03_plate_patch_work.py": "61226436c029b6ebd80a7d63fb5b7038493fb29dfd06ee245fe3ca7fd78507ea",
+    "scripts\\b3_e4_f03_top_face_common_trace.py": "b9bde46d65cb764b409990d723682c3fa34f8f30a196eca04d600bf15eb0c963"
+  },
+  "thread_env": {
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_DISABLE_JIT": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "threadpool_info": [
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.31.188.0"
+    },
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.30"
+    }
+  ]
+}

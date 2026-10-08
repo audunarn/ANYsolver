@@ -1,0 +1,100 @@
+{
+  "prior_head": "a0fc4941c725fbbf45714bc6cb13bc38945f9bb7",
+  "owned_paths": [
+    {
+      "path": ".gitattributes",
+      "sha256": "c2355c781a2ea06ef52b83023c031b256d7409b8c3da6e7782f98a2b6302bcc0"
+    },
+    {
+      "path": "GENERAL_CONTACT_PLAN.md",
+      "sha256": "c36475c31aa5ced23ac8bf8620d0b9a0e4c1f7858a77d52f02703ee50d649a68"
+    },
+    {
+      "path": "GENERAL_CONTACT_RESTART.md",
+      "sha256": "743da2a108726146473827a29ed61188fc443fc0d8d56e86e62a6158cbe87ac3"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_CAPABILITIES.md",
+      "sha256": "4aadb268ccbdb2377d9a27d1e74b0888ebff883db43c52a925a5d0f4ce522667"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_NATIVE_DYNAMIC_DEVELOPMENT.md",
+      "sha256": "8640d88ad01bdcf56e6755c03b265d3877b0a69d885595bd411c4415b6deaf45"
+    },
+    {
+      "path": "docs/d1_review_support/D6_NATIVE_MIDPOINT_DEVELOPMENT_20260930.md",
+      "sha256": "a56c3eebd8eb4244a6c2f202446bc688a56317d679825e3826a109775d578d50"
+    },
+    {
+      "path": "docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART30.md",
+      "sha256": "74bb78cfdcfab862ee19374a89a2a4160c76e15501fecad927e6677200a6da21"
+    },
+    {
+      "path": "docs/d1_review_support/native_clamped_response_review_20261001.md",
+      "sha256": "1d30027b13593ebac1a7ba607c997094d8a341a2b29769c5fdc6ecec0f2a8ee4"
+    },
+    {
+      "path": "docs/d1_review_support/native_clamped_response_v1_20261001.disposition.json",
+      "sha256": "c972678a29129d453eabe3d59bc54f84ec9259172f9b6b60640ac5142bb8d4f7"
+    },
+    {
+      "path": "docs/d1_review_support/native_clamped_response_v1_20261001.inputs.json",
+      "sha256": "785573bc4b57b7496ab2d50f64348ff0acc386ccd8f885043f25b11d904ed9c4"
+    },
+    {
+      "path": "docs/d1_review_support/native_clamped_response_v1_20261001.log",
+      "sha256": "3e044f14bdcf9472728d22175b047425c5e4d306490cd0bd8ba8ee55389df100"
+    },
+    {
+      "path": "docs/d1_review_support/native_clamped_response_v1_20261001.proposal.json",
+      "sha256": "6bb521359e095118dd1078014ac45ee556cd12161921fb84db6b8b2ea05e1788"
+    },
+    {
+      "path": "docs/d1_review_support/native_clamped_response_v1_20261001.raw.json",
+      "sha256": "b68642d1cbe0be85d3ce493e8426056e634c8f7323269b7e2e9920e9c69f48a5"
+    },
+    {
+      "path": "docs/d1_review_support/native_clamped_response_v1_20261001.reference.source.py",
+      "sha256": "286d8bb381ea133a065b002c7e0d1577493dc20a8c41e7f91d53c3c05ac3b7e1"
+    },
+    {
+      "path": "docs/d1_review_support/native_clamped_response_v1_20261001.resources.json",
+      "sha256": "2e0bad13856eea8a284f4665e21a77583f20da6aea26e6f0961669438a398e5f"
+    },
+    {
+      "path": "docs/d1_review_support/native_clamped_response_v1_20261001.summary.json",
+      "sha256": "6329a06b656648ab20809c00ca5f334dcfea24d4c54d06a005d8dc8bc2ff2db0"
+    },
+    {
+      "path": "docs/d1_review_support/native_clamped_response_v1_20261001.test.source.py",
+      "sha256": "80be413e9215974a2c619bd0182dbe4e29a7032278c82b5238f73a99d761a9e5"
+    },
+    {
+      "path": "docs/d1_review_support/native_clamped_response_v1_20261001.xml",
+      "sha256": "527d6cab2210de1f4cfea5755a66ee2af4aa03507c589a5102d2e7efb874f45d"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_angle_refinement_design_20261001.md",
+      "sha256": "38be2ad0c5bb6dcaf5a2d7ea5787704aed9ad98205305fd8a8110495744b66ef"
+    },
+    {
+      "path": "docs/d1_review_support/native_finite_angle_review_20261001.md",
+      "sha256": "1cd24a83a5809f80771e4a1d8b5c7d120c91596200d8c813e94bc476133bc81e"
+    },
+    {
+      "path": "docs/d1_review_support/native_forced_response_checkpoint_commit_20261001.log",
+      "sha256": "8705eaf6febecc51e91a09aea9c0659d680ab1af99a8a3402bfe8e0ef0720b88"
+    },
+    {
+      "path": "docs/d1_review_support/native_temporal_development_freeze.py",
+      "sha256": "6cb9a9b6650f5f1a947b432e696f6f88b100b21640d1c1484ed40e9b504a900d"
+    },
+    {
+      "path": "docs/d1_review_support/native_temporal_development_summary.py",
+      "sha256": "503090e1e2bcd9bc872066cfca432235d8fd5db3b311fe3a8545fdcc03e386ed"
+    }
+  ],
+  "include_manifest_itself": true,
+  "source_changes": "none",
+  "active_exclusions": "native_finite_spin_step* author ownership; unrelated dirty files"
+}

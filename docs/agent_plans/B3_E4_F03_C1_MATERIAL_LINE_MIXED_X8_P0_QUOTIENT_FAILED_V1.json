@@ -1,0 +1,19 @@
+{
+  "classification": "private diagnostic implementation failure",
+  "status": "FAILED_BEFORE_MIXED_RESULT",
+  "source_git": "c29f9432",
+  "runner_sha256": "15cb8dff5666d37f89bf0e1c6227cddef78e6acf142904d35436c0b5172313a2",
+  "command": "python scripts/b3_e4_f03_c1_material_line_mixed_metric.py --shell-cells 8 --space-kind piecewise_constant --exact-drill-quotient --output docs/agent_plans/B3_E4_F03_C1_MATERIAL_LINE_MIXED_X8_P0_QUOTIENT_DEV_V1.json",
+  "failure_type": "ArithmeticError",
+  "failure_detail": "exact shell drilling quotient is asymmetric",
+  "diagnosis": {
+    "global_relative_quotient_skew": 2.953032247416072e-16,
+    "maximum_absolute_quotient_skew": 4.7540292143821716e-05,
+    "maximum_absolute_quotient_entry": 168637457443.66852,
+    "relative_full_physical_block_skew": 2.92385862925751e-16,
+    "relative_drilling_block_skew": 0.0,
+    "relative_cross_block_skew": 7.943372983048588e-17,
+    "interpretation": "An elementwise 1e-8 absolute symmetry check was inappropriate for a tangent with entries near 1e11; no mixed-system result was produced. Replace the diagnostic guard with a global relative skew check and retain the unaveraged tangent."
+  },
+  "authority": "private bounded development diagnostic; formal F03 execution authority unconsumed"
+}

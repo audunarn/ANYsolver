@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 22.889170399997965,
+  "peak_process_tree_memory_mb": 302.65344,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "docs/d1_review_support/d1_enforcement_current_route.py",
+    "docs/d1_review_support/d1_enforcement_nested_1_20260929.json",
+    "--enforcement",
+    "nested_augmented"
+  ],
+  "log": "docs\\d1_review_support\\d1_enforcement_nested_1_log_20260929.txt"
+}

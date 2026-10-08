@@ -1,0 +1,118 @@
+{
+  "review_kind": "SAME_FAMILY_SUPPORTING_SAVED_EVIDENCE_NO_EXECUTION",
+  "scope": "BOUNDED_CONNECTED_AXIAL_P1_DEFORMATION_DEV",
+  "candidate": "15d34aa340a7af1f8819fa9f40a5ddf9d3384b46",
+  "runs": [
+    {
+      "run": "deformation_work1",
+      "selection": [
+        "tests/test_ge_beam3_native_connected_deformation.py::test_independent_axial_mass_virtual_work_and_condensed_tangent"
+      ],
+      "exit_code": 0,
+      "elapsed_s": 17.264534100075252,
+      "peak_tree_bytes": 167325696,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "import_errors": [],
+      "runtime_errors": [],
+      "connected_owner_hash": "792e45e329341036eeb77ef035e588e01aa6bc41ae8e2404329b268e8b4813e1",
+      "connected_adapter_hash": "507246c5d049f053d202ba718954cebf84cc443e9fb3599a3b89102a307ad1c2",
+      "shared_controller_hash": "ed9352bfc4e883367b1c9712d997581391f579657075371c39920b8342042b45",
+      "cases": [
+        "tests/test_ge_beam3_native_connected_deformation.py::test_independent_axial_mass_virtual_work_and_condensed_tangent teardown passed",
+        "tests/test_ge_beam3_native_connected_deformation.py::test_independent_axial_mass_virtual_work_and_condensed_tangent setup passed",
+        "tests/test_ge_beam3_native_connected_deformation.py::test_independent_axial_mass_virtual_work_and_condensed_tangent call passed"
+      ]
+    },
+    {
+      "run": "deformation_response1",
+      "selection": [
+        "tests/test_ge_beam3_native_connected_deformation.py::test_public_axial_deformation_endpoint_stage_support_and_analytic_reference[4]"
+      ],
+      "exit_code": 0,
+      "elapsed_s": 14.319503600010648,
+      "peak_tree_bytes": 168710144,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "import_errors": [],
+      "runtime_errors": [],
+      "connected_owner_hash": "792e45e329341036eeb77ef035e588e01aa6bc41ae8e2404329b268e8b4813e1",
+      "connected_adapter_hash": "507246c5d049f053d202ba718954cebf84cc443e9fb3599a3b89102a307ad1c2",
+      "shared_controller_hash": "ed9352bfc4e883367b1c9712d997581391f579657075371c39920b8342042b45",
+      "cases": [
+        "tests/test_ge_beam3_native_connected_deformation.py::test_public_axial_deformation_endpoint_stage_support_and_analytic_reference[4] call passed",
+        "tests/test_ge_beam3_native_connected_deformation.py::test_public_axial_deformation_endpoint_stage_support_and_analytic_reference[4] teardown passed",
+        "tests/test_ge_beam3_native_connected_deformation.py::test_public_axial_deformation_endpoint_stage_support_and_analytic_reference[4] setup passed"
+      ]
+    },
+    {
+      "run": "deformation_restart1",
+      "selection": [
+        "tests/test_ge_beam3_native_connected_deformation.py::test_deforming_fresh_split_restart_preserves_full_journal[4]"
+      ],
+      "exit_code": 0,
+      "elapsed_s": 26.69080620002933,
+      "peak_tree_bytes": 168054784,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "import_errors": [],
+      "runtime_errors": [],
+      "connected_owner_hash": "792e45e329341036eeb77ef035e588e01aa6bc41ae8e2404329b268e8b4813e1",
+      "connected_adapter_hash": "507246c5d049f053d202ba718954cebf84cc443e9fb3599a3b89102a307ad1c2",
+      "shared_controller_hash": "ed9352bfc4e883367b1c9712d997581391f579657075371c39920b8342042b45",
+      "cases": [
+        "tests/test_ge_beam3_native_connected_deformation.py::test_deforming_fresh_split_restart_preserves_full_journal[4] setup passed",
+        "tests/test_ge_beam3_native_connected_deformation.py::test_deforming_fresh_split_restart_preserves_full_journal[4] teardown passed",
+        "tests/test_ge_beam3_native_connected_deformation.py::test_deforming_fresh_split_restart_preserves_full_journal[4] call passed"
+      ]
+    },
+    {
+      "run": "deformation_cli1",
+      "selection": [
+        "--steps",
+        "4"
+      ],
+      "exit_code": 0,
+      "elapsed_s": 14.77752290002536,
+      "peak_tree_bytes": 146407424,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1,
+        1
+      ],
+      "import_errors": [],
+      "runtime_errors": [],
+      "connected_owner_hash": "792e45e329341036eeb77ef035e588e01aa6bc41ae8e2404329b268e8b4813e1",
+      "connected_adapter_hash": "507246c5d049f053d202ba718954cebf84cc443e9fb3599a3b89102a307ad1c2",
+      "shared_controller_hash": "ed9352bfc4e883367b1c9712d997581391f579657075371c39920b8342042b45",
+      "cases": []
+    }
+  ],
+  "source_hash_matches": [
+    true,
+    true,
+    true,
+    true
+  ],
+  "declared_elapsed_sum_s": 73.05236680014059,
+  "authority_s": 180,
+  "response_and_restart_full_checkpoint_sha256": "0aede56a5f5e494e80239d8774e2d4d4f3263a3fb6ec94728bc4fa3871564de5",
+  "prefix_checkpoint_sha256": "ec2a86bf274749974282b39693cc51d0e3a8e6c899e53ff80feebdbc08e76099",
+  "remaining_consequential_blockers": [],
+  "formal_engineering_acceptance": false,
+  "reference_recomputed": false
+}

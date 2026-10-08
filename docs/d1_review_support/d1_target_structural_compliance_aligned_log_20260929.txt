@@ -1,0 +1,9 @@
+{
+  "status": "development_target_only_structural_compliance",
+  "elapsed_seconds": [
+    0.029017899993050378,
+    0.02584509999724105,
+    0.06496049999987008,
+    0.2564286999986507
+  ]
+}

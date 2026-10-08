@@ -1,0 +1,62 @@
+{
+  "id": "C5_PARTIAL_REPLAY_STAGE_MOMENTS_FULL_V1_20261002",
+  "status": "failed: explicit ordinary stage construction cap during reversal commit control",
+  "resource": {
+    "peak_sampled_bytes": 241295360,
+    "limit_mib": 953,
+    "elapsed_seconds": 533.8853029000456,
+    "status": "terminal",
+    "child_exit_codes": [
+      1
+    ]
+  },
+  "pytest_seconds": 532.26,
+  "test_call_seconds": 527.24,
+  "accepted_history_frames": 2,
+  "location": "prepare_commit -> _integrate(full=True,level=integration_refinement+1) -> _step_events -> _stage_frames",
+  "cap": 4096,
+  "source_bindings_verified": true,
+  "authority_consumed": true,
+  "full_workflow_completed": false,
+  "restart_completed": false,
+  "last_completed_evaluations": [
+    {
+      "seconds": 45.81313769996632,
+      "frames": 2,
+      "tangent": true,
+      "total_evaluations": 426,
+      "cached_frames": 4096
+    },
+    {
+      "seconds": 147.02947039995342,
+      "frames": 2,
+      "tangent": true,
+      "total_evaluations": 472,
+      "cached_frames": 4096
+    },
+    {
+      "seconds": 115.30291689996375,
+      "frames": 2,
+      "tangent": true,
+      "total_evaluations": 518,
+      "cached_frames": 4096
+    },
+    {
+      "seconds": 112.28733409999404,
+      "frames": 2,
+      "tangent": true,
+      "total_evaluations": 564,
+      "cached_frames": 4096
+    },
+    {
+      "seconds": 12.262833099986892,
+      "frames": 2,
+      "tangent": false,
+      "total_evaluations": 566,
+      "cached_frames": 4096
+    }
+  ],
+  "saved_candidate": "docs\\d1_review_support\\contact_c5_s3_partial_replay_20261002\\stage_moments_full_v1_last_tangent_candidate.json",
+  "saved_candidate_scope": "Last evaluated tangent input and accepted two-frame physical history, not guaranteed identical to the final accepted_u passed to prepare_commit.",
+  "decision": "Do not rerun full workflow or increase cap automatically. Isolate full-domain commit control on retained pose; investigate genuine prepared partial-stage geometry with explicit unchanged ordinary fallback and bounded prepared work."
+}

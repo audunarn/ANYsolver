@@ -1,0 +1,62 @@
+{
+  "status": "development_independent_contact_nonlinear_kkt",
+  "source_commit": "22a0334d0a501eff5dd0431ead67f3039d86cb15",
+  "command": "python docs/d1_review_support/d1_two_body_nonlinear_kkt_compare.py",
+  "saved_source_sha256": "ef69c6d174c3c189fc1d3f1f3fe809f5182b5f5b0799abffcfd1330290050311",
+  "current_skin_oracle_source_sha256": "f1b568bfc436f07f460388b4500527aaf99266ea7435491cac2adf726d12f5c5",
+  "python": "3.14.2",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "active_pressure_modes": [
+    3,
+    8
+  ],
+  "free_structural_coordinates": 28,
+  "geometry_evaluations": 355,
+  "gradient_evaluations": 7,
+  "gradient_step_sensitivity": {
+    "directions": 30,
+    "resolved_columns_at_norm_1e_minus_4": 10,
+    "maximum_half_vs_nominal_absolute_difference": 8.179309338203327e-12,
+    "maximum_double_vs_nominal_absolute_difference": 3.325414365016746e-11,
+    "maximum_half_vs_nominal_resolved_relative_difference": 1.3829531800055373e-11,
+    "maximum_double_vs_nominal_resolved_relative_difference": 5.5940396815581083e-11,
+    "minimum_nominal_column_norm": 0.0,
+    "maximum_nominal_column_norm": 1.0987905046684479
+  },
+  "elapsed_seconds": 9.706440300000395,
+  "trace": [
+    {
+      "iteration": 0,
+      "scaled_merit": 0.00010610271049077397,
+      "force_residual_norm_n": 3.182531077532343e-05,
+      "active_gap_norm_m": 9.863789953547067e-11,
+      "minimum_active_force_n": 4.0556221889079e-06
+    },
+    {
+      "iteration": 1,
+      "scaled_merit": 2.0467196244171816e-12,
+      "force_residual_norm_n": 6.14002253889978e-13,
+      "active_gap_norm_m": 6.819519721563856e-19,
+      "minimum_active_force_n": 4.055434284903684e-06
+    }
+  ],
+  "final_scaled_merit": 2.0467196244171816e-12,
+  "minimum_inactive_gap_m": 2.6238579697279624e-06,
+  "relative_pressure_l2_difference": 1.4111731830165154e-08,
+  "relative_nodal_force_l2_difference": 1.4651269992383203e-08,
+  "maximum_displacement_difference_m_or_rad": 6.180630009525179e-16,
+  "relative_displacement_l2_difference": 8.182520807509074e-15,
+  "integrated_normal_force_n": 0.0001517337079878402,
+  "production_integrated_normal_force_n": 0.00015173370888638138,
+  "relative_integrated_force_difference": 5.921829608261031e-09,
+  "independent_control_reaction_n": [
+    -4.10187039762935e-09,
+    -3.6076149888827683e-09
+  ],
+  "production_recovered_control_reaction_n": [
+    -4.1018701505138165e-09,
+    -3.6076147000717273e-09
+  ],
+  "control_reaction_relative_l2_difference": 6.958244546222497e-08
+}

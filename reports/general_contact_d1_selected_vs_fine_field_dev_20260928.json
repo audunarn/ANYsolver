@@ -1,0 +1,29 @@
+{
+  "method": "exact common-Q1 L2 over x=[0,1], y=[0,0.9]",
+  "selected_source": {
+    "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\reports\\general_contact_d1_structure128_selected_front8_field_dev_20260928.json",
+    "sha256": "0c71c905f5eca00796e6c18e08121ff7995d9feed972ea337e53ff45eba5d8d4"
+  },
+  "fine_source": {
+    "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\reports\\general_contact_d1_structure128_pressure128_field_dev_20260928.json",
+    "sha256": "79ebca0e5c74c530d5a51b13a7c43dbbdd340c28a15ace832e55c06082764a5f"
+  },
+  "structural_cells": [
+    128,
+    16
+  ],
+  "selected_pressure_modes": 720,
+  "fine_pressure_modes": 2064,
+  "selected_active_scaled_compliance_minimum_eigenvalue": 0.0009987184803524401,
+  "fine_active_scaled_compliance_minimum_eigenvalue": 0.000725780823056156,
+  "selected_active_scaled_compliance_condition": 221628.59428872025,
+  "fine_active_scaled_compliance_condition": 555984.386656976,
+  "selected_pressure_l2_pa_m": 0.2622358298379787,
+  "fine_pressure_l2_pa_m": 0.2622358207852314,
+  "difference_pressure_l2_pa_m": 6.755720476108019e-05,
+  "relative_pressure_l2": 0.00025762004808797226,
+  "maximum_node_pressure_difference_pa": 0.019650889901308588,
+  "maximum_node_pressure_difference_relative": 0.0018453385323766065,
+  "relative_line_pressure_l2": 4.0196242631328406e-05,
+  "reaction_difference_n": 3.4946212590369896e-12
+}

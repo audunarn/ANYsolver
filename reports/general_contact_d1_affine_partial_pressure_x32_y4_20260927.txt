@@ -1,0 +1,19 @@
+[
+  {
+    "divisions": 32,
+    "rows": 4,
+    "elapsed_seconds": 20.931506099994294,
+    "reaction_z_n": 0.17177348497348763,
+    "continuous_local_plane_reference_z_n": 0.17225,
+    "relative_reference_error": 0.0027664152482575243,
+    "minimum_gap_m": -2.4999999917175232e-05,
+    "gap_tolerance_met": true,
+    "active_pressure_dofs": 40,
+    "supported_pressure_modes": 76,
+    "scaled_pressure_rank": 76,
+    "overlapping_pairs": 74,
+    "integration_triangles": 584,
+    "area_integration_error_m2": 1.5722625566934323e-16,
+    "weighted_gap_integration_error_m3": 6.693093798616464e-20
+  }
+]

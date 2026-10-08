@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 22.15335179999238,
+  "peak_process_tree_memory_mb": 226.086912,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_general_contact_d1_overlap_gap_bound_dev.py::test_saved_eight_s3_rejected_proposal_has_admissible_local_sweep"
+  ],
+  "log": "docs\\d1_review_support\\d1_overlap_saved_eight_s3_path_20260929.log"
+}

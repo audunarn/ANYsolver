@@ -1,0 +1,43 @@
+{
+  "purpose": "development cumulative normal reaction comparison",
+  "measure": "exact reference-strip Q1 pressure integration over physical y overlap [0.1,1] m and source x [0,1] m",
+  "cases": [
+    {
+      "report": "reports\\general_contact_d1_mixed_16q4_interior_distributed_0p3n_cartesian_roundoff_four_phase_20260927.json",
+      "columns": 16,
+      "cumulative_total_n": 0.10387155974561169,
+      "reported_contact_force_n": 0.10387155974562323,
+      "total_minus_reported_n": -1.1546319456101628e-14
+    },
+    {
+      "report": "reports\\general_contact_d1_distributed_cycle_response_v1_formal_20260927.json",
+      "columns": 24,
+      "cumulative_total_n": 0.10387883725521235,
+      "reported_contact_force_n": 0.1038788372552249,
+      "total_minus_reported_n": -1.2545520178264269e-14
+    },
+    {
+      "report": "reports\\general_contact_d1_distributed_32q4_fine_press_dev_20260928.json",
+      "columns": 32,
+      "cumulative_total_n": 0.10385726665701828,
+      "reported_contact_force_n": 0.10385726665702487,
+      "total_minus_reported_n": -6.591949208711867e-15
+    }
+  ],
+  "adjacent_comparisons": [
+    {
+      "earlier_columns": 16,
+      "later_columns": 24,
+      "maximum_absolute_cumulative_difference_n": 0.0010551423669648945,
+      "location_reference_x": 0.7318546860729666,
+      "relative_later_total": 0.0101574333602964
+    },
+    {
+      "earlier_columns": 24,
+      "later_columns": 32,
+      "maximum_absolute_cumulative_difference_n": 0.001557975056240321,
+      "location_reference_x": 0.701631057080294,
+      "relative_later_total": 0.015001117460422198
+    }
+  ]
+}

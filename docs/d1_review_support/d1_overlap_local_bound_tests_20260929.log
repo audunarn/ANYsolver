@@ -1,0 +1,25 @@
+F.                                                                       [100%]
+================================== FAILURES ===================================
+_______ test_partial_planar_overlap_bound_is_conservative_and_tightens ________
+
+    def test_partial_planar_overlap_bound_is_conservative_and_tightens():
+        source = np.asarray((
+            (0.0, 0.0, 0.0), (1.0, 0.0, -0.1),
+            (1.0, 1.0, -0.1), (0.0, 1.0, 0.0),
+        ))
+        target = np.asarray((
+            (0.01, 0.01, 0.0), (0.21, 0.01, 0.0),
+            (0.01, 0.21, 0.0),
+        ))
+        independent = q4_source_planar_overlap_gap_lower(source, target)
+        assert independent is not None
+        broad = q4_source_projected_gap_lower(source, target)
+        local0, _ = overlap_local_lower(source, target, 0)
+        local4, _ = overlap_local_lower(source, target, 4)
+>       assert broad < local0 + 1.0e-11
+E       assert np.float64(-0.02089578099443819) < (np.float64(-0.10049875621143627) + 1e-11)
+
+tests\test_general_contact_d1_overlap_gap_bound_dev.py:26: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_d1_overlap_gap_bound_dev.py::test_partial_planar_overlap_bound_is_conservative_and_tightens
+1 failed, 1 passed in 1.46s

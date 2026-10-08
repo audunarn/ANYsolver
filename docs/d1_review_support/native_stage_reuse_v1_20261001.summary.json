@@ -1,0 +1,62 @@
+{
+  "status": "DEVELOPMENT_VERIFICATION_NONPASS_TEST_DEFECT",
+  "physical_fixture_status": "PASS",
+  "solver_committed_steps": 4,
+  "gate_passing_steps": 4,
+  "physical_bitwise_parity": [
+    {
+      "kind": "initial",
+      "epoch": 0,
+      "actual_physical_sha256": "9ddb06f26c91b20a0e051c84d1ed467b9ce8c35ae183d0762c31e41781331cbb",
+      "saved_physical_sha256": "9ddb06f26c91b20a0e051c84d1ed467b9ce8c35ae183d0762c31e41781331cbb",
+      "bitwise_equal": true
+    },
+    {
+      "kind": "endpoint",
+      "epoch": 1,
+      "actual_physical_sha256": "814805be6f0cffb344911d629d80f90280bd51f328f52b8fdb93d29c49c2602b",
+      "saved_physical_sha256": "814805be6f0cffb344911d629d80f90280bd51f328f52b8fdb93d29c49c2602b",
+      "bitwise_equal": true
+    },
+    {
+      "kind": "endpoint",
+      "epoch": 2,
+      "actual_physical_sha256": "d4714dc333b0ed0ad1690b1ffdd2e9a7d84ed6838482f5ba763a6690d11b808a",
+      "saved_physical_sha256": "d4714dc333b0ed0ad1690b1ffdd2e9a7d84ed6838482f5ba763a6690d11b808a",
+      "bitwise_equal": true
+    },
+    {
+      "kind": "endpoint",
+      "epoch": 3,
+      "actual_physical_sha256": "8c92b15b4a251339fa0aa4c4d53635a47a661b666bfa1e27311202c88a638002",
+      "saved_physical_sha256": "8c92b15b4a251339fa0aa4c4d53635a47a661b666bfa1e27311202c88a638002",
+      "bitwise_equal": true
+    },
+    {
+      "kind": "endpoint",
+      "epoch": 4,
+      "actual_physical_sha256": "07c2aa690818376d3cbc22013e67ae555256ef5c92f2cd2d3b1c483bcb19b502",
+      "saved_physical_sha256": "07c2aa690818376d3cbc22013e67ae555256ef5c92f2cd2d3b1c483bcb19b502",
+      "bitwise_equal": true
+    }
+  ],
+  "actual_returned_stages": 12,
+  "unissued_checks": [
+    "stage-count assertion",
+    "stale predecessor rejection",
+    "accepted-line cancellation"
+  ],
+  "failure": "assert 'b96cbba573bf7401d963ac96584196398edb0dcd70e31ffd746839f5b9b82f61' != 'b96cbba573bf7401d963ac96584196398edb0dcd70e31ffd746839f5b9b82f61'",
+  "classification": "Invalid test assertion that mechanical/settings context identity must differ after source-only optimization. Exact source artifact binding is separate. Reviewer missed this assumption; all original failure evidence preserved.",
+  "complete_route_seconds": 21.178866600006586,
+  "peak_process_tree_memory_mb": 268.04224,
+  "next": "Remove only incorrect provenance assertion in NEWV2 source/input; unchanged production/equations/physical gates/caps. Finish originally missing controls.",
+  "bindings": {
+    "inputs.json": "3357f49e551cabe38015e5b0cae34d2560007e7748c5599d7d6a791391a07b06",
+    "test.source.py": "f5f4cfbc2801ef34f9d99a53ca76f295b26fc46a5fa2b6d617d29b1915a83b35",
+    "raw.json": "7d5c1f27e81353e4d883b27b57a39f7f08bb4e7e86aa3e26d2f4c8ac67f30880",
+    "resources.json": "dd2a9cfe3f033facb6f92bf2cabdf725689d94953b89b69d67aa9156dccc493a",
+    "log": "2c66d39cb7324d21f243401b4bc6b7655ad27798e4e15ee45e478b6347eaa363",
+    "xml": "3c394f370f4853caa396c54da5000294dddf6daf87bb5f909a2b5e6112aea380"
+  }
+}

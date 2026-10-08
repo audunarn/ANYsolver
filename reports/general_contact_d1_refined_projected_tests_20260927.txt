@@ -1,0 +1,2 @@
+....ssF.FFF.
+Development suite stopped after 6+ minutes; incomplete output is not a pass/fail verdict.

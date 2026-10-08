@@ -1,0 +1,83 @@
+{
+  "status": "development_cycle_checks",
+  "saved_input": "docs\\d1_review_support\\d1_pressure_family4_moving_edge_cycle_v4_20260929.json",
+  "input_sha256": "17191761809ebba0d86ade727c2ea7ac748b665f3e74cfb693be34b0c0cca690",
+  "force_scale_n": 0.04,
+  "moment_scale_nm": 0.04,
+  "dimensional_gap_budget_m": 5e-05,
+  "development_checks_met": true,
+  "rows": [
+    {
+      "step": 1,
+      "independent_gap_lower_m": -4.15855613458307e-05,
+      "equilibrium_relative_force": 1.2015979177212323e-11,
+      "complementarity_relative_force": 4.3524568791799896e-13,
+      "contact_balance_relative_force": 2.1684279623244563e-17,
+      "contact_balance_relative_moment": 1.5333038556173833e-17,
+      "active_modes": 2
+    },
+    {
+      "step": 2,
+      "independent_gap_lower_m": -4.511473214406594e-05,
+      "equilibrium_relative_force": 1.117879512617752e-11,
+      "complementarity_relative_force": 1.2947361819925005e-13,
+      "contact_balance_relative_force": 7.579791358429169e-20,
+      "contact_balance_relative_moment": 9.69739903612216e-17,
+      "active_modes": 2
+    },
+    {
+      "step": 3,
+      "independent_gap_lower_m": -4.409963015201604e-05,
+      "equilibrium_relative_force": 1.1411966248700549e-08,
+      "complementarity_relative_force": 5.277627230290973e-11,
+      "contact_balance_relative_force": 1.7024494346787737e-19,
+      "contact_balance_relative_moment": 6.133197062889688e-17,
+      "active_modes": 2
+    },
+    {
+      "step": 4,
+      "independent_gap_lower_m": -4.3093698547376534e-05,
+      "equilibrium_relative_force": 1.3106998332620469e-08,
+      "complementarity_relative_force": 5.5247613866242816e-11,
+      "contact_balance_relative_force": 8.673624548607218e-17,
+      "contact_balance_relative_moment": 4.336811307192385e-17,
+      "active_modes": 2
+    },
+    {
+      "step": 5,
+      "independent_gap_lower_m": -3.918961492863888e-05,
+      "equilibrium_relative_force": 3.944378063374763e-11,
+      "complementarity_relative_force": 7.04608213903097e-14,
+      "contact_balance_relative_force": 2.1684049402621293e-17,
+      "contact_balance_relative_moment": 2.4243498405389835e-17,
+      "active_modes": 2
+    },
+    {
+      "step": 6,
+      "independent_gap_lower_m": 4.499999966408462e-05,
+      "equilibrium_relative_force": 3.00627779107377e-11,
+      "complementarity_relative_force": 0.0,
+      "contact_balance_relative_force": 0.0,
+      "contact_balance_relative_moment": 0.0,
+      "active_modes": 0
+    },
+    {
+      "step": 7,
+      "independent_gap_lower_m": -3.9189614928574295e-05,
+      "equilibrium_relative_force": 4.6737399901164166e-11,
+      "complementarity_relative_force": 3.485317497680004e-13,
+      "contact_balance_relative_force": 4.336809061869734e-17,
+      "contact_balance_relative_moment": 1.0842022860814688e-17,
+      "active_modes": 2
+    },
+    {
+      "step": 8,
+      "independent_gap_lower_m": -4.309369855077047e-05,
+      "equilibrium_relative_force": 2.7818647651909967e-11,
+      "complementarity_relative_force": 8.192164142177945e-14,
+      "contact_balance_relative_force": 1.4223697147764384e-19,
+      "contact_balance_relative_moment": 4.336808689942018e-17,
+      "active_modes": 2
+    }
+  ]
+}

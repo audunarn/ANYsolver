@@ -1,0 +1,61 @@
+{
+  "base": "f3e6db3f",
+  "final_development_files": {
+    "src/anysolver/general_contact/native_surface_front.py": "a536640c91df6388d7eec4bf5a9453ece88cdffdef94f9638e0471d703eb2d65",
+    "src/anysolver/general_contact/native_surface_friction_integral.py": "4f0022bf08323c3bf0f48e8c0783017179cf0e2b1220088ed6fe33c6b0fe1426",
+    "tests/test_general_contact_native_surface_local_fronts.py": "f922e6740c6740d267ce7498030a2971d3226e9415c7904147c70ad156f1e378"
+  },
+  "resources": [
+    {
+      "run": "contact-native-local-front-bound-20261002",
+      "peak_sampled_bytes": 183644160,
+      "limit_mib": 953,
+      "elapsed_seconds": 5.467129600001499,
+      "status": "terminal",
+      "child_exit_codes": [
+        0
+      ]
+    },
+    {
+      "run": "contact-native-local-front-integral-20261002",
+      "peak_sampled_bytes": 190992384,
+      "limit_mib": 953,
+      "elapsed_seconds": 5.617558999976609,
+      "status": "terminal",
+      "child_exit_codes": [
+        1
+      ]
+    },
+    {
+      "run": "contact-native-local-front-endpoint-cuts-20261002",
+      "peak_sampled_bytes": 206393344,
+      "limit_mib": 953,
+      "elapsed_seconds": 18.659307299996726,
+      "status": "terminal",
+      "child_exit_codes": [
+        1
+      ]
+    },
+    {
+      "run": "contact-native-local-front-proof-cache-20261002",
+      "peak_sampled_bytes": 207147008,
+      "limit_mib": 953,
+      "elapsed_seconds": 19.954994799976703,
+      "status": "terminal",
+      "child_exit_codes": [
+        1
+      ]
+    },
+    {
+      "run": "contact-native-local-front-closed-guard-20261002",
+      "peak_sampled_bytes": 199876608,
+      "limit_mib": 953,
+      "elapsed_seconds": 9.92590149998432,
+      "status": "terminal",
+      "child_exit_codes": [
+        0
+      ]
+    }
+  ],
+  "note": "Level A sequential edits; final hash includes explicit replay gate added after failed runs, not a frozen acceptance candidate."
+}

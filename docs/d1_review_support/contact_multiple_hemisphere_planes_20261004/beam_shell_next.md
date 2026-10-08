@@ -1,0 +1,28 @@
+# Beam/S3 physical-end next slice
+
+Source inspection only, 2026-10-04. Repository: `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`. No numerical execution or production edits; no acceptance claim.
+
+## Missing work shown by source
+
+- `beam_shell.py:284-291` rejects all endpoint caps and every endpoint stiffness. The differentiated S3 selector changes the profile only afterward (`333-339`), so it inherits those exclusions.
+- `deformable_beam_s3_static.py:52` records `end_caps` but never consumes it in assembly. Its only kernel is the line kernel (`71-74`, `93-95`); reported energy, minimum gap and swept admission cover line work only (`100-112`). Restart metadata omits endpoint stiffness and ownership (`141-152`).
+- `deformable_beam_s3_line.py:103-121` already seeds all beam nodes and all three physical S3 vertices in one Jet2 energy. Its moving normal is differentiated from the cross product of the two current skin edges. Its current gap is centreline plane height minus radius, integrated with original line measure; there is no endpoint tangent or hemisphere branch.
+- Finite shell boundaries are deliberately excluded: current kernel rejects insufficient rim clearance (`96-100`) and conservatively measures all quadratic Bernstein controls against each physical edge (`87-93`). Thus adding hemisphere endpoints inside a face does not implement shell edges/corners, footprint clipping, moving integration boundaries or transfer between faces. Those remain separate physical boundary work.
+
+## Shortest credible integration route
+
+1. Add a distinct explicit development profile for one classical B2/B3 cell against one deforming fixed-director S3 physical side, with physical beam ends and a separately dimensioned point penalty. Retain zero target rotation, positive/exterior support domain and face-interior clearance; exclude Q4, multiple faces and physical shell rims. Preserve the current line profile by default.
+2. Reuse `DeformableBeamS3Manager` and its `S3SkinWorkAdapter`: `static.py:59-67` composes the beam translations and authoritative physical-skin work map; `82-89` gets current skin positions; `94-95` pulls the complete coordinate gradient/Hessian back by `W.T` and `W.T H W`. This preserves offsets/force couples without a second structural scatter implementation. The adapter's internal correctness was not inspected in this bounded assignment.
+3. Extend the physical-coordinate Jet2 kernel with point energy at owned physical ends. Use endpoint coefficients B2 `(-1,1)`, B3 start `(-3,4,-1)` and end `(1,-4,3)`, with the physical outward sign; never use a B3 chord. Couple each cap gap to the existing Jet2 normal and physical vertex anchor. For h=(xe-s0).n and beta=n.v/|v|, use sphere h-R for beta<=0 and rim h-R sqrt(1-beta^2) for beta>0. A fixed-plane gap derivative cannot be scattered as if the target normal were constant.
+4. Seed all translations on both bodies in one energy. B3 tangent derivatives distribute cap work to the midnode and opposite end; target normal variations distribute work to all three skin vertices. Keep cross-body Hessian blocks. Existing force/moment accounting (`static.py:96-99`) then evaluates the complete physical nodal work, and the adapter carries shell lever couples.
+5. Include cap gap/branch/energy/counts and endpoint stiffness in result/restart semantics. Extend initial admissibility and the swept gate to cap gaps and actual whole-curve/tangent regularity; current line sweep alone is insufficient. Continue using the face-interior clearance contract unless a separate bounded shell-edge slice is authorized.
+
+## Coupling and discontinuity risks to resolve before acceptance
+
+- At beta=0, gap and first derivatives are continuous but Hessians differ across the sphere/rim seam. State the selected one-sided Hessian; no tolerance may move activation. At beta=1 the rim minimizer is nonunique, so positive-gap zero pressure may be supported without claiming a unique skin force.
+- The deforming target normal makes the cap gap nonlinear even on affine nodal paths. The common-translation endpoint argument in `beam_shell.py:623-625` cannot certify this path. `line.py:129-211` bounds line gap and face clearance, but does not bound tangent-normal hemisphere support or tangent collapse. Add a conservative bounded cap/regularity certificate rather than endpoint sampling.
+- Existing line active intervals are polynomial and the three-point rule is justified for that measure (`line.py:1-6`, `113-127`). A cap point has a distinct stiffness/unit and no line quadrature weight. Adding it changes result semantics; any future clipped boundary line measure is no longer covered by the present fixed-interval explanation.
+- Dropping midnode or target-normal work would break the complete potential gradient, cross-body tangent and force/moment balance. A skin-point point force with barycentric target weights alone is not this differentiated envelope law.
+- Dynamic normal orientation, face degeneracy and unresolved numerical scale remain fail-closed (`line.py:77-81`). Skin/beam exterior and finite-face support require explicit geometric admission; do not silently substitute a centreline footprint for admitted shell-edge contact.
+
+Suggested next bounded development check set, subject to lead execution authority: B2 and curved-current-B3 endpoint cases on an inclined physical S3 side; all beam/skin gradient and Hessian blocks; B3 midnode force; common translation/rotation covariance of physical-coordinate energy; both-body force/moment balance; seam and parallel-rim dispositions; hidden swept cap penetration/tangent-collapse and face-rim rejection. These checks have not been run.

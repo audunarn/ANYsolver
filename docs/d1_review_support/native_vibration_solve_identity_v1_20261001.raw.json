@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "time_steps": 0,
+  "checks": {
+    "default_payload_and_nondefault_identity": true,
+    "seven_invalid_settings_rejected": true,
+    "actual_setting_mutations_rejected": true,
+    "scope_exit_setting_mutation_rejected": true,
+    "unissued_audit_and_session_closure": true
+  },
+  "elapsed_seconds": 0.0917028000112623
+}

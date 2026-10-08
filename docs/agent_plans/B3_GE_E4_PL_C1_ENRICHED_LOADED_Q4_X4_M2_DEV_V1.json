@@ -1,0 +1,220 @@
+{
+  "classification": "G0B loaded development screen; no interface stability or multiplier selection",
+  "elapsed_s_not_benchmark": 22.526296199997887,
+  "families": {
+    "line_hybrid_dual_p1_weighted": {
+      "basis_integrals_m": [
+        0.02499999999999999,
+        0.05000000000000013,
+        0.024999999999999897
+      ],
+      "cases": {
+        "tip_fz": {
+          "interface_shell_wrench_N_Nm": [
+            -6018.739144164412,
+            1.3529349107760814e-10,
+            -72.56860078699843,
+            -2.720290659397051e-11,
+            48.742691479897466,
+            3.9761971493135206e-11
+          ],
+          "mechanics_error": 5.671422680439483e-12,
+          "physical_shell_work_j": 0.013176381819987953,
+          "sampled_line_position_gap": {
+            "quadrature_max_position_gap_m": 1.1654984201696627e-7,
+            "quadrature_points": 144,
+            "quadrature_rms_position_gap_m": 5.001010874128628e-8
+          },
+          "shell_support_wrench_N_Nm": [
+            6018.739144164352,
+            -1.2033263274702222e-10,
+            72.5686007838767,
+            2.703801627035318e-10,
+            -48.742691476354736,
+            -2.2148370637520285e-11
+          ],
+          "tip_rx_rad": -2.425269939596821e-17,
+          "tip_uz_m": -0.00006925099450724094,
+          "total_external_work_j": 0.06925099450724094
+        },
+        "tip_mx": {
+          "interface_shell_wrench_N_Nm": [
+            2.4315518487583176e-9,
+            64.87223587373245,
+            -2.965805379062658e-10,
+            41.46819079110051,
+            2.8839508559030946e-10,
+            31.537329012311034
+          ],
+          "mechanics_error": 7.80189960762272e-12,
+          "physical_shell_work_j": 0.0019713372757709426,
+          "sampled_line_position_gap": {
+            "quadrature_max_position_gap_m": 9.893070781416601e-8,
+            "quadrature_points": 144,
+            "quadrature_rms_position_gap_m": 4.642623308076827e-8
+          },
+          "shell_support_wrench_N_Nm": [
+            -2.4336482828957173e-9,
+            -64.87223587370809,
+            7.16227077646181e-12,
+            -41.468190791038104,
+            2.0811263823361522e-11,
+            -31.537329012291412
+          ],
+          "tip_rx_rad": 0.00004862065222821541,
+          "tip_uz_m": 2.555242257369621e-17,
+          "total_external_work_j": 0.004862065222821541
+        }
+      },
+      "constraint_rank": 18
+    },
+    "line_hybrid_p0_weighted": {
+      "basis_integrals_m": [
+        0.04999999999999995,
+        0.05000000000000006
+      ],
+      "cases": {
+        "tip_fz": {
+          "interface_shell_wrench_N_Nm": [
+            -6011.672093958081,
+            2.2305334768803898e-10,
+            -71.49830395883146,
+            -6.372724570269384e-11,
+            48.81619434324214,
+            1.21741616787574e-10
+          ],
+          "mechanics_error": 6.53768495891654e-12,
+          "physical_shell_work_j": 0.013243370437419067,
+          "sampled_line_position_gap": {
+            "quadrature_max_position_gap_m": 1.5464839772442038e-7,
+            "quadrature_points": 144,
+            "quadrature_rms_position_gap_m": 6.195317509381518e-8
+          },
+          "shell_support_wrench_N_Nm": [
+            6011.67209395804,
+            -2.1269527805678479e-10,
+            71.49830395478197,
+            3.639632484286892e-10,
+            -48.81619433909905,
+            -1.0496139617177659e-10
+          ],
+          "tip_rx_rad": 4.418763815700554e-17,
+          "tip_uz_m": -0.00006931932133539676,
+          "total_external_work_j": 0.06931932133539676
+        },
+        "tip_mx": {
+          "interface_shell_wrench_N_Nm": [
+            4.77687223110479e-10,
+            64.56569323113318,
+            -5.0604853640834335e-11,
+            40.89600921823998,
+            6.939160357433138e-11,
+            31.346732317419722
+          ],
+          "mechanics_error": 9.035763560226952e-12,
+          "physical_shell_work_j": 0.0019676079486242327,
+          "sampled_line_position_gap": {
+            "quadrature_max_position_gap_m": 7.477676282736428e-8,
+            "quadrature_points": 144,
+            "quadrature_rms_position_gap_m": 3.324758401220212e-8
+          },
+          "shell_support_wrench_N_Nm": [
+            -4.790277896571382e-10,
+            -64.56569323111603,
+            -5.8193450058752205e-11,
+            -40.89600921811594,
+            7.455422945668035e-11,
+            -31.346732317408886
+          ],
+          "tip_rx_rad": 0.000047708241680103865,
+          "tip_uz_m": 4.52451199775161e-18,
+          "total_external_work_j": 0.004770824168010387
+        }
+      },
+      "constraint_rank": 12
+    },
+    "line_hybrid_p1_weighted": {
+      "basis_integrals_m": [
+        0.02499999999999998,
+        0.050000000000000044,
+        0.024999999999999984
+      ],
+      "cases": {
+        "tip_fz": {
+          "interface_shell_wrench_N_Nm": [
+            -6026.029933331484,
+            -3.934110351804314e-10,
+            -72.25308554031325,
+            1.5454942881021339e-10,
+            48.66284822034272,
+            -1.4808199111371323e-10
+          ],
+          "mechanics_error": 5.774349983198758e-12,
+          "physical_shell_work_j": 0.013190589261537652,
+          "sampled_line_position_gap": {
+            "quadrature_max_position_gap_m": 1.026460141735951e-7,
+            "quadrature_points": 144,
+            "quadrature_rms_position_gap_m": 4.5049038332294196e-8
+          },
+          "shell_support_wrench_N_Nm": [
+            6026.029933331381,
+            4.085749794047189e-10,
+            72.25308553641383,
+            8.348532976043543e-11,
+            -48.66284821744733,
+            1.7632598714456547e-10
+          ],
+          "tip_rx_rad": -1.2312618038373174e-16,
+          "tip_uz_m": -0.00006915455728267459,
+          "total_external_work_j": 0.0691545572826746
+        },
+        "tip_mx": {
+          "interface_shell_wrench_N_Nm": [
+            5.251550305729324e-10,
+            64.06223303410447,
+            2.3726443032501265e-10,
+            41.25390839921288,
+            -7.973710580699844e-11,
+            31.21714339099437
+          ],
+          "mechanics_error": 6.422595113451998e-12,
+          "physical_shell_work_j": 0.001977383558433791,
+          "sampled_line_position_gap": {
+            "quadrature_max_position_gap_m": 8.06755053995365e-8,
+            "quadrature_points": 144,
+            "quadrature_rms_position_gap_m": 3.362373918118918e-8
+          },
+          "shell_support_wrench_N_Nm": [
+            -5.267180858137266e-10,
+            -64.06223303409169,
+            -1.41895384331292e-10,
+            -41.253908399072074,
+            1.9900880943168887e-11,
+            -31.217143390983548
+          ],
+          "tip_rx_rad": 0.0000480317761311168,
+          "tip_uz_m": 1.5883558713613116e-18,
+          "total_external_work_j": 0.00480317761311168
+        }
+      },
+      "constraint_rank": 18
+    }
+  },
+  "geometry": "C1 35 mm Q4 shell, native retained B3-12, 0.1 m terminal width and length, left supports",
+  "limitations": [
+    "rank and loaded balance do not establish mesh-uniform inf-sup or full native mixed-system stability",
+    "two shell resolutions are not a convergence qualification",
+    "the shared-node F5 solid has a different full-width kinematic bond"
+  ],
+  "line_multiplier_intervals": 2,
+  "loading": "+100 Nm tip Mx and -1000 N tip Fz as separate linear influences",
+  "operator_sources_sha256": {
+    "scripts\\_b3_e4_f03_native_fixture.py": "94d9e1a3532c3b2c061153e73942ccd73283eae0ef895b5ca4ef4014e5caa3fb",
+    "scripts\\b3_e4_f03_distributed_surface_finite.py": "cfc4cde7fe9920899415341c813a4c3df99a3fddb0d5579737cb2bb27f7b09e7",
+    "scripts\\b3_e4_f03_local_footprint_work.py": "7de56e6bbef34ce00c77c3a580b90934a43a7e963dff16f20bd7636fd2e6c60f"
+  },
+  "question": "Do growing longitudinal rows remain independent and balanced in the actual native retained-variable mixed solve?",
+  "shell_bond_cells": 4,
+  "source_git": "7d16458477941968463c7c5570f7122693980f28",
+  "source_sha256": "87544f450a795fe42c779ae9354a4cb575aa967c558935ce340c63d567d11247"
+}

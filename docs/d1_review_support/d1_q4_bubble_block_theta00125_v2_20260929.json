@@ -1,0 +1,12 @@
+{
+  "status": "fixed-pose development block; contact bubble geometry absent",
+  "theta": 0.0125,
+  "nodal_stiffness_3x3_vs_production_2x2_relative": 3.92255993414663e-16,
+  "bubble_stiffness_n_per_m": 13675.213675213678,
+  "condensed_bubble_stiffness_n_per_m": 13675.213675213678,
+  "exact_bubble_contact_force_n": -2.814368032637945e-06,
+  "condensed_bubble_contact_force_n": -2.814368032637957e-06,
+  "condensed_contact_force_over_theta_squared": -0.01801195540888292,
+  "bubble_energy_dual_increment_j": 5.791988053167062e-16,
+  "nodal_energy_dual_j": 1.9801306949211638e-13
+}

@@ -1,0 +1,554 @@
+{
+  "base": "bd8d3ad0e2de33581e65a688ff5c18875af636b0",
+  "scope": "development only; native C5 not accepted",
+  "runs": [
+    {
+      "name": "contact-native-replay-state-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 199667712,
+          "limit_mib": 953,
+          "elapsed_seconds": 16.630841599951964,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ],
+      "runtime": {
+        "jit_disabled": true,
+        "effective_pools": [
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+            "version": "0.3.31.188.0",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          },
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+            "version": "0.3.30",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          }
+        ],
+        "errors": [],
+        "collected": 3,
+        "failed": 1,
+        "exit_code": 1
+      }
+    },
+    {
+      "name": "contact-native-replay-state-owned-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 197517312,
+          "limit_mib": 953,
+          "elapsed_seconds": 13.928723499993794,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ],
+      "runtime": {
+        "jit_disabled": true,
+        "effective_pools": [
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+            "version": "0.3.31.188.0",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          },
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+            "version": "0.3.30",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          }
+        ],
+        "errors": [],
+        "collected": 2,
+        "failed": 0,
+        "exit_code": 0
+      }
+    },
+    {
+      "name": "contact-native-replay-coupled-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 257994752,
+          "limit_mib": 3814,
+          "elapsed_seconds": 64.16130319994409,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ],
+      "runtime": {
+        "jit_disabled": true,
+        "effective_pools": [
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+            "version": "0.3.31.188.0",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          },
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+            "version": "0.3.30",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          }
+        ],
+        "errors": [],
+        "collected": 1,
+        "failed": 1,
+        "exit_code": 1
+      }
+    },
+    {
+      "name": "contact-native-replay-capture-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 257564672,
+          "limit_mib": 953,
+          "elapsed_seconds": 64.294058999978,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ],
+      "runtime": {
+        "jit_disabled": true,
+        "effective_pools": [
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+            "version": "0.3.31.188.0",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          },
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+            "version": "0.3.30",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          }
+        ],
+        "errors": [],
+        "collected": 1,
+        "failed": 1,
+        "exit_code": 1
+      }
+    },
+    {
+      "name": "contact-native-replay-discriminator-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 185094144,
+          "limit_mib": 953,
+          "elapsed_seconds": 5.348597299947869,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ],
+      "runtime": {
+        "jit_disabled": true,
+        "effective_pools": [
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+            "version": "0.3.31.188.0",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          },
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+            "version": "0.3.30",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          }
+        ],
+        "errors": [],
+        "collected": 1,
+        "failed": 0,
+        "exit_code": 0
+      }
+    },
+    {
+      "name": "contact-native-replay-front-fix-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 250888192,
+          "limit_mib": 953,
+          "elapsed_seconds": 39.915219000016805,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ],
+      "runtime": {
+        "jit_disabled": true,
+        "effective_pools": [
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+            "version": "0.3.31.188.0",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          },
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+            "version": "0.3.30",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          }
+        ],
+        "errors": [],
+        "collected": 1,
+        "failed": 1,
+        "exit_code": 1
+      }
+    },
+    {
+      "name": "contact-native-replay-open-skip-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 248020992,
+          "limit_mib": 953,
+          "elapsed_seconds": 45.15046049997909,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ],
+      "runtime": {
+        "jit_disabled": true,
+        "effective_pools": [
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+            "version": "0.3.31.188.0",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          },
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+            "version": "0.3.30",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          }
+        ],
+        "errors": [],
+        "collected": 1,
+        "failed": 1,
+        "exit_code": 1
+      }
+    },
+    {
+      "name": "contact-native-replay-global-error-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 228438016,
+          "limit_mib": 953,
+          "elapsed_seconds": 32.328240200004075,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ],
+      "runtime": {
+        "jit_disabled": true,
+        "effective_pools": [
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+            "version": "0.3.31.188.0",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          },
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+            "version": "0.3.30",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          }
+        ],
+        "errors": [],
+        "collected": 1,
+        "failed": 0,
+        "exit_code": 0
+      }
+    },
+    {
+      "name": "contact-native-replay-global-regression-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 207544320,
+          "limit_mib": 953,
+          "elapsed_seconds": 63.606358199962415,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ],
+      "runtime": {
+        "jit_disabled": true,
+        "effective_pools": [
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+            "version": "0.3.31.188.0",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          },
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+            "version": "0.3.30",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          }
+        ],
+        "errors": [],
+        "collected": 7,
+        "failed": 0,
+        "exit_code": 0
+      }
+    },
+    {
+      "name": "contact-native-replay-coupled-global-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 232026112,
+          "limit_mib": 3814,
+          "elapsed_seconds": 63.974448399967514,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ],
+      "runtime": {
+        "jit_disabled": true,
+        "effective_pools": [
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+            "version": "0.3.31.188.0",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          },
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+            "version": "0.3.30",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          }
+        ],
+        "errors": [],
+        "collected": 1,
+        "failed": 1,
+        "exit_code": 1
+      }
+    },
+    {
+      "name": "contact-native-replay-backtrack-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 185991168,
+          "limit_mib": 953,
+          "elapsed_seconds": 8.05745730001945,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ],
+      "runtime": {
+        "jit_disabled": true,
+        "effective_pools": [
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+            "version": "0.3.31.188.0",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          },
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+            "version": "0.3.30",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          }
+        ],
+        "errors": [],
+        "collected": 3,
+        "failed": 0,
+        "exit_code": 0
+      }
+    },
+    {
+      "name": "contact-native-replay-coupled-backtrack-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 230862848,
+          "limit_mib": 3814,
+          "elapsed_seconds": 72.85262660001172,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ],
+      "runtime": {
+        "jit_disabled": true,
+        "effective_pools": [
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+            "version": "0.3.31.188.0",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          },
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+            "version": "0.3.30",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          }
+        ],
+        "errors": [],
+        "collected": 1,
+        "failed": 1,
+        "exit_code": 1
+      }
+    }
+  ],
+  "source": {
+    "src/anysolver/general_contact/native_surface_activation.py": "efe7e8ff9f203bfd551383216b55a6f758ad582e5c1fbb8352d2463fd3041ebf",
+    "src/anysolver/general_contact/native_surface_contributor.py": "06afba7ed712ca84ccbf6ff3b7eb79c55294086f2b43f8b264ef5b685db96490",
+    "src/anysolver/general_contact/native_surface_extrema.py": "b645e7a0a415f3a4191bc648a09d47513cde09b9eec3bf41835f767607c3f4e3",
+    "src/anysolver/general_contact/native_surface_friction_integral.py": "4614c6910c62b0b57d89d38a60ddc9efb72b2079ec46eda61d6825d83cfc2b2e",
+    "src/anysolver/general_contact/native_surface_history.py": "f9b1cf07d3dd7cbce01612bfe16f42b44ea5d838782b857ff33497b783ddf4af",
+    "src/anysolver/general_contact/native_surface_normal.py": "0dcd580a66de0c8676f6633b86312eca362980dacee47ef5fcc70f4cdb772ee9",
+    "src/anysolver/general_contact/native_surface_patch.py": "33b8b9b7156c1a0548021decf1841c1d63fd5c78dcd956a23fb68be576c614b8",
+    "src/anysolver/general_contact/native_surface_path.py": "a124737992f3f3788e9998a2322943f134d469e81c91d9660bdcc626ba084a9c",
+    "src/anysolver/general_contact/native_surface_quadrature.py": "8161ff6b66db73a8c21b6dc53131e7123aeabacf57391f91f67966934220d10d",
+    "src/anysolver/general_contact/native_surface_s3_friction.py": "b4727d0f026de6e80c07002197775427b676cb36bc97ff97546672914eb69ffc",
+    "src/anysolver/general_contact/native_surface_support.py": "faea552ad82aebc2d5d20ae053320ec140c8d56d606a6756d534d242ec791401",
+    "src/anysolver/general_contact/native_surface_transaction.py": "1a49ed64d657355b05f4f3af1a8bf24233a9646df9e0abfa7cf6425a3a4c22be",
+    "src/anysolver/general_contact/native_retained_s3_static.py": "09c51261fefa1a6d455dd1c26c7fc0fcf82813e1150bbbe5c53fb96e14521ebe",
+    "tests/test_general_contact_native_surface_activation.py": "14bd709095e9be1ef7a01095965af39e507ee3f78ebc99a72288fc7ec895096b",
+    "tests/test_general_contact_native_surface_contributor.py": "69253104435844fba25a877d3d7427920f91a397c70fe0dfee93c5199967ed5a",
+    "tests/test_general_contact_native_surface_extrema.py": "2574462e70b01b4c4afab1bbaa1076b85446f38354aecf3c353f1e5dde21c8e5",
+    "tests/test_general_contact_native_surface_friction_integral.py": "1195ef2eb501e22ca7040046aacb6e531a702d4d23d0c742ee01b032e9f854d4",
+    "tests/test_general_contact_native_surface_history.py": "76643772b6327933c5db8d7d0a105d18f64914aece2afbc0bc4d717298461da5",
+    "tests/test_general_contact_native_surface_normal.py": "20fa773dc9003910b3893b750d07e2dceb6cba81cf83c972001496eadd11e4bb",
+    "tests/test_general_contact_native_surface_patch.py": "56f097a8fcfdcbdf3a153921c75f623e7f5510fe146abf549d6f75bcdcb07610",
+    "tests/test_general_contact_native_surface_path.py": "d40fbfe8ea0c4d5409c7dc81904d7fe8e8295527fc4588a5968bcc9c7329ccdd",
+    "tests/test_general_contact_native_surface_quadrature.py": "3a48bab099cc8c452f56b8bcfc67d3113f16c68152e41400560d54d6fed3e2a9",
+    "tests/test_general_contact_native_surface_refinement.py": "652f53a9c3762d2feca74ea6018ff248689ee71ca5a6ecc4ef7bdf1c956d6b89",
+    "tests/test_general_contact_native_surface_release.py": "57235a35d10405ed7c6833ccd8e2c2a18e9da4a6f1711837f2efa1ed4563c48e",
+    "tests/test_general_contact_native_surface_replay_owner.py": "c1b2e61543ec1012925e373e747831f5091e61891fbec94b0fd8b42cb47f9a3f",
+    "tests/test_general_contact_native_surface_s3_friction.py": "13bec611722739bd2098f81c02750a5ba3e0c19ea4b51976e8aa9873793d2a01",
+    "tests/test_general_contact_native_surface_support.py": "45cc4da4878d09cc9715811477956128885a613c914013b3627960c5854dba43",
+    "tests/test_general_contact_native_surface_transaction.py": "12945b0cb64a5ab5898df90fbf4d26ebb1e686be315a195a05926b517cf48ac9",
+    "tests/test_general_contact_native_surface_variations.py": "459eb245f8ed7c37a546715843b1aa3920af955169e2c7f46e7de946b9dad67e"
+  },
+  "raw_sha256": "55bdb2d72abba4deff7e514b6bcb0772d3887ee011323c67175487d07e699794"
+}

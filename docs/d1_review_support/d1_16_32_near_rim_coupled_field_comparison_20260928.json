@@ -1,0 +1,32 @@
+{
+  "status": "development_comparison_only",
+  "first_record": "reports\\general_contact_d1_16x8_near_rim_guarded_no_checkpoint_comparison_identity_dev_20260928.json",
+  "second_record": "reports\\general_contact_d1_32x8_near_rim_search_direct_comparison_identity_dev_20260928.json",
+  "first_record_sha256": "d27cf3e4908bb67170914fd9c980b1316d9afb734ddd8307a8912b3fc21290c2",
+  "second_record_sha256": "dfa752293db46df25d2a3a316d55390b51eadcab9cf47ded29a2b3115b3e7612",
+  "first_coupled_sha256": "8293e528837cc2a8a25444aa079944c9f8371f5a5b50280bb6dc91816d19b852",
+  "second_coupled_sha256": "fda79a813d4235594af6cd0e7d367e62e98d57210d67e1152d435f00a845a72a",
+  "oracle_sha256": "9cfa980753f094a8373661e70ccdb55f2634894b3b02566efee76d00817991b3",
+  "first_mesh": [
+    16,
+    8
+  ],
+  "second_mesh": [
+    32,
+    8
+  ],
+  "common_bin_shape": [
+    8,
+    9
+  ],
+  "pressure_support_y_max_m": 0.9,
+  "bin_force_l1_relative_to_second": 0.0018314580764799554,
+  "bin_force_l2_relative_to_second": 0.002521287681063222,
+  "rim_band_force_relative_to_second": 0.0018964733509946948,
+  "q1_pressure_l2_relative_to_second": 0.07816626071461225,
+  "reaction_first_n": 0.10380210457097483,
+  "reaction_second_n": 0.10380466040536195,
+  "reaction_relative_change": 2.462157649893186e-05,
+  "first_vs_fv_l2_relative": 0.0033442002101469175,
+  "second_vs_fv_l2_relative": 0.004811099044158682
+}

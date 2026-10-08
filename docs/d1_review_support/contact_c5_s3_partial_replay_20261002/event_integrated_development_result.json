@@ -1,0 +1,21 @@
+{
+  "id": "C5_PARTIAL_REPLAY_EVENT_INTEGRATED_DEV_20261002",
+  "status": "failed: explicit pressure-stage resource admission",
+  "pytest_elapsed_seconds": 441.05,
+  "resource": {
+    "peak_sampled_bytes": 235950080,
+    "limit_mib": 953,
+    "elapsed_seconds": 442.66914369998267,
+    "status": "terminal",
+    "child_exit_codes": [
+      1
+    ]
+  },
+  "accepted_history_frames": 2,
+  "reason": "replay actual-pressure event stage cap exceeded",
+  "pressure_stage_cap": 4096,
+  "source_bindings_verified": true,
+  "frozen_source": "C:\\ANYworkspaceWork\\contact-friction-replay-integrated-dev-20261002\\frozen_source",
+  "authority_consumed": true,
+  "next": "bounded batching design; no automatic repeat or cap increase"
+}

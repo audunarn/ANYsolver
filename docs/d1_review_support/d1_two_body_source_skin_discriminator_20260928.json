@@ -1,0 +1,37 @@
+{
+  "status": "development_frozen_target_skin_geometry_discriminator",
+  "saved_comparison_sha256": "ef69c6d174c3c189fc1d3f1f3fe809f5182b5f5b0799abffcfd1330290050311",
+  "oracle_source_sha256": "0154045a84059c6dbc3c69c927fd8836c923214ab517ec026c3f2a23482d9fc9",
+  "maximum_target_skin_xy_shift_m": 2.0957177791033943e-06,
+  "maximum_source_extra_skin_xy_shift_m": 5.740805386622583e-09,
+  "reference_footprint": {
+    "model": "reference_footprint",
+    "area_m2": 0.8999999999999995,
+    "support_relative_l2": 9.030375916972128e-09,
+    "gap_at_production_pose_max_abs_error_m": 8.400944361076413e-11,
+    "integrated_force_n": 0.00015173302905964022,
+    "force_relative_error": 4.479384136786901e-06,
+    "pressure_relative_l2": 5.955504469834884e-06,
+    "active_modes": 2
+  },
+  "frozen_production_target_skin_xy": {
+    "model": "frozen_production_target_skin_xy",
+    "area_m2": 0.9000000059651412,
+    "support_relative_l2": 2.447187287039879e-14,
+    "gap_at_production_pose_max_abs_error_m": 2.9292860793798427e-13,
+    "integrated_force_n": 0.0001517334809148836,
+    "force_relative_error": 1.5014351552933744e-06,
+    "pressure_relative_l2": 1.670078454098964e-06,
+    "active_modes": 2
+  },
+  "frozen_production_both_skin_xy": {
+    "model": "frozen_production_both_skin_xy",
+    "area_m2": 0.9000000007988981,
+    "support_relative_l2": 6.9827213339271735e-09,
+    "gap_at_production_pose_max_abs_error_m": 1.9417799345441272e-13,
+    "integrated_force_n": 0.00015173348277722898,
+    "force_relative_error": 1.4891613804675014e-06,
+    "pressure_relative_l2": 1.6493464345083052e-06,
+    "active_modes": 2
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 91.31129750001128,
+  "peak_process_tree_memory_mb": 410.894336,
+  "time_limit_seconds": 900.0,
+  "memory_limit_bytes": 4000000000,
+  "command": [
+    "python",
+    "scripts/general_contact_d1_gap_failure_reuse_dev.py",
+    "docs/d1_review_support/d1_gap_failure_reuse_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_gap_failure_reuse_20260929.log"
+}

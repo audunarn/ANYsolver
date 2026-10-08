@@ -95,3 +95,93 @@ def test_development_deadline_terminates_owned_process(tmp_path, monkeypatch):
     assert terminated == [process]
     record = json.loads(next((tmp_path/'temp').glob('*/P01/resource.json')).read_text())
     assert record['status'] == 'timeout' and record['child_exit_codes'] == [-1]
+
+
+def test_nested_matrix_preserves_parent_allocation_and_complete_coverage(monkeypatch):
+    critical = tuple(runner.PORTABLE_CURRENT_S3_SUCCESSOR_MODULES)
+    modules = (*critical, *(f"tests/test_general_{i}.py" for i in range(64)))
+    monkeypatch.setattr(runner, '_module_weight', lambda module: 1)
+    general = set(modules) - set(critical)
+    all_general = []
+    for parent in range(8):
+        outer = runner.matrix_modules(modules, parent, 8)
+        assigned = []
+        for sub in range(4):
+            selected = runner.matrix_modules(outer, sub, 4)
+            assert set(critical) <= set(selected)
+            assert set(selected) <= set(outer)
+            assigned.extend(m for m in selected if m in general)
+        assert len(assigned) == len(set(assigned))
+        assert set(assigned) == set(outer) - set(critical)
+        all_general.extend(assigned)
+    assert len(all_general) == len(set(all_general)) == len(general)
+    assert set(all_general) == general
+
+
+@pytest.mark.parametrize('parent,inner', [
+    ((None,None),(0,4)), ((0,8),(None,4)), ((0,8),(0,None)),
+    ((0,8),(-1,4)), ((0,8),(4,4)), ((0,8),(0,0)),
+    ((0,8),(True,4)), ((0,8),(0,True))])
+def test_nested_matrix_rejects_invalid_configuration(monkeypatch, parent, inner):
+    monkeypatch.setattr(runner, 'merge_test_modules',
+                        lambda: (*runner.PORTABLE_CURRENT_S3_SUCCESSOR_MODULES,
+                                 *(f'tests/test_general_{i}.py' for i in range(64))))
+    monkeypatch.setattr(runner, '_module_weight', lambda module: 1)
+    with pytest.raises(ValueError, match='matrix'):
+        runner.run(workers=2, timeout_seconds=1,
+                   matrix_shard_index=parent[0], matrix_shard_count=parent[1],
+                   matrix_subshard_index=inner[0], matrix_subshard_count=inner[1])
+
+
+def test_development_refuses_nested_ci_selection():
+    with pytest.raises(ValueError, match='focused development'):
+        runner.run(workers=2, timeout_seconds=1, development_targets=[],
+                   matrix_subshard_index=0, matrix_subshard_count=4)
+
+
+@pytest.mark.parametrize('failure', [False, True])
+def test_ci_full_success_or_failed_child_stops_live_sibling(tmp_path, monkeypatch, failure):
+    monkeypatch.setenv('RUNNER_TEMP', str(tmp_path))
+    monkeypatch.setattr(runner, 'merge_test_modules', lambda: ('a.py','b.py'))
+    monkeypatch.setattr(runner, 'execution_partitions', lambda *args: (('a.py',),('b.py',)))
+    launched = []
+    terminated = []
+    def launch(*args, **kwargs):
+        index = len(launched)
+        values = iter((None, 1) if failure and index == 0 else
+                      (None, None) if failure else (None, 0))
+        process = SimpleNamespace(returncode=None)
+        def poll():
+            process.returncode = next(values, process.returncode)
+            return process.returncode
+        process.poll = poll
+        launched.append(process)
+        return process
+    def terminate(process):
+        if process.returncode is None:
+            terminated.append(process)
+            process.returncode = -15
+    monkeypatch.setattr(runner.subprocess, 'Popen', launch)
+    monkeypatch.setattr(runner, '_terminate_tree', terminate)
+    assert runner.run(workers=2, timeout_seconds=1) == int(failure)
+    assert len(launched) == 2
+    assert terminated == ([launched[1]] if failure else [])
+
+
+def test_ci_does_not_launch_more_work_after_immediate_failure(tmp_path, monkeypatch):
+    monkeypatch.setenv('RUNNER_TEMP', str(tmp_path))
+    monkeypatch.setattr(runner, 'merge_test_modules', lambda: ('a.py','b.py'))
+    monkeypatch.setattr(runner, 'execution_partitions', lambda *args: (('a.py',),('b.py',)))
+    launched = []
+    def launch(*args, **kwargs):
+        process = SimpleNamespace(poll=lambda: 1, returncode=1)
+        launched.append(process)
+        return process
+    monkeypatch.setattr(runner.subprocess, 'Popen', launch)
+    monkeypatch.setattr(runner, '_terminate_tree', lambda process: None)
+    assert runner.run(workers=2, timeout_seconds=1) == 1
+    assert len(launched) == 1
+
+
+def test_ci_worker_stops_at_first_failure(tmp_path):
+    assert '-x' in runner._worker_command(('tests/test_x.py',), tmp_path)

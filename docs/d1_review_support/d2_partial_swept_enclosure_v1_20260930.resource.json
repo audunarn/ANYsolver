@@ -1,0 +1,19 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 16.495104799978435,
+  "peak_process_tree_memory_mb": 221.896704,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_partial_swept_enclosure.py",
+    "tests/test_general_contact_overlap_local_swept_roundoff.py",
+    "tests/test_general_contact_swept_patch_broadphase.py",
+    "-q",
+    "--junitxml=docs/d1_review_support/d2_partial_swept_enclosure_v1_20260930.xml"
+  ],
+  "log": "docs\\d1_review_support\\d2_partial_swept_enclosure_v1_20260930.log"
+}

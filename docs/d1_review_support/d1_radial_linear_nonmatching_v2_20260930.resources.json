@@ -1,0 +1,20 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 1.7773576999898069,
+  "peak_process_tree_memory_mb": 160.043008,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "scripts.general_contact_d1_interior_press_dev",
+    "docs/d1_review_support/d1_radial_linear_nonmatching_v2_20260930.json",
+    "--radial-linear-discriminator",
+    "--radial-target-cells",
+    "12",
+    "--radial-target-right-x-m",
+    "1.317"
+  ],
+  "log": "docs\\d1_review_support\\d1_radial_linear_nonmatching_v2_20260930.log"
+}

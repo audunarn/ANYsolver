@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="2.346" timestamp="2026-10-01T09:16:07.811608+02:00" hostname="WORK_STABEIST1"><testcase classname="docs.d1_review_support.native_inertia_batch_v1_20261001.test.source" name="test_complete_prepared_kernel_batch" time="0.836"><failure message="AssertionError">record_property = &lt;function record_property.&lt;locals&gt;.append_property at 0x0000018D095D4D50&gt;
+
+    def test_complete_prepared_kernel_batch(record_property):
+        spec = json.loads(Path(os.environ['NATIVE_INERTIA_BATCH_INPUTS']).read_bytes())
+        output = Path(spec['raw_output'])
+        assert not output.exists()
+        for path, expected in spec['source_sha256'].items():
+            assert sha256(Path(path).read_bytes()).hexdigest() == expected, path
+        for key, expected in spec['environment'].items():
+            assert os.environ.get(key) == expected,key
+        assert Path(inspect.getsourcefile(batch)).resolve() == Path(spec['candidate_module']).resolve()
+        started = perf_counter()
+        evidence = dict(status='RUNNING',cases=[],directional=[],timings=[],criteria=spec['criteria'],
+            actual_candidate_file=inspect.getsourcefile(batch),effective_environment=spec['environment'])
+        def save(stage):
+            evidence['last_stage'] = stage
+            evidence['elapsed_seconds'] = perf_counter()-started
+            output.write_bytes(canonical(evidence))
+            print(json.dumps(dict(stage=stage,elapsed_seconds=evidence['elapsed_seconds'])),flush=True)
+        try:
+            data = fixture()  # Authentic existing geometry/section helper, no old tests.
+            ref, section, positions, _, cells, velocity, acceleration = data
+            kernel = _CenteredFiniteKernel(ref,section,order=24)
+            assert np.linalg.norm(section[:3,3:]) &gt; 0.
+            evidence['prepared_inputs'] = dict(section_mass=kernel.section_mass.tolist(),
+                stations=[dict(cell=c,left=l,right=r,t=t,frame=f.tolist(),offset=d.tolist(),measure=w)
+                    for c,l,r,t,f,d,w in kernel._stations])
+            shift = np.array(((.012,-.007,.004),(-.008,.013,-.006),(.004,-.009,.011)))
+            fast_cells = np.array((rotation((.38,-.2,.31)),rotation((-.29,.41,-.14))))
+            fast_v = np.zeros(24)
+            omega = np.array((35.,-25.,20.))
+            for node,point in enumerate(positions+shift): fast_v[6*node:6*node+3]=np.cross(omega,point)
+            fast_v[18:21] = fast_v[21:24] = omega
+            rigid_v = np.zeros(24)
+            for node in range(3): rigid_v[6*node:6*node+3] = (.31,-.2,.5)
+            cases = (
+                ('rest',positions,np.array((np.eye(3),np.eye(3))),np.zeros(24),np.zeros(24)),
+                ('finite_off_axis',positions+shift,cells,velocity,acceleration),
+                ('fast_finite_off_axis',positions+shift,fast_cells,fast_v,np.linspace(-120.,150.,24)),
+                ('finite_attitude_translation',positions,fast_cells,rigid_v,np.zeros(24)))
+            for name,x,r,v,a in cases:
+                old = kernel.evaluate(x,r,v,a)
+                new = batch(kernel.section_mass,kernel._stations,x,r,v,a)
+                errors = {key:scaled_difference(value,asdict(old)[key]) for key,value in asdict(new).items()}
+                row = dict(name=name,positions=x.tolist(),cells=r.tolist(),velocity=v.tolist(),acceleration=a.tolist(),
+                    old=json.loads(canonical(old)),new=json.loads(canonical(new)),scaled_errors=errors,gate_status='UNASSESSED')
+                evidence['cases'].append(row); save(name+'_before_gates')
+&gt;               assert max(errors.values()) &lt;= spec['criteria']['parity_limit']
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               AssertionError
+
+docs\d1_review_support\native_inertia_batch_v1_20261001.test.source.py:98: AssertionError</failure></testcase></testsuite></testsuites>

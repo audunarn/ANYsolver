@@ -1,0 +1,29 @@
+{
+  "status": "development_free_ry_linear_predictor",
+  "source_commit": "5ff4b7a5a1c1d040249e11bbbb50806b65c3fbb3",
+  "probe_sha256": "c0e1c9e8bd6c48e8124562c5142e899c3241e796dc0bba65467a6620aca35726",
+  "load_fraction": 0.0016666666666666668,
+  "load_n": 0.0005,
+  "common_reference_slope": 0.1,
+  "guided": null,
+  "free_ry": null,
+  "free_interior_ry": {
+    "free_ry": true,
+    "left_ry_clamp": true,
+    "status": "linear_predictor_complete",
+    "scaled_stiffness_minimum": 0.0003333145693048446,
+    "free_coordinates": 36,
+    "linear_solve_relative_residual": 2.4428456951051316e-13,
+    "maximum_source_ry_rad": 7.544944122556641e-05,
+    "minimum_sampled_physical_gap_m": -1.5302000042628427e-05,
+    "initial_minimum_sampled_physical_gap_m": 3.999999999996421e-05,
+    "initial_gap_lower_m": 3.9999999963071305e-05,
+    "minimum_normalized_gap_m": -9.051742212710675e-06,
+    "maximum_normalized_gap_m": 3.8182132821481374e-05,
+    "source_uz_range_m": [
+      -5.5027999434915755e-05,
+      0.0
+    ]
+  },
+  "elapsed_seconds": 0.4255425000010291
+}

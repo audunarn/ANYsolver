@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 10.259244899993064,
+  "peak_process_tree_memory_mb": 227.180544,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_d1_radial_source_bin_work.py",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d1_candidate_budget_source_bins_outward_20260930.log"
+}

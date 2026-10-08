@@ -1,0 +1,51 @@
+{
+  "schema": "B3_E4_F03_FLAT_WEB_ENERGY_PARTITION_DEV_V1",
+  "classification": "bounded_elastic_domain_energy_comparison_not_F03_assessment",
+  "superseded_by": "B3_E4_F03_FLAT_WEB_ENERGY_PARTITION_DEV_V2.json",
+  "supersession_reason": "The V1 parser accepted caller-supplied counts and work without binding deck, FRD and case identities; raw evidence remains preserved.",
+  "source_head_before_changes": "49585f38",
+  "calculix_version": "2.23",
+  "calculix_exe_sha256": "27a9426a1ee2f72c38fbe892e0ffaf38e14867628ffd0235770261b6f3ec9c5f",
+  "external_parser_sha256": "a01a05227354a7625fcf19b7e8eef9934effc963ac82eef02e439d1f6c758f0f",
+  "native_runner_sha256": "786735e43ec7460a7ee866cb3da0f515c0a4622f0893d995c35b6f70c04a8baa",
+  "raw_evidence_directory": ".qualification/b3-ge-e4-pl/f03-flat-web-energy-partition-dev-20260928-v1",
+  "raw_sha256": {
+    "plate_deck": "daeef34b1a1c88304ba41f0f7b71527211e7483eba9b343a55feeba0ba515881",
+    "plate_dat": "13fb1876c9b699a9a04e868447664dc1871903daa76b8da22b19bc7813ec7b0c",
+    "plate_parsed": "17eed07b6e4e0d1fdddaf4c30dc5f1d342d881ad3e530b588347ff8d549a140a",
+    "torque_deck": "1d466414a7349f9813691877e45833581de572e184d6c0e6c15a11d6b8509075",
+    "torque_dat": "579a26f28f9447350b5325f6da41afbd1f377659b289e47d3d003838948ea218",
+    "torque_parsed": "6e62b1ada8b6cb6b7f76acc7bc631ff5cfac07f47bb28be5f0eec6a7eea82a53",
+    "native_result": "85bc5a96d78eed11b8b3994a2311533bc385e2a7ddb0379965fa04b105cffa75"
+  },
+  "method": "The same four-edge coupled external decks add *EL PRINT ELSE for Plate and Web. Modified-deck FRD action work matches the prior loaded-work values exactly at reported precision. The native result uses the block-diagonal shell/beam stiffness and the full constrained solution; each split sums to half its applied work within 1e-8 relative.",
+  "external": {
+    "plate_fy": {
+      "applied_work_j": 0.000689073,
+      "plate_internal_energy_j": 0.000344037644,
+      "web_internal_energy_j": 0.000000498803961,
+      "energy_balance_relative": 0.000000151040600946592,
+      "plate_energy_fraction": 0.998552246173222
+    },
+    "web_mx": {
+      "applied_work_j": 0.001878843,
+      "plate_internal_energy_j": 0.000177627338,
+      "web_internal_energy_j": 0.0007617921412,
+      "energy_balance_relative": 0.00000215111108271606,
+      "plate_energy_fraction": 0.189082025583785
+    }
+  },
+  "native": {
+    "A_plate_fy": {"shell_internal_energy_j": 0.000294607379657405, "beam_internal_energy_j": 0.00000101550368478533},
+    "A_web_mx": {"shell_internal_energy_j": 0.00000450017904272748, "beam_internal_energy_j": 0.000719105951311083, "shell_energy_fraction": 0.00621910021758259},
+    "B_plate_fy": {"shell_internal_energy_j": 0.000294603382256404, "beam_internal_energy_j": 0.00000102662246907291},
+    "B_web_mx": {"shell_internal_energy_j": 0.0000109684910751702, "beam_internal_energy_j": 0.000714775537654256, "shell_energy_fraction": 0.0151134430887058}
+  },
+  "decision": "The torque-case domain energy allocations differ substantially: the external welded S4 model stores about 18.9% in the plate, compared with about 0.62% for native L1 A and 1.51% for B. This does not isolate interface transfer because the torque work conjugates, S4 web, B3 section and connection law differ. Do not select A/B or alter the law from this split alone. The remaining discriminator is a reviewed supported virtual side-work map or equivalent physically matched operator partition.",
+  "limitations": [
+    "Element ELSE is an internal-energy partition, not the interface force or moment conjugate to a trial trace.",
+    "The S4 wall and B3 section have different isolated torque work; the S4 shared seam is not the native weak L1 law.",
+    "One mesh level does not establish convergence, interface stability, or the required physical transfer accuracy.",
+    "CalculiX DAT/FRD output rounding sets a small nonzero energy-work closure error."
+  ]
+}

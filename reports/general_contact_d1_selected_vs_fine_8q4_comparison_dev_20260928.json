@@ -1,0 +1,17 @@
+{
+  "method": "same-mechanics eight-Q4/two-S3 coupled discrete comparison",
+  "fine_sha256": "13eb273301b6d3723e7bb0ec42b838e7ab261986c5b0fc3b5f2c2ea76e8dc387",
+  "selected_sha256": "d800d8ffe34b4c311ec88ae6cfa33208a32e388164205284739463b3cc8a4ce0",
+  "full_pressure_relative_l2_over_overlap": 0.29480535519039947,
+  "pressure_maximum_node_difference_pa": 0.266379279942369,
+  "displacement_relative_l2": 0.006674807196867564,
+  "fine_normal_force_n": 0.10347981515520664,
+  "selected_normal_force_n": 0.10460495942778514,
+  "normal_force_relative_difference": 0.010873079652209678,
+  "fine_minimum_gap_m": -8.037223729084013e-08,
+  "selected_minimum_gap_m": -3.153120414895453e-07,
+  "fine_pressure_modes": 18,
+  "selected_pressure_modes": 12,
+  "fine_elapsed_seconds": 101.25754470005631,
+  "selected_elapsed_seconds": 137.5293283999781
+}

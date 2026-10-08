@@ -1,0 +1,115 @@
+{
+  "status": "development_free_source_director_press",
+  "source_commit": "085d53d8a436fc6f28d5ddaf142bb82482622499",
+  "probe_sha256": "87a03e9c6a40fdf1b8e2f523df389e368d0c54eba4e59f68008a438af4eb609a",
+  "solver_status": "diverged",
+  "failure_reason": "contact_semismooth_iterations_exhausted",
+  "accepted_steps": 0,
+  "source_rotational_constraint": "ry released; uy/rx/rz retained",
+  "maximum_ry_rad": null,
+  "maximum_source_contact_ry_moment_nm": null,
+  "maximum_free_ry_equilibrium_nm": null,
+  "final_contact": {
+    "profile": "Q4_S3_PATCH_REFINED_PROJECTED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0",
+    "minimum_gap": 3.9999999963048415e-05,
+    "sampled_overlap_gap": 3.9999999999993166e-05,
+    "penalty_energy": 0.0,
+    "current_overlap_area": 0.9000000000000001,
+    "reference_overlap_area": 0.8999999999999991,
+    "overlapping_pairs": 8,
+    "integration_force": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "target_force": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "integration_moment": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "target_moment": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "gap_tolerance_met": true,
+    "active_pressure_dofs": 0,
+    "source_pressure_node_ids": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "normalized_weighted_gap_m": [
+      3.9999999999996364e-05,
+      3.999999999999659e-05,
+      3.999999999999662e-05,
+      3.999999999999661e-05,
+      3.9999999999996866e-05,
+      3.999999999999649e-05,
+      3.999999999999659e-05,
+      3.999999999999665e-05,
+      3.999999999999652e-05,
+      3.9999999999997e-05
+    ],
+    "numerical_pressure_pa": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reference_support_m2": [
+      0.06187499999999999,
+      0.12374999999999996,
+      0.12374999999999997,
+      0.12374999999999999,
+      0.06187499999999979,
+      0.050624999999999934,
+      0.10124999999999987,
+      0.1012499999999999,
+      0.10124999999999992,
+      0.05062499999999981
+    ],
+    "energy_evaluations": 8,
+    "weighted_gap_integration_error_m3": 1.249373597200093e-19,
+    "integration_triangles": 64,
+    "area_integration_error_m2": 8.716985466783456e-17,
+    "augmented_merit_j": 0.0,
+    "normal_multiplier_estimate_pa": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "pair_geometry_evaluations": 8,
+    "pressure_gram_rank": 10,
+    "pressure_gram_condition_estimate": 14.71289061329302,
+    "pressure_gram_supported_modes": 10,
+    "pressure_gram_scaled_rank": 10,
+    "pressure_gram_scaled_condition_estimate": 10.937113801369321
+  },
+  "elapsed_seconds": 102.3019134999995
+}

@@ -1,0 +1,13 @@
+{
+  "scope": "single cProfile-instrumented retained residual; not balanced whole-route measurement",
+  "before_seconds": 8.55513679998694,
+  "after_seconds": 6.263381999975536,
+  "max_force_difference": 0.0,
+  "physical_summary_exact": true,
+  "before": "C:\\ANYworkspaceWork\\contact-friction-replay-cache-profile-v2-20261002\\anysolver-portable-ci-s8xc5wkv\\P01\\basetemp\\test_saved_partial_replay_resi0\\partial_residual_cost.json",
+  "after": "C:\\ANYworkspaceWork\\contact-friction-replay-partition-reuse-20261002\\anysolver-portable-ci-tf331vre\\P01\\basetemp\\test_saved_partial_replay_resi0\\partial_residual_cost.json",
+  "source_sha256": {
+    "src/anysolver/general_contact/s3_friction_replay.py": "2548091fdc328b4ca3642e0276589225fa1c160b5f42a6342ba0cfecc968cbbe",
+    "tests/test_general_contact_s3_friction_replay.py": "c5923215de2e570a45429aa2084c4a0510fd311c1f5dc9c8f7a81b86f6a11bc7"
+  }
+}

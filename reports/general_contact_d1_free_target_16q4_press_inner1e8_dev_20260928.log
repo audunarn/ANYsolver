@@ -1,0 +1,44 @@
+{
+  "status": "stopped_at_limit",
+  "failure_reason": "maximum_augmentations_reached",
+  "accepted_steps": 2,
+  "elapsed_seconds": 107.85636450001039,
+  "history": [
+    {
+      "step": 1,
+      "normal_force_n": 0.0,
+      "target_force_n": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "minimum_gap_m": -1.477928893081334e-13,
+      "active_pressure_dofs": 0,
+      "pressure_change_pa": 0.0,
+      "pressure_rank": 34,
+      "residual_norm": 3.2994116212691995e-16,
+      "augmentation_iterations": 1,
+      "schur_attempts": 0,
+      "schur_applied": 0,
+      "schur_rejected": 0
+    },
+    {
+      "step": 2,
+      "normal_force_n": 6.484620054267214e-05,
+      "target_force_n": [
+        -1.4276787560370087e-09,
+        4.724480577146213e-13,
+        -6.484620054267216e-05
+      ],
+      "minimum_gap_m": -8.210080670449688e-08,
+      "active_pressure_dofs": 2,
+      "pressure_change_pa": 4.630691023774919e-11,
+      "pressure_rank": 34,
+      "residual_norm": 4.469980597636463e-12,
+      "augmentation_iterations": 3,
+      "schur_attempts": 1,
+      "schur_applied": 1,
+      "schur_rejected": 0
+    }
+  ]
+}

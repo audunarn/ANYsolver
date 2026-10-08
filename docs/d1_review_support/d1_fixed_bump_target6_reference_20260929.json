@@ -1,0 +1,82 @@
+{
+  "baseline": "docs\\d1_review_support\\d1_fixed_bump_target_xy_reference_20260929.json",
+  "cases": [
+    {
+      "source_columns": 16,
+      "source_rows": 16,
+      "target_columns": 2,
+      "target_rows": 2,
+      "target_s3_faces": 8,
+      "fixed_middle_left_nodes": [
+        293
+      ],
+      "load_shape": "physical_bump",
+      "integrated_normal_force_n": 0.006050988344520671,
+      "active_node_ids": [
+        143
+      ],
+      "independent_projected_lower_gap_m": -3.3423030670802114e-06,
+      "sample_xy_m": [
+        [
+          0.6,
+          0.6
+        ],
+        [
+          0.6,
+          0.7
+        ],
+        [
+          0.6,
+          0.9
+        ]
+      ],
+      "source_vertical_displacement_m": [
+        -0.0003122703458544152,
+        -0.00029097507989124185,
+        -0.00016760311187574695
+      ],
+      "structural_free_coordinates": 1416
+    },
+    {
+      "source_columns": 16,
+      "source_rows": 16,
+      "target_columns": 6,
+      "target_rows": 6,
+      "target_s3_faces": 72,
+      "fixed_middle_left_nodes": [
+        297,
+        304,
+        311,
+        318,
+        325
+      ],
+      "load_shape": "physical_bump",
+      "integrated_normal_force_n": 0.008473502866979937,
+      "active_node_ids": [
+        142,
+        143
+      ],
+      "independent_projected_lower_gap_m": -1.3576581932357684e-05,
+      "sample_xy_m": [
+        [
+          0.6,
+          0.6
+        ],
+        [
+          0.6,
+          0.7
+        ],
+        [
+          0.6,
+          0.9
+        ]
+      ],
+      "source_vertical_displacement_m": [
+        -0.00029691356150181027,
+        -0.0002764848545748087,
+        -0.00015895244872760642
+      ],
+      "structural_free_coordinates": 1632
+    }
+  ]
+}

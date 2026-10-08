@@ -642,10 +642,14 @@ def test_ci_lane_is_exactly_quick_plus_functional_plus_additive() -> None:
     assert (
         "python scripts/run_portable_ci.py --workers 2 --timeout-seconds 1200\n"
         "          --matrix-shard-index ${{ matrix.shard-index }} "
-        "--matrix-shard-count 8"
+        "--matrix-shard-count 8\n"
+        "          --matrix-subshard-index ${{ matrix.subshard-index }} --matrix-subshard-count 4"
         in workflow
     )
-    assert len(re.findall(r"(?m)^\s+- \{os: .* shard-index: \d\}$", workflow)) == 8
+    rows = re.findall(r'(?m)^\s+- \{os: (windows-latest|ubuntu-latest), python-version: "(3\.\d+)", shard-index: (\d), subshard-index: (\d)\}$', workflow)
+    expected = {(('windows-latest' if i % 2 == 0 else 'ubuntu-latest'),
+                 f"3.{11+i//2}", str(i), str(j)) for i in range(8) for j in range(4)}
+    assert len(rows) == 32 and set(rows) == expected
     assert "push:\n    branches: [main]\n  pull_request:" in workflow
     assert "python scripts/run_e4_pl_burnin_gate.py ci" not in workflow
     # The burn-in contract remains immutable historical evidence. Ordinary CI is

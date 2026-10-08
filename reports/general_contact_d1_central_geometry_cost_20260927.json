@@ -1,0 +1,20 @@
+[
+  {
+    "divisions": 4,
+    "pair_laws": 32,
+    "overlapping_pairs": 18,
+    "minimum_gap_lower_m": 4.999999997157799e-05,
+    "gap_lower_seconds": 0.013243099994724616,
+    "geometry_seconds": 0.2178892999945674,
+    "pressure_modes": 20
+  },
+  {
+    "divisions": 8,
+    "pair_laws": 128,
+    "overlapping_pairs": 40,
+    "minimum_gap_lower_m": 4.999999997157799e-05,
+    "gap_lower_seconds": 0.054439200001070276,
+    "geometry_seconds": 1.0716333000164013,
+    "pressure_modes": 42
+  }
+]

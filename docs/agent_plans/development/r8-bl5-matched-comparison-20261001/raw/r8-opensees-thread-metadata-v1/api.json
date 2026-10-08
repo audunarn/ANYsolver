@@ -1,0 +1,8 @@
+{
+  "pid": 70108,
+  "version": "3.8.0",
+  "before": null,
+  "set_return": null,
+  "after": null,
+  "scope": "import and thread-setting API only; no model, element or analysis"
+}

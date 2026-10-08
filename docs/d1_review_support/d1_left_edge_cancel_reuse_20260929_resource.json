@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 75.00728930000332,
+  "peak_process_tree_memory_mb": 408.109056,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_d1_interior_profile.py::test_guarded_left_edge_press_cancel_after_step_keeps_model_reusable",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d1_left_edge_cancel_reuse_20260929.log"
+}

@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 3.0289775999990525,
+  "peak_process_tree_memory_mb": 214.007808,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_overlap_local_swept_roundoff.py",
+    "-q",
+    "-k",
+    "nonfinite"
+  ],
+  "log": "docs\\d1_review_support\\d1_swept_nonfinite_focus_20260929.log"
+}

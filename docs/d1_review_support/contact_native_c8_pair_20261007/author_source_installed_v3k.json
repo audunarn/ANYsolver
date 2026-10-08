@@ -1,0 +1,75 @@
+{
+  "state": "PASS",
+  "owned_product_count": 8,
+  "comparison": [
+    {
+      "path": "src/anysolver/_ge_beam3_connected_dynamic.py",
+      "source_sha256": "2a0f006b353d22a679b29f45046f557807ed5c7fad0832dbe1a9633976193fa0",
+      "build_sha256": "2a0f006b353d22a679b29f45046f557807ed5c7fad0832dbe1a9633976193fa0",
+      "wheel_sha256": "2a0f006b353d22a679b29f45046f557807ed5c7fad0832dbe1a9633976193fa0",
+      "installed_sha256": "2a0f006b353d22a679b29f45046f557807ed5c7fad0832dbe1a9633976193fa0",
+      "match": true
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_connected_trajectory.py",
+      "source_sha256": "61ac48ce5485144f2ac2f46e6c41cd477f0b573f936a1ac890e7e8841a7be84c",
+      "build_sha256": "61ac48ce5485144f2ac2f46e6c41cd477f0b573f936a1ac890e7e8841a7be84c",
+      "wheel_sha256": "61ac48ce5485144f2ac2f46e6c41cd477f0b573f936a1ac890e7e8841a7be84c",
+      "installed_sha256": "61ac48ce5485144f2ac2f46e6c41cd477f0b573f936a1ac890e7e8841a7be84c",
+      "match": true
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_native_pair_contact.py",
+      "source_sha256": "68c7d09deea102915c721819a459389a6063149e04345cc0d69e8d4e5a5dcdc3",
+      "build_sha256": "68c7d09deea102915c721819a459389a6063149e04345cc0d69e8d4e5a5dcdc3",
+      "wheel_sha256": "68c7d09deea102915c721819a459389a6063149e04345cc0d69e8d4e5a5dcdc3",
+      "installed_sha256": "68c7d09deea102915c721819a459389a6063149e04345cc0d69e8d4e5a5dcdc3",
+      "match": true
+    },
+    {
+      "path": "src/anysolver/general_contact/native_transient_pair.py",
+      "source_sha256": "420a62600eeb34ab8e920d14951ef4f53033719393622fb9ead4d41b87e66f04",
+      "build_sha256": "420a62600eeb34ab8e920d14951ef4f53033719393622fb9ead4d41b87e66f04",
+      "wheel_sha256": "420a62600eeb34ab8e920d14951ef4f53033719393622fb9ead4d41b87e66f04",
+      "installed_sha256": "420a62600eeb34ab8e920d14951ef4f53033719393622fb9ead4d41b87e66f04",
+      "match": true
+    },
+    {
+      "path": "src/anysolver/general_contact/__init__.py",
+      "source_sha256": "4159a3d921f1794d79a22f813bfd8d14de76ab5725633e12075c80952d4dc291",
+      "build_sha256": "4159a3d921f1794d79a22f813bfd8d14de76ab5725633e12075c80952d4dc291",
+      "wheel_sha256": "4159a3d921f1794d79a22f813bfd8d14de76ab5725633e12075c80952d4dc291",
+      "installed_sha256": "4159a3d921f1794d79a22f813bfd8d14de76ab5725633e12075c80952d4dc291",
+      "match": true
+    },
+    {
+      "path": "src/anysolver/__init__.py",
+      "source_sha256": "6791af8fd0d3d0155fcca299e62d0fca0ed869da982cdac21841918f1a9ad0d8",
+      "build_sha256": "6791af8fd0d3d0155fcca299e62d0fca0ed869da982cdac21841918f1a9ad0d8",
+      "wheel_sha256": "6791af8fd0d3d0155fcca299e62d0fca0ed869da982cdac21841918f1a9ad0d8",
+      "installed_sha256": "6791af8fd0d3d0155fcca299e62d0fca0ed869da982cdac21841918f1a9ad0d8",
+      "match": true
+    },
+    {
+      "path": "src/anysolver/general_contact/native_retained_whole_pair.py",
+      "source_sha256": "1315ed7d4ceb72ab386eb89c24d7f86d61a1d2f6034ca12a5f7a86ffec177346",
+      "build_sha256": "1315ed7d4ceb72ab386eb89c24d7f86d61a1d2f6034ca12a5f7a86ffec177346",
+      "wheel_sha256": "1315ed7d4ceb72ab386eb89c24d7f86d61a1d2f6034ca12a5f7a86ffec177346",
+      "installed_sha256": "1315ed7d4ceb72ab386eb89c24d7f86d61a1d2f6034ca12a5f7a86ffec177346",
+      "match": true
+    },
+    {
+      "path": "src/anysolver/general_contact/native_pair_error_budget.py",
+      "source_sha256": "9ee8b7a5d9f46b7673b5c4e93fe0e7b38b5a0282730c64729c8266d399a029f8",
+      "build_sha256": "9ee8b7a5d9f46b7673b5c4e93fe0e7b38b5a0282730c64729c8266d399a029f8",
+      "wheel_sha256": "9ee8b7a5d9f46b7673b5c4e93fe0e7b38b5a0282730c64729c8266d399a029f8",
+      "installed_sha256": "9ee8b7a5d9f46b7673b5c4e93fe0e7b38b5a0282730c64729c8266d399a029f8",
+      "match": true
+    }
+  ],
+  "wheel": "C:\\ANYworkspaceWork\\contact_native_c8_pair_20261007\\dist_v3k\\anysolver-0.4.7-py3-none-any.whl",
+  "wheel_sha256": "487af8778274b5fcf8efaf082e8d57299bdf67af1ef7ef52409000fef01cb88e",
+  "site": "C:\\ANYworkspaceWork\\contact_native_c8_pair_20261007\\site_v3k",
+  "errors": [],
+  "scope": "OWNED_CHANGED_PRODUCT8_CURRENT_SOURCE_BUILD_WHEEL_SITE_NOT_DUPLICATE_FULL_PACKAGE_AUDIT"
+}

@@ -1,0 +1,290 @@
+{
+  "status": "local_development",
+  "scientific_accepted": false,
+  "installed": false,
+  "released": false,
+  "profile": "JET2_ROUND_BEAM_DEFORMABLE_FIXED_DIRECTOR_S3_STATIC_DEV_V0",
+  "sources": [
+    {
+      "path": "src/anysolver/general_contact/deformable_beam_s3_line.py",
+      "sha256": "2f4d3036877639de3c8deef6b5c12dd16af12acc8a7d77d80ca5a7c1310ed48e"
+    },
+    {
+      "path": "src/anysolver/general_contact/deformable_beam_s3_static.py",
+      "sha256": "d40608c6759ef0a709c63ebe665b93cf80b52af34097fed2338c8dd38c34780f"
+    },
+    {
+      "path": "src/anysolver/general_contact/core.py",
+      "sha256": "01ecbd77ed6d5ce50ee3dcf6e20886c05b944b015a1fcb486c0a21f5c66b5d94"
+    },
+    {
+      "path": "src/anysolver/general_contact/beam_shell.py",
+      "sha256": "f726ebc5e6a9e098843c39484439a03250aaf0cf56f76c9e6c0df3d2e83b6369"
+    },
+    {
+      "path": "tests/test_general_contact_deformable_beam_s3.py",
+      "sha256": "1d842141fdedd21cbe0b4b635b312b7290179f1131036e73759abc031061fa42"
+    },
+    {
+      "path": "tests/test_general_contact_deformable_beam_s3_static.py",
+      "sha256": "eadee2c437ff40b84ed0d76ccb1b720798029753e04316b43204de2f406c6b45"
+    },
+    {
+      "path": "examples/general_contact_deformable_round_beam_s3.py",
+      "sha256": "ef6c4f5ac68799d67e8df4444750055b7cbcabe1235cb821c37d7093fe099acc"
+    }
+  ],
+  "runs": [
+    {
+      "stem": "d3_deformable_beam_s3_example_v1_20261001",
+      "status": "completed",
+      "exit_code": 1,
+      "elapsed_seconds": 4.944467199995415,
+      "peak_process_tree_memory_mb": 306.97472,
+      "pytest_summary": "1 failed, 4 deselected in 1.86s",
+      "bindings": [
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_example_v1_20261001.inputs.json",
+          "sha256": "e1ed64a244f0724d3bfddcfe344d007318d881931471fb8aa0f94cc77c1e2f2f"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_example_v1_20261001.log",
+          "sha256": "078008753354f66d80e6d239f2f24282c5c90341d2ead731e713eb0ed4b9c8e8"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_example_v1_20261001.manager.source.py",
+          "sha256": "f967dcf3df132dbc088b3fdcd73bf04bef425f79f8cba10630d0248409f58834"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_example_v1_20261001.resources.json",
+          "sha256": "943b145cc8f0dd7e1969503db59b961f60f23cdfcfc63ff5bf665c457852170f"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_example_v1_20261001.xml",
+          "sha256": "43a4534a6cea688ed6d0cd23c9422e8af9a3ab5cb4c757b91d079521846019b8"
+        }
+      ]
+    },
+    {
+      "stem": "d3_deformable_beam_s3_example_v2_20261001",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_seconds": 4.844794800010277,
+      "peak_process_tree_memory_mb": 269.406208,
+      "pytest_summary": "1 passed, 4 deselected in 1.46s",
+      "bindings": [
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_example_v2_20261001.inputs.json",
+          "sha256": "16e3b57540c621d850f807b12e5694735e06e2ad25c03d01d066534c2e1c303c"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_example_v2_20261001.log",
+          "sha256": "ce7a1c2bd08a83763fc48ef15cd1664c029bd1931148d2903d55ae85ae8a3367"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_example_v2_20261001.resources.json",
+          "sha256": "8b084bc40ae6f006f8ac3ca3077fa5c69486ad7605dc131515c643019e45ed2d"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_example_v2_20261001.xml",
+          "sha256": "15251437b71ceecad2d1778c0aa0f851672db7a9e1a706dd1c2c1e78dad0275e"
+        }
+      ]
+    },
+    {
+      "stem": "d3_deformable_beam_s3_local_v1_20261001",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_seconds": 3.2986616999842227,
+      "peak_process_tree_memory_mb": 214.97856,
+      "pytest_summary": "7 passed in 0.45s",
+      "bindings": [
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_local_v1_20261001.inputs.json",
+          "sha256": "8ce76b6c53a898d311f2d2dd216f06fc35f723e85d62706002ce9371abf02216"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_local_v1_20261001.log",
+          "sha256": "e7a7f10737ce216f5334cfdf136069580dba4dbd74b1d3f70550815714cdd563"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_local_v1_20261001.resources.json",
+          "sha256": "c22493e8833349f60da4570bf19c8cfb7b9bec6228b4c464df90789d810e11e2"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_local_v1_20261001.xml",
+          "sha256": "03f4e8496256b8c58075bbf68da62c81b57fea4e0b58f5cdb70f2374a994585d"
+        }
+      ]
+    },
+    {
+      "stem": "d3_deformable_beam_s3_static_v1_20261001",
+      "status": "completed",
+      "exit_code": 1,
+      "elapsed_seconds": 4.828503199998522,
+      "peak_process_tree_memory_mb": 271.228928,
+      "pytest_summary": "1 failed, 3 passed in 1.68s",
+      "bindings": [
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v1_20261001.inputs.json",
+          "sha256": "f516048b79a14fb7a4e5d3e031299b8c200e389e770acef4280026306f667c2f"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v1_20261001.log",
+          "sha256": "1ba2954f6d56cfd867fbea33954c7a8ff448fe404e0119f40975b39f431796b1"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v1_20261001.resources.json",
+          "sha256": "c6dad4ec7500db4e5301893823717052e09c795283ec65f56885a36a225c533f"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v1_20261001.test.source.py",
+          "sha256": "91d2987eadd789f27d90eaec1ee35a6b4f356c3c800cde4433f1b32454ac2b12"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v1_20261001.xml",
+          "sha256": "aac5f485006084b50ff96f3803c07f3d3be554c687d112ccf4eba67444eae136"
+        }
+      ]
+    },
+    {
+      "stem": "d3_deformable_beam_s3_static_v2_20261001",
+      "status": "completed",
+      "exit_code": 1,
+      "elapsed_seconds": 0.14325059999828227,
+      "peak_process_tree_memory_mb": 11.431936,
+      "pytest_summary": "NOT_EXECUTED",
+      "bindings": [
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v2_20261001.log",
+          "sha256": "5431b7e59fd0ddeb1dfd43d8ef632e0c6d431a874526b2988f9d72efc92fbde8"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v2_20261001.resources.json",
+          "sha256": "f0cab3728aa5ecad82dbfc90f63be1b08c5f4bb9be49d84945006f38d6db3678"
+        }
+      ]
+    },
+    {
+      "stem": "d3_deformable_beam_s3_static_v3_20261001",
+      "status": "completed",
+      "exit_code": 1,
+      "elapsed_seconds": 16.16579850000562,
+      "peak_process_tree_memory_mb": 270.331904,
+      "pytest_summary": "1 failed, 2 passed in 12.96s",
+      "bindings": [
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v3_20261001.inputs.json",
+          "sha256": "ce1ce1882b093bae4179d07fdcd4b9d1afb2a7b2fb56164d0e9b56fdebde902f"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v3_20261001.log",
+          "sha256": "81eac0eaa4f74e2136db1338a6404f1c95e1b00979cba08aebd9b3df4ea00089"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v3_20261001.resources.json",
+          "sha256": "a5ca57c6d2bd3c8d5460b298dbbc2e0f214e0a79d9914415e40d19b6664cc805"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v3_20261001.test.source.py",
+          "sha256": "e56dd79e9277ef0055e934d1e4b4e5e3e46daf6020e31c1fe7ddd46bc9cdc91c"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v3_20261001.xml",
+          "sha256": "00bac514693964d3fad4667279f69415306cae82771af11298b0d0ced8e34c4f"
+        }
+      ]
+    },
+    {
+      "stem": "d3_deformable_beam_s3_static_v4_20261001",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_seconds": 5.490117199980887,
+      "peak_process_tree_memory_mb": 269.582336,
+      "pytest_summary": "2 passed, 2 deselected in 2.18s",
+      "bindings": [
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v4_20261001.inputs.json",
+          "sha256": "65870ceec5c414f964398d6414ed42fc0a59e24b38205d5b7c8577bc1c5dc190"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v4_20261001.log",
+          "sha256": "d243ba55dea9b211bb1f2d1eb1659e56fb0575877102d0c450ab2b26ba8184f6"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v4_20261001.manager.source.py",
+          "sha256": "b1778300fd59b2f64828331591c50fde6afab642653980fe1ab12c8acc8bf6fe"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v4_20261001.resources.json",
+          "sha256": "5b987f8774a74e56cbec4f902a0261085a23e1badc8e7a5122faa291539b7224"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v4_20261001.xml",
+          "sha256": "bc6f0426e651dcb0ae0aac830c353988d948bd403d64682b1ffe71e5f97a7582"
+        }
+      ]
+    },
+    {
+      "stem": "d3_deformable_beam_s3_swept_diagnostic_v1_20261001",
+      "status": "completed",
+      "exit_code": 1,
+      "elapsed_seconds": 3.9964017999882344,
+      "peak_process_tree_memory_mb": 259.698688,
+      "pytest_summary": "1 failed, 3 deselected in 0.93s",
+      "bindings": [
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_swept_diagnostic_v1_20261001.inputs.json",
+          "sha256": "3cf5e333d4b97acc10f8cf62edcc730fae69466a42a326e9374402c21f6ed158"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_swept_diagnostic_v1_20261001.log",
+          "sha256": "ef433e02ffa8c3a4f1b94e6b85e48a9cbfa856ea12c32c6336383450790854e4"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_swept_diagnostic_v1_20261001.resources.json",
+          "sha256": "3759676874da7125415ba1d027ed9f3a3484455b93e4726b5d5be6e2eb69e31b"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_swept_diagnostic_v1_20261001.test.source.py",
+          "sha256": "bd7b9c5c4f223c22998d19c3343e1387686273c4ab59ab2a8d6f82058d10311e"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_swept_diagnostic_v1_20261001.xml",
+          "sha256": "6a1a159bea64066e83ced2a386595fc317da8157976e52f2667bbe5bc3ce72e1"
+        }
+      ]
+    },
+    {
+      "stem": "d3_deformable_beam_s3_swept_diagnostic_v2_20261001",
+      "status": "completed",
+      "exit_code": 1,
+      "elapsed_seconds": 3.884889100008877,
+      "peak_process_tree_memory_mb": 259.895296,
+      "pytest_summary": "1 failed, 3 deselected in 0.90s",
+      "bindings": [
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_swept_diagnostic_v2_20261001.inputs.json",
+          "sha256": "9550c47542f79c46a5dca4f9ace35dd32f5b061915b473a1bb7f0828646cd8b2"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_swept_diagnostic_v2_20261001.log",
+          "sha256": "b48d71fdc96b85d703fec67e8268fad489280ec05c9b916d239dad12f1aaf026"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_swept_diagnostic_v2_20261001.resources.json",
+          "sha256": "19c27e4f7b2ab75c053abfb7322ed72568c6e9261d114464fe445e6a887c2cfe"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_swept_diagnostic_v2_20261001.test.source.py",
+          "sha256": "0b0342c90e88148f3548c3578f49e4160d3125ab7a318ecc4388df16f817360d"
+        },
+        {
+          "path": "docs/d1_review_support/d3_deformable_beam_s3_swept_diagnostic_v2_20261001.xml",
+          "sha256": "e25f8f71915ecab046b94ed092794a752f11bebb43a23fa0d769e9f71db1e515"
+        }
+      ]
+    }
+  ],
+  "limits": "One explicit B2/B3 reference-straight round cell and one S3 interior, fixed target rotational coordinates, elastic von Karman; full programme open; prior failures not regraded"
+}

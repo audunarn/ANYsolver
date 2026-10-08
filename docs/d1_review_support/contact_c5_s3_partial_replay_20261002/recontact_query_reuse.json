@@ -1,0 +1,240 @@
+{
+  "queries": 25620,
+  "hits": 17326,
+  "hit_fraction": 0.6762685402029665,
+  "cache_points": 8294,
+  "cache_cap": 32768,
+  "evaluations": [
+    {
+      "points": 504,
+      "hits": 1,
+      "level": 1
+    },
+    {
+      "points": 2016,
+      "hits": 27,
+      "level": 2
+    },
+    {
+      "points": 504,
+      "hits": 216,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 312,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 348,
+      "level": 1
+    },
+    {
+      "points": 636,
+      "hits": 377,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 504,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 504,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 504,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 504,
+      "level": 1
+    },
+    {
+      "points": 636,
+      "hits": 392,
+      "level": 1
+    },
+    {
+      "points": 636,
+      "hits": 395,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 216,
+      "level": 1
+    },
+    {
+      "points": 636,
+      "hits": 391,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 504,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 504,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 504,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 504,
+      "level": 1
+    },
+    {
+      "points": 636,
+      "hits": 393,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 216,
+      "level": 1
+    },
+    {
+      "points": 636,
+      "hits": 390,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 300,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 504,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 504,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 504,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 504,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 300,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 216,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 216,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 300,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 396,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 396,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 396,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 396,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 396,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 396,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 396,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 396,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 310,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 404,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 399,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 408,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 330,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 332,
+      "level": 1
+    },
+    {
+      "points": 636,
+      "hits": 513,
+      "level": 1
+    },
+    {
+      "points": 504,
+      "hits": 408,
+      "level": 1
+    }
+  ],
+  "scope": "exact material coordinate reuse count, no mechanical/performance acceptance"
+}

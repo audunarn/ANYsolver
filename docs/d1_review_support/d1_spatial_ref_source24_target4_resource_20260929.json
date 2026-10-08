@@ -1,0 +1,14 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 7.735426400002325,
+  "peak_process_tree_memory_mb": 687.280128,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-c",
+    "from pathlib import Path; from scripts.general_contact_d1_interior_two_body_oracle_dev import offline_target_xy_reference; offline_target_xy_reference(Path('docs/d1_review_support/d1_spatial_ref_source24_target4_20260929.json'), None, (4,), 5.0, 24, 0.04, -0.1)"
+  ],
+  "log": "docs\\d1_review_support\\d1_spatial_ref_source24_target4_20260929.log"
+}

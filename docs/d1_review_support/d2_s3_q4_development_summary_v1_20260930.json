@@ -1,0 +1,253 @@
+{
+  "status": "implemented_and_locally_tested",
+  "scientifically_accepted": false,
+  "released": false,
+  "scope": "two S3 source faces, one original Q4 target; elastic small rotation projected finite penalty",
+  "source_identity_scope": "final current source; earlier development runs retain their historical differences",
+  "identities": {
+    "src\\anysolver\\general_contact\\s3_q4_overlap_derivatives.py": {
+      "sha256": "1a7456f0f5552b5633bf975ccbf89c29331ab0d39c1d1ce38dcaa05e6cffb9a6",
+      "snapshot": "docs\\d1_review_support\\d2_s3_q4_final_20260930.s3_q4_overlap_derivatives.py.snapshot"
+    },
+    "src\\anysolver\\general_contact\\s3_q4_swept.py": {
+      "sha256": "35aa736fddafeef067bc341c84cdd0a91b62d339e98726efc08e225e506a0c76",
+      "snapshot": "docs\\d1_review_support\\d2_s3_q4_final_20260930.s3_q4_swept.py.snapshot"
+    },
+    "src\\anysolver\\general_contact\\q4_s3_overlap_derivatives.py": {
+      "sha256": "5327364afa12236bff97fb16131e8feb9b5563eaf72ea2084c21c510e18e51eb",
+      "snapshot": "docs\\d1_review_support\\d2_s3_q4_final_20260930.q4_s3_overlap_derivatives.py.snapshot"
+    },
+    "src\\anysolver\\general_contact\\core.py": {
+      "sha256": "207a0fd46e27fc762cd6d992e55293a4ad17058d418d1bd011b9f101b2b0bfe2",
+      "snapshot": "docs\\d1_review_support\\d2_s3_q4_final_20260930.core.py.snapshot"
+    },
+    "src\\anysolver\\general_contact\\s3_patch_static.py": {
+      "sha256": "0efd5954c9339c5bd4a0d8b2c960878f5cdab8c50e523fc3841cfa7827c2b77f",
+      "snapshot": "docs\\d1_review_support\\d2_s3_q4_final_20260930.s3_patch_static.py.snapshot"
+    },
+    "src\\anysolver\\general_contact\\s3_patch_augmented.py": {
+      "sha256": "1ce8ee2769fcb32dc7cd613fe45c04017e34b1a096c3f64c3237d42ae9a12fe9",
+      "snapshot": "docs\\d1_review_support\\d2_s3_q4_final_20260930.s3_patch_augmented.py.snapshot"
+    },
+    "src\\anysolver\\general_contact\\s3_patch_mortar_energy.py": {
+      "sha256": "ef8d44042beab99d1fe7b97adabbd1bbbefab8f5b96fef7395e6f5aff1cf6f09",
+      "snapshot": "docs\\d1_review_support\\d2_s3_q4_final_20260930.s3_patch_mortar_energy.py.snapshot"
+    },
+    "src\\anysolver\\general_contact\\static_path.py": {
+      "sha256": "70df4e7a4030a00f24afd992bd05c5b8eec4375da7014323be65e73f936cef1b",
+      "snapshot": "docs\\d1_review_support\\d2_s3_q4_final_20260930.static_path.py.snapshot"
+    },
+    "tests\\test_general_contact_s3_q4_static_dev.py": {
+      "sha256": "95a508e410e77b4410c3adef3ba5e71c9def83671efd364d931c62e09e3e4c3f",
+      "snapshot": "docs\\d1_review_support\\d2_s3_q4_final_20260930.test_general_contact_s3_q4_static_dev.py.snapshot"
+    }
+  },
+  "runs": {
+    "d2_s3_q4_static_v1_20260930": {
+      "resource": {
+        "status": "completed",
+        "exit_code": 1,
+        "elapsed_seconds": 11.387888199998997,
+        "peak_process_tree_memory_mb": 335.798272,
+        "time_limit_seconds": 180.0,
+        "memory_limit_bytes": 1073741824,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "tests/test_general_contact_s3_q4_static_dev.py",
+          "-q",
+          "--junitxml=docs/d1_review_support/d2_s3_q4_static_v1_20260930.xml"
+        ],
+        "log": "docs\\d1_review_support\\d2_s3_q4_static_v1_20260930.log"
+      },
+      "counts": {
+        "tests": 3,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "files": {
+        "resources.json": "e667166d30c23f0d3c73fa176964d16045ec213c0e58aa446d9ffa1f47970d6c",
+        "log": "404912cfd6ae937839b0f114ba21824c77165626e9a225606bfe79af26e7efb2",
+        "xml": "ba0171b7252b98274873bd86072a716b91fc20217ed680999882f1c040ffdda3"
+      }
+    },
+    "d2_s3_q4_static_v2_20260930": {
+      "resource": {
+        "status": "completed",
+        "exit_code": 1,
+        "elapsed_seconds": 3.2902606000134256,
+        "peak_process_tree_memory_mb": 212.922368,
+        "time_limit_seconds": 180.0,
+        "memory_limit_bytes": 1073741824,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "tests/test_general_contact_s3_q4_static_dev.py",
+          "-q",
+          "-k",
+          "existing_path",
+          "--junitxml=docs/d1_review_support/d2_s3_q4_static_v2_20260930.xml"
+        ],
+        "log": "docs\\d1_review_support\\d2_s3_q4_static_v2_20260930.log"
+      },
+      "counts": {
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "files": {
+        "resources.json": "a6d8ed1167dea0f5ec9bc0ad7ca9c36ad876e7e27b61cccc167bd6fda0eac807",
+        "log": "cf305ff5c41ae78f9a40201bbc60988ec1ed6e9751a61ec2e9f819830c05aa9c",
+        "xml": "cec9904c2e28b7ab60ba337cbb7f839b250996ef6c64f2df990447964f86cedd"
+      }
+    },
+    "d2_s3_q4_static_v3_20260930": {
+      "resource": {
+        "status": "completed",
+        "exit_code": 0,
+        "elapsed_seconds": 9.71727659998578,
+        "peak_process_tree_memory_mb": 336.371712,
+        "time_limit_seconds": 180.0,
+        "memory_limit_bytes": 1073741824,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "tests/test_general_contact_s3_q4_static_dev.py",
+          "-q",
+          "-k",
+          "existing_path or all_four_corner",
+          "--junitxml=docs/d1_review_support/d2_s3_q4_static_v3_20260930.xml"
+        ],
+        "log": "docs\\d1_review_support\\d2_s3_q4_static_v3_20260930.log"
+      },
+      "counts": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "files": {
+        "resources.json": "252f9563544ed8adfc4cc9d0fb9f32dfa70887aa2bb354429d7711f02ed88100",
+        "log": "6ea7cd7af663792b52ef16a42b9f7657d05dff5e6701284245b3a7261aa3353c",
+        "xml": "b12296a4c48ff75d7f61df945088cd415210733456598c9d325aeac3146598d8"
+      }
+    },
+    "d2_s3_q4_static_v4_20260930": {
+      "resource": {
+        "status": "completed",
+        "exit_code": 0,
+        "elapsed_seconds": 14.063921099994332,
+        "peak_process_tree_memory_mb": 336.461824,
+        "time_limit_seconds": 180.0,
+        "memory_limit_bytes": 1073741824,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "tests/test_general_contact_s3_q4_static_dev.py",
+          "-q",
+          "-k",
+          "existing_path or rotated_negative",
+          "--junitxml=docs/d1_review_support/d2_s3_q4_static_v4_20260930.xml"
+        ],
+        "log": "docs\\d1_review_support\\d2_s3_q4_static_v4_20260930.log"
+      },
+      "counts": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "files": {
+        "resources.json": "b1eb056da023296351873a43079374d77598bdaabe1fa2435b58c9ad302c2fe5",
+        "log": "8bd6683225f73c554edaf5092807fc41ecbaaa6a733001054d0ab7510f4c9991",
+        "xml": "9f37ab3408dd2991b8c8f09bd6a74d2c428988338b1da4c9cc87efbc6a550f0e"
+      }
+    },
+    "d2_s3_q4_deforming_target_v1_20260930": {
+      "resource": {
+        "status": "completed",
+        "exit_code": 1,
+        "elapsed_seconds": 3.9318344999919645,
+        "peak_process_tree_memory_mb": 246.939648,
+        "time_limit_seconds": 180.0,
+        "memory_limit_bytes": 1073741824,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "tests/test_general_contact_s3_q4_static_dev.py",
+          "-q",
+          "-k",
+          "structurally_deforming",
+          "--basetemp=docs/d1_review_support/pytest_tmp_s3_q4_deforming_v1",
+          "--junitxml=docs/d1_review_support/d2_s3_q4_deforming_target_v1_20260930.xml"
+        ],
+        "log": "docs\\d1_review_support\\d2_s3_q4_deforming_target_v1_20260930.log"
+      },
+      "counts": {
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0
+      },
+      "files": {
+        "resources.json": "8eaef26879a0fd1768189b0e759eec025320a93bfdc1e67e3b58ea9e84e52d34",
+        "log": "03ad22863dd750a541a213e799e240c5066058de724bd10b2a62f5611bcc8a2a",
+        "xml": "f84f24c4beec8247c9ce908efc45266f16cd703b2de66a94f243f67436153907"
+      }
+    },
+    "d2_s3_q4_deforming_target_v2_20260930": {
+      "resource": {
+        "status": "completed",
+        "exit_code": 0,
+        "elapsed_seconds": 8.519357100012712,
+        "peak_process_tree_memory_mb": 334.442496,
+        "time_limit_seconds": 180.0,
+        "memory_limit_bytes": 1073741824,
+        "command": [
+          "python",
+          "-m",
+          "pytest",
+          "tests/test_general_contact_s3_q4_static_dev.py",
+          "-q",
+          "-k",
+          "structurally_deforming",
+          "--basetemp=docs/d1_review_support/pytest_tmp_s3_q4_deforming_v2",
+          "--junitxml=docs/d1_review_support/d2_s3_q4_deforming_target_v2_20260930.xml"
+        ],
+        "log": "docs\\d1_review_support\\d2_s3_q4_deforming_target_v2_20260930.log"
+      },
+      "counts": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "files": {
+        "resources.json": "d71e8b573f3040030374335e9b2a1ccebe927dbadb35e619281800035bcd5eb2",
+        "log": "d7d78bcd50c273496348f43760a3a7af26fe841008231d543a48152afd5a3e66",
+        "xml": "a8675503077c5197d1e951cdab3e5d627263a64811774e05084054c0eefd5b61"
+      }
+    }
+  },
+  "python_executable": "C:\\Python\\Python314\\python.exe",
+  "distinct_integrated_checks": 5,
+  "limitations": [
+    "no installed promotion or broader spatial/warped/CCD admission",
+    "pure rigid-source press with zero contact-free reaction predictor is rejected",
+    "near-cancelled S3/Q4 scalar disagreement rejects; no shape3 roundoff proof generalized",
+    "adaptive derivative controls are measured differences, not certified true quadrature error"
+  ],
+  "retained_failures": {
+    "static_v1": "path converged but test used nonexistent result accessor",
+    "static_v2": "wrong public API keyword rejected before solve",
+    "deforming_target_v1": "pure-displacement contact-free rigid-source force predictor exactly zero; admission rejection"
+  },
+  "reference": "independent simplex P1-Q1 polynomial moments and existing linear structural operator; 4-row KKT enumeration, small-motion discrepancy bounded by 1e-6 comparisons"
+}

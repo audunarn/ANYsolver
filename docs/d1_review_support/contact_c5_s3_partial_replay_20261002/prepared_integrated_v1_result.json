@@ -1,0 +1,51 @@
+{
+  "id": "C5_PARTIAL_REPLAY_PREPARED_INTEGRATED_V1_20261002",
+  "status": "failed: 900-second execution limit",
+  "resource": {
+    "peak_sampled_bytes": 200986624,
+    "limit_mib": 953,
+    "elapsed_seconds": 910.1492041999591,
+    "status": "timeout",
+    "child_exit_codes": [
+      1
+    ]
+  },
+  "accepted_history_frames": 2,
+  "completed_evaluations": 15,
+  "last_completed_evaluations": [
+    {
+      "seconds": 5.323740299965721,
+      "frames": 2,
+      "tangent": false,
+      "total_evaluations": 380,
+      "cached_frames": 4096
+    },
+    {
+      "seconds": 102.31568599998718,
+      "frames": 2,
+      "tangent": true,
+      "total_evaluations": 426,
+      "cached_frames": 4096
+    },
+    {
+      "seconds": 271.96144420001656,
+      "frames": 2,
+      "tangent": true,
+      "total_evaluations": 472,
+      "cached_frames": 4096
+    },
+    {
+      "seconds": 208.45842779998202,
+      "frames": 2,
+      "tangent": true,
+      "total_evaluations": 518,
+      "cached_frames": 4096
+    }
+  ],
+  "source_bindings_verified": true,
+  "frozen_source": "C:\\ANYworkspaceWork\\contact-friction-prepared-integrated-v1-20261002\\frozen_source",
+  "authority_consumed": true,
+  "full_workflow_completed": false,
+  "restart_completed": false,
+  "next": "Fix retained-cache finding; profile one saved residual, no automatic coupled rerun or cap increase"
+}

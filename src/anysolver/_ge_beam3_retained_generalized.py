@@ -14,6 +14,8 @@ from ._ge_beam3_generalized_cell import GeneralizedCellConjugate, GeneralizedCel
 from ._ge_beam3_generalized_ellipsoid_section import EllipsoidalGeneralizedSection
 from ._ge_beam3_mixed_ad import Jet2, constant_matrix, matmul, transpose, so3_exp, so3_log
 from ._ge_beam3_p5.compensated import compensated_strain
+from ._ge_beam3_centered_so3_strain import (POLICY as STABLE_SO3_POLICY,
+    rotation_jets as stable_rotation_jets, strain as stable_strain)
 from ._ge_beam3_p5.compensated_coordinates import validate_pair
 from ._ge_beam3_p5.algebra import HALVES
 from ._ge_beam3_p5.arrays import _array, _frames
@@ -46,7 +48,7 @@ class RetainedGeneralizedOperator:
         object.__setattr__(self, name, value)
 
     def __init__(self, reference, section, *, order, arithmetic_policy=None):
-        if arithmetic_policy is not None and (type(arithmetic_policy) is not str or arithmetic_policy != PRECISE_WORK_POLICY):
+        if arithmetic_policy is not None and (type(arithmetic_policy) is not str or arithmetic_policy not in (PRECISE_WORK_POLICY, STABLE_SO3_POLICY)):
             raise ValueError('explicit registered geometric arithmetic policy required')
         if type(reference) is not Reference or type(section) is not EllipsoidalGeneralizedSection:
             raise ValueError('explicit centered reference and native generalized ellipsoid section required')
@@ -98,11 +100,22 @@ class RetainedGeneralizedOperator:
         if max(np.linalg.norm(v) for v in angular) >= .9*np.pi:
             raise ValueError('retained generalized rotation chart requires cutback')
         variables = [Jet2.variable(value, i, 24) for i, value in enumerate(delta[:24])]
-        made_q = [matmul(so3_exp(variables[6*n+3:6*n+6]), constant_matrix(q[n], 24)) for n in range(3)]
+        stable = self.arithmetic_policy == STABLE_SO3_POLICY
+        if stable:
+            prepared_q = [stable_rotation_jets(q[n], variables[6*n+3:6*n+6]) for n in range(3)]
+            made_q = [row[0] for row in prepared_q]
+            base_q_delta = np.array([row[2] for row in prepared_q]); base_u_delta = []
+        else:
+            made_q = [matmul(so3_exp(variables[6*n+3:6*n+6]), constant_matrix(q[n], 24)) for n in range(3)]
         z = []; ell = []
         for cell, (left, right) in enumerate(HALVES):
-            made_u = matmul(so3_exp(variables[18+3*cell:21+3*cell]), constant_matrix(u[cell], 24))
-            z.extend(compensated_strain(made_u, self.reference.coordinates, x, low, variables, left, right))
+            if stable:
+                made_u, made_delta, base_delta = stable_rotation_jets(u[cell], variables[18+3*cell:21+3*cell])
+                base_u_delta.append(base_delta)
+                z.extend(stable_strain(made_delta, self.reference.coordinates, x, low, variables, left, right))
+            else:
+                made_u = matmul(so3_exp(variables[18+3*cell:21+3*cell]), constant_matrix(u[cell], 24))
+                z.extend(compensated_strain(made_u, self.reference.coordinates, x, low, variables, left, right))
             for node, sign in ((left, -1), (right, 1)):
                 frame = matmul(made_u, constant_matrix(self.reference.nodal_triads[node], 24))
                 ell.extend(sign*v for v in so3_log(matmul(transpose(frame), made_q[node])))
@@ -118,7 +131,12 @@ class RetainedGeneralizedOperator:
         hessian_low = np.zeros((42, 42)); hessian_low[24:, 24:] = -cl
         potential = fsum([*(float(a)*float(b) for a, b in zip(p, k)),
                          -response['potential'][0][0], -response['potential'][1][0]])
-        if self.arithmetic_policy == PRECISE_WORK_POLICY:
+        if stable:
+            potential = precise_work(self.reference.coordinates, self.reference.nodal_triads,
+                x, low, q, u, delta, p, [response['potential'][0][0], response['potential'][1][0]],
+                check=check if check is not None else lambda: None,
+                effective_nodal_deltas=base_q_delta, effective_cell_deltas=np.array(base_u_delta))
+        elif self.arithmetic_policy == PRECISE_WORK_POLICY:
             potential = precise_work(self.reference.coordinates, self.reference.nodal_triads,
                 x, low, q, u, delta, p, [response['potential'][0][0], response['potential'][1][0]],
                 check=check if check is not None else lambda: None)

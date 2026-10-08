@@ -1,0 +1,19 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 5.959807500010356,
+  "peak_process_tree_memory_mb": 218.656768,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_general_contact_d1_path_normal_admission.py",
+    "tests/test_general_contact_d1_interior_profile.py",
+    "-k",
+    "path_control_of_source or independent_or_coupled or control_admission_revision or prescribed_normal_is_checked"
+  ],
+  "log": "docs\\d1_review_support\\d1_path_normal_admission_checks_v1_20260930.log"
+}

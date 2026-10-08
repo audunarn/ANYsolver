@@ -1,0 +1,15 @@
+...F..                                                                   [100%]
+================================== FAILURES ===================================
+__ test_raw_nodal_force_seam_rejects_unresolved_topology_and_resource_limit ___
+
+    def test_raw_nodal_force_seam_rejects_unresolved_topology_and_resource_limit():
+        owner, source, target, _base, z = _case()
+        saved_tie = owner.law.shared_edge_tie
+>       shared = owner.law._d1_reference_diagonal()
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'MovingS3PatchProjectedNormal' object has no attribute '_d1_reference_diagonal'
+
+tests\test_general_contact_monolithic_exact_seam.py:131: AttributeError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_monolithic_exact_seam.py::test_raw_nodal_force_seam_rejects_unresolved_topology_and_resource_limit
+1 failed, 5 passed in 27.40s

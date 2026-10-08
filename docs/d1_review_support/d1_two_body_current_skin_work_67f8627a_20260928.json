@@ -1,0 +1,143 @@
+{
+  "status": "development_independent_current_skin_values_at_saved_slide",
+  "source_commit": "67f8627a27641eb9bbb88ddf046744bfe85cc21a",
+  "saved_source_sha256": "ef69c6d174c3c189fc1d3f1f3fe809f5182b5f5b0799abffcfd1330290050311",
+  "oracle_source_sha256": "0154045a84059c6dbc3c69c927fd8836c923214ab517ec026c3f2a23482d9fc9",
+  "python": "3.14.2",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "quadrature_points": 256,
+  "current_xy_overlap_area_m2": 0.9000000007988981,
+  "reference_overlap_area_m2": 0.9000000059651394,
+  "saved_production_reference_overlap_area_m2": 0.9000000059651252,
+  "support_relative_l2": 2.4340923859796062e-14,
+  "maximum_normalized_gap_difference_m": 7.062581788386084e-13,
+  "normalized_gap_difference_l2_m": 1.0974840797275202e-12,
+  "directional_checks": [
+    {
+      "direction": "source_4_ux",
+      "step": 2e-06,
+      "independent_gap_gradient_norm": 3.037573629343665e-05,
+      "production_gap_gradient_norm": 3.037573641571862e-05,
+      "gradient_difference_norm": 1.6135997301039951e-13,
+      "gradient_scaled_difference": 5.312133697831935e-09,
+      "independent_contact_work_derivative": 2.0934529550727378e-09,
+      "production_contact_work_derivative": 2.0934529701745436e-09,
+      "contact_work_derivative_difference": 1.5101805837697962e-17
+    },
+    {
+      "direction": "source_4_uz",
+      "step": 2e-06,
+      "independent_gap_gradient_norm": 0.5977690350820205,
+      "production_gap_gradient_norm": 0.5977690351272394,
+      "gradient_difference_norm": 4.456082815412035e-10,
+      "gradient_scaled_difference": 7.454522656001286e-10,
+      "independent_contact_work_derivative": 4.1199673268150584e-05,
+      "production_contact_work_derivative": 4.1199673286867315e-05,
+      "contact_work_derivative_difference": 1.871673118141598e-14
+    },
+    {
+      "direction": "source_9_ux",
+      "step": 2e-06,
+      "independent_gap_gradient_norm": 2.6523195401922287e-05,
+      "production_gap_gradient_norm": 2.6523195224928457e-05,
+      "gradient_difference_norm": 2.023296537985422e-13,
+      "gradient_scaled_difference": 7.62840419801223e-09,
+      "independent_contact_work_derivative": 3.046426295751263e-09,
+      "production_contact_work_derivative": 3.0464262784191306e-09,
+      "contact_work_derivative_difference": 1.7332132509734384e-17
+    },
+    {
+      "direction": "source_9_uz",
+      "step": 2e-06,
+      "independent_gap_gradient_norm": 0.5219955386529007,
+      "production_gap_gradient_norm": 0.5219955388514417,
+      "gradient_difference_norm": 2.128989469573036e-10,
+      "gradient_scaled_difference": 4.078558744500956e-10,
+      "independent_contact_work_derivative": 5.9956132506901854e-05,
+      "production_contact_work_derivative": 5.995613253444232e-05,
+      "contact_work_derivative_difference": 2.754046312834421e-14
+    },
+    {
+      "direction": "target_12_ux",
+      "step": 2e-06,
+      "independent_gap_gradient_norm": 5.58359574713777e-05,
+      "production_gap_gradient_norm": 5.583595754006563e-05,
+      "gradient_difference_norm": 3.190278494170298e-13,
+      "gradient_scaled_difference": 5.713663085084701e-09,
+      "independent_contact_work_derivative": -2.320291091935389e-09,
+      "production_contact_work_derivative": -2.3202910888514868e-09,
+      "contact_work_derivative_difference": 3.0839022043457108e-18
+    },
+    {
+      "direction": "target_12_uz",
+      "step": 2e-06,
+      "independent_gap_gradient_norm": 1.0987905046683886,
+      "production_gap_gradient_norm": 1.0987905057309972,
+      "gradient_difference_norm": 3.0354235308200545e-09,
+      "gradient_scaled_difference": 2.7625134318035126e-09,
+      "independent_contact_work_derivative": -4.5663795239003886e-05,
+      "production_contact_work_derivative": -4.5663795254642554e-05,
+      "contact_work_derivative_difference": 1.5638667661202477e-14
+    },
+    {
+      "direction": "target_12_ry",
+      "step": 2e-05,
+      "independent_gap_gradient_norm": 8.375393712625257e-07,
+      "production_gap_gradient_norm": 8.375393631009845e-07,
+      "gradient_difference_norm": 2.27277141881898e-14,
+      "gradient_scaled_difference": 2.7136293754648824e-08,
+      "independent_contact_work_derivative": -3.4804366209144474e-11,
+      "production_contact_work_derivative": -3.4804366332772303e-11,
+      "contact_work_derivative_difference": 1.236278294127613e-19
+    },
+    {
+      "direction": "target_13_uz",
+      "step": 2e-06,
+      "independent_gap_gradient_norm": 0.7688572467198308,
+      "production_gap_gradient_norm": 0.7688572465644384,
+      "gradient_difference_norm": 1.273001652479499e-09,
+      "gradient_scaled_difference": 1.6557061251198182e-09,
+      "independent_contact_work_derivative": -5.938246118133759e-05,
+      "production_contact_work_derivative": -5.938246119435697e-05,
+      "contact_work_derivative_difference": 1.3019377514012637e-14
+    },
+    {
+      "direction": "target_13_ry",
+      "step": 2e-05,
+      "independent_gap_gradient_norm": 5.859928079660065e-07,
+      "production_gap_gradient_norm": 5.859928143929598e-07,
+      "gradient_difference_norm": 1.1025115164214401e-14,
+      "gradient_scaled_difference": 1.8814420404856858e-08,
+      "independent_contact_work_derivative": -4.525897993772814e-11,
+      "production_contact_work_derivative": -4.525898106583224e-11,
+      "contact_work_derivative_difference": 1.1281041049501601e-18
+    }
+  ],
+  "maximum_scaled_directional_gradient_difference": 2.7136293754648824e-08,
+  "maximum_contact_work_derivative_difference": 2.754046312834421e-14,
+  "independent_support_m2": [
+    0.061875000026766644,
+    0.12375000009177135,
+    0.1237500001491285,
+    0.12375000020648556,
+    0.061875000122361856,
+    0.050625000240899824,
+    0.10125000082594238,
+    0.10125000134215639,
+    0.10125000185837042,
+    0.05062500110125655
+  ],
+  "independent_normalized_gap_m": [
+    3.8216271803724616e-05,
+    2.1351869311748037e-05,
+    4.8289345218792725e-06,
+    2.9231372931654154e-16,
+    2.6241746791408188e-06,
+    3.8216061732928876e-05,
+    2.1351539666975844e-05,
+    4.828672497661928e-06,
+    2.9627382013416486e-16,
+    2.623857970009113e-06
+  ]
+}

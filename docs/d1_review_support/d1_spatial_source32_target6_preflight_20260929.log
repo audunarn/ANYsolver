@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    from pathlib import Path; from scripts.general_contact_d1_interior_two_body_oracle_dev import spatial_source32_allocation_inventory; spatial_source32_allocation_inventory(Path('docs/d1_review_support/d1_spatial_source32_target6_allocation_20260929.json'))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_two_body_oracle_dev.py", line 15, in <module>
+    from scripts.general_contact_d1_interior_press_dev import build_interior_press
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_press_dev.py", line 19, in <module>
+    from anysolver import (
+    ...<2 lines>...
+    )
+ImportError: cannot import name 'ContactPathControl' from 'anysolver' (C:\Github\ANYsolver\src\anysolver\__init__.py)

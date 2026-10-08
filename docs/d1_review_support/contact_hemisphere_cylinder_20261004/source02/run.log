@@ -1,0 +1,8 @@
+.............................                                            [100%]
+============================= slowest 5 durations =============================
+0.02s call     tests/test_general_contact_hemisphere_cylinder_work.py::test_complete_virtual_work_and_hessian[3-2-rim]
+0.02s call     tests/test_general_contact_hemisphere_cylinder_work.py::test_complete_virtual_work_and_hessian[3-0-rim]
+0.02s call     tests/test_general_contact_hemisphere_cylinder_work.py::test_complete_virtual_work_and_hessian[2-0-rim]
+0.02s call     tests/test_general_contact_hemisphere_cylinder_work.py::test_complete_virtual_work_and_hessian[2-1-rim]
+0.02s call     tests/test_general_contact_hemisphere_cylinder_work.py::test_complete_virtual_work_and_hessian[3-0-sphere]
+29 passed in 1.65s

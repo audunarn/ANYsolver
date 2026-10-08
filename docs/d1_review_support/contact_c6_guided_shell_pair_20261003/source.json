@@ -1,0 +1,398 @@
+{
+  "parent": "542d8184160d7d3a618ec57c3c143cf9042da640",
+  "candidate_sha256": {
+    "src/anysolver/general_contact/pair.py": "8b35fa90aa7a3404dd8b15b9b67cba11a0fd24f2249774e49fbfc4eda9481698",
+    "src/anysolver/general_contact/transient.py": "35a6f9dab7709f5e209507e83d41c9ac020e997f876b5870d98a523a513f2115",
+    "src/anysolver/general_contact/guided_pair_transient_geometry.py": "271e38aa9e15f76a63c36b957166f7082247982c8927d274e5c357dfb93f5976",
+    "tests/test_general_contact_guided_pair_transient_geometry.py": "19d7b2b9be8e5c73e6a05d5cb5dd4f97878fbc00b3247ada0e680f1b378fadab",
+    "tests/test_general_contact_transient_guided_shell_pair.py": "753dbc189ab7906ddf0c42145b3032372560e45077ae9dd4e06855e4db41369c",
+    "examples/general_contact_guided_shell_pair_impact_dev.py": "fcbf6588b29f2ee28f2e70910076feaef36c489d575350257e15ca8616191c61"
+  },
+  "wheel_sha256": "ec15777b30f96ac9e9555d83e9e29a27e8d44c998f95fc7eedc77b5b66daeca2",
+  "installed_import_hashes": 208,
+  "example_parity": true,
+  "raw_records": 43,
+  "archive_manifest": [
+    {
+      "path": "contact_guided_shell_pair_local_a_20261003/anysolver-portable-ci-pdmlh98p/P01/resource.json",
+      "sha256": "2b4ff771b90b07c5dce436b7c59d6f3b229814d22e88c449f5c6f9ce3220ea0d"
+    },
+    {
+      "path": "contact_guided_shell_pair_local_a_20261003/anysolver-portable-ci-pdmlh98p/P01/runtime.json",
+      "sha256": "52705b1fcb249967a4b78cab526615a169800c9d03f6fddb67e9b28c40bdf5b2"
+    },
+    {
+      "path": "contact_guided_shell_pair_local_a_20261003/anysolver-portable-ci-pdmlh98p/P01/selection.json",
+      "sha256": "a1669b9da034ee662373088433053adc0af074a6487795aabd75603308562812"
+    },
+    {
+      "path": "contact_guided_shell_pair_local_a_20261003/contact_guided_shell_pair_local_a_20261003.log",
+      "sha256": "83257a4030bba58c14554319542f26d9f4c059ac0070c8c3264ddd4b218450b0"
+    },
+    {
+      "path": "contact_guided_shell_pair_local_b_20261003/anysolver-portable-ci-bp4dhlwf/P01/resource.json",
+      "sha256": "ded953eec4b6d15e48df6f1a06146fc617e271ab4c8c1fb847e2cc89e51b30e6"
+    },
+    {
+      "path": "contact_guided_shell_pair_local_b_20261003/anysolver-portable-ci-bp4dhlwf/P01/runtime.json",
+      "sha256": "6a605fa7d79f48f65c8bcd7419ce11f9f18b7a5e641a52c4a10aa4a812d623af"
+    },
+    {
+      "path": "contact_guided_shell_pair_local_b_20261003/anysolver-portable-ci-bp4dhlwf/P01/selection.json",
+      "sha256": "0795c77c76adcfb29bc1457c503175500181b02189f0ae2d04ef5c3137be7633"
+    },
+    {
+      "path": "contact_guided_shell_pair_local_b_20261003/contact_guided_shell_pair_local_b_20261003.log",
+      "sha256": "8e078b535c5316ec3fcff70fc39faac22cb533dd8b7198368f01dbb90850c708"
+    },
+    {
+      "path": "contact_guided_shell_pair_impact_c_20261003/anysolver-portable-ci-kgvy_xpv/P01/resource.json",
+      "sha256": "2fd29756d787eaac4638b5b01162c3799fa639c70bf759c1b6c44d7d08fd154d"
+    },
+    {
+      "path": "contact_guided_shell_pair_impact_c_20261003/anysolver-portable-ci-kgvy_xpv/P01/runtime.json",
+      "sha256": "b2353b838dab71fd206f89f6a79c9a2fa61030333de2fe006b9dae03207f0814"
+    },
+    {
+      "path": "contact_guided_shell_pair_impact_c_20261003/anysolver-portable-ci-kgvy_xpv/P01/selection.json",
+      "sha256": "8e6af0a836cc9761166cb0abd8f1b96b85ecb66472be46ff0659bae8335255c3"
+    },
+    {
+      "path": "contact_guided_shell_pair_impact_c_20261003/shell_pair_impact.json",
+      "sha256": "67ce9376689ed692ed4a1258ab65c79cfca3e8d58b3d6bab1d2223cee3e57666"
+    },
+    {
+      "path": "contact_guided_shell_pair_impact_c_20261003/contact_guided_shell_pair_impact_c_20261003.log",
+      "sha256": "9fa3b4ef21512e9feb36f7b0553b4d17e6ff94bd4e4feb400f9abe390823d339"
+    },
+    {
+      "path": "contact_guided_shell_pair_state_d_20261003/anysolver-portable-ci-1z4uqf6w/P01/resource.json",
+      "sha256": "66b5ac6fa2728b39512dd584b54e9f4fe6024fd6df9d47047dcac05fb0cfaf32"
+    },
+    {
+      "path": "contact_guided_shell_pair_state_d_20261003/anysolver-portable-ci-1z4uqf6w/P01/runtime.json",
+      "sha256": "d166b357a61ad35d39f4002d1d548ebcfe52d7bd18b417eabe39ae36d579c647"
+    },
+    {
+      "path": "contact_guided_shell_pair_state_d_20261003/anysolver-portable-ci-1z4uqf6w/P01/selection.json",
+      "sha256": "9e54eb8c7a7d001f8a546487080dc962246bac9d42ee3b93a4d17d0088fb2795"
+    },
+    {
+      "path": "contact_guided_shell_pair_state_d_20261003/shell_pair_impact.json",
+      "sha256": "67ce9376689ed692ed4a1258ab65c79cfca3e8d58b3d6bab1d2223cee3e57666"
+    },
+    {
+      "path": "contact_guided_shell_pair_state_d_20261003/contact_guided_shell_pair_state_d_20261003.log",
+      "sha256": "b829884ea31348489d24e66af40e0e32fe9201633411a97af8975fb2b640e234"
+    },
+    {
+      "path": "contact_guided_shell_pair_refinement_e_20261003/anysolver-portable-ci-awnfm8nj/P01/resource.json",
+      "sha256": "82ad9e2eaf55c5dbfccb8568ae31fba427cdf2ff9701d15890fe1b4f4eaa3f8d"
+    },
+    {
+      "path": "contact_guided_shell_pair_refinement_e_20261003/anysolver-portable-ci-awnfm8nj/P01/runtime.json",
+      "sha256": "123e187dbad5e130c938745a9a55bfd3743a425872e65284226a368cfa682eb3"
+    },
+    {
+      "path": "contact_guided_shell_pair_refinement_e_20261003/anysolver-portable-ci-awnfm8nj/P01/selection.json",
+      "sha256": "f5d9026a310c5a49d688eae4cdfac61424f23f9b55ca902e5c0364b6641026ee"
+    },
+    {
+      "path": "contact_guided_shell_pair_refinement_e_20261003/shell_pair_impact.json",
+      "sha256": "67ce9376689ed692ed4a1258ab65c79cfca3e8d58b3d6bab1d2223cee3e57666"
+    },
+    {
+      "path": "contact_guided_shell_pair_refinement_e_20261003/temporal_refinement.json",
+      "sha256": "6b9a780486cdc1a262b89efea5dafe4d0452ee1dd95a686a83989c213c9d9cfd"
+    },
+    {
+      "path": "contact_guided_shell_pair_refinement_e_20261003/contact_guided_shell_pair_refinement_e_20261003.log",
+      "sha256": "5ac92ff7dd050f0e9ca8165d94f23f53e6c1fdfb4d30ac10f2f4dced1a304a8d"
+    },
+    {
+      "path": "helper/anysolver-portable-ci-f5vf6lbj/P01/resource.json",
+      "sha256": "25c466858218c3556b83f2af3da1d9f09a6aa62b9f39e52beaf98cc3fe563886"
+    },
+    {
+      "path": "helper/anysolver-portable-ci-f5vf6lbj/P01/runtime.json",
+      "sha256": "9b691443f8dddbf0b505f7056cbc1233fe997058834dc6ba48fdc8442d45c08b"
+    },
+    {
+      "path": "helper/anysolver-portable-ci-f5vf6lbj/P01/selection.json",
+      "sha256": "d5fb1e06ea9b87bbe505cc7077f05658cc608c301559131ae7b18a9ca82c2e3c"
+    },
+    {
+      "path": "helper/runner.log",
+      "sha256": "80963746f56e124cb6a2fbae5001723d54ade5a7a17795929e1fd77777896f5f"
+    },
+    {
+      "path": "helper_delta/anysolver-portable-ci-wl_3s2de/P01/resource.json",
+      "sha256": "f1ece650f5b53c8dd97b8222935786e0d10901c353a7a740612004947a9774f8"
+    },
+    {
+      "path": "helper_delta/anysolver-portable-ci-wl_3s2de/P01/runtime.json",
+      "sha256": "e3e7e5129036d8fa1296dbbf319344635594e368c99fa20770716f970268f6bd"
+    },
+    {
+      "path": "helper_delta/anysolver-portable-ci-wl_3s2de/P01/selection.json",
+      "sha256": "1c0a59ed00c0de2078773e2b7dd5ca70b733f29f097d435e3dbf671f5051ce91"
+    },
+    {
+      "path": "helper_delta/runner.log",
+      "sha256": "da9190670dbd2c6291149a0b8a2af0179251b16cc88ab662b4c143f3224d5583"
+    },
+    {
+      "path": "package/build.log",
+      "sha256": "1e376875cf874938eb3b2863c06143ae45e3a6aef0cd4ec4149dbe67da638f48"
+    },
+    {
+      "path": "package/example_check.py",
+      "sha256": "ab233c3a31adda99f756e1bf07e47e050707c9e3bd61c04b76f4c8b62b54ecb4"
+    },
+    {
+      "path": "package/install.log",
+      "sha256": "ebf271f317e2dfa14b38802c4ee851d33e0fe32704a4704bcc1f2f8d55d737cc"
+    },
+    {
+      "path": "package/installed-resource.json",
+      "sha256": "a9416d4a0e626d92d871bc8877bd29bdc8dfae7b620b8be1ca57be915b2c6719"
+    },
+    {
+      "path": "package/installed.json",
+      "sha256": "9aac16ad703bc9682a63805c43000d076b21785efffe033dfa9e702fd8a8bb3e"
+    },
+    {
+      "path": "package/installed.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "package/run_case.py",
+      "sha256": "1d22d09c7bbc9e1330be20b9ab8ca75446403e42f4b11a846fff9f0d9ca4c3ea"
+    },
+    {
+      "path": "package/source-resource.json",
+      "sha256": "de79b4bd002a5a9160c4906d72f21140aca2741a3760ada4d97557f6fd179d70"
+    },
+    {
+      "path": "package/source.json",
+      "sha256": "0e28cd7d830fc468bbeef0d3c2dd38b43f67bda1544872bebe2928be858d6665"
+    },
+    {
+      "path": "package/source.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "package/summarize.py",
+      "sha256": "d7423abf5ecf6d8819763f4c467d004f6db419ec209ae89c54e73be968562730"
+    }
+  ],
+  "resources": [
+    {
+      "label": "contact_guided_shell_pair_local_a_20261003",
+      "outcomes": {
+        "failed": 2
+      },
+      "collected": 2,
+      "resource": {
+        "peak_sampled_bytes": 182988800,
+        "limit_mib": 953,
+        "elapsed_seconds": 5.487768899998628,
+        "status": "terminal",
+        "child_exit_codes": [
+          1
+        ]
+      },
+      "source_imports": 201
+    },
+    {
+      "label": "contact_guided_shell_pair_local_b_20261003",
+      "outcomes": {
+        "passed": 2
+      },
+      "collected": 2,
+      "resource": {
+        "peak_sampled_bytes": 181637120,
+        "limit_mib": 953,
+        "elapsed_seconds": 5.349488999985624,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      },
+      "source_imports": 204
+    },
+    {
+      "label": "contact_guided_shell_pair_impact_c_20261003",
+      "outcomes": {
+        "passed": 1
+      },
+      "collected": 1,
+      "resource": {
+        "peak_sampled_bytes": 184385536,
+        "limit_mib": 953,
+        "elapsed_seconds": 11.363744599977508,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      },
+      "source_imports": 208
+    },
+    {
+      "label": "contact_guided_shell_pair_state_d_20261003",
+      "outcomes": {
+        "passed": 9
+      },
+      "collected": 9,
+      "resource": {
+        "peak_sampled_bytes": 188497920,
+        "limit_mib": 953,
+        "elapsed_seconds": 15.262081699969713,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      },
+      "source_imports": 208
+    },
+    {
+      "label": "contact_guided_shell_pair_refinement_e_20261003",
+      "outcomes": {
+        "passed": 2
+      },
+      "collected": 2,
+      "resource": {
+        "peak_sampled_bytes": 181653504,
+        "limit_mib": 953,
+        "elapsed_seconds": 16.3081044999999,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      },
+      "source_imports": 208
+    },
+    {
+      "label": "helper",
+      "outcomes": {
+        "passed": 36
+      },
+      "collected": 36,
+      "resource": {
+        "peak_sampled_bytes": 181186560,
+        "limit_mib": 953,
+        "elapsed_seconds": 5.76014299999224,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      },
+      "source_imports": 194
+    },
+    {
+      "label": "helper_delta",
+      "outcomes": {
+        "passed": 2
+      },
+      "collected": 2,
+      "resource": {
+        "peak_sampled_bytes": 179798016,
+        "limit_mib": 953,
+        "elapsed_seconds": 4.981250500015449,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      },
+      "source_imports": 194
+    }
+  ],
+  "package_resources": {
+    "source": {
+      "command": [
+        "C:\\Python\\Python314\\python.exe",
+        "-I",
+        "C:\\ANYworkspaceWork\\contact_guided_pair_package_20261003\\example_check.py",
+        "C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001/src",
+        "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\examples\\general_contact_guided_shell_pair_impact_dev.py",
+        "C:\\ANYworkspaceWork\\contact_guided_pair_package_20261003\\source.json"
+      ],
+      "elapsed_s": 5.697282200038899,
+      "peak_sampled_bytes": 159293440,
+      "exit": 0,
+      "limit_s": 180,
+      "limit_mib": 953
+    },
+    "installed": {
+      "command": [
+        "C:\\Python\\Python314\\python.exe",
+        "-I",
+        "C:\\ANYworkspaceWork\\contact_guided_pair_package_20261003\\example_check.py",
+        "C:/ANYworkspaceWork/contact_guided_pair_package_20261003/installed",
+        "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\examples\\general_contact_guided_shell_pair_impact_dev.py",
+        "C:\\ANYworkspaceWork\\contact_guided_pair_package_20261003\\installed.json"
+      ],
+      "elapsed_s": 5.64956260001054,
+      "peak_sampled_bytes": 159178752,
+      "exit": 0,
+      "limit_s": 180,
+      "limit_mib": 953
+    }
+  },
+  "development_metrics": {
+    "states": 102,
+    "cutbacks": 0,
+    "events_s": [
+      0.0019999999999999987,
+      0.0025285675960540774
+    ],
+    "endpoint_requests": 21,
+    "stage_evaluations": 148,
+    "independent_discrete_q_v_a_maximum_errors": [
+      1.6805133673525319e-18,
+      3.490263633665336e-15,
+      2.0804691303055733e-11
+    ],
+    "target_final_velocity_m_s": -0.1162790710059082,
+    "momentum_error_kg_m_s": 1.1102230246251565e-15,
+    "body_force_error_n": 1.950866135302931e-10,
+    "exchange_force_error_n": 4.547473508864641e-13,
+    "exchange_moment_error_nm": 9.094947017729282e-13,
+    "body_moment_error_nm": 1.1368683772161603e-10,
+    "modal_equilibrium_error_n": 1.9599610823206604e-10,
+    "represented_minimum_gap_m": -1.670606891566493e-05,
+    "represented_bound_discrepancy_m": 3.0086610286472748e-18,
+    "continuous_refinement": [
+      {
+        "name": "coarse",
+        "scaled_q_v_errors": [
+          0.0010908678131154607,
+          0.00780205302889081
+        ],
+        "energy_relative_defect": 1.7833915233467224e-08,
+        "cutbacks": 0,
+        "events_s": [
+          0.0019999999999999987,
+          0.0025285675960540774
+        ],
+        "endpoint_requests": 21,
+        "stage_evaluations": 148
+      },
+      {
+        "name": "half",
+        "scaled_q_v_errors": [
+          0.0002838781165906824,
+          0.0019635728918215856
+        ],
+        "energy_relative_defect": 3.5060487846294563e-10,
+        "cutbacks": 0,
+        "events_s": [
+          0.0020000000000000018,
+          0.002525791604804991
+        ],
+        "endpoint_requests": 20,
+        "stage_evaluations": 250
+      }
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "errors": [],
+  "scope": "SOURCE_ONLY_NO_SOLVER_IMPORT_OR_NUMERICAL_EXECUTION",
+  "manifest_file": "native_multi_shell_pending_manifest_v3.json",
+  "manifest_sha256": "e63546a4c498daa539943eff9a8be867433e6c92e94a3ee517899136f7ddce54",
+  "source_check_sha256": "4e00b706930c10d211204138771d6ceb27a405ef1797464d15c9d06d40de616b",
+  "runner_sha256": "2c8434787b224aa7677c6e9170551304eb0847386123ab430bae791d5efee257",
+  "held_files": 565,
+  "build_files": 560,
+  "new_selectors": 10,
+  "public_exports": 5,
+  "groups": 15,
+  "numerical_jobs": 0
+}

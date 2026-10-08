@@ -1,0 +1,78 @@
+{
+  "question": "Does official loaded/clamped acceleration-chart restart preserve complete committed state and subsequent signed physical work?",
+  "scope": "Six-step public restart routing control; no new temporal/spatial qualification",
+  "fixture": {
+    "builder": "test_ge_beam3_native_midpoint.make_analysis",
+    "force_density_n_per_m": [
+      0.2,
+      -0.15,
+      0.1
+    ],
+    "physical_centroid_m": [
+      0.035,
+      -0.025,
+      0.012
+    ],
+    "clamp_node": 1,
+    "fixed_indices": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "stage_coordinates": "acceleration",
+    "runtime_limit_seconds": 120.0,
+    "chart_adapter": "Pure path helper data-only SimpleNamespace uses official audit.increment42; never passed to owner operations"
+  },
+  "criteria": {
+    "dt": 0.001,
+    "prefix_steps": 2,
+    "continuation_steps": 2,
+    "total_physical_steps": 6,
+    "owners": 2,
+    "internal_time_limit_seconds": 120.0,
+    "stage_solve_tolerance": 1e-12,
+    "stage_and_endpoint_limit": 1e-11,
+    "correction_limit": 1e-11,
+    "energy_momentum_limit": 1e-06,
+    "witness_limit": 1e-10,
+    "load_map_limit": 1e-12,
+    "rotation_increment_limit": 0.001,
+    "observation_limit_per_trial": 128,
+    "position_radius_limit": 1.1,
+    "support_work_j": 0.0
+  },
+  "reference_scales": "Frozen positive coarse forced-response scales from authentic clamped raw; E0=0 is never used as denominator",
+  "sequence": [
+    "owner1 virgin consistent initialize",
+    "2 prefix steps",
+    "official checkpoint export",
+    "owner2 fresh-only three incompatible header rejections with corrected content/external digest",
+    "official matching restore + exact canonical re-export",
+    "2 direct continuation steps",
+    "2 restored continuation steps",
+    "complete canonical final checkpoint parity"
+  ],
+  "negative_controls": "Changed load, chart, fixed support header must reject before any visible state/diagnostics issuance; fresh owner reused only after atomic rejection",
+  "parity": {
+    "complete_candidate_state_work_accounting": true,
+    "complete_audit": true,
+    "exclusion": "Only actual audit-authentication session_provenance is excluded from equality; complete original audit retained"
+  },
+  "physical_accounting": "Signed stage e[:3] clamp force and e[3:6] couple, moment=(x0-O)cross force+couple; path-integrated load torque and exact force work distinct from midpoint approximations; exact fixed pose/frame/v/a and zero support work",
+  "historical_reuse": "Old clamped 20-step descriptor/temporal result and existing free restart reviewed by impact; no eigen/descriptor recalculation or old test replay",
+  "resource_bounds": {
+    "process_seconds": 180,
+    "process_bytes": 1073741824,
+    "fixture_seconds": 120,
+    "owners": 2,
+    "owner_seconds": 120,
+    "physical_steps": 6,
+    "stage_observations_per_trial": 128,
+    "total_stage_observations": 768,
+    "segments": false
+  },
+  "decision": "Physical/header/state failure stops once-only fixture; no clock/physics/tolerance changes to rescue. PASS closes this routing row only, full C7 remains open."
+}

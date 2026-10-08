@@ -1,0 +1,210 @@
+{
+  "source": "current working tree",
+  "status": "diverged",
+  "failure_reason": "contact_semismooth_backtracking_failed",
+  "accepted_steps": 0,
+  "requested_steps": 4,
+  "elapsed_seconds": 13.306176000005507,
+  "source_nodes": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "left_rotation_support_nodes": [
+    1,
+    6
+  ],
+  "available_info_keys": [
+    "contact_failure",
+    "contact_path",
+    "control",
+    "failure_reason",
+    "force_displacement_history",
+    "general_contact",
+    "general_contact_profile",
+    "nonlinear_state_storage",
+    "profile",
+    "qualified_q4_committed_state_lifecycle",
+    "qualified_s3_committed_state_lifecycle",
+    "status_category",
+    "stop_reason",
+    "total_newton_iterations"
+  ],
+  "contact_failure": {
+    "iteration": 9,
+    "merit": 0.052772869905373124,
+    "equilibrium": 0.052772869905373124,
+    "constraint": 3.211439707943206e-13,
+    "complementarity": 0.01564096528128577,
+    "active_modes": 0,
+    "z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0007450122636450907,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.00394727732074064
+    ],
+    "c": [
+      624.9999999999999,
+      1249.9999999999998,
+      1249.9999999999998,
+      1250.0000000000002,
+      625.0000000000005,
+      624.9999999999999,
+      1249.9999999999998,
+      1249.9999999999995,
+      1250.0,
+      625.0000000000002
+    ],
+    "support": [
+      0.061875000722112765,
+      0.12375000275701901,
+      0.12375000472666978,
+      0.12375000669595786,
+      0.061875004004425284,
+      0.05062500649898917,
+      0.10125002481321563,
+      0.1012500425400741,
+      0.10125006026371172,
+      0.05062503603989275
+    ],
+    "gap": [
+      0.0002934718591450018,
+      0.0003944801661589346,
+      0.00034821729071469467,
+      0.00016787787247944086,
+      2.4204079504505936e-05,
+      0.0002934555641385185,
+      0.00039442494933989705,
+      0.0003480882113445179,
+      0.00016776234490030608,
+      2.4205821675815634e-05
+    ],
+    "y": [
+      -0.18341991196562607,
+      -0.49310020769866814,
+      -0.4352716133933683,
+      -0.2098473405993011,
+      -0.014382537426671132,
+      -0.183409727586574,
+      -0.4930311866748712,
+      -0.4351102641806472,
+      -0.2097029311253826,
+      -0.011181361226644137
+    ],
+    "ncp": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0007450122636450907,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.00394727732074064
+    ],
+    "last_trial": null,
+    "direction_q_norm": 0.014255970609768796,
+    "direction_z_min": -0.0,
+    "direction_z_max": 0.006102200839379686,
+    "attempts": []
+  },
+  "contact_path": {
+    "accepted_step": 0,
+    "total_steps": 4,
+    "targets": [
+      0.0,
+      0.0
+    ],
+    "reaction_generalized": [
+      0.0,
+      0.0
+    ],
+    "profile": "Q4_S3_PATCH_REFINED_PROJECTED_AUGMENTED_PATH_DEV_V0",
+    "enforcement_solver": "monolithic_active_set",
+    "monolithic_linear_solver": "direct",
+    "monolithic_maximum_pivots": 12,
+    "nodal_forces_n": [
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0
+    ]
+  },
+  "swept_calls_count": 9,
+  "last_swept_calls": [
+    {
+      "fraction": 0.25,
+      "start_gap_lower_m": 3.9999999963048415e-05,
+      "end_gap_lower_m": -0.00019057414867099952,
+      "step_norm": 0.023508616334258714
+    },
+    {
+      "fraction": 0.125,
+      "start_gap_lower_m": -1.736596734136726e-05,
+      "end_gap_lower_m": -0.00018952544462836916,
+      "step_norm": 0.01760266868036042
+    },
+    {
+      "fraction": 0.0625,
+      "start_gap_lower_m": -3.8792701104430944e-05,
+      "end_gap_lower_m": -0.00018934971921602667,
+      "step_norm": 0.015404382071585739
+    },
+    {
+      "fraction": 0.0078125,
+      "start_gap_lower_m": -4.8163935404004016e-05,
+      "end_gap_lower_m": -0.0001892938585960215,
+      "step_norm": 0.01444348820581678
+    },
+    {
+      "fraction": 0.00390625,
+      "start_gap_lower_m": -4.926200918449432e-05,
+      "end_gap_lower_m": -0.00018928839969559365,
+      "step_norm": 0.014330926405914565
+    },
+    {
+      "fraction": 0.0009765625,
+      "start_gap_lower_m": -4.9806760689414654e-05,
+      "end_gap_lower_m": -0.00018928573186236878,
+      "step_norm": 0.014275085291377044
+    },
+    {
+      "fraction": 0.000244140625,
+      "start_gap_lower_m": -4.9942416564718365e-05,
+      "end_gap_lower_m": -0.00018928507372137804,
+      "step_norm": 0.014261179683811033
+    },
+    {
+      "fraction": 0.0001220703125,
+      "start_gap_lower_m": -4.997629741487846e-05,
+      "end_gap_lower_m": -0.00018928490973023536,
+      "step_norm": 0.014257706685167829
+    },
+    {
+      "fraction": 0.0,
+      "start_gap_lower_m": -4.999323370843679e-05,
+      "end_gap_lower_m": -0.00018928482779221112,
+      "step_norm": 0.014255970609768794
+    }
+  ]
+}

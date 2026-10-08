@@ -1,0 +1,19 @@
+{
+  "status": "development_split_restart_comparison",
+  "reference": "docs\\d1_review_support\\d1_pressure_family4_moving_edge_cycle_v4_20260929.json",
+  "candidate": "docs\\d1_review_support\\d1_pressure_family4_versioned_recontact_v6_20260929.json",
+  "reference_sha256": "17191761809ebba0d86ade727c2ea7ac748b665f3e74cfb693be34b0c0cca690",
+  "candidate_sha256": "4497ccc9f6c73c914c0558b76dfb3301b9415126eac399ee109eb3d193dded90",
+  "absolute_development_tolerance": 1e-10,
+  "maximum_differences": {
+    "displacement_m": 0.0,
+    "integration_force": 0.0,
+    "target_force": 0.0,
+    "integration_moment": 0.0,
+    "target_moment": 0.0,
+    "minimum_gap": 0.0,
+    "numerical_pressure_pa": 0.0,
+    "reaction_generalized_n": 0.0
+  },
+  "development_checks_met": true
+}

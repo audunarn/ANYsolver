@@ -1,0 +1,6 @@
+{
+  "case": "affine-dependent_rows",
+  "rejected": true,
+  "exception": "ValueError",
+  "message": "six independent supported point rows required"
+}

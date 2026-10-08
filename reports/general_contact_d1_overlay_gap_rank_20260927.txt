@@ -1,0 +1,14 @@
+{
+  "profile": "fixed_pose_overlay_actual_structural_gap_rank_dev",
+  "pressure_nodes": 25,
+  "supported_pressure_modes": 20,
+  "real_source_nodes": 9,
+  "free_source_structural_dofs": 46,
+  "structural_map_shape": [
+    75,
+    46
+  ],
+  "elapsed_seconds": 25.02799309999682
+}
+{'difference_step_m': 1e-06, 'gap_jacobian_shape': [20, 46], 'rank_relative_1e_minus_5': 7, 'rank_relative_1e_minus_7': 11, 'rank_relative_1e_minus_9': 11}
+{'difference_step_m': 5e-07, 'gap_jacobian_shape': [20, 46], 'rank_relative_1e_minus_5': 7, 'rank_relative_1e_minus_7': 11, 'rank_relative_1e_minus_9': 11}

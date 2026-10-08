@@ -1,0 +1,99 @@
+{
+  "classification": "bounded G0B development diagnostic; not a multiplier selection",
+  "combined_row_singular_values": [
+    1.0321130129403253,
+    1.0096710580605388,
+    0.881584167953297,
+    0.3392830170020631,
+    1.4792285802553912e-15,
+    9.50893648368141e-16,
+    8.408723605954899e-16,
+    7.437334862231061e-16,
+    5.39463567551273e-16
+  ],
+  "common_null_relative_residual": 3.162089876778105e-16,
+  "geometry": "C1 35 mm Q4 x8/y4 terminal bond, native retained B3-12, reference shell translations only",
+  "law": "six-channel transverse mean/first-moment and director-pitch pose trace",
+  "limitations": [
+    "translation-only linearized fields; no loaded coupled solution",
+    "a transverse section null does not by itself classify the intended connection law",
+    "a longitudinal projection null on fixed multiplier spans is not a uniform inf-sup result",
+    "saved F5 common action does not provide one-sided retained B3 port work"
+  ],
+  "modes": {
+    "longitudinal_projection": {
+      "complete_shell_energy_j": 50.019224868700604,
+      "continuous_g6_component_max_abs": [
+        0,
+        0,
+        0.000008462527967911489,
+        2.0328790734103208e-20,
+        0,
+        0
+      ],
+      "continuous_g6_component_weighted_rms": [
+        0,
+        0,
+        0.0000029733526087061915,
+        5.895327619166901e-21,
+        0,
+        0
+      ],
+      "fixed_root_max_displacement_m": 0,
+      "integrated_mean_g6": [
+        0,
+        0,
+        -1.8867936457624563e-22,
+        7.466961439930441e-22,
+        0,
+        0
+      ],
+      "physical_shell_energy_j": 50.019224868700604,
+      "sampled_local_slip_rms_m": 0.000002973352608706193,
+      "station_count": 24,
+      "weak_row_max_abs_by_space": {
+        "continuous_linear": 3.085206774240976e-21,
+        "dual_linear": 1.507000829108534e-20,
+        "piecewise_constant": 8.068023415545172e-22
+      }
+    },
+    "transverse_section": {
+      "complete_shell_energy_j": 30.11427659254808,
+      "continuous_g6_component_max_abs": [
+        0,
+        0,
+        3.917527381051139e-21,
+        6.776263578034403e-20,
+        0,
+        0
+      ],
+      "continuous_g6_component_weighted_rms": [
+        0,
+        0,
+        3.620666372875766e-21,
+        4.356893917133745e-20,
+        0,
+        0
+      ],
+      "fixed_root_max_displacement_m": 0,
+      "integrated_mean_g6": [
+        0,
+        0,
+        -2.7323165296055594e-21,
+        -2.422344822557848e-20,
+        0,
+        0
+      ],
+      "physical_shell_energy_j": 30.11427659254808,
+      "sampled_local_slip_rms_m": 0.000007438987946398806,
+      "station_count": 24,
+      "weak_row_max_abs_by_space": {
+        "continuous_linear": 6.745600985343797e-20,
+        "dual_linear": 8.630079886395164e-20,
+        "piecewise_constant": 6.983278430343354e-20
+      }
+    }
+  },
+  "physical_tangent": "E4 physical stiffness without drilling completion",
+  "source_sha256": "0a455949de7b3e986ad0f40d50eea2d08afcaec687df198c0d25fadddef7b61f"
+}

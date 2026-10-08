@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 4.541398599976674,
+  "peak_process_tree_memory_mb": 224.41984,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_zero_weight_derivatives.py",
+    "-k",
+    "complete_physical_skin",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d1_zero_weight_skin_map_check_v3_20260930.log"
+}

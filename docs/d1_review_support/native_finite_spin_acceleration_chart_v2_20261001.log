@@ -1,0 +1,27 @@
+{"effective_numba_cache": "C:\\ANYworkspaceWork\\native_finite_spin_acceleration_chart_v2_20261001-cache", "numba_version": "0.65.1", "entry_sha256": "5e78500955231e4ac42aa05e09e9464ec054b9f62d26ced3d3a3efbb84a4ed1f"}
+{"anysolver_file": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\__init__.py", "input_sha256": "d2355dd4ad01a9845b37fb8d933f6e56eb4eaf26b3e5eeecec3850fc6b4a54de", "numpy": "2.4.6", "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]", "scipy": "1.17.1", "threadpools": [{"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.31.188.0"}, {"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.30"}]}
+{"stage": "authenticated_fixture_scales_before_initialization", "elapsed_seconds": 0.6199022000073455}
+{"stage": "actual_initial_signed_balance", "elapsed_seconds": 2.5586151000170503}
+{"stage": "original_returned_stage_1", "elapsed_seconds": 2.949105800013058}
+{"stage": "original_returned_stage_2", "elapsed_seconds": 3.1690581000002567}
+{"stage": "original_returned_stage_3", "elapsed_seconds": 3.3896108000189997}
+{"stage": "original_returned_stage_4", "elapsed_seconds": 3.613680900016334}
+{"stage": "original_returned_stage_5", "elapsed_seconds": 3.8387617000262253}
+{"stage": "trial_return_or_failure", "elapsed_seconds": 4.662986200011801}
+{"stage": "authenticated_candidate_before_commit", "elapsed_seconds": 5.013376500020968}
+{"stage": "original_returned_directional_plus", "elapsed_seconds": 5.5825582000252325}
+{"stage": "original_returned_directional_minus", "elapsed_seconds": 6.14803550002398}
+{"stage": "original_returned_directional_plus", "elapsed_seconds": 6.733450700005051}
+{"stage": "original_returned_directional_minus", "elapsed_seconds": 7.332717200013576}
+{"stage": "independent_chart_checks_before_gates", "elapsed_seconds": 7.3535221000202}
+{"stage": "actual_issued_endpoint_before_gates", "elapsed_seconds": 8.845257100008894}
+{"stage": "complete", "elapsed_seconds": 8.866314300015802}
+.
+============================== warnings summary ===============================
+tests/test_ge_beam3_native_finite_spin_acceleration_chart.py::test_one_acceleration_chart_finite_spin_step
+  tests\test_ge_beam3_native_finite_spin_acceleration_chart.py:283: PytestWarning: record_property is incompatible with junit_family 'xunit2' (use 'legacy' or 'xunit1')
+    def test_one_acceleration_chart_finite_spin_step(record_property):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 1 warning in 9.24s
+{"pytest_exit_code": 0, "verified_source_count": 446}

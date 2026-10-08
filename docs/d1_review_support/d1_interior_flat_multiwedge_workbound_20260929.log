@@ -1,0 +1,1 @@
+{"status": "diverged", "failure_reason": "contact_semismooth_candidate_failed: raw shared-edge tie gap direction disagrees", "accepted_steps": 0, "elapsed_seconds": 64.20725479999965, "contact_failure": null}

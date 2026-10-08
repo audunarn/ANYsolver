@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_two_body_oracle_dev.py", line 756, in <module>
+    coupled_contrast_comparison(Path(sys.argv[2]), Path(sys.argv[3]),
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                Path(sys.argv[4]))
+                                ^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_two_body_oracle_dev.py", line 533, in coupled_contrast_comparison
+    raise ValueError("saved pose is outside the declared contrast case")
+ValueError: saved pose is outside the declared contrast case

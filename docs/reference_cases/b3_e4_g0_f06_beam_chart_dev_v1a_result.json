@@ -1,0 +1,5 @@
+{
+  "failure": "beam support reaction rows required",
+  "failure_type": "ValueError",
+  "status": "DEV_F06_BEAM_CHART_EXCEPTION"
+}

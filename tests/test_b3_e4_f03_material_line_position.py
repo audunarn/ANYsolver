@@ -1,0 +1,795 @@
+"""Bounded G0 material-line position and value-only orientation checks."""
+
+import numpy as np
+import pytest
+from scipy.spatial.transform import Rotation
+
+from scripts._b3_e4_f03_native_fixture import build
+from scripts.b3_e4_f03_distributed_surface_finite import FiniteSurfaceLineHybrid
+from scripts.b3_e4_f03_material_line_position import MaterialLinePosition
+from scripts.b3_e4_f03_plate_patch_work import local_grid, raw_e4_tangent
+from scripts.b3_e4_f03_square_section_control import square_torsion_constant
+from scripts._b3_e4_f03_weak_line_candidate import LineMultiplierSpace
+from scripts.b3_e4_f03_material_line_space_screen import _rows
+from scripts.b3_e4_f03_material_line_channel_screen import _channel_rows
+from scripts.b3_e4_f03_material_line_loaded import _scales
+
+
+def _fixture(patch_cells=4):
+    xs, ys = local_grid(patch_cells, transverse_cells=4)
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um", assemble=False)
+    line = MaterialLinePosition(xs, ys, beam)
+    return xs, ys, beam, line
+
+
+@pytest.mark.parametrize("mixed_s3,diagonal", (
+    (False, "bl_tr"), (True, "bl_tr"), (True, "br_tl")))
+def test_aligned_two_cell_p1_yaw_row_is_exactly_dependent(mixed_s3, diagonal):
+    """A third Mz multiplier cannot see a two-value reference yaw trace."""
+    xs, ys = local_grid(2, transverse_cells=4)
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um", assemble=False)
+    line = MaterialLinePosition(xs, ys, beam, mixed_s3=mixed_s3,
+                                diagonal=diagonal)
+    station_yaw = line.reference_orientation_jacobian().reshape(
+        len(line.stations), 3, -1)[:, 2, :]
+    first = [i for i, station in enumerate(line.stations) if station.x < .95]
+    second = [i for i, station in enumerate(line.stations) if station.x > .95]
+    assert len(first) == len(second) == 3
+    for cell in (first, second):
+        assert np.max(np.abs(station_yaw[cell]-station_yaw[cell[0]])) < 1e-12
+
+    p0, _ = _rows(line, LineMultiplierSpace("piecewise_constant", (0., .5, 1.)))
+    for kind in ("continuous_linear", "dual_linear"):
+        rows, measures = _rows(line, LineMultiplierSpace(kind, (0., .5, 1.)))
+        yaw = rows[[5, 11, 17]]
+        relative = np.linalg.norm(yaw[0]-2*yaw[1]+yaw[2]) / max(
+            1., np.linalg.norm(yaw))
+        assert np.allclose(measures, (.025, .05, .025), rtol=0., atol=1e-14)
+        assert relative < 1e-12
+        assert np.max(np.abs(yaw[0]-p0[5])) < 1e-12
+        assert np.max(np.abs(yaw[2]-p0[11])) < 1e-12
+
+
+@pytest.mark.parametrize("shell_cells,beam_half_cells,expected_rank,block", (
+    (4, 12, 28, (1, 5)),
+    (2, 14, 27, (3, 4)),
+))
+@pytest.mark.parametrize("kind", ("continuous_linear", "dual_linear"))
+def test_mismatched_line_rows_have_full_coordinate_dependencies(
+        shell_cells, beam_half_cells, expected_rank, block, kind):
+    """The reciprocal-ratio nulls are trace identities, not solver failures."""
+    xs, ys = local_grid(shell_cells, transverse_cells=4)
+    beam = build(beam_half_cells, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um", assemble=False)
+    line = MaterialLinePosition(xs, ys, beam)
+    rows = _channel_rows(line, kind, (0., .25, .5, .75, 1.))
+    shell_size = 6*len(xs)*len(ys)
+    fixed_shell = {6*(j*len(xs)+i)+axis
+                   for j in range(len(ys)) for i, x in enumerate(xs)
+                   if abs(x+.5) < 1e-12 for axis in range(6)}
+    fixed_beam = {shell_size+int(index) for index in beam.context.fixed}
+    free = np.setdiff1d(
+        np.arange(shell_size+beam.context.count),
+        np.array(sorted(fixed_shell|fixed_beam)))
+    scales, _ = _scales(shell_size, beam, free, row_count=len(rows))
+    mapped = rows[:, free]*scales[:len(free)]
+    norms = np.linalg.norm(mapped, axis=1)
+    left, singular, _ = np.linalg.svd(mapped/norms[:, None],
+                                     full_matrices=False)
+    tolerance = max(mapped.shape)*np.finfo(float).eps*singular[0]
+    assert np.sum(singular > tolerance) == expected_rank
+    assert singular[expected_rank-1] > 1e-3
+    assert singular[expected_rank] < 1e-12
+    for index in np.flatnonzero(singular <= tolerance):
+        coefficients = left[:, index]/norms
+        relative = np.linalg.norm(coefficients@rows)/sum(
+            abs(c)*np.linalg.norm(row) for c, row in zip(coefficients, rows))
+        assert relative < 1e-12
+    counts = [5, 5, 5, 5, 5, 4]
+    offsets = np.cumsum([0]+counts)
+    first, second = (mapped[offsets[i]:offsets[i+1]] for i in block)
+    if shell_cells == 4:
+        assert np.linalg.matrix_rank(first) == 5
+        assert np.linalg.matrix_rank(second) == 4
+        assert np.linalg.matrix_rank(np.vstack((first, second))) == 8
+    else:
+        assert np.linalg.matrix_rank(first) == 4
+        assert np.linalg.matrix_rank(second) == 4
+        assert np.linalg.matrix_rank(np.vstack((first, second))) == 8
+
+
+def test_reciprocal_line_rows_expose_unscaled_channel_identities():
+    """Keep the physical-channel identities behind the rank loss visible."""
+    knots = (0., .25, .5, .75, 1.)
+    for shell_cells, beam_half_cells in ((4, 12), (2, 14)):
+        xs, ys = local_grid(shell_cells, transverse_cells=4)
+        beam = build(beam_half_cells, z_offset=.0675,
+                     torsion_constant=square_torsion_constant(),
+                     reference_profile="c1_tangent_2um", assemble=False)
+        line = MaterialLinePosition(xs, ys, beam)
+        space = LineMultiplierSpace("continuous_linear", knots)
+        rows, measures = _rows(line, space)
+        channel = lambda axis: rows[[6*i+axis for i in range(5)]]
+        alternating = np.array((.5, -1., 1., -1., .5))
+        if shell_cells == 4:
+            fy, mz = channel(1), channel(5)
+            cross = np.array((-.5, 1., -1., 1., -.5))@fy
+            cross += np.array((1., -1., 0., 1., -1.))@mz/120.
+            assert np.linalg.norm(cross) < 1e-12*np.linalg.norm(rows)
+            assert np.linalg.norm(alternating@mz) < 1e-12*np.linalg.norm(rows)
+            force_coeff = np.array((-.5, 1., -1., 1., -.5))
+            moment_coeff = np.array((1., -1., 0., 1., -1.))/120.
+
+            def density(coefficients, coordinate):
+                return space.values(coordinate)@(coefficients/measures)
+
+            # The row identity is a *projected* null, not a zero continuous
+            # physical force/moment field or a functional gauge.
+            assert abs(density(force_coeff, .0625)) > 10.
+            assert abs(density(moment_coeff, 0.)) > .6
+            derivative = (density(moment_coeff, .25)
+                          -density(moment_coeff, 0.))/.025
+            assert abs(density(force_coeff, .0625)+derivative) > 10.
+            for a, b, c in ((0., .25, .5), (.5, .75, 1.)):
+                integral = .1*((b-a)*(density(moment_coeff, a)
+                                    +density(moment_coeff, b))/2
+                                +(c-b)*(density(moment_coeff, b)
+                                    +density(moment_coeff, c))/2)
+                assert abs(integral) < 1e-12
+        else:
+            for axis in (3, 4, 5):
+                assert (np.linalg.norm(alternating@channel(axis))
+                        < 1e-12*np.linalg.norm(rows))
+
+
+@pytest.mark.parametrize("mixed_s3,off_edge,diagonal", (
+    (False, False, "bl_tr"),
+    (True, True, "bl_tr"),
+    (True, True, "br_tl"),
+))
+def test_straight_material_line_has_analytic_two_sided_work_contract(
+        mixed_s3, off_edge, diagonal):
+    """Independent flat-reference pose rows include both physical offsets."""
+    xs, ys = local_grid(2, transverse_cells=4)
+    if off_edge:
+        ys = ys.copy()
+        ys[np.argmin(np.abs(ys))] = .01
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="straight_c1_stations", assemble=False)
+    line = MaterialLinePosition(xs, ys, beam, mixed_s3=mixed_s3,
+                                diagonal=diagonal)
+    count, shell_size = len(line.stations), 6*line.shell_count
+    position = np.zeros((count, 3, shell_size+beam.context.count))
+    rotation = np.zeros_like(position)
+    shell_top, beam_bottom = .035/2, -.1/2
+    for k, station in enumerate(line.stations):
+        for node, shape, derivative in zip(
+                station.nodes, station.shape, station.dshape_dx):
+            c = 6*int(node)
+            for axis in range(3):
+                position[k, axis, c+axis] += shape
+            position[k, 0, c+4] += shell_top*shape
+            position[k, 1, c+3] -= shell_top*shape
+            rotation[k, 0, c+3] -= shape
+            rotation[k, 1, c+4] -= shape
+            rotation[k, 2, c+1] -= derivative
+            rotation[k, 2, c+3] += shell_top*derivative
+        port = station.port
+        left, right = beam.context.nodes[port.element_index][port.cell:port.cell+2]
+        for node, shape in ((left, 1-port.weight), (right, port.weight)):
+            for axis in range(3):
+                position[k, axis, shell_size+6*node+axis] -= shape
+        c = shell_size+beam.context.nodal_count+24*port.element_index+3*port.cell
+        position[k, 0, c+1] -= beam_bottom
+        position[k, 1, c] += beam_bottom
+        for axis in range(3):
+            rotation[k, axis, c+axis] += 1.
+    np.testing.assert_allclose(
+        line.reference_jacobian().reshape(count, 3, -1),
+        position, rtol=0., atol=5e-13)
+    np.testing.assert_allclose(
+        line.reference_orientation_jacobian().reshape(count, 3, -1),
+        rotation, rtol=0., atol=5e-13)
+
+    # Equal surface motions leave the line gap closed even though their
+    # reference axes are eccentric. Removing the beam-center compensation
+    # exposes the physical 67.5 mm force lever arm.
+    shell_bond = line.reference_nodes[:, 0] >= .9-1e-12
+    beam_bond = beam.abscissae >= .9-1e-12
+    alpha = 1e-3
+    for shell_axis, beam_axis, translation_axis, translation_sign, gap_axis in (
+            (3, 0, 1, -1., 1),  # roll / transverse force
+            (4, 1, 0, +1., 0),  # pitch / axial force
+    ):
+        step = np.zeros(shell_size+beam.context.count)
+        shell = step[:shell_size].reshape(-1, 6)
+        shell[shell_bond, shell_axis] = alpha
+        for node in np.flatnonzero(beam_bond):
+            step[shell_size+6*node+translation_axis] = (
+                translation_sign*.0675*alpha)
+        for station in line.stations:
+            port = station.port
+            c = (shell_size+beam.context.nodal_count
+                 +24*port.element_index+3*port.cell+beam_axis)
+            step[c] = alpha
+        assert np.max(np.abs(position.reshape(3*count, -1)@step)) < 1e-12
+        assert np.max(np.abs(rotation.reshape(3*count, -1)@step)) < 1e-12
+        uncompensated = step.copy()
+        for node in np.flatnonzero(beam_bond):
+            uncompensated[shell_size+6*node+translation_axis] = 0.
+        gap = (position.reshape(3*count, -1)@uncompensated).reshape(count, 3)
+        expected_gap = translation_sign*.0675*alpha
+        np.testing.assert_allclose(gap[:, gap_axis], expected_gap,
+                                   rtol=0., atol=1e-12)
+        density = 1000./sum(station.weight for station in line.stations)
+        weights = np.array([station.weight for station in line.stations])
+        multiplier = np.zeros((count, 3))
+        multiplier[:, gap_axis] = weights*density
+        assert (uncompensated@(position.reshape(3*count, -1).T
+                               @multiplier.ravel())) == pytest.approx(
+                                   1000.*expected_gap, abs=1e-11)
+
+    shear = np.zeros(shell_size+beam.context.count)
+    shear[:shell_size].reshape(-1, 6)[shell_bond, 2] = 2e-5
+    for node in np.flatnonzero(beam_bond):
+        shear[shell_size+6*node+2] = 2e-5
+    assert np.max(np.abs(position.reshape(3*count, -1)@shear)) < 1e-12
+    assert np.max(np.abs(rotation.reshape(3*count, -1)@shear)) < 1e-12
+    for node in np.flatnonzero(beam_bond):
+        shear[shell_size+6*node+2] = 0.
+    gap = (position.reshape(3*count, -1)@shear).reshape(count, 3)
+    np.testing.assert_allclose(gap[:, 2], 2e-5, rtol=0., atol=1e-12)
+    multiplier = np.zeros((count, 3))
+    multiplier[:, 2] = np.array([station.weight for station in line.stations])*1e4
+    assert (shear@(position.reshape(3*count, -1).T
+                   @multiplier.ravel())) == pytest.approx(.02, abs=1e-11)
+
+    slope = 1e-3
+    yaw = np.zeros(shell_size+beam.context.count)
+    yaw_shell = yaw[:shell_size].reshape(-1, 6)
+    yaw_shell[shell_bond, 1] = (
+        slope*(line.reference_nodes[shell_bond, 0]-.9))
+    yaw_gap = (rotation.reshape(3*count, -1)@yaw).reshape(count, 3)
+    np.testing.assert_allclose(yaw_gap[:, 2], -slope,
+                               rtol=0., atol=1e-12)
+    couple = np.zeros((count, 3))
+    couple[:, 2] = np.array([station.weight for station in line.stations])*1e3
+    assert (yaw@(rotation.reshape(3*count, -1).T
+                 @couple.ravel())) == pytest.approx(-.1, abs=1e-11)
+    drilling = np.zeros_like(yaw)
+    drilling[:shell_size].reshape(-1, 6)[shell_bond, 5] = 1e-3
+    assert np.max(np.abs(position.reshape(3*count, -1)@drilling)) < 1e-12
+    assert np.max(np.abs(rotation.reshape(3*count, -1)@drilling)) < 1e-12
+    transverse_shear = np.zeros_like(yaw)
+    transverse_shear[:shell_size].reshape(-1, 6)[shell_bond, 2] = (
+        slope*(line.reference_nodes[shell_bond, 0]-.9))
+    assert np.max(np.abs(rotation.reshape(3*count, -1)@transverse_shear)) < 1e-12
+    assert np.max(np.abs(position.reshape(3*count, -1)@transverse_shear)) > 1e-5
+
+
+@pytest.mark.parametrize("shell_cells,beam_half_cells,intervals,expected_rank", (
+    (8, 12, 8, 44), (2, 18, 8, 48),
+    (16, 12, 16, 84), (2, 26, 16, 96),
+))
+def test_union_cut_p0_growth_is_not_uniformly_independent(
+        shell_cells, beam_half_cells, intervals, expected_rank):
+    """A six-vector on every union cut over-resolves the shell-fine trace."""
+    xs, ys = local_grid(shell_cells, transverse_cells=4)
+    beam = build(beam_half_cells, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um", assemble=False)
+    line = MaterialLinePosition(xs, ys, beam)
+    rows, _ = _rows(line, LineMultiplierSpace(
+        "piecewise_constant", tuple(np.linspace(0., 1., intervals+1))))
+    shell_size = 6*len(xs)*len(ys)
+    fixed_shell = {6*(j*len(xs)+i)+axis
+                   for j in range(len(ys)) for i, x in enumerate(xs)
+                   if abs(x+.5) < 1e-12 for axis in range(6)}
+    fixed_beam = {shell_size+int(index) for index in beam.context.fixed}
+    free = np.setdiff1d(
+        np.arange(rows.shape[1]), np.array(sorted(fixed_shell|fixed_beam)))
+    # Trace-only screen: the first entries of _scales do not depend on
+    # multiplier count, and the loaded oracle deliberately caps that count.
+    scales, _ = _scales(shell_size, beam, free, row_count=1)
+    mapped = rows[:, free]*scales[:len(free)]
+    norms = np.linalg.norm(mapped, axis=1)
+    assert np.min(norms) > 0.
+    unit_rows = mapped/norms[:, None]
+    singular = np.linalg.svd(unit_rows, compute_uv=False)
+    tolerance = max(unit_rows.shape)*np.finfo(float).eps*singular[0]
+    assert np.sum(singular > tolerance) == expected_rank
+    assert len(rows) == 6*intervals
+
+
+def test_material_line_detects_even_slip_invisible_to_reduced_strip_pose():
+    xs, ys, beam, line = _fixture()
+    hybrid = FiniteSurfaceLineHybrid(xs, ys, beam, thickness=.035)
+    y2 = line.reference_nodes[:, 1]**2
+    mean_y2 = sum(point.weight*(point.shape@y2[point.nodes])
+                  for point in hybrid.points)
+    step = np.zeros((line.shell_count, 6))
+    terminal = ((line.reference_nodes[:, 0] >= .9-1e-12) &
+                (np.abs(line.reference_nodes[:, 1]) <= .05+1e-12))
+    step[terminal, 2] = .01*(y2[terminal]-mean_y2)
+    beam_step = np.zeros(beam.context.count)
+    direction = np.r_[step.ravel(), beam_step]
+    assert np.max(np.abs(hybrid.reference_trace()@direction)) < 1e-12
+    detected = line.reference_jacobian()@direction
+    assert np.max(np.abs(detected)) > 1e-6
+    physical_tangent, physical = raw_e4_tangent(xs, ys, thickness=.035)
+    assert .5*step.ravel()@physical@step.ravel() > 0.
+    assert np.max(np.abs(step[line.reference_nodes[:, 0] <= -.5+1e-12])) == 0.
+    assert np.isfinite(physical_tangent).all()
+
+
+def test_material_line_reference_rigid_translation_and_shear_patch():
+    xs, ys, beam, line = _fixture()
+    state = beam.context.initial.mechanical
+    identity = np.broadcast_to(np.eye(3), (line.shell_count, 3, 3))
+    assert np.max(np.abs(line.evaluate(line.reference_nodes, identity, state))) < 1e-12
+    assert np.max(np.abs(line.orientation_gap(
+        line.reference_nodes, identity, state))) < 1e-12
+    jacobian = line.reference_jacobian()
+    shell = np.zeros((line.shell_count, 6))
+    beam_step = np.zeros(beam.context.count)
+    shell[:, :3] = (.01, -.02, .03)
+    for node in range(len(beam.abscissae)):
+        beam_step[6*node:6*node+3] = (.01, -.02, .03)
+    assert np.max(np.abs(jacobian@np.r_[shell.ravel(), beam_step])) < 1e-12
+    shell[:] = 0.
+    beam_step[:] = 0.
+    slope = 1e-4
+    shell[:, 2] = slope*np.maximum(line.reference_nodes[:, 0], 0.)
+    for node, x in enumerate(beam.abscissae):
+        beam_step[6*node+2] = slope*x
+    assert np.max(np.abs(jacobian@np.r_[shell.ravel(), beam_step])) < 1e-12
+    assert np.max(np.abs(shell[line.reference_nodes[:, 0] <= -.5+1e-12])) == 0.
+    assert beam_step[2] == 0.
+    shell_coordinates = line.reference_nodes+shell[:, :3]
+    candidate = beam.context.advance(state, beam_step)
+    assert np.max(np.abs(line.orientation_gap(
+        shell_coordinates, identity, candidate))) < 1e-10
+
+
+def test_material_line_jacobian_uses_actual_native_chart():
+    _, _, beam, line = _fixture()
+    rng = np.random.default_rng(231)
+    shell = rng.normal(size=(line.shell_count, 6))*.1
+    beam_step = rng.normal(size=beam.context.count)*.1
+    shell[line.reference_nodes[:, 0] <= -.5+1e-12] = 0.
+    beam_step[list(beam.context.fixed)] = 0.
+    direction = np.r_[shell.ravel(), beam_step]
+    predicted = (line.reference_jacobian()@direction).reshape(-1, 3)
+    h = 1e-6
+    def trial(sign):
+        coordinates = line.reference_nodes+sign*h*shell[:, :3]
+        frames = Rotation.from_rotvec(sign*h*shell[:, 3:]).as_matrix()
+        candidate = beam.context.advance(
+            beam.context.initial.mechanical, sign*h*beam_step)
+        return line.evaluate(coordinates, frames, candidate)
+    finite_difference = (trial(1)-trial(-1))/(2*h)
+    assert np.max(np.abs(finite_difference-predicted)) < 2e-8
+
+
+def test_mixed_s3_material_line_detects_centerline_slip():
+    xs, ys, beam, _ = _fixture(patch_cells=2)
+    line = MaterialLinePosition(xs, ys, beam, mixed_s3=True)
+    step = np.zeros((line.shell_count, 6))
+    terminal = line.reference_nodes[:, 0] >= .9-1e-12
+    step[terminal, 2] = 1e-5
+    direction = np.r_[step.ravel(), np.zeros(beam.context.count)]
+    assert np.max(np.abs(line.reference_jacobian()@direction)) > 9e-6
+    frames = np.broadcast_to(np.eye(3), (line.shell_count, 3, 3))
+    assert np.max(np.abs(line.evaluate(
+        line.reference_nodes, frames, beam.context.initial.mechanical))) < 1e-12
+    assert np.max(np.abs(line.orientation_gap(
+        line.reference_nodes, frames, beam.context.initial.mechanical))) < 1e-12
+    tilted = frames.copy()
+    tilted[terminal] = Rotation.from_rotvec((0., 1e-3, 0.)).as_matrix()
+    assert np.max(np.abs(line.orientation_gap(
+        line.reference_nodes, tilted, beam.context.initial.mechanical))) > 5e-4
+
+
+def test_material_line_rejects_unexplained_reference_gap():
+    xs, ys = local_grid(2, transverse_cells=4)
+    beam = build(12, z_offset=.0675,
+                 reference_profile="c1_tangent_2um", assemble=False)
+    with pytest.raises(ValueError, match="reference geometry is not coincident"):
+        MaterialLinePosition(xs, ys, beam, beam_depth=.09)
+
+
+@pytest.mark.parametrize("mixed_s3,off_edge,diagonal", (
+    (False, False, "bl_tr"),
+    (True, True, "bl_tr"),
+    (True, True, "br_tl"),
+))
+def test_material_line_finite_common_rigid_motion_is_objective(
+        mixed_s3, off_edge, diagonal):
+    xs, ys = local_grid(2, transverse_cells=4)
+    if off_edge:
+        ys = ys.copy()
+        ys[np.flatnonzero(np.abs(ys) < 1e-12)[0]] = .01
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um", assemble=False)
+    line = MaterialLinePosition(xs, ys, beam, mixed_s3=mixed_s3,
+                                diagonal=diagonal)
+    if off_edge:
+        assert [len(station.nodes) for station in line.stations] == [3]*3+[4]*3
+        assert min(np.min(station.shape) for station in line.stations) > 0.
+        assert len({tuple(station.nodes) for station in line.stations[:3]}) == 2
+    rotation_vector = np.array((.2, -.15, .1))
+    rotation = Rotation.from_rotvec(rotation_vector).as_matrix()
+    translation = np.array((.03, -.02, .04))
+    shell_coordinates = line.reference_nodes.copy()
+    shell_frames = np.broadcast_to(np.eye(3), (line.shell_count, 3, 3)).copy()
+    shell_bond = line.reference_nodes[:, 0] >= .9-1e-12
+    shell_coordinates[shell_bond] = (
+        line.reference_nodes[shell_bond]@rotation.T+translation)
+    shell_frames[shell_bond] = rotation
+    base = beam.context.initial.mechanical
+    step = np.zeros(beam.context.count)
+    for node, x in enumerate(beam.abscissae):
+        if x < .9-1e-12:
+            continue
+        reference = base.positions[node]+base.position_low[node]
+        step[6*node:6*node+3] = rotation@reference+translation-reference
+        step[6*node+3:6*node+6] = rotation_vector
+    for element in range(len(beam.context.elements)):
+        for cell in (0, 1):
+            if beam.abscissae[2*element+cell] < .9-1e-12:
+                continue
+            first = beam.context.nodal_count+24*element+3*cell
+            step[first:first+3] = rotation_vector
+    candidate = beam.context.advance(base, step)
+    assert np.max(np.abs(line.evaluate(
+        shell_coordinates, shell_frames, candidate))) < 1e-10
+    assert np.max(np.abs(line.orientation_gap(
+        shell_coordinates, shell_frames, candidate))) < 1e-10
+
+
+def test_material_line_orientation_uses_director_without_drilling():
+    _, _, beam, line = _fixture(patch_cells=2)
+    identity = np.broadcast_to(np.eye(3), (line.shell_count, 3, 3)).copy()
+    bond = line.reference_nodes[:, 0] >= .9-1e-12
+    pitch = identity.copy()
+    pitch[bond] = Rotation.from_rotvec((0., 1e-3, 0.)).as_matrix()
+    state = beam.context.initial.mechanical
+    assert np.max(np.abs(line.orientation_gap(
+        line.reference_nodes, pitch, state))) > 5e-4
+    drilling = identity.copy()
+    drilling[bond] = Rotation.from_rotvec((0., 0., 1e-3)).as_matrix()
+    assert np.max(np.abs(line.orientation_gap(
+        line.reference_nodes, drilling, state))) < 1e-12
+
+
+@pytest.mark.parametrize("mixed_s3", (False, True))
+def test_material_line_orientation_jacobian_uses_native_chart(mixed_s3):
+    xs, ys, beam, _ = _fixture(patch_cells=2)
+    line = MaterialLinePosition(xs, ys, beam, mixed_s3=mixed_s3)
+    rng = np.random.default_rng(345 if mixed_s3 else 346)
+    shell = rng.normal(size=(line.shell_count, 6))*.1
+    beam_step = rng.normal(size=beam.context.count)*.1
+    shell[line.reference_nodes[:, 0] <= -.5+1e-12] = 0.
+    beam_step[list(beam.context.fixed)] = 0.
+    direction = np.r_[shell.ravel(), beam_step]
+    predicted = (line.reference_orientation_jacobian()@direction).reshape(-1, 3)
+    step_size = 1e-6
+
+    def trial(sign):
+        coordinates = line.reference_nodes+sign*step_size*shell[:, :3]
+        frames = Rotation.from_rotvec(
+            sign*step_size*shell[:, 3:]).as_matrix()
+        candidate = beam.context.advance(
+            beam.context.initial.mechanical, sign*step_size*beam_step)
+        return line.orientation_gap(coordinates, frames, candidate)
+
+    finite_difference = (trial(1)-trial(-1))/(2*step_size)
+    assert np.max(np.abs(finite_difference-predicted)) < 2e-8
+
+    drilling = np.zeros_like(direction)
+    bond = line.reference_nodes[:, 0] >= .9-1e-12
+    drilling[:6*line.shell_count].reshape(-1, 6)[bond, 5] = 1.
+    assert np.max(np.abs(line.reference_orientation_jacobian()@drilling)) < 1e-12
+
+
+@pytest.mark.parametrize("mixed_s3,off_edge,diagonal", (
+    (False, False, "bl_tr"),
+    (True, False, "bl_tr"),
+    (True, True, "bl_tr"),
+    (True, True, "br_tl"),
+))
+def test_material_line_orientation_jacobian_at_nonzero_gap(
+        mixed_s3, off_edge, diagonal):
+    xs, ys = local_grid(2, transverse_cells=4)
+    if off_edge:
+        ys = ys.copy()
+        ys[np.flatnonzero(np.abs(ys) < 1e-12)[0]] = .01
+    beam = build(12, z_offset=.0675,
+                 torsion_constant=square_torsion_constant(),
+                 reference_profile="c1_tangent_2um", assemble=False)
+    line = MaterialLinePosition(xs, ys, beam, mixed_s3=mixed_s3,
+                                diagonal=diagonal)
+    if off_edge:
+        assert [len(station.nodes) for station in line.stations] == [3]*3+[4]*3
+        assert len({tuple(station.nodes) for station in line.stations[:3]}) == 2
+        identity = np.broadcast_to(np.eye(3), (line.shell_count, 3, 3))
+        assert np.max(np.abs(line.evaluate(
+            line.reference_nodes, identity,
+            beam.context.initial.mechanical))) < 1e-12
+        assert np.max(np.abs(line.orientation_gap(
+            line.reference_nodes, identity,
+            beam.context.initial.mechanical))) < 1e-12
+    rng = np.random.default_rng(349 if mixed_s3 else 350)
+    shell_base = rng.normal(size=(line.shell_count, 6))*.02
+    shell_direction = rng.normal(size=(line.shell_count, 6))*.1
+    base_step = rng.normal(size=beam.context.count)*.02
+    beam_direction = rng.normal(size=beam.context.count)*.1
+    fixed_shell = line.reference_nodes[:, 0] <= -.5+1e-12
+    shell_base[fixed_shell] = 0.
+    shell_direction[fixed_shell] = 0.
+    base_step[list(beam.context.fixed)] = 0.
+    beam_direction[list(beam.context.fixed)] = 0.
+    coordinates = line.reference_nodes+shell_base[:, :3]
+    frames = Rotation.from_rotvec(shell_base[:, 3:]).as_matrix()
+    state = beam.context.advance(beam.context.initial.mechanical, base_step)
+    direction = np.r_[shell_direction.ravel(), beam_direction]
+    predicted = (line.orientation_jacobian(
+        coordinates, frames, state)@direction).reshape(-1, 3)
+    assert np.max(np.abs(line.orientation_gap(coordinates, frames, state))) > 1e-4
+    step_size = 1e-6
+
+    def trial(sign):
+        trial_coordinates = coordinates+sign*step_size*shell_direction[:, :3]
+        update = Rotation.from_rotvec(
+            sign*step_size*shell_direction[:, 3:]).as_matrix()
+        trial_frames = update@frames
+        trial_state = beam.context.advance(state, sign*step_size*beam_direction)
+        return line.orientation_gap(trial_coordinates, trial_frames, trial_state)
+
+    finite_difference = (trial(1)-trial(-1))/(2*step_size)
+    assert np.max(np.abs(finite_difference-predicted)) < 2e-8
+
+    position_predicted = (line.position_jacobian(
+        coordinates, frames, state)@direction).reshape(-1, 3)
+
+    def position_trial(sign):
+        trial_coordinates = coordinates+sign*step_size*shell_direction[:, :3]
+        update = Rotation.from_rotvec(
+            sign*step_size*shell_direction[:, 3:]).as_matrix()
+        trial_frames = update@frames
+        trial_state = beam.context.advance(state, sign*step_size*beam_direction)
+        return line.evaluate(trial_coordinates, trial_frames, trial_state)
+
+    position_difference = (position_trial(1)-position_trial(-1))/(2*step_size)
+    assert np.max(np.abs(position_difference-position_predicted)) < 2e-8
+
+    second_shell = rng.normal(size=(line.shell_count, 6))*.1
+    second_beam = rng.normal(size=beam.context.count)*.1
+    second_shell[fixed_shell] = 0.
+    second_beam[list(beam.context.fixed)] = 0.
+    other = np.r_[second_shell.ravel(), second_beam]
+    analytic_mixed = line.orientation_second_variation(
+        coordinates, frames, state, direction, other)
+    reversed_mixed = line.orientation_second_variation(
+        coordinates, frames, state, other, direction)
+
+    def two_direction_state(first_scale, second_scale):
+        translation = (first_scale*shell_direction[:, :3]
+                       +second_scale*second_shell[:, :3])
+        rotation = (first_scale*shell_direction[:, 3:]
+                    +second_scale*second_shell[:, 3:])
+        trial_frames = Rotation.from_rotvec(rotation).as_matrix()@frames
+        trial_state = beam.context.advance(
+            state, first_scale*beam_direction+second_scale*second_beam)
+        return coordinates+translation, trial_frames, trial_state
+
+    def two_direction_trial(first_scale, second_scale):
+        return line.orientation_gap(
+            *two_direction_state(first_scale, second_scale))
+
+    def mixed_stencil(h):
+        return (two_direction_trial(h, h)-two_direction_trial(h, -h)
+                -two_direction_trial(-h, h)+two_direction_trial(-h, -h)
+                )/(4*h*h)
+
+    # The raw stencil has observed O(h²) truncation on this curved state.
+    # Richardson cancellation retains the same absolute acceptance bound.
+    fine = mixed_stencil(1e-4)
+    coarse = mixed_stencil(2e-4)
+    difference_mixed = (4*fine-coarse)/3
+    assert np.max(np.abs(analytic_mixed-difference_mixed)) < 5e-7
+    assert np.max(np.abs(analytic_mixed-reversed_mixed)) < 1e-9
+
+    position_mixed = line.position_second_variation(
+        coordinates, frames, state, direction, other)
+    position_reversed = line.position_second_variation(
+        coordinates, frames, state, other, direction)
+
+    def position_stencil(h):
+        return (
+            line.evaluate(*two_direction_state(h, h))
+            -line.evaluate(*two_direction_state(h, -h))
+            -line.evaluate(*two_direction_state(-h, h))
+            +line.evaluate(*two_direction_state(-h, -h))
+            )/(4*h*h)
+
+    position_fine = position_stencil(1e-4)
+    position_coarse = position_stencil(2e-4)
+    position_difference = (4*position_fine-position_coarse)/3
+    assert np.max(np.abs(position_mixed-position_difference)) < 5e-7
+    assert np.max(np.abs(position_mixed-position_reversed)) < 1e-9
+
+
+def test_material_line_orientation_couple_work_cancels_on_common_rigid_motion():
+    _, _, beam, line = _fixture(patch_cells=2)
+    shell_coordinates = line.reference_nodes.copy()
+    shell_frames = np.broadcast_to(np.eye(3), (line.shell_count, 3, 3)).copy()
+    beam_state = beam.context.initial.mechanical
+    omega = np.array((.03, -.04, .05))
+    translation = np.array((.002, -.003, .004))
+    shell_step = np.zeros((line.shell_count, 6))
+    shell_bond = line.reference_nodes[:, 0] >= .9-1e-12
+    shell_step[shell_bond, :3] = (
+        np.cross(omega, shell_coordinates[shell_bond])+translation)
+    shell_step[shell_bond, 3:] = omega
+    beam_step = np.zeros(beam.context.count)
+    for node, x in enumerate(beam.abscissae):
+        if x < .9-1e-12:
+            continue
+        position = beam_state.positions[node]+beam_state.position_low[node]
+        beam_step[6*node:6*node+3] = np.cross(omega, position)+translation
+        beam_step[6*node+3:6*node+6] = omega
+    for element in range(len(beam.context.elements)):
+        for cell in (0, 1):
+            if beam.abscissae[2*element+cell] < .9-1e-12:
+                continue
+            first = beam.context.nodal_count+24*element+3*cell
+            beam_step[first:first+3] = omega
+    jacobian = line.reference_orientation_jacobian()
+    weights = np.repeat([station.weight for station in line.stations], 3)
+    multiplier = weights*np.tile((1.3, -2.1, 3.2), len(line.stations))
+    split = 6*line.shell_count
+    shell_work = shell_step.ravel()@(jacobian[:, :split].T@multiplier)
+    beam_work = beam_step@(jacobian[:, split:].T@multiplier)
+    assert abs(shell_work) > 1e-6
+    assert abs(shell_work+beam_work) < 1e-10*abs(shell_work)
+
+
+@pytest.mark.parametrize("mixed_s3", (False, True))
+def test_material_line_six_channel_work_balances_six_rigid_modes(mixed_s3):
+    xs, ys, beam, _ = _fixture(patch_cells=2)
+    line = MaterialLinePosition(xs, ys, beam, mixed_s3=mixed_s3)
+    frames = np.broadcast_to(np.eye(3), (line.shell_count, 3, 3))
+    state = beam.context.initial.mechanical
+    weights = np.repeat([station.weight for station in line.stations], 3)
+    forces = weights*np.tile((2.3, -1.7, 3.1), len(line.stations))
+    couples = weights*np.tile((-.8, 1.2, .5), len(line.stations))
+    actions = (line.reference_jacobian().T@forces
+               +line.reference_orientation_jacobian().T@couples)
+    split = 6*line.shell_count
+    shell_bond = line.reference_nodes[:, 0] >= .9-1e-12
+    modes = []
+    for axis in np.eye(3):
+        modes.append((axis, np.zeros(3)))
+        modes.append((np.zeros(3), axis))
+    shell_works = []
+    beam_works = []
+    for translation, omega in modes:
+        shell_step = np.zeros((line.shell_count, 6))
+        shell_step[shell_bond, :3] = (
+            np.cross(omega, line.reference_nodes[shell_bond])+translation)
+        shell_step[shell_bond, 3:] = omega
+        beam_step = np.zeros(beam.context.count)
+        for node, x in enumerate(beam.abscissae):
+            if x < .9-1e-12:
+                continue
+            position = state.positions[node]+state.position_low[node]
+            beam_step[6*node:6*node+3] = np.cross(omega, position)+translation
+            beam_step[6*node+3:6*node+6] = omega
+        for element in range(len(beam.context.elements)):
+            for cell in (0, 1):
+                if beam.abscissae[2*element+cell] < .9-1e-12:
+                    continue
+                first = beam.context.nodal_count+24*element+3*cell
+                beam_step[first:first+3] = omega
+        shell_works.append(shell_step.ravel()@actions[:split])
+        beam_works.append(beam_step@actions[split:])
+    shell_works, beam_works = np.array(shell_works), np.array(beam_works)
+    assert np.min(np.abs(shell_works)) > 1e-6
+    assert np.max(np.abs(shell_works+beam_works)) < 1e-9*np.max(
+        np.abs(shell_works))
+
+
+def test_material_line_orientation_work_has_chart_corrected_mixed_curvature():
+    _, _, beam, line = _fixture(patch_cells=2)
+    rng = np.random.default_rng(351)
+    directions = [rng.normal(size=6*line.shell_count+beam.context.count)*.1
+                  for _ in range(2)]
+    split = 6*line.shell_count
+    for direction in directions:
+        shell = direction[:split].reshape(-1, 6)
+        shell[line.reference_nodes[:, 0] <= -.5+1e-12] = 0.
+        direction[split+np.asarray(beam.context.fixed)] = 0.
+    first, second = directions
+    multiplier = np.repeat([station.weight for station in line.stations], 3)
+    multiplier *= np.tile((1.3, -2.1, 3.2), len(line.stations))
+    base = beam.context.initial.mechanical
+
+    def state_for(step):
+        shell = step[:split].reshape(-1, 6)
+        coordinates = line.reference_nodes+shell[:, :3]
+        frames = Rotation.from_rotvec(shell[:, 3:]).as_matrix()
+        state = beam.context.advance(base, step[split:])
+        return coordinates, frames, state
+
+    def left_exp_jacobian(vector):
+        angle = np.linalg.norm(vector)
+        cross = np.array(((0., -vector[2], vector[1]),
+                          (vector[2], 0., -vector[0]),
+                          (-vector[1], vector[0], 0.)))
+        if angle < 1e-4:
+            a = .5-angle**2/24.+angle**4/720.
+            b = 1./6.-angle**2/120.+angle**4/5040.
+        else:
+            a = (1.-np.cos(angle))/angle**2
+            b = (angle-np.sin(angle))/angle**3
+        return np.eye(3)+a*cross+b*cross@cross
+
+    def base_chart_direction(current_step, direction):
+        result = direction.copy()
+        current_shell = current_step[:split].reshape(-1, 6)
+        result_shell = result[:split].reshape(-1, 6)
+        for node in range(line.shell_count):
+            result_shell[node, 3:] = (
+                left_exp_jacobian(current_shell[node, 3:])@
+                result_shell[node, 3:])
+        for element in range(len(beam.context.elements)):
+            for cell in (0, 1):
+                start = split+beam.context.nodal_count+24*element+3*cell
+                result[start:start+3] = (
+                    left_exp_jacobian(current_step[start:start+3])@
+                    result[start:start+3])
+        return result
+
+    def work(step):
+        return multiplier@line.orientation_gap(*state_for(step)).ravel()
+
+    def first_work_derivative(step, direction):
+        coordinates, frames, state = state_for(step)
+        return multiplier@(
+            line.orientation_jacobian(coordinates, frames, state)@
+            base_chart_direction(step, direction))
+
+    h = 1e-4
+    mixed_ab = (first_work_derivative(h*second, first)
+                -first_work_derivative(-h*second, first))/(2*h)
+    mixed_ba = (first_work_derivative(h*first, second)
+                -first_work_derivative(-h*first, second))/(2*h)
+    naive_mixed = (
+        multiplier@(line.orientation_jacobian(*state_for(h*second))@first)
+        -multiplier@(line.orientation_jacobian(*state_for(-h*second))@first)
+        )/(2*h)
+    scalar_difference = (work(h*(first+second))-work(h*(first-second))
+                         -work(h*(-first+second))+work(-h*(first+second))
+                         )/(4*h*h)
+    analytic = multiplier@line.orientation_second_variation(
+        line.reference_nodes,
+        np.broadcast_to(np.eye(3), (line.shell_count, 3, 3)),
+        base, first, second).ravel()
+    analytic_reversed = multiplier@line.orientation_second_variation(
+        line.reference_nodes,
+        np.broadcast_to(np.eye(3), (line.shell_count, 3, 3)),
+        base, second, first).ravel()
+    assert abs(mixed_ab) > 1e-5
+    assert abs(mixed_ab-mixed_ba) < 2e-7
+    assert abs(mixed_ab-scalar_difference) < 2e-7
+    assert abs(analytic-mixed_ab) < 2e-7
+    assert abs(analytic-analytic_reversed) < 2e-9
+    assert abs(naive_mixed-mixed_ab) > 1e-6

@@ -1,0 +1,7 @@
+# D1 deformable-target ordinary force-control check
+
+At production source `91589fa6` plus a test-only addition, a four-Q4 source and deformable two-S3 target were pressed with identical supports, two load steps and distributed dead nodal forces through two public routes: `ContactPathProgram` and ordinary `LoadCase`/`num_steps`. Both used the explicit fine-Q1 monolithic active-set settings from `build_free_target_case`. The ordinary route fixed source-node `ux` at the same two nodes whose controlled-path values were zero.
+
+The focused [test](../../tests/test_general_contact_monolithic_ordinary_force.py) passed in 14.59 s with 366.56 MB peak process-tree RSS, within the 180 s/1 GB development cap ([full log](d1_free_target_force_pytest_20260929.log), [resource record](d1_free_target_force_resource_20260929.json)). It requires completed status for both solves, displacements equal within `1e−10 m` absolute, integrated force, minimum gap and numerical pressure equal within `1e−9` absolute, active positive normal force, nonzero free-target displacement and solver-reported minimum gap above the registered `−5e−5 m` setting.
+
+This is **tested route equivalence** on one two-step elastic press. Both sides use the production solver, so it is not an independent mechanics reference. It does not cover force-controlled slide/open/recontact, an independently checked physical gap, pressure-space stability, or final D1 acceptance. No production mechanics or public interface was changed.

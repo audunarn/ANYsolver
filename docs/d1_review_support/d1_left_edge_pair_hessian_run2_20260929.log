@@ -1,0 +1,20 @@
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_tangent_pairs_dev.py", line 117, in <module>
+    main(args.pose, args.output)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_tangent_pairs_dev.py", line 76, in main
+    derivatives.append(q4_s3_overlap_derivatives(
+                       ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        reference, source[source_ids], target[target_ids], **options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ))
+    ^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_s3_overlap_derivatives.py", line 907, in q4_s3_overlap_derivatives
+    return _evaluate(
+        reference_source, current_source, current_target,
+    ...<5 lines>...
+        derivative_tolerances=derivative_tolerances,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_s3_overlap_derivatives.py", line 658, in _evaluate
+    raise UnsupportedQ4S3Branch("zero projected overlap")
+anysolver.general_contact.q4_s3_overlap_derivatives.UnsupportedQ4S3Branch: zero projected overlap

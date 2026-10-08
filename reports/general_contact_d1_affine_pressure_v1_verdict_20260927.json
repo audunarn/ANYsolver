@@ -1,0 +1,53 @@
+{
+  "case_id": "general_contact_d1_affine_partial_pressure_v1",
+  "status": "passed_numerical_gate",
+  "checks": {
+    "registered_case": true,
+    "source_blobs": true,
+    "registered_source_tree": true,
+    "environment": true,
+    "input_profile": true,
+    "row_inventory": true,
+    "wall_budget": true,
+    "x32_reference_identity": true,
+    "x32_wrench": true,
+    "x32_gap": true,
+    "x32_rank_and_activity": true,
+    "x32_integration_indicator": true,
+    "x64_reference_identity": true,
+    "x64_wrench": true,
+    "x64_gap": true,
+    "x64_rank_and_activity": true,
+    "x64_integration_indicator": true,
+    "x64_analytic_force": true,
+    "refinement_trend": true
+  },
+  "metrics": [
+    {
+      "x_divisions": 32,
+      "reaction_z_n": 0.17177348497348763,
+      "relative_reference_error": 0.0027664152482575243,
+      "normalized_force_balance": 1.61135546029431e-16,
+      "normalized_moment_balance": 9.007746484098115e-17,
+      "integration_fraction_of_response_budget": 4.113880660545615e-11,
+      "minimum_gap_m": -2.4999999917175232e-05,
+      "supported_modes": 76,
+      "scaled_rank": 76
+    },
+    {
+      "x_divisions": 64,
+      "reaction_z_n": 0.17218069317077198,
+      "relative_reference_error": 0.00040236185328308157,
+      "normalized_force_balance": 1.6113591594524988e-16,
+      "normalized_moment_balance": 2.904910544344163e-16,
+      "integration_fraction_of_response_budget": 4.4690640156948814e-11,
+      "minimum_gap_m": -2.4999999917176967e-05,
+      "supported_modes": 144,
+      "scaled_rank": 144
+    }
+  ],
+  "source_commit": "7d50fed58cb4ad924a118a83ffcfc29efbf8a2ed",
+  "claim_boundary": "Prescribed-pose Q4/S3 partial-contact pressure-space integrated force and balance only; no coupled C1 acceptance, installed-package claim or release",
+  "contract_sha256": "20e631e23cda700ae342439223236c6c1ce96956eb39ce405bd7d649a4e04ac5",
+  "result_sha256": "4d63aaaaf9c1bd84c8509ce67250693d5e99aa07f1585d3df13871c8a17bf8c7"
+}

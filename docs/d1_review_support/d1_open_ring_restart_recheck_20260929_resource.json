@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 63.31041730000288,
+  "peak_process_tree_memory_mb": 411.541504,
+  "time_limit_seconds": 900.0,
+  "memory_limit_bytes": 4000000000,
+  "command": [
+    "python",
+    "scripts/general_contact_d1_open_ring_restart_dev.py",
+    "docs/d1_review_support/d1_pressure_work_16q4_press_20260929.json",
+    "docs/d1_review_support/d1_open_ring_cycle_per_control_20260929.json",
+    "docs/d1_review_support/d1_open_ring_restart_recheck_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_open_ring_restart_recheck_20260929.log"
+}

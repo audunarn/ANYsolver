@@ -1,0 +1,98 @@
+{
+  "fixture": "schur_tiny_wedge_pose",
+  "spring_n_per_m": 1000000.0,
+  "pressure_step_pa": 0.03,
+  "active_pressure_mode": 0,
+  "selected_pressure_modes": [
+    0,
+    1,
+    2,
+    5,
+    6,
+    7,
+    10,
+    11,
+    12
+  ],
+  "predicted_gap_response_m_per_pa": [
+    1.5432075719191356e-09,
+    3.3574177111319984e-09,
+    3.395055876061174e-09,
+    3.936754028229659e-10,
+    8.564842382632982e-10,
+    8.660856840766128e-10,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "observed_gap_response_m_per_pa": [
+    1.5432075748361251e-09,
+    3.357417714906377e-09,
+    3.39505586639492e-09,
+    3.9367540560482395e-10,
+    8.564842360862671e-10,
+    8.660856799169841e-10,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "relative_error": 2.3330015705306457e-09,
+  "records": [
+    {
+      "success": true,
+      "message": "The solution converged.",
+      "free_displacement_m": -2.0833299659345216e-10,
+      "equilibrium_n": 0.0,
+      "gap": [
+        5.32218113002095e-07,
+        5.687835558357036e-05,
+        8.158347241641443e-05,
+        5.107542958332204e-07,
+        5.682842680597466e-05,
+        8.152420589680807e-05,
+        4.619654631927663e-07,
+        5.671870429667541e-05,
+        8.140353782592924e-05
+      ],
+      "calls": 6
+    },
+    {
+      "success": true,
+      "message": "The solution converged.",
+      "free_displacement_m": 2.0833299659389626e-10,
+      "equilibrium_n": 0.0,
+      "gap": [
+        5.323107054565852e-07,
+        5.6878557028633254e-05,
+        8.158367611976641e-05,
+        5.107779163575567e-07,
+        5.682847819502883e-05,
+        8.152425786194886e-05,
+        4.619654631927663e-07,
+        5.671870429667541e-05,
+        8.140353782592924e-05
+      ],
+      "calls": 6
+    }
+  ],
+  "diagnostics": {
+    "schur_tiny_wedge_gap_response": {
+      "pair": 2,
+      "overlap_area_m2": 4.372157705178659e-16,
+      "maximum_gradient_error": 1.841060704136142e-18,
+      "float_evaluations": 310
+    },
+    "schur_force_map_unconstrained_singular_values": [
+      1.4142135623730951
+    ],
+    "schur_force_map_column_norms": [
+      0.006944445298291099,
+      0.0034722226652267522,
+      0.0
+    ],
+    "schur_force_map_scaled_singular_values": [
+      1.4142135623730951
+    ]
+  },
+  "elapsed_seconds": 22.866018056869507
+}

@@ -1,0 +1,63 @@
+{
+  "status": "SOURCE_AUTHORED_NOT_EXECUTED",
+  "selected_test": "tests/test_ge_beam3_native_dynamic_runtime.py::test_runtime_admission_and_atomic_restore",
+  "owned_path": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_native_dynamic_runtime.py",
+  "test_sha256": "27d57d14aacca34649a0c08c48080798541f2c56faace67ffd934645f8c4252f",
+  "production_bindings": {
+    "_ge_beam3_dynamic_elastic_state.py": {
+      "path": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py",
+      "sha256": "5467683fdd7d708c32e268dd3474cf9c164da8e9977b3e4f1a7db46bcff7ce2a"
+    },
+    "_ge_beam3_native_midpoint.py": {
+      "path": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+      "sha256": "027fe102aaedcef19af658a8ffb4394100760e2a150bc7dc16c057459ac868e9"
+    },
+    "ge_beam3_native_dynamics.py": {
+      "path": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\ge_beam3_native_dynamics.py",
+      "sha256": "32462df5b94cfcd6b4ccb344e97d48385928a48bd2f658598ddee8f5000df1ab"
+    },
+    "_ge_beam3_native_dynamic_restart.py": {
+      "path": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_dynamic_restart.py",
+      "sha256": "ceb2790dc9385f6db57ec8cb0e8ec034aa03a1c22b41489d37fdb42869c01658"
+    }
+  },
+  "builder_binding": {
+    "path": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_native_midpoint.py",
+    "sha256": "426f673d40e82a4d554c3964dc9b51b4ca5638f180f3f985e4ba85c974ebc05d"
+  },
+  "environment": {
+    "PYTHONPATH": "src;tests;.;examples",
+    "NUMBA_CACHE_DIR": "LEAD_FROZEN_WRITABLE_CACHE",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NATIVE_DYNAMIC_RUNTIME_INPUTS": "LEAD_FROZEN_INPUT",
+    "NATIVE_DYNAMIC_RUNTIME_RAW_OUTPUT": "NEW_EXCLUSIVE_RAW"
+  },
+  "fixture": "Existing authentic curved ellipsoid definition and its unchanged public zero initialization; free supports and no load/spin/time steps. Three successful dynamic constructors: uninitialized default120, initialized840, matching fresh840 restore. Invalid public constructor attempts are recorded separately. Ignored clamped native analysis used only for legacy early admission rejection.",
+  "controls": [
+    "Exact type bool/subclass and finite/range public admission; int840 maps to float840, default120 unchanged",
+    "Legacy midpoint nondefault duration early rejection",
+    "Default identity omits runtime field;840 definition and restart metadata bind nondefault duration; identity changes",
+    "Default still uses accepted operator_call in validation scope; extended excludes active scope and uses ordinary direct full callback route",
+    "Midpoint duration/public dynamic duration/started mutation reject at entry and stage guard",
+    "Mocked clock expiry before structural work, no started/captured duration reset",
+    "Official zero initialization: original require_contract called on entry and exit; only after second actual call mocked clock advances, tentative original state remains invisible and complete atomic issuance/diagnostics rollback required",
+    "Default120 official restore of840 snapshot rejects header before semantic work/publication; remains fresh",
+    "Matching840 official fresh restore keeps complete canonical state/accounting and byte-identical re-export; actual stored histories/q/v/a unchanged"
+  ],
+  "resource_bounds": {
+    "supervisor_seconds": 180,
+    "memory_limit_bytes": 1073741824,
+    "fixture_seconds": 120,
+    "physical_steps": 0,
+    "dynamic_owner_count": 3,
+    "normal_initializations": 1,
+    "negative_exit_initialization_attempts": 1,
+    "sleeps": 0,
+    "segments": 0
+  },
+  "unchanged": "No production edits, public/static guard weakening, mathematical/scientific gate changes, spin/trial/timestep cases or previous evidence replay. Initial/restore algebraic rank/mass/residual/correction validity remains enforced by official owners.",
+  "claim_boundary": "Resource identity/clock/atomic codec development controls only; explicit840 setting does not authorize renew/reset any execution cap, dynamics or fullC7 qualification. Test clock is patched only for isolated controls and captured started values are never modified except prospective mutation/rejection probe with scoped restoration.",
+  "authoring": "Standard-library source/hash/metadata reads and compile-only validation; no production/test imports, initializer, operator, stage, trial, eigensolve or numeric test execution."
+}

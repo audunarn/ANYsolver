@@ -1,0 +1,23 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 20.618252200016286,
+  "peak_process_tree_memory_mb": 421.494784,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_authority_signature_immutable_cache.py",
+    "tests/test_nonlinear_checkpoint_guarded_normalization.py",
+    "tests/test_e4_pl_mixed_current_state_route.py::test_s3_scientific_data_and_imported_class_alias_are_frozen",
+    "tests/test_e4_pl_mixed_current_state_route.py::test_scientific_mapping_spoof_rejects_without_iterating_attacker",
+    "tests/test_e4_pl_mixed_current_state_route.py::test_transitive_module_helper_spoof_rejects_before_any_mechanics",
+    "tests/test_e4_pl_mixed_current_state_route.py::test_direct_q4_s3_mechanics_bind_exact_numpy_operations",
+    "tests/test_e4_pl_q4_state_lifecycle.py::test_q4_checkpoint_nested_mapping_observation_is_guarded_before_normalization",
+    "tests/test_e4_pl_q4_state_lifecycle.py::test_q4_checkpoint_producer_guards_module_helpers_before_fingerprint"
+  ],
+  "log": "docs\\d1_review_support\\d1_checkpoint_inert_controls_v5_20260930.log"
+}

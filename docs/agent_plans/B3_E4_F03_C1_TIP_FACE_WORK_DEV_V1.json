@@ -1,0 +1,79 @@
+{
+  "cases": {
+    "tip_fz": {
+      "fitted_rotation_rad": [
+        -3.149825985193804e-14,
+        6.567974883593267e-05,
+        1.2761756056603458e-16
+      ],
+      "fitted_translation_m": [
+        2.5549512778164913e-06,
+        1.4692430215165753e-15,
+        -7.256090278519683e-05
+      ],
+      "force_N": [
+        0.0,
+        0.0,
+        -999.9999999999995
+      ],
+      "full_tip_load_work_J": 0.07256238191016057,
+      "loaded_nodes": 225,
+      "moment_Nm_about_origin": [
+        -2.220446049250313e-16,
+        0.0,
+        0.0
+      ],
+      "nonrigid_fit_load_work_J": 1.4791249637013407e-06,
+      "nonrigid_fraction_of_abs_full_work": 2.038418426689251e-05,
+      "rigid_fit_condition": 32.09428170959642,
+      "rigid_fit_load_work_J": 0.07256090278519686,
+      "rigid_fit_rank": 6,
+      "saved_applied_load_work_J": 0.07256238191016047,
+      "source_deck_sha256": "ffdc4182aaf4bc0103eae30ecee1a2d122c6bed67e4ebac7111290fa9f4fd107",
+      "source_frd_sha256": "ed89e1ca4e59fd546d953b55bfa466e90acba4cbd2eb39ab141e5016f3587c16",
+      "tip_displacement_fit_rms_m": 4.1101490959024873e-08
+    },
+    "tip_mx": {
+      "fitted_rotation_rad": [
+        5.387497702499291e-05,
+        -4.090813558074282e-15,
+        -4.117121415411566e-06
+      ],
+      "fitted_translation_m": [
+        -1.5679794993026014e-16,
+        -3.5341881833546916e-06,
+        3.476264240160727e-15
+      ],
+      "force_N": [
+        0.0,
+        1.2434497875801753e-14,
+        -1.0302869668521453e-13
+      ],
+      "full_tip_load_work_J": 0.0053865057895247145,
+      "loaded_nodes": 225,
+      "moment_Nm_about_origin": [
+        99.99999999999996,
+        0.0,
+        0.0
+      ],
+      "nonrigid_fit_load_work_J": -9.919129745689436e-07,
+      "nonrigid_fraction_of_abs_full_work": 0.00018414775985165448,
+      "rigid_fit_condition": 32.09428170959642,
+      "rigid_fit_load_work_J": 0.005387497702499284,
+      "rigid_fit_rank": 6,
+      "saved_applied_load_work_J": 0.005386505789524708,
+      "source_deck_sha256": "4792273d1efe3957de336436d7398d3eb6ee7960c50fe1eea1aab70fa504fdec",
+      "source_frd_sha256": "219adedf645eeca1af30d456363ea449b347a15f6a387d1a0b917e403f61cee3",
+      "tip_displacement_fit_rms_m": 1.7912879042794067e-08
+    }
+  },
+  "classification": "same saved P0 solid response, tip-face rigid-fit work split",
+  "limitations": [
+    "equal-loaded-node rigid fit is a declared kinematic split, not a unique beam port",
+    "nonrigid load work is not a stiffness-energy allocation or an accuracy bound",
+    "saved external linear response only; no new solve or connection qualification"
+  ],
+  "reconstruction_sha256": "118aef26cf0766fa50a6d42929a095440e142f7177216e5b85dc2c7e51fa7f92",
+  "source_commit": "6a68438917ef8625fe818c77052f9b1d99929d95",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE"
+}

@@ -1,0 +1,19 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 1.3991334000020288,
+  "peak_process_tree_memory_mb": 160.198656,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "scripts.general_contact_d1_interior_press_dev",
+    "docs/d1_review_support/d1_pressure_family4_split_compare_v6_20260929.json",
+    "--compare-saved-cycle",
+    "docs/d1_review_support/d1_pressure_family4_versioned_recontact_v6_20260929.json",
+    "--cycle-reference",
+    "docs/d1_review_support/d1_pressure_family4_moving_edge_cycle_v4_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_pressure_family4_split_compare_v6_20260929.log"
+}

@@ -1,0 +1,73 @@
+{
+  "beam_half_cells_for_trace": 12,
+  "classification": "fixed matched-line dual and P0 policy; E4 x-resolution only",
+  "levels": {
+    "16": {
+      "cases": {
+        "tip_fz": {
+          "equilibrium_ratio": 2.0916638651594698e-11,
+          "native_shell_action_only_work_J": 0.013028863267736827,
+          "native_vs_solid_relative": -0.14081802469235205,
+          "solid_plate_action_only_work_J": 0.01516426512913236
+        },
+        "tip_mx": {
+          "equilibrium_ratio": 2.944543821726987e-11,
+          "native_shell_action_only_work_J": 0.001791669096802688,
+          "native_vs_solid_relative": -0.09517919255783602,
+          "solid_plate_action_only_work_J": 0.0019801369310543967
+        }
+      },
+      "line_rows": 24,
+      "shell_dof": 1782,
+      "shell_nodes": 297
+    },
+    "4": {
+      "cases": {
+        "tip_fz": {
+          "equilibrium_ratio": 1.5192495484517917e-12,
+          "native_shell_action_only_work_J": 0.01299322314074704,
+          "native_vs_solid_relative": -0.143168295324413,
+          "solid_plate_action_only_work_J": 0.01516426512913236
+        },
+        "tip_mx": {
+          "equilibrium_ratio": 1.6943455477625352e-12,
+          "native_shell_action_only_work_J": 0.0017780972753723746,
+          "native_vs_solid_relative": -0.10203317382421562,
+          "solid_plate_action_only_work_J": 0.0019801369310543967
+        }
+      },
+      "line_rows": 24,
+      "shell_dof": 990,
+      "shell_nodes": 165
+    },
+    "8": {
+      "cases": {
+        "tip_fz": {
+          "equilibrium_ratio": 3.807619861217103e-12,
+          "native_shell_action_only_work_J": 0.013022047029396046,
+          "native_vs_solid_relative": -0.14126751817474215,
+          "solid_plate_action_only_work_J": 0.01516426512913236
+        },
+        "tip_mx": {
+          "equilibrium_ratio": 4.253483235378204e-12,
+          "native_shell_action_only_work_J": 0.001788483909392909,
+          "native_vs_solid_relative": -0.09678776182384263,
+          "solid_plate_action_only_work_J": 0.0019801369310543967
+        }
+      },
+      "line_rows": 24,
+      "shell_dof": 1254,
+      "shell_nodes": 209
+    }
+  },
+  "limitations": [
+    "fixed dual is the x4 solid-constrained result; not a re-equilibrated coupled refinement",
+    "fixed y4 and one 3D plate mesh; no physical convergence or accuracy claim",
+    "support/clamp and E4 versus 3D plate idealization remain distinct",
+    "not F03/G0B acceptance or multiplier selection"
+  ],
+  "same_action_sha256": "b61ad12d112e5dc1a4d7046e60c0a1a8f4c3dda8344dd43cc4eebcee6e243a7b",
+  "solid_reconstruction_sha256": "118aef26cf0766fa50a6d42929a095440e142f7177216e5b85dc2c7e51fa7f92",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE",
+  "transverse_cells": 4
+}

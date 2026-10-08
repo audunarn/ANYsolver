@@ -1,0 +1,14 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 48.838257900002645,
+  "peak_process_tree_memory_mb": 205.586432,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "C:/Python/Python314/python.exe",
+    "docs/d1_review_support/native_beam_installed_development_entry.py",
+    "docs/d1_review_support/native_dynamic_restart_installed_v1_20261001.inputs.json"
+  ],
+  "log": "docs\\d1_review_support\\native_dynamic_restart_installed_v1_20261001.log"
+}

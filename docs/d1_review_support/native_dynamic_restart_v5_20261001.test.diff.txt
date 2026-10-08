@@ -1,0 +1,59 @@
+--- authoredV3
++++ harnessV5
+@@ -1,6 +1,6 @@
+ """Prospective bounded split restart test. Not authorized/executed yet."""
+ from contextlib import contextmanager
+-from dataclasses import replace
++from dataclasses import asdict, replace
+ from hashlib import sha256
+ import json
+ import os
+@@ -16,6 +16,13 @@
+ from anysolver._native_reference_modal import _owned
+ from anysolver.control import CancellationToken, SolveCancelled
+ from native_contact_free_finite_velocity_dev import build_definition, initial_velocity
++
++
++def _accounting_payload(accounting):
++    """Serialize diagnostic JSON bytes without changing endpoint values."""
++    row = asdict(accounting)
++    row['rank_mass_checks'] = json.loads(row['rank_mass_checks'])
++    return row
+ 
+ 
+ def test_committed_native_dynamic_split_restart(record_property):
+@@ -39,7 +46,6 @@
+         assert c._initial_checks is None and c._restore_checks is None
+         assert c._dynamic._active_session is None and c._work_session is None
+         assert len(c._dynamic._issued)==1
+-    def account(owner,state): return json.loads(canonical(owner.endpoint_accounting(state)))
+     def modified(raw,change):
+         row=json.loads(raw);change(row)
+         row['state_sha256']=sha(row['state'])
+@@ -90,7 +96,7 @@
+             P=float(np.linalg.norm(delta('linear_momentum',initial_account))/pstar),
+             H=float(np.linalg.norm(delta('angular_momentum',initial_account))/hstar))
+         evidence['trajectories'][label]=dict(state=json.loads(canonical(state)),
+-            accounting=json.loads(canonical(now)),stage_residual_norm=candidate.stage_residual_norm,
++            accounting=json.loads(canonical(_accounting_payload(now))),stage_residual_norm=candidate.stage_residual_norm,
+             endpoint_algebraic_norm=candidate.endpoint_algebraic_norm,step_defects=defects,
+             cumulative_defects=cumulative)
+         evidence['accepted_steps']+=1;save(label)
+@@ -107,7 +113,7 @@
+         initial=owner.initialize(positions,cells,velocity,position_low=low)
+         initial_account=owner.endpoint_accounting(initial)
+         evidence['initial_energy_j']=initial_account.total_energy
+-        evidence['initial_accounting']=json.loads(canonical(initial_account))
++        evidence['initial_accounting']=json.loads(canonical(_accounting_payload(initial_account)))
+         assert evidence['initial_energy_j']>0.
+         evidence['profile']=workflow_provenance(owner)
+         u1=advance(owner,initial,'uninterrupted1')
+@@ -186,7 +192,7 @@
+         with pytest.raises(ValueError): restored.trial(replace(state),dt=.001)
+         final=advance(restored,state,'restored2')
+         assert canonical(final)==canonical(u2)
+-        assert canonical(restored.endpoint_accounting(final))==canonical(owner.endpoint_accounting(u2))
++        assert canonical(_accounting_payload(restored.endpoint_accounting(final)))==canonical(_accounting_payload(owner.endpoint_accounting(u2)))
+         assert final.time==.002 and final.epoch==2
+         evidence['restore_controls'].update(fresh_only=True,typed_semantics=True,
+             correction_witness=True,cancellation=True,publication_rollback=True,

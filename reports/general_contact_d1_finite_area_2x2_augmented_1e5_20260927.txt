@@ -1,0 +1,11 @@
+{
+  "divisions": 2,
+  "total_load_n": 0.4,
+  "normal_law": "augmented",
+  "normal_stiffness": 100000.0,
+  "elapsed_seconds": 93.79135680000763,
+  "status": "diverged",
+  "failure_reason": "maximum_augmentations_reached",
+  "accepted_steps": 0,
+  "has_restart_checkpoint": true
+}

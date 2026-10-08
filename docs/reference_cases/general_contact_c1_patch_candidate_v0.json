@@ -1,0 +1,47 @@
+{
+  "id": "GENERAL_CONTACT_C1_PATCH_CANDIDATE_V0",
+  "status": "prospective_local_candidate",
+  "scope": "Uniform normal closure of one Q4 bottom skin against two nonmatching S3 V2D top skins; restricted planar frictionless penalty contact",
+  "source_baseline": "4d803ec0",
+  "runner": "scripts/run_general_contact_c1_patch_candidate.py",
+  "command": "python scripts/run_general_contact_c1_patch_candidate.py --output C:\\ANYworkspaceWork\\general-contact-evidence\\c1-patch-candidate-v0-result.json",
+  "length_scale_m": 1.0,
+  "force_scale_N": 0.72,
+  "moment_scale_Nm": 0.72,
+  "energy_scale_J": 3.6e-7,
+  "geometry": {
+    "upper_q4_xy_m": [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]],
+    "lower_s3_patch_xy_m": [[0.2, 0.1], [1.2, 0.1], [1.2, 1.1], [0.2, 1.1]],
+    "overlap_area_m2": 0.72,
+    "overlap_centroid_xy_m": [0.6, 0.55],
+    "shell_thickness_m": 0.05,
+    "s3_reference_surface_offset_m": 0.01,
+    "closure_m": -1e-6
+  },
+  "law": {
+    "normal_stiffness_Pa_per_m": 1000000.0,
+    "gap_tolerance_m": 6e-6,
+    "sliding_difference_step_m": 1e-8
+  },
+  "independent_reference": {
+    "pressure_Pa": 1.0,
+    "normal_force_N": 0.72,
+    "upper_normal_moment_Nm": [0.396, -0.432, 0.0],
+    "penalty_energy_J": 3.6e-7,
+    "pointwise_gap_m": -1e-6,
+    "pressure_rank": 4,
+    "active_pressure_dofs": 4
+  },
+  "criteria": {
+    "overlap_area_absolute_m2": 1e-10,
+    "force_relative": 0.001,
+    "moment_relative": 1e-6,
+    "energy_relative": 0.001,
+    "gap_absolute_m": 1e-9,
+    "paired_wrench_relative": 1e-6,
+    "role_exchange_integrated_relative": 0.001,
+    "directional_tangent_relative": 1e-5,
+    "tangent_steps": [0.0001, 0.00005]
+  },
+  "adjudication": "A passing local runner is mechanical candidate evidence only. C1 independent review, coupled structural cases, refinement and installed-package gates remain separate."
+}

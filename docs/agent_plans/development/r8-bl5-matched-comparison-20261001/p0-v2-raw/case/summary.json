@@ -1,0 +1,27 @@
+{
+  "all_non_equation_primary_commands_equal_strong": true,
+  "binary": "C:\\Python\\Python314\\Lib\\site-packages\\openseespywin\\opensees.pyd",
+  "binary_sha256": "25ba42e1672526137d765d9c3631d1403e091f54f5afcdb9242f9243c63c3a96",
+  "case": "mz",
+  "claim_scope": "Unchanged external K/material/model/support/load; only constraint space changes. No native C substitution, mesh/refinement, finite native mechanics, 1% convergence or F03 acceptance.",
+  "classification": "fixed external P0 enforcement-space discriminator",
+  "frozen_sources": {
+    "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-enforcement-v2\\b3_e4_bl5_matched_mz_reference_dev.py": "6e1b3f25c2b479e1ade3700b57d996cef2f9709812a72108ce7e6a41e346293a",
+    "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-enforcement-v2\\b3_e4_bl5_matched_reference_actions.py": "506c5259afddfab1872c50c2a2544a7cb706b4cf14e6e7c6b4771d80a0ff98cc",
+    "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-external-p0-enforcement-v2\\b3_e4_f03_bl5_opensees_line_reference.py": "5d3616e5fc6f198adc8c0442e01c27c5b7b719e73059f5088561d0027e826f47"
+  },
+  "opensees": "3.8.0",
+  "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+  "requested_threads": {
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "row_replacement": {
+    "original_commands_consumed": 160,
+    "replacement_rows_emitted": 40
+  },
+  "source_sha256": "180e2c33d1df17239fbf30f66d9c6b400eebbfa9e5f961d83e7c9b68bdc5fdac",
+  "status": "completed",
+  "thread_scope": "Environment requests only. Effective OpenSees threads unresolved; no resource-qualified performance or effective-thread claim."
+}

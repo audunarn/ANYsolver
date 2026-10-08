@@ -1,0 +1,34 @@
+{
+  "status": "development algebraic screen; not production enriched shell",
+  "source_cell_width_m": 0.5,
+  "source_cell_height_m": 1.0,
+  "thickness_m": 0.05,
+  "young_pa": 100000.0,
+  "poisson": 0.3,
+  "raw_mindlin_shear_energy_coefficient_n_per_m": 13675.213675213676,
+  "mitc4_assumed_shear_energy_coefficient_n_per_m": 0.0,
+  "raw_gauss_gradient_maximum": 6.196773353931867,
+  "mitc4_tied_gradient_maximum": 0.0,
+  "pressure_work": [
+    {
+      "theta": 0.1,
+      "exact_bubble_force_m2_per_pa": -0.0001306770244627319,
+      "force_over_theta_squared_m2_per_pa": -0.013067702446273189
+    },
+    {
+      "theta": 0.05,
+      "exact_bubble_force_m2_per_pa": -3.8702222751085585e-05,
+      "force_over_theta_squared_m2_per_pa": -0.015480889100434232
+    },
+    {
+      "theta": 0.025,
+      "exact_bubble_force_m2_per_pa": -1.067320730516899e-05,
+      "force_over_theta_squared_m2_per_pa": -0.01707713168827038
+    },
+    {
+      "theta": 0.0125,
+      "exact_bubble_force_m2_per_pa": -2.814368032637945e-06,
+      "force_over_theta_squared_m2_per_pa": -0.018011955408882844
+    }
+  ]
+}

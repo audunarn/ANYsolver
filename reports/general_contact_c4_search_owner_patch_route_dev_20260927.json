@@ -1,0 +1,101 @@
+{
+  "candidate": "c4_owner_patch_search_dev",
+  "historical_tree_commit": "53871171",
+  "paired_order": [
+    "old",
+    "owner",
+    "owner",
+    "old"
+  ],
+  "all_outputs_match_exactly": true,
+  "observations": [
+    {
+      "search": "old",
+      "elapsed_seconds": 9.770289100008085,
+      "result": {
+        "profile": "PLANAR_Q4_S3_PATCH_RESTRICTED_SLIDING_MORTAR_DEV_V0",
+        "status": "completed",
+        "lateral_displacement_m": 0.1,
+        "overlapping_face_pairs": 2,
+        "current_overlap_area_m2": 0.81,
+        "upper_contact_force_N": [
+          -4.3516570965530577e-07,
+          -4.3516570965412675e-07,
+          0.4
+        ],
+        "lower_contact_force_N": [
+          4.3516570965492847e-07,
+          4.351657096517935e-07,
+          -0.4000000000000001
+        ],
+        "conservative_lower_gap_m": -1.874756911161278e-06
+      }
+    },
+    {
+      "search": "owner",
+      "elapsed_seconds": 4.747636499989312,
+      "result": {
+        "profile": "PLANAR_Q4_S3_PATCH_RESTRICTED_SLIDING_MORTAR_DEV_V0",
+        "status": "completed",
+        "lateral_displacement_m": 0.1,
+        "overlapping_face_pairs": 2,
+        "current_overlap_area_m2": 0.81,
+        "upper_contact_force_N": [
+          -4.3516570965530577e-07,
+          -4.3516570965412675e-07,
+          0.4
+        ],
+        "lower_contact_force_N": [
+          4.3516570965492847e-07,
+          4.351657096517935e-07,
+          -0.4000000000000001
+        ],
+        "conservative_lower_gap_m": -1.874756911161278e-06
+      }
+    },
+    {
+      "search": "owner",
+      "elapsed_seconds": 4.73166739998851,
+      "result": {
+        "profile": "PLANAR_Q4_S3_PATCH_RESTRICTED_SLIDING_MORTAR_DEV_V0",
+        "status": "completed",
+        "lateral_displacement_m": 0.1,
+        "overlapping_face_pairs": 2,
+        "current_overlap_area_m2": 0.81,
+        "upper_contact_force_N": [
+          -4.3516570965530577e-07,
+          -4.3516570965412675e-07,
+          0.4
+        ],
+        "lower_contact_force_N": [
+          4.3516570965492847e-07,
+          4.351657096517935e-07,
+          -0.4000000000000001
+        ],
+        "conservative_lower_gap_m": -1.874756911161278e-06
+      }
+    },
+    {
+      "search": "old",
+      "elapsed_seconds": 4.282206600008067,
+      "result": {
+        "profile": "PLANAR_Q4_S3_PATCH_RESTRICTED_SLIDING_MORTAR_DEV_V0",
+        "status": "completed",
+        "lateral_displacement_m": 0.1,
+        "overlapping_face_pairs": 2,
+        "current_overlap_area_m2": 0.81,
+        "upper_contact_force_N": [
+          -4.3516570965530577e-07,
+          -4.3516570965412675e-07,
+          0.4
+        ],
+        "lower_contact_force_N": [
+          4.3516570965492847e-07,
+          4.351657096517935e-07,
+          -0.4000000000000001
+        ],
+        "conservative_lower_gap_m": -1.874756911161278e-06
+      }
+    }
+  ]
+}

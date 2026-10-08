@@ -1,0 +1,41 @@
+{
+  "registration": "docs\\reference_cases\\general_contact_d1_distributed_coupled_tangent_v1.json",
+  "registration_sha256": "11428e031b9a1942eb8dd076e64071ca428df19625a4ca377ccad1bd4b7dd011",
+  "raw_report": "reports\\general_contact_d1_distributed_coupled_tangent_v1_formal_20260927.json",
+  "raw_sha256": "08a6a41d814bb2e0c72cfa5012d8fbfcca473b771d24572288ebf1b8d7a87997",
+  "checks": {
+    "saved_pose_sha256": true,
+    "raw_status": true,
+    "source_nodes": true,
+    "free_dofs": true,
+    "active_modes": true,
+    "pressure_replay": true,
+    "pose_constraints": true,
+    "step_count_and_sizes": true,
+    "smooth_branches": true,
+    "coupled_action": true,
+    "contact_action": true,
+    "coupled_error": true,
+    "contact_error": true,
+    "wall_limit": true
+  },
+  "runs": [
+    {
+      "step_m": 1e-06,
+      "smooth_branch": true,
+      "relative_reduced_tangent_error": 6.927630440061363e-11,
+      "action_scale_n_per_m": 118968.01082781907,
+      "relative_mapped_contact_tangent_error": 2.882190285135899e-10,
+      "mapped_contact_action_scale_n_per_m": 78.86283522525243
+    },
+    {
+      "step_m": 5e-07,
+      "smooth_branch": true,
+      "relative_reduced_tangent_error": 1.7941955359940738e-11,
+      "action_scale_n_per_m": 118968.01082645994,
+      "relative_mapped_contact_tangent_error": 7.170948453824798e-11,
+      "mapped_contact_action_scale_n_per_m": 78.86283521330844
+    }
+  ],
+  "status": "pass"
+}

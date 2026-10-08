@@ -1,0 +1,20 @@
+[
+  {
+    "divisions": 2,
+    "status": "completed",
+    "failure_reason": null,
+    "free_nodal_load_n": 0.5,
+    "fixed_boundary_load_n": 1.5,
+    "center_uz_m": -0.000117,
+    "iterations": 2
+  },
+  {
+    "divisions": 4,
+    "status": "completed",
+    "failure_reason": null,
+    "free_nodal_load_n": 1.125,
+    "fixed_boundary_load_n": 0.875,
+    "center_uz_m": -9.694285714285717e-05,
+    "iterations": 2
+  }
+]

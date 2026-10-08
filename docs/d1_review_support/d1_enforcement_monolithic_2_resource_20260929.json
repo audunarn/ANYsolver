@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 14.32237689998874,
+  "peak_process_tree_memory_mb": 280.723456,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "docs/d1_review_support/d1_enforcement_current_route.py",
+    "docs/d1_review_support/d1_enforcement_monolithic_2_20260929.json",
+    "--enforcement",
+    "monolithic_active_set"
+  ],
+  "log": "docs\\d1_review_support\\d1_enforcement_monolithic_2_log_20260929.txt"
+}

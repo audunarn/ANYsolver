@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 1.5468137999996543,
+  "peak_process_tree_memory_mb": 136.302592,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "scripts/general_contact_d1_interior_two_body_oracle_dev.py",
+    "--coupled-y-comparison",
+    "docs/d1_review_support/d1_coupled_bump_comparison_20260929.json",
+    "docs/d1_review_support/d1_fixed_bump_linear_family_20260929.json",
+    "docs/d1_review_support/d1_coupled_fixed_bump_y16_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_coupled_bump_comparison_20260929.log"
+}

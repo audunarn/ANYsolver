@@ -1,0 +1,42 @@
+{
+  "classification": "bounded external plate-only fixed-action mesh sensitivity",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE_NOT_QUALIFICATION",
+  "source_git": "90e01819b3a07d9e8752f002c9b554868ff05ae5",
+  "runner_sha256": "4d4487acb1d3e2901ff6a6fafd778e02522d69cb627492a7d096f5411ef60e00",
+  "solver_sha256": "27a9426a1ee2f72c38fbe892e0ffaf38e14867628ffd0235770261b6f3ec9c5f",
+  "solid_reconstruction_sha256": "118aef26cf0766fa50a6d42929a095440e142f7177216e5b85dc2c7e51fa7f92",
+  "same_action_sha256": "b61ad12d112e5dc1a4d7046e60c0a1a8f4c3dda8344dd43cc4eebcee6e243a7b",
+  "raw_root": ".qualification/b3-ge-e4-pl/f03-c1-material-line-plate-only-load-dev-20260928-v1",
+  "cases": {
+    "tip_mx": {
+      "factor_4_saved_detached_plate_work_J": 0.0019801369310543967,
+      "factor_4_plate_only_work_J": 0.001980136843172689,
+      "factor_4_parity_relative": -4.438163148101637e-08,
+      "factor_2_plate_only_work_J": 0.001890241950852976,
+      "factor_2_over_factor_4_minus_one": -0.04539832316623049,
+      "factor_4_row_rank": "24/24",
+      "factor_2_row_rank": "21/24",
+      "factor_4_result_sha256": "9045052b9dbdb7f9547a67814f235ed333063f51430986aa6a5cc8acd3de2efd",
+      "factor_2_result_sha256": "d6ca1598b4db921260d9f6a527a366f1950ab655314d3a580ee94c23be71df76"
+    },
+    "tip_fz": {
+      "factor_4_saved_detached_plate_work_J": 0.01516426512913236,
+      "factor_4_plate_only_work_J": 0.015164270418287886,
+      "factor_4_parity_relative": 3.4879075783145197e-07,
+      "factor_2_plate_only_work_J": 0.014450566416321137,
+      "factor_2_over_factor_4_minus_one": -0.04706484270460065,
+      "factor_4_row_rank": "24/24",
+      "factor_2_row_rank": "21/24",
+      "factor_4_result_sha256": "f5fe322d90f24bf5bc3291d07eb9fac10dad654cb2917f56218ae14a9fb8da61",
+      "factor_2_result_sha256": "179355bf06555dceba9a5f42f0981c45da900eb0f1f096c05065396af22c6837"
+    }
+  },
+  "resource": {
+    "max_solver_elapsed_s": 16.93378920003306,
+    "max_solver_rss_bytes": 1127444480,
+    "one_numerical_thread": true,
+    "existing_per_case_wall_limit_s": 120
+  },
+  "interpretation": "Factor-four load-only action work reproduces the saved detached plate to displayed-field precision. Factor-two fixed-action work is 4.54 percent lower for Mx and 4.71 percent lower for the mixed Fz-labelled case. The same applied resultants and positive work make this a valid two-level load-only mesh-sensitivity diagnostic. Factor-two row dependence bars an exact 24-multiplier solve, but not application of the fixed C-transpose dual action. The result does not establish 3D convergence or assign the remaining E4/3D difference to the connection law.",
+  "gate": "F03/G0B open; G1 barred; formal F03 authority unconsumed"
+}

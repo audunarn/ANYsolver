@@ -1,0 +1,11 @@
+{
+  "repo": "C:/Github/ANYstructure",
+  "head": "dc977b7c584393e18785e924a69aa7ce190a5296",
+  "branch": "master",
+  "dirty": [
+    " M ECOSYSTEM_GUIDE.md"
+  ],
+  "new_worktree": "C:\\ANYworkspaceWork\\ANYstructure-general-contact",
+  "new_branch": "codex/general-contact-anystructure",
+  "policy": "Preserve main checkout; new worktree uses committed HEAD, no dirty-copy or prior-worktree cleanup"
+}

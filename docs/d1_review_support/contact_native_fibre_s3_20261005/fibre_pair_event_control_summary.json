@@ -1,0 +1,220 @@
+{
+  "scope": "development-only native physical-fibre pair; no independent engineering acceptance",
+  "baseline": "5a56024d1ed41e70a8192a5180a3cd26cfe42744",
+  "wheel_sha256": "a096989ad6c5d9a633443e2d4c183e95814af5590815da01898398c5ab1604d4",
+  "python_files_matched": 527,
+  "algorithm": "SAFEGUARDED_CERTIFIED_GAP_SECANT_GEOMETRY_PATH_DEV_V2",
+  "controls": {
+    "installed_event_geometry_controls": {
+      "runtime": {
+        "errors": [],
+        "outcomes": {
+          "passed": 28
+        },
+        "numba_threads": 1,
+        "jit_disabled": true
+      },
+      "raw_path": "C:/ANYworkspaceWork/contact_native_fibre_s3_20261005/candidate16/installed_event_geometry_controls",
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 11.162513299961574,
+        "peak_bytes": 193982464
+      }
+    },
+    "installed_accepted_pair_verification": {
+      "runtime": {
+        "errors": [],
+        "outcomes": {
+          "passed": 1
+        },
+        "numba_threads": 1,
+        "jit_disabled": true
+      },
+      "raw_path": "C:/ANYworkspaceWork/contact_native_fibre_s3_20261005/candidate16/installed_accepted_pair_verification",
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 6.050572100095451,
+        "peak_bytes": 188911616
+      }
+    },
+    "installed_event_limited_coupled": {
+      "runtime": {
+        "errors": [],
+        "outcomes": {
+          "failed": 1
+        },
+        "numba_threads": 1,
+        "jit_disabled": true
+      },
+      "raw_path": "C:/ANYworkspaceWork/contact_native_fibre_s3_20261005/candidate16/installed_event_limited_coupled",
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 51.787573800073005,
+        "peak_bytes": 200830976
+      }
+    },
+    "installed_event_normal_enforcement_refinement": {
+      "runtime": {
+        "errors": [],
+        "outcomes": {
+          "passed": 1
+        },
+        "numba_threads": 1,
+        "jit_disabled": true
+      },
+      "raw_path": "C:/ANYworkspaceWork/contact_native_fibre_s3_20261005/candidate16/installed_event_normal_enforcement_refinement",
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 81.97338960005436,
+        "peak_bytes": 200704000
+      }
+    }
+  },
+  "accepted_check": {
+    "scope": "accepted source-state verification; original postprocessing failure retained",
+    "completed_targets": 1,
+    "material": {
+      "yielded": 30,
+      "dissipation_j": 1.6138579062677168E-07
+    },
+    "checkpoint_sha256": "a5d00650a9b90e61f7110cc2ac12fa0f2f7a77e377d5d169f5b4d0877680e0aa",
+    "force_error": 8.673617379884035E-17,
+    "moment_error": 0.0,
+    "potential_j": 7.26668428741993E-09,
+    "gap_lower_m": -1.9609960989471462E-05,
+    "force_a_n": [
+      -3.1347430960351174E-06,
+      -0.0011061531065328627,
+      0.0
+    ],
+    "moment_a_nm": [
+      0.0,
+      0.0,
+      -0.0022018269611018223
+    ],
+    "positions": [
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.999999341762836,
+        -0.0011443853291573623,
+        0.0
+      ],
+      [
+        1.9999962225759003,
+        -0.003641820396207317,
+        0.0
+      ],
+      [
+        0.0,
+        0.101,
+        0.0
+      ],
+      [
+        0.9999989418204887,
+        0.09953872846199342,
+        0.0
+      ],
+      [
+        1.999993836243581,
+        0.09633888740694443,
+        0.0
+      ]
+    ]
+  },
+  "sensitivity": {
+    "scope": "one fixed-discretization development enforcement comparison only",
+    "reference_checkpoint_sha256": "a5d00650a9b90e61f7110cc2ac12fa0f2f7a77e377d5d169f5b4d0877680e0aa",
+    "current_checkpoint_sha256": "e314c8b2e91475351dd0dbd269ced735421cb0fde7a5bcab0a756762a27367d6",
+    "stiffnesses_n_per_m2": [
+      4000.0,
+      8000.0
+    ],
+    "response_target": 0.02,
+    "errors": {
+      "force_a_n": 0.0010949896056036404,
+      "moment_a_nm": 0.0002706617866204722,
+      "beam_a_tip": 0.000800052738672967,
+      "beam_b_tip": 0.0006247265056087179
+    }
+  },
+  "stiffer_response": {
+    "status": "completed",
+    "failure": null,
+    "completed": 1,
+    "profile": "NATIVE_B3_GE_PHYSICAL_FIBRE_WHOLE_CURVE_PAIR_STATIC_DEV_V1",
+    "targets": [
+      0.05
+    ],
+    "line_stiffness_n_per_m2": 8000.0,
+    "material": {
+      "yielded": 30,
+      "dissipation_j": 1.6138509109607818E-07
+    },
+    "gap_lower_m": -1.3784964379231185E-05,
+    "checkpoint_sha256": "e314c8b2e91475351dd0dbd269ced735421cb0fde7a5bcab0a756762a27367d6",
+    "force_a_n": [
+      -3.1247542977687403E-06,
+      -0.0011049419167038783,
+      0.0
+    ],
+    "moment_a_nm": [
+      0.0,
+      0.0,
+      -0.0022024229115209432
+    ],
+    "positions": [
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.9999993410599222,
+        -0.0011450142829225152,
+        0.0
+      ],
+      [
+        1.9999962161779596,
+        -0.0036447340391319214,
+        0.0
+      ],
+      [
+        0.0,
+        0.101,
+        0.0
+      ],
+      [
+        0.9999989427217354,
+        0.09953935676622146,
+        0.0
+      ],
+      [
+        1.9999938444304248,
+        0.09634179931856432,
+        0.0
+      ]
+    ]
+  },
+  "remaining": [
+    "native spatial convergence",
+    "broader material/geometry admission",
+    "independent engineering acceptance",
+    "complete C0-C9"
+  ],
+  "inputs": {
+    "tests/test_general_contact_native_pair_gap_geometry.py": "d2ca9f929ae8d906a2e17cc21eb1b6838092f255fe178adde8b6537f1b08a42d",
+    "src/anysolver/general_contact/native_retained_pair_static.py": "8fc0b9e8c2ddf645cd6de259cc8da6894c4e9d35af53475d4f0ae1de2a4b56d4",
+    "docs/d1_review_support/d3_beam_foundation_reference.py": "ed1616d16ca083a2e94dd29689c9466c32c97d75895d3de6f79a2a5607115e6b",
+    "src/anysolver/general_contact/native_retained_whole_pair.py": "514ee909cc55f5d0b78cf8cfd5c31ec08c42f643e1df6b55954b14a515b94f83",
+    "tests/test_general_contact_native_fibre_pair_static.py": "83e918277bcd76d032e11dd363274cb2c3bd747410b465ec0177528c8e85ba2c",
+    "tests/test_general_contact_native_pair_reference.py": "2543dbcf76f58e49a26b34b56f7be0e9df22d6a7e564a87694fd774be784c4fa"
+  }
+}

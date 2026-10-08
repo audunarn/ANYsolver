@@ -1,0 +1,26 @@
+{
+  "status": "development_frozen_target_skin_geometry_discriminator",
+  "saved_comparison_sha256": "ef69c6d174c3c189fc1d3f1f3fe809f5182b5f5b0799abffcfd1330290050311",
+  "oracle_source_sha256": "83025ea43d0a3da921835fc278401b7053e2826c3b7df7f9e26bdb2c8aa84cc9",
+  "maximum_target_skin_xy_shift_m": 2.0957177791033943e-06,
+  "reference_footprint": {
+    "model": "reference_footprint",
+    "area_m2": 0.8999999999999995,
+    "support_relative_l2": 9.030375922061744e-09,
+    "gap_at_production_pose_max_abs_error_m": 8.40094436175404e-11,
+    "integrated_force_n": 0.00015173302905964025,
+    "force_relative_error": 4.479384136608265e-06,
+    "pressure_relative_l2": 5.95550446566603e-06,
+    "active_modes": 2
+  },
+  "frozen_production_target_skin_xy": {
+    "model": "frozen_production_target_skin_xy",
+    "area_m2": 0.9000000059651412,
+    "support_relative_l2": 2.449367540961915e-14,
+    "gap_at_production_pose_max_abs_error_m": 2.929286011617207e-13,
+    "integrated_force_n": 0.00015173348091488358,
+    "force_relative_error": 1.50143515547201e-06,
+    "pressure_relative_l2": 1.6700784497386335e-06,
+    "active_modes": 2
+  }
+}

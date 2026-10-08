@@ -1,0 +1,204 @@
+{
+  "accepted_beam_history_unchanged": true,
+  "accepted_checkpoint_sha256": "93663ba004343d4d507dcd1321a070117c62cdac0c4244afbb7ca84f8e2c2aec",
+  "accepted_prefix_sha256": "c6c0089bc587cfab855c963a7a0ebf5dce75522137d044b3f5460ed2829ecee0",
+  "accepted_prefix_unchanged": true,
+  "beam_cell_chart_max_angle": 0.002740126872848861,
+  "beam_nodal_chart_max_angle": 0.0027480783230886866,
+  "chart_virtual_work_relative_error": 0.0,
+  "metrics": {
+    "baseline_gap_rotation": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 1e-09,
+      "unit": "rotation"
+    },
+    "baseline_gap_translation": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 1e-09,
+      "unit": "translation"
+    },
+    "baseline_loaded_residual": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 0.0005004857021278245,
+      "unit": "mixed_solver"
+    },
+    "baseline_section_resultants_force": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 0.0008953245675210048,
+      "unit": "force"
+    },
+    "baseline_section_resultants_low_force": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 1e-09,
+      "unit": "force"
+    },
+    "baseline_section_resultants_low_moment": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 1e-09,
+      "unit": "moment"
+    },
+    "baseline_section_resultants_moment": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 0.001041291018252263,
+      "unit": "moment"
+    },
+    "baseline_section_strain_curvature": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 0.0009413094798705645,
+      "unit": "curvature"
+    },
+    "baseline_section_strain_low_curvature": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 1e-12,
+      "unit": "curvature"
+    },
+    "baseline_section_strain_low_strain": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 1e-12,
+      "unit": "strain"
+    },
+    "baseline_section_strain_strain": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 2.2465216469431394e-06,
+      "unit": "strain"
+    },
+    "cell_frame": {
+      "absolute": 1.1156185397512209e-18,
+      "relative": 1.1156185397512209e-18,
+      "scale": 1e-09,
+      "unit": "rotation"
+    },
+    "gap_rotation": {
+      "absolute": 2.7764479981257757e-17,
+      "relative": 2.7764479981257755e-08,
+      "scale": 1e-09,
+      "unit": "rotation"
+    },
+    "gap_translation": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 1e-09,
+      "unit": "translation"
+    },
+    "loaded_residual": {
+      "absolute": 1.377706942934873e-16,
+      "relative": 2.7527398626524707e-13,
+      "scale": 0.0005004857021278245,
+      "unit": "mixed_solver"
+    },
+    "nodal_frame": {
+      "absolute": 3.356714051353123e-17,
+      "relative": 3.356714051353123e-17,
+      "scale": 1e-09,
+      "unit": "rotation"
+    },
+    "pose_spatial_force": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 0.000316227766016838,
+      "unit": "force"
+    },
+    "pose_spatial_moment": {
+      "absolute": 3.8332335417084355e-20,
+      "relative": 7.211056486269105e-17,
+      "scale": 0.0005315772451661509,
+      "unit": "moment"
+    },
+    "positions": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 2.754946614226491,
+      "unit": "translation"
+    },
+    "retained_force": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 0.00044721359549995795,
+      "unit": "force"
+    },
+    "retained_moment": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 0.0007462687101982411,
+      "unit": "moment"
+    },
+    "section_resultants_force": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 0.0008953245675210048,
+      "unit": "force"
+    },
+    "section_resultants_low_force": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 1e-09,
+      "unit": "force"
+    },
+    "section_resultants_low_moment": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 1e-09,
+      "unit": "moment"
+    },
+    "section_resultants_moment": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 0.001041291018252263,
+      "unit": "moment"
+    },
+    "section_strain_curvature": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 0.0009413094798705645,
+      "unit": "curvature"
+    },
+    "section_strain_low_curvature": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 1e-12,
+      "unit": "curvature"
+    },
+    "section_strain_low_strain": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 1e-12,
+      "unit": "strain"
+    },
+    "section_strain_strain": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 2.2465216469431394e-06,
+      "unit": "strain"
+    },
+    "support_force": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 0.00022360679774857559,
+      "unit": "force"
+    },
+    "support_moment": {
+      "absolute": 0.0,
+      "relative": 0.0,
+      "scale": 0.000447756561130051,
+      "unit": "moment"
+    }
+  },
+  "multiplier_norm": 0.0005000040178947112,
+  "rebased_cell_coordinate_max": 0.0,
+  "rebased_nodal_coordinate_max": 0.0,
+  "recovered_history_bits_identical": true,
+  "status": "DEV_F06_BEAM_CHART_FAIL",
+  "support_force_norm": 0.00022360679774857559,
+  "support_moment_norm": 0.000447756561130051
+}

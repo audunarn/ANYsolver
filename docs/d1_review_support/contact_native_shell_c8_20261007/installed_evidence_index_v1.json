@@ -1,0 +1,27 @@
+{
+  "files": [
+    {
+      "file": "native_shell_authority_v1.json",
+      "sha256": "884d6b366a83ad53f8dcf4033752f0153002e62b9443b05e48ee9be9173b9406"
+    },
+    {
+      "file": "author_installed_handoff_v1.md",
+      "sha256": "72ce963d06927287e9ee9f14afd49dd53ad781e09c139ae6c0344e70ef97aaab"
+    },
+    {
+      "file": "author_source_check_v4.json",
+      "sha256": "6790d9e55098057fbbcd42dd55ea1a714d84adb67a99436b87a906896be974c8"
+    },
+    {
+      "file": "lead_installed_audit_v1.json",
+      "sha256": "650bd6bd1a0ab69a6afabb2fe6520daf9a3dc7a0718ae3655df4f5ca3303a1d6"
+    },
+    {
+      "file": "restart_history_pre_installed_delivery.md",
+      "sha256": "d8046ab72819d8690cdecdf40a8edd872cc3aab2da4bfb817800f19aebc38981"
+    }
+  ],
+  "historical_indexes_unchanged": true,
+  "raw_root": "C:\\ANYworkspaceWork\\contact_native_shell_c8_20261007",
+  "scope": "C8_NATIVE_SHELL_DEV"
+}

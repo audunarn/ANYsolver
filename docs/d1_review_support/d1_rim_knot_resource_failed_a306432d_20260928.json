@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 1.0309950000009849,
+  "peak_process_tree_memory_mb": 72.585216,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-u",
+    "-m",
+    "scripts.general_contact_d1_fixed_structure_pressure_probe",
+    "--rim-knot",
+    "docs/d1_review_support/d1_rim_knot_a306432d_20260928.json"
+  ],
+  "log": "reports\\d1_rim_knot_run_a306432d_20260928.log"
+}

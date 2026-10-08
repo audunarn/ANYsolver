@@ -1,0 +1,21 @@
+usage: python.exe -m scripts.general_contact_d1_interior_press_dev
+       [-h] [--force-n FORCE_N] [--reference-slope REFERENCE_SLOPE]
+       [--target-columns {1,2,3,4,6}] [--target-rows {1,2,3,4,6}]
+       [--target-young-multiplier {1.0,5.0}] [--target-y0-m {-0.1,-0.113}]
+       [--source-reference-downshift-m {0.0,3.5e-05}]
+       [--source-support {left,perimeter}] [--source-rows {2,4,8,12,16}]
+       [--source-columns {4,8,12}] [--source-y-profile {uniform_ref16}]
+       [--offline-structural-reference-y16]
+       [--load-shape {point,interior_distributed,interior_uniform,physical_bump}]
+       [--max-path-fraction MAX_PATH_FRACTION] [--four-phase]
+       [--slide-distance-m SLIDE_DISTANCE_M]
+       [--slide-intervals SLIDE_INTERVALS]
+       [--slide-body {source,target,target_diagonal_dev}] [--shared-edge-tie]
+       [--target-reference-full-left-clamp] [--capture-swept-failure]
+       [--record-swept-fractions]
+       [--q4-gap-certificate {projected_matching,overlap_local_dev}]
+       [--replay-captured-sweep REPLAY_CAPTURED_SWEEP]
+       [--saved-rotation-probe SAVED_ROTATION_PROBE]
+       [--steps-per-segment {1,2}]
+       output
+python.exe -m scripts.general_contact_d1_interior_press_dev: error: argument --source-columns: invalid choice: '6' (choose from 4, 8, 12)

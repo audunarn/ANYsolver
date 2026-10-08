@@ -1,0 +1,1108 @@
+{
+  "identity": "R8_BL5_PROJECTED_RECIPROCAL_DEVELOPMENT_SAFE_RAW_V6",
+  "source_parent": "0cec5c7191aa4a5d45737fb6438e1097cdaaf70f",
+  "previous_manifest_sha256": "6818598b00e3cc5871f440044362f2b510287828d35d4ad216b51e967531ae30",
+  "files": [
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/active-parent-note.raw",
+      "sha256": "dac0db70b60934243e84d2f470b923ce1fd58c5016e398e476eb22b7621843e6",
+      "bytes": 4909,
+      "source": "exact parent/current bytes; current snapshot after numerical comparisons"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/active-postcomparison-note.raw",
+      "sha256": "5e762231a4187f2ac771e5fafb9831956c3e834e9313a1faaa107149a5dc2f41",
+      "bytes": 5917,
+      "source": "exact parent/current bytes; current snapshot after numerical comparisons"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/physical-review-v1.md",
+      "sha256": "5ab9779692bb30f3e0aeee12af0abc1f9b4a7e2e9d233a99dcac57be583b9ef5",
+      "bytes": 5009,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\physical-review-v1.md"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/resolution-review.md",
+      "sha256": "299b0746e673b39e06ce1dc62045aa7c6c15e9b818194e5381c66a5f7b152bd1",
+      "bytes": 7206,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\resolution-review.md"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/run-v1.py",
+      "sha256": "e978b202cda78793c68f0a4f1cd1dca3b40ea11bf5826664a604343760fc8582",
+      "bytes": 1922,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\run-v1.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/run-v2.py",
+      "sha256": "d5fccdfcdc31ac821845b6a3a1bad6032462013c38925ce9cf28d770ec2e7bd7",
+      "bytes": 2767,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\run-v2.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/run-v3.py",
+      "sha256": "91e15a121ce8c71dab307fbe653896f3a2ee81fd81b39af05f619cea8230ae8c",
+      "bytes": 2811,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\run-v3.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/slice-review-v1.md",
+      "sha256": "bd427ff30226d51bde759d11dce954f74b236966c92e5dcd20a23cf9a69cf490",
+      "bytes": 4780,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\slice-review-v1.md"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-external-v1/b3_e4_bl5_external_p0_enforcement_dev.py",
+      "sha256": "11e593497dab40ae052a491740a6ed50bfe51a3580f275fa87d950dc1004a004",
+      "bytes": 35782,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-external-v1\\b3_e4_bl5_external_p0_enforcement_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-external-v1/b3_e4_bl5_external_p0_refinement_dev.py",
+      "sha256": "6f3d19d0c95a851d7e1d7dd694f1c1dce051716a811fc4fb7c733e314c4c733a",
+      "bytes": 33736,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-external-v1\\b3_e4_bl5_external_p0_refinement_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-external-v1/b3_e4_bl5_matched_mz_reference_dev.py",
+      "sha256": "5b6eb1dac1bb4f58548c7555e10cc798ef4727406ca25efb735808b776444702",
+      "bytes": 30002,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-external-v1\\b3_e4_bl5_matched_mz_reference_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-external-v1/b3_e4_bl5_matched_reference_actions.py",
+      "sha256": "a42d4bdeb96c7106f296e92129104eb896fbc7cb2904d9867bc61c7a9ca169c6",
+      "bytes": 21000,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-external-v1\\b3_e4_bl5_matched_reference_actions.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-external-v1/b3_e4_f03_bl5_opensees_line_reference.py",
+      "sha256": "fe654b7a7c384620dae65f0b0981bb18e512513c090abdfe0dbf6c62c43d15cc",
+      "bytes": 16790,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-external-v1\\b3_e4_f03_bl5_opensees_line_reference.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-external-v1/r8_bl5_external_affine_reference_dev.py",
+      "sha256": "04c1b930258d5911c500ab3430b196e9488324ae8cafaebbfa30584420a26b08",
+      "bytes": 39416,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-external-v1\\r8_bl5_external_affine_reference_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-external-v1/r8_bl5_projected_ratio_comparison_dev.py",
+      "sha256": "a50a92d4f23c0d7419909a1edefbf91e75c060f9f04ec8dbba95aa79351d2c6c",
+      "bytes": 14107,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-external-v1\\r8_bl5_projected_ratio_comparison_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-external-v1/r8_bl5_projected_ratio_external_dev.py",
+      "sha256": "7d9469cc0c3fbb1f32e8f34d8e62580e2d9480feac3f9f498e203f1ec8da6492",
+      "bytes": 16507,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-external-v1\\r8_bl5_projected_ratio_external_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-external-v1/source-binding.json",
+      "sha256": "a9c6b301dca6e8f3cfd3bc85b53a8c27be66a687410c9a883eedf6a4163e0cfc",
+      "bytes": 916,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-external-v1\\source-binding.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-v1/r8_bl5_projected_ratio_kernel_dev.py",
+      "sha256": "ee3bad14ffe9435614b150642bce4b07097e7cf1c17257dcd316c01a25b8a58b",
+      "bytes": 41095,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-v1\\r8_bl5_projected_ratio_kernel_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-v1/r8_bl5_projected_ratio_norm_dev.py",
+      "sha256": "40b5e4c7cff820a1ba115ea3461aad0a977798e8d4439794039c019ae3fbcd2c",
+      "bytes": 20513,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-v1\\r8_bl5_projected_ratio_norm_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-v1/r8_bl5_projected_ratio_owner_dev.py",
+      "sha256": "e3fa392f2b04a0bbb6ac93e26195631bc180a13134c657bc980166d06623293c",
+      "bytes": 21370,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-v1\\r8_bl5_projected_ratio_owner_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-v2/b3_e4_bl5_coherent_aggregation_dev.py",
+      "sha256": "ce286f0a1483369cff04d43b999ddb4c266d3988b46d3917d485801dab32ce52",
+      "bytes": 11716,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-v2\\b3_e4_bl5_coherent_aggregation_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-v2/b3_e4_bl5_matched_mz_native_dev.py",
+      "sha256": "85390ab04b08d859a5c91a580b3f7706b9ba6ebea5e96a6bd62e3c0029a116d2",
+      "bytes": 24441,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-v2\\b3_e4_bl5_matched_mz_native_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-v2/b3_e4_bl5_matched_p0_native_refinement_dev.py",
+      "sha256": "7f220b1a94a49c8ec7e20b66c862b9506c057da7291c92ea691d109c3edcbfe0",
+      "bytes": 31626,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-v2\\b3_e4_bl5_matched_p0_native_refinement_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-v2/b3_e4_bl5_modal_reference_dev.py",
+      "sha256": "e1553e83596d5d371a7b2e196c000a1d9b551e361abf0942e352d54018b5712b",
+      "bytes": 4987,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-v2\\b3_e4_bl5_modal_reference_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-v2/b3_e4_bl5_reference_accuracy_dev.py",
+      "sha256": "bc4d66871d152d3eb41f2ae9818e4ca416a11881e215d925fc6c5231ecebbf27",
+      "bytes": 12891,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-v2\\b3_e4_bl5_reference_accuracy_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-v2/b3_e4_bl5_riesz_controls_dev.py",
+      "sha256": "da2ed22be805ce6901cfdfe034fe52a80089617e83849f71375948c64f724a4f",
+      "bytes": 15746,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-v2\\b3_e4_bl5_riesz_controls_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-v2/r8_bl5_affine_flexible_native_dev.py",
+      "sha256": "496d4119175b52c3237c5ff8ea47328fd4957da5c6f060c6727a20574bdd7166",
+      "bytes": 21844,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-v2\\r8_bl5_affine_flexible_native_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-v2/r8_bl5_external_affine_reference_dev.py",
+      "sha256": "04c1b930258d5911c500ab3430b196e9488324ae8cafaebbfa30584420a26b08",
+      "bytes": 39416,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-v2\\r8_bl5_external_affine_reference_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-v2/r8_bl5_projected_auxiliary_norm_dev.py",
+      "sha256": "906ebf3d821a85b6d8851f2dc86fc6e0cb2e80d19eb4f70976bad0b22f5e2bbf",
+      "bytes": 9449,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-v2\\r8_bl5_projected_auxiliary_norm_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-v2/r8_bl5_projected_ratio_kernel_dev.py",
+      "sha256": "9f1191e134b36842d243370e3dff3fb5c193a0142edb46f094b2fc0deac34e2f",
+      "bytes": 44005,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-v2\\r8_bl5_projected_ratio_kernel_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-v2/r8_bl5_projected_ratio_norm_dev.py",
+      "sha256": "2424d4ad6f5d6c0287dbbe7321b70419ade9ac2ee0908028f3c85dc86a880a48",
+      "bytes": 20498,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-v2\\r8_bl5_projected_ratio_norm_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-v2/r8_bl5_projected_ratio_owner_dev.py",
+      "sha256": "e3fa392f2b04a0bbb6ac93e26195631bc180a13134c657bc980166d06623293c",
+      "bytes": 21370,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-v2\\r8_bl5_projected_ratio_owner_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-v2/r8_bl5_projected_reference_action_dev.py",
+      "sha256": "b199b5273381009a21815184c2b665f1339ede0bc81d2f89d462fc085617202b",
+      "bytes": 8042,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-v2\\r8_bl5_projected_reference_action_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-v2/source-binding.json",
+      "sha256": "ab1998eec62cbab18bc3c9c156f0c3c6c094e423fc7a58661c2b9558d719110f",
+      "bytes": 1685,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-v2\\source-binding.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/sources-v2/test_stiffened_shell_l1_assembly_experimental.py",
+      "sha256": "b05875dbc723b041abf425784afc98a090366b914792da6833b1139a17d8d0d7",
+      "bytes": 31951,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\sources-v2\\test_stiffened_shell_l1_assembly_experimental.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-compare-v1/execution.json",
+      "sha256": "c2d0c0ff31d038b8253fdaf259e475e93b9955830d3b3fb8a961ba5cf97274c6",
+      "bytes": 1451,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-compare-v1\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-compare-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-compare-v1\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-compare-v1/stdout.log",
+      "sha256": "7b9823ad79faf50ca15e98660d338b0cee9dca3410aa259602a4b78af9ee8c0f",
+      "bytes": 149,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-compare-v1\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-compare-v1/thread-samples.json",
+      "sha256": "f07f9a2c70d5c45b29fee86292292d932be3eeaf6e75ac8a465811f4dec828de",
+      "bytes": 3449,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-compare-v1\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-external-fy-v1/execution.json",
+      "sha256": "dd64a9d74d95cdf3547657b7eb5d7fba3f28cfb15ef1ce519ef666eb6a774daa",
+      "bytes": 1264,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-external-fy-v1\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-external-fy-v1/stderr.log",
+      "sha256": "23b326b47ea464109714be3eb4a2105df733a3b2080180c9b7e936512795a935",
+      "bytes": 92,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-external-fy-v1\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-external-fy-v1/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-external-fy-v1\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-external-fy-v1/thread-samples.json",
+      "sha256": "8d7cf450f610a13dec53025a800acf77046d3a1089e1256add54af64477b4399",
+      "bytes": 1988,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-external-fy-v1\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-external-mx-v1/execution.json",
+      "sha256": "1f12bca6fb89279240da56a92a6799e04744c645cdce4a12a6e5f47d6ed6e222",
+      "bytes": 1265,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-external-mx-v1\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-external-mx-v1/stderr.log",
+      "sha256": "23b326b47ea464109714be3eb4a2105df733a3b2080180c9b7e936512795a935",
+      "bytes": 92,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-external-mx-v1\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-external-mx-v1/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-external-mx-v1\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-external-mx-v1/thread-samples.json",
+      "sha256": "28acb43ea48e7363fdbd572471d9a41a9b3628160d1317c55a5d33140dc00f7a",
+      "bytes": 3268,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-external-mx-v1\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-external-mz-v1/execution.json",
+      "sha256": "08734bdbc949185b8782bbcbd89e656046fb1befc2abcf1824c525415582acaf",
+      "bytes": 1264,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-external-mz-v1\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-external-mz-v1/stderr.log",
+      "sha256": "23b326b47ea464109714be3eb4a2105df733a3b2080180c9b7e936512795a935",
+      "bytes": 92,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-external-mz-v1\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-external-mz-v1/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-external-mz-v1\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-external-mz-v1/thread-samples.json",
+      "sha256": "081b4bb11a552232034eebb19144ed8f0fb286f552bab6f019ea2388f7df6f9a",
+      "bytes": 1916,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-external-mz-v1\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-kernel-v1/execution.json",
+      "sha256": "6012ce8cec3b0368cec57962a2cdc703396199b3c42dbe884066802e9bf5a1dc",
+      "bytes": 1178,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-kernel-v1\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-kernel-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-kernel-v1\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-kernel-v1/stdout.log",
+      "sha256": "f5c1c1dd5e5760ffcc01ef99035358dbb19398de4a916948fd4567e6f006ce30",
+      "bytes": 259,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-kernel-v1\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-kernel-v1/thread-samples.json",
+      "sha256": "f3d9fee51e9af08fd084a73abaee18312879a942723ef548e313d35b2f6dbbba",
+      "bytes": 49896,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-kernel-v1\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-norm-v1/execution.json",
+      "sha256": "b37795903ea90190973e0a2eec9bcb61178084c030c506f41c33dd933d0bf3c1",
+      "bytes": 1513,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-norm-v1\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-norm-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-norm-v1\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-norm-v1/stdout.log",
+      "sha256": "831b0f0e7092d11295bb6322e3b35ce648cd25dc859d18b4e09e9ac0fca604a3",
+      "bytes": 193,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-norm-v1\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-norm-v1/thread-samples.json",
+      "sha256": "0766baf5eb6bca74c56ced331a4fd45e31416b9795fe5f9f60873942201599a4",
+      "bytes": 19426,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-norm-v1\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-owner-v1/execution.json",
+      "sha256": "8406db9a9592715c7c6f34e55f6a62b6eccca1552942c130029b46cd968a9055",
+      "bytes": 1660,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-owner-v1\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-owner-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-owner-v1\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-owner-v1/stdout.log",
+      "sha256": "248235ca472daffc0684bba459e19fc7ecd59e5390c2d0aae124de3305e54987",
+      "bytes": 520,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-owner-v1\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-owner-v1/thread-samples.json",
+      "sha256": "8995f2e5f091a6609dd01e4a0482939834fc5f026dc0d742cd35122897f57249",
+      "bytes": 69338,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-owner-v1\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-register-v1/execution.json",
+      "sha256": "bbd452c04c71d34a8fb370f3430615919d7b293e34f4c652b3ec8ace232fcdf2",
+      "bytes": 1103,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-register-v1\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-register-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-register-v1\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-register-v1/stdout.log",
+      "sha256": "66a494f1c4542d9930a4adb278dc0a005bad6b86178eb27dac8e1704c51c34e1",
+      "bytes": 210,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-register-v1\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double-register-v1/thread-samples.json",
+      "sha256": "39d2f5f772f1c212e7d0c3c44b85dcf0d1b53eca1103c00c57d5e8699448d126",
+      "bytes": 3188,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double-register-v1\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/comparison-v1.json",
+      "sha256": "c6dfc4db6ad770fab4b303fb4fabf66b3388df7a9164283efd34720f38d95211",
+      "bytes": 18973,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\comparison-v1.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/external-v1/fy/inputs.json",
+      "sha256": "3b4146a89aa3feb021d8a64b12a6d27e0b9f7dbbfcdec079e6ec2ba888740f48",
+      "bytes": 286791,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\external-v1\\fy\\inputs.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/external-v1/fy/interface-recovery-blocks.json",
+      "sha256": "1046397dfab9bd9121b4ff6b3ce9ff0d40e660640cd48ce5db3f0a500c9c4a80",
+      "bytes": 11291,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\external-v1\\fy\\interface-recovery-blocks.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/external-v1/fy/inventory-predicates.json",
+      "sha256": "7be9f8d98c87f114d087da6ad9ef755836a4f2b746f69ae8b8b10384fba759ed",
+      "bytes": 193,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\external-v1\\fy\\inventory-predicates.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/external-v1/fy/preparation-controls.json",
+      "sha256": "d34c681afd9d0c91d5559c32488efcdcb362106a724786ca82f5ae1398b74d83",
+      "bytes": 795,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\external-v1\\fy\\preparation-controls.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/external-v1/fy/raw-inventory.json",
+      "sha256": "0e1e94e34434ce1e106d64a5ddb4cedbb6c666865edf9dbcf986781e5411bb01",
+      "bytes": 182312,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\external-v1\\fy\\raw-inventory.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/external-v1/fy/recovered-actions.json",
+      "sha256": "07db4368dc22c0a6279d594df120751830c91982eba63e3e30d61d04f91223b6",
+      "bytes": 249729,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\external-v1\\fy\\recovered-actions.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/external-v1/fy/summary.json",
+      "sha256": "4b87e5982dfcedb38dc0df126353cb760bb00513defcc05b4b868b049a0d2fe8",
+      "bytes": 3328,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\external-v1\\fy\\summary.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/external-v1/mx/inputs.json",
+      "sha256": "9b4ead53853c8008da0d9b50e76f0862f8742586297af1f6d9c8d42bfccd48eb",
+      "bytes": 286789,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\external-v1\\mx\\inputs.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/external-v1/mx/interface-recovery-blocks.json",
+      "sha256": "d8009121b65651f0fee9a1e12e68f730ea2d563ae101c1a1603b5cef7ffe44fe",
+      "bytes": 11361,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\external-v1\\mx\\interface-recovery-blocks.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/external-v1/mx/inventory-predicates.json",
+      "sha256": "7be9f8d98c87f114d087da6ad9ef755836a4f2b746f69ae8b8b10384fba759ed",
+      "bytes": 193,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\external-v1\\mx\\inventory-predicates.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/external-v1/mx/preparation-controls.json",
+      "sha256": "d34c681afd9d0c91d5559c32488efcdcb362106a724786ca82f5ae1398b74d83",
+      "bytes": 795,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\external-v1\\mx\\preparation-controls.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/external-v1/mx/raw-inventory.json",
+      "sha256": "48aa265e9fd8df35fb34f324442d74af8343e90024fd09999512c1e53ba13a17",
+      "bytes": 183877,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\external-v1\\mx\\raw-inventory.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/external-v1/mx/recovered-actions.json",
+      "sha256": "53f45eee18597bce5e1e40bf6ea5c5d82eca1fdbdc91ea98ac2eb4bd3721ae6e",
+      "bytes": 251904,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\external-v1\\mx\\recovered-actions.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/external-v1/mx/summary.json",
+      "sha256": "56977f8d0601600180df7e71c9bbd8577b84aec669d5fed8fbe2cdda82e030d3",
+      "bytes": 3344,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\external-v1\\mx\\summary.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/external-v1/mz/inputs.json",
+      "sha256": "c906c8505b989f38e72a9ba56bc505aa6b92cdcc19a1030c0e6a39d4e1ec6644",
+      "bytes": 286789,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\external-v1\\mz\\inputs.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/external-v1/mz/interface-recovery-blocks.json",
+      "sha256": "501804a06dcfe988a21201b8ab3933c7ed22b86f3a246ac20c1ce93279332026",
+      "bytes": 11358,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\external-v1\\mz\\interface-recovery-blocks.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/external-v1/mz/inventory-predicates.json",
+      "sha256": "7be9f8d98c87f114d087da6ad9ef755836a4f2b746f69ae8b8b10384fba759ed",
+      "bytes": 193,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\external-v1\\mz\\inventory-predicates.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/external-v1/mz/preparation-controls.json",
+      "sha256": "d34c681afd9d0c91d5559c32488efcdcb362106a724786ca82f5ae1398b74d83",
+      "bytes": 795,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\external-v1\\mz\\preparation-controls.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/external-v1/mz/raw-inventory.json",
+      "sha256": "98eae8f89f5bd547e44ad997aa3418ea96ea495a2d0cc188fdf61442e49363d3",
+      "bytes": 183637,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\external-v1\\mz\\raw-inventory.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/external-v1/mz/recovered-actions.json",
+      "sha256": "88e00e2e571c05d0b66ad19e216f43c715504e03288c1956f2f618b2abdbc2c6",
+      "bytes": 251311,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\external-v1\\mz\\recovered-actions.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/external-v1/mz/summary.json",
+      "sha256": "a34942b7dc190adf3d33fa05b910a3e930237c093442be761a19a1ec712723ba",
+      "bytes": 3351,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\external-v1\\mz\\summary.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/kernel-v1.json",
+      "sha256": "6be9b0f60dd9817d77197f4fffc332ae2777a76fcd4036e2caeaeb93a76f0e2c",
+      "bytes": 133735,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\kernel-v1.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/kernel-v1.npz",
+      "sha256": "36a59c4cbddb2011dc62e2d85cea4f819d76939e5fce01e7fce7533a769caec9",
+      "bytes": 12599200,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\kernel-v1.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/norm-v1.json",
+      "sha256": "1418a0d2467d47b816aec276ca4b4f2482fc58ac6947726fff2ab8dbadd97929",
+      "bytes": 4899,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\norm-v1.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/norm-v1.npz",
+      "sha256": "1e257e3fd2fb3e98818730a46bdb85496ccd63004d4bc762f92cbe928c51da87",
+      "bytes": 672682,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\norm-v1.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/owner-v1/identity.json",
+      "sha256": "402dfb8db16a7b69816b19de202d05ad4272d9935cec9001bc9e104fbb79ac08",
+      "bytes": 93642,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\owner-v1\\identity.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/owner-v1/native/fy/physical-actions.json",
+      "sha256": "089c8f4392a0926f0bfc9eb7afd3c6a75d58740d4b7eb16907e76148f3148758",
+      "bytes": 74099,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\owner-v1\\native\\fy\\physical-actions.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/owner-v1/native/fy/raw-state.json",
+      "sha256": "52d853dbc726114663334bbfa39575aba63064006b38ec71e10e3b11373fe653",
+      "bytes": 520,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\owner-v1\\native\\fy\\raw-state.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/owner-v1/native/fy/raw-state.npz",
+      "sha256": "34bbe8d26e9985eebb69a42eab6c7e244cd62b07f50bbf5ed397c90ac903ee96",
+      "bytes": 131666,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\owner-v1\\native\\fy\\raw-state.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/owner-v1/native/inputs.json",
+      "sha256": "a2b9a29e6ca5d6ebfbe82642e89fe44b226406038ed21d1cf2e9bed5569c99b7",
+      "bytes": 611316,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\owner-v1\\native\\inputs.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/owner-v1/native/mx/physical-actions.json",
+      "sha256": "96b2114dff68cf1e1fb0c43cc14d8d85a4d4ecb06f7764547460737c926d3552",
+      "bytes": 74298,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\owner-v1\\native\\mx\\physical-actions.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/owner-v1/native/mx/raw-state.json",
+      "sha256": "26e327d9dd231734a50328d7207b9851a6ce711f13dbd04fe4a8b1685c2d227f",
+      "bytes": 520,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\owner-v1\\native\\mx\\raw-state.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/owner-v1/native/mx/raw-state.npz",
+      "sha256": "8e658bfd35603d063230eb6f4d83b879a5747689eecd4d1eaf25d5fa8c35201a",
+      "bytes": 131666,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\owner-v1\\native\\mx\\raw-state.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/owner-v1/native/mz/physical-actions.json",
+      "sha256": "4f07ef72511baa8ad748b5ae19dda9e0ded44718f332abc86868ce67cff6988e",
+      "bytes": 74144,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\owner-v1\\native\\mz\\physical-actions.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/owner-v1/native/mz/raw-state.json",
+      "sha256": "ae1cd0f476618dfdd2646320c31ae1d301a76138f1ad2c74b90ba04d0d9531d4",
+      "bytes": 520,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\owner-v1\\native\\mz\\raw-state.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/owner-v1/native/mz/raw-state.npz",
+      "sha256": "568e258b69b128cdb7e889f092357de344455eb374fc864da85cd30b23d7476e",
+      "bytes": 131666,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\owner-v1\\native\\mz\\raw-state.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/owner-v1/native/operators.npz",
+      "sha256": "2d21b82bcc4718f84836f0a5a0312c0e259bdbf034e34b6a236c14d909bd4ef6",
+      "bytes": 1156290,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\owner-v1\\native\\operators.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/owner-v1/native/states.npz",
+      "sha256": "7fabe5973c01e6b1e7c77ebbc9024913be46624d80cc91e2f70c4902394fc75b",
+      "bytes": 124084,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\owner-v1\\native\\states.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/owner-v1/summary.json",
+      "sha256": "6fc7b0b365048b7163df326235110648ebbdc0b99945ca7072ce624702a22053",
+      "bytes": 348511,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\owner-v1\\summary.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/registration-v1.json",
+      "sha256": "02f5cff98afbcb2bff9611617d17488b106be1b388c84557c74efb8438013dce",
+      "bytes": 3305,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\registration-v1.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_double/registration-v1.npz",
+      "sha256": "8889a4036bb476f27f01b51e897af6a96ae0ed5ca1be21e8991f849d17d72912",
+      "bytes": 14200,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_double\\registration-v1.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-compare-v1/execution.json",
+      "sha256": "9e39bbea37010d482639075e94439044ecb89f9850a25af0908d48e616741429",
+      "bytes": 1445,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-compare-v1\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-compare-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-compare-v1\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-compare-v1/stdout.log",
+      "sha256": "f8b4fe6ee6c6e6052d9bb7de8fcfa5c92c7e16809729f877020b5bf7d670c0c5",
+      "bytes": 150,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-compare-v1\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-compare-v1/thread-samples.json",
+      "sha256": "00a4b0c078ccf63324f7b3575df0468027e1f9d5549b1476ed13cb9a8e02f476",
+      "bytes": 2479,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-compare-v1\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-external-fy-v1/execution.json",
+      "sha256": "8bb3e733275a9abf8fba367bcc8de4c95bd7c01f536f26ad5f6a74d590c11226",
+      "bytes": 1260,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-external-fy-v1\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-external-fy-v1/stderr.log",
+      "sha256": "23b326b47ea464109714be3eb4a2105df733a3b2080180c9b7e936512795a935",
+      "bytes": 92,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-external-fy-v1\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-external-fy-v1/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-external-fy-v1\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-external-fy-v1/thread-samples.json",
+      "sha256": "62d642b75247d8a48afed35cb7347a214782ebeefdc168a62c8f6a6b482ceede",
+      "bytes": 1923,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-external-fy-v1\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-external-mx-v1/execution.json",
+      "sha256": "51bef94bf30aa7ac39eb120f6e4087d6253e5b42dba9d2aabf012483a0e47506",
+      "bytes": 1260,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-external-mx-v1\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-external-mx-v1/stderr.log",
+      "sha256": "23b326b47ea464109714be3eb4a2105df733a3b2080180c9b7e936512795a935",
+      "bytes": 92,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-external-mx-v1\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-external-mx-v1/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-external-mx-v1\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-external-mx-v1/thread-samples.json",
+      "sha256": "f13b32db3de6f3ee9739224b2de18bf6c6ce7c442e0233a3fd1fcbec8e4c4eea",
+      "bytes": 1912,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-external-mx-v1\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-external-mz-v1/execution.json",
+      "sha256": "34f48f7d8c0c32539804b782bc40650dd71b00ec65312a8f48bc818546a90768",
+      "bytes": 1261,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-external-mz-v1\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-external-mz-v1/stderr.log",
+      "sha256": "23b326b47ea464109714be3eb4a2105df733a3b2080180c9b7e936512795a935",
+      "bytes": 92,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-external-mz-v1\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-external-mz-v1/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-external-mz-v1\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-external-mz-v1/thread-samples.json",
+      "sha256": "93c74bedaf4f071eb3b560839b2d9a4c8b1f98251b8fa9ddbe93f25b2041d29f",
+      "bytes": 1916,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-external-mz-v1\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-kernel-v1/execution.json",
+      "sha256": "d8efb5dc66447fe8457b4e5b5cc128a57fa5be80507be01985c00c36a424dd94",
+      "bytes": 1174,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-kernel-v1\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-kernel-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-kernel-v1\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-kernel-v1/stdout.log",
+      "sha256": "7479ba7d32b6af0f69977b4953e54609669c3f2f80b6bd5cacb69c63c22e87f5",
+      "bytes": 257,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-kernel-v1\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-kernel-v1/thread-samples.json",
+      "sha256": "650d194161a80c7e7daf1d56943dbf95a379f86324b91482b58ca701f4f5bb37",
+      "bytes": 27051,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-kernel-v1\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-norm-v1/execution.json",
+      "sha256": "cb55d034493b195d1d2f706f38dec1f178c0fddde34729895168a03d8eb57cf9",
+      "bytes": 1505,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-norm-v1\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-norm-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-norm-v1\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-norm-v1/stdout.log",
+      "sha256": "253ca4a29a968b04ef37e5bb7e725c37faaeb5368c4b1b80fa99cd756de45f05",
+      "bytes": 192,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-norm-v1\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-norm-v1/thread-samples.json",
+      "sha256": "aa3500b8b5f347080be07e1e8e0f2d76d69fe4c9d49111bd881694736d34dc8e",
+      "bytes": 19351,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-norm-v1\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-owner-v1/execution.json",
+      "sha256": "9fdd71a53a3f346896c304202e1b1eb582221a01fac0bbefb2dc5207dc60ef38",
+      "bytes": 1654,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-owner-v1\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-owner-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-owner-v1\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-owner-v1/stdout.log",
+      "sha256": "c677ba163b2df6a43fd1dd9f819863c0ca072c92f17400e5a6baa348cb8ff3f4",
+      "bytes": 517,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-owner-v1\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-owner-v1/thread-samples.json",
+      "sha256": "b6dd78f856672aab41aeb7251f50ebbe815b1dee44026e88e41faf94e6c1edcd",
+      "bytes": 26252,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-owner-v1\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-register-v1/execution.json",
+      "sha256": "128c1efab7c9aed1558876d3c112b10f46ea1e122a215b4cfda3b47f658dee09",
+      "bytes": 1099,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-register-v1\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-register-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-register-v1\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-register-v1/stdout.log",
+      "sha256": "9140c10a67bd742e970b996019d87a94269871e0826af3ae210de107614d8b76",
+      "bytes": 210,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-register-v1\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half-register-v1/thread-samples.json",
+      "sha256": "bc3195dea4e0b3583188b1b2189f3a3f665d88e75878f1821108d13a9956bb5e",
+      "bytes": 1691,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half-register-v1\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/comparison-v1.json",
+      "sha256": "cfbd5b7f72cd08f12b5c5851cf478d67fa57365adecec1c5bcacd9a95f8f0dad",
+      "bytes": 18889,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\comparison-v1.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/external-v1/fy/inputs.json",
+      "sha256": "b6f03d2f34fa853074f877102c239d697a165634d9cf54a13e76de77dd5e01a0",
+      "bytes": 143747,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\external-v1\\fy\\inputs.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/external-v1/fy/interface-recovery-blocks.json",
+      "sha256": "b273ed48433d4fc293837935ff4e3ef0a9a1efcc01f51e7244e4fd604a89e622",
+      "bytes": 11076,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\external-v1\\fy\\interface-recovery-blocks.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/external-v1/fy/inventory-predicates.json",
+      "sha256": "7be9f8d98c87f114d087da6ad9ef755836a4f2b746f69ae8b8b10384fba759ed",
+      "bytes": 193,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\external-v1\\fy\\inventory-predicates.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/external-v1/fy/preparation-controls.json",
+      "sha256": "8f47647460c23405d6d15b773e276dd86cae91902504f734ecc92057f6b62b35",
+      "bytes": 757,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\external-v1\\fy\\preparation-controls.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/external-v1/fy/raw-inventory.json",
+      "sha256": "8dc792bbfc6f3df5a77ef3620c30699b49220f3ae8009257d231441464cf3c3b",
+      "bytes": 114082,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\external-v1\\fy\\raw-inventory.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/external-v1/fy/recovered-actions.json",
+      "sha256": "506d0b456f360006c27d95590c53892f7d6cc545024cc5d20b079169c8cee7dc",
+      "bytes": 167486,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\external-v1\\fy\\recovered-actions.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/external-v1/fy/summary.json",
+      "sha256": "1f12eeb12c74ce965557d0ab4d736f5a8940f836608dfc8fe2d48f9558d5958a",
+      "bytes": 3324,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\external-v1\\fy\\summary.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/external-v1/mx/inputs.json",
+      "sha256": "f7e053ec37228d9088adce149ab4ce6d2e88ad1ce66bfeaba36c8bc58031ea9f",
+      "bytes": 143745,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\external-v1\\mx\\inputs.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/external-v1/mx/interface-recovery-blocks.json",
+      "sha256": "804211b33d7911b2d3e729785e614b6daf966d39df2065940a92e267534118a6",
+      "bytes": 11090,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\external-v1\\mx\\interface-recovery-blocks.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/external-v1/mx/inventory-predicates.json",
+      "sha256": "7be9f8d98c87f114d087da6ad9ef755836a4f2b746f69ae8b8b10384fba759ed",
+      "bytes": 193,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\external-v1\\mx\\inventory-predicates.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/external-v1/mx/preparation-controls.json",
+      "sha256": "8f47647460c23405d6d15b773e276dd86cae91902504f734ecc92057f6b62b35",
+      "bytes": 757,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\external-v1\\mx\\preparation-controls.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/external-v1/mx/raw-inventory.json",
+      "sha256": "e2fc9336d0570e26b9afb5534c770ba949e3e678a6da89be7464964834d76920",
+      "bytes": 115158,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\external-v1\\mx\\raw-inventory.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/external-v1/mx/recovered-actions.json",
+      "sha256": "cd4ed04d11e741104ae4e1c02f576d1fa1fa33d7751cf787abbd51a7d0e19010",
+      "bytes": 168120,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\external-v1\\mx\\recovered-actions.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/external-v1/mx/summary.json",
+      "sha256": "2b41bbcff5d770bd403f8d18ac467999d8cae0126705be903b150a6e133a9130",
+      "bytes": 3346,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\external-v1\\mx\\summary.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/external-v1/mz/inputs.json",
+      "sha256": "1aeead6bd7541caf665ab55f8e422d53ca03cd68c863eb81455c55bc0bfabed0",
+      "bytes": 143745,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\external-v1\\mz\\inputs.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/external-v1/mz/interface-recovery-blocks.json",
+      "sha256": "7365dbc245ccaa27058e5c1d8da640f03f8f30b00aa959c2c7308a01523b8581",
+      "bytes": 10999,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\external-v1\\mz\\interface-recovery-blocks.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/external-v1/mz/inventory-predicates.json",
+      "sha256": "7be9f8d98c87f114d087da6ad9ef755836a4f2b746f69ae8b8b10384fba759ed",
+      "bytes": 193,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\external-v1\\mz\\inventory-predicates.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/external-v1/mz/preparation-controls.json",
+      "sha256": "8f47647460c23405d6d15b773e276dd86cae91902504f734ecc92057f6b62b35",
+      "bytes": 757,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\external-v1\\mz\\preparation-controls.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/external-v1/mz/raw-inventory.json",
+      "sha256": "2f93388769462d039bc0e6ca7538d047ff85d90a2d3f91015b52c13a406e1b59",
+      "bytes": 115161,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\external-v1\\mz\\raw-inventory.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/external-v1/mz/recovered-actions.json",
+      "sha256": "ff0c03b9d8bda3155396286748c6dad3dddba80e43c7c9c29875caaca367aac3",
+      "bytes": 168010,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\external-v1\\mz\\recovered-actions.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/external-v1/mz/summary.json",
+      "sha256": "978bf9f2fec8231bb69fb97183169adb553692df9bd40a372e4a9eb9195cd93c",
+      "bytes": 3342,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\external-v1\\mz\\summary.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/kernel-v1.json",
+      "sha256": "bb4ec45a9b89aa110570bc57bd25caade592ef4223a30cee5537ba4a9ecfed5d",
+      "bytes": 126908,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\kernel-v1.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/kernel-v1.npz",
+      "sha256": "e72d1370429704ada99e7e5b5a2b31ee84b820733adc67ae24037e2eb37fe9f7",
+      "bytes": 3612886,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\kernel-v1.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/norm-v1.json",
+      "sha256": "b243524d5551e4a483154e76a2f6d377c26db5942d9da91fac992a238bb9aafe",
+      "bytes": 5963,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\norm-v1.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/norm-v1.npz",
+      "sha256": "71a8fea1263a37d12443bfb9f8045060745cbf329808a1f884442ac5faaf9918",
+      "bytes": 409258,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\norm-v1.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/owner-v1/identity.json",
+      "sha256": "6a89097200624c24d77d287a0671c3b39bb3c062b09864450d435051296bb3d8",
+      "bytes": 93635,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\owner-v1\\identity.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/owner-v1/native/fy/physical-actions.json",
+      "sha256": "88693955b1cf1255f0dd546d20ac99d17c835e08cb14236d945e237dbf7dce73",
+      "bytes": 21604,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\owner-v1\\native\\fy\\physical-actions.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/owner-v1/native/fy/raw-state.json",
+      "sha256": "246d722de130c068b9f2106a7def900d4322a7fec2e1d0641185300d48896f8a",
+      "bytes": 517,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\owner-v1\\native\\fy\\raw-state.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/owner-v1/native/fy/raw-state.npz",
+      "sha256": "2f40e38ea56d6d46bd470bc7bc4b618d33b23e35941a010ea4861c20f1ab1795",
+      "bytes": 67538,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\owner-v1\\native\\fy\\raw-state.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/owner-v1/native/inputs.json",
+      "sha256": "e5e9ba086e8bb18844d984911dfecf062cfc36c7c95d8ad6b8b701f52875f7eb",
+      "bytes": 174424,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\owner-v1\\native\\inputs.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/owner-v1/native/mx/physical-actions.json",
+      "sha256": "00013b0339fc95b2a7b88beea7883dd6d4811b96635cd418e97bcf63c90ac467",
+      "bytes": 21727,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\owner-v1\\native\\mx\\physical-actions.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/owner-v1/native/mx/raw-state.json",
+      "sha256": "82d3ceff114ebce6f893160a72feb0c1cbd1499f023e0f94ce3c26727d1d4bcb",
+      "bytes": 517,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\owner-v1\\native\\mx\\raw-state.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/owner-v1/native/mx/raw-state.npz",
+      "sha256": "300f0e7f976633533378dce842bf4b8512aca15517f0674e3e051b4a09350623",
+      "bytes": 67538,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\owner-v1\\native\\mx\\raw-state.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/owner-v1/native/mz/physical-actions.json",
+      "sha256": "76569dd5bbb2dda5e40e81c0a8e84bbdd6c7eb2e4730c87311c99a9a240ced04",
+      "bytes": 21615,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\owner-v1\\native\\mz\\physical-actions.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/owner-v1/native/mz/raw-state.json",
+      "sha256": "aa586845bfce098e6406f001c80108c9660c4553b050e163bd48b2a847d4da52",
+      "bytes": 517,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\owner-v1\\native\\mz\\raw-state.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/owner-v1/native/mz/raw-state.npz",
+      "sha256": "f44f4067a61fd5d857ab46e1d4f2e94bce341a6cbfd94a4d1b59cf8b8ebf94ec",
+      "bytes": 67538,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\owner-v1\\native\\mz\\raw-state.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/owner-v1/native/operators.npz",
+      "sha256": "bf53d6414a572b3300b4f052372d4b3ac479d2723198a8d67b04e313837d8089",
+      "bytes": 548718,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\owner-v1\\native\\operators.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/owner-v1/native/states.npz",
+      "sha256": "300a5e826b9d2fdd1d906b7604e04251c0d224db5c2b49f0ca98be5f2e602b6b",
+      "bytes": 61876,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\owner-v1\\native\\states.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/owner-v1/summary.json",
+      "sha256": "1bf027157edfd6dc1beaeafbdfcce3f7b52a081a5eaad02de009895af3f57aff",
+      "bytes": 169018,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\owner-v1\\summary.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/registration-v1.json",
+      "sha256": "f461b20915580f111e662f83af44255edf9c8f311157b256232c539b0fff087f",
+      "bytes": 3299,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\registration-v1.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/ratios/whole_half/registration-v1.npz",
+      "sha256": "f76337c47744ec4fd3fc60480c7fe6fe570784a3714baa1eda99cc2bc00793a3",
+      "bytes": 11128,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-projected-offratio-dev-v1\\whole_half\\registration-v1.npz"
+    }
+  ],
+  "count": 183,
+  "bytes": 26326297,
+  "limitation": "Explicit newly owned reciprocal source/registrations/installed/operators/failed unrefined arrays/reference/review/supervision whitelist only; no credential-bearing historical archive, no formal F03/acceptance/release. Previous records unchanged; original wheel identity reused byte-exactly."
+}

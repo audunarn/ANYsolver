@@ -74,7 +74,7 @@ def _constructor_calls(
     return calls
 
 
-def test_functional_lane_direct_shell_calls_are_provably_non_q4() -> None:
+def test_functional_lane_direct_shell_calls_are_non_q4_or_explicit_refusal() -> None:
     inventory = _gate_module().inventory()
     paths = [ROOT / relative for relative in inventory["functional"]]
     calls = _constructor_calls(paths)
@@ -146,8 +146,12 @@ def test_functional_lane_direct_shell_calls_are_provably_non_q4() -> None:
             ): 1,
         }
     )
-    assert calls["ShellElement"] == expected_non_q4
-    assert sum(calls["ShellElement"].values()) == sum(expected_non_q4.values())
+    # This explicit negative constructs legacy Q4 only to verify rejection by
+    # the qualified material-checkpoint route; it is not a Q4 solve admission.
+    expected_refused_q4 = Counter({
+        ("tests/test_general_contact_q4_material_checkpoint.py",
+         "test_only_exact_q4_and_finite_reference_geometry_are_admitted"): 1})
+    assert calls["ShellElement"] == expected_non_q4 + expected_refused_q4
     expected_qualified_q4 = Counter(
         {
             (
@@ -327,6 +331,12 @@ def test_functional_lane_direct_shell_calls_are_provably_non_q4() -> None:
             ("tests/test_spectral_validation_preparation.py", "_q4"): 1,
         }
     )
+    expected_qualified_q4.update({
+        ("tests/test_b2_f10_f11_point_attachment.py", "specimen"): 1,
+        ("tests/test_stiffened_shell_b2_nodal_rigid_footprint.py", "_independent"): 1,
+        ("tests/test_stiffened_shell_b2_physical_rigid_footprint.py", "test_distorted_skew_frozen_shell_tensor_frame_and_scalar_work"): 1,
+        ("tests/test_stiffened_shell_b2_q4_panel_experimental.py", "_independent_dense"): 1,
+    })
     assert calls["QualifiedE4PLShellElement"] == expected_qualified_q4
     assert sum(calls["QualifiedE4PLShellElement"].values()) == sum(
         expected_qualified_q4.values()

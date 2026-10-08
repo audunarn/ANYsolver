@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="1.453" timestamp="2026-10-01T02:11:37.148964+02:00" hostname="WORK_STABEIST1"><testcase classname="tests.test_general_contact_multiple_beam_sphere_lifecycle" name="test_sphere_plane_coupling_cancelled_path_and_full_checkpoint" time="0.476"><failure message="anysolver.control.SolveCancelled: Solve cancelled at nonlinear_static.force.step:3: same-path restart control">def test_sphere_plane_coupling_cancelled_path_and_full_checkpoint():
+        model,definition,settings=fixture()
+        load=LoadCase("sphere_plane");load.add_nodal_load(2,forces=(0.,-10.,-12.))
+        controls=dict(contact=definition,contact_settings=settings,num_steps=4,max_iterations=22,
+                      tolerance=1e-8,emit_restart_checkpoint=True)
+        full=solve_static_nonlinear(model,load,**controls)
+        assert full.status=="completed",full.failure_reason
+        contact=full.info["general_contact"]
+        assert contact["gap_tolerance_met"]
+        assert all(p["contact"]["active_line_length"]&gt;0 for p in contact["pairs"])
+        indices=np.array(model.mesh.dof_manager.get_node_dofs(2)[1:3])
+        manager=MultipleBeamRigidManager(model,definition,settings)
+        residual,_,_=manager.evaluate(full.displacements)
+        expected=independent_force(full.displacements[indices])
+        np.testing.assert_allclose(residual[indices],expected,rtol=1e-8,atol=1e-9)
+        np.testing.assert_allclose(np.array(contact["beam_force"])+contact["rigid_force"],0.,atol=1e-9)
+        np.testing.assert_allclose(np.array(contact["beam_moment"])+contact["rigid_moment"],0.,atol=1e-9)
+        force_scale=np.hypot(10.,12.)
+        assert full.steps[-1].residual_norm/force_scale&lt;1e-8
+        token=CancellationToken()
+        def stop(event):
+            if event.event_type=="nonlinear_static_step" and event.metadata["load_factor"]&gt;=.5:
+                token.cancel("same-path restart control")
+        prefix_model,_,_=fixture()
+&gt;       prefix=solve_static_nonlinear(prefix_model,load,cancellation_token=token,progress_callback=stop,**controls)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_general_contact_multiple_beam_sphere_lifecycle.py:64: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\anysolver\nonlinear_performance_batch_c.py:262: in wrapper
+    return _run_with_context(original, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\nonlinear_performance_batch_c.py:248: in _run_with_context
+    return original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\nonlinear_static.py:8025: in solve_static_nonlinear
+    return run_under_lease(
+src\anysolver\matrix_assembly.py:3651: in _run_with_qualified_assembly_runtime_lease
+    raise scoped_operation_error
+src\anysolver\matrix_assembly.py:3626: in _run_with_qualified_assembly_runtime_lease
+    result = operation(lease)
+             ^^^^^^^^^^^^^^^^
+src\anysolver\nonlinear_static.py:7963: in operation
+    result = run_solver()
+             ^^^^^^^^^^^^
+src\anysolver\nonlinear_static.py:7897: in run_solver
+    return _run_with_nonlinear_state_cleanup(
+src\anysolver\nonlinear_state.py:271: in _run_with_nonlinear_state_cleanup
+    return operation(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\threading_policy.py:412: in wrapped
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\nonlinear_analysis_diagnostics.py:443: in wrapped
+    result = func(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\nonlinear_static.py:6882: in _solve_static_nonlinear_under_lease
+    cancellation_safe_point(
+src\anysolver\control.py:86: in cancellation_safe_point
+    token.raise_if_cancelled(stage)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;anysolver.control.CancellationToken object at 0x0000020C003FE7B0&gt;
+stage = 'nonlinear_static.force.step:3'
+
+    def raise_if_cancelled(self, stage: str = "") -&gt; None:
+        """Raise :class:`SolveCancelled` when cancellation was requested."""
+    
+        if self._event.is_set():
+&gt;           raise SolveCancelled(self.reason, stage=stage)
+E           anysolver.control.SolveCancelled: Solve cancelled at nonlinear_static.force.step:3: same-path restart control
+
+src\anysolver\control.py:71: SolveCancelled</failure></testcase></testsuite></testsuites>

@@ -1,0 +1,18 @@
+{
+  "status": "NONPASS",
+  "classification": "TEST_MISUSE_STALE_INITIAL_ACCOUNTING",
+  "failure": "current issued immutable midpoint predecessor required",
+  "solver_committed_steps": 4,
+  "gate_passing_steps": 4,
+  "checkpoint_created": false,
+  "remaining_checks": "UNISSUED",
+  "elapsed_seconds": 21.742937000002712,
+  "peak_process_tree_memory_mb": 263.979008,
+  "independent_review": "checkpoint_review confirmed current-state guard behavior; reuse only authentic initial numeric bookkeeping",
+  "bindings": {
+    "raw.json": "656f691586bcdbd50eee3c55d9c90ba200a5e6dd1e6494b5d749907fcc99c431",
+    "resources.json": "e7404b4e25a29d39d623b465ffb12a8eba7bc9f82c24dfc6d1060f42efbaf9e3",
+    "inputs.json": "1549441b8692a34cacf1c1682ed3c9965066fffc8bf551aaf9124498fea53aa5",
+    "test.source.py": "190fb4e330a8dc8e3ebb360a145d0e3264b63a7dec6752f0988153fbaf5c1e2c"
+  }
+}

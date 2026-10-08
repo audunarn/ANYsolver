@@ -1,0 +1,416 @@
+{
+  "scope": "Curved native physical-fibre pair static lifecycle development; not native engineering acceptance or release",
+  "baseline_head": "3fddf6b5e75b68f07fbe3fa4c76b489205a05113",
+  "private_wheel_sha256": "6f4bffeb3606083c4f2ee7686e03c5fe3970525c4d35d772181a504f1f11e3a9",
+  "source_stage1_elapsed_s": 30.492915399954654,
+  "installed_open_elapsed_s": 70.95889370003715,
+  "installed_recontact_elapsed_s": 64.46428999991622,
+  "installed_final_replay_and_guard_elapsed_s": 37.3875031999778,
+  "conservative_total_work_s": 283.1291014998948,
+  "budget_s": 360,
+  "stage_summaries": [
+    {
+      "stage": 1,
+      "status": "paused",
+      "failure": null,
+      "completed": 1,
+      "elapsed_s": 20.907499300083145,
+      "checkpoint_sha256": "0c8e0e844da54092b9f9b870cee8817cefa6eb0fca1c0c58b683ad3e387ccbd7",
+      "contacts": [
+        {
+          "gap": -1.3602236061436836E-05,
+          "potential": 5.086257902072423E-09,
+          "elapsed_s": 10.142920900019817
+        },
+        {
+          "gap": -1.3602236061436836E-05,
+          "potential": 5.086257902072423E-09,
+          "elapsed_s": 10.249889699975029
+        }
+      ],
+      "material": {
+        "yielded": 30,
+        "dissipation_j": 1.6133012308940197E-07
+      },
+      "force_error": 8.673882073641208E-17,
+      "moment_error": 0.0,
+      "gap_lower_m": -1.3602236061436836E-05,
+      "potential_j": 5.086257902072423E-09,
+      "force_a_n": [
+        -1.3813270855780865E-05,
+        -0.0011061135992281956,
+        0.0
+      ],
+      "force_b_n": [
+        1.3813270855780863E-05,
+        0.0011061135992281954,
+        0.0
+      ],
+      "moment_a_nm": [
+        0.0,
+        0.0,
+        -0.0022041502481472373
+      ],
+      "moment_b_nm": [
+        0.0,
+        0.0,
+        0.0022041502481472373
+      ],
+      "actual_contact": "active",
+      "positions": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          1.000005039817705,
+          0.0038540957760100233,
+          0.0
+        ],
+        [
+          1.999989393393956,
+          -0.0036473760924409164,
+          0.0
+        ],
+        [
+          0.0,
+          0.101,
+          0.0
+        ],
+        [
+          1.000006247385234,
+          0.1045408667062343,
+          0.0
+        ],
+        [
+          1.9999852226555868,
+          0.09634687942843818,
+          0.0
+        ]
+      ]
+    },
+    {
+      "stage": 2,
+      "status": "paused",
+      "failure": null,
+      "completed": 2,
+      "elapsed_s": 63.54355569998734,
+      "checkpoint_sha256": "14446abb3e558a2f9ab409d358992eb8c6bbe18270bf8ce240ffed282f1c5dd4",
+      "contacts": [
+        {
+          "gap": -1.3602236061436836E-05,
+          "potential": 5.086257902072423E-09,
+          "elapsed_s": 10.501597800059244
+        },
+        {
+          "gap": -1.3602236061436836E-05,
+          "potential": 5.086257902072423E-09,
+          "elapsed_s": 10.328612499986775
+        },
+        {
+          "gap": -6.430082953807318E-06,
+          "potential": 5.455431815463839E-10,
+          "elapsed_s": 10.573663500021212
+        },
+        {
+          "gap": -1.251550964061832E-06,
+          "potential": 4.704064558454908E-12,
+          "elapsed_s": 11.722669100039639
+        },
+        {
+          "gap": 7.409750285526176E-06,
+          "potential": 0.0,
+          "elapsed_s": 7.359921399969608
+        },
+        {
+          "gap": 0.0009001674297063153,
+          "potential": 0.0,
+          "elapsed_s": 3.829204299952835
+        },
+        {
+          "gap": 0.0009001675215878455,
+          "potential": 0.0,
+          "elapsed_s": 3.8073813000228256
+        },
+        {
+          "gap": 0.0009001675215878455,
+          "potential": 0.0,
+          "elapsed_s": 3.714416000060737
+        }
+      ],
+      "material": {
+        "yielded": 28,
+        "dissipation_j": 1.0667536935620632E-07
+      },
+      "force_error": 0.0,
+      "moment_error": 0.0,
+      "gap_lower_m": 0.0009001675215878455,
+      "potential_j": 0.0,
+      "force_a_n": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_b_n": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "moment_a_nm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "moment_b_nm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "actual_contact": "open",
+      "positions": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          1.0000005956427334,
+          0.004878388051212294,
+          0.0
+        ],
+        [
+          1.9999991714161898,
+          -0.0003985109056011466,
+          0.0
+        ],
+        [
+          0.0,
+          0.101,
+          0.0
+        ],
+        [
+          1.0000007460706677,
+          0.10584899862013859,
+          0.0
+        ],
+        [
+          1.9999989899546606,
+          0.10050698134535019,
+          0.0
+        ]
+      ]
+    },
+    {
+      "stage": 3,
+      "status": "completed",
+      "failure": null,
+      "completed": 3,
+      "elapsed_s": 56.18455859995447,
+      "checkpoint_sha256": "748321210ee68da847a24da5039e8991a4e382afbe68c472166b5829b93bd85e",
+      "contacts": [
+        {
+          "gap": -1.3602236061436836E-05,
+          "potential": 5.086257902072423E-09,
+          "elapsed_s": 11.322077300050296
+        },
+        {
+          "gap": 0.0009001675215878455,
+          "potential": 0.0,
+          "elapsed_s": 3.622500400058925
+        },
+        {
+          "gap": -1.3602236061436836E-05,
+          "potential": 5.086257902072423E-09,
+          "elapsed_s": 10.587698800023645
+        },
+        {
+          "gap": -1.3540344314169902E-05,
+          "potential": 5.018206869426834E-09,
+          "elapsed_s": 10.354746100027114
+        },
+        {
+          "gap": -1.35387238302846E-05,
+          "potential": 5.0164339471204216E-09,
+          "elapsed_s": 9.538345500011928
+        },
+        {
+          "gap": -1.35387238302846E-05,
+          "potential": 5.0164339471204216E-09,
+          "elapsed_s": 9.64122689992655
+        }
+      ],
+      "material": {
+        "yielded": 30,
+        "dissipation_j": 7.725368262435517E-08
+      },
+      "force_error": 8.673617379884035E-17,
+      "moment_error": 0.0,
+      "gap_lower_m": -1.35387238302846E-05,
+      "potential_j": 5.0164339471204216E-09,
+      "force_a_n": [
+        -1.3500992289182911E-05,
+        -0.001095894303848618,
+        0.0
+      ],
+      "force_b_n": [
+        1.3500992289182911E-05,
+        0.0010958943038486177,
+        0.0
+      ],
+      "moment_a_nm": [
+        0.0,
+        0.0,
+        -0.0021838299585111723
+      ],
+      "moment_b_nm": [
+        0.0,
+        0.0,
+        0.0021838299585111723
+      ],
+      "actual_contact": "active",
+      "positions": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          1.0000047260688605,
+          0.003935633732975721,
+          0.0
+        ],
+        [
+          1.999990361379009,
+          -0.003393131604103043,
+          0.0
+        ],
+        [
+          0.0,
+          0.101,
+          0.0
+        ],
+        [
+          1.0000059534752632,
+          0.10462223378997612,
+          0.0
+        ],
+        [
+          1.9999863254488592,
+          0.0966009708545497,
+          0.0
+        ]
+      ]
+    }
+  ],
+  "final_replay": {
+    "checkpoint_sha256": "748321210ee68da847a24da5039e8991a4e382afbe68c472166b5829b93bd85e",
+    "completed": 3,
+    "canonical_capsule": true,
+    "canonical_records": true,
+    "final_history_matches": true,
+    "earlier_prefix_records_match": true,
+    "support_wrench_errors": [
+      {
+        "force_error": 5.889988764580189E-09,
+        "moment_error": 5.829381768962527E-09,
+        "root_position_m": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "tip_position_m": [
+          1.999990361379009,
+          -0.003393131604103043,
+          0.0
+        ],
+        "support_force_n": [
+          1.3500992105769805E-05,
+          0.0010958942891247884,
+          0.0
+        ],
+        "support_moment_about_origin_nm": [
+          0.0,
+          0.0,
+          0.0021838299293642635
+        ],
+        "contact_force_n": [
+          -1.3500992289182911E-05,
+          -0.001095894303848618,
+          0.0
+        ],
+        "contact_moment_about_origin_nm": [
+          0.0,
+          0.0,
+          -0.0021838299585111723
+        ],
+        "applied_tip_force_n": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "applied_tip_moment_about_origin_nm": [
+          -0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "force_error": 5.889988334925311E-09,
+        "moment_error": 5.829443525118272E-09,
+        "root_position_m": [
+          0.0,
+          0.101,
+          0.0
+        ],
+        "tip_position_m": [
+          1.9999863254488592,
+          0.0966009708545497,
+          0.0
+        ],
+        "support_force_n": [
+          -1.3500992105769004E-05,
+          0.0014041057108752112,
+          0.0
+        ],
+        "support_moment_about_origin_nm": [
+          0.0,
+          0.0,
+          0.0028161358842581944
+        ],
+        "contact_force_n": [
+          1.3500992289182911E-05,
+          0.0010958943038486177,
+          0.0
+        ],
+        "contact_moment_about_origin_nm": [
+          0.0,
+          0.0,
+          0.0021838299585111723
+        ],
+        "applied_tip_force_n": [
+          0.0,
+          -0.0025000000000000005,
+          0.0
+        ],
+        "applied_tip_moment_about_origin_nm": [
+          0.0,
+          0.0,
+          -0.004999965813622149
+        ]
+      }
+    ]
+  },
+  "raw_evidence": [
+    "C:/ANYworkspaceWork/contact_native_fibre_s3_20261005/candidate26",
+    "C:/ANYworkspaceWork/contact_native_fibre_s3_20261005/candidate27"
+  ],
+  "invariants": [
+    "Same complete (.05,0,.05) program and checkpoint identity across all three stages",
+    "First disposable guess from mechanical coordinates only; initial physical history virgin",
+    "Repeated-target guess from prior accepted mechanical pose; current unloading history used for every recontact candidate",
+    "Actual supported swept path and 50um physical gap, no hidden forces or tolerance rescue",
+    "Exact accepted prefix and complete checkpoint replay; support wrenches normalized separately at 1e-6"
+  ],
+  "remaining": "Native spatial/section breadth and independent engineering acceptance; friction, automatic/self-contact, dynamics, applications and full C0-C9"
+}

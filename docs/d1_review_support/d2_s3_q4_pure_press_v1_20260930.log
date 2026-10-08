@@ -1,0 +1,124 @@
+F.                                                                       [100%]
+================================== FAILURES ===================================
+_ test_structurally_deforming_target_against_independent_fixed_geometry_kkt[pure_press] _
+
+load = 0.0
+
+    @pytest.mark.parametrize('load',(.01,0.),ids=('mixed_load','pure_press'))
+    def test_structurally_deforming_target_against_independent_fixed_geometry_kkt(load):
+        from itertools import product
+        from math import factorial
+        from anysolver.matrix_assembly import assemble_stiffness_matrix
+        from anysolver.general_contact.static_path import ContactPathNodalForce
+        model,definition,settings=build(target_rigid_normal=False)
+        # Reduce the registered clearance to1um and press1.3um. This limits the
+        # von Karman vs linear reference discrepancy; no stiffness/gap relaxation.
+        for node in range(1,5):
+            model.mesh.get_node(node).z-=99e-6
+        xy=np.array(((.1,.1),(.9,.1),(.9,.9),(.1,.9)))
+        support=np.zeros(4);coupling=np.zeros((4,4))
+        for nodes in ((0,1,3),(1,2,3)):
+            points=xy[list(nodes)]
+            area=abs(np.linalg.det(np.stack((points[1]-points[0],points[2]-points[0]))))*.5
+            def moment(indices):
+                powers=[indices.count(j) for j in range(3)]
+                return 2*area*np.prod([factorial(p) for p in powers])/factorial(len(indices)+2)
+            for i,node in enumerate(nodes):
+                one=moment((i,))
+                x=sum(points[j,0]*moment((i,j)) for j in range(3))
+                y=sum(points[j,1]*moment((i,j)) for j in range(3))
+                x_y=sum(points[j,0]*points[k,1]*moment((i,j,k)) for j in range(3) for k in range(3))
+                support[node]+=one
+                coupling[node]+=np.array((one-x-y+x_y,x-x_y,x_y,y-x_y))
+        # Independent P1-Q1 polynomial moments + the existing structural linear
+        # operator, never the production contact overlap, work or pressure kernel.
+        h=coupling[:,2:]/support[:,None]
+        stiffness=assemble_stiffness_matrix(model)[0]
+        free=[model.mesh.dof_manager.get_node_dofs(node)[2] for node in (7,8)]
+        structural=stiffness[np.ix_(free,free)].toarray()
+        clearance=1e-6;press=-1.3e-6;kappa=1e7
+        # Explicit upward target loads exercise mixed physical force/control work.
+        # Pure rigid-source pressing has zero contact-free reaction scale and is
+        # separately rejected by the existing public path admission contract.
+        target_load=np.full(2,load)
+        candidates=[]
+        for flags in product((False,True),repeat=4):
+            active=np.array(flags)
+            weights=kappa*support*active
+            displacement=np.linalg.solve(structural+h.T@(weights[:,None]*h),
+                target_load+h.T@(weights*np.full(4,clearance+press)))
+            gap=clearance+press-h@displacement
+            if np.array_equal(active,gap<0.):
+                candidates.append((displacement,kappa*np.maximum(0.,-gap)))
+        assert len(candidates)==1
+        reference,pressure=candidates[0]
+        program=ContactPathProgram(controls=(ContactPathControl.node(1,'uz'),ContactPathControl.node(1,'ux')),
+            waypoints=((0.,0.),(press,0.)),steps_per_segment=1,
+            nodal_forces=tuple(ContactPathNodalForce(node,'uz',(0.,load)) for node in (7,8)) if load else ())
+>       result=solve_static_nonlinear(model,contact=definition,contact_settings=settings,
+            contact_path_program=program,tolerance=1e-10)
+
+tests\test_general_contact_s3_q4_static_dev.py:198: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\anysolver\nonlinear_static.py:7714: in solve_static_nonlinear
+    return solve_static_contact_path(
+src\anysolver\general_contact\static_path.py:1718: in solve_static_contact_path
+    return _run_with_qualified_assembly_runtime_lease(
+src\anysolver\matrix_assembly.py:3651: in _run_with_qualified_assembly_runtime_lease
+    raise scoped_operation_error
+src\anysolver\matrix_assembly.py:3626: in _run_with_qualified_assembly_runtime_lease
+    result = operation(lease)
+             ^^^^^^^^^^^^^^^^
+src\anysolver\general_contact\static_path.py:1716: in operation
+    return _run_with_nonlinear_state_cleanup(run)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\nonlinear_state.py:271: in _run_with_nonlinear_state_cleanup
+    return operation(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\general_contact\static_path.py:894: in run
+    internal, tangent, trial = _assemble_nonlinear_system(
+src\anysolver\nonlinear_static.py:1556: in _assemble_nonlinear_system
+    contact_force, contact_tangent, _ = contact_manager.evaluate(
+src\anysolver\general_contact\s3_patch_static.py:683: in evaluate
+    work = (self.law.work(source, target, self.normal_multipliers,
+src\anysolver\general_contact\s3_patch_augmented.py:675: in work
+    return self._work_unresolved(current_source, current_target,
+src\anysolver\general_contact\s3_patch_augmented.py:1120: in _work_unresolved
+    return self._jet2_s3_work(current_source, current_target,
+src\anysolver\general_contact\s3_patch_augmented.py:1451: in _jet2_s3_work
+    s3_operand_allowance = _s3_gap_operand_roundoff(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+source = array([[0.1      , 0.1      , 0.0249997],
+       [0.9      , 0.1      , 0.0249997],
+       [0.1      , 0.9      , 0.0249997]])
+target = array([[0.        , 0.        , 0.025     ],
+       [1.        , 0.        , 0.025     ],
+       [1.        , 1.        , 0.02499955],
+       [0.        , 1.        , 0.02499882]])
+support = array([0.10666667, 0.10666667, 0.10666667])
+
+    def _s3_gap_operand_roundoff(source, target, support) -> np.ndarray:
+        """Per-row cancellation allowance for the two analytic S3 value paths.
+    
+        Both paths subtract interpolated Cartesian positions before projecting a
+        small gap. Their absolute operand error is amplified by the source frame
+        and the target barycentric frame in the source plane. A gamma(64) budget
+        covers their short arithmetic chains; conditioning is explicit rather
+        than inferred from the already cancelled weighted gap. Poorly resolved
+        frames/origins reject, including when this allowance exceeds 1e-9 of the
+        smallest source edge. This is a value-roundoff allowance, not an
+        integration, derivative or physical-gap tolerance.
+        """
+        source, target = np.asarray(source, float), np.asarray(target, float)
+        support = np.asarray(support, float)
+        if (source.shape != (3, 3) or target.shape != (3, 3)
+                or support.shape != (3,) or np.any(support <= 0)
+                or not all(np.all(np.isfinite(a)) for a in (source, target, support))):
+>           raise UnsupportedOverlapBranch("S3 gap operands or supports are invalid")
+E           anysolver.general_contact.s3_overlap_derivatives.UnsupportedOverlapBranch: S3 gap operands or supports are invalid
+
+src\anysolver\general_contact\s3_patch_augmented.py:267: UnsupportedOverlapBranch
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_s3_q4_static_dev.py::test_structurally_deforming_target_against_independent_fixed_geometry_kkt[pure_press]
+1 failed, 1 passed, 5 deselected in 6.26s

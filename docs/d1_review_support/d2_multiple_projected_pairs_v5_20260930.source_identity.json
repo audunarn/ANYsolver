@@ -1,0 +1,26 @@
+{
+  "head": "75a2820fedb2b1e345c9f8feb2e7fd3aacfdd0bc",
+  "branch": "codex/general-contact-core",
+  "files": [
+    {
+      "path": "src/anysolver/general_contact/multiple_projected_pairs.py",
+      "sha256": "69de6856cc4b5e34485115572b97944bb3df5ea8d63f0277b18051fbeb375876"
+    },
+    {
+      "path": "src/anysolver/general_contact/core.py",
+      "sha256": "9cd9844f92e6ca4938bb0b4dd8c4d589801389e760a33835f1beaeddff900a31"
+    },
+    {
+      "path": "src/anysolver/general_contact/static_path.py",
+      "sha256": "44b11ab1cecdc020a6c1ef71a7e40f166f0656c94e0502fdeb5ad212f02c353e"
+    },
+    {
+      "path": "src/anysolver/nonlinear_static.py",
+      "sha256": "d42289776ddee3285691588028838513a0c1e855ea16e77deb50eed6df2e5525"
+    },
+    {
+      "path": "tests/test_general_contact_multiple_projected_pairs.py",
+      "sha256": "c09b23d08ced206090f6f2a51f00a64eb897cd40ec39e9218a63b361d8d712b8"
+    }
+  ]
+}

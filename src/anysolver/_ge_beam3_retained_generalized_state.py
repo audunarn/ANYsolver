@@ -168,15 +168,8 @@ class Context:
         self.guard();return r,j,metrics,tuple(responses),tuple(works)
 
     def step(self,state,r,j):
-        step=np.zeros(self.count);step[self.free]=np.linalg.solve(j[np.ix_(self.free,self.free)],-r[self.free])
-        if not np.isfinite(step).all():raise ValueError('nonfinite retained generalized Newton step')
-        nodal=step[:self.nodal_count].reshape(-1,6)
-        correction=max(float(np.linalg.norm(nodal[:,:3]))/self.length,float(np.linalg.norm(nodal[:,3:])))
-        for i in range(len(self.elements)):
-            first=self.nodal_count+24*i
-            correction=max(correction,float(np.linalg.norm(step[first:first+6])),
-                float(np.linalg.norm(step[first+6:first+24]))/max(1.,float(np.linalg.norm(state.resultants[i]))))
-        return step,correction
+        from ._native_retained_step import retained_newton_step
+        return retained_newton_step(self,state,r,j)
 
     def advance(self,state,step):
         s={k:v.copy() for k,v in state.descriptor().items()}

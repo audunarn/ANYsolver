@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 13.21599789999891,
+  "peak_process_tree_memory_mb": 356.081664,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_monolithic_work.py::test_deformed_s3_target_translation_and_rotation_contact_work",
+    "-q",
+    "-ra"
+  ],
+  "log": "docs\\d1_review_support\\d1_monolithic_matrix_integrated_pytest_20260929.log"
+}

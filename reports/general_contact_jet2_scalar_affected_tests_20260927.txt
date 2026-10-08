@@ -1,0 +1,16 @@
+
+=================================== ERRORS ====================================
+__________ ERROR collecting tests/test_ge_beam3_g3c_so3_numerics.py ___________
+ImportError while importing test module 'C:\ANYworkspaceWork\ANYsolver-general-contact\tests\test_ge_beam3_g3c_so3_numerics.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python\Python314\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_ge_beam3_g3c_so3_numerics.py:22: in <module>
+    import run_ge_beam3_g3c_so3_numerics as runner
+E   ModuleNotFoundError: No module named 'run_ge_beam3_g3c_so3_numerics'
+=========================== short test summary info ===========================
+ERROR tests/test_ge_beam3_g3c_so3_numerics.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 1.96s

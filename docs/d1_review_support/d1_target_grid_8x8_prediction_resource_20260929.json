@@ -1,0 +1,22 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 69.05461790000118,
+  "peak_process_tree_memory_mb": 432.545792,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "docs/d1_review_support/d1_two_body_refined_target_route.py",
+    "--source-columns",
+    "4",
+    "--target-x-cells",
+    "8",
+    "--target-y-cells",
+    "8",
+    "--record-pressure",
+    "--output",
+    "docs/d1_review_support/d1_target_grid_8x8_prediction_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_target_grid_8x8_prediction_log_20260929.txt"
+}

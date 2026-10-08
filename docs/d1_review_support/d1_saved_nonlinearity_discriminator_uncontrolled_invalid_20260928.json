@@ -1,0 +1,24 @@
+{
+  "status": "development_saved_pose_structural_linearization_check",
+  "saved_source_sha256": "8293e528837cc2a8a25444aa079944c9f8371f5a5b50280bb6dc91816d19b852",
+  "saved_runtime_identity": {
+    "python": "3.14.2",
+    "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+    "anymaterial_module": "C:\\Github\\ANYmaterial\\src\\anymaterial\\__init__.py",
+    "compiled_bjet_mul_enabled": false
+  },
+  "source_nodes": 153,
+  "structural_dofs": 942,
+  "free_coordinates": 297,
+  "maximum_source_inplane_displacement_m": 1.6326996721945734e-09,
+  "maximum_source_rotation_rad": 0.0,
+  "maximum_transverse_secant_slope": 0.00011663543552371206,
+  "maximum_source_deflection_m": 4.0924058409429904e-05,
+  "reduced_nonlinear_force_norm_n": 0.02247670587553951,
+  "reduced_nonlinear_minus_linear_norm_n": 1.5137706769621731e-05,
+  "relative_to_total_applied_force": 5.0459022565405774e-05,
+  "maximum_reduced_force_difference_n": 7.4647001624216575e-06,
+  "linear_compliance_estimate_max_displacement_m": 1.1592277369253038e-08,
+  "linear_compliance_estimate_relative_to_max_source_deflection": 0.0002832631420197048,
+  "contact_reaction_n": 0.10380210457097483
+}

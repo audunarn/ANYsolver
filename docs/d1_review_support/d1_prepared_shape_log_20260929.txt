@@ -1,0 +1,15 @@
+{
+  "status": "development_value_only_shape_parity",
+  "relative_errors": {
+    "reference_support": 0.0,
+    "reference_weighted_gap": 0.0,
+    "normalized_gap": 0.0,
+    "pressure_gram": 0.0,
+    "force": 0.0,
+    "gap_gradient": 0.0,
+    "tangent": 0.0
+  },
+  "legacy_median_seconds": 13.626422599998477,
+  "value_only_median_seconds": 12.705797650000022,
+  "local_time_ratio": 1.0724570763173182
+}
