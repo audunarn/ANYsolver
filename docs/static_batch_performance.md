@@ -160,3 +160,49 @@ For this comparison use `--route candidate` on **both** import roots, since
 the baseline already has the streaming API. The barge command above applies;
 the control uses `--family multiple-body --history pilot --warmup
 --warmup-cases 1`. The large canceled campaign remains canceled.
+
+## Selected recovery and snapshot follow-up: NO_GO (2026-10-08)
+
+A further prototype reused audited constraint fingerprints within one static
+stream when current observations matched, including native eccentric beam-shell
+coupling outputs. It retained session audits, public recovery calls and the
+existing per-case checks. Selected stress recovery already restricted element
+numerics to the requested selection; repeated model observations were the more
+promising target.
+
+The prototype was **not promoted**. Fresh serial warm comparisons against
+`b246a985`, with the same frozen application, fixture, selections and thread
+settings used above, gave:
+
+| Workload | Before | Prototype | Observed change |
+| --- | ---: | ---: | ---: |
+| Eight held-out barge cases | 24.721 s | 27.204 s | 10.0% slower |
+| Twenty disconnected free-free control cases | 0.436 s | 0.474 s | 8.7% slower |
+
+Barge input/snapshot time increased from 6.320 to 7.831 s, and process peak
+working set increased from 604.0 to 631.4 MB. All selected values and case
+digests were bit-identical; envelope values and governing identities were exact
+in both comparisons. These are bounded paired observations, not statistical
+estimates from a repeated campaign.
+
+A separate one-case warm diagnostic confirmed reuse was active: full constraint
+audits dropped from 21 to six, while fingerprint calls dropped from 19 to four.
+However, recursively encoding and checking the replacement observation consumed
+3.200 s of profiled time. Model snapshots increased from 5.626 to 6.101 s in
+the instrumented run. Thus rebuilding the observation cost more than the audit
+work it avoided; no guard relaxation was accepted to manufacture a gain.
+Profiled times include instrumentation overhead and are not workload timings.
+
+The final affected groups covered 128 distinct passing checks, including
+application integration and independent hidden-provider/code-mutation probes.
+Failed development attempts remain recorded. The prototype, added tests,
+commands, source identities, JUnit and both profiles are preserved under
+`C:/ANYworkspaceWork/static-batch-20261007/selection-slice/`; the sibling
+`checks/selection-*` directories hold full execution records. Only the evidence
+report is delivered. Solver source remains exactly the faster `b246a985`
+implementation; no new runtime cache or API is introduced by this follow-up.
+
+Reconsider this approach only with a materially cheaper observation strategy
+that preserves arbitrary-provider fallback and direct-mutation detection. The
+earlier measured recovery improvement remains in production. No large campaign
+was run.
