@@ -1,3 +1,18 @@
+**8 October common-main distributing-displacement consumer - IMPLEMENTED_NOT_QUALIFIED:**
+The existing ANYfem consumer wheel and common-main solver site pass 54/54
+affected installed development tests, including the public checkpoint example,
+with imports from the pinned installed sites (14.644 s wall, 210 MB sampled
+peak tree RSS). The runner requested CPU0, one thread and JIT off; effective
+numerical settings were not independently audited in this smoke. The registered packet's V2 and V3
+supervisors timed out before pytest during identity preparation; 78.0437588 s
+and 40.0053873 s remain charged to one 240 s allowance. The untouched V1,
+failed V2/V3 receipts and direct smoke logs are preserved at
+C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/.development/
+distributing-displacement-consumer-common-main-20261008-v1/. This demonstrates
+installed behavior only. The registered installed gate, affected legacy checks,
+complete dependency/artifact audit, consumer review and aggregate G6 remain
+OPEN; no release claim follows.
+
 **4 October area common-action external feasibility — IMPLEMENTED_NOT_QUALIFIED:**
 Independent Cartesian C3D20 midsurface/director/curl work map, strict deck/parser
 and installed free-stub controls execute.57 focused map/deck checks plus12 final

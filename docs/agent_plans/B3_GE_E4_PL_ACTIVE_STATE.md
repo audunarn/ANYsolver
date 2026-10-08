@@ -1,5 +1,23 @@
 # Active development — 8 October 2026
 
+Current decision: keep the native BL5 line law open until a two-sided
+face/retained-port reference can allocate the V5 work gap. Advance
+independent integrated capability in parallel. The common-main ANYfem
+distributing-displacement consumer imports from the bound installed solver
+and consumer sites and passes all 54 tests in its affected file (14.6440475 s
+process wall, peak sampled tree RSS 210,395,136 B). Its runner requested
+CPU0, one thread, and JIT off; effective numerical settings were not
+independently audited in this smoke.
+This is development smoke, not the registered installed gate. The exact
+installed packet attempted V2 and V3 and timed out before pytest during
+its dependency/module inventory (78.0437588 s and 40.0053873 s); both
+receipts remain in the packet. Its single 240 s allowance has 118.0491461 s
+charged and 121.9508539 s remaining including the 60 s reserve. Stop
+repeating that verifier. The next integration action is a reviewed,
+proportionate evidence route or a separately authorized amended packet;
+full G6 artifact acceptance remains open. Local evidence:
+`C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/.development/distributing-displacement-consumer-common-main-20261008-v1/`.
+
 One expressly authorized BL5 V5 exact-face beam-only diagnostic completed:
 the resolved and native body equilibrium ratios are `1.6071e-12` and
 `3.9385e-12`, respectively, with the three prior tiny-load rows now exactly
@@ -64,11 +82,14 @@ Cross-platform/consumer and mandatory programme review remain pending. This is a
 recovery addition, not G0/G1 or full-programme acceptance. Direct OpenAI edit
 uses the already recorded Mistral/local unavailability for this task.
 
-Read-only consumer review found a static packet blocker in the unrun ANYfem
-common-main installed packet: its supervisor expects 431 solver Python files,
-while its frozen artifact and entry require 627. The packet remains PENDING,
-zero attempts; repair and re-freeze before any activation. No sibling edits or
-numerical attempt were made for that packet in this slice.
+The original ANYfem common-main installed packet remains an untouched,
+unrun V1 registration. V2 corrected its stale 431-file supervisor literal
+against the bound 627-file solver artifact; V3 removed duplicate full
+dependency rehashing from each development phase while retaining frozen
+catalogs and imported-module checks. Both registered attempts timed out
+before pytest; neither confers qualification. Direct OpenAI edits were limited
+to these tightly coupled evidence bindings while the recorded Mistral/local
+workers remain unavailable for this task.
 
 Mz common-density beam-only branch stopped FAILED, without a validated body
 comparison. V1 native calculation failed the unchanged active-row equilibrium
