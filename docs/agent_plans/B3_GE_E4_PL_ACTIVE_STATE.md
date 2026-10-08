@@ -8,9 +8,12 @@ zero. The paired work ratio under the same projected weak P0 density is
 This is a development comparison between distinct primal/retained spaces,
 not a law-selection or physical-accuracy result. V5 consumed its one-use
 authority in 2.8735119 s; [adjudication](../../.development/bl5-mz-common-beam-20261008/v5-adjudication.md)
-and raw receipt are preserved. The next discriminating work must isolate
-beam-body representation from connection transfer; no automatic refinement
-or F03 run follows.
+and raw receipt are preserved. A full-space lift of broken native half-cell
+rotations to one conforming C3D20 face is impossible at shared stations;
+the existing affine common-field proof does not cover the V5 work gap.
+Any next reference must explicitly resolve two-sided trace and seam work
+before it can distinguish body compliance from connection transfer. No
+automatic refinement or F03 run follows.
 
 The scoped S3 V2D elastic recovery fix is now a separate **draft PR #65**
 against common main: `codex/s3-v2d-surface-recovery` at `974f283a`, based on

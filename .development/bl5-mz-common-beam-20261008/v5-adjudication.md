@@ -28,8 +28,17 @@ The ratio alone cannot identify a connection-law, beam-operator, or physical
 accuracy defect.
 
 The next decision is to distinguish native beam-body compliance from
-representation differences using an independently matched beam-body
-reference or bounded convergence argument. Do not adjust the connection law
+interface representation differences. A full-space lift of arbitrary native
+retained half-cell fields to one conforming C3D20 face does not exist:
+adjoining native half-cells can have different one-sided rotations at their
+shared station, while the conforming solid has one displacement trace there.
+The already checked globally affine common-field lift excludes precisely
+these broken fields; repeating it will not explain this work ratio. The
+smallest new discriminator is a separately justified two-sided face reference
+at one station with a saved nonzero retained jump, including its seam or
+section work. Compare its virtual-work functional with the native one before
+claiming a body-law explanation. This requires a new bounded contract and
+execution authority; V5 supplies neither. Do not adjust the connection law
 or multiplier space from this single ratio. No F03, old Fz retry, external
 solver, mesh sweep, gate acceptance or release occurred. V5 is consumed;
 its unused process-cap time is not transferable authority.
