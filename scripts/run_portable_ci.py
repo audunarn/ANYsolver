@@ -73,6 +73,10 @@ DEDICATED_LANE_NODES = (
 # checkouts may not carry the bound object, and superseded aliases must retain
 # their historical meaning on the frozen source revision.
 PORTABLE_HISTORY_ONLY_NODES = (
+    # Exact saved-deck/result regressions require untracked historical evidence.
+    # Current generator/parser/oracle controls in both modules remain portable.
+    "tests/test_r8_e02_distributing_thickness.py::test_saved_legacy_six_decks_metadata_and_parses_are_exact",
+    "tests/test_stiffened_shell_e03_force_observability_followup.py::test_actual_saved_wrong_response_refused_after_valid_preamble_and_hashes",
     # Original P3 metadata/commit authority remains frozen at 0.4.2. Runtime
     # routing/state tests in this module still run; release metadata is tested
     # independently by test_release_043.py.

@@ -5,18 +5,15 @@ import pytest
 
 from scripts._b3_e4_f03_native_fixture import build
 from scripts.b3_e4_f03_c1_global_beam_trace import (
-    SOURCE, _action_density, _fit_case, _surface_samples,
+    _action_density, _fit_case, _surface_samples,
 )
 from scripts.b3_e4_f03_c1_six_channel_same_beam import _solid_action_on_beam
-from scripts.b3_e4_f03_ccx_six_channel_compliance import _source
-from scripts.b3_e4_f03_ccx_six_channel_preflight import _element_domain_nodes
 from scripts.b3_e4_f03_square_section_control import square_torsion_constant
 
 
 @pytest.fixture(scope="module")
-def sampled_face():
-    deck, _, coords, _, _, _ = _source(SOURCE / "tip_mx")
-    _, bar = _element_domain_nodes(deck)
+def sampled_face(f03_q8_sided_faces):
+    coords, _, bar = f03_q8_sided_faces
     beam = build(12, z_offset=.0675,
                  torsion_constant=square_torsion_constant(),
                  reference_profile="c1_tangent_2um", assemble=False)

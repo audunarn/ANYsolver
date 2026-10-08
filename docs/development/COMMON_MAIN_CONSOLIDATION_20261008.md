@@ -92,14 +92,30 @@ byte (manifest SHA256 `5c895298684030d734d5581fce5bdbd5c94678bf404ff41fc6507a4fe
 Thus the earlier 209/19/runtime example checks apply to the unchanged runtime
 payload; metadata, wheel identities and installed sites remain distinct.
 The manufactured workflow caller passed a further six source controls.
-The ledger has used 497.800684 seconds; 402.199316 remain, including the 60-second
-reserve. This is consolidation-only authority, not a future feature-run budget.
+At the final installed-artifact check the ledger had used 497.800684 seconds;
+402.199316 remained, including the 60-second reserve. Later fixture checks have
+their own ledger receipts. This is consolidation-only authority, not a future
+feature-run budget. The dated runner is workstation-specific and uses the
+approved existing dependency staging directory; it is not a portable public API.
 
 Final supporting source review found no changed equations/tolerances in the
 fma fallback. It caught a stale archival report boolean claiming the now-separate
 corruption discriminator had executed; that unbound claim was removed. The
 archived comparison reports only its own executed profiles. No archived run
 was performed and no archival compatibility acceptance is claimed here.
+
+Additional bounded trace tests required an untracked detached-solid deck. Their
+algebra now uses manufactured Q8 face coordinates with identical dimensions,
+distinct side ownership and unchanged work/representability assertions. This
+does not replace external reference agreement. The two exact saved E02/E03
+deck/result regressions remain explicit historical-only nodes, alongside current
+portable generator/parser/oracle controls. A synthetic wrong-response witness
+keeps oracle refusal covered without historical raw inputs. Original failed
+evidence and its scientific disposition are untouched.
+All eight bounded trace controls passed; the repaired synthetic oracle control
+passed. Supporting independent source review confirmed no lost ordinary algebra
+assertion or unjustified node exclusion. Intermediate failed fixture attempts
+remain recorded. No new runtime package files changed in this final test slice.
 
 Main promotion requires successful full CI for the final branch head in
 [PR #63](https://github.com/audunarn/ANYsolver/pull/63).

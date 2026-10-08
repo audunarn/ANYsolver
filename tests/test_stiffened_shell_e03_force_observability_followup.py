@@ -190,6 +190,21 @@ def test_exact_single_preamble_accepts_synthetic_oracle():
     assert u[4][0] == .1 and g[4] == [0,0,0]
 
 
+def test_wrong_response_refused_with_valid_synthetic_preamble_and_hashes():
+    # A coherent receipt and successful parsing cannot establish physical
+    # agreement. Preserve this portable counterexample separately from the
+    # exact saved failed-execution regression, whose evidence is not in Git.
+    displacement,heading,forces=DAT.partition(b' forces ')
+    dat = b' S T E P 1\n INCREMENT 1\n'+displacement.replace(b'.1 0 0',b'0 0 0')+heading+forces.replace(
+        b'3 0 0 0\n4 0 0 0\n',b'3 2 0 0\n4 -2 0 0\n')
+    u,g=followup.read_analytic_dat(dat)
+    assert u[4][0]==0 and [g[n][0] for n in range(1,5)]==[1,-1,2,-2]
+    source=receipt();source['dat_sha256']=followup.sha(dat)
+    with pytest.raises(followup.FollowupError,match='oracle'):
+        followup.analytic_candidate(dat,STA,STDOUT,b'',receipt=source,
+                                    deck_sha256='a'*64,command=COMMAND)
+
+
 @pytest.mark.parametrize('prefix', [b'S T E P 2\nINCREMENT 1\n',b'S T E P 1\nINCREMENT 2\n',
     b'STEP 1\nINCREMENT 1\n', b'S T E P 1\nINCREMENT 1\nS T E P 1\nINCREMENT 1\n'])
 def test_wrong_or_repeated_preamble_refused(prefix):
