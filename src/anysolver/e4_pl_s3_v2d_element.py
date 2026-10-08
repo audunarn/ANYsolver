@@ -1693,6 +1693,52 @@ class NativeParityE4PLS3V2DShellElement(
             "implementation_id": IMPLEMENTATION_ID,
             "recovery_scope": "PHYSICAL_LOCAL_RESULTANTS_ONLY",
         }
+        if self.shell_section is None:
+            thickness = float(self.thickness)
+            if not math.isfinite(thickness) or thickness <= np.finfo(np.float64).tiny:
+                raise ValueError("S3 V2D recovery thickness must be positive")
+            membrane_stress = np.asarray(
+                recovered["membrane_resultants"], dtype=np.float64
+            ).reshape(3, 3) / thickness
+            bending_stress = 6.0 * np.asarray(
+                recovered["bending_resultants"], dtype=np.float64
+            ).reshape(3, 3) / (thickness * thickness)
+            owner_shear = np.asarray(
+                recovered["transverse_shear_resultants"], dtype=np.float64
+            ).reshape(3, 2) / thickness
+            result.update(
+                {
+                    "membrane_xx": membrane_stress[:, 0].copy(),
+                    "membrane_yy": membrane_stress[:, 1].copy(),
+                    "membrane_xy": membrane_stress[:, 2].copy(),
+                    "bending_xx": bending_stress[:, 0].copy(),
+                    "bending_yy": bending_stress[:, 1].copy(),
+                    "bending_xy": bending_stress[:, 2].copy(),
+                    "shear_xz": owner_shear[:, 0].copy(),
+                    "shear_yz": owner_shear[:, 1].copy(),
+                }
+            )
+            top = membrane_stress + bending_stress
+            bottom = membrane_stress - bending_stress
+            shear_square = owner_shear[:, 0] ** 2 + owner_shear[:, 1] ** 2
+
+            def von_mises(in_plane: np.ndarray) -> np.ndarray:
+                return np.sqrt(
+                    in_plane[:, 0] ** 2
+                    - in_plane[:, 0] * in_plane[:, 1]
+                    + in_plane[:, 1] ** 2
+                    + 3.0 * (in_plane[:, 2] ** 2 + shear_square)
+                )
+
+            result["von_mises"] = np.maximum(von_mises(top), von_mises(bottom))
+            result["equivalent_stress"] = result["von_mises"].copy()
+            result["equivalent_stress_measure"] = "von_mises"
+            result["physical_stress_available"] = True
+            result["physical_layer_recovery_available"] = True
+            result["recovery_scope"] = "PHYSICAL_LOCAL_SURFACE_STRESSES"
+        else:
+            result["physical_stress_available"] = False
+            result["physical_layer_recovery_available"] = False
         if not return_global:
             return result
 
@@ -1744,12 +1790,6 @@ class NativeParityE4PLS3V2DShellElement(
             result["physical_layer_recovery_available"] = False
             return result
 
-        thickness = float(self.thickness)
-        if not math.isfinite(thickness) or thickness <= np.finfo(np.float64).tiny:
-            raise ValueError("S3 V2D recovery thickness must be positive")
-        membrane_stress = membrane / thickness
-        bending_stress = 6.0 * bending / (thickness * thickness)
-        owner_shear = shear_resultant / thickness
         for surface, sign in (("bot", -1.0), ("top", 1.0)):
             in_plane = membrane_stress + sign * bending_stress
             local_tensors = np.zeros((3, 3, 3), dtype=np.float64)
