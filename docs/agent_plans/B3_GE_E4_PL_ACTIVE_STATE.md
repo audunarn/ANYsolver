@@ -60,6 +60,17 @@ declare a distinct matched footprint/material-spin comparison. A finer axial
 mesh does not distinguish those laws. E01 physical accuracy and the connection
 decision remain open; no existing comparison is relabeled.
 
+Bounded BL5 development discriminator, independent of the pending consumer
+packet: use the existing three-edge cantilever with finite eccentric bond and
+apply a pure +1 N m beam-tip moment about the shell normal. Distinguish (a)
+finite, balanced transfer through distributed line force with released local
+normal spin, (b) an unsupported physical/mechanical mode, and (c) numerical
+failure. Record effective runtime, work, equilibrium, global support wrench
+and distributed interface action. Outcome (a) advances only to matched physical
+reference design; (b) requires a law/support decision; (c) requires numerical
+diagnosis. One source development probe, CPU0/thread1/JIT-off, 2 GiB, 60-second
+process cap; no formal F03, ratio sweep, tolerance change or acceptance claim.
+
 ---
 
 # Common-main consolidation — 8 October 2026
