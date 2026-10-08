@@ -1,0 +1,71 @@
+{
+  "identity": "R8_BL5_CCX_MATCHED_MX_8X4X2_COMPARISON_DEV_V1",
+  "status": "DEVELOPMENT_COMPARISON_NOT_QUALIFIED",
+  "source_sha256": "25a21db5f251f2c209f8586cfa29bc4d2b7d6ffb1b7a09c34f9cc804c51ac15c",
+  "independent_sha256": "69ac74e73dcc63e306aecdfb3d21b32088350905dcefddb4f9f0122e78a4feb3",
+  "metadata_sha256": "610ee139115f05138e154a601b2cbc0ab46dee4c44daced1d1f9efd9f802b601",
+  "deck_sha256": "984ab66d68693a8b6393c95be48b475cce2dae02bf8d888bf9f4f4c46a6daa51",
+  "ccx_receipt_sha256": "0514ea50abf13ce70fc5b04c4dd09063e034860e76221ba9f25d05da806fe5a5",
+  "frd_sha256": "df3dd194d11fbdf431a0bd5ae4ac0219d7366362404dfd9b4ba7bc81e0a14c9c",
+  "nodes": 906,
+  "elements": 128,
+  "physical_dofs": 2718,
+  "physical_weak_rows": 40,
+  "kkt_nnz": 287157,
+  "ccx_applied_work_J": 0.000984473175679996,
+  "independent_applied_work_J": 0.0009844731758240765,
+  "saved_independent_applied_work_J": 0.000984473175778957,
+  "ccx_tip_spin_x_rad": 9.84473175679996e-05,
+  "ccx_root_support_wrench": [
+    -1.851212516612577e-10,
+    -5.7552513865744e-09,
+    -2.759961148512957e-09,
+    -9.999999997142414,
+    2.8551551817246335e-09,
+    6.740965563523105e-09
+  ],
+  "ccx_tip_wrench": [
+    0.0,
+    2.1316282072803006e-14,
+    4.618527782440651e-14,
+    10.0,
+    -4.618527782440651e-14,
+    2.1316282072803006e-14
+  ],
+  "ccx_global_wrench_balance": [
+    -1.851212516612577e-10,
+    -5.7552300702923276e-09,
+    -2.7599149632351327e-09,
+    2.857586167692716e-09,
+    2.855108996446809e-09,
+    6.7409868798051775e-09
+  ],
+  "ccx_interface_work_J": -2.710505431213761e-19,
+  "ccx_raw_root_rf_norm_N": 382.30948253595693,
+  "ccx_corrected_root_support_norm_N": 390.9970944576681,
+  "development_parity_checks": {
+    "displacement_parity": 1.803123647483224e-09,
+    "saved_independent_work": 4.5831118812439877e-11,
+    "independent_equation": 8.968622766416118e-17,
+    "weak_gap": 3.049318610115481e-20,
+    "free_equilibrium": 3.437927895938144e-10,
+    "raw_reaction": 5.085698039254283e-13,
+    "physical_support": 5.984140432739452e-09,
+    "force_balance": 5.7552300702923276e-09,
+    "moment_balance": 6.740986879805178e-10,
+    "work_balance": 1.4200781317931555e-10
+  },
+  "development_parity_limits": {
+    "displacement_parity": 1e-06,
+    "saved_independent_work": 1e-06,
+    "independent_equation": 1e-06,
+    "weak_gap": 1e-09,
+    "free_equilibrium": 1e-06,
+    "raw_reaction": 1e-06,
+    "physical_support": 1e-06,
+    "force_balance": 1e-06,
+    "moment_balance": 1e-06,
+    "work_balance": 1e-06
+  },
+  "limitation": "Same-law executed C3D20 deck parity only; resolved-work refinement and native BL5/F03 connection acceptance remain open"
+}

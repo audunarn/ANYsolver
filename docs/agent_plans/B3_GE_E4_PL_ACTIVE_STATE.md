@@ -248,6 +248,34 @@ decision; it does not reject the continuous law. Next prepare one executed
 finer matched external deck with exact weak-row, root and section-torque work
 and a resolved-shell convergence check. Do not spend formal F03 authority or
 select P0 from these linear development results. No broad refinement sweep.
+Immediate external smoke comparison: use the matched 8×4×2 solid model and
+its 40 exact five-channel P0 rows, same shell root and area-dual Mx traction.
+Row-reduce only for CalculiX `*EQUATION` elimination and prove the serialized
+rows span the original constraints; bind the independent sparse KKT result.
+Execute the pinned CalculiX binary once under the existing one-job CPU0,
+thread/JIT and memory/time ceilings, then parse DOUBLE U/RF and check all-node
+displacements, weak gaps, multipliers, physical support wrench and work.
+Parity permits using the independently assembled matched series as a credible
+development reference and motivates a still-finer executed case; a row, load,
+solver or parser mismatch is repaired before any physical inference. Neither
+outcome closes the full external/refinement or F03 gate.
+
+The pinned 8×4×2 CalculiX deck now executed one accepted increment with 40
+exact five-channel rows. Parsed DOUBLE U/RF and independently reassembled
+physical-row KKT passed every declared development check: relative all-node
+displacement `1.803e-9`, scaled weak gap `3.05e-20`, corrected support
+comparison `5.98e-9`, and applied work `0.000984473175680 J` versus saved
+independent `0.000984473175779 J`. The first sandboxed CalculiX launch failed
+before process creation (`WinError 623`); its evidence remains intact. The
+successful new attempt and [complete result](../../.development/bl5-ccx-matched-mx-8x4x2-20261008-v2/results.md)
+establish same-law external parity at this resolution, not native accuracy.
+The matched resolved work still moves about 2.5% between 8×4×2 and 16×8×4.
+Next distinguish resolved-shell discretization from beam/interface change by
+one bounded shell-only refinement at fixed 16×8×4 beam and 80-row action,
+using the existing indexed operators. Its possible outcomes are: substantial
+work movement → refine/qualify the physical reference; stable work but a
+persistent native difference → inspect connection/body work maps. No automatic
+broader sweep, F03 assessment or line-law selection follows this parity.
 
 ## Delivered experimental behavior and open acceptance
 

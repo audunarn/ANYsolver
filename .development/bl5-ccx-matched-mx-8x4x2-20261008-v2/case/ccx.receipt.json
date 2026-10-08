@@ -1,0 +1,45 @@
+{
+  "identity": "R8_BL5_CCX_MATCHED_MX_8X4X2_EXECUTION_DEV_V1",
+  "status": "EXITED",
+  "exit_code": 0,
+  "command": [
+    "C:\\Github\\ANYsolver\\.qualification\\b3-ge-e4-pl\\calculix-223\\CalculiX-2.23.0-win-x64\\bin\\ccx.exe",
+    "-i",
+    "weak"
+  ],
+  "launch_error": null,
+  "cwd": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-ccx-matched-mx-8x4x2-20261008-v2\\case",
+  "executable_sha256": "27a9426a1ee2f72c38fbe892e0ffaf38e14867628ffd0235770261b6f3ec9c5f",
+  "deck_sha256": "984ab66d68693a8b6393c95be48b475cce2dae02bf8d888bf9f4f4c46a6daa51",
+  "prep_receipt_sha256": "5b3292d5648345a79861ab7ad01b9a7b707287428b7e9066a87bff098b5be698",
+  "wall_seconds": 0.16413900000043213,
+  "process_cap_seconds": 120,
+  "process_started": true,
+  "process_wall_seconds": 0.16413900000043213,
+  "cumulative_allowance_seconds": 180,
+  "cumulative_used_seconds": 0.16413900000043213,
+  "cumulative_remaining_seconds": 179.83586099999957,
+  "peak_sampled_process_tree_rss_bytes": 17874944,
+  "memory_cap_bytes": 2147483648,
+  "cpu_affinity_observed": [
+    0
+  ],
+  "requested_threads": 1,
+  "jit_disabled_requested": true,
+  "environment": {
+    "OPENBLAS_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_NUM_THREADS": "1",
+    "NUMBA_DISABLE_JIT": "1",
+    "PATH": "C:\\Github\\ANYsolver\\.qualification\\b3-ge-e4-pl\\calculix-223\\CalculiX-2.23.0-win-x64\\bin;C:\\Windows\\System32;C:\\Windows"
+  },
+  "file_sha256": {
+    "weak.12d": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "weak.cvg": "7949113325cb32be7bffd2b865928ef5606322c0f7f08d37a302e5063b074593",
+    "weak.dat": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "weak.frd": "df3dd194d11fbdf431a0bd5ae4ac0219d7366362404dfd9b4ba7bc81e0a14c9c",
+    "weak.inp": "984ab66d68693a8b6393c95be48b475cce2dae02bf8d888bf9f4f4c46a6daa51",
+    "weak.sta": "253efd59462bae0a6fce7b06552a063c82349747e482366b56da923c68b7ca9d"
+  }
+}
