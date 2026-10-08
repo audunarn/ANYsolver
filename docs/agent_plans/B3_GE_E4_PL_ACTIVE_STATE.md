@@ -277,6 +277,22 @@ work movement → refine/qualify the physical reference; stable work but a
 persistent native difference → inspect connection/body work maps. No automatic
 broader sweep, F03 assessment or line-law selection follows this parity.
 
+The fixed-beam, fixed-80-row 16×8×4 C3D20 screen is now resolved at three
+separate shell directions. Doubling thickness cells changed work by `+0.1041%`,
+doubling transverse cells by `+0.4354%`, and doubling axial cells by `+1.3122%`.
+All final runs passed the unchanged physical checks; the thickness
+global-wrench result was close to its bound (`9.51e-9` versus `1e-8`). Its
+first guard failure and the explicit failed-control diagnostic are preserved.
+[Results and receipts](../../.development/bl5-mx-shell-single-axis-20261008-results.md).
+The changes are separate and non-additive; axial shell resolution materially
+contributes to the earlier ~2.5% matched-level resolved-work shift. **Next**
+hold the shell fixed and change beam/interface resolution together under the
+declared material trace rule, then compare supported local transfer as well
+as work. If both domains converge with a persistent difference, inspect the
+continuous native/solid work map. Do not infer BL5 fidelity or select P0
+from these one-axis development screens. F03 remains unconsumed and G0/G1
+acceptance open.
+
 ## Delivered experimental behavior and open acceptance
 
 - The sparse multi-element Q4/mixed Q4-S3/all-S3 GE point workflow, physical

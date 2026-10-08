@@ -1,0 +1,12 @@
+Failed to find real location of C:\Python\Python314\python.exe
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_mx_shell_thickness_dev.py", line 99, in <module>
+    main()
+    ~~~~^^
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_mx_shell_thickness_dev.py", line 71, in main
+    result = coupled._solve(model, body, c, scale, load, tip)
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_mx_coupled_body_refinement_dev.py", line 119, in _solve
+    raise ValueError("coupled equilibrium, gap, physical work, or wrench failed")
+ValueError: coupled equilibrium, gap, physical work, or wrench failed

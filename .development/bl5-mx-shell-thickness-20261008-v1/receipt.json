@@ -1,0 +1,32 @@
+{
+  "identity": "R8_BL5_MX_SHELL_THICKNESS_RUN_V1",
+  "status": "EXITED",
+  "exit_code": 1,
+  "launch_error": null,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-m",
+    "scripts.r8_bl5_mx_shell_thickness_dev",
+    "--independent",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-mx-matched-refinement-20261008-v1\\levels\\16x8x4.json",
+    "--output",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-mx-shell-thickness-20261008-v1\\result.json"
+  ],
+  "source_sha256": "e9c07897bbfd272880098a679cc164a5593a0ab3261abc11e2de2939527ebcc9",
+  "independent_sha256": "c81720f503d972dff685ec114446eece5abeef4c1d7d9a1d9df56cf43ff79729",
+  "source_commit": "a9905f00065c9effb37f67b4061e86c634db1385",
+  "result_sha256": null,
+  "process_started": true,
+  "wall_seconds": 8.340356100001372,
+  "process_cap_seconds": 120,
+  "cumulative_allowance_seconds": 180,
+  "cumulative_used_seconds": 8.340356100001372,
+  "cumulative_remaining_seconds": 171.65964389999863,
+  "memory_cap_bytes": 2147483648,
+  "peak_sampled_process_tree_rss_bytes": 920383488,
+  "cpu_affinity_observed": [
+    0
+  ],
+  "threads_requested": 1,
+  "jit_disabled_requested": true
+}
