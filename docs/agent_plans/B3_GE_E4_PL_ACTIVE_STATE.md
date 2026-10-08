@@ -92,6 +92,18 @@ FE stress balance must be handled explicitly. V6 one-use authority is
 consumed; [the adjudication](../../.development/bl5-mz-common-beam-20261008/v6-sided-face-adjudication.md)
 binds the raw receipt. A future saved-only volume-work/nodal-action audit is
 the discriminating route; no automatic refinement, V6 rerun or F03 follows.
+The V7 [saved nodal-port extractor](../../scripts/r8_bl5_saved_nodal_port_dev.py)
+is now source-prepared and **unrun**. It integrates each original C3D20 beam
+element's `B^T sigma` action from the saved V5 displacement, partitions the
+physical P0 interface load by its original left/right integration intervals,
+and reconstructs the separately saved end traction. It reports side cut-node
+ports, full nodal/rigid-projected work, noncut residuals, gauge contribution,
+and the disagreement with V6 raw face tractions. An independent read-only
+review found no blocking source defect after the load-partition correction.
+The bounded decision is whether the saved weak nodal actions form a balanced,
+work-conjugate section port despite V6's unbalanced raw stress-face recovery.
+Even a positive result would not establish native B3 port equivalence, BL5
+accuracy or F03 acceptance. Numerical V7 execution has no authority yet.
 
 The scoped S3 V2D elastic recovery fix is now a separate **draft PR #65**
 against common main: `codex/s3-v2d-surface-recovery` at `974f283a`, based on
