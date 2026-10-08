@@ -1,4 +1,9 @@
-**Current status: PAUSED by user on 7 October 2026.** Resume only after user direction; exact restart state is in B3_GE_E4_PL_ACTIVE_STATE.md.
+**Current status: ACTIVE after the user's 8 October 2026 resumption.** The
+complete objective below is unchanged. The common-main baseline is `cff55d95`,
+and the active development checkout is `codex/stiffened-rev8-resume`. See
+[B3_GE_E4_PL_ACTIVE_STATE.md](B3_GE_E4_PL_ACTIVE_STATE.md) for current evidence,
+pending authority and next action. Earlier pause and canonical-path statements
+below are historical; no qualification or release boundary changes.
 
 # B3-GE / E4-PL stiffened shells: Revision 8 goal
 
