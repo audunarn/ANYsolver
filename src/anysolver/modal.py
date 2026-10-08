@@ -2229,7 +2229,7 @@ def _solve_free_vibration_under_lease(
         float(sparse_linalg.norm(K_sym)) if descriptor_modal else 0.0
     )
     mass_operator_norm = float(sparse_linalg.norm(M_sym)) if descriptor_modal else 0.0
-    if descriptor_modal and Q.shape[1]:
+    if Q.shape[1]:
         mass_times_rigid = np.asarray(M_sym @ Q, dtype=float)
         rigid_mass_gram = np.asarray(Q.T @ mass_times_rigid, dtype=float)
         rigid_mass_inverse = np.linalg.pinv(
@@ -2294,20 +2294,20 @@ def _solve_free_vibration_under_lease(
             )
         )
         reduced_norm = float(np.linalg.norm(reduced))
-        if descriptor_modal:
-            if Q.shape[1]:
-                coefficients = rigid_mass_inverse @ (mass_times_rigid.T @ reduced)
-                projected = Q @ coefficients
-                projected_mass = float(projected @ (M_sym @ projected))
-                rigid_corr = float(
-                    np.sqrt(max(projected_mass, 0.0) / max(modal_mass, np.finfo(float).tiny))
-                )
-            else:
-                rigid_corr = 0.0
-            rigid_corr = min(max(rigid_corr, 0.0), 1.0)
+        # Normalized whole-rigid-subspace measure: the fraction of modal mass
+        # captured by the mass-orthogonal projection onto span(Q).  Unlike a
+        # per-coefficient test against a Euclidean basis, it is invariant under
+        # orthogonal re-mixing of Q and under mass-matrix rescaling.
+        if Q.shape[1]:
+            coefficients = rigid_mass_inverse @ (mass_times_rigid.T @ reduced)
+            projected = Q @ coefficients
+            projected_mass = float(projected @ (M_sym @ projected))
+            rigid_corr = float(
+                np.sqrt(max(projected_mass, 0.0) / max(modal_mass, np.finfo(float).tiny))
+            )
         else:
-            # Preserve the established Q4/legacy/beam result semantics exactly.
-            rigid_corr = float(np.max(np.abs(Q.T @ reduced))) if Q.shape[1] else 0.0
+            rigid_corr = 0.0
+        rigid_corr = min(max(rigid_corr, 0.0), 1.0)
         omega = float(np.sqrt(max(eig, 0.0)))
         frequency = omega / (2.0 * np.pi)
         residual = np.asarray(
