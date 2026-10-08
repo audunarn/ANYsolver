@@ -69,9 +69,17 @@ Stop loaded refinements here. Read-only source inspection found that
 five channel densities, including beam x-spin, on the supported globally
 affine common subspace. They do not cover arbitrary broken native half-cell
 traces. Reuse their existing accepted execution evidence where bound; check
-its identity before citing it. Advance the off-common trace-space and growing
-interface stability question under the prospective F03 contract; no new
-common-field helper is needed. Do not select a line law from these results.
+its identity before citing it. The prospective F03 draft also records a
+physical-core continuity obstruction for the unsmoothed L1 yaw/P0 pairing on
+anisotropic grids; its finite-area patch is a distinct distributing law, not
+an accepted bonded-line replacement. Before another loaded solve or generic
+growing-space spectrum, identify a supported off-common motion, evaluate its
+continuous physical gap and work, and decide whether the declared bond
+prohibits it. If prohibited, correct the continuous work map before selecting
+an interface space; if admissible, retain its semantics and test physical
+transfer. Only a law with a justified work norm advances to the prospective
+growing-space F03 assessment. No new common-field helper is needed. Do not
+select a line law from the saved ratios.
 
 ## Delivered experimental behavior and open acceptance
 
