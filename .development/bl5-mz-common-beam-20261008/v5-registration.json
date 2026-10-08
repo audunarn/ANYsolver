@@ -1,0 +1,17 @@
+{
+  "identity": "BL5_MZ_COMMON_BEAM_V5_EXACT_FACE_DEV",
+  "status": "PENDING_AUTHORITY",
+  "authority": null,
+  "source_commit": "95efd07f1b024ffe7c8ec105e11f18f0c3fe962c",
+  "source_sha256": "996cd5e908c973b95628d7e49ab4d9b0f3bebea18a58d4e0441c0edaf0eb48e1",
+  "face_source_sha256": "9a37d949298e494e099e6eb8eab02790ef03a0199645c9c227f4ea447d52c6db",
+  "scope": "one common-density beam-only comparison; no F03, Fz retry, sweep, criteria change or acceptance",
+  "process_cap_seconds": 30,
+  "memory_bytes": 2147483648,
+  "cpu_affinity": [
+    0
+  ],
+  "numerical_threads": 1,
+  "jit": "disabled",
+  "historical_v4": "FAILED_CLOSED"
+}
