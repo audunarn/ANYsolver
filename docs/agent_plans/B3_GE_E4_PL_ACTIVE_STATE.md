@@ -98,6 +98,20 @@ The sampled parent RSS field is not a reliable process-tree peak. The next
 decision still requires physical work and a justified norm for the disputed
 off-ratio mode before any formal F03 comparison.
 
+Reuse the already reconstructed **2:1 x8/B3-14 Fy/rotation mode** for that
+decision. Historical saved-state checks found a nonzero continuous six-channel
+gap, actual L1 work-transpose parity, positive shell/native physical energy,
+and substantial unresolved twist under some fixed spaces; they did not find a
+sign defect or qualify a multiplier basis. The corrected same-virgin-field
+L1/finite-patch comparison attributes their difference to signed shell virtual
+work, mainly pitch, without proving a loaded response or physical fidelity.
+[Saved projection and limits](<C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling/.qualification/b3-ge-e4-pl/r7-f03-fy-saved-projection-dev-20260929-v1/manifest.md>)
+and the [historical decision](B3_GE_E4_PL_ACTIVE_STATE_HISTORY_R8_20260929.md)
+therefore replace another reconstruction or refinement. The discriminating
+next work is a matched physical bond/reference declaration with local slip and
+traction/couple work, followed by the justified growing-space norm and mixed
+system check. Do not infer the connection law from either saved quotient.
+
 ## Delivered experimental behavior and open acceptance
 
 - The sparse multi-element Q4/mixed Q4-S3/all-S3 GE point workflow, physical
