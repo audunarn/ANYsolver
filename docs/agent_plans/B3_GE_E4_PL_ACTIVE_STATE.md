@@ -1,5 +1,17 @@
 # Active development — 8 October 2026
 
+One expressly authorized BL5 V5 exact-face beam-only diagnostic completed:
+the resolved and native body equilibrium ratios are `1.6071e-12` and
+`3.9385e-12`, respectively, with the three prior tiny-load rows now exactly
+zero. The paired work ratio under the same projected weak P0 density is
+`7.24284444` (resolved `2.40980606e-7 J`, native `1.74538504e-6 J`).
+This is a development comparison between distinct primal/retained spaces,
+not a law-selection or physical-accuracy result. V5 consumed its one-use
+authority in 2.8735119 s; [adjudication](../../.development/bl5-mz-common-beam-20261008/v5-adjudication.md)
+and raw receipt are preserved. The next discriminating work must isolate
+beam-body representation from connection transfer; no automatic refinement
+or F03 run follows.
+
 The scoped S3 V2D elastic recovery fix is now a separate **draft PR #65**
 against common main: `codex/s3-v2d-surface-recovery` at `974f283a`, based on
 `cff55d95`. Its three product/test files are byte-identical to the installed
@@ -16,10 +28,10 @@ are structural zeros, independent of multipliers. The old 3.5665e-16 N load
 arose in floating face interpolation. A candidate exact-face coordinate
 correction and source-only regression now pass for the three top tiny-load
 rows, slots 55/58/130 (3 passed, 9 deselected).
-This does not repair the saved 9.1302e-13 N high-precision equilibrium
-residual or reopen the CLOSED V4 ledger. V4 remains FAILED; no numerical
-retry, active-row criterion change, F03 execution, or Fz body retry occurred.
-The next solved comparison needs separately valid authority. Astra handled
+This does not repair the saved 9.1302e-13 N V4 high-precision equilibrium
+residual or reopen its CLOSED ledger. V4 remains FAILED; V5 is a distinct
+new attempt. No active-row criterion change, F03 execution or Fz body retry
+occurred. Further solved comparisons need separately valid authority. Astra handled
 this reserved source/mechanics decision directly while the recorded Mistral
 and local workers remain unavailable for this task.
 Main and origin/main still point to `cff55d95`; the main checkout has unrelated

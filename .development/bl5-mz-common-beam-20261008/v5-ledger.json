@@ -1,0 +1,17 @@
+{
+  "identity": "BL5_MZ_COMMON_BEAM_V5_EXACT_FACE_DEV",
+  "status": "CLOSED_DEVELOPMENT_SOLVED_NOT_ACCEPTED",
+  "authority": "User explicitly approved the single 30-second BL5 V5 diagnostic in this task on 2026-10-08",
+  "attempt_count": 1,
+  "allowance_seconds": 30.0,
+  "used_seconds": 2.8735119000048144,
+  "untransferable_unused_seconds": 27.126488099995186,
+  "receipt": "receipt-v5.json",
+  "receipt_sha256": "2303ab974f75acae3e093c545c3cc8eb17c0e36415b97f87829c0ef511640139",
+  "result": "case-v5/result.json",
+  "result_sha256": "b8dbec0ce3751cad8e273ec50f1b1032010e97ffa2da6494a9c0ad1d706d3e33",
+  "source_commit": "fb129c78067e86f2acce3fe54eb98afa4b093d5b",
+  "historical_v4": "FAILED_CLOSED",
+  "formal_F03_runs": 0,
+  "historical_Fz_retry_runs": 0
+}

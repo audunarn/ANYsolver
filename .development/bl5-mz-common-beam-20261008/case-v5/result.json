@@ -1,0 +1,151 @@
+{
+  "identity": "R8_BL5_MZ_COMMON_BEAM_ACTION_DEV_V2",
+  "status": "DEVELOPMENT_BODY_SOLVED_NOT_ACCEPTED",
+  "compute_inventory": {
+    "resolved_coupled_RHS": 1,
+    "resolved_beam_RHS": 1,
+    "native_beam_RHS": 1,
+    "native_coupled_RHS": 0,
+    "native_shell_RHS": 0,
+    "external_runs": 0,
+    "formal_F03_runs": 0
+  },
+  "common_density": [
+    [
+      0.0,
+      -0.0,
+      0.0,
+      -0.0
+    ],
+    [
+      -4.7456776488556045,
+      27.120779906391043,
+      -56.004526866022005,
+      33.62942460852443
+    ],
+    [
+      -0.0,
+      -0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      -0.0,
+      0.0,
+      -0.0
+    ],
+    [
+      -0.07096295698508709,
+      0.2497208873416905,
+      -0.3871558319795584,
+      0.20839790162290836
+    ]
+  ],
+  "symmetry": {
+    "status": "CALCULATED_NOT_VALIDATED",
+    "physical_reflection": "(x,y,z)->(x,-y,z); displacement signs (-,+,-)",
+    "five_channel_parity": [
+      -1.0,
+      1.0,
+      -1.0,
+      -1.0,
+      1.0
+    ],
+    "k_relative_equivariance_error": 4.3565758673867296e-16,
+    "c_relative_equivariance_error": 0.0,
+    "load_relative_parity_error": 0.0,
+    "coupled_state_relative_parity_error": 5.872977703881714e-11,
+    "density_relative_parity_error": 4.426138126399016e-11,
+    "fixed_supports_reflection_invariant": true,
+    "projected_density_channel_major": [
+      [
+        0.0,
+        -0.0,
+        0.0,
+        -0.0
+      ],
+      [
+        -4.7456776488556045,
+        27.120779906391043,
+        -56.004526866022005,
+        33.62942460852443
+      ],
+      [
+        -0.0,
+        -0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        -0.0,
+        0.0,
+        -0.0
+      ],
+      [
+        -0.07096295698508709,
+        0.2497208873416905,
+        -0.3871558319795584,
+        0.20839790162290836
+      ]
+    ],
+    "removed_density_channel_major": [
+      [
+        1.23941885806319e-09,
+        -1.2182803307313047e-09,
+        3.394796701267661e-10,
+        -3.640785865962174e-10
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        -3.698965417584371e-13,
+        -8.072030724731325e-11,
+        2.601673077998665e-11,
+        3.040497924327775e-11
+      ],
+      [
+        4.976293339247016e-11,
+        -3.8433446599923824e-11,
+        2.4339785485362747e-11,
+        -9.393570808087208e-12
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "projected_original_equilibrium_ratio": 1.1691260623070736e-11
+  },
+  "continuum_beam_body_work_J": 2.409806056950254e-07,
+  "native_beam_body_work_J": 1.7453850409980502e-06,
+  "work_difference_J": 1.5044044353030248e-06,
+  "work_ratio": 7.242844443701555,
+  "native_equation_ratio": 3.938494783495594e-12,
+  "native_material_energy_relative_error": 0.0,
+  "reference_beam_wrench_N_Nm": [
+    3.552713678800501e-15,
+    -9.465872530256547e-12,
+    0.0,
+    8.299610998463436e-14,
+    1.2767564783189299e-17,
+    3.7965122712257934e-12
+  ],
+  "native_beam_wrench_N_Nm": [
+    0.0,
+    -9.466205597163935e-12,
+    0.0,
+    8.310019339319297e-14,
+    0.0,
+    3.796074565798335e-12
+  ],
+  "interpretation": "same P0 physical density on proven common trace fields; different primal beam spaces and native retained half-cell ports remain",
+  "limitations": "not a coupled native response or standalone constitutive compliance; no line-law, physical-accuracy, F03 or gate acceptance"
+}

@@ -1,7 +1,7 @@
 {
   "identity": "BL5_MZ_COMMON_BEAM_V5_EXACT_FACE_DEV",
-  "status": "PENDING_AUTHORITY",
-  "authority": null,
+  "status": "CONSUMED",
+  "authority": "User explicitly approved the single 30-second BL5 V5 diagnostic in this task on 2026-10-08",
   "source_commit": "95efd07f1b024ffe7c8ec105e11f18f0c3fe962c",
   "source_sha256": "996cd5e908c973b95628d7e49ab4d9b0f3bebea18a58d4e0441c0edaf0eb48e1",
   "face_source_sha256": "9a37d949298e494e099e6eb8eab02790ef03a0199645c9c227f4ea447d52c6db",
@@ -13,5 +13,7 @@
   ],
   "numerical_threads": 1,
   "jit": "disabled",
-  "historical_v4": "FAILED_CLOSED"
+  "historical_v4": "FAILED_CLOSED",
+  "receipt_sha256": "2303ab974f75acae3e093c545c3cc8eb17c0e36415b97f87829c0ef511640139",
+  "result_sha256": "b8dbec0ce3751cad8e273ec50f1b1032010e97ffa2da6494a9c0ad1d706d3e33"
 }

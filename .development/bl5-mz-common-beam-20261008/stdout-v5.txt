@@ -1,0 +1,1 @@
+{"status": "DEVELOPMENT_BODY_SOLVED_NOT_ACCEPTED", "continuum_beam_body_work_J": 2.409806056950254e-07, "native_beam_body_work_J": 1.7453850409980502e-06, "work_ratio": 7.242844443701555, "native_equation_ratio": 3.938494783495594e-12}

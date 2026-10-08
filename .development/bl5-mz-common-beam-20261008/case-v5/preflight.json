@@ -1,0 +1,306 @@
+{
+  "identity": "R8_BL5_MZ_COMMON_BEAM_ACTION_DEV_V2",
+  "status": "PREFLIGHT_ONLY",
+  "model_sha256": "a22170179b6e257a47288ff825a3b69ad503e5e3c4a040fcd5f3b53933c86463",
+  "reference_end_faces": [
+    7,
+    8
+  ],
+  "end_traction_rigid_work_N_Nm": [
+    -3.552713678800501e-15,
+    0.0,
+    0.0,
+    0.0,
+    1.2767564783189299e-17,
+    1.0000000000000002
+  ],
+  "parity_roundoff_N": 1.7763568394002505e-15,
+  "reference_body_load_parity_roundoff_N": 0.0,
+  "continuum_coupled_checks": {
+    "free_equilibrium_ratio": 2.0509267766074977e-12,
+    "compatibility": 4.235164736271502e-22,
+    "internal_work_relative_error": 1.700029556330159e-11,
+    "interface_work_relative_error": 3.2854939390071394e-16,
+    "applied_pairing_J": 6.445248134518471e-07,
+    "matrix_dimension": 287,
+    "matrix_nnz": 20276
+  },
+  "original_reference_density_channel_major": [
+    [
+      1.23941885806319e-09,
+      -1.2182803307313047e-09,
+      3.394796701267661e-10,
+      -3.640785865962174e-10
+    ],
+    [
+      -4.7456776488556045,
+      27.120779906391043,
+      -56.004526866022005,
+      33.62942460852443
+    ],
+    [
+      -3.698965417584371e-13,
+      -8.072030724731325e-11,
+      2.601673077998665e-11,
+      3.040497924327775e-11
+    ],
+    [
+      4.976293339247016e-11,
+      -3.8433446599923824e-11,
+      2.4339785485362747e-11,
+      -9.393570808087208e-12
+    ],
+    [
+      -0.07096295698508709,
+      0.2497208873416905,
+      -0.3871558319795584,
+      0.20839790162290836
+    ]
+  ],
+  "projected_common_density_channel_major": [
+    [
+      0.0,
+      -0.0,
+      0.0,
+      -0.0
+    ],
+    [
+      -4.7456776488556045,
+      27.120779906391043,
+      -56.004526866022005,
+      33.62942460852443
+    ],
+    [
+      -0.0,
+      -0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      -0.0,
+      0.0,
+      -0.0
+    ],
+    [
+      -0.07096295698508709,
+      0.2497208873416905,
+      -0.3871558319795584,
+      0.20839790162290836
+    ]
+  ],
+  "symmetry": {
+    "status": "CALCULATED_NOT_VALIDATED",
+    "physical_reflection": "(x,y,z)->(x,-y,z); displacement signs (-,+,-)",
+    "five_channel_parity": [
+      -1.0,
+      1.0,
+      -1.0,
+      -1.0,
+      1.0
+    ],
+    "k_relative_equivariance_error": 4.3565758673867296e-16,
+    "c_relative_equivariance_error": 0.0,
+    "load_relative_parity_error": 0.0,
+    "coupled_state_relative_parity_error": 5.872977703881714e-11,
+    "density_relative_parity_error": 4.426138126399016e-11,
+    "fixed_supports_reflection_invariant": true,
+    "projected_density_channel_major": [
+      [
+        0.0,
+        -0.0,
+        0.0,
+        -0.0
+      ],
+      [
+        -4.7456776488556045,
+        27.120779906391043,
+        -56.004526866022005,
+        33.62942460852443
+      ],
+      [
+        -0.0,
+        -0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        -0.0,
+        0.0,
+        -0.0
+      ],
+      [
+        -0.07096295698508709,
+        0.2497208873416905,
+        -0.3871558319795584,
+        0.20839790162290836
+      ]
+    ],
+    "removed_density_channel_major": [
+      [
+        1.23941885806319e-09,
+        -1.2182803307313047e-09,
+        3.394796701267661e-10,
+        -3.640785865962174e-10
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        -3.698965417584371e-13,
+        -8.072030724731325e-11,
+        2.601673077998665e-11,
+        3.040497924327775e-11
+      ],
+      [
+        4.976293339247016e-11,
+        -3.8433446599923824e-11,
+        2.4339785485362747e-11,
+        -9.393570808087208e-12
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "projected_original_equilibrium_ratio": 1.1691260623070736e-11
+  },
+  "reference_beam_wrench_N_Nm": [
+    3.552713678800501e-15,
+    -9.465872530256547e-12,
+    0.0,
+    8.299610998463436e-14,
+    1.2767564783189299e-17,
+    3.7965122712257934e-12
+  ],
+  "native_beam_wrench_N_Nm": [
+    0.0,
+    -9.466205597163935e-12,
+    0.0,
+    8.310019339319297e-14,
+    0.0,
+    3.796074565798335e-12
+  ],
+  "continuum_coupled_beam_work_J": 2.409806056945185e-07,
+  "native_beam_load_covector": [
+    0.0,
+    0.5932097061069506,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -2.79688778219193,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    3.61046836995387,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    2.7968877821871967,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -4.203678076065554,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.01785184312014526,
+    0.0,
+    0.0,
+    -0.1409756274625102,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.32324499350027547,
+    0.0,
+    0.0,
+    -0.2001212091582061,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "source_sha256": {
+    "native": "068ae3ae16fe167d3052a02e8ecf0b7c6c0c3ba83f0db1f79ab5dfd07a75d9a8",
+    "continuum": "9a37d949298e494e099e6eb8eab02790ef03a0199645c9c227f4ea447d52c6db",
+    "port": "662fcd5350c09dfc2e448392f588abc2658f277760f54c3d68dddc545f917f6a",
+    "mz": "c673796c5ffe971d01e8bdfdff2e32bf0c54e8bb34052b6d45987602f87fb312"
+  },
+  "runtime": {
+    "cpu_affinity": [
+      0
+    ],
+    "numba_disable_jit": 1,
+    "numba_threads": 1,
+    "loaded_threadpools": [
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+        "version": "0.3.31.188.0",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      },
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+        "version": "0.3.30",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      }
+    ]
+  }
+}

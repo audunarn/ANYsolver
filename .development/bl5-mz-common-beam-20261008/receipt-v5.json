@@ -1,0 +1,39 @@
+{
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-I",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\scripts\\r8_bl5_mz_common_beam_action_dev.py",
+    "--output",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-mz-common-beam-20261008\\case-v5"
+  ],
+  "cwd": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008",
+  "source_sha256": "996cd5e908c973b95628d7e49ab4d9b0f3bebea18a58d4e0441c0edaf0eb48e1",
+  "face_source_sha256": "9a37d949298e494e099e6eb8eab02790ef03a0199645c9c227f4ea447d52c6db",
+  "authority": "User explicitly approved the single 30-second BL5 V5 diagnostic in this task on 2026-10-08",
+  "source_commit": "fb129c78067e86f2acce3fe54eb98afa4b093d5b",
+  "effective_cpu_affinity": [
+    0
+  ],
+  "environment": {
+    "NUMBA_DISABLE_JIT": "1",
+    "NUMBA_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "BLIS_NUM_THREADS": "1",
+    "VECLIB_MAXIMUM_THREADS": "1"
+  },
+  "process_wall_seconds": 2.8735119000048144,
+  "process_cap_seconds": 30.0,
+  "cumulative_allowance_seconds": 30.0,
+  "prior_consumed_seconds": 0.0,
+  "consumed_seconds": 2.8735119000048144,
+  "remaining_seconds": 27.126488099995186,
+  "sampled_peak_rss_bytes": 166604800,
+  "memory_limit_bytes": 2147483648,
+  "exit_code": 0,
+  "stop_reason": null,
+  "output": "case-v5/result.json",
+  "stdout": "stdout-v5.txt",
+  "stderr": "stderr-v5.txt"
+}
