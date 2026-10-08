@@ -38,6 +38,18 @@ before integration. Complete independent consumer review before integration.
 No F03, E03, body retry, old campaign, release or production qualification is
 implied. The programme's G0–G6/F01–F13/V01–V28/B01–B18 obligations remain open.
 
+Physical-reference lane, independent of the pending consumer run: the pinned
+CalculiX 2.23 executable used by E02 is present and its recorded SHA-256
+matches. E01's saved cross-work review allocates the torque discrepancy mainly
+to membrane/normal-spin work, while the later material-frame control shows a
+nodal `theta_z` motion changes the six-row point port but leaves the recovered
+polar-spin port fixed. Thus an expanded-face material-spin comparison cannot
+score the six-row nodal law as the *same* connection. Before another external
+solve, define an executable, work-conjugate six-row reference or explicitly
+declare a distinct matched footprint/material-spin comparison. A finer axial
+mesh does not distinguish those laws. E01 physical accuracy and the connection
+decision remain open; no existing comparison is relabeled.
+
 ---
 
 # Common-main consolidation — 8 October 2026
