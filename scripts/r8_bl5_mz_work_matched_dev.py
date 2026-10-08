@@ -33,7 +33,7 @@ from scripts import r8_bl5_matched_native_reference as native
 from scripts import r8_bl5_weak_continuum_reference as continuum
 
 
-IDENTITY = "R8_BL5_MZ_WORK_MATCHED_DEV_V1"
+IDENTITY = "R8_BL5_MZ_WORK_MATCHED_DEV_V2"
 MOMENT_NM = 1.0
 
 
@@ -208,6 +208,35 @@ def evaluate():
             "beam", tip, (0., 0., 0., 0., 0., MOMENT_NM)),))
         if response.status != "completed":
             raise ValueError("native reference-linear Mz solve incomplete")
+        if lam.shape != (20,) or response.multipliers.shape != (20,):
+            raise ValueError("unchanged five-channel by four-edge P0 layout required")
+        reference_density = lam.reshape(5, 4).copy()
+        native_equivalent_density = -response.multipliers.reshape(5, 4).copy()
+        edge_x = np.asarray([station["x"] for station in model["stations"]])
+        edge_lengths = np.diff(edge_x)
+        edge_centers = .5 * (edge_x[:-1] + edge_x[1:])
+        if not np.array_equal(edge_lengths, np.full(4, .25)):
+            raise ValueError("four unchanged quarter-length supports required")
+        def density_action(values):
+            return dict(force_per_edge_N=(values[:3] * edge_lengths).T.tolist(),
+                        fy_force_per_edge_N=(values[1] * edge_lengths).tolist(),
+                        mz_force_arm_per_edge_Nm=(values[1] * edge_lengths * edge_centers).tolist(),
+                        resultant_force_N=(values[:3] @ edge_lengths).tolist(),
+                        resultant_mz_from_fy_Nm=float(np.sum(values[1] * edge_lengths * edge_centers)))
+        density_comparison = dict(
+            convention="C_ref=beam-shell; C_native=shell-beam; comparable physical density is -native multiplier",
+            reference_density_channel_major=reference_density.tolist(),
+            native_equivalent_density_channel_major=native_equivalent_density.tolist(),
+            difference_channel_major=(native_equivalent_density-reference_density).tolist(),
+            reference_action=density_action(reference_density),
+            native_action=density_action(native_equivalent_density),
+            reference_translation_density_norm=float(np.linalg.norm(reference_density[:3])),
+            difference_translation_density_norm=float(np.linalg.norm(
+                native_equivalent_density[:3]-reference_density[:3])),
+            reference_director_density_norm=float(np.linalg.norm(reference_density[3:])),
+            difference_director_density_norm=float(np.linalg.norm(
+                native_equivalent_density[3:]-reference_density[3:])),
+            meaning="diagnostic P0 action distribution; mixed force/director units are not collapsed into one quotient")
         nq = np.r_[response.shell_displacement, response.beam_coordinates]
         native_load = owner._accepted[1]
         node = owner._beam_ids.index(tip)
@@ -263,6 +292,7 @@ def evaluate():
                                support_wrench=wrench(model, support).tolist(),
                                total_wrench=external_wrench.tolist()),
                 native=native_checks,
+                interface_density=density_comparison,
                 comparison=dict(
                     tip_rotation_difference_rad=tip_spin-continuum_tip_rotation,
                     tip_rotation_relative_difference=(

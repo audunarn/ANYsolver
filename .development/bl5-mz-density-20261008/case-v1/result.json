@@ -1,0 +1,337 @@
+{
+  "identity": "R8_BL5_MZ_WORK_MATCHED_DEV_V2",
+  "status": "DEVELOPMENT_ONLY_NOT_QUALIFIED",
+  "model_sha256": "a22170179b6e257a47288ff825a3b69ad503e5e3c4a040fcd5f3b53933c86463",
+  "connection": "five-channel material-director weak P0; normal spin free",
+  "load": "consistent axial traction -Mz*y/Iz on bar x=1 face",
+  "section_end_faces": [
+    7,
+    8
+  ],
+  "end_traction_parity_roundoff_N": 1.7763568394002505e-15,
+  "end_traction_rigid_work_N_Nm": [
+    -3.552713678800501e-15,
+    0.0,
+    0.0,
+    0.0,
+    1.2767564783189299e-17,
+    1.0000000000000002
+  ],
+  "continuum": {
+    "free_equilibrium_ratio": 2.046855583132791e-12,
+    "compatibility": 8.755990310803245e-22,
+    "internal_work_relative_error": 8.48051695551052e-12,
+    "interface_work_relative_error": 3.2854939390634276e-16,
+    "applied_pairing_J": 6.445248134408049e-07,
+    "matrix_dimension": 287,
+    "matrix_nnz": 20428,
+    "body_work": {
+      "shell": {
+        "internal_pairing_J": 4.035442077484647e-07,
+        "applied_plus_interface_pairing_J": 4.035442077433492e-07,
+        "relative_work_error": 7.936849845943999e-12
+      },
+      "beam": {
+        "internal_pairing_J": 2.409806056868742e-07,
+        "applied_plus_interface_pairing_J": 2.409806056974557e-07,
+        "relative_work_error": 1.641753107615147e-11
+      }
+    },
+    "work_conjugate_tip_rotation_z_rad": 6.445248134408049e-07,
+    "applied_wrench": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "interface_wrench_shell": [
+      -5.55378342596241e-14,
+      -2.2229773577464584e-11,
+      -7.27798104260322e-12,
+      2.2585483830384057e-12,
+      4.887031053937621e-12,
+      0.999999999970965
+    ],
+    "support_wrench": [
+      4.228306726073324e-12,
+      2.883848715384829e-11,
+      1.3930066807331997e-11,
+      -1.929938847622381e-12,
+      -1.0231515738927086e-11,
+      -0.9999999999698039
+    ],
+    "total_wrench": [
+      4.22830672607325e-12,
+      2.8838653687301937e-11,
+      1.3930066807331992e-11,
+      -1.929950990686711e-12,
+      -1.0231515738927086e-11,
+      3.019566176277044e-11
+    ]
+  },
+  "native": {
+    "status": "completed",
+    "free_equilibrium_ratio": 1.1048174012176327e-13,
+    "compatibility": 1.3027460907223049e-23,
+    "tip_rotation_z_rad": 1.8863005195465056e-06,
+    "applied_pairing_J": 1.8863005195465056e-06,
+    "body_work": {
+      "shell": {
+        "internal_pairing_J": 3.187786959344681e-07,
+        "applied_plus_interface_pairing_J": 3.1877869593444286e-07,
+        "relative_work_error": 1.3387140319555137e-14
+      },
+      "beam": {
+        "internal_pairing_J": 1.5675218236120625e-06,
+        "applied_plus_interface_pairing_J": 1.5675218236120625e-06,
+        "relative_work_error": 0.0
+      }
+    },
+    "support_wrench": [
+      -1.3766765505351941e-14,
+      -5.03819208574896e-13,
+      -1.0130785099704553e-14,
+      -3.677613769070831e-16,
+      1.1487338857918417e-14,
+      -1.0000000000003462
+    ],
+    "interface_wrench_shell": [
+      0.0,
+      0.0,
+      -1.5777218104420236e-30,
+      -4.163336342344337e-17,
+      -7.888609052210118e-31,
+      1.0
+    ],
+    "physical_dofs": 168,
+    "multiplier_rows": 20
+  },
+  "interface_density": {
+    "convention": "C_ref=beam-shell; C_native=shell-beam; comparable physical density is -native multiplier",
+    "reference_density_channel_major": [
+      [
+        1.021768385651822e-09,
+        -9.93889503324982e-10,
+        2.8984838554234343e-10,
+        -3.179494192062217e-10
+      ],
+      [
+        -4.745677648817644,
+        27.12077990623195,
+        -56.00452686585761,
+        33.62942460835439
+      ],
+      [
+        3.419338276765248e-12,
+        -6.514745416079677e-11,
+        1.0250491208371251e-11,
+        2.2365700505247387e-11
+      ],
+      [
+        4.055612496016304e-11,
+        -3.131084529910034e-11,
+        1.9811441573252636e-11,
+        -7.532708583574108e-12
+      ],
+      [
+        -0.07096295699144053,
+        0.24972088733705405,
+        -0.38715583197531206,
+        0.20839790162155358
+      ]
+    ],
+    "native_equivalent_density_channel_major": [
+      [
+        -1.2720786144954365e-12,
+        1.1844356971497655e-12,
+        -3.182490963938678e-13,
+        4.058920137395388e-13
+      ],
+      [
+        -7.550718263325554,
+        29.17908419335186,
+        -51.706013596727054,
+        30.07764766670075
+      ],
+      [
+        -6.888946251978929e-14,
+        2.046909692568681e-13,
+        -1.6016555048018283e-13,
+        2.4364043743104e-14
+      ],
+      [
+        -4.099813171039876e-14,
+        3.375837039295616e-14,
+        -2.1972720763516852e-14,
+        1.857548196241307e-14
+      ],
+      [
+        -0.21033232492235238,
+        0.5933649774153698,
+        -0.7558288823254488,
+        0.3727962298324314
+      ]
+    ],
+    "difference_channel_major": [
+      [
+        -1.0230404642663176e-09,
+        9.950739390221316e-10,
+        -2.901666346387373e-10,
+        3.1835531121996125e-10
+      ],
+      [
+        -2.8050406145079103,
+        2.0583042871199098,
+        4.298513269130559,
+        -3.5517769416536424
+      ],
+      [
+        -3.488227739285037e-12,
+        6.535214513005364e-11,
+        -1.0410656758851434e-11,
+        -2.2341336461504284e-11
+      ],
+      [
+        -4.059712309187344e-11,
+        3.134460366949329e-11,
+        -1.9833414294016154e-11,
+        7.55128406553652e-12
+      ],
+      [
+        -0.13936936793091184,
+        0.3436440900783157,
+        -0.3686730503501367,
+        0.1643983282108778
+      ]
+    ],
+    "reference_action": {
+      "force_per_edge_N": [
+        [
+          2.554420964129555e-10,
+          -1.186419412204411,
+          8.54834569191312e-13
+        ],
+        [
+          -2.484723758312455e-10,
+          6.780194976557987,
+          -1.6286863540199192e-11
+        ],
+        [
+          7.246209638558586e-11,
+          -14.001131716464403,
+          2.562622802092813e-12
+        ],
+        [
+          -7.948735480155542e-11,
+          8.407356152088598,
+          5.591425126311847e-12
+        ]
+      ],
+      "fy_force_per_edge_N": [
+        -1.186419412204411,
+        6.780194976557987,
+        -14.001131716464403,
+        8.407356152088598
+      ],
+      "mz_force_arm_per_edge_Nm": [
+        -0.14830242652555137,
+        2.5425731162092453,
+        -8.750707322790252,
+        7.356436633077523
+      ],
+      "resultant_force_N": [
+        -5.5537834259572404e-14,
+        -2.2229329488254734e-11,
+        -7.27798104260322e-12
+      ],
+      "resultant_mz_from_fy_Nm": 0.9999999999709654
+    },
+    "native_action": {
+      "force_per_edge_N": [
+        [
+          -3.180196536238591e-13,
+          -1.8876795658313885,
+          -1.7222365629947323e-14
+        ],
+        [
+          2.961089242874414e-13,
+          7.294771048337965,
+          5.117274231421703e-14
+        ],
+        [
+          -7.956227409846695e-14,
+          -12.926503399181763,
+          -4.004138762004571e-14
+        ],
+        [
+          1.014730034348847e-13,
+          7.519411916675187,
+          6.091010935776e-15
+        ]
+      ],
+      "fy_force_per_edge_N": [
+        -1.8876795658313885,
+        7.294771048337965,
+        -12.926503399181763,
+        7.519411916675187
+      ],
+      "mz_force_arm_per_edge_Nm": [
+        -0.23595994572892356,
+        2.735539143126737,
+        -8.079064624488602,
+        6.5794854270907885
+      ],
+      "resultant_force_N": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "resultant_mz_from_fy_Nm": 1.0
+    },
+    "reference_translation_density_norm": 70.89078493024549,
+    "difference_translation_density_norm": 6.5724580756037625,
+    "reference_director_density_norm": 0.5106031594791962,
+    "difference_director_density_norm": 0.5481438768573643,
+    "meaning": "diagnostic P0 action distribution; mixed force/director units are not collapsed into one quotient"
+  },
+  "comparison": {
+    "tip_rotation_difference_rad": 1.2417757061057007e-06,
+    "tip_rotation_relative_difference": 1.9266530631713983,
+    "interpretation": "same common five-channel work; different beam/shell body spaces and independent native half-cell ports; no physical accuracy score"
+  },
+  "runtime": {
+    "cpu_affinity": [
+      0
+    ],
+    "numba_disable_jit": 1,
+    "numba_threads": 1,
+    "loaded_threadpools": [
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+        "version": "0.3.31.188.0",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      },
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+        "version": "0.3.30",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      }
+    ]
+  },
+  "source_sha256": {
+    "native": "068ae3ae16fe167d3052a02e8ecf0b7c6c0c3ba83f0db1f79ab5dfd07a75d9a8",
+    "continuum": "ecaedbab83249f46a390a4bb2bc0da269d54459f9d7722233b0675208cb8c645"
+  }
+}

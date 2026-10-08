@@ -1,5 +1,17 @@
 # Active development — 8 October 2026
 
+Mz density decision: the work-matched native and resolved-continuum five-row
+models both exert +1 N m Mz on the shell, but their signed per-edge Fy action
+distributions differ. Translation-density difference norm 6.57246 versus
+reference 70.89078; director channels differ too and keep separate units.
+The previous 1.2418e-6 J beam-dominated work gap therefore cannot be
+assigned solely to the body operator. One source-only paired solve passed in
+2.8639997 s, CPU0/thread1/JIT-off, sampled RSS 165,920,768 B; see
+`.development/bl5-mz-density-20261008/adjudication.md` and raw receipt.
+Next discriminator is same-density beam body work; the prior separate
+body-port retry remains PENDING and was not run or renewed. No multiplier
+selection, external accuracy, formal F03 or M2/G0 acceptance follows.
+
 BL5 Mz development decision: a +1 N m native tip action and a resolved-bar
 `t_x=-Mz*y/I_z` traction share the declared five-channel weak material-trace
 work on the 1 m specimen. Both exert +1 N m on the shell and balance -1 N m

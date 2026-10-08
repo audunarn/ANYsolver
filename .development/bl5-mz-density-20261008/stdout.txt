@@ -1,0 +1,1 @@
+{"status": "DEVELOPMENT_ONLY_NOT_QUALIFIED", "continuum_rotation": 6.445248134408049e-07, "native_rotation": 1.8863005195465056e-06, "continuum_equilibrium": 2.046855583132791e-12, "native_equilibrium": 1.1048174012176327e-13}
