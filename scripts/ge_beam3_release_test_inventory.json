@@ -3,6 +3,7 @@
   "accepted_commit": "0f3c60cae8ca7aa098245fee1b7f3c963ea1c10e",
   "policy": "Current runtime regressions run in portable CI. Preserved development, diagnostics and frozen qualification tests remain explicitly extended, not repeated or reclassified as scientific results. New GE test modules require explicit classification.",
   "portable": [
+    "tests/test_ge_beam3_branch_direction.py",
     "tests/test_ge_beam3_coupled_modes.py",
     "tests/test_ge_beam3_durable_coupled.py",
     "tests/test_ge_beam3_g6_completion.py",
@@ -10,6 +11,7 @@
     "tests/test_ge_beam3_g6_domain.py",
     "tests/test_ge_beam3_g6_runners.py",
     "tests/test_ge_beam3_mixed_p3_optin.py",
+    "tests/test_ge_beam3_mixed_ad_scalars.py",
     "tests/test_ge_beam3_native_analysis.py",
     "tests/test_ge_beam3_native_definition.py",
     "tests/test_ge_beam3_native_delivery_gate.py",
@@ -22,6 +24,14 @@
     "tests/test_ge_beam3_variational_shell.py"
   ],
   "extended": [
+    "tests/test_ge_beam3_native_connected_bending.py",
+    "tests/test_ge_beam3_native_connected_deformation.py",
+    "tests/test_ge_beam3_native_connected_dynamic.py",
+    "tests/test_ge_beam3_native_connected_transient.py",
+    "tests/test_ge_beam3_native_dynamic_restart.py",
+    "tests/test_ge_beam3_native_manufactured_loading.py",
+    "tests/test_ge_beam3_native_nonprincipal.py",
+    "tests/test_ge_beam3_native_transient.py",
     "tests/test_ge_beam3_g1_confirmation.py",
     "tests/test_ge_beam3_g1_elastic.py",
     "tests/test_ge_beam3_g1_elastic_admission.py",

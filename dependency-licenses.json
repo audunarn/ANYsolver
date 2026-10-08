@@ -43,6 +43,13 @@
       "status": "not-bundled"
     },
     {
+      "distribution": "ANYgeometry",
+      "licence": "MPL-2.0",
+      "requirement": "ANYgeometry>=0.4.3,<0.5",
+      "scope": "optional-runtime",
+      "status": "not-bundled"
+    },
+    {
       "distribution": "numba",
       "licence": "BSD",
       "requirement": "numba>=0.59",

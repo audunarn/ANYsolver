@@ -22,7 +22,7 @@ def setup(mode):
     sys.path[:0] = [str(DEPS), str(BASE), *map(str, SIBLINGS)]
     import psutil
     psutil.Process().cpu_affinity([0])
-    package_root = REPO / 'src' if mode == 'source' else RAW / 'site'
+    package_root = REPO / 'src' if mode in ('source', 'policy') else RAW / 'site'
     sys.path.insert(0, str(package_root))
     sys.path.append(str(REPO))  # scripts/examples, never src in installed mode
     os.environ['PYTHONPATH'] = os.pathsep.join(map(str, [package_root, DEPS, BASE, *SIBLINGS, REPO]))
@@ -31,6 +31,14 @@ def setup(mode):
 def child(args):
     setup(args.mode)
     out = RAW / args.phase
+    if args.mode == 'policy':
+        from scripts.check_license_compliance import validate_repository
+        from scripts.run_portable_ci import merge_test_modules, _ge_beam3_inventory
+        validate_repository(REPO)
+        ge = _ge_beam3_inventory()
+        modules = merge_test_modules()
+        write(out / 'policy.json', dict(license='passed', portable_module_count=len(modules), ge_portable=len(ge['portable']), ge_extended=len(ge['extended'])))
+        return 0
     if args.mode == 'build':
         env = os.environ.copy()
         env['PYTHONPATH'] = os.pathsep.join(map(str, [DEPS, BASE, *SIBLINGS]))
@@ -55,6 +63,7 @@ def child(args):
         raise RuntimeError('Effective CPU/thread settings mismatch')
     if args.mode == 'example':
         import runpy
+        sys.path.insert(0, str((REPO / args.targets[0]).parent))
         runpy.run_path(str(REPO / args.targets[0]), run_name='__main__')
         pools = threadpool_info()
         if any(p['num_threads'] != 1 for p in pools):
@@ -70,7 +79,7 @@ def child(args):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('phase')
-    parser.add_argument('--mode', choices=('source', 'installed', 'build', 'example'), default='source')
+    parser.add_argument('--mode', choices=('source', 'installed', 'build', 'example', 'policy'), default='source')
     parser.add_argument('--cap', type=float, default=120)
     parser.add_argument('--child', action='store_true')
     parser.add_argument('targets', nargs='*')
@@ -90,6 +99,7 @@ def main():
     out.mkdir(exist_ok=False)
     head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=REPO, text=True).strip()
     paths = sorted((REPO / 'src/anysolver').rglob('*.py')) + [REPO / 'pyproject.toml', Path(__file__).resolve()]
+    paths += [REPO / p for p in ('dependency-licenses.json', 'THIRD_PARTY_NOTICES.md', 'scripts/ge_beam3_release_test_inventory.json', 'scripts/run_portable_ci.py', 'scripts/check_license_compliance.py', 'scripts/development_test_runtime.py')]
     paths += [REPO / t.partition('::')[0] for t in args.targets]
     identities = {str(p.relative_to(REPO)): sha(p) for p in paths}
     command = [sys.executable, '-I', str(Path(__file__).resolve()), args.phase, '--child', '--mode', args.mode, *args.targets]
