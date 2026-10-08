@@ -83,9 +83,23 @@ is now separate and requires an explicit baseline and its own execution authorit
 No archived driver was accessed. Pure guard, saved-fixture parsing and bounded
 algebra coverage are retained rather than excluded because CI failed.
 
-Full CI and final fresh-artifact reconciliation remain before main promotion.
-Earlier failed CI runs and local failed attempts are preserved. The prospective
-CI corrections do not complete any open scientific obligation.
+Final source `5108bf0d` built a third fresh artifact, SHA256
+`ef9576de174334921f3066c6168b64ff50a607260a4593b7344819a902ccb5c5`,
+installed only into `.development/common-main-20261008/site-v3`.
+Its 37 affected installed controls passed, with actual imports/settings recorded.
+All 627 `anysolver/` wheel members match the first and second artifacts byte for
+byte (manifest SHA256 `5c895298684030d734d5581fce5bdbd5c94678bf404ff41fc6507a4fe336af85`).
+Thus the earlier 209/19/runtime example checks apply to the unchanged runtime
+payload; metadata, wheel identities and installed sites remain distinct.
+The manufactured workflow caller passed a further six source controls.
+The ledger has used 497.800684 seconds; 402.199316 remain, including the 60-second
+reserve. This is consolidation-only authority, not a future feature-run budget.
+
+Main promotion requires successful full CI for the final branch head in
+[PR #63](https://github.com/audunarn/ANYsolver/pull/63).
+Earlier failed CI runs and local failed attempts are preserved. Prospective
+CI corrections do not complete any open scientific obligation. The PR's actual
+merge and CI status supply the final Git delivery result; no release is included.
 
 Do not resume feature development, numerical refinement campaigns or release
 work from this note. After consolidation, continue only on explicit human resume.

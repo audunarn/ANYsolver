@@ -1,3 +1,16 @@
+# Common-main consolidation — 8 October 2026
+
+Human authorizes consolidation and coordination with contact task `01a0d278-3e81-77b1-a9b6-e6c1dc764a38`. Both feature programmes remain paused.
+The common checkout is `C:/Github/ANYsolver/.perf2-worktrees/common-main-20261008`;
+branch `codex/common-main-20261008`, PR #63. See
+`docs/development/COMMON_MAIN_CONSOLIDATION_20261008.md` for source/artifact checks
+and merge prerequisites. This prospective authority supersedes historical
+no-coordination/no-main-merge instructions only for consolidation. It does
+not resume development, consume old allowances, qualify incomplete gates
+or authorize publication. Original checkpoint follows unchanged.
+
+---
+
 # General contact - restart point
 
 7 October 2026. USER PAUSED implementation. Full C0-C9 incomplete.
