@@ -19,8 +19,15 @@ The scoped S3 V2D elastic recovery fix is now a separate **draft PR #65**
 against common main: `codex/s3-v2d-surface-recovery` at `974f283a`, based on
 `cff55d95`. Its three product/test files are byte-identical to the installed
 verified development candidate (`552401b9`). The clean sparse checkout is
-`C:/Github/ANYsolver/.perf2-worktrees/s3-v2d-recovery-main`. CI was queued
-at PR creation; do not describe it as passing before results are inspected.
+`C:/Github/ANYsolver/.perf2-worktrees/s3-v2d-recovery-main`. CI snapshot for
+head `974f283a`: 49 checks, 16 success, 17 failure, 9 in progress, 7 queued.
+The 17 inspected failing test files are outside the three-file S3 diff;
+causality is not fully established, and common main was already recorded as
+CI-red. The portable matrix repeats the
+current S3 successor modules on every shard, so successful completed jobs
+include those source controls. Do not describe full CI as passed; inspect
+remaining jobs before PR disposition. GitHub Actions logs are linked from
+[PR #65](https://github.com/audunarn/ANYsolver/pull/65).
 This extraction excludes BL5 diagnostics and qualification evidence. Main was
 not edited or merged; package publication remains separate.
 
