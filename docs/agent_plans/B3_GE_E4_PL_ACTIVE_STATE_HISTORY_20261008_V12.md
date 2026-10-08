@@ -1,0 +1,489 @@
+# Active development — 8 October 2026
+
+Latest V12 V5-action discriminator: the original retained-spin interface
+component is separately rigid-balanced. Two new responses on the unchanged
+native beam operator/gauge reconstruct the saved V5 state. Removing that
+component reduces native paired work by `1.15586949156334e-7 J`, leaving
+`1.62979809184172e-6 J`, still `6.76319` times the saved resolved-beam work.
+Independent review found no blocking defect. Direct retained-spin *loading*
+alone therefore cannot explain the large V5 ratio; this changed-load check
+does not allocate body or connection error. Next derive one physically matched
+distributed P0/tip action with native retained and resolved two-sided work,
+then compare its response. No automatic saved-vector or refinement sequence.
+[V12 evidence](../../.development/bl5-mz-common-beam-20261008/v12-retained-load-adjudication.md).
+G0/F03 and the connection-law/space decision remain open.
+
+Current connection decision: stop reusing saved V5 vectors as a causal
+allocation. A read-only load-role review found direct native retained-spin
+interface pairing of `1.15586949156334e-7 J`, but it cannot say how the
+solution would change without that load. One bounded V11 saved-V7 two-sided
+C3D20 response run found full/six-resultant work ratio `0.998452783` under
+V9 remote supports (2.3274024 s, 165 MB sampled peak, equation ratios below
+`8.24e-12`). Independent review found no blocking sign or work defect.
+This limits the cut-face warping hypothesis in that *incremental solid* model;
+it does not explain the V5 7.24 body-work ratio or qualify BL5/F03. Next,
+seek the original P0/tip action with physically matched two-sided beam/shell
+responses and native retained traces, or state the exact unavailable
+conjugate reference. No automatic refinement. Evidence:
+`.development/bl5-mz-common-beam-20261008/v11-cut-warping-adjudication.md`.
+The programme remains experimental; G0/F03 and G1 acceptance remain open.
+
+Consumer integration: the unchanged installed ANYfem `345db0c` and pinned
+common-main solver sites now have 54/54 affected plus 19/19 legacy development
+controls passing, including the public checkpoint example. The 19-case run
+used 9.4482919 s child wall and 186,146,816 B sampled peak; the combined
+logical allowance has 127.4974380 s used and 112.5025620 s remaining with
+60 s reserved. Exact V2/V3 packet attempts timed out before pytest and remain
+failed evidence. This is a development milestone, not G6 acceptance. Raw
+receipts and adjudication:
+`C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/.development/distributing-displacement-consumer-common-main-20261008-v1/installed-development-adjudication-v1.md`.
+ANYfem evidence is byte-preserved on its isolated branch at `c923160`;
+unrelated local `.development` contents remain untouched. The smoke requested
+one numerical thread/JIT-off; effective pools were not independently audited.
+
+V10 resolves the specific V9 port ambiguity: under pure cut Mz and the same
+incremental remote supports, native nodal-frame work agrees with the C3D20
+rigid-face work to `8.9e-11` relative; native retained-spin work is 2/3 of
+that because it is a different generalized port. The V7 combined-resultant
+nodal/solid work ratio remains 1.275. V7's zero-resultant nodal cut action
+does only 0.22% of its full cut work on the *saved conforming* displacement,
+but its two-sided response remains unmeasured. This rules out a gross local
+nodal-frame Mz stiffness mismatch, not a V5 body/connection allocation.
+V10's two attempts and corrected beam-only indexing are preserved; source
+imports are bound to this worktree. Its one-use registration is closed.
+[Adjudication](../../.development/bl5-mz-common-beam-20261008/v10-nodal-warping-adjudication.md).
+The next connection decision must use the original P0/tip load work paths
+through physical nodal and retained traces, including warping response if
+material. G0/F03 and BL5 law/space selection remain open.
+
+V9 now supplies a bounded **incremental two-sided body-port response**, not
+the V5 loaded solution or connection acceptance. Under V7's six-component
+cut resultant, native/resolved work is 1.248; for pure Mz it is 0.667.
+The native loaded coordinate is a retained half-cell orientation, whereas
+the C3D20 port is a projected physical cut-face rotation. Thus these
+different-port values do not allocate V5's 7.24 work ratio or settle BL5.
+The three-attempt batch preserved two diagnostic setup failures and one
+success; its final one-use registration is consumed. The source imported
+the native package through the editable main path, with directly relevant
+files byte-identical but transitive provenance unresolved. A read-only
+mechanics review found no concrete algebra defect and advised a same-solve
+native nodal-frame/retained-port comparison, followed by quantifying V7's
+zero-resultant cut warping action. [Adjudication](../../.development/bl5-mz-common-beam-20261008/v9-port-response-adjudication.md).
+G0/F03 and law selection remain open. Astra implemented this tightly coupled
+mechanics diagnostic directly because it defines a reserved physical
+comparison; the cached Mistral worker was unavailable for this task.
+
+Current decision: keep the native BL5 line law open until a two-sided
+face/retained-port reference can allocate the V5 work gap. Advance
+independent integrated capability in parallel. The common-main ANYfem
+distributing-displacement consumer imports from the bound installed solver
+and consumer sites and passes all 54 tests in its affected file (14.6440475 s
+process wall, peak sampled tree RSS 210,395,136 B). Its runner requested
+CPU0, one thread, and JIT off; effective numerical settings were not
+independently audited in this smoke.
+This is development smoke, not the registered installed gate. The exact
+installed packet attempted V2 and V3 and timed out before pytest during
+its dependency/module inventory (78.0437588 s and 40.0053873 s); both
+receipts remain in the packet. Its single 240 s allowance has 118.0491461 s
+charged and 121.9508539 s remaining including the 60 s reserve. Stop
+repeating that verifier. The next integration action is a reviewed,
+proportionate evidence route or a separately authorized amended packet;
+full G6 artifact acceptance remains open. Local evidence:
+`C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/.development/distributing-displacement-consumer-common-main-20261008-v1/`.
+
+The ready F06 chart gap now has scoped source and installed development results
+on the existing two-stiffener Q4-J2/native-fibre point owner. Its full loaded
+history passed 1/1 from source in 86.1881032 s and from the byte-identical
+627-file installed site in 90.4082661 s (wheel `07f20642...6ed4d2`). Both
+record effective CPU0, one Numba/native thread and JIT off. Three accepted
+increments advanced shell and fibre plasticity together. The adjacent 2->3
+and 3->4 physical left rotations straddle the rebase and give a maximum
+bracket of `1.131495384e-10 rad^2` and axis sine `0.003159956`; rebase,
+material state, restore, continued history, rejection and cancellation passed.
+Independent read-only review found no blocking defect for small-rotation
+coverage, but requested a same-node conjunction in the guard. That final
+test-only refinement was verified against both saved state sets (4/6 node rows
+qualify); the full 86-90 s test was not repeated after this pure assertion edit.
+This does not establish finite-angle sensitivity, S3, broad F06/V18/G3 or
+release acceptance. Raw receipts and replay are preserved in
+`.development/f06-j2-fibre-chart-20261008/evidence-v1.zip`, with each original
+byte hash in `evidence-index-v1.json`; local unpacked originals remain intact.
+
+One expressly authorized BL5 V5 exact-face beam-only diagnostic completed:
+the resolved and native body equilibrium ratios are `1.6071e-12` and
+`3.9385e-12`, respectively, with the three prior tiny-load rows now exactly
+zero. The paired work ratio under the same projected weak P0 density is
+`7.24284444` (resolved `2.40980606e-7 J`, native `1.74538504e-6 J`).
+This is a development comparison between distinct primal/retained spaces,
+not a law-selection or physical-accuracy result. V5 consumed its one-use
+authority in 2.8735119 s; [adjudication](../../.development/bl5-mz-common-beam-20261008/v5-adjudication.md)
+and raw receipt are preserved. A full-space lift of broken native half-cell
+rotations to one conforming C3D20 face is impossible at shared stations;
+the existing affine common-field proof does not cover the V5 work gap.
+Any next reference must explicitly resolve two-sided trace and seam work
+before it can distinguish body compliance from connection transfer. No
+automatic refinement or F03 run follows.
+
+Saved-state postprocessing now fixes the next two-sided reference location:
+the shared member station at `x=0.5 m` has the largest one-sided native
+retained-spin jump, `9.569014186e-7 rad` (versus `1.233892858e-7` and
+`5.250428264e-7 rad` at `x=0.25` and `0.75 m`). Under a *conditional* rigid
+0.04 x 0.06 m section lift, its maximum corner displacement mismatch is
+`1.995511594e-8 m`. This is not a measured seam gap or proof of a body-law
+defect. The exact saved-input hash, indexing and all three stations are in
+[the postprocess record](../../.development/bl5-mz-common-beam-20261008/v5-retained-jump-postprocess-v1.json);
+it launched zero new solves. The next discriminator must recover left/right
+cut-face work conjugate to independent section variations at that station,
+including how seam action is represented. Failure of sided force/work balance
+invalidates that reference; a valid result then determines whether the
+broken-port work is large enough to justify a targeted seam/trace comparison.
+The V5 receipt stays closed and no new numerical authority is inferred.
+The saved native material resultants provide a further, source-derived check
+at the **virgin reference linearization**:
+the left/right retained end moments balance within `8.868e-13 N m` at all
+three stations. Their linearized conjugate virtual work against the saved
+one-sided spin jumps is `1.6892e-8`, `4.0092e-7`, and `8.0595e-8 J`, summing
+to `4.9841e-7 J`. Its magnitude is 33.1% of the V5 *difference* in paired
+body work, but these are different work quantities; the percentage is a
+scale comparison, **not** an energy partition, finite-rotation work, or causal
+attribution. This
+favors `x=0.5 m` for a sided cut-face action check and makes an affine-only
+reference inadequate for the disputed mode. The exact saved-input bindings,
+moment-row mapping and limits are in [the native seam-work postprocess](../../.development/bl5-mz-common-beam-20261008/v5-native-seam-work-postprocess-v1.json).
+It used saved arrays only and performed zero new solver executions.
+The separately approved V6 [sided C3D20 cut-face extractor](../../scripts/r8_bl5_saved_sided_face_work_dev.py)
+ran once from the saved resolved solution (no new equilibrium solve): exit 0,
+`2.5653282 s`, peak `160,354,304 B`, effective CPU0/one thread/JIT off.
+However, its raw outward side tractions **do not balance**: y-forces
+`+7.349246346` and `+13.008910282 N` sum to `+20.358156629 N`, while the
+moment-sum ratio is `0.92555`. The `1.631405007e-9 J` computed broken-trace
+work is therefore unqualified for comparison with native seam work. This is
+an invalid sided reference, **not** a BL5 formulation failure or a reversal
+of V5 global equilibrium. Independent read-only review found no concrete
+extraction sign/layout defect and noted that cut-node external loads and weak
+FE stress balance must be handled explicitly. V6 one-use authority is
+consumed; [the adjudication](../../.development/bl5-mz-common-beam-20261008/v6-sided-face-adjudication.md)
+binds the raw receipt. A future saved-only volume-work/nodal-action audit is
+the discriminating route; no automatic refinement, V6 rerun or F03 follows.
+The V7 [saved nodal-port extractor](../../scripts/r8_bl5_saved_nodal_port_dev.py)
+ran once under the separately approved 30 s/2 GiB/CPU0/one-thread/JIT-off
+limit: exit 0, `2.1464038 s`, peak `161,181,696 B`. It integrates each
+original C3D20 beam
+element's `B^T sigma` action from the saved V5 displacement, partitions the
+physical P0 interface load by its original left/right integration intervals,
+and reconstructs the separately saved end traction. It reports side cut-node
+ports, full nodal/rigid-projected work, noncut residuals, gauge contribution,
+and the disagreement with V6 raw face tractions. An independent read-only
+review found no blocking source defect after the load-partition correction.
+The saved load reconstructs within `5.6e-17 N` and the weak nodal equilibrium
+within `3.55e-12 N`. The source-partitioned left/right cut port has y-force
+`+5.593775564 / -5.593775564 N`, with sum `-6.7e-12 N`; its opposite full
+nodal works have magnitude `1.567e-7 J`. Thus V7 provides a balanced discrete
+reference port where V6 raw face tractions did not. It does **not** establish
+native B3 port equivalence, allocate the V5 work gap, BL5 accuracy or F03
+acceptance. V7 one-use authority is consumed. A rigid lift of the native
+spin jump onto this balanced section wrench would only check algebraic work
+duality, not allocate compliance. The next substantive discriminator requires
+a derived two-sided response/port-flexibility reference with matched physical
+loads, cut kinematics and gauge;
+[adjudication](../../.development/bl5-mz-common-beam-20261008/v7-nodal-port-adjudication.md)
+binds raw hashes and the pre-child launcher failure.
+The bounded saved-only V8 rigid-cut lift then verified full nodal work against
+six-wrench work to `1.06e-22 J`. Outward work `-4.009200810356648e-7 J`
+opposes native endpoint-log work `+4.009200810375506e-7 J` within
+`1.89e-18 J`; independent read-only review confirms the restricted sign/map.
+This is algebraic duality under imposed one-sided spins, **not** split-solid
+response, warping, compliance allocation or BL5 acceptance. V8's source
+bindings do not itself enforce the full historical seam chain; its frozen
+inputs were checked independently. [V8 adjudication](../../.development/bl5-mz-common-beam-20261008/v8-rigid-cut-work-adjudication.md)
+preserves the limited conclusion. Do not run further rigid-lift checks;
+the next actual mechanics decision needs a matched two-sided response reference.
+
+The scoped S3 V2D elastic recovery fix is now a separate **draft PR #65**
+against common main: `codex/s3-v2d-surface-recovery` at `974f283a`, based on
+`cff55d95`. Its three product/test files are byte-identical to the installed
+verified development candidate (`552401b9`). The clean sparse checkout is
+`C:/Github/ANYsolver/.perf2-worktrees/s3-v2d-recovery-main`. All 49 CI checks
+for head `974f283a` have completed: 23 success, 26 failure. The inspected
+failing test files are outside the three-file S3 diff; causality remains
+unproven, particularly for S3-adjacent failures, and common main was already
+recorded as CI-red. The portable matrix repeats the
+current S3 successor modules on every shard, so successful completed jobs
+include those source controls. Do not describe full CI as passed; inspect
+remaining jobs before PR disposition. GitHub Actions logs are linked from
+[PR #65](https://github.com/audunarn/ANYsolver/pull/65).
+This extraction excludes BL5 diagnostics and qualification evidence. Main was
+not edited or merged; package publication remains separate.
+
+BL5 source review has now proved that V4's slot 55 is the vertical C3D20
+midside node's y displacement. Its shape vanishes exactly on both sampled
+beam faces, so its analytical weak-P0 interface column and end-traction load
+are structural zeros, independent of multipliers. The old 3.5665e-16 N load
+arose in floating face interpolation. A candidate exact-face coordinate
+correction and source-only regression now pass for the three top tiny-load
+rows, slots 55/58/130 (3 passed, 9 deselected).
+This does not repair the saved 9.1302e-13 N V4 high-precision equilibrium
+residual or reopen its CLOSED ledger. V4 remains FAILED; V5 is a distinct
+new attempt. No active-row criterion change, F03 execution or Fz body retry
+occurred. Further solved comparisons need separately valid authority. Astra handled
+this reserved source/mechanics decision directly while the recorded Mistral
+and local workers remain unavailable for this task.
+Main and origin/main still point to `cff55d95`; the main checkout has unrelated
+untracked work and was not edited.
+
+Current independent product slice: default elastic S3 V2D recovery now has a
+candidate local physical surface-stress mapping for exact isotropic Material,
+using its existing N/M/Q resultants and the same top/bottom von Mises convention
+as Q4. Generalized sections remain resultants-only. Mixed Q4/S3 public
+prescribed-displacement recovery, nonzero bending/shear tensor agreement, and
+public committed-state isolation pass 11 focused source tests. Supporting
+read-only review found no concrete defect; its consequential coverage requests
+were added and passed. Full affected historical file recorded 19 PASS / 1 unrelated
+FAIL: its frozen pre-default-activation assertion still expects `legacy-s3`.
+Do not change that historical boundary to obtain a pass. Raw source receipts
+are in `.development/s3-v2d-surface-recovery-20261008/`. An isolated wheel from
+`552401b9` passed a public mixed Q4/S3 installed recovery probe; all 627 Python
+modules match source/wheel/site byte-for-byte. Wheel SHA-256 is `07f20642...6ed4d2`.
+Cross-platform/consumer and mandatory programme review remain pending. This is an experimental
+recovery addition, not G0/G1 or full-programme acceptance. Direct OpenAI edit
+uses the already recorded Mistral/local unavailability for this task.
+
+The original ANYfem common-main installed packet remains an untouched,
+unrun V1 registration. V2 corrected its stale 431-file supervisor literal
+against the bound 627-file solver artifact; V3 removed duplicate full
+dependency rehashing from each development phase while retaining frozen
+catalogs and imported-module checks. Both registered attempts timed out
+before pytest; neither confers qualification. Direct OpenAI edits were limited
+to these tightly coupled evidence bindings while the recorded Mistral/local
+workers remain unavailable for this task.
+
+Mz common-density beam-only branch stopped FAILED, without a validated body
+comparison. V1 native calculation failed the unchanged active-row equilibrium
+check (ratio 3.253606). V2 found a reflection-search bookkeeping defect.
+V3 proved the actual discrete reflection of K/C/load/supports and retained
+the original equilibrium after projecting forbidden density channels, but
+the resolved beam failed on a 3.57e-16 N *symmetry-allowed* load. V4's exact
+load-sector projection changed zero and repeated that failure (ratio
+2559.993319). No magnitude cutoff, tolerance change or body-law conclusion.
+All four attempts, including preflight/calculated data and cumulative
+11.6943905 s wall, are in
+`.development/bl5-mz-common-beam-20261008/adjudication.md`. The distinct old
+Fz shell/body retry remains PENDING and untouched. Further numerical work on
+this branch needs focused independent review of load assembly and the strict
+active-row assessment; meanwhile advance independent programme work. F03,
+M2/G0, external accuracy and release remain open.
+
+Mz density decision: the work-matched native and resolved-continuum five-row
+models both exert +1 N m Mz on the shell, but their signed per-edge Fy action
+distributions differ. Translation-density difference norm 6.57246 versus
+reference 70.89078; director channels differ too and keep separate units.
+The previous 1.2418e-6 J beam-dominated work gap therefore cannot be
+assigned solely to the body operator. One source-only paired solve passed in
+2.8639997 s, CPU0/thread1/JIT-off, sampled RSS 165,920,768 B; see
+`.development/bl5-mz-density-20261008/adjudication.md` and raw receipt.
+Next discriminator is same-density beam body work; the prior separate
+body-port retry remains PENDING and was not run or renewed. No multiplier
+selection, external accuracy, formal F03 or M2/G0 acceptance follows.
+
+BL5 Mz development decision: a +1 N m native tip action and a resolved-bar
+`t_x=-Mz*y/I_z` traction share the declared five-channel weak material-trace
+work on the 1 m specimen. Both exert +1 N m on the shell and balance -1 N m
+at the support; equilibrium/gap/body work checks pass. Native tip rotation is
+1.88630052e-6 rad versus continuum work-conjugate 6.44524813e-7 rad.
+The difference is primarily in beam-side internal work, but different
+interface action distributions and body spaces prevent a law-error or
+physical-accuracy attribution. Preserve five attempts, including two failed
+numerical screens and the corrected exerted-action sign, in
+`.development/bl5-mz-work-matched-20261008/`; cumulative wall 12.5824441 s
+of 90 s, final CPU0/thread1/JIT-off and peak RSS 165,392,384 B. The original
+three-edge probe's `C.T @ lambda` label denotes the algebraic covector; its
+physical exerted action is `-C.T @ lambda`, as documented by the new
+adjudication. Next: compare beam body/port response under one common physical
+interface density before another refinement or external run. F03/M2/G0
+remain open. Current-main ANYfem installed verification remains PENDING
+distinct authority and unrun.
+
+The human resumed development after PR #63 established common main at
+`cff55d95e905ab689efdacdf08742a60614728c1`. Work in the sparse, isolated
+`C:/Github/ANYsolver/.perf2-worktrees/stiffened-rev8-20261008` checkout on
+`codex/stiffened-rev8-resume`; do not edit main or the older reconciliation
+checkout's protected qualification evidence. Mistral/local were already found
+unavailable for this task, so OpenAI handled the connected consumer repair and
+artifact reconciliation directly.
+
+The experimental ANYfem displacement consumer is at isolated commit
+`345db0cb73e7e7683872188b2a5ee4df0fd84b86`. It now rejects a non-JSON
+seed-factor tuple before Project canonicalization can turn it into a list.
+Frozen source controls passed **53/53** in
+`C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/.development/distributing-displacement-consumer-20261008-v9/source-controls-v8`.
+The subsequent wheel build and isolated install commands exited zero; wheel and
+site receipt exist, but the 30-second `build-install` phase timed out during its
+post-install audit. Preserve that outcome as **TIMEOUT**, not a passed installed
+gate. Packet v9 charged 269.4988338/360 seconds and retains a 60-second reserve;
+no installed controls, public example or affected legacy checks ran. Earlier
+pretest dependency-catalog refusals and the one source test failure remain in
+the carried ledger; the repaired source result supersedes only the test defect.
+The wheel's saved SHA and all 117 isolated site-file hashes match; build and
+install subprocesses both exited zero. Installed behavior remains unverified.
+
+The prepared artifact-only packet is
+`C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/.development/distributing-displacement-consumer-installed-20261008-v1`.
+It is **PENDING** a distinct 240-second authority with 60 seconds reserved; it
+binds the v9 source pass and timeout by hash, copies the verified wheel/site,
+and admits only 53 installed controls, one public example and 19 affected
+legacy controls. Its static source/artifact/runner bindings passed. Do not run
+it before the pending authority reply. It does not rewrite or transfer the old
+packet's ledger. Its frozen solver wheel predates common main: 22/431 solver
+Python files differ at `cff55d95`, including shared nonlinear and arc-length
+code. Passing this packet will verify the consumer only against that older
+solver artifact. It remains PENDING/unrun and is superseded as the proposed
+next check by
+`C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/.development/distributing-displacement-consumer-common-main-20261008-v1`.
+The latter binds the same consumer wheel/source pass/timeout to the existing
+common-main solver wheel `86650929...`, with 627 Python members and all 1,264
+installed files frozen; static manifest, source and runner checks passed. Its
+solver wheel differs from Git commit `cff55d95` only by CRLF/LF in four named
+Python files, recorded in its registration; it is not described as exactly
+byte-identical to Git. This changed-artifact 240-second check is PENDING a
+separate authority reply, has zero attempts and retains 60 seconds. Do not run
+either pending packet before the applicable reply. Complete independent
+consumer review before integration.
+No F03, E03, body retry, old campaign, release or production qualification is
+implied. The programme's G0–G6/F01–F13/V01–V28/B01–B18 obligations remain open.
+
+Physical-reference lane, independent of the pending consumer run: the pinned
+CalculiX 2.23 executable used by E02 is present and its recorded SHA-256
+matches. E01's saved cross-work review allocates the torque discrepancy mainly
+to membrane/normal-spin work, while the later material-frame control shows a
+nodal `theta_z` motion changes the six-row point port but leaves the recovered
+polar-spin port fixed. Thus an expanded-face material-spin comparison cannot
+score the six-row nodal law as the *same* connection. Before another external
+solve, define an executable, work-conjugate six-row reference or explicitly
+declare a distinct matched footprint/material-spin comparison. A finer axial
+mesh does not distinguish those laws. E01 physical accuracy and the connection
+decision remain open; no existing comparison is relabeled.
+
+Bounded BL5 development discriminator, independent of the pending consumer
+packet: use the existing three-edge cantilever with finite eccentric bond and
+apply a pure +1 N m beam-tip moment about the shell normal. Distinguish (a)
+finite, balanced transfer through distributed line force with released local
+normal spin, (b) an unsupported physical/mechanical mode, and (c) numerical
+failure. Record effective runtime, work, equilibrium, global support wrench
+and distributed interface action. Outcome (a) advances only to matched physical
+reference design; (b) requires a law/support decision; (c) requires numerical
+diagnosis. One source development probe, CPU0/thread1/JIT-off, 2 GiB, 60-second
+process cap; no formal F03, ratio sweep, tolerance change or acceptance claim.
+
+---
+
+# Common-main consolidation — 8 October 2026
+
+Human authorizes consolidation and coordination with contact task `01a0d278-3e81-77b1-a9b6-e6c1dc764a38`. Both feature programmes remain paused.
+The common checkout is `C:/Github/ANYsolver/.perf2-worktrees/common-main-20261008`;
+branch `codex/common-main-20261008`, PR #63. See
+`docs/development/COMMON_MAIN_CONSOLIDATION_20261008.md` for source/artifact checks
+and merge prerequisites. This prospective authority supersedes historical
+no-coordination/no-main-merge instructions only for consolidation. It does
+not resume development, consume old allowances, qualify incomplete gates
+or authorize publication. Original checkpoint follows unchanged.
+
+---
+
+# PAUSED restart point - 7 October 2026
+
+Revision 8 remains the complete programme: G0-G6/F01-F13/V01-V28/B01-B18,
+external references, practical scale, platforms, consumers, reviews and release.
+Goal PAUSED by explicit human request. Human approval covers pending checks, compatible repairs and
+prospective bounded checks; scientific criteria and consumed authority remain.
+No communication with the contact task. Mistral/local remain unavailable;
+OpenAI supporting review does not satisfy final different-family acceptance.
+
+Canonical checkout: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001
+Branch: codex/stiffened-main-reconcile-20261001; integrated source 2c3b3779.
+No main merge, push or release. Unrelated ANYfem main edits remain untouched.
+
+## Decision, facts, uncertainty and next action
+
+Deliver the verified finite distributing displacement route through the existing
+experimental ANYfem consumer while assessing saved E03 reference applicability.
+No replacement framework or automatic refinement campaign.
+
+The GE displacement candidate a990de12 (product 6399be68) has been integrated
+as four commits ending at 2c3b3779. All 431 canonical solver modules now match
+the tested installed site byte-for-byte. Sixteen checkout-only line-ending
+differences were diagnosed and reconciled; initial mismatch evidence is retained.
+Numerical checks were not repeated for this byte-identical integration.
+
+Source controls: 17 new PASS (116.3260553s), 13 affected legacy PASS
+(31.0507396s), final observer control PASS (17.8700295s). Replay uses independent
+scratch-owner bindings; observer tests honor the detached-copy contract.
+The source 300s follow-up used 182.7547355s, remaining 117.2452645s, reserve 60s.
+Earlier 180s failures and sandbox/host visibility failures remain recorded;
+no old allocation is transferred or silently renewed.
+
+Installed wheel: abc87da6987961edc4eec35f641be018aa148103eb319af0b2a876288ad61087.
+Built and installed once; 431 Python modules and 441 site files are bound.
+Installed 17 new + 13 legacy + 2 cyclic controls PASS, and the public example
+PASS after its preserved first timeout. Final equilibrium 1.162664177e-12;
+compatibility 1.002599187e-17; checkpoint/restore/continue parity passed.
+The separate 400s allowance used 223.8072112s, remaining 176.1927888s,
+reserve 60s. There is no in-flight numerical job.
+
+Supporting independent product review found no concrete correctness defect.
+The added generalized/coupled cyclic controls close that coverage gap. Physical
+accumulated history is the high+low compensated scalar, independently reconstructed
+with Decimal at 80 digits; its two compensation terms are not separate channels.
+Actual-zero-load and signed yielded reversal remain open G3 obligations.
+This is a verified experimental slice, not programme or production acceptance.
+
+Evidence: isolated ge-distributing-displacement-20261007/.development/
+distributing-displacement-installed-20261007/root-terminal-result-v1.json;
+canonical .development/distributing-displacement-integration-20261007/source-parity-v2.json.
+
+E03 force observability is resolved in next-force-output-v1/saved-adjudication-v3.
+Pinned RF/FORC semantics are uncondensed element nodal gradients, not raw support
+reactions. The original unconsumed coarse external follow-up is now consumed.
+Recovered balance 1.4974177636511776e-10 <= 1e-8; eight compatible point ports;
+positive work 4.210950351426983e-5J. Engineering accuracy remains unscored.
+The original ROOT-only balance failure 3.9905884 and all failed scalar runs remain.
+Original 150s accounting used 44.1285582s, remaining 105.8714418s, reserve 60s;
+this remainder grants no new physical comparison or refinement scope.
+Saved-data review and root inspection now adopt FAILED / NOT CONVERGED as
+the coarse B2 compliance screen: external/native work 2.78978, relative gap
+64.1549%. No concrete section/axis/unit error was found; continuum versus
+plate/beam idealization and convergence remain unresolved. This is distinct
+from the principal GE connection. No new physical campaign is launched.
+
+ANYfem source milestone committed at 8ecb8b42 in its isolated experimental
+checkout. Existing elastic/material panels now persist v2 displacement requests;
+v1 force formats stay unchanged. Source review repaired flat shell-output indexing
+and refusal of bad callbacks/iteration controls before force seeding. Root also
+corrected its overnarrow unit-seed assumption: actual cyclic seed factors are
+preserved. Supporting independent review has no remaining blocking source finding.
+
+Runtime remains UNVERIFIED. Static packet preparation completed before pause.
+The packet covers 53 framing/dispatch controls, 19 affected legacy controls and
+one actual public helper/checkpoint/restore/continue example. Prospective 360s,
+reserve 60s; CPU0/thread1/JIT off/2GiB/job1. No old allocation transfer or solver
+wheel rebuild. Authority/ledger remain PENDING, used 0s, remaining 360s, no attempts or in-flight
+process. Manifest c31184cbe0ff9e0d4435cd113dc25f461e67dbb74f3a302ea317eaa41e8ce53f.
+Root reviews final JSON bindings and activates only after explicit resumption.
+Existing programme approval persists; this is a pause, not a fresh approval need.
+Unrelated ANYfem main edits and protected historical evidence remain untouched.
+
+## Resume action and protected boundaries
+
+No workers or numerical jobs remain running. Consumer handoff is saved in its
+.development/distributing-displacement-consumer-20261007/handoff.md; supporting
+review found no runner-code blocker but final frozen JSON records are unreviewed.
+On explicit resume, read this note, confirm source/packet identities and actual
+Git state, finish the frozen-record review, then activate bounded checks. Do not
+rerun completed solver checks or the consumed E03 physical comparison.
+
+Formal F03 UNCONSUMED; body retry PENDING; bridge38 UNRUN; closed campaigns unchanged.
+Never inspect, traverse or copy protected us3-modal-canary evidence. No automatic
+physical retry, criterion relaxation or release claim. Other remainders remain
+nontransferable. One numerical job, CPU0, one thread, JIT off, 2GiB for current
+packets. Root owns ledgers, execution, scientific adoption and Git integration.
+Historical active records are preserved; one acceptance matrix retains failures.
+Resume actual artifacts without repeating passed checks or copying historical plans.

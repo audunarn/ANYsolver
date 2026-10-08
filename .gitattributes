@@ -1,5 +1,6 @@
 docs/reference_cases/s4_nullspace_semantics_cases.json text eol=lf
 .gitattributes text eol=lf
+docs/agent_plans/B3_GE_E4_PL_ACTIVE_STATE_HISTORY_20261008_V12.md -text
 scripts/r8_bl5_v11_cut_warping_response_dev.py -text
 scripts/r8_bl5_v12_retained_load_response_dev.py -text
 .development/bl5-mz-common-beam-20261008/run-v11-cut-warping.py -text
