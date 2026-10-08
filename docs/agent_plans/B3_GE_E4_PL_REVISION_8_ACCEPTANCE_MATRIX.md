@@ -895,6 +895,16 @@ sealed48 files including seal SHA-256
 General F13/M3 remain open; no member-resultant envelope, scaling/material
 qualification, speedup or larger-domain acceptance follows.
 
+**Prospective B07/F13 addition, 8 October:** selected local B2 member-resultant
+envelopes now retain signed component extrema, requested station identity,
+first-case ties and complete-case prefixes across point, physical-footprint,
+loaded-point and body-load batch routes. Exact-source controls passed 21/21;
+an isolated wheel public physical-footprint 10-case probe passed with one
+factorization. [Raw receipts, initial temp failure and wheel identity](../../.development/b2-member-envelope-20261008-artifact/receipt-v2.json).
+The earlier statement above remains the historical 30 September disposition.
+General F13/M3 and untested material, scale and physical-accuracy claims
+remain open.
+
 **F13 lifecycle development,30 September:** completion-callback closure now
 returns the complete selected prefix and scalar numerical counts. Incomplete
 closure is cancelled with an explicit reason; final-case closure is completed.

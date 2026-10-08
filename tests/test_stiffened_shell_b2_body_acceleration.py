@@ -234,6 +234,7 @@ def test_body_load_batches_keep_factor_and_complete_cancelled_prefix(count):
         assert batch.status == "completed", batch.failure_reason
         assert len(batch.cases) == count and batch.factorization_count == 1
         assert batch.solve_count == count
+        assert batch.member_resultant_envelopes == ()
         token = CancellationToken()
         def stop(name): token.cancel("complete first body case")
         cancelled = analysis.solve_linear_many((("first", cases[0][1]), ("never", cases[0][1])), selected_dofs=(49, 50),

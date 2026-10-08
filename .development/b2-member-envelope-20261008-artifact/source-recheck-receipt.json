@@ -1,0 +1,32 @@
+{
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_stiffened_shell_b2_q4_panel_experimental.py::test_point_panel_batch_reuses_factorization_and_selects_recovery",
+    "tests/test_stiffened_shell_b2_q4_panel_experimental.py::test_point_panel_selected_envelopes_report_signed_extrema_and_first_case_ties",
+    "tests/test_stiffened_shell_b2_q4_panel_experimental.py::test_point_panel_selected_envelopes_use_only_complete_prefix",
+    "tests/test_stiffened_shell_b2_q4_panel_experimental.py::test_point_panel_selected_envelopes_are_empty_for_zero_complete_cases",
+    "tests/test_stiffened_shell_b2_physical_footprint_batch.py::test_public_batch_counts_selected_outputs_and_envelopes",
+    "tests/test_stiffened_shell_b2_physical_footprint_batch.py::test_no_unselected_recovery_and_first_case_tie",
+    "tests/test_stiffened_shell_b2_physical_footprint_batch.py::test_public_batch_example",
+    "tests/test_b2_loaded_point_owner.py::test_loaded_batch_selection_and_factor_reuse",
+    "tests/test_b2_loaded_point_owner.py::test_loaded_batch_cancellation_returns_complete_case",
+    "tests/test_stiffened_shell_b2_body_acceleration.py::test_body_load_batches_keep_factor_and_complete_cancelled_prefix"
+  ],
+  "status": "COMPLETED",
+  "exit_code": 0,
+  "wall_seconds": 12.529191099994932,
+  "cumulative_used_seconds": 42.50108029999493,
+  "cumulative_remaining_seconds": 137.49891970000508,
+  "process_cap_seconds": 45,
+  "peak_sampled_tree_rss_bytes": 221888512,
+  "memory_cap_bytes": 2147483648,
+  "cpu_affinity_observed": [
+    0
+  ],
+  "threads_requested": 1,
+  "jit_disabled_requested": true,
+  "product_sha256": "9f52d1ac6e155a810ef306dafad684c7e19d2b638bd649c9ceee20b67985963a"
+}

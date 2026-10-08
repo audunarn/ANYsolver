@@ -1,0 +1,37 @@
+{
+  "status": "PASSED",
+  "imported_from": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\b2-member-envelope-20261008-artifact\\site\\anysolver\\__init__.py",
+  "wheel_sha256": "2c73683ab355a3b1f2d8c5b172bed1db75db0c2b47c6460f9ba86ae780f69e08",
+  "threadpools": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "version": "0.3.31.188.0",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "version": "0.3.30",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    }
+  ],
+  "result": {
+    "status": "completed",
+    "case_count": 10,
+    "factorization_count": 1,
+    "solve_count": 10,
+    "maximum_rhs_chunk": 1,
+    "member_resultant_envelope_count": 18,
+    "footprint_law_id": "B2_PHYSICAL_RIGID_FOOTPRINT_DIRECTOR_REFERENCE_V1_EXPERIMENTAL",
+    "production_qualified": false
+  }
+}

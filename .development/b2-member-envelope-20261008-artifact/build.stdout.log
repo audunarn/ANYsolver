@@ -1,0 +1,23 @@
+
+Traceback (most recent call last):
+  File "C:\Python\Python314\Lib\site-packages\pyproject_hooks\_impl.py", line 29, in write_json
+    with open(path, "w", encoding="utf-8") as f:
+         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: 'C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Packages\\sandbox.{28908333-444a-43f9-b54b-bbea45b5eded}\\AC\\Temp\\tmpbe6qy3wi\\input.json'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Python\Python314\Lib\shutil.py", line 707, in _rmtree_unsafe
+    os.rmdir(path)
+    ~~~~~~~~^^^^^^
+PermissionError: [WinError 5] Access is denied: 'C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Packages\\sandbox.{28908333-444a-43f9-b54b-bbea45b5eded}\\AC\\Temp\\tmpbe6qy3wi'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Python\Python314\Lib\tempfile.py", line 276, in _dont_follow_symlinks
+    func(path, *args, follow_symlinks=False)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+PermissionError: [WinError 5] Access is denied: 'C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Packages\\sandbox.{28908333-444a-43f9-b54b-bbea45b5eded}\\AC\\Temp\\tmpbe6qy3wi'
+

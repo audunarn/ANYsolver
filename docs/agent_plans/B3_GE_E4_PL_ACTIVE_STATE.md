@@ -117,6 +117,15 @@ off-ratio mode before any formal F03 comparison.
   the continuum-versus-plate/beam idealization is unresolved. It is separate
   from the principal GE connection decision. Other G2–G6 mechanics, scale,
   external comparisons, platforms, consumer completion and release remain open.
+- B2 selected local member-resultant envelopes now report signed extrema and
+  first governing case IDs for requested stations and all six components,
+  using complete cases only. Exact-source focused controls passed 21/21;
+  an isolated wheel (SHA-256 `2c73683ab355a3b1f2d8c5b172bed1db75db0c2b47c6460f9ba86ae780f69e08`)
+  ran the public ten-case physical-footprint batch with one factorization and
+  18 requested envelopes. [Receipt and failed first build attempt](../../.development/b2-member-envelope-20261008-artifact/receipt-v2.json).
+  The first build failed because sandbox temp was unwritable; the corrected
+  task-local-temp build passed. This is B07/F13 experimental development,
+  not material, scale, external-accuracy, or aggregate gate acceptance.
 
 ## Execution and restart boundaries
 

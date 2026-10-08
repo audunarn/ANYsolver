@@ -1,0 +1,29 @@
+{
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_stiffened_shell_b2_q4_panel_experimental.py::test_point_panel_batch_reuses_factorization_and_selects_recovery",
+    "tests/test_stiffened_shell_b2_q4_panel_experimental.py::test_point_panel_selected_envelopes_report_signed_extrema_and_first_case_ties",
+    "tests/test_stiffened_shell_b2_q4_panel_experimental.py::test_point_panel_selected_envelopes_use_only_complete_prefix",
+    "tests/test_stiffened_shell_b2_q4_panel_experimental.py::test_point_panel_selected_envelopes_are_empty_for_zero_complete_cases"
+  ],
+  "source_commit": "343d74dc8ee66160094a2e1e4772f549581cfa06",
+  "product_sha256": "812262d70902de25b8b5f6f050b05afd10e7982eb5deeb0720c18e9cd281729e",
+  "test_sha256": "a90a378929768a841ace7c89f522c0cddc8682d0fc1b8fdd1d1678dd8b445a59",
+  "status": "COMPLETED",
+  "exit_code": 0,
+  "wall_seconds": 6.6856328,
+  "cumulative_allowance_seconds": 180.0,
+  "cumulative_used_seconds": 6.6856328,
+  "cumulative_remaining_seconds": 173.3143672,
+  "process_cap_seconds": 60.0,
+  "memory_cap_bytes": 2147483648,
+  "peak_sampled_parent_rss_bytes": 219967488,
+  "cpu_affinity_observed": 1,
+  "numerical_threads_requested": 1,
+  "jit_disabled_requested": true,
+  "stdout": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\b2-member-envelope-20261008-v1\\stdout.log",
+  "stderr": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\b2-member-envelope-20261008-v1\\stderr.log"
+}

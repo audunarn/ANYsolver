@@ -74,6 +74,7 @@ from ._stiffened_shell_b2_q4_panel_experimental import (
     ExperimentalB2MixedReferenceModalCapabilities,
     S3_V2D_TRANSLATIONAL_LUMPED_SECTION_AREAL_MASS_V1,
     ExperimentalB2Q4PanelResponseEnvelope,
+    ExperimentalB2Q4PanelMemberResultantEnvelope,
     B2ReferenceModesRequest, B2ReferenceModesResult,
     B2FreeReferenceModesResult, B2_FREE_FREE_MODAL_ONLY_V1,
     B2ReferenceBodyLoad,

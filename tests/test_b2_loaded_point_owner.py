@@ -225,6 +225,10 @@ def test_loaded_batch_selection_and_factor_reuse(count):
         assert all(len(c.loaded_member_poses)==1 and len(c.equilibrated_sections)==1 for c in result.cases)
         assert all(c.loaded_member_poses[0].stations==(.25,.75) for c in result.cases)
         assert result.cases[-1].loaded_strain_energy==result.cases[0].loaded_strain_energy
+        assert len(result.member_resultant_envelopes)==12
+        assert all(item.member_id=="beam-left" and
+                   item.minimum_case_id==item.maximum_case_id=="0"
+                   for item in result.member_resultant_envelopes)
     finally:a.close()
 
 
@@ -236,6 +240,9 @@ def test_loaded_batch_cancellation_returns_complete_case():
             recover_members={"beam-left":(.5,)},cancellation_token=token,on_case=lambda _:token.cancel())
         assert result.status=="cancelled" and len(result.cases)==1
         assert len(result.cases[0].loaded_member_poses)==1
+        assert len(result.member_resultant_envelopes)==6
+        assert all(item.minimum_case_id==item.maximum_case_id=="one"
+                   for item in result.member_resultant_envelopes)
     finally:a.close()
 
 

@@ -1,0 +1,102 @@
+[
+  {
+    "name": "build",
+    "command": [
+      "C:\\Python\\Python314\\python.exe",
+      "-m",
+      "build",
+      "--wheel",
+      "--no-isolation",
+      "--outdir",
+      "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\b2-member-envelope-20261008-artifact\\wheel",
+      "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008"
+    ],
+    "status": "COMPLETED",
+    "exit_code": 1,
+    "wall_seconds": 0.3511750000034226,
+    "cumulative_used_seconds": 16.456961200003423,
+    "cumulative_remaining_seconds": 163.54303879999657,
+    "process_cap_seconds": 60,
+    "cpu_affinity_observed": [
+      0
+    ],
+    "threads_requested": 1,
+    "jit_disabled_requested": true,
+    "memory_cap_bytes": 2147483648,
+    "peak_sampled_tree_rss_bytes": 28647424
+  },
+  {
+    "name": "build-v2",
+    "command": [
+      "C:\\Python\\Python314\\python.exe",
+      "-m",
+      "build",
+      "--wheel",
+      "--no-isolation",
+      "--outdir",
+      "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\b2-member-envelope-20261008-artifact\\wheel",
+      "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008"
+    ],
+    "status": "COMPLETED",
+    "exit_code": 0,
+    "wall_seconds": 6.135946599999443,
+    "cumulative_used_seconds": 22.592907800002866,
+    "cumulative_remaining_seconds": 157.40709219999712,
+    "process_cap_seconds": 60,
+    "cpu_affinity_observed": [
+      0
+    ],
+    "threads_requested": 1,
+    "jit_disabled_requested": true,
+    "memory_cap_bytes": 2147483648,
+    "peak_sampled_tree_rss_bytes": 81362944
+  },
+  {
+    "name": "install-v2",
+    "command": [
+      "C:\\Python\\Python314\\python.exe",
+      "-m",
+      "pip",
+      "install",
+      "--no-deps",
+      "--target",
+      "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\b2-member-envelope-20261008-artifact\\site",
+      "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\b2-member-envelope-20261008-artifact\\wheel\\anysolver-0.4.7-py3-none-any.whl"
+    ],
+    "status": "COMPLETED",
+    "exit_code": 0,
+    "wall_seconds": 5.0059207000012975,
+    "cumulative_used_seconds": 27.598828500004164,
+    "cumulative_remaining_seconds": 152.40117149999583,
+    "process_cap_seconds": 60,
+    "cpu_affinity_observed": [
+      0
+    ],
+    "threads_requested": 1,
+    "jit_disabled_requested": true,
+    "memory_cap_bytes": 2147483648,
+    "peak_sampled_tree_rss_bytes": 100958208
+  },
+  {
+    "name": "probe-v2",
+    "command": [
+      "C:\\Python\\Python314\\python.exe",
+      "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\b2-member-envelope-20261008-artifact\\installed_probe.py",
+      "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\b2-member-envelope-20261008-artifact\\site",
+      "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\b2-member-envelope-20261008-artifact\\wheel\\anysolver-0.4.7-py3-none-any.whl"
+    ],
+    "status": "COMPLETED",
+    "exit_code": 0,
+    "wall_seconds": 2.373060699988855,
+    "cumulative_used_seconds": 29.97188919999302,
+    "cumulative_remaining_seconds": 150.02811080000697,
+    "process_cap_seconds": 60,
+    "cpu_affinity_observed": [
+      0
+    ],
+    "threads_requested": 1,
+    "jit_disabled_requested": true,
+    "memory_cap_bytes": 2147483648,
+    "peak_sampled_tree_rss_bytes": 159092736
+  }
+]

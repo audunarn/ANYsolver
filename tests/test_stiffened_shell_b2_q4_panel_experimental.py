@@ -353,6 +353,12 @@ def test_point_panel_batch_reuses_factorization_and_selects_recovery(count):
                case.beam_resultants_local[0][0] == "beam-right" and
                len(case.beam_resultants_local[0][1]) == 2
                for case in result.cases)
+    assert len(result.member_resultant_envelopes) == 12
+    assert tuple((item.member_id, item.station_index, item.station_normalized,
+                  item.component) for item in result.member_resultant_envelopes) == tuple(
+        ("beam-right", station_index, station, component)
+        for station_index, station in enumerate((.25, .75))
+        for component in ("N", "Qy", "Qz", "Mx", "My", "Mz"))
     single = analysis.solve_linear(
         cases[-1][1], recover_members={"beam-right": (.25, .75)})
     assert single.status == "completed"
@@ -383,10 +389,13 @@ def test_point_panel_selected_envelopes_report_signed_extrema_and_first_case_tie
     load[6*5+2] = -.16
     cases = (("z-first", load), ("a-reversed", -2*load),
              ("y-tied", load.copy()), ("zero", np.zeros(54)))
+    recovery = {"beam-right": (.25, .75)}
     try:
-        expected = tuple(control.solve_linear(value) for _, value in cases)
+        expected = tuple(control.solve_linear(value, recover_members=recovery)
+                         for _, value in cases)
         assert all(case.status == "completed" for case in expected)
-        result = owner.solve_linear_many(cases, selected_dofs=selected)
+        result = owner.solve_linear_many(cases, selected_dofs=selected,
+                                        recover_members=recovery)
         assert result.status == "completed"
         assert tuple(case.case_id for case in result.cases) == tuple(
             case_id for case_id, _ in cases)
@@ -402,6 +411,23 @@ def test_point_panel_selected_envelopes_report_signed_extrema_and_first_case_tie
                 assert envelope.maximum == values[maximum_index]
                 assert envelope.minimum_case_id == cases[minimum_index][0]
                 assert envelope.maximum_case_id == cases[maximum_index][0]
+        assert len(result.member_resultant_envelopes) == 12
+        assert isinstance(result.member_resultant_envelopes[0],
+                          stiffened_shell.ExperimentalB2Q4PanelMemberResultantEnvelope)
+        for station_index, station in enumerate(recovery["beam-right"]):
+            for component_index, component in enumerate(("N", "Qy", "Qz", "Mx", "My", "Mz")):
+                envelope = result.member_resultant_envelopes[6*station_index+component_index]
+                values = tuple(dict(case.beam_resultants_local)["beam-right"]
+                               [station_index][component_index] for case in expected)
+                minimum_index = min(range(len(values)), key=values.__getitem__)
+                maximum_index = max(range(len(values)), key=values.__getitem__)
+                assert (envelope.member_id, envelope.station_index,
+                        envelope.station_normalized, envelope.component) == (
+                            "beam-right", station_index, station, component)
+                assert (envelope.minimum, envelope.minimum_case_id) == (
+                    values[minimum_index], cases[minimum_index][0])
+                assert (envelope.maximum, envelope.maximum_case_id) == (
+                    values[maximum_index], cases[maximum_index][0])
         # The supported uy response ties at zero: preserve submission order,
         # rather than sorting IDs or choosing the last equally governing case.
         ground = result.displacement_envelopes[1]
@@ -410,6 +436,8 @@ def test_point_panel_selected_envelopes_report_signed_extrema_and_first_case_tie
         assert abs(expected[0].affine_reactions[1]) > 0.
         with pytest.raises(FrozenInstanceError):
             ground.minimum = 1.
+        with pytest.raises(FrozenInstanceError):
+            result.member_resultant_envelopes[0].minimum = 1.
     finally:
         owner.close()
         control.close()
@@ -430,6 +458,7 @@ def test_point_panel_selected_envelopes_use_only_complete_prefix(termination, mo
     load[6*5+2] = -.16
     cases = (("first", load), ("second", -2*load),
              ("unpublished-large", 100*load))
+    recovery = {"beam-right": (.25, .75)}
     token = CancellationToken()
     seen = []
 
@@ -442,7 +471,8 @@ def test_point_panel_selected_envelopes_use_only_complete_prefix(termination, mo
                 owner.close()
 
     try:
-        expected = tuple(control.solve_linear(value) for _, value in cases[:2])
+        expected = tuple(control.solve_linear(value, recover_members=recovery)
+                         for _, value in cases[:2])
         assert all(case.status == "completed" for case in expected)
         if termination == "failure":
             original = owner._handle.solve
@@ -454,7 +484,8 @@ def test_point_panel_selected_envelopes_use_only_complete_prefix(termination, mo
 
             monkeypatch.setattr(owner._handle, "solve", fail_third)
         result = owner.solve_linear_many(
-            cases, selected_dofs=selected, cancellation_token=token, on_case=after_case)
+            cases, selected_dofs=selected, recover_members=recovery,
+            cancellation_token=token, on_case=after_case)
         assert result.status == ("failed" if termination == "failure" else "cancelled")
         assert tuple(case.case_id for case in result.cases) == ("first", "second")
         assert result.factorization_count == 1 and result.solve_count == 2
@@ -468,6 +499,17 @@ def test_point_panel_selected_envelopes_use_only_complete_prefix(termination, mo
                 assert envelope.maximum == values[maximum_index]
                 assert envelope.minimum_case_id == cases[minimum_index][0]
                 assert envelope.maximum_case_id == cases[maximum_index][0]
+        assert len(result.member_resultant_envelopes) == 12
+        for envelope in result.member_resultant_envelopes:
+            component_index = ("N", "Qy", "Qz", "Mx", "My", "Mz").index(envelope.component)
+            values = tuple(dict(case.beam_resultants_local)[envelope.member_id]
+                           [envelope.station_index][component_index] for case in expected)
+            minimum_index = min(range(2), key=values.__getitem__)
+            maximum_index = max(range(2), key=values.__getitem__)
+            assert (envelope.minimum, envelope.minimum_case_id) == (
+                values[minimum_index], cases[minimum_index][0])
+            assert (envelope.maximum, envelope.maximum_case_id) == (
+                values[maximum_index], cases[maximum_index][0])
         if termination == "failure":
             assert result.failure_reason == "unpublished-large: injected envelope backend failure"
         elif termination == "close":
@@ -499,10 +541,12 @@ def test_point_panel_selected_envelopes_are_empty_for_zero_complete_cases(
         monkeypatch.setattr(owner._handle, "solve", failed_backend)
     try:
         result = owner.solve_linear_many(
-            (("first", load),), selected_dofs=(6*8+1,), cancellation_token=token)
+            (("first", load),), selected_dofs=(6*8+1,),
+            recover_members={"beam-right": (.25,)}, cancellation_token=token)
         assert result.status == ("cancelled" if termination == "cancel" else "failed")
         assert result.cases == ()
-        assert result.displacement_envelopes == result.affine_reaction_envelopes == ()
+        assert (result.displacement_envelopes == result.affine_reaction_envelopes ==
+                result.member_resultant_envelopes == ())
         assert result.solve_count == 0
     finally:
         owner.close()

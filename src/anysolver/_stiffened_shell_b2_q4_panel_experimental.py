@@ -458,6 +458,24 @@ class ExperimentalB2Q4PanelResponseEnvelope:
 
 
 @dataclass(frozen=True)
+class ExperimentalB2Q4PanelMemberResultantEnvelope:
+    """Signed local sectional-resultant extrema at one requested station.
+
+    Components are N, Qy, Qz, Mx, My, Mz in the member's local frame.
+    Station indices distinguish repeated normalized station coordinates.
+    """
+
+    member_id: str
+    station_index: int
+    station_normalized: float
+    component: str
+    minimum: float
+    minimum_case_id: str
+    maximum: float
+    maximum_case_id: str
+
+
+@dataclass(frozen=True)
 class ExperimentalB2Q4PanelBatchResult:
     status: str
     selected_dofs: tuple[int, ...]
@@ -470,6 +488,7 @@ class ExperimentalB2Q4PanelBatchResult:
     production_qualified: bool = False
     displacement_envelopes: tuple[ExperimentalB2Q4PanelResponseEnvelope, ...] = ()
     affine_reaction_envelopes: tuple[ExperimentalB2Q4PanelResponseEnvelope, ...] = ()
+    member_resultant_envelopes: tuple[ExperimentalB2Q4PanelMemberResultantEnvelope, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -1848,8 +1867,9 @@ class ExperimentalB2Q4PanelAnalysis:
         final-case closure still returns completed. Callback and programming
         errors propagate. This development route uses one RHS at a
         time, avoiding full displacement/reaction batches for large panels.
-        Selected displacement/reaction envelopes describe only complete cases
-        in the returned prefix, with the first submitted case governing ties.
+        Selected displacement, reaction and local member-resultant envelopes
+        describe only complete cases in the returned prefix, with the first
+        submitted case governing ties.
         """
         if self._closed:
             raise ExperimentalB2Q4PanelError("experimental panel is closed")
@@ -1922,6 +1942,28 @@ class ExperimentalB2Q4PanelAnalysis:
                     getattr(maximum, attribute)[index], maximum.case_id))
             return tuple(extrema)
 
+        def member_envelopes():
+            if not completed or not recovery:
+                return ()
+            sections = tuple((case.case_id, dict(case.beam_resultants_local))
+                             for case in completed)
+            extrema = []
+            for member_id, stations in recovery.items():
+                if any(member_id not in rows or len(rows[member_id]) != len(stations)
+                       for _, rows in sections):
+                    raise RuntimeError("incomplete selected B2 member recovery")
+                for station_index, station in enumerate(stations):
+                    for component_index, component in enumerate(
+                            ("N", "Qy", "Qz", "Mx", "My", "Mz")):
+                        values = tuple((case_id, rows[member_id][station_index][component_index])
+                                       for case_id, rows in sections)
+                        minimum = min(values, key=lambda item: item[1])
+                        maximum = max(values, key=lambda item: item[1])
+                        extrema.append(ExperimentalB2Q4PanelMemberResultantEnvelope(
+                            member_id, station_index, station, component,
+                            minimum[1], minimum[0], maximum[1], maximum[0]))
+            return tuple(extrema)
+
         def finish(status, failure_reason=None):
             result_type = (ExperimentalB2Q4FootprintBatchResult if self.footprints
                            else ExperimentalB2Q4PanelBatchResult)
@@ -1934,7 +1976,8 @@ class ExperimentalB2Q4PanelAnalysis:
                 factorization_count, solve_count,
                 failure_reason=failure_reason,
                 displacement_envelopes=envelopes("selected_displacements"),
-                affine_reaction_envelopes=envelopes("selected_affine_reactions"), **extra)
+                affine_reaction_envelopes=envelopes("selected_affine_reactions"),
+                member_resultant_envelopes=member_envelopes(), **extra)
 
         for index, (case_id, load) in enumerate(submitted):
             if self._closed or (cancellation_token is not None and

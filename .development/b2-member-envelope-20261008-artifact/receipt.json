@@ -1,0 +1,28 @@
+[
+  {
+    "name": "build",
+    "command": [
+      "C:\\Python\\Python314\\python.exe",
+      "-m",
+      "build",
+      "--wheel",
+      "--no-isolation",
+      "--outdir",
+      "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\b2-member-envelope-20261008-artifact\\wheel",
+      "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008"
+    ],
+    "status": "COMPLETED",
+    "exit_code": 1,
+    "wall_seconds": 0.3511750000034226,
+    "cumulative_used_seconds": 16.456961200003423,
+    "cumulative_remaining_seconds": 163.54303879999657,
+    "process_cap_seconds": 60,
+    "cpu_affinity_observed": [
+      0
+    ],
+    "threads_requested": 1,
+    "jit_disabled_requested": true,
+    "memory_cap_bytes": 2147483648,
+    "peak_sampled_tree_rss_bytes": 28647424
+  }
+]
