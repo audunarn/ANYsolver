@@ -26,3 +26,35 @@ Either outcome still requires a separate valid equilibrium result before a
 body-work comparison. This check has not run and needs the applicable
 execution authority. Formal F03 and the separate historical Fz retry remain
 untouched.
+
+## Source derivation and candidate correction — 8 October 2026
+
+The exact-row derivation resolves the source question more strongly than a
+multiplier-specific dot product. Local beam node 18 is the vertical C3D20
+midside edge node, with reference coordinates `(1, 1, 0)` and physical
+coordinates `(0.5, 0, 0.04)`. Its `y` degree of freedom is local beam slot 55.
+Its shape contains `(1-zeta**2)`, so it vanishes identically on both physical
+beam faces sampled by the weak five-channel operator, `z=0.01` and `z=0.07`.
+Only the `y` position and director rows could otherwise involve this degree
+of freedom. Both exact coefficients vanish for every P0 segment, regardless
+of the saved multipliers. The end traction loads only `x=1` beam nodes; its
+exact slot-55 value is also zero. Thus the analytical reduced beam load on
+this slot is exactly zero. The saved V4 nonzero value is an implemented
+floating-point assembly artifact, not a physical interface action.
+
+The source's physical-to-reference `center/span` calculation could round a
+material-face coordinate slightly inside `zeta=+/-1`. A candidate source
+correction now substitutes exact reference boundary coordinates when the
+physical sample is on a cell face. A focused algebraic regression confirms
+all five local trace channels and all 20 weak rows are exactly zero in the
+slot-55 column: 1 passed, 9 deselected. This is not a V5 solve or a proof of
+equilibrium. V4 remains FAILED, its cumulative ledger remains CLOSED, and
+the prior high-precision residual remains unsatisfied. No old attempt was
+rerun, and no F03 or separate Fz body authority was consumed.
+
+To decompose the V4 implemented dot exactly, the actual binary64 C column
+would be needed alongside the saved projected multipliers. V4 did not save
+that column. The analytical identity has zero error bound; an exact rational
+reconstruction of the old *implemented* dot cannot be claimed from the
+available arrays. A new solved comparison requires a separately valid
+numerical execution authority and its unchanged equilibrium criteria.
