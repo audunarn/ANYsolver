@@ -22,6 +22,8 @@ scripts/r8_bl5_v12_retained_load_response_dev.py -text
 .development/bl5-off-common-20261008-*/** -text -whitespace
 .development/bl5-ccx-matched-mx-8x4x2-20261008-*/** -text -whitespace
 .development/bl5-mx-shell-*-20261008-*/** -text -whitespace
+.development/bl5-mx-beam-interface-20261008-*/** -text -whitespace
+.development/bl5-mx-interface-aggregation-20261008-*/** -text -whitespace
 docs/agent_plans/s4_drill_constraint_tor_agent.md text eol=lf
 docs/reference_cases/s4_drill_constraint_cases.json text eol=lf
 docs/reference_cases/s4_drill_constraint_oracle.py text eol=lf

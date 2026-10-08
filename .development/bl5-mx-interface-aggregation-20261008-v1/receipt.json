@@ -1,0 +1,35 @@
+{
+  "identity": "R8_BL5_MX_INTERFACE_AGGREGATION_RUN_V1",
+  "status": "EXITED",
+  "exit_code": 0,
+  "launch_error": null,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-m",
+    "scripts.r8_bl5_mx_interface_aggregation_dev",
+    "--independent",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-mx-matched-refinement-20261008-v1\\levels\\16x8x4.json",
+    "--fine",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-mx-beam-interface-20261008-v1\\result.json",
+    "--output",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-mx-interface-aggregation-20261008-v1\\result.json"
+  ],
+  "source_sha256": "df6638cfdf4285ab3a515ff70c4cbad1e6f13872699533068d699f4ee565c2d5",
+  "independent_sha256": "c81720f503d972dff685ec114446eece5abeef4c1d7d9a1d9df56cf43ff79729",
+  "fine_result_sha256": "65bab6152c4e2c2885eda352ef525b3243ca426902f88a0adfaacbf951bb6bac",
+  "source_commit": "11f4a3b05a6ca14feaedc52ec85bdea467103143",
+  "result_sha256": "6555b7270e7f84c6d9459eab17b87cfc5314e24cebee74e90c2a7092a3ec7784",
+  "process_started": true,
+  "wall_seconds": 9.53476419999788,
+  "process_cap_seconds": 120,
+  "cumulative_allowance_seconds": 180,
+  "cumulative_used_seconds": 9.53476419999788,
+  "cumulative_remaining_seconds": 170.46523580000212,
+  "memory_cap_bytes": 2147483648,
+  "peak_sampled_process_tree_rss_bytes": 961126400,
+  "cpu_affinity_observed": [
+    0
+  ],
+  "threads_requested": 1,
+  "jit_disabled_requested": true
+}

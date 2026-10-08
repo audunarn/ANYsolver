@@ -293,6 +293,21 @@ continuous native/solid work map. Do not infer BL5 fidelity or select P0
 from these one-axis development screens. F03 remains unconsumed and G0/G1
 acceptance open.
 
+That fixed-shell beam/interface discriminator also completed. Refine the
+resolved beam from 16×8×4 to 32×8×4 while growing exact physical P0 rows
+80→160: work changes `−0.63016%`. Holding the *refined* beam fixed and
+aggregating pairs of fine segment-integrated rows back to 80 isolates row
+resolution: work rises `+0.74836%` relative to 160 rows. Thus beam refinement
+at 80 rows alone changes work `+0.11348%`, while 80→160 rows on the same beam
+changes it `−0.74280%`. All bounded equilibrium/work/wrench controls passed.
+[Results](../../.development/bl5-mx-interface-resolution-20261008-results.md).
+This makes interface resolution a material finite-grid response variable,
+not a selected P0 policy: extra rows could reduce under-enforcement or cause
+locking. Next compare supported local traction/couple work, continuous gaps,
+shear/drilling and unresolved modes for these exact two spaces before any
+further loaded refinement or formal F03. Preserve the previous failed
+thickness attempts and all protected evidence.
+
 ## Delivered experimental behavior and open acceptance
 
 - The sparse multi-element Q4/mixed Q4-S3/all-S3 GE point workflow, physical

@@ -1,0 +1,32 @@
+{
+  "identity": "R8_BL5_MX_BEAM_INTERFACE_RUN_V1",
+  "status": "EXITED",
+  "exit_code": 0,
+  "launch_error": null,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-m",
+    "scripts.r8_bl5_mx_beam_interface_dev",
+    "--independent",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-mx-matched-refinement-20261008-v1\\levels\\16x8x4.json",
+    "--output",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-mx-beam-interface-20261008-v1\\result.json"
+  ],
+  "source_sha256": "95c69043db7921d99414b8dac524fdee2720b66ad7565feb991a604371fee812",
+  "independent_sha256": "c81720f503d972dff685ec114446eece5abeef4c1d7d9a1d9df56cf43ff79729",
+  "source_commit": "11f4a3b05a6ca14feaedc52ec85bdea467103143",
+  "result_sha256": "65bab6152c4e2c2885eda352ef525b3243ca426902f88a0adfaacbf951bb6bac",
+  "process_started": true,
+  "wall_seconds": 9.882634199995664,
+  "process_cap_seconds": 120,
+  "cumulative_allowance_seconds": 180,
+  "cumulative_used_seconds": 9.882634199995664,
+  "cumulative_remaining_seconds": 170.11736580000434,
+  "memory_cap_bytes": 2147483648,
+  "peak_sampled_process_tree_rss_bytes": 972091392,
+  "cpu_affinity_observed": [
+    0
+  ],
+  "threads_requested": 1,
+  "jit_disabled_requested": true
+}
