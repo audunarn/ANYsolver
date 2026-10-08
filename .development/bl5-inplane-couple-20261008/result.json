@@ -1,0 +1,70 @@
+{
+  "scope": "BL5 pure in-plane tip moment, source development only",
+  "qualified": false,
+  "status": "completed",
+  "equilibrium": 4.656618521889459e-14,
+  "constraint": 7.025373203609414e-24,
+  "root_force": [
+    -4.884981308350689e-15,
+    1.1368683772161603e-13,
+    1.9761969838327786e-14
+  ],
+  "root_moment_about_origin": [
+    1.7763568394002505e-15,
+    -2.232936058277346e-14,
+    -0.9999999999999215
+  ],
+  "shell_interface_force": [
+    4.440892098500626e-16,
+    0.0,
+    1.3877787807814457e-17
+  ],
+  "shell_interface_moment_about_origin": [
+    -6.591949208711867e-17,
+    1.3877787807814457e-17,
+    -1.0
+  ],
+  "max_shell_interface_covector": 3.62238974517325,
+  "external_work_at_final_load": 1.7000855950530435e-07,
+  "matrix_dimension": 134,
+  "matrix_nnz": 4692,
+  "line_samples": 12,
+  "multiplier_rows": 20,
+  "cpu_affinity": [
+    0
+  ],
+  "numba_disable_jit": 1,
+  "numba_threads": 1,
+  "threadpools": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "version": "0.3.31.188.0",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "version": "0.3.30",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "openmp",
+      "internal_api": "openmp",
+      "num_threads": 1,
+      "prefix": "vcomp",
+      "filepath": "C:\\Windows\\System32\\vcomp140.dll",
+      "version": null
+    }
+  ],
+  "children_after": [],
+  "fixture_sha256": "b05875dbc723b041abf425784afc98a090366b914792da6833b1139a17d8d0d7"
+}
