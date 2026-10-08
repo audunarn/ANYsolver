@@ -1,5 +1,17 @@
 # Active development — 8 October 2026
 
+BL5 source-only independent review now localizes the V4 tiny-load obstruction:
+slot 55 is a symmetry-allowed y row, with 3.5665e-16 N assembled load and
+9.1302e-13 N high-precision residual. Reflection cannot delete it. The next
+discriminating calculation, under applicable execution authority, is an
+analytic/exact-integral derivation of that C3D20/P0 row's individual interface
+terms evaluated against the saved binary64 multipliers, with an error bound.
+Only a proved structural zero could justify exact cancellation. Even then,
+the active-row equilibrium check remains unsatisfied until its residual is
+resolved. V4 remains FAILED; no numerical retry or criterion change occurred.
+Main and origin/main still point to `cff55d95`; the main checkout has unrelated
+untracked work and was not edited.
+
 Current independent product slice: default elastic S3 V2D recovery now has a
 candidate local physical surface-stress mapping for exact isotropic Material,
 using its existing N/M/Q resultants and the same top/bottom von Mises convention
