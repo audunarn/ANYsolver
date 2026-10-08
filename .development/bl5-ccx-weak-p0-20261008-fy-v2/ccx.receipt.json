@@ -1,0 +1,28 @@
+{
+  "identity": "R8_BL5_CCX_WEAK_P0_EXECUTION_DEV_V1",
+  "case": "fy",
+  "executable": "C:\\Github\\ANYsolver\\.qualification\\b3-ge-e4-pl\\calculix-223\\CalculiX-2.23.0-win-x64\\bin\\ccx.exe",
+  "executable_sha256": "27a9426a1ee2f72c38fbe892e0ffaf38e14867628ffd0235770261b6f3ec9c5f",
+  "command": [
+    "C:\\Github\\ANYsolver\\.qualification\\b3-ge-e4-pl\\calculix-223\\CalculiX-2.23.0-win-x64\\bin\\ccx.exe",
+    "-i",
+    "weak"
+  ],
+  "cwd": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-ccx-weak-p0-20261008-fy-v2",
+  "affinity": [
+    0
+  ],
+  "environment": {
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "NUMBA_NUM_THREADS": "1",
+    "NUMBA_DISABLE_JIT": "1"
+  },
+  "max_ccx_seconds": 30.0,
+  "max_total_seconds": 60.0,
+  "max_tree_rss_bytes": 2147483648,
+  "status": "SUPERVISOR_ERROR",
+  "error": "OSError(22, '{Illegal System DLL Relocation}\\r\\nThe system DLL %hs was relocated in memory. The application will not run properly.\\r\\nThe relocation occurred because the DLL %hs occupied an address range reserved for Windows system DLLs. The vendor supplying the DLL should be contacted for a new DLL', None, 623, None)",
+  "ccx_process_wall_seconds": 0.007392900006379932
+}

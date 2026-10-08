@@ -1,7 +1,7 @@
 # B3-GE / E4-PL and B2 — current development state
 
 **8 October 2026.** Worktree `C:/Github/ANYsolver/.perf2-worktrees/stiffened-rev8-20261008`,
-branch `codex/stiffened-rev8-resume`, pushed head `0cda7dcc`. This is the
+branch `codex/stiffened-rev8-resume`. Read Git for the current head. This is the
 authoritative current-state note. The preceding 448-line note was copied
 byte-for-byte to [history](B3_GE_E4_PL_ACTIVE_STATE_HISTORY_20261008_V12.md)
 (SHA-256 `f09b8d490d39b6b3ea528f7a8f91007962607ef82ca2777e2107934132e36f10`).
@@ -40,6 +40,22 @@ declared continuous connection, with its real geometry, loads and supports.
 Do not repeat classical axial refinement or tune channels to one case.
 Formal F03 remains unconsumed; G0B and G1 acceptance remain open.
 
+The new resolved C3D20 CalculiX weak-P0 bridge executed the same 20 physical
+rows through an exact-pivot `*EQUATION` representation for declared Fy=100 N
+and Mx=10 N·m end-face actions. Saved external results match an independently
+assembled same-law sparse C3D20 solve within `1.53e-9` and `3.12e-10`
+relative displacement. Raw CalculiX root `RF` excludes the weak constraint
+force; adding `Cᵀλ` gives balanced physical support. Both saved results pass
+the stated development deck-parity checks. Against the native experimental
+BL5 owner, the work-conjugate response ratios are Fy `0.95955` and Mx
+`1.22489` (native/resolved). See the versioned
+[adjudication](../../.development/bl5-ccx-weak-p0-20261008-adjudication.md)
+and raw directories named there. Fy/Mx are new actions, not V5's +Fz;
+their equal resultants do not establish identical warping work or allocate
+body versus connection error. The next discriminator is a bounded Mx
+beam-only same-action/warping comparison before attributing the 22.5%
+response difference. Do not select a line law from this result.
+
 ## Delivered experimental behavior and open acceptance
 
 - The sparse multi-element Q4/mixed Q4-S3/all-S3 GE point workflow, physical
@@ -77,6 +93,6 @@ Mistral/local workers were unavailable for this task; Astra directly owned
 the tightly coupled physical diagnostics and their Git integration. Do not
 communicate with the separate contact worker. On resumption, verify actual
 Git and process state, read this note and the relevant evidence only, then
-advance the matched P0/tip contract while independent capability work
+advance the Mx body/traction discriminator while independent capability work
 continues where prerequisites permit. Do not rerun passed campaigns merely
 to reconstruct their accounting.

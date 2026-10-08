@@ -1,0 +1,39 @@
+{
+  "identity": "R8_BL5_CCX_WEAK_P0_EXECUTION_DEV_V1",
+  "case": "fy",
+  "source_sha256": {
+    "runner": "da3dd8c910397d2c5b011061021e4783348993acc04da1a116df70e2446a20c8",
+    "specimen": "827238278cf14ca30a7ccdcb7b8150a5334a37b745ce63f3c2b1041e41ae6175"
+  },
+  "deck_sha256": "3e7499ef913d184d681ede0f5324d4accd26ca8a47aa6c7f305ecc64c3849ef0",
+  "ccx_receipt": {
+    "identity": "R8_BL5_CCX_WEAK_P0_EXECUTION_DEV_V1",
+    "case": "fy",
+    "executable": "C:\\Github\\ANYsolver\\.qualification\\b3-ge-e4-pl\\calculix-223\\CalculiX-2.23.0-win-x64\\bin\\ccx.exe",
+    "executable_sha256": "27a9426a1ee2f72c38fbe892e0ffaf38e14867628ffd0235770261b6f3ec9c5f",
+    "command": [
+      "C:\\Github\\ANYsolver\\.qualification\\b3-ge-e4-pl\\calculix-223\\CalculiX-2.23.0-win-x64\\bin\\ccx.exe",
+      "-i",
+      "weak"
+    ],
+    "cwd": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-ccx-weak-p0-20261008-fy-v2",
+    "affinity": [
+      0
+    ],
+    "environment": {
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "NUMBA_NUM_THREADS": "1",
+      "NUMBA_DISABLE_JIT": "1"
+    },
+    "max_ccx_seconds": 30.0,
+    "max_total_seconds": 60.0,
+    "max_tree_rss_bytes": 2147483648,
+    "status": "SUPERVISOR_ERROR",
+    "error": "OSError(22, '{Illegal System DLL Relocation}\\r\\nThe system DLL %hs was relocated in memory. The application will not run properly.\\r\\nThe relocation occurred because the DLL %hs occupied an address range reserved for Windows system DLLs. The vendor supplying the DLL should be contacted for a new DLL', None, 623, None)",
+    "ccx_process_wall_seconds": 0.007392900006379932
+  },
+  "status": "EXTERNAL_EXECUTION_FAILED",
+  "total_process_wall_seconds": 0.053590399998938665
+}

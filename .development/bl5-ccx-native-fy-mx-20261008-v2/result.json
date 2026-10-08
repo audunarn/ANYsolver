@@ -1,0 +1,160 @@
+{
+  "identity": "R8_BL5_CCX_NATIVE_FY_MX_COMPARISON_DEV_V1",
+  "status": "DEVELOPMENT_COMPARISON_NOT_QUALIFIED",
+  "source_sha256": {
+    "comparison": "80d98595ad9255d4980dc5239bfa960a83367c855bb8a8f1764a7bc25f17780a",
+    "native": "068ae3ae16fe167d3052a02e8ecf0b7c6c0c3ba83f0db1f79ab5dfd07a75d9a8",
+    "deck": "a6fca28e42526871c3d3a31ee4446da31ac7bf0ba4ea6951457ba7295cab1b52",
+    "external_runner": "9b731e1dad77107e2b27f07ab62359327620f023b1c242ed78d0ad2a5829dbd8"
+  },
+  "effective_runtime": {
+    "affinity": [
+      0
+    ],
+    "numba_disable_jit": 1,
+    "numba_threads": 1,
+    "threadpools": [
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python313\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-4bb64bb73b19ae7523581172b5c4a821.dll",
+        "version": "0.3.31.dev",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      },
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python313\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-48c358d105077551cc9cc3ba79387ed5.dll",
+        "version": "0.3.29.dev",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      }
+    ],
+    "anysolver_source": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\src\\anysolver\\__init__.py"
+  },
+  "cases": {
+    "fy": {
+      "external": {
+        "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-ccx-weak-p0-20261008-fy-v4",
+        "result_path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-ccx-weak-p0-20261008-fy-v4-recovery-v3\\result.json",
+        "files_sha256": {
+          "weak.inp": "3e7499ef913d184d681ede0f5324d4accd26ca8a47aa6c7f305ecc64c3849ef0",
+          "weak.frd": "85c9799830f69ecd611bd4cc323974aff9dda99b5be1c7f64c2b4f52ca035123",
+          "weak.sta": "253efd59462bae0a6fce7b06552a063c82349747e482366b56da923c68b7ca9d",
+          "metadata.json": "3649947289bdb383922ebc7479bf1f4180dc060b2356c81f1496d4b3c996c423"
+        },
+        "result_sha256": "9bd5f9ad16d23c384bf315b3e9e36bf50e3d09b15c37238af20893f709622bde",
+        "applied_work_J": 0.0012461073783389582,
+        "generalized_response": 1.2461073783389583e-05,
+        "physical_support_wrench_about_origin": [
+          -3.888089850079268e-11,
+          -100.00000018299392,
+          -2.9834268389095087e-10,
+          4.00000000247939,
+          5.445603967757506e-10,
+          -100.00000017470002
+        ],
+        "interface_beam_wrench_about_origin": [
+          -1.0687089557359105e-10,
+          -100.00000005767674,
+          -1.8626675201104225e-10,
+          4.000000002432874,
+          2.0275100418247926e-10,
+          -100.00000006604496
+        ],
+        "same_law_displacement_parity": 1.5275335921881622e-09
+      },
+      "native": {
+        "status": "completed",
+        "tip_generalized_response": 1.195699915074453e-05,
+        "applied_work_J": 0.001195699915074453,
+        "free_equilibrium_ratio": 1.6236884231111337e-13,
+        "compatibility": 1.3895958301037919e-21,
+        "support_wrench_about_origin": [
+          -4.547473508864641e-13,
+          -100.00000000003882,
+          1.0480505352461478e-13,
+          3.9999999999994627,
+          1.532107773982716e-13,
+          -100.00000000002618
+        ],
+        "interface_shell_wrench_about_origin": [
+          0.0,
+          100.0,
+          3.7865323450608567e-29,
+          -4.0,
+          -2.524354896707238e-29,
+          100.0
+        ],
+        "physical_dofs": 168,
+        "multiplier_rows": 20
+      },
+      "generalized_response_ratio_native_over_external": 0.959548058104192
+    },
+    "mx": {
+      "external": {
+        "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-ccx-weak-p0-20261008-mx-v2",
+        "result_path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-ccx-weak-p0-20261008-mx-v2-recovery-v1\\result.json",
+        "files_sha256": {
+          "weak.inp": "7575fbf329ef288b88e3c5eb8c362ec4f93979819ff642277ace65b71495f300",
+          "weak.frd": "d5f7b203ebadd9757dae523309d09414f4365bb09c0c966246ea6d68612c207d",
+          "weak.sta": "253efd59462bae0a6fce7b06552a063c82349747e482366b56da923c68b7ca9d",
+          "metadata.json": "74ed82d4109587badca2f414fb0a5dff070a81f8bf27b4649551dd50d01af9c5"
+        },
+        "result_sha256": "97a672c54dc18e918bbc38be6111098c3f987d88cb75a07c09fc2684b1015a43",
+        "applied_work_J": 0.0008246158878537697,
+        "generalized_response": 8.246158878537696e-05,
+        "physical_support_wrench_about_origin": [
+          1.1620926443356439e-11,
+          1.9574238341313333e-08,
+          -8.988081390270963e-10,
+          -9.999999999960888,
+          2.437396950938364e-10,
+          1.7266284048356173e-08
+        ],
+        "interface_beam_wrench_about_origin": [
+          -1.0231689720123032e-11,
+          -6.275371333686053e-10,
+          -3.1367176399182464e-11,
+          -9.99999999968904,
+          -1.1572106068926293e-10,
+          -2.0869848071924935e-09
+        ],
+        "same_law_displacement_parity": 3.1192083920234856e-10
+      },
+      "native": {
+        "status": "completed",
+        "tip_generalized_response": 0.00010100673229873282,
+        "applied_work_J": 0.0010100673229873282,
+        "free_equilibrium_ratio": 2.862998890087479e-13,
+        "compatibility": 6.947979150518959e-23,
+        "support_wrench_about_origin": [
+          1.4641066137244252e-15,
+          -1.176836406102666e-14,
+          -3.055333763768431e-13,
+          -9.999999999998678,
+          -1.900701818158268e-13,
+          -6.748291161984277e-15
+        ],
+        "interface_shell_wrench_about_origin": [
+          0.0,
+          -1.1102230246251565e-16,
+          -1.0097419586828951e-28,
+          10.0,
+          0.0,
+          -1.1102230246251565e-16
+        ],
+        "physical_dofs": 168,
+        "multiplier_rows": 20
+      },
+      "generalized_response_ratio_native_over_external": 1.224894327001428
+    }
+  },
+  "limitations": "Same declared resultant and weak P0 channel family; continuum face traction vs native section wrench differ in warping work, shell/beam body formulations and half-cell traces. No F03 or accuracy acceptance.",
+  "process_wall_seconds": 0.7034061000013025
+}

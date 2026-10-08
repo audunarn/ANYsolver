@@ -1,0 +1,95 @@
+{
+  "identity": "R8_BL5_CCX_WEAK_P0_EXECUTION_DEV_V1",
+  "case": "mx",
+  "source_sha256": {
+    "runner": "179800328e55890c506a68e566a33d03df820d3ee77b93ef0c503878b24bddde",
+    "specimen": "a6fca28e42526871c3d3a31ee4446da31ac7bf0ba4ea6951457ba7295cab1b52"
+  },
+  "deck_sha256": "7575fbf329ef288b88e3c5eb8c362ec4f93979819ff642277ace65b71495f300",
+  "ccx_receipt": {
+    "identity": "R8_BL5_CCX_WEAK_P0_EXECUTION_DEV_V1",
+    "case": "mx",
+    "executable": "C:\\Github\\ANYsolver\\.qualification\\b3-ge-e4-pl\\calculix-223\\CalculiX-2.23.0-win-x64\\bin\\ccx.exe",
+    "executable_sha256": "27a9426a1ee2f72c38fbe892e0ffaf38e14867628ffd0235770261b6f3ec9c5f",
+    "command": [
+      "C:\\Github\\ANYsolver\\.qualification\\b3-ge-e4-pl\\calculix-223\\CalculiX-2.23.0-win-x64\\bin\\ccx.exe",
+      "-i",
+      "weak"
+    ],
+    "cwd": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-ccx-weak-p0-20261008-mx-v2",
+    "affinity": [
+      0
+    ],
+    "environment": {
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "NUMBA_NUM_THREADS": "1",
+      "NUMBA_DISABLE_JIT": "1",
+      "PATH": "C:\\Github\\ANYsolver\\.qualification\\b3-ge-e4-pl\\calculix-223\\CalculiX-2.23.0-win-x64\\bin;C:\\Windows\\System32;C:\\Windows"
+    },
+    "max_ccx_seconds": 30.0,
+    "max_total_seconds": 60.0,
+    "max_tree_rss_bytes": 2147483648,
+    "status": "EXITED",
+    "exit_code": 0,
+    "sampled_peak_tree_rss_bytes": 3039232,
+    "ccx_process_wall_seconds": 0.08070749999023974
+  },
+  "status": "DEVELOPMENT_COMPARISON_NOT_QUALIFIED",
+  "ccx_displacement_relative_to_independent_same_law": 3.1192083920234856e-10,
+  "ccx_displacement_max_abs": 1.6847188859356495e-15,
+  "independent_equation_residual": 4.0883597751450925e-09,
+  "physical_weak_gap_max": 3.3881317890172014e-21,
+  "free_augmented_residual_relative": 1.25688240644818e-10,
+  "ccx_raw_rf_relative_to_body_internal": 4.755219873030188e-12,
+  "physical_support_relative_to_independent": 1.8607169636705903e-09,
+  "physical_multiplier_relative_to_independent": 6.517589998909281e-10,
+  "interface_beam_wrench_about_origin": [
+    -1.0231689720123032e-11,
+    -6.275371333686053e-10,
+    -3.1367176399182464e-11,
+    -9.99999999968904,
+    -1.1572106068926293e-10,
+    -2.0869848071924935e-09
+  ],
+  "ccx_raw_rf_wrench_about_origin": [
+    -1.8170887017276982e-09,
+    3.0152100292167328,
+    -6.252776074688882e-10,
+    -8.480957105149841,
+    1.527848958460254e-10,
+    1.7266284048356173e-08
+  ],
+  "physical_support_wrench_about_origin": [
+    1.1620926443356439e-11,
+    1.9574238341313333e-08,
+    -8.988081390270963e-10,
+    -9.999999999960888,
+    2.437396950938364e-10,
+    1.7266284048356173e-08
+  ],
+  "tip_wrench_about_origin": [
+    0.0,
+    6.394884621840902e-14,
+    -7.105427357601002e-15,
+    9.999999999999996,
+    7.105427357601002e-15,
+    6.394884621840902e-14
+  ],
+  "global_wrench_balance_about_origin": [
+    1.1620926443356439e-11,
+    1.957430229015955e-08,
+    -8.988152444544539e-10,
+    3.9108272176235914e-11,
+    2.43746800521194e-10,
+    1.726634799720239e-08
+  ],
+  "interface_work_J": -1.0842021724855044e-19,
+  "full_strain_work_J": 0.0008246158878319452,
+  "applied_work_J": 0.0008246158878537697,
+  "model_dofs": 306,
+  "physical_weak_rows": 20,
+  "limitation": "Conforming resolved C3D20 lacks independent native half-cell side traces; same-law deck parity does not establish native accuracy or F03 acceptance",
+  "total_process_wall_seconds": 0.18832299999485258
+}

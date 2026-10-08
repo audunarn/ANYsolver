@@ -1,0 +1,12 @@
+{
+  "identity": "R8_BL5_CCX_NATIVE_FY_MX_COMPARISON_DEV_V1",
+  "status": "FAILED",
+  "source_sha256": {
+    "comparison": "d6cb0bdc0b701f8f6c0d4480c42dc00980841b02336f7be97a3e2c06b5e5430b",
+    "native": "068ae3ae16fe167d3052a02e8ecf0b7c6c0c3ba83f0db1f79ab5dfd07a75d9a8",
+    "deck": "a6fca28e42526871c3d3a31ee4446da31ac7bf0ba4ea6951457ba7295cab1b52",
+    "external_runner": "9b731e1dad77107e2b27f07ab62359327620f023b1c242ed78d0ad2a5829dbd8"
+  },
+  "error": "KeyError('geometry_m')",
+  "process_wall_seconds": 0.3968505999946501
+}
