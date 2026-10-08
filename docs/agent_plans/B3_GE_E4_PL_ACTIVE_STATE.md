@@ -93,17 +93,25 @@ consumed; [the adjudication](../../.development/bl5-mz-common-beam-20261008/v6-s
 binds the raw receipt. A future saved-only volume-work/nodal-action audit is
 the discriminating route; no automatic refinement, V6 rerun or F03 follows.
 The V7 [saved nodal-port extractor](../../scripts/r8_bl5_saved_nodal_port_dev.py)
-is now source-prepared and **unrun**. It integrates each original C3D20 beam
+ran once under the separately approved 30 s/2 GiB/CPU0/one-thread/JIT-off
+limit: exit 0, `2.1464038 s`, peak `161,181,696 B`. It integrates each
+original C3D20 beam
 element's `B^T sigma` action from the saved V5 displacement, partitions the
 physical P0 interface load by its original left/right integration intervals,
 and reconstructs the separately saved end traction. It reports side cut-node
 ports, full nodal/rigid-projected work, noncut residuals, gauge contribution,
 and the disagreement with V6 raw face tractions. An independent read-only
 review found no blocking source defect after the load-partition correction.
-The bounded decision is whether the saved weak nodal actions form a balanced,
-work-conjugate section port despite V6's unbalanced raw stress-face recovery.
-Even a positive result would not establish native B3 port equivalence, BL5
-accuracy or F03 acceptance. Numerical V7 execution has no authority yet.
+The saved load reconstructs within `5.6e-17 N` and the weak nodal equilibrium
+within `3.55e-12 N`. The source-partitioned left/right cut port has y-force
+`+5.593775564 / -5.593775564 N`, with sum `-6.7e-12 N`; its opposite full
+nodal works have magnitude `1.567e-7 J`. Thus V7 provides a balanced discrete
+reference port where V6 raw face tractions did not. It does **not** establish
+native B3 port equivalence, allocate the V5 work gap, BL5 accuracy or F03
+acceptance. V7 one-use authority is consumed. The next discriminator is the
+actual native half-cell one-sided trace work against the full nodal cut port;
+[adjudication](../../.development/bl5-mz-common-beam-20261008/v7-nodal-port-adjudication.md)
+binds raw hashes and the pre-child launcher failure.
 
 The scoped S3 V2D elastic recovery fix is now a separate **draft PR #65**
 against common main: `codex/s3-v2d-surface-recovery` at `974f283a`, based on

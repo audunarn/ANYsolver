@@ -1,0 +1,40 @@
+{
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-I",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\scripts\\r8_bl5_saved_nodal_port_dev.py",
+    "--output",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-mz-common-beam-20261008\\case-v7-nodal-port\\result.json"
+  ],
+  "cwd": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008",
+  "source_commit": "9e714f64060b1795ca07d3763fa1e6fc364510c7",
+  "actual_head": "2f48cecdfaf8695a9a6028369f6bbab1d756f7ee",
+  "source_sha256": "4f60fc1344b720b649e2866794a6a7b13a11c655dbf204ba899e4ed2203dd744",
+  "registration_sha256": "1eb4b4064e8e9e3996a5951a814567aaf6034e35e10c64efc41a3b57ce367fe6",
+  "input_sha256": {
+    ".development/bl5-mz-common-beam-20261008/case-v5/preflight.json": "28225b23fa2aeb86878615b949187446d53df823b4c06a256d312bd93158b4d2",
+    ".development/bl5-mz-common-beam-20261008/case-v5/reference-beam-solved.json": "6ba8b3af282954ad68efc6a71bdd394948a01e489b11667bb9cf8ce4242c99a0",
+    ".development/bl5-mz-common-beam-20261008/case-v6-sided-face/result.json": "96bf50e4d67390f946943ab7c8efa93c666a1ce9645f6a24d892163cbf9e51d5"
+  },
+  "effective_parent_affinity": [
+    0
+  ],
+  "environment": {
+    "NUMBA_DISABLE_JIT": "1",
+    "NUMBA_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "BLIS_NUM_THREADS": "1",
+    "VECLIB_MAXIMUM_THREADS": "1"
+  },
+  "process_wall_seconds": 2.1464037999976426,
+  "process_cap_seconds": 30.0,
+  "sampled_peak_process_tree_rss_bytes": 161181696,
+  "memory_limit_bytes": 2147483648,
+  "exit_code": 0,
+  "stop_reason": null,
+  "output": "case-v7-nodal-port/result.json",
+  "stdout": "stdout-v7-nodal-port.txt",
+  "stderr": "stderr-v7-nodal-port.txt"
+}

@@ -1,0 +1,1 @@
+{"saved_residual_reconstruction_max_N": 3.4154196114296075e-12, "saved_equilibrium_max_N": 3.54688886094788e-12, "cut_equilibrium_max_N": 3.54694051907245e-12, "volume_internal_pairing_J": 2.4098060569589585e-07}
