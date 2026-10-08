@@ -1,0 +1,27 @@
+{
+  "identity": "R8_BL5_TWO_SIDED_PORT_RESPONSE_DEV_V1",
+  "status": "AUTHORIZED",
+  "source_commit": "a4bd3f2a383375063a55163f303ed1f7297851c8",
+  "source_sha256": "2400b813eb68e7243bbe2aa425d37b2374a41f79a2b5aad7f1295f23b65ebac6",
+  "runner_sha256": "6d51bd4dbfa2ab647898254ced43c9127cde101a71849cf72533eb13d0fbdf16",
+  "inputs_sha256": {
+    "scripts/r8_bl5_matched_native_reference.py": "068ae3ae16fe167d3052a02e8ecf0b7c6c0c3ba83f0db1f79ab5dfd07a75d9a8",
+    "src/anysolver/_stiffened_shell_ge_experimental.py": "706cb395fb7375debd202110fa2b280d2776541b6e38c6b6d2e79bdfea160ed4",
+    "scripts/r8_bl5_weak_continuum_reference.py": "9a37d949298e494e099e6eb8eab02790ef03a0199645c9c227f4ea447d52c6db",
+    "scripts/r8_bl5_released_director_reference.py": "7d3a388ba2ba900aa7e04170fc08057b6ead8d2d11d00d5f0c1de3cf5240bbee"
+  },
+  "cumulative_seconds": 90.0,
+  "reserve_seconds": 60.0,
+  "max_attempts": 3,
+  "process_cap_seconds": 30.0,
+  "memory_limit_bytes": 2147483648,
+  "cpu_affinity": [
+    0
+  ],
+  "threads": 1,
+  "jit_disabled": true,
+  "scope": "new incremental two-sided body port response only; not F03 or connection acceptance",
+  "predecessor_registration_sha256": "2a214ebb14004582a8ea817ae73aacd33c3e28b9a001b05ce2b8c080cc0fc14f",
+  "amendment": "Fresh bounded repair check under user broad prospective approval; native B3 has indefinite mixed block, so use absolute row congruence. Prior two attempts charged to this smaller 90-second cap; one final attempt only.",
+  "predecessor_receipt_sha256": "852c03fd6a132481ed75099fcd87540dbe03b3e24276081764b3da01d98d71bc"
+}

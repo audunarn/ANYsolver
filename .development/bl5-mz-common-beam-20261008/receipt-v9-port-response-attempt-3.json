@@ -1,0 +1,42 @@
+{
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-I",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\scripts\\r8_bl5_two_sided_port_response_dev.py",
+    "--output",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-mz-common-beam-20261008\\case-v9-port-response-attempt-3\\result.json"
+  ],
+  "cwd": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008",
+  "attempt": 3,
+  "registration_sha256": "a80082f8d21030878436e7c46175625953b6b3c3f470d4c31f3771e901292c45",
+  "source_sha256": "2400b813eb68e7243bbe2aa425d37b2374a41f79a2b5aad7f1295f23b65ebac6",
+  "inputs_sha256": {
+    "scripts/r8_bl5_matched_native_reference.py": "068ae3ae16fe167d3052a02e8ecf0b7c6c0c3ba83f0db1f79ab5dfd07a75d9a8",
+    "src/anysolver/_stiffened_shell_ge_experimental.py": "706cb395fb7375debd202110fa2b280d2776541b6e38c6b6d2e79bdfea160ed4",
+    "scripts/r8_bl5_weak_continuum_reference.py": "9a37d949298e494e099e6eb8eab02790ef03a0199645c9c227f4ea447d52c6db",
+    "scripts/r8_bl5_released_director_reference.py": "7d3a388ba2ba900aa7e04170fc08057b6ead8d2d11d00d5f0c1de3cf5240bbee"
+  },
+  "effective_parent_affinity": [
+    0
+  ],
+  "environment": {
+    "NUMBA_DISABLE_JIT": "1",
+    "NUMBA_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "BLIS_NUM_THREADS": "1",
+    "VECLIB_MAXIMUM_THREADS": "1"
+  },
+  "process_wall_seconds": 2.2368588999961503,
+  "cumulative_wall_seconds": 6.168955899993307,
+  "remaining_including_reserve_seconds": 83.8310441000067,
+  "process_cap_seconds": 26.067903000002843,
+  "sampled_peak_process_tree_rss_bytes": 162545664,
+  "memory_limit_bytes": 2147483648,
+  "exit_code": 0,
+  "stop_reason": null,
+  "output": "case-v9-port-response-attempt-3\\result.json",
+  "stdout": "stdout-v9-port-response-attempt-3.txt",
+  "stderr": "stderr-v9-port-response-attempt-3.txt"
+}

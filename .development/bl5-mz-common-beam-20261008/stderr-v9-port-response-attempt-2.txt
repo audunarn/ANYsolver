@@ -1,0 +1,13 @@
+Failed to find real location of C:\Python\Python314\python.exe
+Traceback (most recent call last):
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_two_sided_port_response_dev.py", line 227, in <module>
+    main(parser.parse_args().output)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_two_sided_port_response_dev.py", line 209, in main
+    left = evaluator("left", p)
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_two_sided_port_response_dev.py", line 187, in _native
+    q, checks = _solve(k, c, f)
+                ~~~~~~^^^^^^^^^
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_two_sided_port_response_dev.py", line 45, in _solve
+    raise ValueError("finite positive elastic displacement diagonal required")
+ValueError: finite positive elastic displacement diagonal required

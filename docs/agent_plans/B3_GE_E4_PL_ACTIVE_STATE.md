@@ -1,5 +1,22 @@
 # Active development — 8 October 2026
 
+V9 now supplies a bounded **incremental two-sided body-port response**, not
+the V5 loaded solution or connection acceptance. Under V7's six-component
+cut resultant, native/resolved work is 1.248; for pure Mz it is 0.667.
+The native loaded coordinate is a retained half-cell orientation, whereas
+the C3D20 port is a projected physical cut-face rotation. Thus these
+different-port values do not allocate V5's 7.24 work ratio or settle BL5.
+The three-attempt batch preserved two diagnostic setup failures and one
+success; its final one-use registration is consumed. The source imported
+the native package through the editable main path, with directly relevant
+files byte-identical but transitive provenance unresolved. A read-only
+mechanics review found no concrete algebra defect and advised a same-solve
+native nodal-frame/retained-port comparison, followed by quantifying V7's
+zero-resultant cut warping action. [Adjudication](../../.development/bl5-mz-common-beam-20261008/v9-port-response-adjudication.md).
+G0/F03 and law selection remain open. Astra implemented this tightly coupled
+mechanics diagnostic directly because it defines a reserved physical
+comparison; the cached Mistral worker was unavailable for this task.
+
 Current decision: keep the native BL5 line law open until a two-sided
 face/retained-port reference can allocate the V5 work gap. Advance
 independent integrated capability in parallel. The common-main ANYfem
