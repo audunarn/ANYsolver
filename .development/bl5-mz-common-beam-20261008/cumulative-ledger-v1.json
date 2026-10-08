@@ -1,0 +1,47 @@
+{
+  "scope": "new Mz beam-only common-density development case; historical Fz shell/body retry untouched",
+  "status": "CLOSED_FAILED_NUMERICAL_GATE",
+  "allowance_seconds": 90.0,
+  "reserve_seconds": 30.0,
+  "used_seconds": 11.69439049999346,
+  "remaining_seconds": 78.30560950000654,
+  "attempts": [
+    {
+      "id": 1,
+      "receipt": "receipt.json",
+      "wall_seconds": 2.9761909999942873,
+      "cumulative_seconds": 2.9761909999942873,
+      "exit_code": 1,
+      "stop_reason": null,
+      "source_sha256": "6f39c6e8844b2bd8e25656e59772d5123d28bf13b0da10f0c3902729aa17f586"
+    },
+    {
+      "id": 2,
+      "receipt": "receipt-v2.json",
+      "wall_seconds": 2.3304207000037422,
+      "cumulative_seconds": 5.3066116999980295,
+      "exit_code": 1,
+      "stop_reason": null,
+      "source_sha256": "7200b646246aaf243e0ed9319d0c710b2aedb72ee57eb16a3f5825a5b58d0edd"
+    },
+    {
+      "id": 3,
+      "receipt": "receipt-v3.json",
+      "wall_seconds": 2.8128406000032555,
+      "cumulative_seconds": 8.119452300001285,
+      "exit_code": 1,
+      "stop_reason": null,
+      "source_sha256": "c73d464f9a5315d601c7a069c9574594543683fb8835a273ef8aa20ef88e7378"
+    },
+    {
+      "id": 4,
+      "receipt": "receipt-v4.json",
+      "wall_seconds": 3.574938199992175,
+      "cumulative_seconds": 11.69439049999346,
+      "exit_code": 1,
+      "stop_reason": null,
+      "source_sha256": "996cd5e908c973b95628d7e49ab4d9b0f3bebea18a58d4e0441c0edaf0eb48e1"
+    }
+  ],
+  "note": "No passed beam-only common-action result. V1 native active-row failure; V2 duplicate coincident-node mirror search error; V3 discrete symmetry proved, reference beam quiet-row failure; V4 exact symmetry projection changed load by zero and reference quiet-row failure repeated. Per-attempt receipts are immutable; this record is cumulative."
+}

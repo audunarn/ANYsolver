@@ -1,0 +1,13 @@
+Failed to find real location of C:\Python\Python314\python.exe
+Traceback (most recent call last):
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_mz_common_beam_action_dev.py", line 226, in <module>
+    main()
+    ~~~~^^
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_mz_common_beam_action_dev.py", line 219, in main
+    report = evaluate(args.output)
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_mz_common_beam_action_dev.py", line 107, in evaluate
+    projected_lam, symmetry = symmetry_controls(model, k, c, external, q, lam)
+                              ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_mz_common_beam_action_dev.py", line 53, in symmetry_controls
+    raise ValueError("unique reflected physical node required")
+ValueError: unique reflected physical node required

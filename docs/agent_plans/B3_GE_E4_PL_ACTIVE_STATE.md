@@ -1,5 +1,21 @@
 # Active development — 8 October 2026
 
+Mz common-density beam-only branch stopped FAILED, without a validated body
+comparison. V1 native calculation failed the unchanged active-row equilibrium
+check (ratio 3.253606). V2 found a reflection-search bookkeeping defect.
+V3 proved the actual discrete reflection of K/C/load/supports and retained
+the original equilibrium after projecting forbidden density channels, but
+the resolved beam failed on a 3.57e-16 N *symmetry-allowed* load. V4's exact
+load-sector projection changed zero and repeated that failure (ratio
+2559.993319). No magnitude cutoff, tolerance change or body-law conclusion.
+All four attempts, including preflight/calculated data and cumulative
+11.6943905 s wall, are in
+`.development/bl5-mz-common-beam-20261008/adjudication.md`. The distinct old
+Fz shell/body retry remains PENDING and untouched. Further numerical work on
+this branch needs focused independent review of load assembly and the strict
+active-row assessment; meanwhile advance independent programme work. F03,
+M2/G0, external accuracy and release remain open.
+
 Mz density decision: the work-matched native and resolved-continuum five-row
 models both exert +1 N m Mz on the shell, but their signed per-edge Fy action
 distributions differ. Translation-density difference norm 6.57246 versus

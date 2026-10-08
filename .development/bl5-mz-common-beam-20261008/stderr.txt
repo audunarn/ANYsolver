@@ -1,0 +1,19 @@
+Failed to find real location of C:\Python\Python314\python.exe
+Traceback (most recent call last):
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_mz_common_beam_action_dev.py", line 155, in <module>
+    main()
+    ~~~~^^
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_mz_common_beam_action_dev.py", line 148, in main
+    report = evaluate(args.output)
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_mz_common_beam_action_dev.py", line 106, in evaluate
+    beam_q, beam = port.solve_body(
+                   ~~~~~~~~~~~~~~~^
+        owner._K[ns:, ns:], native_body_load,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        owner._coordinate_scale[ns:], rigid=rigid,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        diagnostics=output / "beam-calculated.json")
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_body_port_probe.py", line 196, in solve_body
+    raise ValueError('body equilibrium/work/gauge reaction failed')
+ValueError: body equilibrium/work/gauge reaction failed
