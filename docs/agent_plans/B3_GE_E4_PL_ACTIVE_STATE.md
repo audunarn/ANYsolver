@@ -1,5 +1,14 @@
 # Active development — 8 October 2026
 
+The scoped S3 V2D elastic recovery fix is now a separate **draft PR #65**
+against common main: `codex/s3-v2d-surface-recovery` at `974f283a`, based on
+`cff55d95`. Its three product/test files are byte-identical to the installed
+verified development candidate (`552401b9`). The clean sparse checkout is
+`C:/Github/ANYsolver/.perf2-worktrees/s3-v2d-recovery-main`. CI was queued
+at PR creation; do not describe it as passing before results are inspected.
+This extraction excludes BL5 diagnostics and qualification evidence. Main was
+not edited or merged; package publication remains separate.
+
 BL5 source-only independent review now localizes the V4 tiny-load obstruction:
 slot 55 is a symmetry-allowed y row, with 3.5665e-16 N assembled load and
 9.1302e-13 N high-precision residual. Reflection cannot delete it. The next
