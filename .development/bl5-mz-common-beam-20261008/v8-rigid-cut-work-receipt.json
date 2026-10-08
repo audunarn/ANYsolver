@@ -1,0 +1,19 @@
+{
+  "identity": "BL5_V8_SAVED_RIGID_CUT_WORK_MAP_DEV_RECEIPT_V1",
+  "command": "C:/Python/Python314/python.exe -I .development/bl5-mz-common-beam-20261008/v8-rigid-cut-work.py",
+  "cwd": "C:/Github/ANYsolver/.perf2-worktrees/stiffened-rev8-20261008",
+  "exit_code": 0,
+  "tool_wall_seconds": 2.8729274,
+  "source_evaluation_wall_seconds": 0.216319999992265,
+  "process_wall_seconds": null,
+  "peak_process_tree_rss_bytes": null,
+  "runtime_from_child": {
+    "cpu_affinity": [0],
+    "numba_disable_jit": 1,
+    "numba_threads": 1,
+    "blas_threadpools": "Recorded in v8-rigid-cut-work.json"
+  },
+  "stdout": "{\"full_nodal_outward_work_J\": -4.009200810356648e-07, \"outward_plus_native_work_J\": 1.885812977943293e-18, \"nodal_vs_wrench_work_error_J\": -1.0587911840678754e-22, \"solver_executions\": 0}",
+  "stderr": "Failed to find real location of C:\\Python\\Python314\\python.exe",
+  "scope": "Saved-state algebraic rigid-cut pairing only; no solver execution, F03, external job, compliance or law-accuracy claim"
+}

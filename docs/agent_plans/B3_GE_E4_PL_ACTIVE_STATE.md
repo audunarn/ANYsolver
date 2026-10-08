@@ -115,6 +115,16 @@ a derived two-sided response/port-flexibility reference with matched physical
 loads, cut kinematics and gauge;
 [adjudication](../../.development/bl5-mz-common-beam-20261008/v7-nodal-port-adjudication.md)
 binds raw hashes and the pre-child launcher failure.
+The bounded saved-only V8 rigid-cut lift then verified full nodal work against
+six-wrench work to `1.06e-22 J`. Outward work `-4.009200810356648e-7 J`
+opposes native endpoint-log work `+4.009200810375506e-7 J` within
+`1.89e-18 J`; independent read-only review confirms the restricted sign/map.
+This is algebraic duality under imposed one-sided spins, **not** split-solid
+response, warping, compliance allocation or BL5 acceptance. V8's source
+bindings do not itself enforce the full historical seam chain; its frozen
+inputs were checked independently. [V8 adjudication](../../.development/bl5-mz-common-beam-20261008/v8-rigid-cut-work-adjudication.md)
+preserves the limited conclusion. Do not run further rigid-lift checks;
+the next actual mechanics decision needs a matched two-sided response reference.
 
 The scoped S3 V2D elastic recovery fix is now a separate **draft PR #65**
 against common main: `codex/s3-v2d-surface-recovery` at `974f283a`, based on

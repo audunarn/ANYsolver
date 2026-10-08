@@ -1,0 +1,83 @@
+{
+  "identity": "BL5_V8_SAVED_RIGID_CUT_WORK_MAP_DEV_V1",
+  "status": "DEVELOPMENT_ALGEBRAIC_MAP_ONLY_NOT_QUALIFIED",
+  "input_sha256": {
+    "v7": "43e592a917e3e716cb2d9bcfcc46cfbe271b03191eeb624b657506e96a85e8ec",
+    "native": "3b018950628ff5565ecdede721eebe6cff8feb3db56edf1e139e7a484b2952c9",
+    "seam": "afeb2b4d67808ab9d5829152938324118fceb3e3f8ace03c3f9215b4f4bac315",
+    "preflight": "28225b23fa2aeb86878615b949187446d53df823b4c06a256d312bd93158b4d2"
+  },
+  "section_x_m": 0.5,
+  "center_m": [
+    0.5,
+    0.0,
+    0.039999999999999994
+  ],
+  "translation_m": [
+    -0.0,
+    1.259641521230577e-07,
+    -0.0
+  ],
+  "shared_node_spin_rad": [
+    2.0847236383530721e-07,
+    0.0,
+    -6.250697304681267e-08
+  ],
+  "left_cell_spin_rad": [
+    5.173446157578497e-08,
+    0.0,
+    3.4481678591186217e-07
+  ],
+  "right_cell_spin_rad": [
+    2.4012684779361954e-07,
+    0.0,
+    -5.933562438773206e-07
+  ],
+  "full_nodal_outward_work_by_side_J": {
+    "left": 5.721558070381681e-07,
+    "right": -9.73075888073833e-07
+  },
+  "rigid_wrench_outward_work_by_side_J": {
+    "left": 5.72155807038168e-07,
+    "right": -9.730758880738327e-07
+  },
+  "full_nodal_outward_work_J": -4.009200810356648e-07,
+  "rigid_wrench_outward_work_J": -4.009200810356647e-07,
+  "nodal_vs_wrench_work_error_J": -1.0587911840678754e-22,
+  "common_node_spin_work_J": -7.761998170401595e-19,
+  "broken_trace_outward_work_J": -4.009200810348886e-07,
+  "native_endpoint_log_reference_work_J": 4.009200810375506e-07,
+  "outward_plus_native_work_J": 1.885812977943293e-18,
+  "source_evaluation_wall_seconds": 0.21631999999226537,
+  "runtime": {
+    "cpu_affinity": [
+      0
+    ],
+    "numba_disable_jit": 1,
+    "numba_threads": 1,
+    "loaded_threadpools": [
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+        "version": "0.3.31.188.0",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      },
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+        "version": "0.3.30",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      }
+    ]
+  },
+  "solver_executions": 0,
+  "interpretation": "The reference-linear rigid cut lift uses each native retained half-cell spin on the corresponding saved C3D20 nodal port. Outward cut action is opposite the native endpoint-log action. Agreement verifies this restricted dual map and sign only; identical source balance largely fixes its moment scale. It does not measure port flexibility, allocate V5 body work, qualify BL5, or execute F03."
+}
