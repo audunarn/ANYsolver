@@ -1,0 +1,245 @@
+{
+  "identity": "R8_BL5_NODAL_PORT_AND_WARPING_DEV_V1",
+  "status": "DEVELOPMENT_DIAGNOSTIC_NOT_QUALIFIED",
+  "sources": {
+    "anysolver": {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\src\\anysolver\\__init__.py",
+      "sha256": "c4565eb447ed82b761ec0e5e105c74318cf61838c6b16b55fdb874314cc4e48e"
+    },
+    "ge_compiler": {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\src\\anysolver\\_stiffened_shell_ge_experimental.py",
+      "sha256": "706cb395fb7375debd202110fa2b280d2776541b6e38c6b6d2e79bdfea160ed4"
+    },
+    "v9": {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\scripts\\r8_bl5_two_sided_port_response_dev.py",
+      "sha256": "2400b813eb68e7243bbe2aa425d37b2374a41f79a2b5aad7f1295f23b65ebac6"
+    },
+    "native_fixture": {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\scripts\\r8_bl5_matched_native_reference.py",
+      "sha256": "068ae3ae16fe167d3052a02e8ecf0b7c6c0c3ba83f0db1f79ab5dfd07a75d9a8"
+    },
+    "solid_fixture": {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\scripts\\r8_bl5_released_director_reference.py",
+      "sha256": "7d3a388ba2ba900aa7e04170fc08057b6ead8d2d11d00d5f0c1de3cf5240bbee"
+    },
+    "weak_fixture": {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\scripts\\r8_bl5_weak_continuum_reference.py",
+      "sha256": "9a37d949298e494e099e6eb8eab02790ef03a0199645c9c227f4ea447d52c6db"
+    }
+  },
+  "saved_inputs_sha256": {
+    "V5": "6ba8b3af282954ad68efc6a71bdd394948a01e489b11667bb9cf8ce4242c99a0",
+    "V7": "43e592a917e3e716cb2d9bcfcc46cfbe271b03191eeb624b657506e96a85e8ec"
+  },
+  "response": {
+    "v7_resultant": {
+      "left": {
+        "side": "left",
+        "action": [
+          0.0,
+          5.59377556437,
+          0.0,
+          0.123123784342,
+          0.0,
+          -0.402617092486
+        ],
+        "nodal_pose": [
+          0.0,
+          2.7367611697230505e-06,
+          0.0,
+          1.0139330039568039e-06,
+          0.0,
+          7.409425584869793e-06
+        ],
+        "retained_pose": [
+          0.0,
+          2.7367611697230505e-06,
+          0.0,
+          7.604497529676029e-07,
+          0.0,
+          7.291250601217449e-06
+        ],
+        "applied_work_J": 1.2450505639258214e-05,
+        "strain_work_J": 1.2450505639258219e-05,
+        "work_energy_relative": 4.0819207113170637e-16,
+        "nodal_rotation_minus_retained": [
+          2.5348325098920097e-07,
+          0.0,
+          1.1817498365234367e-07
+        ],
+        "equation_relative": 4.8826447401903737e-17,
+        "remote_gap": 0.0,
+        "kkt_dimension": 48,
+        "k_nnz": 110
+      },
+      "right": {
+        "side": "right",
+        "action": [
+          -0.0,
+          -5.59377556437,
+          -0.0,
+          -0.123123784342,
+          -0.0,
+          0.402617092486
+        ],
+        "nodal_pose": [
+          0.0,
+          -4.234592614983467e-06,
+          0.0,
+          -1.0139330039568039e-06,
+          0.0,
+          1.3400751365911458e-05
+        ],
+        "retained_pose": [
+          -0.0,
+          -4.234592614983467e-06,
+          -0.0,
+          -7.604497529676029e-07,
+          -0.0,
+          1.17847449369987e-05
+        ],
+        "applied_work_J": 2.920757151534365e-05,
+        "strain_work_J": 2.920757151534366e-05,
+        "work_energy_relative": 3.480054944558443e-16,
+        "nodal_rotation_minus_retained": [
+          -2.5348325098920097e-07,
+          0.0,
+          1.6160064289127588e-06
+        ],
+        "equation_relative": 5.810778858944277e-17,
+        "remote_gap": 0.0,
+        "kkt_dimension": 48,
+        "k_nnz": 110
+      },
+      "nodal_frame_work_sum_J": 4.165807715460187e-05,
+      "retained_port_work_sum_J": 4.077078092022445e-05,
+      "resolved_port_work_sum_J": 3.267391027873519e-05
+    },
+    "pure_mz": {
+      "left": {
+        "side": "left",
+        "action": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "nodal_pose": [
+          0.0,
+          1.8601190476190476e-06,
+          0.0,
+          0.0,
+          0.0,
+          7.4404761904761905e-06
+        ],
+        "retained_pose": [
+          0.0,
+          1.8601190476190476e-06,
+          0.0,
+          0.0,
+          0.0,
+          5.580357142857143e-06
+        ],
+        "applied_work_J": 7.4404761904761905e-06,
+        "strain_work_J": 7.4404761904761905e-06,
+        "work_energy_relative": 0.0,
+        "nodal_rotation_minus_retained": [
+          0.0,
+          0.0,
+          1.8601190476190476e-06
+        ],
+        "equation_relative": 2.15041506046435e-22,
+        "remote_gap": 0.0,
+        "kkt_dimension": 48,
+        "k_nnz": 110
+      },
+      "right": {
+        "side": "right",
+        "action": [
+          -0.0,
+          -0.0,
+          -0.0,
+          -0.0,
+          -0.0,
+          -1.0
+        ],
+        "nodal_pose": [
+          0.0,
+          1.860119047619048e-06,
+          0.0,
+          0.0,
+          0.0,
+          -7.4404761904761905e-06
+        ],
+        "retained_pose": [
+          -0.0,
+          1.860119047619048e-06,
+          -0.0,
+          -0.0,
+          -0.0,
+          -5.580357142857144e-06
+        ],
+        "applied_work_J": 7.4404761904761905e-06,
+        "strain_work_J": 7.4404761904761905e-06,
+        "work_energy_relative": 0.0,
+        "nodal_rotation_minus_retained": [
+          0.0,
+          0.0,
+          -1.8601190476190468e-06
+        ],
+        "equation_relative": 8.866388433213505e-22,
+        "remote_gap": 0.0,
+        "kkt_dimension": 48,
+        "k_nnz": 110
+      },
+      "nodal_frame_work_sum_J": 1.4880952380952381e-05,
+      "retained_port_work_sum_J": 9.92063492063492e-06,
+      "resolved_port_work_sum_J": 1.488095238226976e-05
+    }
+  },
+  "saved_v7_cut_action_decomposition": {
+    "left": {
+      "side": "left",
+      "cut_nodes": 13,
+      "wrench": [
+        -1.545430450278218e-13,
+        5.593775564367478,
+        5.995204332975845e-15,
+        0.12312378434239529,
+        6.877831637552845e-14,
+        -0.4026170924859578
+      ],
+      "zero_resultant_max": 2.6645352591003757e-15,
+      "saved_full_cut_work_J": -1.5668867101383923e-07,
+      "rigid_six_port_work_J": -1.5634191700499996e-07,
+      "zero_resultant_warping_work_J": -3.4675400883925606e-10,
+      "raw_nodal_force_norm_N": 12.151853010032331,
+      "rigid_nodal_force_norm_N": 14.363531082079858,
+      "warping_nodal_force_norm_N": 9.764816441457103,
+      "note": "Euclidean nodal force norms are descriptive only, not a mesh-invariant dual norm"
+    },
+    "right": {
+      "side": "right",
+      "cut_nodes": 13,
+      "wrench": [
+        2.291500322826323e-13,
+        -5.593775564374162,
+        1.7208456881689926e-13,
+        -0.12312378434207924,
+        -6.961098364399732e-14,
+        0.4026170924859617
+      ],
+      "zero_resultant_max": 8.881784197001252e-16,
+      "saved_full_cut_work_J": 1.5668867101413362e-07,
+      "rigid_six_port_work_J": 1.5634191700529427e-07,
+      "zero_resultant_warping_work_J": 3.4675400883937517e-10,
+      "raw_nodal_force_norm_N": 12.151853010031061,
+      "rigid_nodal_force_norm_N": 14.36353108208027,
+      "warping_nodal_force_norm_N": 9.764816441456531,
+      "note": "Euclidean nodal force norms are descriptive only, not a mesh-invariant dual norm"
+    }
+  },
+  "caveat": "nodal-frame and retained-spin loads are different generalized actions; saved V7 warping work is from the old conforming solution, not a V10 incremental response; no V5 allocation or F03/law acceptance"
+}

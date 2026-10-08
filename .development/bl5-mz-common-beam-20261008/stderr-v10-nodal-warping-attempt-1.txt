@@ -1,0 +1,12 @@
+Failed to find real location of C:\Python\Python314\python.exe
+Traceback (most recent call last):
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_nodal_port_and_warping_dev.py", line 154, in <module>
+    main(parser.parse_args().output)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_nodal_port_and_warping_dev.py", line 133, in main
+    warping = {side:saved_warping(model,elements,side,v7,saved_q,full_index)
+                    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Github\ANYsolver\.perf2-worktrees\stiffened-rev8-20261008\scripts\r8_bl5_nodal_port_and_warping_dev.py", line 99, in saved_warping
+    q[side_index[node]:side_index[node]+3] = saved_q[full_index[node]:full_index[node]+3]
+    ~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: could not broadcast input array from shape (0,) into shape (3,)

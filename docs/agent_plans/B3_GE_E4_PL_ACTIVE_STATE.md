@@ -1,5 +1,20 @@
 # Active development — 8 October 2026
 
+V10 resolves the specific V9 port ambiguity: under pure cut Mz and the same
+incremental remote supports, native nodal-frame work agrees with the C3D20
+rigid-face work to `8.9e-11` relative; native retained-spin work is 2/3 of
+that because it is a different generalized port. The V7 combined-resultant
+nodal/solid work ratio remains 1.275. V7's zero-resultant nodal cut action
+does only 0.22% of its full cut work on the *saved conforming* displacement,
+but its two-sided response remains unmeasured. This rules out a gross local
+nodal-frame Mz stiffness mismatch, not a V5 body/connection allocation.
+V10's two attempts and corrected beam-only indexing are preserved; source
+imports are bound to this worktree. Its one-use registration is closed.
+[Adjudication](../../.development/bl5-mz-common-beam-20261008/v10-nodal-warping-adjudication.md).
+The next connection decision must use the original P0/tip load work paths
+through physical nodal and retained traces, including warping response if
+material. G0/F03 and BL5 law/space selection remain open.
+
 V9 now supplies a bounded **incremental two-sided body-port response**, not
 the V5 loaded solution or connection acceptance. Under V7's six-component
 cut resultant, native/resolved work is 1.248; for pure Mz it is 0.667.

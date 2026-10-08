@@ -1,0 +1,27 @@
+{
+  "identity": "R8_BL5_NODAL_PORT_AND_WARPING_DEV_V1",
+  "status": "AUTHORIZED",
+  "source_commit": "ceedff0b811b473b0c1a03933a88bfc9c3dae301",
+  "source_sha256": "4c08a6b2fd8ffe2eb340240cc711a0447647e72fc7d39d7bcf7c8c7a27d7df69",
+  "runner_sha256": "8cb2cf5fb0b6709837168241b0f5b0cac081abbb25903d69f395f2c01165663f",
+  "inputs_sha256": {
+    "scripts/r8_bl5_released_director_reference.py": "7d3a388ba2ba900aa7e04170fc08057b6ead8d2d11d00d5f0c1de3cf5240bbee",
+    "scripts/r8_bl5_weak_continuum_reference.py": "9a37d949298e494e099e6eb8eab02790ef03a0199645c9c227f4ea447d52c6db",
+    "scripts/r8_bl5_two_sided_port_response_dev.py": "2400b813eb68e7243bbe2aa425d37b2374a41f79a2b5aad7f1295f23b65ebac6",
+    "scripts/r8_bl5_matched_native_reference.py": "068ae3ae16fe167d3052a02e8ecf0b7c6c0c3ba83f0db1f79ab5dfd07a75d9a8",
+    "src/anysolver/_stiffened_shell_ge_experimental.py": "706cb395fb7375debd202110fa2b280d2776541b6e38c6b6d2e79bdfea160ed4",
+    ".development/bl5-mz-common-beam-20261008/case-v7-nodal-port/result.json": "43e592a917e3e716cb2d9bcfcc46cfbe271b03191eeb624b657506e96a85e8ec",
+    ".development/bl5-mz-common-beam-20261008/case-v5/reference-beam-solved.json": "6ba8b3af282954ad68efc6a71bdd394948a01e489b11667bb9cf8ce4242c99a0"
+  },
+  "cumulative_seconds": 120.0,
+  "reserve_seconds": 60.0,
+  "max_attempts": 2,
+  "process_cap_seconds": 30.0,
+  "memory_limit_bytes": 2147483648,
+  "cpu_affinity": [
+    0
+  ],
+  "threads": 1,
+  "jit_disabled": true,
+  "scope": "same-support nodal versus retained native response plus saved V7 warping-action decomposition; no F03"
+}
