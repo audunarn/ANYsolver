@@ -1,0 +1,28 @@
+{
+  "identity": "R8_BL5_V12_RETAINED_LOAD_RESPONSE_DEV_V1",
+  "status": "AUTHORIZED",
+  "authority": "Human 2026-10-08 approval of prospective work needed to finish the programme; distinct from consumed V5-V11 and formal F03 authority",
+  "decision": "Can the self-balanced native retained-spin component of the original V5 P0 action alone account for most of the native body-work excess?",
+  "interpretation": "Exact native linear superposition tests this load-path hypothesis only. If the complement remains far above saved resolved work, move to matched physical body/trace reference rather than more retained-load tuning. A large effect would motivate physical trace-work comparison, not automatic law or space selection. Failure is preserved and repaired within scope.",
+  "source_commit": "b42de2ce1d66b32ed2aa87781a063ccbb93e3fbc",
+  "source_sha256": "909fd07e75684c327bd7094209345f2941a71a373aea63f6f7a5850a2ca43a4c",
+  "runner_sha256": "4dcd1b12b2962fec704bf5f83c227019b4ea501d51dcc50525fc2efb841c387b",
+  "inputs_sha256": {
+    "scripts/r8_bl5_body_port_probe.py": "662fcd5350c09dfc2e448392f588abc2658f277760f54c3d68dddc545f917f6a",
+    "scripts/r8_bl5_matched_native_reference.py": "068ae3ae16fe167d3052a02e8ecf0b7c6c0c3ba83f0db1f79ab5dfd07a75d9a8",
+    "src/anysolver/_stiffened_shell_ge_experimental.py": "706cb395fb7375debd202110fa2b280d2776541b6e38c6b6d2e79bdfea160ed4",
+    ".development/bl5-mz-common-beam-20261008/case-v5/preflight.json": "28225b23fa2aeb86878615b949187446d53df823b4c06a256d312bd93158b4d2",
+    ".development/bl5-mz-common-beam-20261008/case-v5/beam-solved.json": "3b018950628ff5565ecdede721eebe6cff8feb3db56edf1e139e7a484b2952c9",
+    ".development/bl5-mz-common-beam-20261008/case-v5/reference-beam-solved.json": "6ba8b3af282954ad68efc6a71bdd394948a01e489b11667bb9cf8ce4242c99a0"
+  },
+  "cumulative_seconds": 120.0,
+  "reserve_seconds": 60.0,
+  "max_attempts": 2,
+  "process_cap_seconds": 30.0,
+  "memory_limit_bytes": 2147483648,
+  "cpu_affinity": [0],
+  "threads": 1,
+  "jit_disabled": true,
+  "one_numerical_job": true,
+  "exclusions": "No V5 repeat, no formal F03, no external execution, no connection-law or multiplier selection, no release."
+}

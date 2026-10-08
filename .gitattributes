@@ -1,12 +1,19 @@
 docs/reference_cases/s4_nullspace_semantics_cases.json text eol=lf
 .gitattributes text eol=lf
 scripts/r8_bl5_v11_cut_warping_response_dev.py -text
+scripts/r8_bl5_v12_retained_load_response_dev.py -text
 .development/bl5-mz-common-beam-20261008/run-v11-cut-warping.py -text
+.development/bl5-mz-common-beam-20261008/run-v12-retained-load.py -text
 .development/bl5-mz-common-beam-20261008/v11-cut-warping-* -text
+.development/bl5-mz-common-beam-20261008/v12-retained-load-* -text
 .development/bl5-mz-common-beam-20261008/receipt-v11-cut-warping-* -text
+.development/bl5-mz-common-beam-20261008/receipt-v12-retained-load-* -text
 .development/bl5-mz-common-beam-20261008/stdout-v11-cut-warping-* -text
+.development/bl5-mz-common-beam-20261008/stdout-v12-retained-load-* -text
 .development/bl5-mz-common-beam-20261008/stderr-v11-cut-warping-* -text
+.development/bl5-mz-common-beam-20261008/stderr-v12-retained-load-* -text
 .development/bl5-mz-common-beam-20261008/case-v11-cut-warping-attempt-*/** -text
+.development/bl5-mz-common-beam-20261008/case-v12-retained-load-attempt-*/** -text
 docs/agent_plans/s4_drill_constraint_tor_agent.md text eol=lf
 docs/reference_cases/s4_drill_constraint_cases.json text eol=lf
 docs/reference_cases/s4_drill_constraint_oracle.py text eol=lf

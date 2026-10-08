@@ -1,3 +1,14 @@
+**8 October BL5 V12 native retained-load sensitivity - IMPLEMENTED_NOT_QUALIFIED:**
+The original V5 retained-spin interface covector is separately balanced. Two
+fixed-operator/gauge native responses reconstruct the frozen state; removing
+that component lowers paired work by 1.15586949156334e-7 J. The complement
+still pairs to 1.62979809184172e-6 J, 6.76319 times the saved resolved-beam
+work. Independent review found no blocking defect. This excludes direct
+retained-spin loading as the sole V5 explanation, not retained-kinematic or
+connection effects. No matched changed-load C3D20 reference, F03, law/space
+selection or acceptance. Evidence: .development/bl5-mz-common-beam-20261008/
+v12-retained-load-adjudication.md.
+
 **8 October simultaneous J2/fibre chart - IMPLEMENTED_NOT_QUALIFIED:**
 The two-stiffener Q4-J2/native-fibre point-owner history passed 1/1 from
 source (86.1881032 s) and the byte-identical 627-file installed wheel site

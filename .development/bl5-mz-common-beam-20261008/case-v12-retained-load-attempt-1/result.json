@@ -1,0 +1,97 @@
+{
+  "identity": "R8_BL5_V12_RETAINED_LOAD_RESPONSE_DEV_V1",
+  "status": "DEVELOPMENT_DIAGNOSTIC_NOT_QUALIFIED",
+  "source_paths": {
+    "anysolver": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\src\\anysolver\\__init__.py",
+    "port": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\scripts\\r8_bl5_body_port_probe.py",
+    "native": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\scripts\\r8_bl5_matched_native_reference.py"
+  },
+  "source_sha256": {
+    "port": "662fcd5350c09dfc2e448392f588abc2658f277760f54c3d68dddc545f917f6a",
+    "native": "068ae3ae16fe167d3052a02e8ecf0b7c6c0c3ba83f0db1f79ab5dfd07a75d9a8"
+  },
+  "saved_v5_sha256": {
+    "preflight.json": "28225b23fa2aeb86878615b949187446d53df823b4c06a256d312bd93158b4d2",
+    "beam-solved.json": "3b018950628ff5565ecdede721eebe6cff8feb3db56edf1e139e7a484b2952c9",
+    "reference-beam-solved.json": "6ba8b3af282954ad68efc6a71bdd394948a01e489b11667bb9cf8ce4242c99a0"
+  },
+  "effective_runtime": {
+    "affinity": [
+      0
+    ],
+    "numba_disable_jit": 1,
+    "numba_threads": 1,
+    "threadpools": [
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+        "version": "0.3.31.188.0",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      },
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+        "version": "0.3.30",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      }
+    ]
+  },
+  "compute_inventory": {
+    "native_beam_RHS": 2,
+    "resolved_RHS": 0,
+    "external_runs": 0,
+    "formal_F03_runs": 0
+  },
+  "balanced_rigid_wrench": {
+    "full": [
+      0.0,
+      -9.466205597163935e-12,
+      0.0,
+      8.310019339319297e-14,
+      0.0,
+      3.796074565798335e-12
+    ],
+    "retained": [
+      0.0,
+      0.0,
+      0.0,
+      -2.955691247308323e-13,
+      0.0,
+      0.0
+    ],
+    "complement": [
+      0.0,
+      -9.466205597163935e-12,
+      0.0,
+      3.7866931812402527e-13,
+      0.0,
+      3.796074565798335e-12
+    ]
+  },
+  "reconstructed_state_max_abs": 0.0,
+  "reconstructed_state_relative": 0.0,
+  "full_original_work_J": 1.7453850409980502e-06,
+  "retained_only_work_J": 1.1558694915633392e-07,
+  "complement_only_work_J": 1.6297980918417161e-06,
+  "cross_work_each_J": -2.4419027973120724e-44,
+  "direct_retained_pairing_on_saved_J": 1.1558694915633392e-07,
+  "work_change_when_retained_action_removed_J": 1.155869491563341e-07,
+  "original_resolved_body_work_J": 2.409806056950254e-07,
+  "retained_response": {
+    "equation_ratio": 1.8397291312930392e-12,
+    "work_relative_error": 0.0
+  },
+  "complement_response": {
+    "equation_ratio": 3.938494783495594e-12,
+    "work_relative_error": 1.2992912304510218e-16
+  },
+  "limitation": "Removing a balanced native load component changes the physical action; this cannot alone allocate native-versus-C3D20 body or coupled-connection error"
+}

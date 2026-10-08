@@ -1,5 +1,18 @@
 # Active development — 8 October 2026
 
+Latest V12 V5-action discriminator: the original retained-spin interface
+component is separately rigid-balanced. Two new responses on the unchanged
+native beam operator/gauge reconstruct the saved V5 state. Removing that
+component reduces native paired work by `1.15586949156334e-7 J`, leaving
+`1.62979809184172e-6 J`, still `6.76319` times the saved resolved-beam work.
+Independent review found no blocking defect. Direct retained-spin *loading*
+alone therefore cannot explain the large V5 ratio; this changed-load check
+does not allocate body or connection error. Next derive one physically matched
+distributed P0/tip action with native retained and resolved two-sided work,
+then compare its response. No automatic saved-vector or refinement sequence.
+[V12 evidence](../../.development/bl5-mz-common-beam-20261008/v12-retained-load-adjudication.md).
+G0/F03 and the connection-law/space decision remain open.
+
 Current connection decision: stop reusing saved V5 vectors as a causal
 allocation. A read-only load-role review found direct native retained-spin
 interface pairing of `1.15586949156334e-7 J`, but it cannot say how the
