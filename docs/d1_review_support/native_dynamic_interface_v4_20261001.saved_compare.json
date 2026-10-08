@@ -1,0 +1,58 @@
+{
+  "scope": "read-only saved arrays and source semantics, no production evaluation",
+  "old_raw_sha256": "1ffc47b49472eeeb8b875a1570686c28d7c641ae2b17b21d829da3ba0d362b94",
+  "v3_raw_sha256": "59437c0923818557159da7705c82f99f856e6357f4e1be8a8af3c805dfe2d834",
+  "old_source_test_sha256": "40417905296f9ece5af97c42650932dc5af6963608247928bb7a8d7d93d4d5e2",
+  "same": {
+    "physical_model": "same source literals: centered curved x=(-1,0,1),y=.2(1-x^2), coupled ellipsoid, mass2.7/cross-center(.035,-.025,.012)",
+    "physical_slots": "node1/2/3 translation and cell1/2 spatial spin; algebraic nodal rotation placeholders zero",
+    "owner": "dynamic_elastic free15/algebraic27, inertia_order24, max_iterations12,max_backtracks8, no loads, virgin elastic",
+    "dt_seconds": 0.001,
+    "momentum_origin_high_m": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "differences": {
+    "old_spin_velocity_rad_s": [
+      0.35,
+      -0.25,
+      0.2
+    ],
+    "v3_spin_velocity_rad_s": [
+      0.08,
+      -0.04,
+      0.05
+    ],
+    "v3_translation_velocity_m_s": [
+      0.1,
+      -0.04,
+      0.03
+    ],
+    "old_pose": "reference/I cell frames/zero low positions",
+    "v3_pose": "common rotation vector(.0002,-.0001,.0003), translation(.002,-.001,.003), low x1/x3=1e-18",
+    "old_stage_residual_tolerance": 1e-11,
+    "v3_stage_residual_tolerance": 1e-15
+  },
+  "saved_v3_velocity_mapping_max_error": 0.0,
+  "old_initial_rank_mass": {
+    "algebraic_condition": 46900.21092266667,
+    "algebraic_rank": 27,
+    "algebraic_sigma_max": 1.617335709717673,
+    "algebraic_sigma_min": 3.448461484287316e-05,
+    "physical_mass_condition": 17.433616647030846,
+    "physical_mass_max_eigenvalue": 2.1685761019501215,
+    "physical_mass_min_eigenvalue": 0.12439048912547104
+  },
+  "v3_initial_rank_mass": {
+    "algebraic_condition": 46900.21092261729,
+    "algebraic_rank": 27,
+    "algebraic_sigma_max": 1.6173357097176733,
+    "algebraic_sigma_min": 3.448461484290947e-05,
+    "physical_mass_condition": 17.433616647030842,
+    "physical_mass_max_eigenvalue": 2.1685761019501197,
+    "physical_mass_min_eigenvalue": 0.12439048912547099
+  },
+  "disposition": "V3 vs old free is not tolerance-only: kinematic seed differs. V3-to-V4 will be tolerance-only, keeping its exact pose/velocity/scales/gates and owner physics; old pass is contextual evidence only."
+}

@@ -1,0 +1,290 @@
+{
+  "status": "development_saved_radial_spatial_assessment",
+  "development_checks_met": true,
+  "gates": {
+    "evidence_completeness": true,
+    "fixture_and_completion": true,
+    "physical_force_relative_error": true,
+    "physical_moment_relative_error": true,
+    "moment_equivalent_position_error_over_radius": true,
+    "source_displacement_relative_errors": true,
+    "independent_gap_penetration_m": true,
+    "step1_equilibrium_relative_force": true,
+    "step1_complementarity_relative_force": true,
+    "step1_physical_gap_penetration_m": true,
+    "step1_action_reaction_force": true,
+    "step1_action_reaction_moment": true,
+    "step1_reaction_and_work": true,
+    "step1_source_rim_force_n": true,
+    "step1_reference_coverage_area_error_m2": true,
+    "step2_equilibrium_relative_force": true,
+    "step2_complementarity_relative_force": true,
+    "step2_physical_gap_penetration_m": true,
+    "step2_action_reaction_force": true,
+    "step2_action_reaction_moment": true,
+    "step2_reaction_and_work": true,
+    "step2_source_rim_force_n": true,
+    "step2_reference_coverage_area_error_m2": true,
+    "physical_bins": true,
+    "reference_pressure_force_conversion_over_force_ref": true,
+    "reference_pressure_moment_conversion_over_moment_ref": true,
+    "independent_linear_kkt": true,
+    "observed_final_force_model_discrepancy": true,
+    "observed_final_bin_model_discrepancy": true,
+    "observed_final_source_model_discrepancy": true,
+    "observed_final_target_model_discrepancy": true,
+    "observed_final_moment_model_discrepancy": true,
+    "observed_final_resultant_model_discrepancy": true,
+    "oracle_solution_uncertainty_assessed": true
+  },
+  "metrics": {
+    "physical_force_relative_error": {
+      "value": 0.009302934823203435,
+      "limit": 0.02
+    },
+    "physical_moment_relative_error": {
+      "value": 0.00011850482189678982,
+      "limit": 0.02
+    },
+    "moment_equivalent_position_error_over_radius": {
+      "value": 0.00034176461939837107,
+      "limit": 0.02
+    },
+    "moment_equivalent_resultant": {
+      "xy_m": [
+        0.6001102370730839,
+        0.5999535655088939
+      ],
+      "plane_z_m": 0.0,
+      "residual_vertical_couple_nm": -1.669825340502256e-13
+    },
+    "source_displacement_relative_errors": {
+      "value": [
+        0.0011083913627260892,
+        0.0019067274801399577,
+        0.0019019109513473834
+      ],
+      "limit": 0.02
+    },
+    "target_displacement_relative_errors_reported": [
+      0.01756803805505011,
+      0.01887255474496684,
+      0.012487609261159579
+    ],
+    "independent_gap_penetration_m": {
+      "value": 1.2442178046936716e-07,
+      "limit": 5e-05
+    },
+    "step1_equilibrium_relative_force": {
+      "value": 3.76364272670833e-11,
+      "limit": 1e-06
+    },
+    "step1_complementarity_relative_force": {
+      "value": 0.0,
+      "limit": 1e-08
+    },
+    "step1_physical_gap_penetration_m": {
+      "value": 0.0,
+      "limit": 5e-05
+    },
+    "step1_action_reaction_force": {
+      "value": 0.0,
+      "limit": 1e-06
+    },
+    "step1_action_reaction_moment": {
+      "value": 0.0,
+      "limit": 1e-06
+    },
+    "step1_reaction_and_work": {
+      "value": [
+        2.9932414148221746e-12,
+        2.8936488621900125e-11,
+        1.3482511075387466e-16,
+        0.0,
+        1.2556416410097748e-15,
+        2.8936575358073924e-11,
+        1.2046038491485814e-16,
+        0.0,
+        1.2536087619363645e-15,
+        3.252606517456513e-17,
+        4.94078028335824e-17,
+        0.0,
+        3.3881317890172014e-18
+      ],
+      "limit": 1e-06
+    },
+    "step1_source_rim_force_n": {
+      "value": 0.0,
+      "limit": 1e-10
+    },
+    "step1_reference_coverage_area_error_m2": {
+      "value": 1.4432899320127035e-15,
+      "limit": 1e-10
+    },
+    "step2_equilibrium_relative_force": {
+      "value": 3.1276971791120853e-11,
+      "limit": 1e-06
+    },
+    "step2_complementarity_relative_force": {
+      "value": 1.0591676609663775e-12,
+      "limit": 1e-08
+    },
+    "step2_physical_gap_penetration_m": {
+      "value": 5.874134204493693e-08,
+      "limit": 5e-05
+    },
+    "step2_action_reaction_force": {
+      "value": 6.462417156195602e-20,
+      "limit": 1e-06
+    },
+    "step2_action_reaction_moment": {
+      "value": 6.857096618852822e-17,
+      "limit": 1e-06
+    },
+    "step2_reaction_and_work": {
+      "value": [
+        6.53133974280421e-12,
+        2.655757558311933e-11,
+        4.966151660147145e-14,
+        1.128810368559264e-16,
+        2.2436208706871907e-15,
+        2.488525878419079e-11,
+        6.288337997587243e-14,
+        4.120815288392171e-17,
+        2.2768245622195593e-15,
+        1.6728372159713345e-12,
+        1.4298177474993358e-14,
+        1.0072280534037699e-16,
+        3.3203691532368573e-17
+      ],
+      "limit": 1e-06
+    },
+    "step2_source_rim_force_n": {
+      "value": 0.0,
+      "limit": 1e-10
+    },
+    "step2_reference_coverage_area_error_m2": {
+      "value": 1.3322676295501878e-15,
+      "limit": 1e-10
+    },
+    "reference_pressure_force_conversion_over_force_ref": {
+      "value": 4.812556603228657e-13,
+      "limit": 0.002
+    },
+    "reference_pressure_moment_conversion_over_moment_ref": {
+      "value": 7.10689651069128e-12,
+      "limit": 0.002
+    },
+    "observed_final_force_model_discrepancy": {
+      "value": 9.209151703025087e-06,
+      "limit": 0.002
+    },
+    "observed_final_bin_model_discrepancy": {
+      "value": [
+        [
+          1.391294337488103e-05,
+          7.671359919575306e-06
+        ],
+        [
+          1.0622015618897783e-05,
+          6.031519221147251e-06
+        ]
+      ],
+      "limit": 0.002
+    },
+    "observed_final_source_model_discrepancy": {
+      "value": [
+        1.3139445130140668e-07,
+        6.735177213442842e-08,
+        6.085422738051621e-09
+      ],
+      "limit": 0.002
+    },
+    "observed_final_target_model_discrepancy": {
+      "value": [
+        8.81914447390977e-08,
+        3.951633686855459e-08,
+        1.972584968382617e-08
+      ],
+      "limit": 0.002
+    },
+    "observed_final_moment_model_discrepancy": {
+      "value": 1.6761740274251333e-06,
+      "limit": 0.002
+    },
+    "observed_final_resultant_model_discrepancy": {
+      "value": 4.350546768316027e-05,
+      "limit": 0.002
+    }
+  },
+  "physical_bin_assessment": {
+    "scope": "guided whole-source-face physical vertical-force bins",
+    "development_checks_met": true,
+    "physical_bins_n": [
+      [
+        0.005070884920287109,
+        0.0050531540797603474
+      ],
+      [
+        0.005048314547409279,
+        0.005072758907721809
+      ]
+    ],
+    "exact_bins_n": [
+      [
+        0.005108804993675256,
+        0.005108804993675256
+      ],
+      [
+        0.005108804993675256,
+        0.005108804993675256
+      ]
+    ],
+    "uncertainty_bins_n": [
+      [
+        2.0054520562133676e-12,
+        1.9984407952053548e-12
+      ],
+      [
+        1.9965277694455352e-12,
+        2.0061931536027078e-12
+      ]
+    ],
+    "uncertainty_budget_bins_n": [
+      [
+        1.021760998735051e-05,
+        1.021760998735051e-05
+      ],
+      [
+        1.021760998735051e-05,
+        1.021760998735051e-05
+      ]
+    ],
+    "exact_reference_error_bins_n": [
+      [
+        2.4159474761922314e-16,
+        2.4159474761922314e-16
+      ],
+      [
+        2.4159474761922314e-16,
+        2.4159474761922314e-16
+      ]
+    ],
+    "physical_bin_force_l1_relative_error": 0.00930293482320386,
+    "physical_bin_force_l2_relative_error": 0.009535882605060607,
+    "uncertainty_accounted_l1_relative_error": 0.009302935215008488,
+    "uncertainty_accounted_l2_relative_error": 0.009535882987112047,
+    "bins_to_reassembled_force_relative_difference": 8.673617379884035e-17,
+    "reassembled_to_saved_force_relative_difference": 4.336808689942018e-17,
+    "uncertainty_budget_met": true
+  },
+  "remaining_gates": [],
+  "evidence_sha256": {
+    "docs\\d1_review_support\\d1_radial_nonmatching_swept_search_coupled_v8_20260930.json": "96f0bcec3b5a3fcc6bd913d3cff192e8b66a7ba9d34e2d3d0dedeaea7c0fc001",
+    "docs\\d1_review_support\\d1_radial_saved_physical_bins_v10_20260930.json": "75c967d54fb5d18f19010215f9d63f1180070ac63ebdb002bbdf1a6f93e0183c",
+    "docs\\d1_review_support\\d1_radial_saved_wrench_v9_20260930.json": "0cc2792efcaf6fa45db11b16c5b74e93e87ad1115d02df8a4db47fb4e1732808",
+    "docs\\d1_review_support\\d1_radial_linear_saved_assessment_v2_20260930.json": "dcc0e94644e5d3705d9008ea0a1d2d916b63023d4f7b94cc4c4ddc2b75e47b76"
+  },
+  "independently_accepted": false,
+  "released": false
+}

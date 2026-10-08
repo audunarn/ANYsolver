@@ -1,0 +1,87 @@
+{
+  "review": "C8 supporting source review",
+  "status": "SOURCE_ONLY_NUMERICALLY_UNVERIFIED",
+  "role": "same-family supporting review, no independent engineering acceptance",
+  "author_source_manifest": "source_checks_v2.json",
+  "author_source_manifest_sha256": "c626ae9a1f61fe3c0f5ebf4f96666e835fe4464b3ec0d8e12754a12cebf45d86",
+  "adopted_baseline_context": "ace4ec422727f5d07fd58fd5ba12eb869996345b, provided by lead contract, not independently queried Git HEAD",
+  "repository": "C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001",
+  "reviewed_at_utc": "2026-10-07T09:56:48.5754499Z",
+  "numerical_jobs": 0,
+  "solver_imports": 0,
+  "product_edits": 0,
+  "git_commands": 0,
+  "inventory": [
+    {
+      "path": "src/anysolver/_ge_beam3_connected_dynamic.py",
+      "author_sha256": "2a0f006b353d22a679b29f45046f557807ed5c7fad0832dbe1a9633976193fa0",
+      "actual_sha256": "2a0f006b353d22a679b29f45046f557807ed5c7fad0832dbe1a9633976193fa0",
+      "match": true
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_connected_trajectory.py",
+      "author_sha256": "61ac48ce5485144f2ac2f46e6c41cd477f0b573f936a1ac890e7e8841a7be84c",
+      "actual_sha256": "61ac48ce5485144f2ac2f46e6c41cd477f0b573f936a1ac890e7e8841a7be84c",
+      "match": true
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_native_pair_contact.py",
+      "author_sha256": "1417a1b2af7878944337d8ca1c7eaab18a3a391499bf89923f03ec207940c480",
+      "actual_sha256": "1417a1b2af7878944337d8ca1c7eaab18a3a391499bf89923f03ec207940c480",
+      "match": true
+    },
+    {
+      "path": "src/anysolver/general_contact/native_transient_pair.py",
+      "author_sha256": "d2b309f1000d23fe1792d5354bf67ceb377b8cbabb3aafe1117979e73556e45e",
+      "actual_sha256": "d2b309f1000d23fe1792d5354bf67ceb377b8cbabb3aafe1117979e73556e45e",
+      "match": true
+    },
+    {
+      "path": "src/anysolver/general_contact/__init__.py",
+      "author_sha256": "4159a3d921f1794d79a22f813bfd8d14de76ab5725633e12075c80952d4dc291",
+      "actual_sha256": "4159a3d921f1794d79a22f813bfd8d14de76ab5725633e12075c80952d4dc291",
+      "match": true
+    },
+    {
+      "path": "src/anysolver/__init__.py",
+      "author_sha256": "6791af8fd0d3d0155fcca299e62d0fca0ed869da982cdac21841918f1a9ad0d8",
+      "actual_sha256": "6791af8fd0d3d0155fcca299e62d0fca0ed869da982cdac21841918f1a9ad0d8",
+      "match": true
+    },
+    {
+      "path": "tests/test_general_contact_native_transient_pair.py",
+      "author_sha256": "55df1d0022f9a5dc158d37ab3e4e6bb7c4ac3f0474cff74e077112d3614b2ec9",
+      "actual_sha256": "55df1d0022f9a5dc158d37ab3e4e6bb7c4ac3f0474cff74e077112d3614b2ec9",
+      "match": true
+    },
+    {
+      "path": "tests/test_general_contact_native_transient_legacy.py",
+      "author_sha256": "ed044196b376888929099e5315ff54bd2c7a634eb774a9ecbe7f999c06d5a6c1",
+      "actual_sha256": "ed044196b376888929099e5315ff54bd2c7a634eb774a9ecbe7f999c06d5a6c1",
+      "match": true
+    },
+    {
+      "path": "examples/general_contact_native_pair_impact_dev.py",
+      "author_sha256": "028b4fa1b497737c51941e2b474d0fddae477efe8220fca9c2cc89b1cc8230d2",
+      "actual_sha256": "028b4fa1b497737c51941e2b474d0fddae477efe8220fca9c2cc89b1cc8230d2",
+      "match": true
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_NATIVE_TRANSIENT_DEV.md",
+      "author_sha256": "41a936c368397ef702dd5a37a414e81f35174ce4926370bd09c49c41537dac00",
+      "actual_sha256": "41a936c368397ef702dd5a37a414e81f35174ce4926370bd09c49c41537dac00",
+      "match": true
+    }
+  ],
+  "all_current_source_hashes_match_author_manifest": true,
+  "held_status": "lead confirmed author stopped product edits and v2 source inventory is held",
+  "resolved_findings": [
+    "direct capsule restore endpoint penetration admission",
+    "effective derived contact radius identity"
+  ],
+  "remaining_obligations": [
+    "all numerical gates unexecuted",
+    "old checkpoint and result byte compatibility requires actual evidence",
+    "curved/native friction/shell/wider admission qualification remains open"
+  ]
+}

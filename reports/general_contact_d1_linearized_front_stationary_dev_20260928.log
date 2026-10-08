@@ -1,0 +1,234 @@
+{
+  "cases": [
+    {
+      "columns": 16,
+      "pressure_columns": 16,
+      "pressure_knots": null,
+      "supported_modes": 34,
+      "active_modes": 12,
+      "active_work_rank": 12,
+      "active_compliance_scaled_condition": 10789.595477088233,
+      "active_compliance_scaled_smallest_eigenvalue": 0.0010047411531540003,
+      "first_active_reference_x": 0.6875,
+      "maximum_pressure_pa": 0.5047831014576193,
+      "minimum_weighted_gap_m": -1.3689421369766468e-20,
+      "maximum_active_weighted_gap_m": 1.673151500749235e-20,
+      "integrated_force_n": 0.10387155974560196,
+      "tip_vertical_displacement_m": -3.999994640392244e-05,
+      "minimum_physical_overlap_gap_m": -1.9401780076881237e-08,
+      "reduced_equilibrium_residual_n": 7.320467553742712e-16,
+      "pressure_compliance_asymmetry": 2.117582368135751e-22,
+      "saved_report": "reports\\general_contact_d1_mixed_16q4_interior_distributed_0p3n_cartesian_roundoff_press_20260927.json",
+      "saved_pressure_l2_relative_to_linearized": 1.819336607718296e-11,
+      "saved_front_l2_absolute_pa_sqrt_m": 3.1006241195903944e-12
+    },
+    {
+      "columns": 24,
+      "pressure_columns": 24,
+      "pressure_knots": null,
+      "supported_modes": 50,
+      "active_modes": 18,
+      "active_work_rank": 18,
+      "active_compliance_scaled_condition": 26677.858739639592,
+      "active_compliance_scaled_smallest_eigenvalue": 0.0006043679149482054,
+      "first_active_reference_x": 0.6666666666666666,
+      "maximum_pressure_pa": 0.5975404861489542,
+      "minimum_weighted_gap_m": -3.593473109563711e-20,
+      "maximum_active_weighted_gap_m": 3.593473109563711e-20,
+      "integrated_force_n": 0.10387883725519423,
+      "tip_vertical_displacement_m": -4.000000107149105e-05,
+      "minimum_physical_overlap_gap_m": -2.0162246833084734e-08,
+      "reduced_equilibrium_residual_n": 1.0737003173097124e-15,
+      "pressure_compliance_asymmetry": 4.499862532288471e-22,
+      "saved_report": "reports\\general_contact_d1_distributed_cycle_response_v1_formal_20260927.json",
+      "saved_pressure_l2_relative_to_linearized": 1.4046926394283276e-11,
+      "saved_front_l2_absolute_pa_sqrt_m": 2.1894262536477015e-12
+    },
+    {
+      "columns": 32,
+      "pressure_columns": 32,
+      "pressure_knots": null,
+      "supported_modes": 66,
+      "active_modes": 24,
+      "active_work_rank": 24,
+      "active_compliance_scaled_condition": 49335.71726135034,
+      "active_compliance_scaled_smallest_eigenvalue": 0.00043383988497757456,
+      "first_active_reference_x": 0.65625,
+      "maximum_pressure_pa": 0.6913926203585069,
+      "minimum_weighted_gap_m": -5.475768547906588e-20,
+      "maximum_active_weighted_gap_m": 5.475768547906588e-20,
+      "integrated_force_n": 0.10385726665699867,
+      "tip_vertical_displacement_m": -3.9999999981691345e-05,
+      "minimum_physical_overlap_gap_m": -1.790811531720047e-08,
+      "reduced_equilibrium_residual_n": 2.377254920104846e-15,
+      "pressure_compliance_asymmetry": 2.9116757561866574e-22,
+      "saved_report": "reports\\general_contact_d1_distributed_32q4_fine_press_dev_20260928.json",
+      "saved_pressure_l2_relative_to_linearized": 1.5167630326503632e-11,
+      "saved_front_l2_absolute_pa_sqrt_m": 2.7339052485639277e-12
+    },
+    {
+      "columns": 48,
+      "pressure_columns": 48,
+      "pressure_knots": null,
+      "supported_modes": 98,
+      "active_modes": 34,
+      "active_work_rank": 34,
+      "active_compliance_scaled_condition": 109641.69432396203,
+      "active_compliance_scaled_smallest_eigenvalue": 0.00027669557122837437,
+      "first_active_reference_x": 0.6666666666666666,
+      "maximum_pressure_pa": 0.5265585920726285,
+      "minimum_weighted_gap_m": -3.764590876685793e-20,
+      "maximum_active_weighted_gap_m": 4.6201797122962e-20,
+      "integrated_force_n": 0.10387995492175318,
+      "tip_vertical_displacement_m": -4.0000000000001636e-05,
+      "minimum_physical_overlap_gap_m": -1.1379355972386388e-09,
+      "reduced_equilibrium_residual_n": 3.87486123920573e-15,
+      "pressure_compliance_asymmetry": 1.1911400820763599e-22
+    },
+    {
+      "columns": 64,
+      "pressure_columns": 64,
+      "pressure_knots": null,
+      "supported_modes": 130,
+      "active_modes": 46,
+      "active_work_rank": 46,
+      "active_compliance_scaled_condition": 202021.9475871759,
+      "active_compliance_scaled_smallest_eigenvalue": 0.000202474512422363,
+      "first_active_reference_x": 0.65625,
+      "maximum_pressure_pa": 0.6578590477913122,
+      "minimum_weighted_gap_m": -2.6009900602556296e-19,
+      "maximum_active_weighted_gap_m": 2.6009900602556296e-19,
+      "integrated_force_n": 0.10388003192529995,
+      "tip_vertical_displacement_m": -4.000000000000001e-05,
+      "minimum_physical_overlap_gap_m": -3.890441312467518e-09,
+      "reduced_equilibrium_residual_n": 5.91753091816151e-15,
+      "pressure_compliance_asymmetry": 3.771943593241806e-22
+    },
+    {
+      "columns": 96,
+      "pressure_columns": 96,
+      "pressure_knots": null,
+      "supported_modes": 194,
+      "active_modes": 68,
+      "active_work_rank": 68,
+      "active_compliance_scaled_condition": 460165.1834128742,
+      "active_compliance_scaled_smallest_eigenvalue": 0.00013127578521704566,
+      "first_active_reference_x": 0.65625,
+      "maximum_pressure_pa": 0.624915630927301,
+      "minimum_weighted_gap_m": -1.4373892438254995e-19,
+      "maximum_active_weighted_gap_m": 1.4373892438254995e-19,
+      "integrated_force_n": 0.10388305754333671,
+      "tip_vertical_displacement_m": -3.999999999999999e-05,
+      "minimum_physical_overlap_gap_m": -1.472967608629372e-09,
+      "reduced_equilibrium_residual_n": 1.2148782850138542e-14,
+      "pressure_compliance_asymmetry": 1.1580528575742387e-22
+    },
+    {
+      "columns": 128,
+      "pressure_columns": 128,
+      "pressure_knots": null,
+      "supported_modes": 258,
+      "active_modes": 90,
+      "active_work_rank": 90,
+      "active_compliance_scaled_condition": 824671.2380814472,
+      "active_compliance_scaled_smallest_eigenvalue": 9.690381623255595e-05,
+      "first_active_reference_x": 0.65625,
+      "maximum_pressure_pa": 0.592117514667764,
+      "minimum_weighted_gap_m": -3.3539082355927857e-19,
+      "maximum_active_weighted_gap_m": 3.3539082355927857e-19,
+      "integrated_force_n": 0.10388372780558922,
+      "tip_vertical_displacement_m": -3.999999999999997e-05,
+      "minimum_physical_overlap_gap_m": -6.851136513509148e-10,
+      "reduced_equilibrium_residual_n": 1.7332513194985163e-14,
+      "pressure_compliance_asymmetry": 1.3234889800848443e-22
+    }
+  ],
+  "adjacent": [
+    {
+      "columns": [
+        16,
+        24
+      ],
+      "full_relative_l2": 0.07039516823174619,
+      "front_absolute_l2_pa_sqrt_m": 0.012091808347089103
+    },
+    {
+      "columns": [
+        24,
+        32
+      ],
+      "full_relative_l2": 0.13815739298924834,
+      "front_absolute_l2_pa_sqrt_m": 0.027914730670768613
+    },
+    {
+      "columns": [
+        32,
+        48
+      ],
+      "full_relative_l2": 0.12841631986478758,
+      "front_absolute_l2_pa_sqrt_m": 0.02649013105060938
+    },
+    {
+      "columns": [
+        48,
+        64
+      ],
+      "full_relative_l2": 0.052175409266207735,
+      "front_absolute_l2_pa_sqrt_m": 0.010830064281485818
+    },
+    {
+      "columns": [
+        64,
+        96
+      ],
+      "full_relative_l2": 0.07161601779859227,
+      "front_absolute_l2_pa_sqrt_m": 0.014854464308859373
+    },
+    {
+      "columns": [
+        96,
+        128
+      ],
+      "full_relative_l2": 0.04134828367435318,
+      "front_absolute_l2_pa_sqrt_m": 0.00857551523328119
+    }
+  ],
+  "finest_comparisons": [
+    {
+      "columns": 16,
+      "relative_full_l2": 0.11538735648690568,
+      "absolute_front_l2_pa_sqrt_m": 0.02361470037243702,
+      "absolute_interior_l2_pa_sqrt_m": 0.002265120398000144
+    },
+    {
+      "columns": 24,
+      "relative_full_l2": 0.13453005790591127,
+      "absolute_front_l2_pa_sqrt_m": 0.027504468762693243,
+      "absolute_interior_l2_pa_sqrt_m": 0.0012040928774213837
+    },
+    {
+      "columns": 32,
+      "relative_full_l2": 0.14614221626189589,
+      "absolute_front_l2_pa_sqrt_m": 0.030208833239077856,
+      "absolute_interior_l2_pa_sqrt_m": 0.00031530927507837116
+    },
+    {
+      "columns": 48,
+      "relative_full_l2": 0.04178619394670342,
+      "absolute_front_l2_pa_sqrt_m": 0.008666089834300087,
+      "absolute_interior_l2_pa_sqrt_m": 3.59552700497002e-06
+    },
+    {
+      "columns": 64,
+      "relative_full_l2": 0.08610751578390938,
+      "absolute_front_l2_pa_sqrt_m": 0.017858375618216186,
+      "absolute_interior_l2_pa_sqrt_m": 9.956904497376194e-07
+    },
+    {
+      "columns": 96,
+      "relative_full_l2": 0.04134828367435318,
+      "absolute_front_l2_pa_sqrt_m": 0.00857551523328119,
+      "absolute_interior_l2_pa_sqrt_m": 2.3579403827488935e-09
+    }
+  ]
+}

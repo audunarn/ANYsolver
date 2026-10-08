@@ -1,0 +1,103 @@
+{
+  "source_parent": "a519f5af",
+  "raw_directory": "C:\\ANYworkspaceWork\\contact_native_fibre_s3_20261005\\candidate07",
+  "installed_checks": 14,
+  "installed_resource": {
+    "status": "completed",
+    "returncode": 0,
+    "elapsed_s": 15.771344300010242,
+    "peak_bytes": 187076608
+  },
+  "production_file_parity": 525,
+  "import_count": 221,
+  "import_errors": [],
+  "wheel_sha256": "5da880d0f091b10b428b906b5b5bec69a8a25acaed206ec914658b87ca95e4fc",
+  "balanced_local": {
+    "rows": [
+      {
+        "pair": 0,
+        "route": "cached",
+        "elapsed_s": 2.568057999946177,
+        "intervals": 11,
+        "evaluations": 10880
+      },
+      {
+        "pair": 0,
+        "route": "original",
+        "elapsed_s": 2.9090472999960184,
+        "intervals": 11,
+        "evaluations": 10880
+      },
+      {
+        "pair": 1,
+        "route": "original",
+        "elapsed_s": 2.922924099955708,
+        "intervals": 11,
+        "evaluations": 10880
+      },
+      {
+        "pair": 1,
+        "route": "cached",
+        "elapsed_s": 2.5925111999968067,
+        "intervals": 11,
+        "evaluations": 10880
+      },
+      {
+        "pair": 2,
+        "route": "cached",
+        "elapsed_s": 2.517228199983947,
+        "intervals": 11,
+        "evaluations": 10880
+      },
+      {
+        "pair": 2,
+        "route": "original",
+        "elapsed_s": 2.833133399952203,
+        "intervals": 11,
+        "evaluations": 10880
+      },
+      {
+        "pair": 3,
+        "route": "original",
+        "elapsed_s": 2.833006800035946,
+        "intervals": 11,
+        "evaluations": 10880
+      },
+      {
+        "pair": 3,
+        "route": "cached",
+        "elapsed_s": 2.5381326000206172,
+        "intervals": 11,
+        "evaluations": 10880
+      }
+    ],
+    "medians_s": {
+      "cached": 2.553095299983397,
+      "original": 2.8710903499741107
+    },
+    "min_max_s": {
+      "cached": [
+        2.517228199983947,
+        2.5925111999968067
+      ],
+      "original": [
+        2.833006800035946,
+        2.922924099955708
+      ]
+    },
+    "median_ratio_original_over_cached": 1.1245527536683733,
+    "scope": "local saved-pose contact only; bitwise parity; not whole-route saving"
+  },
+  "local_time_reduction_fraction": 0.11075759075069891,
+  "coupled_resource": {
+    "status": "timeout",
+    "returncode": 15,
+    "elapsed_s": 120.06172190001234,
+    "peak_bytes": 183242752
+  },
+  "coupled_disposition": "resource NONPASS; no returned mechanical result or comparison",
+  "source_hashes": {
+    "src/anysolver/general_contact/native_curved_s3_work.py": "4e58cc650efc4684fa593e4f12b579a788ba903e13397b728c832de51c1f27f5",
+    "tests/test_general_contact_native_curved_s3_work.py": "2da58acf3d5c883efd6861aba10681c552fbd7eef5bcba4479899c8db8cd3bfe"
+  }
+}

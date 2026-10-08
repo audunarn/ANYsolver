@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 3.3351599000161514,
+  "peak_process_tree_memory_mb": 196.063232,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "scripts.general_contact_d1_interior_press_dev",
+    "docs/d1_review_support/d1_radial_linear_discriminator_target12_v2_20260929.json",
+    "--radial-linear-discriminator",
+    "--radial-target-cells",
+    "12"
+  ],
+  "log": "docs\\d1_review_support\\d1_radial_linear_discriminator_target12_v2_20260929.log"
+}

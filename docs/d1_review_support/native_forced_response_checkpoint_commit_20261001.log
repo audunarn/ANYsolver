@@ -1,0 +1,29 @@
+[codex/general-contact-core a0fc4941] Checkpoint reviewed native forced temporal response and cache diagnosis
+ 34 files changed, 158716 insertions(+), 18 deletions(-)
+ create mode 100644 docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART29.md
+ create mode 100644 docs/d1_review_support/native_dynamic_restart_checkpoint_commit_20261001.log
+ create mode 100644 docs/d1_review_support/native_forced_response_cache_entry_20261001.py
+ create mode 100644 docs/d1_review_support/native_forced_response_checkpoint_20261001.py
+ create mode 100644 docs/d1_review_support/native_forced_response_checkpoint_owned_paths_20261001.json
+ create mode 100644 docs/d1_review_support/native_forced_response_fixture_20261001.source.py
+ create mode 100644 docs/d1_review_support/native_forced_response_startup_v1_20261001.log
+ create mode 100644 docs/d1_review_support/native_forced_response_startup_v1_20261001.py
+ create mode 100644 docs/d1_review_support/native_forced_response_startup_v1_20261001.resources.json
+ create mode 100644 docs/d1_review_support/native_forced_response_v1_20261001.freeze.py
+ create mode 100644 docs/d1_review_support/native_forced_response_v1_20261001.inputs.json
+ create mode 100644 docs/d1_review_support/native_forced_response_v1_20261001.log
+ create mode 100644 docs/d1_review_support/native_forced_response_v1_20261001.proposal.json
+ create mode 100644 docs/d1_review_support/native_forced_response_v1_20261001.reference.source.py
+ create mode 100644 docs/d1_review_support/native_forced_response_v1_20261001.resources.json
+ create mode 100644 docs/d1_review_support/native_forced_response_v1_20261001.saved_projection.json
+ create mode 100644 docs/d1_review_support/native_forced_response_v1_20261001.test.source.py
+ create mode 100644 docs/d1_review_support/native_forced_response_v2_20261001.disposition.json
+ create mode 100644 docs/d1_review_support/native_forced_response_v2_20261001.freeze.py
+ create mode 100644 docs/d1_review_support/native_forced_response_v2_20261001.inputs.json
+ create mode 100644 docs/d1_review_support/native_forced_response_v2_20261001.log
+ create mode 100644 docs/d1_review_support/native_forced_response_v2_20261001.raw.json
+ create mode 100644 docs/d1_review_support/native_forced_response_v2_20261001.resources.json
+ create mode 100644 docs/d1_review_support/native_forced_response_v2_20261001.summarize.py
+ create mode 100644 docs/d1_review_support/native_forced_response_v2_20261001.summary.json
+ create mode 100644 docs/d1_review_support/native_forced_response_v2_20261001.xml
+ create mode 100644 docs/d1_review_support/native_torque_free_design_20261001.md

@@ -1,0 +1,7 @@
+{
+  "action": "Bounded overwrite of the two new managed test/example files for the prospective V4 default-tolerance case",
+  "initial_review": "rejected",
+  "reason": "This bounded overwrite is reversible, but it changes the test/example to a new default-tolerance discriminator after the retained user restriction explicitly said no rerun or tolerance change was authorized for this slice. Do not bypass this rejection through a workaround or indirect execution. Continue with a safer alternative, or carry out checks to prove that the action is authorized or low risk before trying again.",
+  "resolution": "The same action was submitted with the exact later parent task authorization for ONE new prospective default1e-11 case, retaining V3 NONPASS. Automatic review accepted that same action. No workaround or numerical execution occurred while rejected.",
+  "scope": "V3 is not replayed/regraded. V4 is a new development fixture, with unchanged factory/private equations/defaults and unchanged physical gates/resource caps. Numerical execution still awaits exact independent source/input clearance."
+}

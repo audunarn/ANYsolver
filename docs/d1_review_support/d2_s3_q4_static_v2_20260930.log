@@ -1,0 +1,18 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_______ test_existing_path_press_slide_open_recontact_and_target_motion _______
+
+    def test_existing_path_press_slide_open_recontact_and_target_motion():
+        model,definition,settings=build()
+        program=ContactPathProgram(controls=(ContactPathControl.node(1,'uz'),
+            ContactPathControl.node(1,'ux'),ContactPathControl.node(5,'uz')),
+            waypoints=((0.,0.,0.),(-130e-6,0.,0.),(-130e-6,.02,0.),(0.,.02,0.),
+                       (-130e-6,.02,-10e-6)),steps_per_segment=1)
+>       result=solve_static_nonlinear(model,contact_definition=definition,contact_settings=settings,
+            contact_path_program=program,emit_restart_checkpoint=True)
+E       TypeError: solve_static_nonlinear() got an unexpected keyword argument 'contact_definition'
+
+tests\test_general_contact_s3_q4_static_dev.py:94: TypeError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_s3_q4_static_dev.py::test_existing_path_press_slide_open_recontact_and_target_motion
+1 failed, 2 deselected in 1.47s

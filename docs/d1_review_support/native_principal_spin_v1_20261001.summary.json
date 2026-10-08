@@ -1,0 +1,35 @@
+{
+  "status": "PASS",
+  "solver_committed_steps": 8,
+  "gate_passing_steps": 8,
+  "original_stages": 16,
+  "final_angle_rad": 0.4,
+  "maximum_trajectory_errors": {
+    "acceleration": 0.0,
+    "cell_frame": 4.965068306494546e-16,
+    "nodal_frame": 2.7330434859898324e-15,
+    "position": 0.0,
+    "velocity": 0.0
+  },
+  "maximum_invariant_defects": {
+    "E": 0.0,
+    "H": 0.0,
+    "P": 0.0
+  },
+  "maximum_endpoint_balance": 2.109423746787797e-15,
+  "verified_source_count": 450,
+  "source_postmatch": true,
+  "elapsed_seconds": 26.525187899998855,
+  "peak_process_tree_memory_mb": 164.868096,
+  "scope": "Exact principal-axis rigid-invariant native trajectory only; C7 open",
+  "artifacts": {
+    "native_principal_spin_v1_20261001.entry.py": "144899591ae216efff5679ba998ed9f133dd1caf65753e9506d609414d649e1b",
+    "native_principal_spin_v1_20261001.inputs.json": "d5a72a82558d8f2508279e40473857dd1c48c7b87ce46aaae692074efc2daed2",
+    "native_principal_spin_v1_20261001.inputs.v2.json": "fc71fd7a719c2eeac3250462c95d65d77e09a4eb4f6ac36c4593304119b57492",
+    "native_principal_spin_v1_20261001.log": "51729f7079914e924781121bc5b553d9b22a9ea7b788847a1cfcefc262430afa",
+    "native_principal_spin_v1_20261001.raw.json": "822344cc461bd2ac652965af66ac270c6d60f11cf0e31ba6afdb3f325d99e440",
+    "native_principal_spin_v1_20261001.resources.json": "3d01c22962577e176cf2d9c7f0b158e9ab0aa5cd4a559e708d23f824795450e0",
+    "native_principal_spin_v1_20261001.runner.preflight.source.py": "12bd7a815e280abb1490a5a5d578b3a3e8852dd9bbb4663c9fb01c190edcb657",
+    "native_principal_spin_v1_20261001.runner.py": "dbdfc36043a6327270959cfeb51ed1028987497451949d47d4acefb0ddd7bd28"
+  }
+}

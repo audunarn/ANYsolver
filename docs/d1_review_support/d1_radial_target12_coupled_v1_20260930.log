@@ -1,0 +1,1 @@
+{"status": "diverged", "failure_reason": "contact_semismooth_candidate_failed: pair=895, overlap_area_m2=0.000486111111111, reference_overlap_area_m2=0.000486111111111, integration_triangles=8: vertex lies on a clipping boundary", "accepted_steps": 0, "elapsed_seconds": 217.06695730000501, "force_relative_error": null}

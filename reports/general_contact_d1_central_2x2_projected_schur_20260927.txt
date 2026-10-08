@@ -1,0 +1,14 @@
+{
+  "divisions": 2,
+  "total_load_n": 2.0,
+  "geometry_profile": "central",
+  "normal_law": "augmented",
+  "normal_stiffness": 100000.0,
+  "supported_schur": true,
+  "min_step_fraction": 0.1,
+  "elapsed_seconds": 58.380265999992844,
+  "status": "completed",
+  "failure_reason": null,
+  "accepted_steps": 1,
+  "has_restart_checkpoint": true
+}

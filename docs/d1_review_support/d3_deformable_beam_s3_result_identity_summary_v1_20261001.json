@@ -1,0 +1,56 @@
+{
+  "status": "local_result_interface_PASS",
+  "scope": "Result identity/origin/measure metadata only; mechanics reused by impact, no new scientific qualification",
+  "prior_review_sha256": "464a3f2df3d94fc9ac8c4735096f755ad4149fb7665ad56c13112828e510c55f",
+  "resource": {
+    "status": "completed",
+    "exit_code": 0,
+    "elapsed_seconds": 5.337510999990627,
+    "peak_process_tree_memory_mb": 269.287424,
+    "time_limit_seconds": 180.0,
+    "memory_limit_bytes": 1073741824,
+    "command": [
+      "C:/Python/Python314/python.exe",
+      "docs/d1_review_support/contact_development_check.py",
+      "docs/d1_review_support/d3_deformable_beam_s3_result_identity_v1_20261001.inputs.json"
+    ],
+    "log": "docs\\d1_review_support\\d3_deformable_beam_s3_result_identity_v1_20261001.log"
+  },
+  "sources": [
+    {
+      "path": "src/anysolver/general_contact/deformable_beam_s3_static.py",
+      "sha256": "66a411b606107b768b88118880ba9070ee208a705ef357b9e131487dc187716c"
+    },
+    {
+      "path": "tests/test_general_contact_deformable_beam_s3_static.py",
+      "sha256": "708b59121b5c362b026df587bb78732e520208d4e341c4e0206e5b3a60dfb4c8"
+    }
+  ],
+  "post_run_formatting": "One trailing whitespace cleanup in test only; exact executed bytes retained in test.source.py",
+  "bindings": [
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_result_identity_v1_20261001.inputs.json",
+      "sha256": "849a321b57870295fc0b1a48603305fef2d3f5d4ab75dcedb97f27d74f626c0f"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_result_identity_v1_20261001.log",
+      "sha256": "9853eca73bc891e9ed34d13e0a68f620ba2f9a08ca30e95d78ebf2dc9b1e53e9"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_result_identity_v1_20261001.manager.source.py",
+      "sha256": "66a411b606107b768b88118880ba9070ee208a705ef357b9e131487dc187716c"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_result_identity_v1_20261001.resources.json",
+      "sha256": "bed9446fc75c2b1f5b059549cdaacb01ca3e062645199382e24a488553e1da50"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_result_identity_v1_20261001.test.source.py",
+      "sha256": "3d60559e88b397b45b008a9a6144881388211a12ac56ee2fd796810ebe2216d6"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_result_identity_v1_20261001.xml",
+      "sha256": "e00b08f7e99fd589ada03cd8725029095561e7f129cfd56250a337373882ef09"
+    }
+  ]
+}

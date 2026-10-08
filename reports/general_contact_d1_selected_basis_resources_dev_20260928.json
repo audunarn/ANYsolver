@@ -1,0 +1,11 @@
+{
+  "status": "development process measurements, one run per case",
+  "environment": "Windows, Python 3.14, one OPENBLAS/OMP/MKL thread, isolated source worktree",
+  "limits": {"elapsed_seconds_per_coupled_case": 180, "peak_process_rss_bytes": 1073741824},
+  "coupled_cases": [
+    {"file": "general_contact_d1_selected_vs_fine_8q4_fine_dev_20260928.json", "wall_seconds": 103.9975447, "peak_process_rss_bytes": 303054848, "exit_code": 0},
+    {"file": "general_contact_d1_selected_vs_fine_8q4_selected_dev_20260928.json", "wall_seconds": 139.7746241, "peak_process_rss_bytes": 329244672, "exit_code": 0},
+    {"file": "general_contact_d1_selected_vs_fine_8q4_front_knots_dev_20260928.json", "wall_seconds": 115.1681637, "peak_process_rss_bytes": 309370880, "exit_code": 0}
+  ],
+  "note": "Wall time and peak RSS were observed by the external bounded process monitor; solver-only elapsed time is in each case JSON. No paired statistical timing claim is made."
+}

@@ -1,0 +1,2 @@
+reference: clip_signature=smooth
+uniform_normal_displacement: clip_signature=smooth

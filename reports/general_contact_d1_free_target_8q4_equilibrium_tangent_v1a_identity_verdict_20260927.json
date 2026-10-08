@@ -1,0 +1,29 @@
+{
+  "amendment": "docs\\reference_cases\\general_contact_d1_free_target_equilibrium_tangent_v1a_metadata.json",
+  "amendment_sha256": "027d6ae7cf3b8c96feb6343b58fce185291c17e543c995893b2510bc32a0d4c1",
+  "original_registration_sha256": "b5940a6258d4058473c3dd7e6484cded00383be08c1869fe23c710744dc5827c",
+  "original_raw_sha256": "bec5aa71f3811b336230eae9f0e1c7700753ef9ac7a59f83c446a3f63b9db0a1",
+  "original_numerical_verdict_sha256": "df6461b273fbdcf23959079a7a0cfa433bd95c02c8bb5fbcdf68ff814b2c578b",
+  "checks": {
+    "original_registration_hash": true,
+    "original_raw_hash": true,
+    "original_numerical_verdict_hash": true,
+    "original_case_identity": true,
+    "source_commit_identity": true,
+    "original_bad_value_preserved": true,
+    "one_declared_correction": true,
+    "mechanics_unchanged": true,
+    "numerical_verdict_binding": true,
+    "all_corrected_blobs_match_source_and_current_tree": true,
+    "correction_is_actual_blob": true
+  },
+  "blob_checks": {
+    "scripts/general_contact_d1_free_target_equilibrium_tangent_probe.py": true,
+    "scripts/general_contact_d1_free_target_press_probe.py": true,
+    "scripts/general_contact_d1_distributed_coupled_tangent_probe.py": true,
+    "scripts/general_contact_d1_distributed_tangent_probe.py": true,
+    "src/anysolver/general_contact/s3_patch_static.py": true,
+    "src/anysolver/general_contact/q4_s3_overlap_derivatives.py": true
+  },
+  "status": "pass"
+}

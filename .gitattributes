@@ -463,3 +463,181 @@ docs/development/stiffened_shell_native_director_arc_metric.md -text whitespace=
 /tests/test_stiffened_shell_native_fold_assessment.py -text whitespace=cr-at-eol
 /docs/development/stiffened_shell_native_fold_assessment.md -text whitespace=cr-at-eol
 /.qualification/b3-ge-e4-pl/r8-native-fold-assessment-dev-20261006-v1/** -text -whitespace
+reports/general_contact_d1_supported_schur_*.txt text eol=lf -whitespace
+reports/general_contact_d1_q4_s3_jet2_focused_20260926.txt text eol=lf -whitespace
+# Preserve exact predicate archives used by byte-bound development comparisons.
+docs/d1_review_support/d1_touch_bounds_prepatch_20260930.py.txt -text
+docs/d1_review_support/d1_touch_bounds_probe_candidate_4ae_20260930.py.source -text
+docs/d1_review_support/d1_saved_report_touch_probe_V2_executed_20260930.py.source -text
+docs/d1_review_support/d1_checkpoint_pre_plain_dict_590d7a42.py.source -text
+# Canonical-byte D2 checkpoint and executed reference snapshots retain their
+# recorded hashes after checkout on platforms with automatic newline conversion.
+docs/d1_review_support/d2_moving_edge_restart_v1_20260930_*.checkpoint.json -text
+docs/d1_review_support/d2_fixed_geometry_penalty_reference_v1_20260930.source.py -text
+docs/d1_review_support/d2_s3_manufactured_force_v1_20260930.runner.source.py -text
+# Retain exact bytes of the new S3 raw evidence and hashed Python sources.
+docs/d1_review_support/d2_s3_projected_penalty*20260930*.json -text
+docs/d1_review_support/d2_s3_projected_penalty*20260930*.log -text
+docs/d1_review_support/d2_s3_projected_penalty*20260930*.xml -text
+docs/d1_review_support/d2_s3_manufactured*20260930*.json -text
+docs/d1_review_support/d2_s3_manufactured*20260930*.log -text
+src/anysolver/general_contact/core.py text eol=lf
+src/anysolver/general_contact/s3_patch_static.py text eol=lf
+src/anysolver/general_contact/s3_patch_augmented.py text eol=lf
+src/anysolver/general_contact/static_path.py text eol=lf
+tests/test_general_contact_s3_projected_penalty.py text eol=lf
+docs/d1_review_support/d2_s3_projected_penalty_coupled_dev.py text eol=lf
+docs/d1_review_support/d2_s3_deformable*20260930*.json -text
+docs/d1_review_support/d2_s3_deformable*20260930*.log -text
+docs/d1_review_support/d2_s3_*20260930.runner.source.py -text
+docs/d1_review_support/d2_s3_deformable_mms_reference_dev.py text eol=lf
+docs/d1_review_support/d2_s3_normal_control*20260930*.json -text
+docs/d1_review_support/d2_s3_normal_control*20260930*.log -text
+
+# Exact-byte radial finite-law evidence and executed helper identities.
+docs/d1_review_support/d2_projected_penalty_radial*20260930*.json -text -whitespace
+docs/d1_review_support/d2_projected_penalty_radial*20260930*.jsonl -text -whitespace
+docs/d1_review_support/d2_projected_penalty_radial*20260930*.log -text -whitespace
+docs/d1_review_support/d2_projected_penalty_radial*20260930.runner.source.py -text -whitespace
+docs/d1_review_support/d2_radial_finite_reference*20260930*.json -text -whitespace
+docs/d1_review_support/d2_radial_finite_reference*20260930*.log -text -whitespace
+docs/d1_review_support/d2_radial_finite_reference*20260930.runner.source.py -text -whitespace
+docs/d1_review_support/d2_projected_penalty_radial_dev.py -text whitespace=cr-at-eol
+docs/d1_review_support/d2_projected_penalty_radial_assess_dev.py -text whitespace=cr-at-eol
+docs/d1_review_support/d2_radial_finite_reference_dev.py -text whitespace=cr-at-eol
+
+# Guided partial-foundation development source/runner and raw evidence hashes.
+docs/d1_review_support/d2_guided_partial_foundation*20260930*.json -text -whitespace
+docs/d1_review_support/d2_guided_partial_foundation*20260930*.log -text -whitespace
+docs/d1_review_support/d2_guided_partial_foundation*20260930.runner.source.py -text -whitespace
+docs/d1_review_support/d2_guided_partial_foundation_reference.py -text whitespace=cr-at-eol
+docs/d1_review_support/d2_guided_partial_foundation_coupled_dev.py -text whitespace=cr-at-eol
+
+# Preserve hashed finite-reference proof and private native development evidence.
+docs/d1_review_support/D2_FINITE_PENALTY_FIXED_GEOMETRY_BOUND_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/D2_GUIDED_PARTIAL_FOUNDATION_DERIVATION_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/D2_GUIDED_PARTIAL_FOUNDATION_ENCLOSURE_DERIVATION_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/d2_guided_partial_foundation_enclosure_dev.py -text whitespace=cr-at-eol
+docs/d1_review_support/d6_centered_finite_inertia*20260930*.json -text -whitespace
+docs/d1_review_support/d6_centered_finite_inertia*20260930*.log -text -whitespace
+docs/d1_review_support/d6_centered_finite_inertia*20260930*.xml -text -whitespace
+docs/d1_review_support/d6_centered_finite_inertia*20260930*.source.py -text -whitespace
+
+docs/d1_review_support/D2_FINITE_PENALTY_RADIAL_REVIEW_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/D2_RADIAL_K1E8_REVIEW_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/D2_GUIDED_PARTIAL_FOUNDATION_REVIEW_20260930.md -text whitespace=cr-at-eol
+
+# Exact partial swept development evidence and executed snapshots.
+docs/d1_review_support/d2_partial_swept*20260930*.json -text -whitespace
+docs/d1_review_support/d2_partial_swept*20260930*.log -text -whitespace
+docs/d1_review_support/d2_partial_swept*20260930*.xml -text -whitespace
+docs/d1_review_support/d2_partial_swept*20260930*.source.py -text -whitespace
+docs/d1_review_support/d2_partial_installed*20260930*.json -text -whitespace
+docs/d1_review_support/d2_partial_installed*20260930*.log -text -whitespace
+docs/d1_review_support/D2_PARTIAL_SHELL_HANDOFF_REVIEW_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/d6_native_midpoint*20260930*.json -text -whitespace
+docs/d1_review_support/d6_native_midpoint*20260930*.log -text -whitespace
+docs/d1_review_support/d6_native_midpoint*20260930*.xml -text -whitespace
+docs/d1_review_support/d6_native_midpoint*20260930*.py -text -whitespace
+docs/d1_review_support/D6_NATIVE_MIDPOINT_DEVELOPMENT_20260930.md -text whitespace=cr-at-eol
+# Exact new multiple-pair and dynamic elastic development evidence.
+docs/d1_review_support/d2_multiple_projected_pairs*20260930*.json -text -whitespace
+docs/d1_review_support/d2_multiple_projected_pairs*20260930*.log -text -whitespace
+docs/d1_review_support/d2_multiple_projected_pairs*20260930*.xml -text -whitespace
+docs/d1_review_support/d2_multiple_projected_pairs*20260930*.source.py -text -whitespace
+docs/d1_review_support/d6_dynamic_elastic_state*20260930*.json -text -whitespace
+docs/d1_review_support/d6_dynamic_elastic_state*20260930*.log -text -whitespace
+docs/d1_review_support/d6_dynamic_elastic_state*20260930*.xml -text -whitespace
+docs/d1_review_support/d6_dynamic_elastic_state*20260930*.source.py -text -whitespace
+docs/d1_review_support/D2_MULTIPLE_PROJECTED_PAIRS_REVIEW_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/D6_DYNAMIC_ELASTIC_STATE_REVIEW_20260930.md -text whitespace=cr-at-eol
+# Exact S3-source/Q4-target derivative development evidence.
+docs/d1_review_support/d2_s3_q4_jet2*20260930*.json -text -whitespace
+docs/d1_review_support/d2_s3_q4_jet2*20260930*.log -text -whitespace
+docs/d1_review_support/d2_s3_q4_jet2*20260930*.xml -text -whitespace
+docs/d1_review_support/d2_s3_q4_jet2*20260930*.source.py -text -whitespace
+docs/d1_review_support/D2_S3_Q4_JET2_REVIEW_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/d2_s3_q4*20260930*.json -text -whitespace
+docs/d1_review_support/d2_s3_q4*20260930*.log -text -whitespace
+docs/d1_review_support/d2_s3_q4*20260930*.xml -text -whitespace
+docs/d1_review_support/d2_s3_q4*20260930*.snapshot -text -whitespace
+docs/d1_review_support/D2_S3_Q4_STATIC_REVIEW_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/d6_native_free_temporal*20260930* -text -whitespace
+docs/d1_review_support/d6_native_midpoint_gate_binding*20260930* -text -whitespace
+docs/d1_review_support/D6_NATIVE_FREE_TEMPORAL_REVIEW_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/d2_s3_q4*20260930*.source.py -text -whitespace
+docs/d1_review_support/d6_native_loaded_temporal*20260930* -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20260930_PART23.md -text -whitespace
+docs/d1_review_support/native_vibration*20260930* -text -whitespace
+docs/d1_review_support/d3_beam*20260930* -text -whitespace
+docs/d1_review_support/d3_multiple_beam*20260930* -text -whitespace
+docs/d1_review_support/D3_BEAM_FOUNDATION_REVIEW_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20260930_PART24.md -text -whitespace
+
+docs/d1_review_support/d3_deformable_beam_s3_*_20261001.* -text -whitespace
+docs/d1_review_support/native_vibration*_20261001.* -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART25.md -text -whitespace
+
+# Exact opt-in native dynamics integration and API evidence bytes.
+docs/d1_review_support/native_dynamic*_20261001.* -text -whitespace
+src/anysolver/_ge_beam3_centered_finite_inertia.py -text whitespace=cr-at-eol
+src/anysolver/_ge_beam3_dynamic_elastic_state.py -text whitespace=cr-at-eol
+src/anysolver/_ge_beam3_native_midpoint.py -text whitespace=cr-at-eol
+src/anysolver/_ge_beam3_native_dynamic_analysis.py -text whitespace=cr-at-eol
+src/anysolver/ge_beam3_native_dynamics.py -text whitespace=cr-at-eol
+examples/native_contact_free_finite_velocity_dev.py -text whitespace=cr-at-eol
+tests/test_native_dynamic_main_example.py -text whitespace=cr-at-eol
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART26.md -text -whitespace
+
+docs/d1_review_support/native_beam_installed_development* -text -whitespace
+docs/d1_review_support/d3_deformable_b3_s3_static*_20261001.* -text -whitespace
+tests/test_general_contact_deformable_b3_s3_static.py -text whitespace=cr-at-eol
+
+docs/d1_review_support/d3_multiple_beam_sphere_lifecycle*_20261001.* -text -whitespace
+tests/test_general_contact_multiple_beam_sphere_lifecycle.py -text whitespace=cr-at-eol
+
+src/anysolver/_ge_beam3_native_dynamic_restart.py -text whitespace=cr-at-eol
+
+tests/test_ge_beam3_native_dynamic_restart.py -text whitespace=cr-at-eol
+
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART28.md -text -whitespace
+
+docs/d1_review_support/native_forced_response* -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART29.md -text -whitespace
+
+docs/d1_review_support/native_clamped_response* -text -whitespace
+docs/d1_review_support/native_temporal_development* -text -whitespace
+docs/d1_review_support/native_finite_angle* -text -whitespace
+docs/d1_review_support/native_finite_spin_step* -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART30.md -text -whitespace
+docs/d1_review_support/native_finite_spin_acceleration_chart* -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART31.md -text -whitespace
+
+docs/d1_review_support/native_finite_spin_trajectory* -text -whitespace
+docs/d1_review_support/native_finite_spin_temporal_half* -text -whitespace
+docs/d1_review_support/native_stage_reuse* -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART32.md -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART33.md -text -whitespace
+docs/d1_review_support/native_acceleration_restart* -text -whitespace
+docs/d1_review_support/native_dynamic_runtime* -text -whitespace
+docs/d1_review_support/native_finite_spin_resolution* -text -whitespace
+docs/d1_review_support/native_validation_cost* -text -whitespace
+docs/d1_review_support/native_step_profile* -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART34.md -text -whitespace
+docs/d1_review_support/anystructure_contact_slice_baseline_20261001.json -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART35.md -text -whitespace
+docs/d1_review_support/native_inertia_batch* -text -whitespace
+docs/d1_review_support/native_principal_spin* -text -whitespace
+src/anysolver/_ge_beam3_centered_batched_finite_inertia.py text eol=lf
+src/anysolver/_ge_beam3_centered_finite_inertia.py text eol=lf
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART36.md -text -whitespace
+
+docs/d1_review_support/native_finite_spin_temporal_refinement* -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261001_REV58.md -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART37.md -text -whitespace
+tests/data/general_contact_native_multi_line_46ea65f6.checkpoint -text
+
+tests/data/general_contact_material_s3_ce3e5495.checkpoint -text
+tests/data/general_contact_material_plane_ce3e5495.checkpoint -text
+
+tests/data/general_contact_native_fibre_s3_plastic_*.checkpoint -text

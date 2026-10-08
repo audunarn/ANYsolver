@@ -1,0 +1,315 @@
+{
+  "base": "1d1faa508458ee1cb6caf49d8f89e4220e9a2a93",
+  "status": "source development API integration and beam result metadata; no scientific/release promotion",
+  "excluded_active_worker_note": "D6_NATIVE_MIDPOINT_DEVELOPMENT_20260930.md",
+  "paths": [
+    {
+      "path": ".gitattributes",
+      "sha256": "fa630729e0078f1ef7825c552892eb94f80f42056704f6165e8167378efb294e"
+    },
+    {
+      "path": "GENERAL_CONTACT_PLAN.md",
+      "sha256": "f6a3041c1bbd9129f794698f14f9d11d6e30e8109d7dbc4dbae1af571dc29c17"
+    },
+    {
+      "path": "GENERAL_CONTACT_RESTART.md",
+      "sha256": "8b29ab0ff4d4e0daad7a0f49730cfca8e9062a2d1a8bff780ec8ab53ae84088c"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_C2_DEFORMABLE_BEAM_S3.md",
+      "sha256": "c8efb58ae345070169b50af1fba443c0ac94e0214847a77f0eec6684eaef2065"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_CAPABILITIES.md",
+      "sha256": "55360a21eafb3e2d303c205ef0e9c38c6dab6ca3157a4d16459841f4a5d3a6f3"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_NATIVE_DYNAMIC_DEVELOPMENT.md",
+      "sha256": "60b468d465438d8ccd83880efbf340258b3b141ace86ba397d6cbd4cb3281be9"
+    },
+    {
+      "path": "docs/d1_review_support/D6_NATIVE_FREE_TEMPORAL_REVIEW_20260930.md",
+      "sha256": "347fae47592ca02c9c7c8bd4cc615ee5d2589979c29402210776f8e4999b242e"
+    },
+    {
+      "path": "docs/d1_review_support/GENERAL_CONTACT_DEVELOPMENT_20260929.md",
+      "sha256": "e18c52d6d32fbe9ceaa2b980cf01c75f87285603d42fc0f1129ab7f0e407c21a"
+    },
+    {
+      "path": "docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART26.md",
+      "sha256": "8f5bd9def95e5f191bdcad2cd1a224c7958d997b490182c434d62c60d00144e9"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_result_identity_summary_v1_20261001.json",
+      "sha256": "fa2fc46e29f5f58cafefaaf363f75aaadc5048901bd9aee4c05f96c0903fc8ca"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_result_identity_v1_20261001.inputs.json",
+      "sha256": "849a321b57870295fc0b1a48603305fef2d3f5d4ab75dcedb97f27d74f626c0f"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_result_identity_v1_20261001.log",
+      "sha256": "9853eca73bc891e9ed34d13e0a68f620ba2f9a08ca30e95d78ebf2dc9b1e53e9"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_result_identity_v1_20261001.manager.source.py",
+      "sha256": "66a411b606107b768b88118880ba9070ee208a705ef357b9e131487dc187716c"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_result_identity_v1_20261001.resources.json",
+      "sha256": "bed9446fc75c2b1f5b059549cdaacb01ca3e062645199382e24a488553e1da50"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_result_identity_v1_20261001.test.source.py",
+      "sha256": "3d60559e88b397b45b008a9a6144881388211a12ac56ee2fd796810ebe2216d6"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_result_identity_v1_20261001.xml",
+      "sha256": "e00b08f7e99fd589ada03cd8725029095561e7f129cfd56250a337373882ef09"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_analysis_imported_owners_v1_20261001.json",
+      "sha256": "dd922c1f1a0bf3ff334f512d336a12e2a2e37edb61818b4a1475c03fd1cc37ad"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v1_20261001.disposition.json",
+      "sha256": "402f661c6e480c24ab224f8a2df0638d6d7591194f22e912c2483743525bacd1"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v1_20261001.entry.source.py",
+      "sha256": "f28f26c5b6fd537435581ff6dc8de55efff3ec3f38167e6bc8b5a42b9e64fc92"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v1_20261001.example.source.py",
+      "sha256": "f324ed9d1d834f65fa9ae15fb22685b2c53c143487ef53f4daf9402334256b56"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v1_20261001.freeze.source.py",
+      "sha256": "fbc2dd5cb8e8e5b7ff87ecad7db692125d67fbd87a1a95c210905734b17822cb"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v1_20261001.inputs.json",
+      "sha256": "2f4c0a6965183e099a249919dd70f3585b0989f10c1f31d498ae45398d7333ae"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v1_20261001.owner.source.py",
+      "sha256": "34bd2d2d5883db447d82ac3fce54015ca96cb864d233a942f454e40951ee76d3"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v1_20261001.public.source.py",
+      "sha256": "cec497e3bcee79d50d8a52cc6358dd3a8249ccdff315d95db808fc78e74cefa7"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v1_20261001.test.source.py",
+      "sha256": "3bf12b19ef9a1915074b438fd5672fed26401f2c04c4a495b782aa3d6504e803"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v2_20261001.disposition.json",
+      "sha256": "bda46ec0805a56387aec4ec0db5fbd6a29de95d241f028817c1f9eda6dccbac9"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v2_20261001.entry.source.py",
+      "sha256": "07c6e4965d045269b809cfb5bd0a188778ef44bbc9e7a7ad11a391a65a5dcacb"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v2_20261001.example.source.py",
+      "sha256": "f324ed9d1d834f65fa9ae15fb22685b2c53c143487ef53f4daf9402334256b56"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v2_20261001.freeze.source.py",
+      "sha256": "711e8bd649f1933cbaedaa72c132040e1ac8622a8ed528154820776637e886a1"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v2_20261001.inputs.json",
+      "sha256": "ab2064aca6e8aeb92032d008330e0f64549e082c226ec1b08725b50d2acf178a"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v2_20261001.owner.source.py",
+      "sha256": "79b173131e9cde52c07f3bb00721e6d07ebc5a68d8f92e0115a42649cb5d0914"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v2_20261001.public.source.py",
+      "sha256": "cec497e3bcee79d50d8a52cc6358dd3a8249ccdff315d95db808fc78e74cefa7"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v2_20261001.test.source.py",
+      "sha256": "72be9a26d3e2df34bcd099a8389a4f2a5fae8a6c1bc6feac7d856a76e1f3ddd1"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v3_20261001.entry.source.py",
+      "sha256": "99179aadabd4ebc1c30241b972c71590e4abc2ad74febf78ccba10f087242950"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v3_20261001.example.source.py",
+      "sha256": "93d041bbe881af220bb324edcb7f941c77dcfa868fec41934291a91e16bf65ce"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v3_20261001.execution.json",
+      "sha256": "4fb2973ca1609939b2e8f94c55452197dd9dbcfcb0fb056231c31ea579c1ecd6"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v3_20261001.freeze.source.py",
+      "sha256": "65cd89d8d2fc8a3b92eb9a348bc07d6ecbcd27ab04b436c5013d7e294fabd9f3"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v3_20261001.inputs.json",
+      "sha256": "a350502f87a436b2daa6d82b12127fc4f29a86cf5ba125413df7cafc75f5611b"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v3_20261001.log",
+      "sha256": "0b89230c48dc8aeba19245096742ff92a4767a472dc5cd6b3d8ffa529089ae89"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v3_20261001.owner.source.py",
+      "sha256": "79b173131e9cde52c07f3bb00721e6d07ebc5a68d8f92e0115a42649cb5d0914"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v3_20261001.public.source.py",
+      "sha256": "cec497e3bcee79d50d8a52cc6358dd3a8249ccdff315d95db808fc78e74cefa7"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v3_20261001.raw.json",
+      "sha256": "59437c0923818557159da7705c82f99f856e6357f4e1be8a8af3c805dfe2d834"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v3_20261001.resource.json",
+      "sha256": "84eb0aefc337f7ebf0211205df05734ef0cb2c835ccbefc45e15149cb2481346"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v3_20261001.summary.json",
+      "sha256": "d165a2f98a33e9e5fd1714cc49bc0842fdf4811acbd4d30f5874cff1f65438bb"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v3_20261001.test.source.py",
+      "sha256": "72be9a26d3e2df34bcd099a8389a4f2a5fae8a6c1bc6feac7d856a76e1f3ddd1"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v3_20261001.xml",
+      "sha256": "cfded519159b12bdc69987b061fba118e4e5b9b2f655085e539ea2108eee83f3"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v4_20261001.approval_resolution.json",
+      "sha256": "a5856facd85bad45c5d57702bb46736dad3fec14180f880df71a277f988dc92a"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v4_20261001.entry.source.py",
+      "sha256": "145b33866e79780bcbd3140fe2e942b32dc649e0948d70f04e25165074a86ea5"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v4_20261001.example.source.py",
+      "sha256": "10c6b29cb66676a4c263c88830e8821da0626d706b2d380b0d1e26b0bb502298"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v4_20261001.execution.json",
+      "sha256": "0d594897c5badbeebd7800b87e3742158282030a2940864557546b838c36ddd1"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v4_20261001.freeze.source.py",
+      "sha256": "1713b879f01b8738e3f1bbc69439610653d27d01f395830af2d062dfe55530fd"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v4_20261001.inputs.json",
+      "sha256": "15d2ccba2aa5a568d76862a4f7f9f1f6ff7c03daa77b2fe0c87d197c6413dea7"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v4_20261001.log",
+      "sha256": "6748b6bb7af69011686f82a86af181714b357f875107d99b104c56d7585e3aa0"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v4_20261001.owner.source.py",
+      "sha256": "79b173131e9cde52c07f3bb00721e6d07ebc5a68d8f92e0115a42649cb5d0914"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v4_20261001.public.source.py",
+      "sha256": "cec497e3bcee79d50d8a52cc6358dd3a8249ccdff315d95db808fc78e74cefa7"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v4_20261001.raw.json",
+      "sha256": "382cdc423b74b161c154635391b6244afd00cf98a1983b6ea7c1c15189444ffc"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v4_20261001.resource.json",
+      "sha256": "cd57c27acce93ab6ba029bcb8c516d63a69b84e7d30aed5d4be70a9a7be53226"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v4_20261001.saved_compare.json",
+      "sha256": "f4e321fde50629cd9ee81eb023a46b8c72e2a34c2076a35679676620d18eac7c"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v4_20261001.saved_compare.source.py",
+      "sha256": "6594b9ad249205af96a02ccf84fc6edeaee76cb763e360dc30fda2b531e8a8c8"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v4_20261001.summary.json",
+      "sha256": "b48c6f7f8eaf16af520167c652e44938b6a86d0c2c72670a1a31e787b01e8d48"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v4_20261001.test.source.py",
+      "sha256": "be267a0371929791cf3a1b7d79b403f7625b9acf01b0afe3924bc9c2443ded3f"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_interface_v4_20261001.xml",
+      "sha256": "38a5d0e59ff24e7453f38fd25df7bdd865a64440a88ecf7ecc33d63951ac8b29"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_main_example_v1_20261001.inputs.json",
+      "sha256": "107f82f44cdbbc1536831062e5b8028816fb092705bedda792ad283d30176c60"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_main_example_v1_20261001.log",
+      "sha256": "372622e20e12f68ada39f9eb9fecbccbc777c7f90ff8713fe2e96f5ac538cc3c"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_main_example_v1_20261001.resources.json",
+      "sha256": "587a2614af6b5df5bc3993ac3cde6192c080043421ac9ebbd37107b1c51a1bd6"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_main_example_v1_20261001.summary.json",
+      "sha256": "2f31b79ba3b379d4b64f75a3192f74ea3118a9602feccca458d8f43883385d91"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_main_example_v1_20261001.xml",
+      "sha256": "927521ccb7c54ad20ed6811bc1924bc47cbdb75a095c5eb4aa936de4cf6679dc"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_main_imported_sources_v1_20261001.json",
+      "sha256": "91932511e8d5a6276ce49f0f6258a01ec9ac31194a3919316e3a92e9acad005f"
+    },
+    {
+      "path": "examples/native_contact_free_finite_velocity_dev.py",
+      "sha256": "10c6b29cb66676a4c263c88830e8821da0626d706b2d380b0d1e26b0bb502298"
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_centered_finite_inertia.py",
+      "sha256": "3334699c5a4c14ef67cbfcef3ad54c3be8c80a15b98f2c34aa6840be70d32f84"
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_dynamic_elastic_state.py",
+      "sha256": "9586af4379a566f8bfa51c6454bba173dd110966d09a7d7f36ba967aedcd8498"
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_native_dynamic_analysis.py",
+      "sha256": "79b173131e9cde52c07f3bb00721e6d07ebc5a68d8f92e0115a42649cb5d0914"
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_native_midpoint.py",
+      "sha256": "36da82603885f6f110adf40404331a5d519c7dccbe284dc67bb93ec44f75d1ac"
+    },
+    {
+      "path": "src/anysolver/ge_beam3_native_dynamics.py",
+      "sha256": "cec497e3bcee79d50d8a52cc6358dd3a8249ccdff315d95db808fc78e74cefa7"
+    },
+    {
+      "path": "src/anysolver/general_contact/deformable_beam_s3_static.py",
+      "sha256": "66a411b606107b768b88118880ba9070ee208a705ef357b9e131487dc187716c"
+    },
+    {
+      "path": "tests/test_general_contact_deformable_beam_s3_static.py",
+      "sha256": "708b59121b5c362b026df587bb78732e520208d4e341c4e0206e5b3a60dfb4c8"
+    },
+    {
+      "path": "tests/test_native_dynamic_main_example.py",
+      "sha256": "0a021b6b8e41b93a22322e737c0308fd2b492a7642e77820bb85a590e47762bf"
+    }
+  ]
+}

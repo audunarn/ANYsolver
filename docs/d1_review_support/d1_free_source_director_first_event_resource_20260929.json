@@ -1,0 +1,20 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 7.688709800000652,
+  "peak_process_tree_memory_mb": 270.09024,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-u",
+    "-m",
+    "docs.d1_review_support.d1_free_source_director_press",
+    "--left-ry-clamp",
+    "--first-load-n",
+    "0.0005",
+    "--output",
+    "docs/d1_review_support/d1_free_source_director_first_event_20260929.json"
+  ],
+  "log": "reports\\d1_free_source_director_first_event_retry_log_dev_20260929.txt"
+}

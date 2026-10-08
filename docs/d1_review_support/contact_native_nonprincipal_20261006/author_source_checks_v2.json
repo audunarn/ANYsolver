@@ -1,0 +1,120 @@
+{
+  "status": "IMPLEMENTED_NUMERICALLY_UNVERIFIED",
+  "time_utc": "2026-10-07T07:47:15.927452+00:00",
+  "repository": "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001",
+  "files": [
+    {
+      "path": "examples/native_nonprincipal_reference.py",
+      "sha256": "6cd821b3ccc49aa73892b9704e541627511fc25b5c4f9f8fe4688ad96ffb8bfb",
+      "bytes": 9461,
+      "whitespace": "PASS",
+      "EOF": "PASS",
+      "paused_snapshot_sha256": "84a28d3bce3d216193596686aed52cbc2331c10050adcfaab5c71c189e44e561",
+      "AST": "PASS_SOURCE_PARSE_ONLY",
+      "functions": [
+        "skew",
+        "exp",
+        "log",
+        "translation_mass",
+        "physical_mass",
+        "elastic",
+        "initial",
+        "gyro",
+        "acceleration",
+        "displaced",
+        "account",
+        "rotation_angle",
+        "temporal_errors",
+        "step",
+        "trajectory",
+        "left_log_inverse",
+        "full_trace_work",
+        "semidiscrete",
+        "chart_gradient",
+        "discrete_angular_increment"
+      ],
+      "imports": [
+        "math",
+        "numpy"
+      ]
+    },
+    {
+      "path": "examples/native_nonprincipal_dev.py",
+      "sha256": "93fc94c55c507b0247910d8719d15d48083263e61246d3d560fb29983f4cd480",
+      "bytes": 2403,
+      "whitespace": "PASS",
+      "EOF": "PASS",
+      "paused_snapshot_sha256": "4d8f8458a381883d8dc2d4bc7cab9fd1de56883e9615fcc3d1d1ca401707cb9c",
+      "AST": "PASS_SOURCE_PARSE_ONLY",
+      "functions": [
+        "build",
+        "run",
+        "main"
+      ],
+      "imports": [
+        "argparse",
+        "json",
+        "math",
+        "numpy",
+        "anysolver.dynamics",
+        "anysolver.ge_beam3_native",
+        "anysolver.ge_beam3_native_dynamics",
+        "anysolver._ge_beam3_centered_so3_strain",
+        "examples"
+      ]
+    },
+    {
+      "path": "tests/test_ge_beam3_native_nonprincipal.py",
+      "sha256": "de62e248a354b697222d6642a6544ce5363fdf5cf5d9ea40fa0e1b53976b4e1f",
+      "bytes": 16129,
+      "whitespace": "PASS",
+      "EOF": "PASS",
+      "paused_snapshot_sha256": "72d6a7fde3618dbae3fb655fc18a9d83723d21c6680e2362dcea1b925b0da6d4",
+      "AST": "PASS_SOURCE_PARSE_ONLY",
+      "functions": [
+        "_save",
+        "_unpack",
+        "_errors",
+        "_physics",
+        "test_nonprincipal_closed_spatial_work_inertia_and_geodesic_trace",
+        "coarse_result",
+        "_trajectory_metrics",
+        "_assert_trajectory",
+        "test_public_nonprincipal_nonlinear_midpoint_and_finite_angle",
+        "test_public_nonprincipal_temporal_reference_and_refinement",
+        "test_public_nonprincipal_fresh_four_equals_two_plus_two"
+      ],
+      "imports": [
+        "hashlib",
+        "json",
+        "os",
+        "pathlib",
+        "types",
+        "numpy",
+        "pytest",
+        "examples",
+        "examples.native_nonprincipal_dev"
+      ],
+      "tests": [
+        "test_nonprincipal_closed_spatial_work_inertia_and_geodesic_trace",
+        "test_public_nonprincipal_nonlinear_midpoint_and_finite_angle",
+        "test_public_nonprincipal_temporal_reference_and_refinement",
+        "test_public_nonprincipal_fresh_four_equals_two_plus_two"
+      ]
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_NATIVE_NONPRINCIPAL_DEV.md",
+      "sha256": "86fe48f0ecace27aae636933b362fb68b2e2de6e90dae969cd8875fe9b654b41",
+      "bytes": 9585,
+      "whitespace": "PASS",
+      "EOF": "PASS",
+      "paused_snapshot_sha256": "8b1ee9cbb9c78b4c4ae8f0d26575de72a64385eaa874a0c10a0e41867ba4c623"
+    }
+  ],
+  "source_checks_only": true,
+  "numerical_execution": false,
+  "solver_or_numpy_import": false,
+  "production_changes": false,
+  "scientific_gates_unexecuted": true,
+  "evidence_snapshot": "C:\\ANYworkspaceWork\\contact_native_nonprincipal_20261006\\source_snapshots_v2"
+}

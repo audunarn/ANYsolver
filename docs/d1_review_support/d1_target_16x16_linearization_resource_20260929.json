@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 34.59065250000276,
+  "peak_process_tree_memory_mb": 218.902528,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "docs/d1_review_support/d1_two_body_16x16_linearization_preflight.py",
+    "--saved-record",
+    "docs/d1_review_support/d1_target_grid_8x8_prediction_20260929.json",
+    "--output",
+    "docs/d1_review_support/d1_target_16x16_linearization_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_target_16x16_linearization_log_20260929.txt"
+}

@@ -1,0 +1,113 @@
+{
+  "source": "ce3e5495035029565b441c1de290daacf80a3e91",
+  "wheel_sha256": "59b5372d70281a38118ad0182e87bec67cb973cc34c1b5cee6385e8a51f18e49",
+  "raw_root": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate04",
+  "scope": "opt-in material-area globalization code/workflow verification; no engineering admission",
+  "algorithm": "material_area_counted_first_approach_prefix_v1",
+  "activation_gap_m": 1e-06,
+  "maximum_geometry_queries": 256,
+  "unchanged_controls": {
+    "max_backtracks": 8,
+    "max_iterations": 24,
+    "gap_tolerance_m": 5e-05,
+    "run_timeout_s": 180,
+    "run_memory_limit_mib": 953
+  },
+  "first_target": {
+    "status": "paused",
+    "failure": null,
+    "completed_targets": 1,
+    "queries": 21,
+    "minimum_gap_m": -7.1157765993552186e-06,
+    "maximum_accumulated": 9.044777190950914e-05
+  },
+  "plastic_cycle": {
+    "status": "completed",
+    "failure": null,
+    "completed_targets": 9,
+    "queries": 48,
+    "checkpoint_sha256": "b3dc0b63b85a13e344ffad9cc448ee1053c7753737bbb328e9b3590d74c40f1e",
+    "maximum_accumulated": 0.0004111444788767289,
+    "maximum_penetration_m": 1.9203338177455097e-05,
+    "normalized_force_balance": 6.9284210314039255e-09,
+    "normalized_moment_balance": 6.4949993300369085e-09,
+    "metrics": [
+      3.061665150682617e-11,
+      2.0181686921035535e-17,
+      1.804236707952933e-11
+    ],
+    "owner_plastic_tangent_errors": [
+      3.380376508307151e-08,
+      2.147745332740593e-09
+    ],
+    "storage_j": [
+      2.6910731440875418e-09,
+      8.781165339639619e-09,
+      1.7757382230753014e-08,
+      2.9378321383109167e-08,
+      0.0,
+      3.9241782830577e-09,
+      1.072831042038971e-08,
+      1.9319491920220578e-08,
+      2.9378321546706967e-08
+    ]
+  },
+  "installed": {
+    "source_files": 518,
+    "imported_modules": 216,
+    "source_installed_errors": [],
+    "extra_installed_files": [],
+    "outcomes": {
+      "passed": 15
+    },
+    "runs": {
+      "installed_activation": {
+        "resource": {
+          "status": "completed",
+          "returncode": 0,
+          "elapsed_s": 97.28096389991697,
+          "peak_bytes": 191135744
+        },
+        "runtime_errors": [],
+        "import_errors": [],
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "outcomes": {
+          "passed": 10
+        }
+      },
+      "installed_compat": {
+        "resource": {
+          "status": "completed",
+          "returncode": 0,
+          "elapsed_s": 43.24585080007091,
+          "peak_bytes": 333393920
+        },
+        "runtime_errors": [],
+        "import_errors": [],
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "outcomes": {
+          "passed": 5
+        }
+      }
+    }
+  },
+  "retained_failures": [
+    "default k1e6 full-load gap/merit",
+    "default k1e7 first-target gap/merit",
+    "prior uniform-axial angular-resolution exhaustion"
+  ],
+  "source_preflight_failure": "first_target: runner resolved relative test under ANYfem; no numerical process launched",
+  "supporting_review": "activation_review.md; same-family Read scrutiny, not independent engineering acceptance",
+  "no_contact_impact": "ordinary structural driver untouched; no-contact lazy import passed; unaffected timing evidence reused",
+  "performance_claim": "no valid complete-route speed comparison against a converged default yielding route"
+}

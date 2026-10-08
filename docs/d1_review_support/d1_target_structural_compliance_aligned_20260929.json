@@ -1,0 +1,239 @@
+{
+  "status": "development_target_only_structural_compliance",
+  "source_commit": "6efbe8fae32b74ba38fa0bf24e956e3d1ac24f9e",
+  "probe_sha256": "a4e58112e39297dae047ee3da9040a85d0381f29523028284e032bbe30240276",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "profiles": [
+    "uniform",
+    "free_edge_x",
+    "upper_rim_y"
+  ],
+  "cases": [
+    {
+      "target_cells": [
+        2,
+        4
+      ],
+      "target_s3_faces": 16,
+      "x_knots_m": [
+        0.0,
+        0.61,
+        1.3
+      ],
+      "y_knots_m": [
+        0.0,
+        0.22878679656440357,
+        0.47,
+        0.7287867965644036,
+        1.0
+      ],
+      "free_target_dofs": 60,
+      "target_stiffness_asymmetry_relative": 1.2608731791420323e-18,
+      "total_force_n": {
+        "uniform": 1.0,
+        "free_edge_x": 1.0,
+        "upper_rim_y": 1.0
+      },
+      "first_moment_x_nm": {
+        "uniform": 0.6500000000000001,
+        "free_edge_x": 0.8666666666666668,
+        "upper_rim_y": 0.6499999999999999
+      },
+      "first_moment_y_nm": {
+        "uniform": 0.5000000000000001,
+        "free_edge_x": 0.5,
+        "upper_rim_y": 0.6666666666666665
+      },
+      "compliance_m_per_n": {
+        "uniform": 0.10505617142408805,
+        "free_edge_x": 0.20907783445104444,
+        "upper_rim_y": 0.10725397836877913
+      },
+      "linear_solve_relative_residual": {
+        "uniform": 1.4775078223675985e-13,
+        "free_edge_x": 1.3227720947349894e-13,
+        "upper_rim_y": 1.4858960790955546e-13
+      },
+      "elapsed_seconds": 0.029017899993050378
+    },
+    {
+      "target_cells": [
+        4,
+        4
+      ],
+      "target_s3_faces": 32,
+      "x_knots_m": [
+        0.0,
+        0.2967157287525381,
+        0.61,
+        0.9467157287525382,
+        1.3
+      ],
+      "y_knots_m": [
+        0.0,
+        0.22878679656440357,
+        0.47,
+        0.7287867965644036,
+        1.0
+      ],
+      "free_target_dofs": 120,
+      "target_stiffness_asymmetry_relative": 9.385505275037559e-19,
+      "total_force_n": {
+        "uniform": 0.9999999999999999,
+        "free_edge_x": 0.9999999999999998,
+        "upper_rim_y": 1.0
+      },
+      "first_moment_x_nm": {
+        "uniform": 0.6499999999999998,
+        "free_edge_x": 0.8666666666666665,
+        "upper_rim_y": 0.6500000000000001
+      },
+      "first_moment_y_nm": {
+        "uniform": 0.49999999999999983,
+        "free_edge_x": 0.4999999999999999,
+        "upper_rim_y": 0.6666666666666666
+      },
+      "compliance_m_per_n": {
+        "uniform": 0.10136549586440821,
+        "free_edge_x": 0.20931659108479148,
+        "upper_rim_y": 0.1048867769727393
+      },
+      "linear_solve_relative_residual": {
+        "uniform": 4.940366195545571e-13,
+        "free_edge_x": 6.063348248014629e-13,
+        "upper_rim_y": 4.4550540939407747e-13
+      },
+      "elapsed_seconds": 0.02584509999724105
+    },
+    {
+      "target_cells": [
+        8,
+        8
+      ],
+      "target_s3_faces": 128,
+      "x_knots_m": [
+        0.0,
+        0.1471926627053964,
+        0.2967157287525381,
+        0.45054481869954854,
+        0.61,
+        0.7755448186995485,
+        0.9467157287525382,
+        1.1221926627053964,
+        1.3
+      ],
+      "y_knots_m": [
+        0.0,
+        0.1135194970290473,
+        0.22878679656440357,
+        0.3472836140246614,
+        0.47,
+        0.5972836140246613,
+        0.7287867965644036,
+        0.8635194970290473,
+        1.0
+      ],
+      "free_target_dofs": 432,
+      "target_stiffness_asymmetry_relative": 1.1892673819831089e-18,
+      "total_force_n": {
+        "uniform": 1.0000000000000002,
+        "free_edge_x": 0.9999999999999999,
+        "upper_rim_y": 1.0000000000000002
+      },
+      "first_moment_x_nm": {
+        "uniform": 0.6500000000000001,
+        "free_edge_x": 0.8666666666666669,
+        "upper_rim_y": 0.6500000000000004
+      },
+      "first_moment_y_nm": {
+        "uniform": 0.5,
+        "free_edge_x": 0.49999999999999983,
+        "upper_rim_y": 0.666666666666667
+      },
+      "compliance_m_per_n": {
+        "uniform": 0.0996376783741508,
+        "free_edge_x": 0.20833350340682005,
+        "upper_rim_y": 0.10379707808221243
+      },
+      "linear_solve_relative_residual": {
+        "uniform": 5.9432893124271445e-12,
+        "free_edge_x": 5.887631250995333e-12,
+        "upper_rim_y": 4.793761279494462e-12
+      },
+      "elapsed_seconds": 0.06496049999987008
+    },
+    {
+      "target_cells": [
+        16,
+        16
+      ],
+      "target_s3_faces": 512,
+      "x_knots_m": [
+        0.0,
+        0.07344638711935488,
+        0.1471926627053964,
+        0.22152719067921595,
+        0.2967157287525381,
+        0.3729912155078982,
+        0.45054481869954854,
+        0.5295185887838707,
+        0.61,
+        0.6920185887838708,
+        0.7755448186995485,
+        0.8604912155078982,
+        0.9467157287525382,
+        1.034027190679216,
+        1.1221926627053964,
+        1.2109463871193549,
+        1.3
+      ],
+      "y_knots_m": [
+        0.0,
+        0.056647290339516154,
+        0.1135194970290473,
+        0.17083289300941193,
+        0.22878679656440357,
+        0.28755591163092364,
+        0.3472836140246614,
+        0.40807644158790307,
+        0.47,
+        0.5330764415879031,
+        0.5972836140246613,
+        0.6625559116309236,
+        0.7287867965644036,
+        0.795832893009412,
+        0.8635194970290473,
+        0.9316472903395161,
+        1.0
+      ],
+      "free_target_dofs": 1632,
+      "target_stiffness_asymmetry_relative": 1.1182251337685164e-18,
+      "total_force_n": {
+        "uniform": 0.9999999999999993,
+        "free_edge_x": 1.0000000000000007,
+        "upper_rim_y": 1.0000000000000004
+      },
+      "first_moment_x_nm": {
+        "uniform": 0.6500000000000001,
+        "free_edge_x": 0.8666666666666665,
+        "upper_rim_y": 0.650000000000001
+      },
+      "first_moment_y_nm": {
+        "uniform": 0.5,
+        "free_edge_x": 0.49999999999999967,
+        "upper_rim_y": 0.6666666666666671
+      },
+      "compliance_m_per_n": {
+        "uniform": 0.09930745208665169,
+        "free_edge_x": 0.20829228037116138,
+        "upper_rim_y": 0.10363062784480882
+      },
+      "linear_solve_relative_residual": {
+        "uniform": 9.294644195644531e-11,
+        "free_edge_x": 1.0321704120652682e-10,
+        "upper_rim_y": 7.265390510473111e-11
+      },
+      "elapsed_seconds": 0.2564286999986507
+    }
+  ]
+}

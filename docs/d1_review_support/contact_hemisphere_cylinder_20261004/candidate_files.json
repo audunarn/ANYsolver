@@ -1,0 +1,15 @@
+{
+  "src/anysolver/general_contact/beam_hemisphere_cylinder_work.py": "3e75f77ee6ccb2c7ee94bc6072a207b39bebd07939247f0c20db90f3018ae361",
+  "src/anysolver/general_contact/beam_hemisphere_cylinder.py": "0737d1597dda049bf9e0f8dc6e9cddd92db5855cea99060a74c1ecd98e5a9fe8",
+  "src/anysolver/general_contact/beam_hemisphere_sphere.py": "a405a83aa6ed2d661358c2d694ef7d0eb2cb0c85b9d402a733af0f30a044a823",
+  "src/anysolver/general_contact/beam_radial_ends.py": "10937e34f8e589585c12694151d23a0aeb505173803c9bb19a8101fed58771c3",
+  "src/anysolver/general_contact/core.py": "9816ffcc8930eaf75f2012e2c7435f0488b01694d5a3d4bbcc18dec8b1175e9c",
+  "src/anysolver/general_contact/multiple_beam_rigid.py": "463cce838f2e1bbef3e7a809643a52e19d29fe2c18b13fbc76e0fe82950c2797",
+  "tests/test_general_contact_hemisphere_cylinder_work.py": "3272d544a962540397ea24cd62aa9c92bb1d6205fdf02d07c5a1f2fa9b39e788",
+  "tests/test_general_contact_hemisphere_cylinder_static.py": "139ceb064c88259013c1dba4f68135d45eab78deb54ef8cf09794638d201eac8",
+  "tests/test_general_contact_multiple_hemisphere_cylinders.py": "4776d5e5736b76c85f644e3943c8c07e3ab0aaeb6b45978dc5bbc2c8ae0e1053",
+  "tests/test_general_contact_hemisphere_sphere.py": "7dbdc7df426292b2cdb9628730d9b766224654f8d59704cf9ae68bbfe4d5bed0",
+  "tests/test_general_contact_multiple_hemisphere_analytic.py": "44581dabafdfb0200247fffc58aea67cacdd96d6896110e1ed1d93f6aa264d9e",
+  "tests/test_general_contact_multiple_hemisphere_planes.py": "83c51d0badedcce7bd115a1f55c49b482eecf6e252baed58c8f930bf849c2327",
+  "examples/general_contact_hemisphere_cylinder.py": "016a50d2debdd42dbc1ef24bc0fda8560a9495cb6b5a032548d6377a83e7bad8"
+}

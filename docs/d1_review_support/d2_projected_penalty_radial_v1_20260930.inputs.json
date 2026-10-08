@@ -1,0 +1,2256 @@
+{
+  "accepted": false,
+  "released": false,
+  "purpose": "finite-law same-spatial-mechanics integrated response discriminator",
+  "resource_caps": {
+    "seconds": 900,
+    "process_tree_bytes": 4000000000
+  },
+  "environment": {
+    "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+    "executable": "C:\\Python\\Python314\\python.exe",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "anysolver": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py"
+  },
+  "source": {
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_projected_penalty_radial_dev.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_projected_penalty_radial_dev.py",
+      "sha256": "a5f4e4e706766168934e80e845e85113f1b34cb80a3827ff5132b15fc64e6bc0"
+    },
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\scripts\\general_contact_d1_interior_press_dev.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\scripts\\general_contact_d1_interior_press_dev.py",
+      "sha256": "89fb91a83c3575038dabba16106cf48a13ab2d21073ea6c282362acc3bcad4e8"
+    },
+    "docs\\d1_review_support\\d1_radial_two_body_reference.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d1_radial_two_body_reference.py",
+      "sha256": "3e8587af06bbcedc4a0d922af23da073c5da25565f98fffc2ec2b873fe7bdf1d"
+    },
+    "docs\\d1_review_support\\d2_projected_penalty_shell_dev.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_projected_penalty_shell_dev.py",
+      "sha256": "d5a7c34836ad85d55cfabc9fb43852045a2bab057363fae083bd8d3f48b172bd"
+    }
+  },
+  "production": {
+    "augmentation.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\augmentation.py",
+      "sha256": "9799e56106fc8d3b22d77d39a9d8a811f07601f1b4020a58db0dd36003fd13cd"
+    },
+    "beam_chain_pair.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\beam_chain_pair.py",
+      "sha256": "75e23da508a2bd6fc2cd5a91fd11c82de00de641537eee5820d8777caae1e3b7"
+    },
+    "beam_curve_pair.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\beam_curve_pair.py",
+      "sha256": "098057e2b4067502e68445a27cffacb2fcb9518fde2b341dfa23f97263abe57d"
+    },
+    "beam_curve_pair_static.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\beam_curve_pair_static.py",
+      "sha256": "09320b948488d23b00e752e4a586dea5c7e1ca05528ea14b558862317de53445"
+    },
+    "beam_pair.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\beam_pair.py",
+      "sha256": "f80266fc37613053819c4fe4d0ffda9433912909e36c2f3a65b476eca3d79000"
+    },
+    "beam_plane.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\beam_plane.py",
+      "sha256": "c435ec5b12c3aa664fbff5c187168bd38ee17b44ecbe6ec7c98f4b4e11436522"
+    },
+    "beam_radial.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\beam_radial.py",
+      "sha256": "2b10f19109be5ebfa692d77038f03d4722c1b44ede4b4d117a8f3c8ab405b2bf"
+    },
+    "beam_shell.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\beam_shell.py",
+      "sha256": "b4a3d9729218ab925c81c9fb6e91d99a31cc99f1208033474e5d61596e5ff60f"
+    },
+    "beam_shell_patch.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\beam_shell_patch.py",
+      "sha256": "d7b4692c56f0940ba6d948f9fb6889aa2174a397f3e7b1d3f17b4cb7d68b1440"
+    },
+    "capability.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\capability.py",
+      "sha256": "366687f25c93fec7cf478b3bc048f16bae1091f99735e239bfbd9a89a444f746"
+    },
+    "contact_search.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\contact_search.py",
+      "sha256": "c9f6bde6f44c99bf74ed6c3e50f7d10a2a2d87c8e8f7daaed2b2d0271df95693"
+    },
+    "core.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\core.py",
+      "sha256": "d78885e37ce0d99571e95d781459ac30fcfb7c590b7974db332f438e7a2e5e85"
+    },
+    "d1_interior_profile.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\d1_interior_profile.py",
+      "sha256": "660e41f80e73f39d58cd6e8c344704f010b1216235aefe162167f0a71db7fe1a"
+    },
+    "equilibrated_pressure_pivot.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\equilibrated_pressure_pivot.py",
+      "sha256": "b7cf42219bae7e6609a3206ecb16ab24400b13c6e4778c9331e1d1d38e53ba26"
+    },
+    "fixed_projection_graph.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\fixed_projection_graph.py",
+      "sha256": "219373c27c446e4c41bc9606e28f281e7822fa2a2b6892af47e47fd3cfc3d0bd"
+    },
+    "friction_point.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\friction_point.py",
+      "sha256": "257902cfe479cd296abb46c97d4ac3bad7d4c8b16b99acf3519a695524e8aa82"
+    },
+    "gap_extrema.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\gap_extrema.py",
+      "sha256": "57843c535ddc4cf3f35ca52a7fb9b0ff85f340e54bb0e329fbebed561791f593"
+    },
+    "linearized_pivot.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\linearized_pivot.py",
+      "sha256": "add412638f185f1cad3aadf5334d852b0263523da94ec4e37442a42e20158ece"
+    },
+    "moving.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\moving.py",
+      "sha256": "c7ff35d6aa5651ff823fa6b395e26e5d23c54d67dad82c1bceed8d60ba8c8194"
+    },
+    "native_curve_union.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\native_curve_union.py",
+      "sha256": "6c69d0558618d1de9074297674a819a367ea13d6573770d982582c86280f8358"
+    },
+    "native_retained_cell_pair.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\native_retained_cell_pair.py",
+      "sha256": "7f7285a0dde49ad9e30ffc99c731debcc027d7b06b73edcbed45c909f782d179"
+    },
+    "native_retained_curve_cell.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\native_retained_curve_cell.py",
+      "sha256": "7d4658a12e3580c59024f5b07f4b92598270b13a3aac4b5ab9f4e67f82044d63"
+    },
+    "native_retained_line_plane.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\native_retained_line_plane.py",
+      "sha256": "ea8b2439f6eb38856f853e78ac695396116188050f65311cd0a5cc102f984bcd"
+    },
+    "native_retained_line_s3.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\native_retained_line_s3.py",
+      "sha256": "25819faeefe9c8973b8639019922b673ab0554fd3f7dbddae3119a1a17cfec4e"
+    },
+    "native_retained_line_s3_work.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\native_retained_line_s3_work.py",
+      "sha256": "321cf440d802791b560f67bcaaca50b16d8cbc0b373efb6665877e2839125fdb"
+    },
+    "native_retained_pair_static.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\native_retained_pair_static.py",
+      "sha256": "7774df80503532b26a264f5b0b921b6b537cce16dfa50e13e50e93135bdbe12f"
+    },
+    "native_retained_s3_static.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\native_retained_s3_static.py",
+      "sha256": "bd405501f79e1db134545b0c45dd586f39a665de4ad61bd3a50bb46852d65c85"
+    },
+    "native_retained_static.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\native_retained_static.py",
+      "sha256": "9e89a18e7579919c8e6e1af4682bb5c1576e03d2500cb01c8af1d4a33c1fd679"
+    },
+    "native_retained_station.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\native_retained_station.py",
+      "sha256": "efa2d88a86e6765068671b04a74a0e8a8a63438e8814533089c7bdf1aa491b85"
+    },
+    "native_retained_whole_pair.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\native_retained_whole_pair.py",
+      "sha256": "0cb07d176d219d3a6759d3dc79c2136ebd36bb3f13e50e84bed53a51a1951f3e"
+    },
+    "overlap.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\overlap.py",
+      "sha256": "ce096ac146f2b3661d955af9c2d9effa501bfbe948d20cef761015f79a6ff48c"
+    },
+    "pair.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\pair.py",
+      "sha256": "4ee7fbb76c67714dae7747204333c035c0b741f66b1d7babf3aa8e04d0ea6cba"
+    },
+    "patch_broadphase.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\patch_broadphase.py",
+      "sha256": "b6b1e7ff037a19450e1ab4d6a4c06c0a66d6c734545fa8adfaf296be64908fef"
+    },
+    "patch_mortar.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\patch_mortar.py",
+      "sha256": "c90ed2f830ca9e4e25dcb9f24c4454d7da499d7074bafa6b33f8543a31b7b3c2"
+    },
+    "patch_sliding.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\patch_sliding.py",
+      "sha256": "9e08c49e754ef5b910a92e6c94c2c09c44e4ac3ac90373bb8e08214fbdbfe567"
+    },
+    "pointwise_patch.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\pointwise_patch.py",
+      "sha256": "3175f7b1451d8de4b125ab72c2c9a725db9aac846f2a5eb3d41c31f2c818624b"
+    },
+    "pressure_basis.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\pressure_basis.py",
+      "sha256": "11cbb09d168e6a37155ffd900a843d3e3c591cd27fa0a742b3cde7920cead54d"
+    },
+    "pressure_overlay.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\pressure_overlay.py",
+      "sha256": "20d7cc2c44e591e6ec773d6f125a63f9381868562860d118a203b6025b70e606"
+    },
+    "pressure_space.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\pressure_space.py",
+      "sha256": "7b294c1f56036cc4ebc52c4f100462e7e66d56d3b765e72d6edb078bd775c682"
+    },
+    "q4_overlap_local_bound.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\q4_overlap_local_bound.py",
+      "sha256": "e5da22ed78561ac3e23ed16e94ba37b252dad0718535ac9066b29b5e5806412f"
+    },
+    "q4_s3_overlap_derivatives.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\q4_s3_overlap_derivatives.py",
+      "sha256": "3baf1469942b7a2f5fef8510123596bc370bba4e9f988ef54966c2bf03cdf8f8"
+    },
+    "q4_s3_tiny_wedge.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\q4_s3_tiny_wedge.py",
+      "sha256": "f27db6b3b410509a71da46b8f5393e842989ff97751ca295c257d1258c1ad5b7"
+    },
+    "q4_skin_work.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\q4_skin_work.py",
+      "sha256": "42e1d0cab3113b7c25f88f23276ced66f0d63e8d93a7f21745df971fab5e5412"
+    },
+    "q4_source_mortar_energy.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\q4_source_mortar_energy.py",
+      "sha256": "c770a0dc79b2696c2e419e2af0a5d9fdea5334b5824a8a6dcaa28429b075e107"
+    },
+    "q4_source_overlap.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\q4_source_overlap.py",
+      "sha256": "8eb2585382252eaed1eb386f8dac1bb03bf082c4cbc5aa340b15e1307c8bdcfd"
+    },
+    "q4_target_overlap.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\q4_target_overlap.py",
+      "sha256": "e41213cfa13815606f8adb40d47df56532ce2448ad922a1f11a9d782cec4725b"
+    },
+    "runtime.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\runtime.py",
+      "sha256": "b6e81c0a07716c23c4fc9c07444e78078899b59d174b3e23b6eb838ecd50d999"
+    },
+    "s3_friction_pair.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_friction_pair.py",
+      "sha256": "cf8bb1b86bd29570285d635f7c00aa672308c8d787d6bc03cfb1112049db186b"
+    },
+    "s3_friction_point.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_friction_point.py",
+      "sha256": "fcd02648b6cbb28b9b7670f5920c006a36bb58c788a3dd27f9786c9d55b475f3"
+    },
+    "s3_overlap_derivatives.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_overlap_derivatives.py",
+      "sha256": "ff013fb6cf6f6a9dfdac095e12fc5c6d569788a99f709036ce8e380e3f1546e6"
+    },
+    "s3_pair_static.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_pair_static.py",
+      "sha256": "4f4b9257c7251b6a161b4c921d69b2142f9785ab05c1d00899c4accad47ade2b"
+    },
+    "s3_patch_augmented.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_augmented.py",
+      "sha256": "0b2f64f0192e72edf374e2d7d9bd5a112936f42e8861a4d884fdfaf3bae20375"
+    },
+    "s3_patch_mortar_energy.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_mortar_energy.py",
+      "sha256": "8185e4415483f7ec64a4b5a97eb8f5a2ea7e9c2191a20ee89c52847715ce93d7"
+    },
+    "s3_patch_static.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_static.py",
+      "sha256": "8cc9776eb5d382e7e3090c51f8bba0b8c4937cadb0af8877648ad63b0ae9b99b"
+    },
+    "s3_skin_work.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_skin_work.py",
+      "sha256": "1c4ed39726f1da800a44bc6cc22bb00a5a2804077cd713c7f3d57dc41d76195d"
+    },
+    "semismooth.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\semismooth.py",
+      "sha256": "606bfa07742b353ec3e5f48a47ead5e9be3a6bf8f1dd767f8dec7db43933a94e"
+    },
+    "semismooth_block.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\semismooth_block.py",
+      "sha256": "e2fc1dd5700c284b49e0140c9d9493d2100fb9555eb4ae3ce17ddc4fb3def12c"
+    },
+    "semismooth_path.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\semismooth_path.py",
+      "sha256": "1aedee12486fc0089628862bfc44cef118f8f2407dcd17e3dfd417f6331cec18"
+    },
+    "sliding.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\sliding.py",
+      "sha256": "710f504b75ee3fe8c0ee8ab16f13b17513a83b2ede0c8710e033558171142e66"
+    },
+    "sphere.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\sphere.py",
+      "sha256": "742f2520023a5da383f708d6a1a9b6ba623be8093769645f42950f2f3532e307"
+    },
+    "static_path.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\static_path.py",
+      "sha256": "1d3771814c82e3dd45a6d8fb43c7a8ff6d8511e4b2736c2fb1eace0c96814f3c"
+    },
+    "supported_schur.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\supported_schur.py",
+      "sha256": "17fd64c9fddc6ea071b79017b370187c4d1cd4b7a21797a412da1f6874d4650c"
+    },
+    "swept_patch_broadphase.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\swept_patch_broadphase.py",
+      "sha256": "877b5e978052d55ec0ad4635e010a647b63414626f50ea210a3869b9c3973dcc"
+    },
+    "transient.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\transient.py",
+      "sha256": "93913098eab0a81b983665ae91e489bb9518efc64f94a962eacded75d808ab53"
+    },
+    "triangle_mortar_energy.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\triangle_mortar_energy.py",
+      "sha256": "f69bdd49016d40da6c9bd215d38c2bab62fa209673e20bf4f3117817c6f0aa8c"
+    },
+    "triangle_pair_energy.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\triangle_pair_energy.py",
+      "sha256": "8d601bdf8993f03fe674a628243810c2c97ae9a62830a9a6cc698b94a8c834d2"
+    },
+    "warped_q4_plane.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\warped_q4_plane.py",
+      "sha256": "38ef1e63683f9656966d79e520aa2070bc9dc521415641981c3f1ecbe4fde452"
+    },
+    "warped_q4_skin.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\warped_q4_skin.py",
+      "sha256": "74078099a414c3c3a38156ef1fef0a32fdce7ff608e43eae4b51ea2c0fdc0085"
+    },
+    "warped_q4_static.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\warped_q4_static.py",
+      "sha256": "85915107b49b304b42c7bf755ee1f522e3a83524b2ff2f8a483d129058b67d19"
+    },
+    "__init__.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\__init__.py",
+      "sha256": "695859a783c6f307812236e6c305bebf0086b9ef2ea3f471a2765e702709acf7"
+    }
+  },
+  "targets": {
+    "integrated_response_relative": 0.02,
+    "physical_gap_m": 5e-05,
+    "force_and_moment_balance_relative": 1e-06
+  },
+  "limits": "guided flat elastic fixed-MIN3 spatial comparison; no boundary or uniform-stability admission",
+  "geometry_and_reference": {
+    "source_guided_shear_n_m": 1602.5641025641025,
+    "target_guided_shear_n_m": 3163.400547104653,
+    "target_phi_squared_range": [
+      0.39479238827866037,
+      0.3947923882786611
+    ],
+    "target_p1_energy_max_relative_error": 4.491729488897204e-16,
+    "target_cells": 12,
+    "target_y0_m": -0.113,
+    "target_right_x_m": 1.297,
+    "gap_m": 7.741263872132846e-06,
+    "exact_force_n": 0.020435219974701022
+  },
+  "contact_definition": {
+    "surfaces": [
+      {
+        "name": "q4_source",
+        "element_ids": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82,
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90,
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          111,
+          112,
+          113,
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          121,
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140,
+          141,
+          142,
+          143,
+          144
+        ],
+        "side": "bottom",
+        "beam_radius": null,
+        "beam_end_caps": "none"
+      },
+      {
+        "name": "s3_target",
+        "element_ids": [
+          145,
+          146,
+          147,
+          148,
+          149,
+          150,
+          151,
+          152,
+          153,
+          154,
+          155,
+          156,
+          157,
+          158,
+          159,
+          160,
+          161,
+          162,
+          163,
+          164,
+          165,
+          166,
+          167,
+          168,
+          169,
+          170,
+          171,
+          172,
+          173,
+          174,
+          175,
+          176,
+          177,
+          178,
+          179,
+          180,
+          181,
+          182,
+          183,
+          184,
+          185,
+          186,
+          187,
+          188,
+          189,
+          190,
+          191,
+          192,
+          193,
+          194,
+          195,
+          196,
+          197,
+          198,
+          199,
+          200,
+          201,
+          202,
+          203,
+          204,
+          205,
+          206,
+          207,
+          208,
+          209,
+          210,
+          211,
+          212,
+          213,
+          214,
+          215,
+          216,
+          217,
+          218,
+          219,
+          220,
+          221,
+          222,
+          223,
+          224,
+          225,
+          226,
+          227,
+          228,
+          229,
+          230,
+          231,
+          232,
+          233,
+          234,
+          235,
+          236,
+          237,
+          238,
+          239,
+          240,
+          241,
+          242,
+          243,
+          244,
+          245,
+          246,
+          247,
+          248,
+          249,
+          250,
+          251,
+          252,
+          253,
+          254,
+          255,
+          256,
+          257,
+          258,
+          259,
+          260,
+          261,
+          262,
+          263,
+          264,
+          265,
+          266,
+          267,
+          268,
+          269,
+          270,
+          271,
+          272,
+          273,
+          274,
+          275,
+          276,
+          277,
+          278,
+          279,
+          280,
+          281,
+          282,
+          283,
+          284,
+          285,
+          286,
+          287,
+          288,
+          289,
+          290,
+          291,
+          292,
+          293,
+          294,
+          295,
+          296,
+          297,
+          298,
+          299,
+          300,
+          301,
+          302,
+          303,
+          304,
+          305,
+          306,
+          307,
+          308,
+          309,
+          310,
+          311,
+          312,
+          313,
+          314,
+          315,
+          316,
+          317,
+          318,
+          319,
+          320,
+          321,
+          322,
+          323,
+          324,
+          325,
+          326,
+          327,
+          328,
+          329,
+          330,
+          331,
+          332,
+          333,
+          334,
+          335,
+          336,
+          337,
+          338,
+          339,
+          340,
+          341,
+          342,
+          343,
+          344,
+          345,
+          346,
+          347,
+          348,
+          349,
+          350,
+          351,
+          352,
+          353,
+          354,
+          355,
+          356,
+          357,
+          358,
+          359,
+          360,
+          361,
+          362,
+          363,
+          364,
+          365,
+          366,
+          367,
+          368,
+          369,
+          370,
+          371,
+          372,
+          373,
+          374,
+          375,
+          376,
+          377,
+          378,
+          379,
+          380,
+          381,
+          382,
+          383,
+          384,
+          385,
+          386,
+          387,
+          388,
+          389,
+          390,
+          391,
+          392,
+          393,
+          394,
+          395,
+          396,
+          397,
+          398,
+          399,
+          400,
+          401,
+          402,
+          403,
+          404,
+          405,
+          406,
+          407,
+          408,
+          409,
+          410,
+          411,
+          412,
+          413,
+          414,
+          415,
+          416,
+          417,
+          418,
+          419,
+          420,
+          421,
+          422,
+          423,
+          424,
+          425,
+          426,
+          427,
+          428,
+          429,
+          430,
+          431,
+          432
+        ],
+        "side": "top",
+        "beam_radius": null,
+        "beam_end_caps": "none"
+      }
+    ],
+    "rigid_bodies": [],
+    "interactions": [
+      {
+        "name": "pair",
+        "surface": "q4_source",
+        "target": "s3_target",
+        "normal_stiffness": 10000000.0,
+        "gap_tolerance": 5e-05,
+        "normal_law": "projected_penalty",
+        "line_stiffness": null,
+        "endpoint_stiffness": null
+      }
+    ]
+  },
+  "contact_settings": {
+    "maximum_candidate_pairs": 100000,
+    "pair_motion": "general",
+    "sliding_difference_step": null,
+    "maximum_gap_triangles": 10000,
+    "maximum_patch_normal_dofs": 256,
+    "maximum_augmentations": 12,
+    "pressure_tolerance": null,
+    "maximum_shell_tilt": null,
+    "line_integration_relative_tolerance": null,
+    "maximum_line_subdivisions": 8,
+    "maximum_swept_subdivisions": 14,
+    "normal_discretization": "primal_mortar",
+    "pointwise_integration_subdivisions": 2,
+    "maximum_pointwise_triangles": 10000,
+    "beam_shell_rim_clearance": null,
+    "beam_shell_difference_step": null,
+    "warped_q4_plane": false,
+    "warped_q4_quadrature_order": null,
+    "warped_q4_control_order": null,
+    "warped_q4_integration_tolerance": null,
+    "warped_q4_gap_accuracy": null,
+    "warped_q4_maximum_gap_cells": null,
+    "warped_q4_maximum_gap_depth": null,
+    "beam_pair_gap_accuracy": null,
+    "maximum_beam_pair_gap_cells": null,
+    "maximum_beam_pair_gap_depth": null,
+    "general_s3_difference_step": 2e-05,
+    "general_s3_differentiation": "jet2_q4_s3_dev",
+    "q4_s3_shared_edge_tie_step_m": null,
+    "q4_s3_shared_edge_tie_direction": null,
+    "q4_s3_shared_edge_tie_relative_tolerance": null,
+    "maximum_general_s3_energy_evaluations": 5000,
+    "q4_target_weighted_gap_tolerance": null,
+    "maximum_q4_target_integration_triangles": null,
+    "q4_source_area_tolerance": 1e-09,
+    "q4_source_weighted_gap_tolerance": 1e-10,
+    "maximum_q4_source_integration_triangles": 128,
+    "q4_source_gap_certificate": "overlap_local_dev",
+    "q4_source_pressure_basis": "fine_nodal_q1",
+    "q4_source_pressure_knot_columns": null,
+    "augmentation_acceleration": "none",
+    "augmentation_pivot_max_pressure_pa": null,
+    "augmentation_pivot_difference_step_m": null,
+    "augmentation_equilibrated_pressure_step_pa": null,
+    "augmentation_schur_maximum_modes": null,
+    "augmentation_schur_maximum_pressure_pa": null,
+    "augmentation_schur_maximum_step_pa": null,
+    "augmentation_schur_difference_step_m": null,
+    "augmentation_schur_maximum_attempts": 1,
+    "augmentation_schur_maximum_relinearizations": 0,
+    "augmentation_schur_nonlinear_backtrack_dev": false,
+    "augmentation_support_resolution": "exact",
+    "augmentation_support_force_budget_n": null,
+    "enforcement_solver": "nested_augmented",
+    "complementarity_force_scale_n": null,
+    "monolithic_maximum_pivots": 12,
+    "monolithic_linear_solver": "direct",
+    "q4_source_support_gradient_tolerance": 1e-05,
+    "q4_source_support_hessian_tolerance": 1e-05,
+    "q4_source_weighted_gap_gradient_tolerance": 1e-05,
+    "q4_source_weighted_gap_hessian_tolerance": 1e-05,
+    "d1_interior_profile": false,
+    "d1_interior_coverage_tolerance_m2": null,
+    "d1_interior_boundary_force_tolerance_n": null
+  },
+  "path_program": {
+    "controls": [
+      {
+        "terms": [
+          [
+            1,
+            "uz",
+            1.0
+          ]
+        ]
+      },
+      {
+        "terms": [
+          [
+            170,
+            "uz",
+            1.0
+          ]
+        ]
+      }
+    ],
+    "waypoints": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        -5.536637024354342e-06,
+        -7.255392078437349e-08
+      ]
+    ],
+    "steps_per_segment": 2,
+    "nodal_forces": [
+      {
+        "node_id": 1,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0001388888888888889
+        ]
+      },
+      {
+        "node_id": 2,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 3,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 4,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 5,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 6,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 7,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 8,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 9,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 10,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 11,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 12,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 13,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0001388888888888889
+        ]
+      },
+      {
+        "node_id": 14,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 15,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 16,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 17,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 18,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 19,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 20,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 21,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 22,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 23,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 24,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 25,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 26,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 27,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 28,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 29,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 30,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 31,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 32,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 33,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 34,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 35,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 36,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 37,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 38,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 39,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 40,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 41,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 42,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 43,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 44,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 45,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 46,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 47,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 48,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 49,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 50,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 51,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 52,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 53,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 54,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 55,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 56,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 57,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 58,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 59,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 60,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 61,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 62,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 63,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 64,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 65,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 66,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 67,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 68,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 69,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 70,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 71,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 72,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 73,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 74,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 75,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 76,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 77,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 78,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 79,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 80,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 81,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 82,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 83,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 84,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 85,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 86,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 87,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 88,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 89,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 90,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 91,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 92,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 93,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 94,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 95,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 96,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 97,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 98,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 99,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 100,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 101,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 102,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 103,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 104,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 105,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 106,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 107,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 108,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 109,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 110,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 111,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 112,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 113,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 114,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 115,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 116,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 117,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 118,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 119,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 120,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 121,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 122,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 123,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 124,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 125,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 126,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 127,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 128,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 129,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 130,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 131,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 132,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 133,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 134,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 135,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 136,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 137,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 138,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 139,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 140,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 141,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 142,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 143,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 144,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 145,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 146,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 147,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 148,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 149,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 150,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 151,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 152,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 153,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 154,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 155,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0005555555555555556
+        ]
+      },
+      {
+        "node_id": 156,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 157,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0001388888888888889
+        ]
+      },
+      {
+        "node_id": 158,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 159,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 160,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 161,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 162,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 163,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 164,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 165,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 166,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 167,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 168,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0002777777777777778
+        ]
+      },
+      {
+        "node_id": 169,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.0001388888888888889
+        ]
+      }
+    ]
+  },
+  "capability_profile": "Q4_S3_PATCH_REFINED_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0"
+}

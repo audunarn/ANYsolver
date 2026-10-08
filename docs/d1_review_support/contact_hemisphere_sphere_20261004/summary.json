@@ -1,0 +1,267 @@
+{
+  "scope": "D3 actual-tangent B2/B3 hemisphere support on one fixed analytic sphere; development/code verification only",
+  "source_parent": "b956dda313dc8cc9708ddde15f9655a10e03f7a1",
+  "source_files": {
+    "src/anysolver/general_contact/beam_hemisphere_sphere_work.py": "591d4d7999f5aadcd01c2b37ce671e1f27a843937f7531fd751be141b01df0e0",
+    "src/anysolver/general_contact/beam_hemisphere_sphere.py": "57af4b581702cefd442048df0e3457880cbfd654c0eded32fc0d696cb531e89b",
+    "src/anysolver/general_contact/core.py": "b3451766ee282700c93a0e08e83cee1d4c15bc4747bf1fc9954013a2425a1301",
+    "src/anysolver/general_contact/multiple_beam_rigid.py": "7af23518f0a393a6de931b5c2c368891d27d64bf9adae9fb91ddaac4a6d9d9f7",
+    "src/anysolver/general_contact/beam_radial_ends.py": "5c1216d31d184e0ec88682e2fbdae9e9e4ca51a15e5e905a7b9e0bb20afa4c63",
+    "src/anysolver/general_contact/beam_end_radial_geometry.py": "c929720d8eba9d9eb012c5ae70c4f7208e604322e2b87004e863738dbfb678d2",
+    "tests/test_general_contact_hemisphere_sphere.py": "5efd482d1ef703130273383164eebb0ba3d3b96cb5d1fd292911d0af1ce03d64",
+    "examples/general_contact_hemisphere_sphere.py": "4a3b6063125d6d63a5f1b8350ba4ab4c9f2ba65c100d39aad8410731be3c1c8c"
+  },
+  "wheels": {
+    "dist\\anysolver-0.4.7-py3-none-any.whl": "53308ebe8a40846e67a0b9f8ea77245d01896ca7467fb7e0cbb4b3193aba0f5e",
+    "dist_before_radius_fix\\anysolver-0.4.7-py3-none-any.whl": "39529d900b560c37edac977eea8c338ff13b6e79bb94e7f34d05cf8143e51698"
+  },
+  "runs": {
+    "installed_final": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 31.887843700009398,
+        "peak_bytes": 362438656
+      },
+      "outcomes": {
+        "passed": 49
+      }
+    },
+    "source01": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 4.507509700022638,
+        "peak_bytes": 185331712
+      },
+      "outcomes": {
+        "passed": 13,
+        "failed": 1
+      }
+    },
+    "source02": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 2.9083054999937303,
+        "peak_bytes": 185565184
+      },
+      "outcomes": {
+        "failed": 1,
+        "passed": 1
+      }
+    },
+    "source03": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 3.1617467000032775,
+        "peak_bytes": 185315328
+      },
+      "outcomes": {
+        "passed": 14
+      }
+    },
+    "source04": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 30.9800997999846,
+        "peak_bytes": 197763072
+      },
+      "outcomes": {
+        "passed": 47
+      }
+    },
+    "source05_radius": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 2.4469150000368245,
+        "peak_bytes": 184111104
+      },
+      "outcomes": {
+        "failed": 1
+      }
+    },
+    "source06_radius": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 2.4448582000331953,
+        "peak_bytes": 182083584
+      },
+      "outcomes": {
+        "failed": 1
+      }
+    }
+  },
+  "installed_modules_matching": 216,
+  "installed_package_files_matching": 506,
+  "effective_jit_disabled": true,
+  "effective_numba_threads": 1,
+  "effective_pools": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "version": "0.3.31.188.0",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "version": "0.3.30",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "openmp",
+      "internal_api": "openmp",
+      "num_threads": 1,
+      "prefix": "vcomp",
+      "filepath": "C:\\Windows\\System32\\vcomp140.dll",
+      "version": null
+    }
+  ],
+  "independent_bar": {
+    "displacement_m": -0.0020018999048260684,
+    "independent_displacement_m": -0.002001899904826066,
+    "relative_error": 1.1102230246251565e-15,
+    "gap_tolerance_m": 1e-05,
+    "contact": {
+      "profile": "CLASSICAL_B2_B3_HEMISPHERE_SUPPORT_SPHERE_STATIC_DEV_V1",
+      "obstacle_kind": "sphere",
+      "minimum_gap": -1.8999048260661539e-06,
+      "line_contact_energy": 1.1316674613954006e-14,
+      "algorithmic_contact_potential": 1.8048192872214772e-07,
+      "active_line_length": 1.8810761947844028e-06,
+      "active_line_cells": 1,
+      "active_intervals": 1,
+      "integration_points": 24,
+      "maximum_integration_relative_error": 8.364940395988499e-16,
+      "candidate_cells": 1,
+      "beam_force": [
+        0.18999050047594407,
+        0.0,
+        0.0
+      ],
+      "rigid_force": [
+        -0.18999050047594407,
+        -0.0,
+        -0.0
+      ],
+      "beam_moment": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rigid_moment": [
+        -0.0,
+        -0.0,
+        -0.0
+      ],
+      "gap_tolerance_met": true,
+      "normal_law": "penalty",
+      "line_stiffness_N_per_m2": 10000.0,
+      "endpoint_contact_energy": 1.8048191740547311e-07,
+      "candidate_endpoints": 2,
+      "active_endpoints": 1,
+      "endpoint_stiffness_N_per_m": 100000.0,
+      "endpoint_fields": [
+        {
+          "node": 1,
+          "element": 1,
+          "gap": -1.8999048260661539e-06,
+          "active": true,
+          "branch": "sphere",
+          "skin_point": [
+            0.09999810009517394,
+            0.0,
+            0.0
+          ],
+          "rigid_point": [
+            0.1,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "node": 2,
+          "element": 1,
+          "gap": 0.2121602152741441,
+          "active": false,
+          "branch": "parallel_rim",
+          "skin_point": null,
+          "rigid_point": null
+        }
+      ],
+      "minimum_gap_kind": "conservative_full_curve_lower_bound",
+      "gap_enclosure_accuracy_m": 1.0000000000000002e-06,
+      "moment_origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "moment_units": "N*m",
+      "beam_end_cap_geometry": "actual_tangent_hemisphere_minimum_sphere_distance",
+      "geometry_kinematics": "literal_fixed_radial_map_affine_static_v1",
+      "beam_end_cap_work": "hemisphere_support_dev",
+      "endpoint_geometry": "actual_tangent_hemisphere_minimum_sphere_distance",
+      "contact_integration_measure": "reference_line_length_and_distinct_endpoint_point_springs",
+      "endpoint_integration_rule": "one_minimum_support_point_per_physical_end",
+      "gap_tolerance": 1e-05,
+      "maximum_candidate_pairs": 100000,
+      "swept_trial_cutbacks": 5
+    }
+  },
+  "directional_tangent_target": 1e-05,
+  "bar_response_target": 1e-06,
+  "raw_records": 66,
+  "raw_sha256": "ce8ac9cc43fb4efc6c91e4221bff63a2e7726f09dd30a9316676d129a185b8e9",
+  "environment": {
+    "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "versions": {
+      "numpy": "2.4.6",
+      "scipy": "1.17.1",
+      "numba": "0.65.1",
+      "ANYmaterial": "0.2.0",
+      "ANYgeometry": "0.4.3"
+    }
+  },
+  "review_disposition": "supporting same-family source review found reversed Jet2 seed, explicit cap/spring and aggregate admission concerns, and radius-conversion dependency. Lead corrected these and verified actual all-coordinate scalar work, tangent/covariance/wrench, radius preservation, coupled bar and state. No independent engineering acceptance.",
+  "preserved_failures": [
+    "source01/source02 conservative active seam rejection; corrected spatial accuracy before temporal bound, same finite budgets",
+    "review-found reversed Jet2 seed corrected before first numerical run",
+    "source05_radius degree-zero curve fixture mistake",
+    "source06_radius verified radius Fraction cast loss; bounds owner now preserves Fraction inputs",
+    "private first pre-radius-fix wheel retained, not installed",
+    "all predecessor consumed and nonpass evidence unchanged"
+  ],
+  "unchanged": [
+    "legacy radial ownership crossing gate, float-radius arithmetic and profile/default",
+    "line integration/potential and line/end units",
+    "multiple fixed-plane support profile identity and geometry",
+    "old sphere APIs, no-contact and physical material commit semantics",
+    "ANYfem source, normal application admission false",
+    "engineering criteria, frozen authority and resource limits"
+  ],
+  "limits": [
+    "one explicit beam selection with classical scalar-elastic concentric B2/B3 von Karman",
+    "fixed analytic sphere only; no automatic/multiple sphere support yet",
+    "genuine all-material-node ends, actual tangent hemisphere point spring distinct from distributed line",
+    "exterior gap budget below both radii; exact literal radii sum for conservative bounds only",
+    "parallel nonunique rim is open with zero penalty work, no smooth contact claim",
+    "C1 sphere/rim seam with one-sided Hessians, no central smooth test across kink",
+    "whole-radius enclosure may reject geometrically safe cap paths; unresolved limits fail",
+    "no spin/material-surface friction, native contact or transient expansion",
+    "cylinder/pair/finite-face transitions, mesh/enforcement and C0-C9 acceptance remain"
+  ]
+}

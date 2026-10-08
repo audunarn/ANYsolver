@@ -1,0 +1,61 @@
+{
+  "purpose": "development saved-state coupled contact-front pose comparison",
+  "reference_coordinate": "source xi=(x_reference-0.1 m)/(1 m)",
+  "l2_measure": "two source rows averaged, exact squared piecewise-linear integration over reference xi",
+  "cases": [
+    {
+      "report": "reports\\general_contact_d1_mixed_16q4_interior_distributed_0p3n_cartesian_roundoff_press_20260927.json",
+      "columns": 16,
+      "steps_per_segment": 2,
+      "initial_nodal_gap_range_m": [
+        3.9999999999996635e-05,
+        3.9999999999996635e-05
+      ],
+      "full_press_nodal_gap_range_m": [
+        -1.9401780073161068e-08,
+        3.9999999999996635e-05
+      ],
+      "first_active_reference_x_by_row": [
+        0.6875,
+        0.6875
+      ],
+      "peak_pressure_pa": 0.5047831014558337,
+      "max_pressure_minus_multiplier_pa": 9.156564395595979e-14,
+      "max_active_weighted_gap_m": 9.155760400513467e-18
+    },
+    {
+      "report": "reports\\general_contact_d1_distributed_32q4_fine_press_dev_20260928.json",
+      "columns": 32,
+      "steps_per_segment": 3,
+      "initial_nodal_gap_range_m": [
+        3.9999999999996635e-05,
+        3.9999999999996635e-05
+      ],
+      "full_press_nodal_gap_range_m": [
+        -1.7908115313575168e-08,
+        3.9999999999996635e-05
+      ],
+      "first_active_reference_x_by_row": [
+        0.65625,
+        0.65625
+      ],
+      "peak_pressure_pa": 0.691392620336944,
+      "max_pressure_minus_multiplier_pa": 3.604755383079805e-14,
+      "max_active_weighted_gap_m": 3.604449545631487e-18
+    }
+  ],
+  "adjacent_comparisons": [
+    {
+      "earlier_columns": 16,
+      "later_columns": 32,
+      "physical_gap_full_l2": 4.420321705456753e-08,
+      "physical_gap_front_l2": 6.864487598413928e-09,
+      "vertical_displacement_full_l2": 4.420321705456741e-08,
+      "vertical_displacement_front_l2": 6.864487598414059e-09,
+      "horizontal_displacement_full_l2": 4.418026550091645e-12,
+      "horizontal_displacement_front_l2": 1.1461544403466708e-12,
+      "multiplier_full_l2": 0.025725473922534662,
+      "multiplier_front_l2": 0.025518680948551236
+    }
+  ]
+}

@@ -1,0 +1,261 @@
+{
+  "scope": "D3 opt-in classical B2/B3 fixed-plane hemisphere support point spring; development/code verification, not engineering acceptance",
+  "source_parent": "3a501e6994cc53f372638f0402cd2f0b2b6e332b",
+  "source_files": {
+    "src/anysolver/general_contact/beam_hemisphere_support.py": "fbf796afc22f7f19c6bbdd83db3a00c920d6bd6b9e3d3b3d4a9bcbe4dd4f3349",
+    "src/anysolver/general_contact/beam_hemisphere_plane.py": "94dc85cc4ff0fa8b86d209ddf6e180a134479a1d31874f1cf2203cc15eb4316e",
+    "src/anysolver/general_contact/core.py": "e33fb0385a276b98a23e0214cd21b08b3aa392d279897f632fa38c9e39aa28e7",
+    "tests/test_general_contact_hemisphere_plane.py": "4670750848a5ce70370a5cce5cbaf8ae40868ab0655b399eda7d326efdc263a8",
+    "examples/general_contact_hemisphere_plane.py": "449406383287ba1da18da9488517d370f3099a16f2b24736ce2107a0e7984c5e"
+  },
+  "wheels": {
+    "anyfem-0.4.1-py3-none-any.whl": "9f992d6b3b5b699e26ff75f567b7fc47909333c595110e62c1a8c5cb100de8a9",
+    "anysolver-0.4.7-py3-none-any.whl": "81664ac4f70785309f1d8cc5693a5ec266c976951fe5fbd57301352df9df0a1e"
+  },
+  "runs": {
+    "build": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 11.494100900017656,
+        "peak_bytes": 110497792
+      },
+      "outcomes": null
+    },
+    "discriminator01": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 2.1058633999782614,
+        "peak_bytes": 159182848
+      },
+      "outcomes": {
+        "passed": 1
+      }
+    },
+    "install": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 3.907628000015393,
+        "peak_bytes": 79417344
+      },
+      "outcomes": null
+    },
+    "installed_final2": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 5.180517700035125,
+        "peak_bytes": 343699456
+      },
+      "outcomes": {
+        "passed": 35
+      }
+    },
+    "source02": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 2.8163356999866664,
+        "peak_bytes": 188354560
+      },
+      "outcomes": {
+        "passed": 7,
+        "failed": 2
+      }
+    },
+    "source03": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 2.4598331000306644,
+        "peak_bytes": 181153792
+      },
+      "outcomes": {
+        "passed": 9
+      }
+    },
+    "source04": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 4.186173100024462,
+        "peak_bytes": 182222848
+      },
+      "outcomes": {
+        "passed": 12,
+        "failed": 3
+      }
+    },
+    "source05": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 2.7564574999851175,
+        "peak_bytes": 181370880
+      },
+      "outcomes": {
+        "failed": 1,
+        "passed": 2
+      }
+    },
+    "source06": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 2.464214300038293,
+        "peak_bytes": 179671040
+      },
+      "outcomes": {
+        "passed": 1
+      }
+    }
+  },
+  "installed_modules_matching": 237,
+  "installed_package_files_matching": 502,
+  "effective_jit_disabled": true,
+  "effective_numba_threads": 1,
+  "effective_pools": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "version": "0.3.31.188.0",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "version": "0.3.30",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "openmp",
+      "internal_api": "openmp",
+      "num_threads": 1,
+      "prefix": "vcomp",
+      "filepath": "C:\\Windows\\System32\\vcomp140.dll",
+      "version": null
+    }
+  ],
+  "legacy_discriminator": {
+    "question": "can an active ownership seam be extended by generalized derivatives?",
+    "disposition": "NO: finite endpoint energy jump with zero endpoint virtual work; existing rejection required",
+    "energy_jump_J": 0.012500000000000022,
+    "rows": [
+      {
+        "theta_rad": -0.001,
+        "line_energy_J": 0.01016666702777777,
+        "endpoint_energy_J": 0.012500000000000022,
+        "beam_force_N": [
+          0.0,
+          0.0,
+          9.500000083333335
+        ],
+        "endpoint_virtual_power_J_per_rad": 0.0
+      },
+      {
+        "theta_rad": -1e-05,
+        "line_energy_J": 0.012475016666667116,
+        "endpoint_energy_J": 0.012500000000000022,
+        "beam_force_N": [
+          0.0,
+          0.0,
+          9.995000000000093
+        ],
+        "endpoint_virtual_power_J_per_rad": 0.0
+      },
+      {
+        "theta_rad": -1e-07,
+        "line_energy_J": 0.012499750001666685,
+        "endpoint_energy_J": 0.012500000000000022,
+        "beam_force_N": [
+          0.0,
+          0.0,
+          9.999950000000009
+        ],
+        "endpoint_virtual_power_J_per_rad": 0.0
+      },
+      {
+        "theta_rad": 1e-07,
+        "line_energy_J": 0.012500250001666697,
+        "endpoint_energy_J": 0.0,
+        "beam_force_N": [
+          0.0,
+          0.0,
+          5.000050000000007
+        ],
+        "endpoint_virtual_power_J_per_rad": 0.0
+      },
+      {
+        "theta_rad": 1e-05,
+        "line_energy_J": 0.012525016666666264,
+        "endpoint_energy_J": 0.0,
+        "beam_force_N": [
+          0.0,
+          0.0,
+          5.004999999999919
+        ],
+        "endpoint_virtual_power_J_per_rad": 0.0
+      },
+      {
+        "theta_rad": 0.001,
+        "line_energy_J": 0.015166666194444517,
+        "endpoint_energy_J": 0.0,
+        "beam_force_N": [
+          0.0,
+          0.0,
+          5.499999916666679
+        ],
+        "endpoint_virtual_power_J_per_rad": 0.0
+      }
+    ]
+  },
+  "directional_tangent_target": 1e-05,
+  "bar_response_target": 1e-06,
+  "raw_records": 54,
+  "raw_sha256": "f99c6b45fd4a2b26550f752bea6246b37f53e9e21ccd9869764471e1a23ee981",
+  "environment": {
+    "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "versions": {
+      "numpy": "2.4.6",
+      "scipy": "1.17.1",
+      "numba": "0.65.1",
+      "ANYmaterial": "0.2.0",
+      "ANYgeometry": "0.4.3"
+    }
+  },
+  "review_disposition": "supporting same-family source scrutiny; compatibility settings/control, fixed-plane validation and candidate size/finiteness issues resolved and tested. No engineering acceptance.",
+  "preserved_failures": [
+    "source02 two fixture errors: central FD inadvertently crossed B3 kink; sphere fixture violated public construction contract",
+    "source04 three fixture failures: no reduced equations in fully prescribed model, so callbacks never reached",
+    "source05 assumed fixed step count despite solver adaptive growth;1fail2pass",
+    "source01/installed_final runner preflight missing-target paths: no numerical execution; directory retained externally"
+  ],
+  "unchanged": [
+    "legacy owned_point cap laws and rejection",
+    "line/end units and explicit regularization",
+    "normal application admission false",
+    "no-contact/historical defaults/sphere APIs",
+    "frozen authority and historical failures",
+    "ANYfem source"
+  ],
+  "limits": [
+    "fixed analytic plane only",
+    "scalar isotropic elastic concentric B2/B3 von Karman",
+    "exterior gap_tolerance below radius",
+    "genuine physical ends from all material-node incidence",
+    "centreline-tangent hemisphere support spring, not material-surface integration/friction/spin",
+    "beam-pair/cylinder/shell cap transition still unresolved",
+    "mesh/enforcement/independent acceptance/release/full programme incomplete"
+  ]
+}

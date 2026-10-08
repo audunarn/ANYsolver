@@ -1,0 +1,33 @@
+.F                                                                       [100%]
+================================== FAILURES ===================================
+__ test_sparse_shared_edge_four_pass_reserve_counts_actual_candidates[True] ___
+
+nodal_force = True
+
+    @pytest.mark.parametrize("nodal_force", (False, True))
+    def test_sparse_shared_edge_four_pass_reserve_counts_actual_candidates(nodal_force):
+        geometry = _geometry(q4=True, count=20, budget=883)
+        normal = MovingS3PatchProjectedNormal(geometry)
+        normal.set_shared_edge_tie(3e-8, (1., 0., 0.), 1e-6)
+        source, target = geometry.reference_source.copy(), geometry.reference_target.copy()
+        # A resolved nonzero slide gap derivative keeps the existing independent
+        # directional gate meaningful at nanometre neighbor offsets.
+        source[:, 2] -= .01-1e-4*source[:, 0]
+        if nodal_force:
+            force = 10.*geometry.evaluate(source, target).reference_support
+            work = normal._shared_edge_nodal_force_limit(
+                source, target, force, tangent=True, recoverable_pair=None)
+        else:
+            work = normal._shared_edge_limit(
+                source, target, np.zeros(80), tangent=True, recoverable_pair=None)
+        # The failed-work/exact-state reserve remains four conservative passes;
+        # the four smooth neighbors each perform one float and one AD pass.
+        assert work.energy_evaluations == 4*20+4*(2*20) == 240
+>       assert work.tie_resolution_relative_error <= 1e-6
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'NodalForceLinearization' object has no attribute 'tie_resolution_relative_error'
+
+tests\test_general_contact_jet2_candidate_budget.py:126: AttributeError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_jet2_candidate_budget.py::test_sparse_shared_edge_four_pass_reserve_counts_actual_candidates[True]
+1 failed, 1 passed in 6.23s

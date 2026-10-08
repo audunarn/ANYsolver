@@ -1,0 +1,739 @@
+{
+  "candidate": "selected_q1_knots_4q4_two_s3_press_dev",
+  "source_faces": 4,
+  "target_faces": 2,
+  "selected_pressure_knot_columns": [
+    0,
+    1,
+    3,
+    4
+  ],
+  "total_downward_force_n": 0.1,
+  "steps_per_segment": 2,
+  "elapsed_seconds": 35.983295599988196,
+  "status": "completed",
+  "failure_reason": null,
+  "accepted_steps": 2,
+  "profile": "Q4_S3_PATCH_REFINED_PROJECTED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0",
+  "contact": {
+    "profile": "Q4_S3_PATCH_REFINED_PROJECTED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0",
+    "minimum_gap": -4.090322739024366e-06,
+    "sampled_overlap_gap": -4.090322591230413e-06,
+    "penalty_energy": 0.0,
+    "current_overlap_area": 0.8999999999999999,
+    "reference_overlap_area": 0.899999999999999,
+    "overlapping_pairs": 8,
+    "integration_force": [
+      -3.327372385494568e-21,
+      -7.34823250183522e-17,
+      0.03200992555354906
+    ],
+    "target_force": [
+      7.990688356453129e-21,
+      7.347817505321902e-17,
+      -0.03200992555354906
+    ],
+    "integration_moment": [
+      0.019205955335816115,
+      -0.03254342428474219,
+      8.082155574865878e-09
+    ],
+    "target_moment": [
+      -0.019205955335816115,
+      0.03254342428474219,
+      -8.082155574871887e-09
+    ],
+    "gap_tolerance_met": "True",
+    "active_pressure_dofs": 2,
+    "source_pressure_node_ids": [
+      1,
+      2,
+      4,
+      5,
+      6,
+      7,
+      9,
+      10
+    ],
+    "normalized_weighted_gap_m": [
+      3.6464516161573446e-05,
+      2.585806453826754e-05,
+      1.1531182804077904e-05,
+      -3.417434182619254e-15,
+      3.646451616161284e-05,
+      2.5858064538486136e-05,
+      1.1531182804798173e-05,
+      -2.070191871438458e-15
+    ],
+    "numerical_pressure_pa": [
+      0.0,
+      0.0,
+      0.0,
+      0.18968844727776443,
+      0.0,
+      0.0,
+      0.0,
+      0.400453389425735
+    ],
+    "reference_support_m2": [
+      0.061875,
+      0.18562499999999993,
+      0.18562499999999996,
+      0.06187499999999982,
+      0.05062499999999995,
+      0.15187499999999982,
+      0.15187499999999987,
+      0.05062499999999981
+    ],
+    "energy_evaluations": 18,
+    "weighted_gap_integration_error_m3": 1.7401233110155533e-19,
+    "integration_triangles": 64,
+    "area_integration_error_m2": 1.0278236595162582e-16,
+    "augmented_merit_j": 5.172370400419224e-07,
+    "normal_multiplier_estimate_pa": [
+      0.0,
+      0.0,
+      0.0,
+      0.1896884472435901,
+      0.0,
+      0.0,
+      0.0,
+      0.40045338940503306
+    ],
+    "pair_geometry_evaluations": 26,
+    "pressure_gram_rank": 8,
+    "pressure_gram_condition_estimate": 19.586756615665436,
+    "pressure_gram_supported_modes": 8,
+    "pressure_gram_scaled_rank": 8,
+    "pressure_gram_scaled_condition_estimate": 10.937113801369364,
+    "pressure_basis_version": "q4_source_selected_q1_knots_v1",
+    "source_geometry_node_ids": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
+  },
+  "history": [
+    {
+      "step_index": 1,
+      "target": [
+        0.0,
+        0.0
+      ],
+      "reaction_generalized": [
+        -6.668994119999746e-22,
+        -9.684595471985855e-22
+      ],
+      "residual_norm": 1.769077786024532e-17,
+      "constraint_error": 5.114376296579079e-26,
+      "augmentation_iterations": 1,
+      "normal_multiplier_change": 0.0,
+      "contact": {
+        "profile": "Q4_S3_PATCH_REFINED_PROJECTED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0",
+        "minimum_gap": 2.559999943577137e-06,
+        "sampled_overlap_gap": 8.800000004279445e-06,
+        "penalty_energy": 0.0,
+        "current_overlap_area": 0.9000000000000001,
+        "reference_overlap_area": 0.8999999999999992,
+        "overlapping_pairs": 8,
+        "integration_force": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "target_force": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "integration_moment": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "target_moment": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "gap_tolerance_met": "True",
+        "active_pressure_dofs": 0,
+        "source_pressure_node_ids": [
+          1,
+          2,
+          4,
+          5,
+          6,
+          7,
+          9,
+          10
+        ],
+        "normalized_weighted_gap_m": [
+          3.740000001820025e-05,
+          2.9600000014403634e-05,
+          1.9200000009342e-05,
+          1.1400000005544834e-05,
+          3.7400000018199825e-05,
+          2.960000001440356e-05,
+          1.9200000009341983e-05,
+          1.1400000005544933e-05
+        ],
+        "numerical_pressure_pa": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "reference_support_m2": [
+          0.061875,
+          0.18562499999999993,
+          0.18562499999999998,
+          0.06187499999999978,
+          0.050624999999999934,
+          0.15187499999999982,
+          0.15187499999999987,
+          0.05062499999999978
+        ],
+        "energy_evaluations": 8,
+        "weighted_gap_integration_error_m3": 1.7292707013788575e-19,
+        "integration_triangles": 64,
+        "area_integration_error_m2": 1.3769367590565906e-16,
+        "augmented_merit_j": 0.0,
+        "normal_multiplier_estimate_pa": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "pair_geometry_evaluations": 8,
+        "pressure_gram_rank": 8,
+        "pressure_gram_condition_estimate": 19.586756615665475,
+        "pressure_gram_supported_modes": 8,
+        "pressure_gram_scaled_rank": 8,
+        "pressure_gram_scaled_condition_estimate": 10.9371138013693,
+        "pressure_basis_version": "q4_source_selected_q1_knots_v1",
+        "source_geometry_node_ids": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ]
+      },
+      "augmentation_acceleration": "supported_schur_dev",
+      "schur_attempts": 0,
+      "schur_relinearizations": 0,
+      "schur_applied": 0,
+      "schur_rejected": 0,
+      "augmentation_trace": [
+        {
+          "pressure_change": 0.0,
+          "minimum_gap": 2.559999943577137e-06,
+          "residual_norm": 1.769077786024532e-17,
+          "macro_equilibrium_force_limit_n": 5.0624999999999787e-08,
+          "active_pressure_dofs": 0,
+          "source_contact_force_n": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "sampled_overlap_gap_m": 8.800000004279445e-06,
+          "pressure_rank": null,
+          "pressure_gram_rank": 8,
+          "pressure_gradient_condition": null,
+          "pressure_gram_condition_estimate": 19.586756615665475,
+          "pressure_gram_supported_modes": 8,
+          "pressure_gram_scaled_rank": 8,
+          "pressure_gram_scaled_condition_estimate": 10.9371138013693,
+          "minimum_weighted_gap_m": null,
+          "normalized_weighted_gap_m": [
+            3.740000001820025e-05,
+            2.9600000014403634e-05,
+            1.9200000009342e-05,
+            1.1400000005544834e-05,
+            3.7400000018199825e-05,
+            2.960000001440356e-05,
+            1.9200000009341983e-05,
+            1.1400000005544933e-05
+          ],
+          "reference_support_m2": [
+            0.061875,
+            0.18562499999999993,
+            0.18562499999999998,
+            0.06187499999999978,
+            0.050624999999999934,
+            0.15187499999999982,
+            0.15187499999999987,
+            0.05062499999999978
+          ],
+          "normal_multiplier_estimate_pa": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "source_pressure_node_ids": [
+            1,
+            2,
+            4,
+            5,
+            6,
+            7,
+            9,
+            10
+          ]
+        }
+      ],
+      "nodal_forces_n": [
+        -0.025,
+        -0.025
+      ],
+      "external_nodal_work_trapezoid_j": 7.800000000000009e-07
+    },
+    {
+      "step_index": 2,
+      "target": [
+        0.0,
+        0.0
+      ],
+      "reaction_generalized": [
+        -1.7827066723473597e-17,
+        1.7825317029682894e-17
+      ],
+      "residual_norm": 1.2404619314414134e-15,
+      "constraint_error": 7.077198015244222e-27,
+      "augmentation_iterations": 3,
+      "normal_multiplier_change": 3.4174330032499256e-11,
+      "contact": {
+        "profile": "Q4_S3_PATCH_REFINED_PROJECTED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0",
+        "minimum_gap": -4.090322739024366e-06,
+        "sampled_overlap_gap": -4.090322591230413e-06,
+        "penalty_energy": 0.0,
+        "current_overlap_area": 0.8999999999999999,
+        "reference_overlap_area": 0.899999999999999,
+        "overlapping_pairs": 8,
+        "integration_force": [
+          -3.327372385494568e-21,
+          -7.34823250183522e-17,
+          0.03200992555354906
+        ],
+        "target_force": [
+          7.990688356453129e-21,
+          7.347817505321902e-17,
+          -0.03200992555354906
+        ],
+        "integration_moment": [
+          0.019205955335816115,
+          -0.03254342428474219,
+          8.082155574865878e-09
+        ],
+        "target_moment": [
+          -0.019205955335816115,
+          0.03254342428474219,
+          -8.082155574871887e-09
+        ],
+        "gap_tolerance_met": "True",
+        "active_pressure_dofs": 2,
+        "source_pressure_node_ids": [
+          1,
+          2,
+          4,
+          5,
+          6,
+          7,
+          9,
+          10
+        ],
+        "normalized_weighted_gap_m": [
+          3.6464516161573446e-05,
+          2.585806453826754e-05,
+          1.1531182804077904e-05,
+          -3.417434182619254e-15,
+          3.646451616161284e-05,
+          2.5858064538486136e-05,
+          1.1531182804798173e-05,
+          -2.070191871438458e-15
+        ],
+        "numerical_pressure_pa": [
+          0.0,
+          0.0,
+          0.0,
+          0.18968844727776443,
+          0.0,
+          0.0,
+          0.0,
+          0.400453389425735
+        ],
+        "reference_support_m2": [
+          0.061875,
+          0.18562499999999993,
+          0.18562499999999996,
+          0.06187499999999982,
+          0.05062499999999995,
+          0.15187499999999982,
+          0.15187499999999987,
+          0.05062499999999981
+        ],
+        "energy_evaluations": 18,
+        "weighted_gap_integration_error_m3": 1.7401233110155533e-19,
+        "integration_triangles": 64,
+        "area_integration_error_m2": 1.0278236595162582e-16,
+        "augmented_merit_j": 5.172370400419224e-07,
+        "normal_multiplier_estimate_pa": [
+          0.0,
+          0.0,
+          0.0,
+          0.1896884472435901,
+          0.0,
+          0.0,
+          0.0,
+          0.40045338940503306
+        ],
+        "pair_geometry_evaluations": 26,
+        "pressure_gram_rank": 8,
+        "pressure_gram_condition_estimate": 19.586756615665436,
+        "pressure_gram_supported_modes": 8,
+        "pressure_gram_scaled_rank": 8,
+        "pressure_gram_scaled_condition_estimate": 10.937113801369364,
+        "pressure_basis_version": "q4_source_selected_q1_knots_v1",
+        "source_geometry_node_ids": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ]
+      },
+      "augmentation_acceleration": "supported_schur_dev",
+      "schur_attempts": 1,
+      "schur_relinearizations": 0,
+      "schur_applied": 1,
+      "schur_rejected": 0,
+      "augmentation_trace": [
+        {
+          "pressure_change": 0.10820096253303517,
+          "minimum_gap": -1.6009227414945174e-05,
+          "residual_norm": 1.8397078391582823e-08,
+          "macro_equilibrium_force_limit_n": 5.062499999929148e-08,
+          "active_pressure_dofs": 2,
+          "source_contact_force_n": [
+            -3.1257291664151368e-21,
+            3.7200112779356254e-09,
+            0.01203025876526553
+          ],
+          "sampled_overlap_gap_m": -1.5911120215029396e-05,
+          "pressure_rank": null,
+          "pressure_gram_rank": 8,
+          "pressure_gradient_condition": null,
+          "pressure_gram_condition_estimate": 19.58675661586422,
+          "pressure_gram_supported_modes": 8,
+          "pressure_gram_scaled_rank": 8,
+          "pressure_gram_scaled_condition_estimate": 10.937113801384124,
+          "minimum_weighted_gap_m": null,
+          "normalized_weighted_gap_m": [
+            3.5430143048032646e-05,
+            2.1727659460832825e-05,
+            3.4168247643668352e-06,
+            -1.0590036392518961e-05,
+            3.542292798616702e-05,
+            2.168760850511478e-05,
+            3.2877532781956225e-06,
+            -1.0820096253303516e-05
+          ],
+          "reference_support_m2": [
+            0.061874999999999986,
+            0.18562500000004095,
+            0.18562499999998422,
+            0.06187499999992136,
+            0.05062499999999994,
+            0.15187500000036946,
+            0.15187499999985982,
+            0.05062499999929147
+          ],
+          "normal_multiplier_estimate_pa": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "source_pressure_node_ids": [
+            1,
+            2,
+            4,
+            5,
+            6,
+            7,
+            9,
+            10
+          ],
+          "acceleration_applied": false
+        },
+        {
+          "pressure_change": 0.06850685781294798,
+          "minimum_gap": -1.2021261730055894e-05,
+          "residual_norm": 3.9205230745950107e-16,
+          "macro_equilibrium_force_limit_n": 5.06249999992603e-08,
+          "active_pressure_dofs": 2,
+          "source_contact_force_n": [
+            -9.147542656098967e-21,
+            9.655202899144592e-09,
+            0.019510553576700035
+          ],
+          "sampled_overlap_gap_m": -1.1865001938879606e-05,
+          "pressure_rank": null,
+          "pressure_gram_rank": 8,
+          "pressure_gradient_condition": null,
+          "pressure_gram_condition_estimate": 19.58675661588646,
+          "pressure_gram_supported_modes": 8,
+          "pressure_gram_scaled_rank": 8,
+          "pressure_gram_scaled_condition_estimate": 10.937113801367488,
+          "minimum_weighted_gap_m": null,
+          "normalized_weighted_gap_m": [
+            3.5821826947365566e-05,
+            2.3298596146961948e-05,
+            6.533862137169281e-06,
+            -6.48425879047818e-06,
+            3.581033518421367e-05,
+            2.323480513510177e-05,
+            6.3282840045952635e-06,
+            -6.8506857812947966e-06
+          ],
+          "reference_support_m2": [
+            0.061875,
+            0.18562500000007515,
+            0.18562500000003634,
+            0.06187499999991823,
+            0.05062499999999999,
+            0.15187500000067736,
+            0.1518750000003319,
+            0.05062499999926029
+          ],
+          "normal_multiplier_estimate_pa": [
+            0.0,
+            0.0,
+            0.0,
+            0.10590036392518962,
+            0.0,
+            0.0,
+            0.0,
+            0.10820096253303517
+          ],
+          "source_pressure_node_ids": [
+            1,
+            2,
+            4,
+            5,
+            6,
+            7,
+            9,
+            10
+          ],
+          "acceleration_applied": false,
+          "schur_force_map_unconstrained_singular_values": [
+            1.3648440792290155,
+            0.3704060466481362
+          ],
+          "schur_force_map_single_control_singular_values": [
+            [
+              1.3648440792290155,
+              0.3704060466481362
+            ],
+            [
+              1.3648440792290155,
+              0.3704060466481362
+            ]
+          ],
+          "schur_force_map_column_norms": [
+            0.034502038065978125,
+            0.027210119955997532
+          ],
+          "schur_force_map_scaled_singular_values": [
+            1.3648440792290155,
+            0.37040604664813626
+          ],
+          "schur_scaled_condition": 13.173018647534414,
+          "schur_scaled_singular_values": [
+            1.8753769504377924,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            0.14236501143865044
+          ],
+          "schur_scaled_rhs_modal": [
+            0.4568966350625752,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -0.021512007871295785
+          ],
+          "schur_scaled_weak_right_mode": [
+            -0.0,
+            -0.0,
+            -0.0,
+            0.65866523350334,
+            0.0,
+            0.0,
+            0.0,
+            -0.7524361170052847
+          ],
+          "schur_scaled_weak_rhs_fraction": 0.04703077657364321,
+          "schur_effective_rank": 8,
+          "schur_truncated_response": false,
+          "schur_full_step_max_pa": 0.2922524268719979,
+          "schur_initial_pressure_pa": [
+            0.0,
+            0.0,
+            0.0,
+            0.10590036392518962,
+            0.0,
+            0.0,
+            0.0,
+            0.10820096253303517
+          ],
+          "schur_full_direction_pa": [
+            -0.0,
+            -0.0,
+            -0.0,
+            0.08378808331840049,
+            -0.0,
+            -0.0,
+            -0.0,
+            0.2922524268719979
+          ],
+          "schur_backtrack_rejections": {
+            "step_cap": 0,
+            "negative_pressure": 0,
+            "pressure_cap": 0,
+            "active_branch": 0,
+            "predicted_merit": 0
+          },
+          "schur_best_fixed_branch_fraction": 1.0,
+          "schur_best_fixed_branch_residual_pa": 2.7755575615628914e-17,
+          "schur_proposal_kind": "fixed_active_branch",
+          "schur_proposed": true,
+          "schur_active_indices": [
+            3,
+            7
+          ],
+          "schur_predicted_residual_pa": 2.7755575615628914e-17,
+          "schur_predicted_residual_before_pa": 0.06850685781294798,
+          "schur_step_fraction": 1.0
+        },
+        {
+          "schur_verified": true,
+          "pressure_change": 3.4174330032499256e-11,
+          "minimum_gap": -4.090322739024366e-06,
+          "residual_norm": 1.2404619314414134e-15,
+          "macro_equilibrium_force_limit_n": 5.062499999999982e-08,
+          "active_pressure_dofs": 2,
+          "source_contact_force_n": [
+            -3.327372385494568e-21,
+            -7.34823250183522e-17,
+            0.03200992555354906
+          ],
+          "sampled_overlap_gap_m": -4.090322591230413e-06,
+          "pressure_rank": null,
+          "pressure_gram_rank": 8,
+          "pressure_gradient_condition": null,
+          "pressure_gram_condition_estimate": 19.586756615665436,
+          "pressure_gram_supported_modes": 8,
+          "pressure_gram_scaled_rank": 8,
+          "pressure_gram_scaled_condition_estimate": 10.937113801369364,
+          "minimum_weighted_gap_m": null,
+          "normalized_weighted_gap_m": [
+            3.6464516161573446e-05,
+            2.585806453826754e-05,
+            1.1531182804077904e-05,
+            -3.417434182619254e-15,
+            3.646451616161284e-05,
+            2.5858064538486136e-05,
+            1.1531182804798173e-05,
+            -2.070191871438458e-15
+          ],
+          "reference_support_m2": [
+            0.061875,
+            0.18562499999999993,
+            0.18562499999999996,
+            0.06187499999999982,
+            0.05062499999999995,
+            0.15187499999999982,
+            0.15187499999999987,
+            0.05062499999999981
+          ],
+          "normal_multiplier_estimate_pa": [
+            0.0,
+            0.0,
+            0.0,
+            0.1896884472435901,
+            0.0,
+            0.0,
+            0.0,
+            0.40045338940503306
+          ],
+          "source_pressure_node_ids": [
+            1,
+            2,
+            4,
+            5,
+            6,
+            7,
+            9,
+            10
+          ]
+        }
+      ],
+      "nodal_forces_n": [
+        -0.05,
+        -0.05
+      ],
+      "external_nodal_work_trapezoid_j": 9.667741937528307e-07
+    }
+  ],
+  "augmentation_attempts": null,
+  "contact_failure": null,
+  "has_restart_checkpoint": true,
+  "terminal_checkpoint_replay_exact": true,
+  "half_path_steps": 1,
+  "split_path_restart_equal": true,
+  "changed_knot_restart_rejected": true,
+  "final_displacement_norm_m": 8.389173938861994e-05
+}

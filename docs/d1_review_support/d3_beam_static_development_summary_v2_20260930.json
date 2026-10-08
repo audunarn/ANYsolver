@@ -1,0 +1,308 @@
+{
+  "schema": "D3_BEAM_STATIC_DEVELOPMENT_SUMMARY_V2",
+  "risk_level": "A",
+  "accepted": false,
+  "released": false,
+  "installed": false,
+  "foundation_response": [
+    {
+      "cells": 16,
+      "reaction_relative_error": 0.0035144669352635254,
+      "tip_relative_error": 1.4484484986560425e-05,
+      "reaction_N": 0.00013889569085561834,
+      "reference_reaction_N": 0.00013840925610151514,
+      "line_stiffness_N_per_m2": 10000.0,
+      "gap_m": -5.881928887152207e-06,
+      "active_length_m": 0.004722793951453769
+    },
+    {
+      "cells": 32,
+      "reaction_relative_error": 0.0008823577491577979,
+      "tip_relative_error": 3.5515818635539256e-06,
+      "reaction_N": 0.00013853138258119148,
+      "reference_reaction_N": 0.00013840925610151514,
+      "line_stiffness_N_per_m2": 10000.0,
+      "gap_m": -5.870931836756896e-06,
+      "active_length_m": 0.004719229806548604
+    },
+    {
+      "cells": 64,
+      "reaction_relative_error": 0.00022438561144358976,
+      "tip_relative_error": 7.91938286372075e-07,
+      "reaction_N": 0.00013844031314707493,
+      "reference_reaction_N": 0.00013840925610151514,
+      "line_stiffness_N_per_m2": 10000.0,
+      "gap_m": -5.8681560013585515e-06,
+      "active_length_m": 0.00471835830932321
+    },
+    {
+      "cells": 64,
+      "reaction_relative_error": 0.00022399022226391862,
+      "tip_relative_error": 2.574933615292617e-07,
+      "reaction_N": 0.00013916333862244978,
+      "reference_reaction_N": 0.00013913217437578728,
+      "line_stiffness_N_per_m2": 100000.0,
+      "gap_m": -1.8556606014123733e-06,
+      "active_length_m": 0.0014998792183929573
+    }
+  ],
+  "executions": [
+    {
+      "stem": "d3_beam_foundation_v1_20260930",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_seconds": 4.0006986999942455,
+      "peak_process_tree_memory_mb": 259.547136,
+      "time_limit_seconds": 180.0,
+      "memory_limit_bytes": 1073741824,
+      "command": [
+        "C:/Python/Python314/python.exe",
+        "docs/d1_review_support/contact_development_check.py",
+        "docs/d1_review_support/d3_beam_foundation_v1_20260930.inputs.json"
+      ],
+      "log": "docs\\d1_review_support\\d3_beam_foundation_v1_20260930.log"
+    },
+    {
+      "stem": "d3_beam_foundation_v2_20260930",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_seconds": 6.13131609998527,
+      "peak_process_tree_memory_mb": 262.49216,
+      "time_limit_seconds": 180.0,
+      "memory_limit_bytes": 1073741824,
+      "command": [
+        "C:/Python/Python314/python.exe",
+        "docs/d1_review_support/contact_development_check.py",
+        "docs/d1_review_support/d3_beam_foundation_v2_20260930.inputs.json"
+      ],
+      "log": "docs\\d1_review_support\\d3_beam_foundation_v2_20260930.log"
+    },
+    {
+      "stem": "d3_beam_reference_resolution_v1_20260930",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_seconds": 3.4124936000152957,
+      "peak_process_tree_memory_mb": 213.495808,
+      "time_limit_seconds": 180.0,
+      "memory_limit_bytes": 1073741824,
+      "command": [
+        "C:/Python/Python314/python.exe",
+        "docs/d1_review_support/contact_development_check.py",
+        "docs/d1_review_support/d3_beam_reference_resolution_v1_20260930.inputs.json"
+      ],
+      "log": "docs\\d1_review_support\\d3_beam_reference_resolution_v1_20260930.log"
+    },
+    {
+      "stem": "d3_multiple_beam_rigid_v1_20260930",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_seconds": 4.453115999989677,
+      "peak_process_tree_memory_mb": 263.192576,
+      "time_limit_seconds": 180.0,
+      "memory_limit_bytes": 1073741824,
+      "command": [
+        "C:/Python/Python314/python.exe",
+        "docs/d1_review_support/contact_development_check.py",
+        "docs/d1_review_support/d3_multiple_beam_rigid_v1_20260930.inputs.json"
+      ],
+      "log": "docs\\d1_review_support\\d3_multiple_beam_rigid_v1_20260930.log"
+    },
+    {
+      "stem": "d3_multiple_beam_rigid_v2_20260930",
+      "status": "completed",
+      "exit_code": 1,
+      "elapsed_seconds": 6.042039099993417,
+      "peak_process_tree_memory_mb": 444.858368,
+      "time_limit_seconds": 180.0,
+      "memory_limit_bytes": 1073741824,
+      "command": [
+        "C:/Python/Python314/python.exe",
+        "docs/d1_review_support/contact_development_check.py",
+        "docs/d1_review_support/d3_multiple_beam_rigid_v2_20260930.inputs.json"
+      ],
+      "log": "docs\\d1_review_support\\d3_multiple_beam_rigid_v2_20260930.log"
+    },
+    {
+      "stem": "d3_multiple_beam_rigid_v3_20260930",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_seconds": 3.70874719999847,
+      "peak_process_tree_memory_mb": 259.756032,
+      "time_limit_seconds": 180.0,
+      "memory_limit_bytes": 1073741824,
+      "command": [
+        "C:/Python/Python314/python.exe",
+        "docs/d1_review_support/contact_development_check.py",
+        "docs/d1_review_support/d3_multiple_beam_rigid_v3_20260930.inputs.json"
+      ],
+      "log": "docs\\d1_review_support\\d3_multiple_beam_rigid_v3_20260930.log"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "docs/d1_review_support/d3_beam_foundation_v1_20260930.inputs.json",
+      "sha256": "a94d0bcde8cea800e7795eadedab929266d7a41f21627d4225f8ddfa437fdb4c"
+    },
+    {
+      "path": "docs/d1_review_support/d3_beam_foundation_v1_20260930.log",
+      "sha256": "bb0304d853b7f4c320bba279ff5a3b758d40bbe7aa286802e38225efa71ae56e"
+    },
+    {
+      "path": "docs/d1_review_support/d3_beam_foundation_v1_20260930.xml",
+      "sha256": "833cdcc6ac036575c0916e7441cea48e358acda9ea820da0bab532c20b231481"
+    },
+    {
+      "path": "docs/d1_review_support/d3_beam_foundation_v1_20260930.resources.json",
+      "sha256": "bec868542d7e18465eb4a05bbe61f5e5b708e9ed3e81664c1312d9e8094d22ac"
+    },
+    {
+      "path": "docs/d1_review_support/d3_beam_foundation_v2_20260930.inputs.json",
+      "sha256": "61a18c7124e908bdd30940224c1a6f439c42205dc1207a38436396a58e82d2cf"
+    },
+    {
+      "path": "docs/d1_review_support/d3_beam_foundation_v2_20260930.log",
+      "sha256": "cfe4340a1cb8dfc9e48b7260eb1926088d5cdac07bcefa8a0e818885fbb06b99"
+    },
+    {
+      "path": "docs/d1_review_support/d3_beam_foundation_v2_20260930.xml",
+      "sha256": "88b12fd0c564598c1095f938d3e885498bcfb3d5c5bf0c992ebc6dac1c2ebd40"
+    },
+    {
+      "path": "docs/d1_review_support/d3_beam_foundation_v2_20260930.resources.json",
+      "sha256": "19ed63646904b5fad180cd38ec34e8e2dfccd2f555778cda3276d8c7390c6e80"
+    },
+    {
+      "path": "docs/d1_review_support/d3_beam_reference_resolution_v1_20260930.inputs.json",
+      "sha256": "913c0fc0b381749055cf861b9625082d468d08bef436031902cb5342beae90d4"
+    },
+    {
+      "path": "docs/d1_review_support/d3_beam_reference_resolution_v1_20260930.log",
+      "sha256": "76b53018b1873ffb3b4f41a6a0b5bfbb65635cb1616b5af65ea091c1951bc96f"
+    },
+    {
+      "path": "docs/d1_review_support/d3_beam_reference_resolution_v1_20260930.xml",
+      "sha256": "5970aae7f9af799e1d84515fb7448516e5269a9310303052be283046b89506e5"
+    },
+    {
+      "path": "docs/d1_review_support/d3_beam_reference_resolution_v1_20260930.resources.json",
+      "sha256": "5a1259f26ba7b8c426d2849438f445476efd01a4d724c5d4f21ae1d8f482e49a"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_rigid_v1_20260930.inputs.json",
+      "sha256": "50296a890e5c756622edd553934d2ad70267812501110da0a128a90117099990"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_rigid_v1_20260930.log",
+      "sha256": "5c58a2ed053118cd55cf0f08db304dd0305fe13c36cfa9af5646f1104e17c6c0"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_rigid_v1_20260930.xml",
+      "sha256": "0a8880d58df37c196ebe700d09cfaf9c7c476c7fcae253e94aa3d8f2dad1b41e"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_rigid_v1_20260930.resources.json",
+      "sha256": "1ec54ee0b5539b232a335ff00c6d59617eb939a86e4a27657e8b6b397432ffcd"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_rigid_v2_20260930.inputs.json",
+      "sha256": "11e1e197ee103e0918812db253f8c1ffe1c74630bb735cbc8f2ffaab00097065"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_rigid_v2_20260930.log",
+      "sha256": "3be398e7ec10054dfc876ee6abe1f7b5a178940f5b0582f0d7955add4d9b74ef"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_rigid_v2_20260930.xml",
+      "sha256": "8b71709eb4208e18ce571addc7a4ce4a2fef796676460835709c633de6fa85a7"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_rigid_v2_20260930.resources.json",
+      "sha256": "41ca52996f44623da162e795f21113e33d274b921c820537b78c2a52cf4dc7a5"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_rigid_v3_20260930.inputs.json",
+      "sha256": "05e7f1169459268a2f054bc48817d9baeca5942c238b308aa8215574240bccdd"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_rigid_v3_20260930.log",
+      "sha256": "ba8256c7c52ebecc6b954a184b6faa0ab33b23d90fc85c8924f07695f6eccbf7"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_rigid_v3_20260930.xml",
+      "sha256": "54995c658947cf4e7f82112547051ca33effc59b3cdf01f60c46678b67d9488a"
+    },
+    {
+      "path": "docs/d1_review_support/d3_multiple_beam_rigid_v3_20260930.resources.json",
+      "sha256": "b1fcac79c0a2508dd0d17d53710696175004f283da7f40e809b663ad9fa48eaa"
+    }
+  ],
+  "sources": [
+    {
+      "path": "src/anysolver/general_contact/beam_plane.py",
+      "sha256": "c435ec5b12c3aa664fbff5c187168bd38ee17b44ecbe6ec7c98f4b4e11436522"
+    },
+    {
+      "path": "src/anysolver/general_contact/beam_radial.py",
+      "sha256": "2b10f19109be5ebfa692d77038f03d4722c1b44ede4b4d117a8f3c8ab405b2bf"
+    },
+    {
+      "path": "src/anysolver/general_contact/multiple_beam_rigid.py",
+      "sha256": "bd5aa455e7cffff0a0a4887383958473e81e1ca83e969ea6e56d2a6d96d741ce"
+    },
+    {
+      "path": "src/anysolver/general_contact/core.py",
+      "sha256": "c8e050702a184a4815df6beded12442cea5a912677d1ab13042d9abe9f7ce818"
+    },
+    {
+      "path": "tests/test_general_contact_beam_foundation_dev.py",
+      "sha256": "db6dfbc6bd8449e2d7b6ae64335b0e09b675c507bc3cfae954f409832501dcfe"
+    },
+    {
+      "path": "tests/test_general_contact_multiple_beam_rigid.py",
+      "sha256": "9070aa53a4bb88d2f502959e7031d6d786cbeab91c6306d29e8f6208141e7aac"
+    },
+    {
+      "path": "docs/d1_review_support/d3_beam_foundation_reference.py",
+      "sha256": "41ad204330260ab61fb81567df679745fa4f62814abeb88b8d6714313bdf66b5"
+    },
+    {
+      "path": "examples/general_contact_multiple_round_beam_tools.py",
+      "sha256": "9daf746bb00ae3adf19ba361b9a26b9f5141289b58f7ce65774358c93c5553c6"
+    }
+  ],
+  "limits": [
+    "Independent Timoshenko single-active-interval finite-foundation comparison on stated concentric elastic small-motion cantilever only; nodal-load and centreline mesh convergence measured",
+    "80-digit independently reconstructed transfer at frozen float front agrees for two inputs; no general outward reference or branch certificate",
+    "Multiple fixed-rigid line-penalty composition reuses original kernels; no caps, moving tools, beam-beam, shell/native, friction, automatic or self admission",
+    "Each pair retains own dimensioned line stiffness/gap; exact named feature ownership and aggregate resource admission",
+    "No installed artifact or accepted shell capability changed; separate scientific and package acceptance remain open"
+  ],
+  "prior_summary": {
+    "path": "docs/d1_review_support/d3_beam_static_development_summary_v1_20260930.json",
+    "sha256": "16351c698816ee0625060fc2a13e20112245c853874c47629870c64adf3bec11"
+  },
+  "additional_dispositions": [
+    {
+      "stem": "d3_multiple_beam_rigid_v2_20260930",
+      "status": "NONPASS",
+      "passed": 2,
+      "failed": 1,
+      "classification": "test dimensional residual assertion; completed mechanical displacement result; old failure retained"
+    },
+    {
+      "stem": "d3_multiple_beam_rigid_v3_20260930",
+      "status": "PASS",
+      "passed": 1,
+      "prior_checks_excluded": 10,
+      "classification": "explicit fixed positive force scale corrects relative criterion; no production change"
+    }
+  ],
+  "multiple_tool_distinct_checks": {
+    "new": 11,
+    "old_shell_routing_control": 1,
+    "source_example_verified": true,
+    "force_and_displacement": true,
+    "split_restart": true,
+    "installed": false
+  }
+}

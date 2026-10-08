@@ -1,0 +1,70 @@
+{
+  "status": "seed_preflight_pass",
+  "source_commit": "2641aa352f546fcad769a87ca7174af9729d8f4d",
+  "probe_sha256": "afc35b8ae0dc18ff1fd377a1d670511d81699bed57138cb69b0da0a012eda015",
+  "saved_source_sha256": "ba2e0be212ee6ac25b9d208a7f2fb9644cba69330dd357810caef1ef41094bdb",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "runtime_identity": {
+    "python": "3.14.2",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1"
+  },
+  "fine_target_s3_faces": 512,
+  "fine_coordinate_count": 1794,
+  "fine_reduced_coordinate_count": 1650,
+  "steps": [
+    {
+      "step": 1,
+      "fine_reconstruction_maximum_error": 0.0,
+      "control_maximum_error": 2.6449632082248655e-24,
+      "nodal_forces_nonnegative": true,
+      "forced_modes_supported": true,
+      "source_pressure_mode_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "coarse_to_fine_work_relative_difference": 0.0002100781939727912,
+      "independent_gap_lower_m": -5.876155344446909e-06,
+      "gap_tolerance_m": 5e-05,
+      "proxy_previous_to_seed_swept_admissible": true,
+      "baseline_free_residual_norm_n": 0.04780330793993236,
+      "seed_free_residual_norm_n": 0.00064417382730252,
+      "contact_integration_triangles": 2416
+    },
+    {
+      "step": 2,
+      "fine_reconstruction_maximum_error": 0.0,
+      "control_maximum_error": 4.972749264271952e-24,
+      "nodal_forces_nonnegative": true,
+      "forced_modes_supported": true,
+      "source_pressure_mode_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "coarse_to_fine_work_relative_difference": 0.0002100778065105834,
+      "independent_gap_lower_m": -3.9748937987740105e-05,
+      "gap_tolerance_m": 5e-05,
+      "proxy_previous_to_seed_swept_admissible": true,
+      "baseline_free_residual_norm_n": 0.09560661587986471,
+      "seed_free_residual_norm_n": 0.0064815469452526205,
+      "contact_integration_triangles": 2416
+    }
+  ],
+  "elapsed_seconds": 72.35941959999764
+}

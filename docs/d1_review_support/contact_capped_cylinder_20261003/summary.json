@@ -1,0 +1,175 @@
+{
+  "scope": "development implementation and installed checks; not independent engineering acceptance",
+  "base_solver_sha": "999bcaea0c8d5b73b636e28d783075ca27244834",
+  "candidate_files": {
+    "src\\anysolver\\general_contact\\capped_cylinder.py": "30968417bcca7288f9b1149d09cd03928cf073d7746385ce4c462e59fed250fa",
+    "src\\anysolver\\general_contact\\core.py": "d1acb747c5747b19616eaf115a439ad3111eabaa6a7df64aa154c0c67412cb89",
+    "src\\anysolver\\__init__.py": "d5808f7b79dd875cc2e772ce59309fbb3d840f0610c1fb7aec8c6aaad71869af",
+    "src\\anysolver\\general_contact\\__init__.py": "164da3965ffd3ffb44fc6890d294edfde54f589029dfe4d0b8cfb034d7edaa02",
+    "tests\\test_general_contact_capped_cylinder.py": "db67a591ef844c9e88ddcefa68593de8555bb3753274fdb296bda493423f5d44",
+    "examples\\general_contact_round_beam_capped_cylinder.py": "eeaac2f0f29a946f929f7910a1f590f6feba670945b90b3e4a6b032fb1853fdc"
+  },
+  "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "runs": {
+    "active_prefix": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 5.101748100016266,
+      "peak_bytes": 183119872
+    },
+    "build": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 11.739958099962678,
+      "peak_bytes": 110465024
+    },
+    "correlated_inactivity": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 2.430277200008277,
+      "peak_bytes": 184344576
+    },
+    "coupled": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 4.168533299991395,
+      "peak_bytes": 183521280
+    },
+    "exact_activation_sign": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 2.9317479000310414,
+      "peak_bytes": 184791040
+    },
+    "exact_restriction": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 2.448697399988305,
+      "peak_bytes": 179970048
+    },
+    "exact_work_activation": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 6.6628978999797255,
+      "peak_bytes": 182894592
+    },
+    "first": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 3.5737172000226565,
+      "peak_bytes": 181555200
+    },
+    "grazing_and_rim_pocket": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 2.557711399975233,
+      "peak_bytes": 185266176
+    },
+    "grazing_coordinate_discriminator": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 2.4479827000177465,
+      "peak_bytes": 184188928
+    },
+    "install": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 3.760822599986568,
+      "peak_bytes": 85004288
+    },
+    "installed_final": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 13.877306999987923,
+      "peak_bytes": 350388224
+    },
+    "installed_lazy": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 3.5274721999885514,
+      "peak_bytes": 317927424
+    },
+    "installed_lazy_corrected": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 3.3288509999983944,
+      "peak_bytes": 318291968
+    },
+    "installed_reference_measure": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 2.099392000003718,
+      "peak_bytes": 179150848
+    },
+    "moving_tool_report": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 4.123572599957697,
+      "peak_bytes": 181972992
+    },
+    "outward_controls": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 4.615588299988303,
+      "peak_bytes": 183857152
+    },
+    "polished": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 2.8484889999963343,
+      "peak_bytes": 181923840
+    },
+    "reference_measure": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 3.5213959000539035,
+      "peak_bytes": 183648256
+    },
+    "review_seams_and_sweeps": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 2.472993800009135,
+      "peak_bytes": 184639488
+    },
+    "source_final": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 10.44339749997016,
+      "peak_bytes": 184066048
+    },
+    "two_pockets_and_moving_tool": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 4.46945879998384,
+      "peak_bytes": 182497280
+    },
+    "work_and_covariance": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 3.651171699981205,
+      "peak_bytes": 184160256
+    }
+  },
+  "installed_final": "37 installed checks + 1 historical lazy source-child compatibility check passed",
+  "installed_lazy_corrected": "1 additional actual installed-root no-contact/lazy export check passed",
+  "installed_reference_measure": "1 additional owner-enforced straight-midpoint reference rejection passed",
+  "source_final": "34 checks passed before two additive capability/lazy tests",
+  "loaded_solver_modules": 237,
+  "package_files": 490,
+  "package_errors": [],
+  "module_errors": [],
+  "wheel_sha256": {
+    "anyfem-0.4.1-py3-none-any.whl": "acbe860e1808552f24339e47b0ab0a1593ab90a403dbb684df9bf88f690cb981",
+    "anysolver-0.4.7-py3-none-any.whl": "4233daa198dee7859f38c8aeb75b7b06bd22f08ff0d17f002d71748d41fb704c"
+  },
+  "resource_limits": {
+    "seconds": 180,
+    "MiB": 953
+  },
+  "review_limits": [
+    "same-family source scrutiny, no independent engineering acceptance",
+    "exterior-centreline restriction closes known medial-seam interface defect",
+    "adaptive mixed-panel Gauss estimate is not a rigorous general integration-error certificate"
+  ]
+}

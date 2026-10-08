@@ -1,0 +1,95 @@
+{
+  "status": "development_two_body_pressure_work_null_preflight",
+  "scope": "saved guided four-Q4/two-free-S3 slide and recontact only",
+  "source_commit": "381dc8f3eb11f732adfce3a1853fa70042752faa",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "probe_sha256": "103e866b7d46e4fabda8fc405489d0feb2fcb7753992ad1d7d850a4cf8ca026a",
+  "records": [
+    {
+      "step": 4,
+      "pressure_modes": 10,
+      "active_pressure_modes": 2,
+      "strict_biactive_modes": [],
+      "enlarged_near_front_modes": [
+        0,
+        1,
+        2,
+        4,
+        5,
+        6,
+        7,
+        9
+      ],
+      "independent_support_relative_error": 2.4340923859796062e-14,
+      "production_support_relative_certificate_error": 0.0,
+      "independent_gap_maximum_error_m": 7.062581788386084e-13,
+      "independent_pressure_gram_relative_error": 5.163213915246398e-14,
+      "independent_gram_scaled_minimum_eigenvalue": 0.21525260318704165,
+      "structural_tangent_symmetry_relative": 3.40532183263674e-17,
+      "structural_energy_scaled_minimum_eigenvalue": 0.05284351187054047,
+      "full_supported_work": {
+        "modes": 10,
+        "scaled_rank": 10,
+        "smallest_to_largest_singular_ratio": 0.001978930517647279
+      },
+      "no_numerically_resolved_supported_work_null": true,
+      "dimensional_compliance_to_gram_eigenvalue_range_m3_per_n": [
+        3.3879264523104007e-09,
+        0.1783918788046897
+      ],
+      "strict_active_plus_biactive_work": {
+        "modes": 2,
+        "scaled_rank": 2,
+        "smallest_to_largest_singular_ratio": 0.3000335084894707
+      },
+      "enlarged_near_front_work": {
+        "modes": 10,
+        "scaled_rank": 10,
+        "smallest_to_largest_singular_ratio": 0.001978930517647279
+      }
+    },
+    {
+      "step": 7,
+      "pressure_modes": 10,
+      "active_pressure_modes": 2,
+      "strict_biactive_modes": [],
+      "enlarged_near_front_modes": [
+        0,
+        1,
+        2,
+        3,
+        5,
+        6,
+        7,
+        8
+      ],
+      "independent_support_relative_error": 1.6885929715766659e-15,
+      "production_support_relative_certificate_error": 0.0,
+      "independent_gap_maximum_error_m": 2.1563198275564854e-13,
+      "independent_pressure_gram_relative_error": 2.3694077912016146e-15,
+      "independent_gram_scaled_minimum_eigenvalue": 0.2152526014825398,
+      "structural_tangent_symmetry_relative": 3.405321704877484e-17,
+      "structural_energy_scaled_minimum_eigenvalue": 0.05284351187054047,
+      "full_supported_work": {
+        "modes": 10,
+        "scaled_rank": 10,
+        "smallest_to_largest_singular_ratio": 0.001978933793589113
+      },
+      "no_numerically_resolved_supported_work_null": true,
+      "dimensional_compliance_to_gram_eigenvalue_range_m3_per_n": [
+        3.3879373085501236e-09,
+        0.1783927938849671
+      ],
+      "strict_active_plus_biactive_work": {
+        "modes": 2,
+        "scaled_rank": 2,
+        "smallest_to_largest_singular_ratio": 0.30027196350778307
+      },
+      "enlarged_near_front_work": {
+        "modes": 10,
+        "scaled_rank": 10,
+        "smallest_to_largest_singular_ratio": 0.001978933793589113
+      }
+    }
+  ]
+}

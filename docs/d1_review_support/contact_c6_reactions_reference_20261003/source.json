@@ -1,0 +1,480 @@
+{
+  "scope": "source development and temporal discriminator; not engineering acceptance",
+  "parent": "7124e166a715af7ed297b05f5b5ae67774a47379",
+  "source_hashes": {
+    "src/anysolver/general_contact/transient.py": "c61252c1be3e473c6f019e072597b3105932c52051dc75ac106b7cd2a4ef3c90",
+    "scripts/check_general_contact_oblique_temporal_dev.py": "ea7d86bb54214d5c256b8a655117fc4352db7c5bfe2ae7020691cb2b99b26eb6",
+    "tests/reference_oblique_q4_plateau.py": "15c11c133ba8ba7b20107e1e78c193c8d0bbf4dd0fa2530ef32a44d4a483a262",
+    "tests/test_reference_oblique_q4_plateau.py": "24fc64faecc3c40b06c2cd56ef9443276ecace11f714f5200aebbc942979ef0d",
+    "tests/test_general_contact_transient_constraint_reactions.py": "e3713cf4a9d9a8896aaaa4ac6425a612e30429742d2b7ba36a6c6d69ef258b5a",
+    "tests/test_general_contact_transient_oblique_q4_plastic.py": "f1f0d8f3dcefa85ee3293c36983da2e6569379787757f3cd3ed84c0093a2330f",
+    "tests/test_general_contact_oblique_temporal_comparison.py": "e3a8bb9d9a04af5e03d349d974982417e4a86fe98771a43969b9ae625ec3c0db"
+  },
+  "environment": {
+    "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1"
+  },
+  "records": {
+    "source/src/anysolver/general_contact/transient.py": {
+      "bytes": 125349,
+      "sha256": "c61252c1be3e473c6f019e072597b3105932c52051dc75ac106b7cd2a4ef3c90"
+    },
+    "source/scripts/check_general_contact_oblique_temporal_dev.py": {
+      "bytes": 3366,
+      "sha256": "ea7d86bb54214d5c256b8a655117fc4352db7c5bfe2ae7020691cb2b99b26eb6"
+    },
+    "source/tests/reference_oblique_q4_plateau.py": {
+      "bytes": 18570,
+      "sha256": "15c11c133ba8ba7b20107e1e78c193c8d0bbf4dd0fa2530ef32a44d4a483a262"
+    },
+    "source/tests/test_reference_oblique_q4_plateau.py": {
+      "bytes": 10226,
+      "sha256": "24fc64faecc3c40b06c2cd56ef9443276ecace11f714f5200aebbc942979ef0d"
+    },
+    "source/tests/test_general_contact_transient_constraint_reactions.py": {
+      "bytes": 7073,
+      "sha256": "e3713cf4a9d9a8896aaaa4ac6425a612e30429742d2b7ba36a6c6d69ef258b5a"
+    },
+    "source/tests/test_general_contact_transient_oblique_q4_plastic.py": {
+      "bytes": 10414,
+      "sha256": "f1f0d8f3dcefa85ee3293c36983da2e6569379787757f3cd3ed84c0093a2330f"
+    },
+    "source/tests/test_general_contact_oblique_temporal_comparison.py": {
+      "bytes": 940,
+      "sha256": "e3a8bb9d9a04af5e03d349d974982417e4a86fe98771a43969b9ae625ec3c0db"
+    },
+    "contact_constraint_reactions_a_20261003/runner.log": {
+      "bytes": 866,
+      "sha256": "f9dccc8ff0aba81b087b2344c7b124e2d97366f1db9a501e97674eb189e93ac8"
+    },
+    "contact_constraint_reactions_a_20261003/selection.json": {
+      "bytes": 1084,
+      "sha256": "f51c867d0720401a846628a32705979d9f3cf5c5cf2ef845441da9686a3ae941"
+    },
+    "contact_constraint_reactions_a_20261003/runtime.json": {
+      "bytes": 31877,
+      "sha256": "a40ff9eb78201bad96d1de83db1c7f9ff9b4bfc3841c44a3dac9f17130087086"
+    },
+    "contact_constraint_reactions_a_20261003/resource.json": {
+      "bytes": 138,
+      "sha256": "7ad91b7752a1db8ae3b41a5612f8de4406ef55a86396a8b8b2047da58a908699"
+    },
+    "contact_constraint_reactions_b_20261003/runner.log": {
+      "bytes": 727,
+      "sha256": "13b5eef80366a5f77a3a01860c01a985f42f552ac8fe8ee14158f35aa3cb684b"
+    },
+    "contact_constraint_reactions_b_20261003/selection.json": {
+      "bytes": 1458,
+      "sha256": "ef7d63a9c7855ce9663e5380595decfc6d95ed104b28485da345d20d242eb65a"
+    },
+    "contact_constraint_reactions_b_20261003/runtime.json": {
+      "bytes": 31877,
+      "sha256": "f58d7077c0cb464b02cade35e600c31362f814b8b1c0db3fdfa85d55858990f6"
+    },
+    "contact_constraint_reactions_b_20261003/resource.json": {
+      "bytes": 137,
+      "sha256": "fec8767d159a531b0161d7f6df1db6e3b3a58d16512bcdc968de2f94ac3afbea"
+    },
+    "contact_constraint_reactions_c_20261003/runner.log": {
+      "bytes": 733,
+      "sha256": "09928887c4ec3814f7dcc7964d8ab8a135b1945abd2de7ddcc403daeeef0cc0b"
+    },
+    "contact_constraint_reactions_c_20261003/selection.json": {
+      "bytes": 1470,
+      "sha256": "7ef44549b8702dc6b4f6b2d7cf4e6426ac3e947f21e6abd6f51360ec658ec242"
+    },
+    "contact_constraint_reactions_c_20261003/runtime.json": {
+      "bytes": 32743,
+      "sha256": "f30b3760d538cf825a672b3862899442780f395b09ac406713c7e21b8c68273b"
+    },
+    "contact_constraint_reactions_c_20261003/resource.json": {
+      "bytes": 138,
+      "sha256": "eaa93f74464c6ea8640cb0f6b91ff219ff5d9503f847113cd1e9cecefacce900"
+    },
+    "contact_oblique_yielded_restart_20261003/runner.log": {
+      "bytes": 612,
+      "sha256": "a62c5e40b048238211865bae397c5780de92e66a3229e0e2ff92eaf3189d02ff"
+    },
+    "contact_oblique_yielded_restart_20261003/selection.json": {
+      "bytes": 1237,
+      "sha256": "bd3d1d115bb236edb71bb434dc2b275d208047b97b2d45597cd7e6c135e51933"
+    },
+    "contact_oblique_yielded_restart_20261003/runtime.json": {
+      "bytes": 32241,
+      "sha256": "14b0532bc02d1b5ec996decd57f428d215e0845d993162dd6c743be76299f2f0"
+    },
+    "contact_oblique_yielded_restart_20261003/resource.json": {
+      "bytes": 139,
+      "sha256": "42f23a9bb8b583f164db1448e8c8198939ec3a0452be48f025a0962454297de5"
+    },
+    "contact_temporal_comparison_zero_20261003/runner.log": {
+      "bytes": 593,
+      "sha256": "bd5e17efac4f16176c694b848b4c0c97591749a036c3e52c34088caef05b8644"
+    },
+    "contact_temporal_comparison_zero_20261003/selection.json": {
+      "bytes": 1077,
+      "sha256": "396ce3ec03b837fd7fb4016312831db7dd07d8c14bb661fc9c75e42bd832c7fa"
+    },
+    "contact_temporal_comparison_zero_20261003/runtime.json": {
+      "bytes": 1069,
+      "sha256": "200b4f05152e5e26c24560bff630abfbfb17e7bd61bac4d8f95a700521e7b379"
+    },
+    "contact_temporal_comparison_zero_20261003/resource.json": {
+      "bytes": 138,
+      "sha256": "a23e0c1c65ca31c8b5ed410e9519fd6d51b03381124b8df6718cf699c30448f9"
+    },
+    "oblique-continuous-reference-dev-20261003-b/runner.log": {
+      "bytes": 1691,
+      "sha256": "e6a9c4688da158349ad79f34bdc920d9c79c7069b7174777388a8a5b02a3c526"
+    },
+    "oblique-continuous-reference-dev-20261003-b/selection.json": {
+      "bytes": 1034,
+      "sha256": "1dfa846e2ae2dd0eec23be9cab091f38240ce253ab35971d24199f007ca9b7fc"
+    },
+    "oblique-continuous-reference-dev-20261003-b/runtime.json": {
+      "bytes": 1071,
+      "sha256": "9b04bc41564589ba7e1ecb7380c388c3dbde8f30344170b7993c3322b3543534"
+    },
+    "oblique-continuous-reference-dev-20261003-b/resource.json": {
+      "bytes": 137,
+      "sha256": "c83be518a24fd0564833a82afdb824db799854a741db488f266f5841df535907"
+    },
+    "oblique-continuous-reference-dev-20261003-b/controls.json": {
+      "bytes": 9315,
+      "sha256": "a2a0d165531355bdcde65c38c7d944e7a5b2caf9d4418970847937882c755f73"
+    },
+    "oblique-continuous-reference-dev-20261003-c/runner.log": {
+      "bytes": 859,
+      "sha256": "3a847ab7f2870593388bd4e946ffd0f157ad8c1f341176ee20817feb8f4bfa6d"
+    },
+    "oblique-continuous-reference-dev-20261003-c/selection.json": {
+      "bytes": 1648,
+      "sha256": "005c75938a14670c090bf46c7d2db218888ca798b7d13d91c646a4cd77124b31"
+    },
+    "oblique-continuous-reference-dev-20261003-c/runtime.json": {
+      "bytes": 1069,
+      "sha256": "fa79bf2323ae2d19f5900914fa3b81534ee4bf90fd77b55b1e62cbc921ab97cd"
+    },
+    "oblique-continuous-reference-dev-20261003-c/resource.json": {
+      "bytes": 138,
+      "sha256": "bc57c780530df7b51e97d04e7ace2d9be11b893fcdb376aad57805230e2ed704"
+    },
+    "oblique-continuous-reference-dev-20261003-c/controls.json": {
+      "bytes": 9826,
+      "sha256": "9cac9dcfac036bdca9ae48a21441c3d51572bae5b850127ead8461d6ca50396f"
+    },
+    "comparison/contact_q4_oblique_continuous_comparison_pre_review_20261003.json": {
+      "bytes": 8647,
+      "sha256": "82dd9107886442326eba3c710e24a6ce8e39be7900dc4404bb663cedee460652"
+    },
+    "comparison/contact_q4_oblique_continuous_comparison_corrected_20261003.json": {
+      "bytes": 9465,
+      "sha256": "eec161e4fc122106cb6184919f1118d47a82108776398ab51ae9eb524f1a0a5f"
+    },
+    "comparison/contact_q4_oblique_continuous_comparison_20261003.log": {
+      "bytes": 357,
+      "sha256": "025cd632d0dd2fa9df64b622dea6ba0fd5f718a5338bb7d02d308b082e0dbd0f"
+    },
+    "comparison/contact_q4_oblique_continuous_comparison_corrected_20261003.log": {
+      "bytes": 357,
+      "sha256": "025cd632d0dd2fa9df64b622dea6ba0fd5f718a5338bb7d02d308b082e0dbd0f"
+    },
+    "saved_fields/coarse.json": {
+      "bytes": 65791,
+      "sha256": "534134dd70c66287c41a56bf6ed7f2f0ae908dc451d10bb59944920da968b382"
+    },
+    "saved_fields/half.json": {
+      "bytes": 128031,
+      "sha256": "4e470f7920fc8af2a63809cf4a95a9a95a9eed17bf6e989ea5cb3cbcb0320eab"
+    },
+    "capture.py": {
+      "bytes": 3113,
+      "sha256": "34ec19d6f1fe18eb3f4973bc3775ecc3f0526aa46f7695cbaa7a090280f0ef5d"
+    }
+  },
+  "runs": {
+    "contact_constraint_reactions_a_20261003": {
+      "resource": {
+        "peak_sampled_bytes": 186212352,
+        "limit_mib": 953,
+        "elapsed_seconds": 8.441297999990638,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      },
+      "selection": {
+        "scope": "focused source development, not qualification",
+        "targets": [
+          "tests/test_general_contact_transient_constraint_reactions.py"
+        ],
+        "command": [
+          "C:\\Python\\Python314\\python.exe",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "-p",
+          "scripts.development_test_runtime",
+          "--durations=10",
+          "--basetemp=C:\\ANYworkspaceWork\\contact_constraint_reactions_a_20261003\\anysolver-portable-ci-ntba7ijk\\P01\\basetemp",
+          "tests/test_general_contact_transient_constraint_reactions.py"
+        ],
+        "source_root": "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001",
+        "timeout_seconds": 180,
+        "selected_file_sha256": {
+          "tests/test_general_contact_transient_constraint_reactions.py": "af13ed8ecf50a1624c724a88bd9fe9117fb6566b7e6e6b9c3038d92b9380351a"
+        },
+        "runner_sha256": "7f4ff98a4d4d66b2bf40ae4e007ad8e3df9cf7db7f7c901de1ed1c888f04b0de",
+        "source_identity_scope": "working-tree paths and selected files; not an installed artifact binding",
+        "memory_limit_mib": 953,
+        "jit": "off"
+      }
+    },
+    "contact_constraint_reactions_b_20261003": {
+      "resource": {
+        "peak_sampled_bytes": 189800448,
+        "limit_mib": 953,
+        "elapsed_seconds": 5.34771219996037,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      },
+      "selection": {
+        "scope": "focused source development, not qualification",
+        "targets": [
+          "tests/test_general_contact_transient_constraint_reactions.py::test_mpc_constraint_reactions_balance_unequal_loads",
+          "tests/test_general_contact_transient_constraint_reactions.py::test_load_history_and_sparse_output_retain_stage_support_forces"
+        ],
+        "command": [
+          "C:\\Python\\Python314\\python.exe",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "-p",
+          "scripts.development_test_runtime",
+          "--durations=10",
+          "--basetemp=C:\\ANYworkspaceWork\\contact_constraint_reactions_b_20261003\\anysolver-portable-ci-5fo85ua3\\P01\\basetemp",
+          "tests/test_general_contact_transient_constraint_reactions.py::test_mpc_constraint_reactions_balance_unequal_loads",
+          "tests/test_general_contact_transient_constraint_reactions.py::test_load_history_and_sparse_output_retain_stage_support_forces"
+        ],
+        "source_root": "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001",
+        "timeout_seconds": 180,
+        "selected_file_sha256": {
+          "tests/test_general_contact_transient_constraint_reactions.py": "d4ccd51943caf3f4997680574e4ccfe11577d42196312eeb07482a5699029872"
+        },
+        "runner_sha256": "7f4ff98a4d4d66b2bf40ae4e007ad8e3df9cf7db7f7c901de1ed1c888f04b0de",
+        "source_identity_scope": "working-tree paths and selected files; not an installed artifact binding",
+        "memory_limit_mib": 953,
+        "jit": "off"
+      }
+    },
+    "contact_constraint_reactions_c_20261003": {
+      "resource": {
+        "peak_sampled_bytes": 187920384,
+        "limit_mib": 953,
+        "elapsed_seconds": 7.152014799998142,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      },
+      "selection": {
+        "scope": "focused source development, not qualification",
+        "targets": [
+          "tests/test_general_contact_transient_constraint_reactions.py::test_descriptor_reactions_preserve_free_algebraic_equilibrium",
+          "tests/test_general_contact_transient_constraint_reactions.py::test_free_body_reactions_export_only_structural_coordinates"
+        ],
+        "command": [
+          "C:\\Python\\Python314\\python.exe",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "-p",
+          "scripts.development_test_runtime",
+          "--durations=10",
+          "--basetemp=C:\\ANYworkspaceWork\\contact_constraint_reactions_c_20261003\\anysolver-portable-ci-il6vpu2s\\P01\\basetemp",
+          "tests/test_general_contact_transient_constraint_reactions.py::test_descriptor_reactions_preserve_free_algebraic_equilibrium",
+          "tests/test_general_contact_transient_constraint_reactions.py::test_free_body_reactions_export_only_structural_coordinates"
+        ],
+        "source_root": "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001",
+        "timeout_seconds": 180,
+        "selected_file_sha256": {
+          "tests/test_general_contact_transient_constraint_reactions.py": "e3713cf4a9d9a8896aaaa4ac6425a612e30429742d2b7ba36a6c6d69ef258b5a"
+        },
+        "runner_sha256": "7f4ff98a4d4d66b2bf40ae4e007ad8e3df9cf7db7f7c901de1ed1c888f04b0de",
+        "source_identity_scope": "working-tree paths and selected files; not an installed artifact binding",
+        "memory_limit_mib": 953,
+        "jit": "off"
+      }
+    },
+    "contact_oblique_yielded_restart_20261003": {
+      "resource": {
+        "peak_sampled_bytes": 187584512,
+        "limit_mib": 953,
+        "elapsed_seconds": 44.917727300024126,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      },
+      "selection": {
+        "scope": "focused source development, not qualification",
+        "targets": [
+          "tests/test_general_contact_transient_oblique_q4_plastic.py::test_contact_driven_yielded_restart_keeps_material_origin_and_constraint_work"
+        ],
+        "command": [
+          "C:\\Python\\Python314\\python.exe",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "-p",
+          "scripts.development_test_runtime",
+          "--durations=10",
+          "--basetemp=C:\\ANYworkspaceWork\\contact_oblique_yielded_restart_20261003\\anysolver-portable-ci-ofhvt094\\P01\\basetemp",
+          "tests/test_general_contact_transient_oblique_q4_plastic.py::test_contact_driven_yielded_restart_keeps_material_origin_and_constraint_work"
+        ],
+        "source_root": "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001",
+        "timeout_seconds": 180,
+        "selected_file_sha256": {
+          "tests/test_general_contact_transient_oblique_q4_plastic.py": "f1f0d8f3dcefa85ee3293c36983da2e6569379787757f3cd3ed84c0093a2330f"
+        },
+        "runner_sha256": "7f4ff98a4d4d66b2bf40ae4e007ad8e3df9cf7db7f7c901de1ed1c888f04b0de",
+        "source_identity_scope": "working-tree paths and selected files; not an installed artifact binding",
+        "memory_limit_mib": 953,
+        "jit": "off"
+      }
+    },
+    "contact_temporal_comparison_zero_20261003": {
+      "resource": {
+        "peak_sampled_bytes": 108711936,
+        "limit_mib": 953,
+        "elapsed_seconds": 2.300780100049451,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      },
+      "selection": {
+        "scope": "focused source development, not qualification",
+        "targets": [
+          "tests/test_general_contact_oblique_temporal_comparison.py"
+        ],
+        "command": [
+          "C:\\Python\\Python314\\python.exe",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "-p",
+          "scripts.development_test_runtime",
+          "--durations=10",
+          "--basetemp=C:\\ANYworkspaceWork\\contact_temporal_comparison_zero_20261003\\anysolver-portable-ci-r_d0l76p\\P01\\basetemp",
+          "tests/test_general_contact_oblique_temporal_comparison.py"
+        ],
+        "source_root": "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001",
+        "timeout_seconds": 180,
+        "selected_file_sha256": {
+          "tests/test_general_contact_oblique_temporal_comparison.py": "e3a8bb9d9a04af5e03d349d974982417e4a86fe98771a43969b9ae625ec3c0db"
+        },
+        "runner_sha256": "7f4ff98a4d4d66b2bf40ae4e007ad8e3df9cf7db7f7c901de1ed1c888f04b0de",
+        "source_identity_scope": "working-tree paths and selected files; not an installed artifact binding",
+        "memory_limit_mib": 953,
+        "jit": "off"
+      }
+    },
+    "oblique-continuous-reference-dev-20261003-b": {
+      "resource": {
+        "peak_sampled_bytes": 111120384,
+        "limit_mib": 953,
+        "elapsed_seconds": 8.49198560003424,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      },
+      "selection": {
+        "scope": "focused source development, not qualification",
+        "targets": [
+          "tests/test_reference_oblique_q4_plateau.py"
+        ],
+        "command": [
+          "C:\\Python\\Python314\\python.exe",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "-p",
+          "scripts.development_test_runtime",
+          "--durations=10",
+          "--basetemp=C:\\ANYworkspaceWork\\oblique-continuous-reference-dev-20261003-b\\anysolver-portable-ci-ueaoti1u\\P01\\basetemp",
+          "tests/test_reference_oblique_q4_plateau.py"
+        ],
+        "source_root": "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001",
+        "timeout_seconds": 180,
+        "selected_file_sha256": {
+          "tests/test_reference_oblique_q4_plateau.py": "fb5a4b6064350b18c4176eb7c0095703654f600f7efe3161d1aafbe1942f1c9f"
+        },
+        "runner_sha256": "7f4ff98a4d4d66b2bf40ae4e007ad8e3df9cf7db7f7c901de1ed1c888f04b0de",
+        "source_identity_scope": "working-tree paths and selected files; not an installed artifact binding",
+        "memory_limit_mib": 953,
+        "jit": "off"
+      }
+    },
+    "oblique-continuous-reference-dev-20261003-c": {
+      "resource": {
+        "peak_sampled_bytes": 110825472,
+        "limit_mib": 953,
+        "elapsed_seconds": 7.711439299979247,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      },
+      "selection": {
+        "scope": "focused source development, not qualification",
+        "targets": [
+          "tests/test_reference_oblique_q4_plateau.py::test_exact_first_closure_output_retains_incoming_tolerance_phase",
+          "tests/test_reference_oblique_q4_plateau.py::test_high_rate_time_near_event_must_meet_own_residual_at_group_time",
+          "tests/test_reference_oblique_q4_plateau.py::test_frozen_fixture_reference_tighter_and_independent_controls_agree"
+        ],
+        "command": [
+          "C:\\Python\\Python314\\python.exe",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "-p",
+          "scripts.development_test_runtime",
+          "--durations=10",
+          "--basetemp=C:\\ANYworkspaceWork\\oblique-continuous-reference-dev-20261003-c\\anysolver-portable-ci-fjs4cvte\\P01\\basetemp",
+          "tests/test_reference_oblique_q4_plateau.py::test_exact_first_closure_output_retains_incoming_tolerance_phase",
+          "tests/test_reference_oblique_q4_plateau.py::test_high_rate_time_near_event_must_meet_own_residual_at_group_time",
+          "tests/test_reference_oblique_q4_plateau.py::test_frozen_fixture_reference_tighter_and_independent_controls_agree"
+        ],
+        "source_root": "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001",
+        "timeout_seconds": 180,
+        "selected_file_sha256": {
+          "tests/test_reference_oblique_q4_plateau.py": "24fc64faecc3c40b06c2cd56ef9443276ecace11f714f5200aebbc942979ef0d"
+        },
+        "runner_sha256": "7f4ff98a4d4d66b2bf40ae4e007ad8e3df9cf7db7f7c901de1ed1c888f04b0de",
+        "source_identity_scope": "working-tree paths and selected files; not an installed artifact binding",
+        "memory_limit_mib": 953,
+        "jit": "off"
+      }
+    }
+  },
+  "archive_sha256": "192eac5c0719ca05ac8418c5308153adb3cb047fae7a1e10700f74e00a809623"
+}

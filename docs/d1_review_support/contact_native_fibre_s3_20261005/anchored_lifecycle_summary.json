@@ -1,0 +1,311 @@
+{
+  "scope": "development-tested explicit anchored root policy; no native engineering acceptance",
+  "source_parent": "47dc4070",
+  "wheel_sha256": "51f988cf3be490af2498fc8a4009e51316a637a99ba3bebc513a9192deb0da30",
+  "production_files_matched": 526,
+  "runs": {
+    "installed_anchored_controls": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 6.113074199995026,
+        "peak_bytes": 186130432
+      },
+      "import_count": 219,
+      "import_errors": []
+    },
+    "installed_anchored_opening_pose": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 10.782168100005947,
+        "peak_bytes": 180355072
+      },
+      "import_count": 219,
+      "import_errors": [],
+      "-anchored-opening-pose.json": {
+        "scope": "saved actual full opening Newton trial; no coupled solve/commit",
+        "policies": {
+          "componentwise": {
+            "status": "rejected",
+            "elapsed_s": 0.02116780006326735,
+            "failure": "curved axial front bracket work uncertainty exceeds integration budget",
+            "diagnostics": {
+              "root_brackets": [
+                {
+                  "cell": 1,
+                  "lower": 0.8727977456682873,
+                  "upper": 0.8727977571449003,
+                  "features": [
+                    2
+                  ],
+                  "representation_gap_m": 4.722709568835759e-13,
+                  "active_angular_width_bound": 1.602598945857393e-05,
+                  "angular_fallback": false,
+                  "representative_xi": 0.8727977485374405,
+                  "error_bounds": [
+                    7.826620381972054e-21,
+                    3.810388393400193e-15,
+                    1.7176738986020192e-06
+                  ],
+                  "enclosure_refinement": "declared_material_arc"
+                }
+              ],
+              "error_bounds": [
+                7.826620381972054e-21,
+                3.810388393400193e-15,
+                1.7176738986020192e-06
+              ]
+            }
+          },
+          "anchored": {
+            "status": "completed",
+            "elapsed_s": 1.366098100086674,
+            "intervals": 7,
+            "evaluations": 5760,
+            "errors": [
+              3.6641969843399185e-18,
+              3.1663839895947014e-13,
+              9.06043190992631e-07
+            ]
+          }
+        },
+        "positions": [
+          [
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.9999998076744887,
+            0.2000000566705418,
+            -3.10621637299872e-05
+          ],
+          [
+            1.99999954962456,
+            1.6367817235315036e-08,
+            -0.00011031076358658818
+          ]
+        ],
+        "position_low": [
+          [
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            -4.245006332076374e-18,
+            2.8482711736388093e-18,
+            1.6618187753161037e-21
+          ],
+          [
+            1.0175049237232369e-16,
+            -4.565721815583859e-25,
+            -2.6585051743700125e-21
+          ]
+        ],
+        "cell_rotations": [
+          [
+            [
+              0.9999999994856797,
+              -7.259452947327533e-09,
+              3.207242092204679e-05
+            ],
+            [
+              7.444421090938138e-09,
+              0.9999999999833699,
+              -5.767201116801778e-06
+            ],
+            [
+              -3.207242087964668e-05,
+              5.767201352596128e-06,
+              0.9999999994690496
+            ]
+          ],
+          [
+            [
+              0.9999999971808153,
+              -2.2518440423483193e-08,
+              7.508907640195593e-05
+            ],
+            [
+              2.4034222111711688e-08,
+              0.9999999997962534,
+              -2.01864466234222e-05
+            ],
+            [
+              -7.508907593208946e-05,
+              2.0186448371220394e-05,
+              0.999999996977069
+            ]
+          ]
+        ],
+        "shell_displacement": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          4.2031534552372057e-07,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "independent_control": {
+          "error_estimate": 1.1641008472076281e-13,
+          "evaluations": 693,
+          "angular_order": 24,
+          "tolerance": 1e-12
+        },
+        "relative_residual_error": 4.889345091022757e-13,
+        "tangent_errors": [
+          9.394188272914202e-08,
+          2.386901022567057e-08
+        ],
+        "virtual_work_errors": [
+          5.794104920872085e-07,
+          1.4522877553552857e-07
+        ]
+      }
+    },
+    "installed_anchored_first_target": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 5.9446990001015365,
+        "peak_bytes": 180109312
+      },
+      "import_count": 221,
+      "import_errors": [],
+      "-anchored-first-target.json": {
+        "scope": "fresh anchored first target; coordinates-only seed, virgin histories",
+        "source_sha256": "5c72a14e4288010a7f9407ada3cd1c5334e37ae071a7baf2281de75615a7d50a",
+        "source_identity": "405a97250a4267fed3079d7dbae12bddf2fd0aa1f937958e2893a2d9367e0167",
+        "owner_identity": "8d6f2df2fea598245b91657b847e9c7412a8ed287baf01788bd40800d3065ec1",
+        "guess_fingerprint": "8f0f6b01c1d0b23e4ab86a6c25e00eaac2a45e38f70e7a103f4bc9678da3b138",
+        "status": "paused",
+        "failure": null,
+        "completed": 1,
+        "checkpoint_sha256": "98d22bd2aff840df5d7b1034298891b179ed438ec9246a9f76b89445a7a15347",
+        "candidates": 4,
+        "pair_evaluations": 2,
+        "reuse_hits": 2,
+        "trial_failures": [],
+        "response_relative_errors": {
+          "contact_force_n": 6.470003523559498e-16,
+          "contact_moment_nm": 5.131408304709018e-16,
+          "tip_z_m": 0.0,
+          "target_z_m": 0.0
+        },
+        "independent_gap_m": -6.3016086522243125e-06,
+        "gap_lower_m": -6.302183730609332e-06,
+        "material": {
+          "yielded": 8,
+          "dissipation_j": 2.8469585440156624e-09
+        }
+      }
+    },
+    "installed_anchored_opening": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 6.310013700043783,
+        "peak_bytes": 180432896
+      },
+      "import_count": 220,
+      "import_errors": [],
+      "-fine-lifecycle.json": {
+        "stage": 2,
+        "status": "paused",
+        "failure": null,
+        "completed": 2,
+        "candidates": 25,
+        "pair_evaluations": 10,
+        "reuse_hits": 15,
+        "trial_failures": [],
+        "checkpoint_sha256": "0ccdfa3cf637d12ca36051e315bd092cc61c53ac9b084676f8f99fac7e092d6e"
+      },
+      "-fine-history.json": {
+        "material": {
+          "yielded": 4,
+          "dissipation_j": 6.556061083047051e-11
+        },
+        "independent_gap_m": 9.321261462951241e-05,
+        "production_gap_lower_m": 9.321260301770008e-05
+      }
+    },
+    "installed_anchored_recontact": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 8.369372399989516,
+        "peak_bytes": 180125696
+      },
+      "import_count": 220,
+      "import_errors": [],
+      "-fine-lifecycle.json": {
+        "stage": 3,
+        "status": "completed",
+        "failure": null,
+        "completed": 3,
+        "candidates": 23,
+        "pair_evaluations": 10,
+        "reuse_hits": 13,
+        "trial_failures": [],
+        "checkpoint_sha256": "5620d6a34a9e6f593a46de11e9c7b908804e2a6c3d7101b451719fde1321a44a"
+      },
+      "-fine-history.json": {
+        "material": {
+          "yielded": 6,
+          "dissipation_j": 4.8977002516857443e-11
+        },
+        "independent_gap_m": -6.3008313369248965e-06,
+        "production_gap_lower_m": -6.3014060828421635e-06
+      }
+    },
+    "installed_anchored_fixture_replay": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 4.3157326999353245,
+        "peak_bytes": 181211136
+      },
+      "import_count": 219,
+      "import_errors": []
+    }
+  },
+  "fixtures": {
+    "active": {
+      "tag": "installed_anchored_first_target",
+      "sha256": "98d22bd2aff840df5d7b1034298891b179ed438ec9246a9f76b89445a7a15347"
+    },
+    "open": {
+      "tag": "installed_anchored_opening",
+      "sha256": "0ccdfa3cf637d12ca36051e315bd092cc61c53ac9b084676f8f99fac7e092d6e"
+    },
+    "recontact": {
+      "tag": "installed_anchored_recontact",
+      "sha256": "5620d6a34a9e6f593a46de11e9c7b908804e2a6c3d7101b451719fde1321a44a"
+    }
+  },
+  "retained_failures": [
+    "candidate11/installed_fine_policy_opening: timeout120.154642s",
+    "candidate11/anchored_opening_pose_directional_controls: larger-h virtual work NONPASS"
+  ],
+  "review": "same-family supporting implementation review; no consequential defect found",
+  "changed_source_sha256": {
+    "src/anysolver/general_contact/native_curved_s3_work.py": "90a1a0c1799d36c3264a6eacae1fd6d49fd58c90ddbeafb065587dedda345506",
+    "tests/test_general_contact_native_anchored_enclosure.py": "f68d5dc63c18ce02f98f2e90b2957fde86220eca4380b905211275e8a4d1e8fe",
+    "tests/test_general_contact_native_fine_lifecycle.py": "500436f704db9219aa03cf9ea5b774080f3273411e283998bcf7e0753cd23952"
+  },
+  "installed_execution_test_sources": "Raw executed runner hashes/preflights remain in candidate12; repository staged lifecycle now uses the identical helper with byte-preserved fixtures."
+}

@@ -1,0 +1,14 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 0.5179962000001979,
+  "peak_process_tree_memory_mb": 10.162176,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "scripts/general_contact_d1_fixed_structure_pressure_probe.py",
+    "reports/general_contact_d1_fixed_structure_pressure_45b96736_20260928.json"
+  ],
+  "log": "reports\\general_contact_d1_fixed_structure_pressure_45b96736_20260928.txt"
+}

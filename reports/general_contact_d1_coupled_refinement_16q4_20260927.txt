@@ -1,0 +1,8 @@
+{
+  "columns": 16,
+  "elapsed_seconds": 91.68042889999924,
+  "status": "diverged",
+  "failure_reason": "maximum_augmentations_reached",
+  "accepted_steps": 0,
+  "has_restart_checkpoint": false
+}

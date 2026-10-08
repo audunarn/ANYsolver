@@ -1,0 +1,58 @@
+{
+  "kind": "supporting_saved_evidence_assessment",
+  "status": "recorded_strict_H_NONPASS_supported",
+  "repository": "C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001",
+  "initial_review_baseline": "e166100ca171f54911b4e75e8de2985030fe5cba",
+  "source_checkpoint_base_reported_by_lead": "48c81824",
+  "git_head_not_read_in_this_assessment": true,
+  "test_sha256": "9b3e727538dae82cb61d1b62c165558ae249201a02efee651129fc9042fc6d49",
+  "guide_postexecution_sha256": "70ddc97bde826626b1e00f8b18ba88d3754c0a0f3575974913148cd24cb2840e",
+  "evidence": [
+    {
+      "path": "lead_numerical_disposition_v3b.json",
+      "sha256": "6f804283d7a17e2b1e5b5f4c7464e7746bb071cbe2b1e17a1d64c1b71f804356"
+    },
+    {
+      "path": "worker_numeric_handoff_v3b.md",
+      "sha256": "fbd663d80435dc33dd8f22a158f0bcda1e7b20fae6711e21a0af742f22aae75d"
+    },
+    {
+      "path": "author_execution_handoff_v3b.json",
+      "sha256": "e8d99e2ff80f47686efc8a1da29da6709f4cc384b0d835ae5774283617ff0849"
+    },
+    {
+      "path": "nonprincipal_repair_revision_v3.json",
+      "sha256": "2ba7ff49bd4e147d4d16be554b3bee1c52075ce693b70fb08a25a69f5b209ce9"
+    },
+    {
+      "path": "nonprincipal_coarse_replay_v3b\\inputs.json",
+      "sha256": "0e57b84b1d68b5fe585b6cbf7a57c253db31f91779382c90ebb41ec577716486"
+    },
+    {
+      "path": "nonprincipal_coarse_replay_v3b\\actual_results_coarse.json",
+      "sha256": "8f8fe4fd54ed1710962f954ce200bc93948fd09f8a5f11819fdc3650ae5ae5be"
+    },
+    {
+      "path": "nonprincipal_coarse_replay_v3b\\run.log",
+      "sha256": "b2c22dbf0489a00e6672e941ff19a1fca48d282afd810e9653827549228c29d3"
+    },
+    {
+      "path": "nonprincipal_temporal_v3b\\actual_results_fine.json",
+      "sha256": "c518043301e2ceb0d97b96bf52e433586b7bbc007cb8261fe73985c7b3a1f34d"
+    },
+    {
+      "path": "nonprincipal_temporal_v3b\\run.log",
+      "sha256": "069a154fe52a654003ea78e87b5de8f4f03d1499522872506447db0ca16cc0e8"
+    }
+  ],
+  "reused_original_json_actual_sha256": "6ef0a7b2bc171cfe0c9e4f521b100c2605f21d790ce9186b1628954b2ef93108",
+  "reused_original_capsule_actual_sha256": "2d2dc1a7644de9351c1c852e56ffb0d3cd5ed1ffb0c2807c65be78dca56628a0",
+  "numerical_job_launched": false,
+  "solver_or_reference_import": false,
+  "product_edits": false,
+  "engineering_acceptance": false,
+  "total_spent_s": 119.1498137001181,
+  "remaining_authorized_s": 120.8501862998819,
+  "prospective_16_step_status": "source_decision_only_no_execution_or_predicted_PASS",
+  "report": "supporting_evidence_review_v3b.md"
+}

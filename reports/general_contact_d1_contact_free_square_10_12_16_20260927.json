@@ -1,0 +1,29 @@
+{
+  "profile": "contact_free_central_2n_von_karman_dev",
+  "rows": [
+    {
+      "x_divisions": 10,
+      "y_divisions": 10,
+      "status": "completed",
+      "failure_reason": null,
+      "center_uz_m": -9.26762748527317e-05,
+      "elapsed_seconds": 3.757727599993814
+    },
+    {
+      "x_divisions": 12,
+      "y_divisions": 12,
+      "status": "completed",
+      "failure_reason": null,
+      "center_uz_m": -9.244970477546877e-05,
+      "elapsed_seconds": 2.136114599998109
+    },
+    {
+      "x_divisions": 16,
+      "y_divisions": 16,
+      "status": "completed",
+      "failure_reason": null,
+      "center_uz_m": -9.222633402365072e-05,
+      "elapsed_seconds": 3.3391283999953885
+    }
+  ]
+}

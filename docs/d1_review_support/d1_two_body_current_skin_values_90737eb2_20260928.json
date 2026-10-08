@@ -1,0 +1,40 @@
+{
+  "status": "development_independent_current_skin_values_at_saved_slide",
+  "source_commit": "90737eb211227752d40a64bec9e74fb248b8b759",
+  "saved_source_sha256": "ef69c6d174c3c189fc1d3f1f3fe809f5182b5f5b0799abffcfd1330290050311",
+  "oracle_source_sha256": "0154045a84059c6dbc3c69c927fd8836c923214ab517ec026c3f2a23482d9fc9",
+  "python": "3.14.2",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "quadrature_points": 256,
+  "current_xy_overlap_area_m2": 0.9000000007988981,
+  "reference_overlap_area_m2": 0.9000000059651394,
+  "saved_production_reference_overlap_area_m2": 0.9000000059651252,
+  "support_relative_l2": 2.4340923859796062e-14,
+  "maximum_normalized_gap_difference_m": 7.062581788386084e-13,
+  "normalized_gap_difference_l2_m": 1.0974840797275202e-12,
+  "independent_support_m2": [
+    0.061875000026766644,
+    0.12375000009177135,
+    0.1237500001491285,
+    0.12375000020648556,
+    0.061875000122361856,
+    0.050625000240899824,
+    0.10125000082594238,
+    0.10125000134215639,
+    0.10125000185837042,
+    0.05062500110125655
+  ],
+  "independent_normalized_gap_m": [
+    3.8216271803724616e-05,
+    2.1351869311748037e-05,
+    4.8289345218792725e-06,
+    2.9231372931654154e-16,
+    2.6241746791408188e-06,
+    3.8216061732928876e-05,
+    2.1351539666975844e-05,
+    4.828672497661928e-06,
+    2.9627382013416486e-16,
+    2.623857970009113e-06
+  ]
+}

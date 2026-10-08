@@ -1,0 +1,21 @@
+{"event": "trace_begin", "elapsed_seconds": 0.00041969999438151717, "imported_source": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py", "scope": "development observer only; no state or numerical setting changes"}
+{"event": "preparation_begin", "elapsed_seconds": 95.73099849998835, "call": 1}
+{"event": "preparation_end", "elapsed_seconds": 138.96806029998697, "call": 1, "seconds": 43.23696939999354}
+{"event": "swept_begin", "elapsed_seconds": 155.88313569998718, "call": 1}
+{"event": "swept_end", "elapsed_seconds": 172.191236499988, "call": 1, "seconds": 16.308014500013087, "admissible": true}
+{"event": "swept_begin", "elapsed_seconds": 222.8788311999815, "call": 2}
+{"event": "swept_end", "elapsed_seconds": 238.9752437999996, "call": 2, "seconds": 16.09636369999498, "admissible": true}
+{"event": "swept_begin", "elapsed_seconds": 282.5031844000041, "call": 3}
+{"event": "swept_end", "elapsed_seconds": 297.1986585999839, "call": 3, "seconds": 14.695421699987492, "admissible": true}
+{"event": "swept_begin", "elapsed_seconds": 338.44107619998977, "call": 4}
+{"event": "swept_end", "elapsed_seconds": 353.1691176999884, "call": 4, "seconds": 14.72798630001489, "admissible": true}
+{"event": "swept_begin", "elapsed_seconds": 393.4189361000026, "call": 5}
+{"event": "swept_end", "elapsed_seconds": 409.2942944999959, "call": 5, "seconds": 15.875303500011796, "admissible": true}
+{"event": "swept_begin", "elapsed_seconds": 446.9437598999939, "call": 6}
+{"event": "swept_end", "elapsed_seconds": 462.3773799999908, "call": 6, "seconds": 15.433555099996738, "admissible": true}
+{"event": "swept_begin", "elapsed_seconds": 498.10243139998056, "call": 7}
+{"event": "swept_end", "elapsed_seconds": 512.9939729000034, "call": 7, "seconds": 14.891490900015924, "admissible": true}
+{"event": "swept_begin", "elapsed_seconds": 547.8008786999853, "call": 8}
+{"event": "swept_end", "elapsed_seconds": 564.5448331999942, "call": 8, "seconds": 16.74389899999369, "admissible": true}
+{"event": "swept_begin", "elapsed_seconds": 602.3243467999855, "call": 9}
+{"event": "swept_end", "elapsed_seconds": 618.9197463000019, "call": 9, "seconds": 16.595349299983354, "admissible": true}

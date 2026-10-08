@@ -1,0 +1,260 @@
+{"anysolver_file": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\__init__.py", "input_sha256": "ea2052aa0acfb9e8998f2a20a80d66c22c6569325a94a5cf69c6a19b1b58bf77", "numpy": "2.4.6", "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]", "scipy": "1.17.1", "threadpools": [{"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.31.188.0"}, {"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.30"}]}
+{"stage": "failure", "elapsed_seconds": 1.662079999980051}
+FE
+=================================== ERRORS ====================================
+_____ ERROR at setup of test_package_manifest_relative_transitive_binding _____
+
+cls = <class '_pytest.runner.CallInfo'>
+func = <function call_and_report.<locals>.<lambda> at 0x000001A11A0A45C0>
+when = 'setup'
+reraise = (<class '_pytest.outcomes.Exit'>, <class 'KeyboardInterrupt'>)
+
+    @classmethod
+    def from_call(
+        cls,
+        func: Callable[[], TResult],
+        when: Literal["collect", "setup", "call", "teardown"],
+        reraise: type[BaseException] | tuple[type[BaseException], ...] | None = None,
+    ) -> CallInfo[TResult]:
+        """Call func, wrapping the result in a CallInfo.
+    
+        :param func:
+            The function to call. Called without arguments.
+        :type func: Callable[[], _pytest.runner.TResult]
+        :param when:
+            The phase in which the function is called.
+        :param reraise:
+            Exception or exceptions that shall propagate if raised by the
+            function, instead of being wrapped in the CallInfo.
+        """
+        excinfo = None
+        instant = timing.Instant()
+        try:
+>           result: TResult | None = func()
+                                     ^^^^^^
+
+C:\Python\Python314\Lib\site-packages\_pytest\runner.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Python\Python314\Lib\site-packages\_pytest\runner.py:245: in <lambda>
+    lambda: runtest_hook(item=item, **kwds),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python\Python314\Lib\site-packages\pluggy\_hooks.py:512: in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python\Python314\Lib\site-packages\pluggy\_manager.py:120: in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python\Python314\Lib\site-packages\_pytest\logging.py:843: in pytest_runtest_setup
+    yield
+C:\Python\Python314\Lib\site-packages\_pytest\capture.py:895: in pytest_runtest_setup
+    return (yield)
+            ^^^^^
+C:\Python\Python314\Lib\site-packages\_pytest\runner.py:165: in pytest_runtest_setup
+    item.session._setupstate.setup(item)
+C:\Python\Python314\Lib\site-packages\_pytest\runner.py:523: in setup
+    col.setup()
+C:\Python\Python314\Lib\site-packages\_pytest\python.py:1723: in setup
+    self._request._fillfixtures()
+C:\Python\Python314\Lib\site-packages\_pytest\fixtures.py:707: in _fillfixtures
+    item.funcargs[argname] = self.getfixturevalue(argname)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python\Python314\Lib\site-packages\_pytest\fixtures.py:539: in getfixturevalue
+    fixturedef = self._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python\Python314\Lib\site-packages\_pytest\fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+C:\Python\Python314\Lib\site-packages\_pytest\fixtures.py:1110: in execute
+    result: FixtureValue = ihook.pytest_fixture_setup(
+C:\Python\Python314\Lib\site-packages\pluggy\_hooks.py:512: in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python\Python314\Lib\site-packages\pluggy\_manager.py:120: in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python\Python314\Lib\site-packages\pluggy\_callers.py:53: in run_old_style_hookwrapper
+    return result.get_result()
+           ^^^^^^^^^^^^^^^^^^^
+C:\Python\Python314\Lib\site-packages\pluggy\_callers.py:38: in run_old_style_hookwrapper
+    res = yield
+          ^^^^^
+C:\Python\Python314\Lib\site-packages\_pytest\setuponly.py:36: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+C:\Python\Python314\Lib\site-packages\_pytest\fixtures.py:1202: in pytest_fixture_setup
+    result = call_fixture_func(fixturefunc, request, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python\Python314\Lib\site-packages\_pytest\fixtures.py:908: in call_fixture_func
+    fixture_result = next(generator)
+                     ^^^^^^^^^^^^^^^
+C:\Python\Python314\Lib\site-packages\_pytest\tmpdir.py:289: in tmp_path
+    path = _mk_tmp(request, tmp_path_factory)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python\Python314\Lib\site-packages\_pytest\tmpdir.py:276: in _mk_tmp
+    return factory.mktemp(name, numbered=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python\Python314\Lib\site-packages\_pytest\tmpdir.py:131: in mktemp
+    basename = self._ensure_relative_to_basetemp(basename)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python\Python314\Lib\site-packages\_pytest\tmpdir.py:112: in _ensure_relative_to_basetemp
+    if (self.getbasetemp() / basename).resolve().parent != self.getbasetemp():
+        ^^^^^^^^^^^^^^^^^^
+C:\Python\Python314\Lib\site-packages\_pytest\tmpdir.py:208: in getbasetemp
+    basetemp = make_numbered_dir_with_cleanup(
+C:\Python\Python314\Lib\site-packages\_pytest\pathlib.py:407: in make_numbered_dir_with_cleanup
+    raise e
+C:\Python\Python314\Lib\site-packages\_pytest\pathlib.py:388: in make_numbered_dir_with_cleanup
+    p = make_numbered_dir(root, prefix, mode)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python\Python314\Lib\site-packages\_pytest\pathlib.py:229: in make_numbered_dir
+    max_existing = max(map(parse_num, find_suffixes(root, prefix)), default=-1)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python\Python314\Lib\site-packages\_pytest\pathlib.py:188: in extract_suffixes
+    for entry in iter:
+                 ^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+root = WindowsPath('C:/Users/AudunArnesenNyhus/AppData/Local/Temp/pytest-of-AudunArnesenNyhus')
+prefix = 'pytest-'
+
+    def find_prefixed(root: Path, prefix: str) -> Iterator[os.DirEntry[str]]:
+        """Find all elements in root that begin with the prefix, case-insensitive."""
+        l_prefix = prefix.lower()
+>       for x in os.scandir(root):
+                 ^^^^^^^^^^^^^^^^
+E       PermissionError: [WinError 5] Access is denied: 'C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\pytest-of-AudunArnesenNyhus'
+
+C:\Python\Python314\Lib\site-packages\_pytest\pathlib.py:176: PermissionError
+================================== FAILURES ===================================
+_________________ test_committed_native_dynamic_split_restart _________________
+
+record_property = <function record_property.<locals>.append_property at 0x000001A119BB2B90>
+
+    def test_committed_native_dynamic_split_restart(record_property):
+        started=perf_counter()
+        output=Path(os.environ['NATIVE_DYNAMIC_RESTART_RAW_OUTPUT'])
+        assert not output.exists()
+        evidence=dict(status='RUNNING',accepted_steps=0,scope='development restart only',
+                      trajectories={},negative_controls=[],restore_controls={})
+        def save(stage):
+            evidence.update(last_stage=stage,elapsed_seconds=perf_counter()-started)
+            output.write_text(json.dumps(evidence,indent=2)+'\n')
+            print(json.dumps(dict(stage=stage,elapsed_seconds=evidence['elapsed_seconds'])),flush=True)
+            assert evidence['elapsed_seconds']<120.
+        def new_owner():
+            definition,_=build_definition()
+            return create_analysis(SELECTOR,(definition,),())
+        def fresh(owner):
+            c=owner._context
+            assert c.current is None and c._current is None and c._visible_current is None
+            assert c._current_bytes is None and not c._issued and not c._candidates
+            assert c._initial_checks is None and c._restore_checks is None
+            assert c._dynamic._active_session is None and c._work_session is None
+            assert len(c._dynamic._issued)==1
+        def account(owner,state): return json.loads(canonical(owner.endpoint_accounting(state)))
+        def modified(raw,change):
+            row=json.loads(raw);change(row)
+            row['state_sha256']=sha(row['state'])
+            row['checkpoint_sha256']=sha({k:v for k,v in row.items() if k!='checkpoint_sha256'})
+            return canonical(row)
+        def reject(raw,label,digest=None):
+            owner=new_owner();fresh(owner)
+            with pytest.raises((ValueError,NativeMaterialError)):
+                owner.restore_checkpoint(raw,expected_sha256=sha256(raw).hexdigest() if digest is None else digest)
+            fresh(owner);evidence['negative_controls'].append(label)
+        def advance(owner,state,label,pending_control=False):
+            c=owner._context;original=c._stage;observed=[]
+            def observe(accepted,unknown,h,token=None):
+                stage=original(accepted,unknown,h,token)
+                observed.append(dict(unknown42=np.asarray(unknown).tolist(),
+                    structural_residual42=stage.structural_residual.tolist(),
+                    inertial_work42=stage.inertia.mixed_inertia.tolist(),residual42=stage.residual.tolist(),
+                    stage_sha256=sha(stage),predecessor_sha256=sha(accepted),
+                    context_sha256=c._identity,active_trial_session=c._work_session is not None))
+                assert len(observed)<=128
+                return stage
+            c._stage=observe
+            try: candidate=owner.trial(state,dt=.001)
+            finally:
+                c._stage=original
+                evidence.setdefault('stage_observations',{})[label]=observed
+            if pending_control:
+                with pytest.raises(ValueError,match='pending'):
+                    owner.create_checkpoint()
+                assert owner.current is state
+                owner.candidate_stage_audit(candidate)  # Historical evidence, no wire credential.
+                evidence['restore_controls']['pending_export_rejection']=True
+            before=owner.endpoint_accounting(state)
+            state=owner.commit(candidate)
+            now=owner.endpoint_accounting(state)
+            energy=evidence['initial_energy_j'];pstar=np.sqrt(2.*5.4*energy);hstar=2.*pstar
+            # Complete high+low endpoint differences retained in the raw record.
+            from fractions import Fraction
+            def delta(key,baseline):
+                return np.array([float(Fraction(float(h))+Fraction(float(l))-
+                                       Fraction(float(h0))-Fraction(float(l0)))
+                    for h,l,h0,l0 in zip(getattr(now,key),getattr(now,key+'_low'),
+                        getattr(baseline,key),getattr(baseline,key+'_low'))])
+            defects=dict(energy=abs(now.total_energy-before.total_energy)/energy,
+                         P=float(np.linalg.norm(delta('linear_momentum',before))/pstar),
+                         H=float(np.linalg.norm(delta('angular_momentum',before))/hstar))
+            cumulative=dict(energy=abs(now.total_energy-initial_account.total_energy)/energy,
+                P=float(np.linalg.norm(delta('linear_momentum',initial_account))/pstar),
+                H=float(np.linalg.norm(delta('angular_momentum',initial_account))/hstar))
+            evidence['trajectories'][label]=dict(state=json.loads(canonical(state)),
+                accounting=json.loads(canonical(now)),stage_residual_norm=candidate.stage_residual_norm,
+                endpoint_algebraic_norm=candidate.endpoint_algebraic_norm,step_defects=defects,
+                cumulative_defects=cumulative)
+            evidence['accepted_steps']+=1;save(label)
+            assert max(defects.values())<=1e-6 and max(cumulative.values())<=1e-6
+            assert candidate.stage_residual_norm<=1e-11 and candidate.endpoint_algebraic_norm<=1e-11
+            assert now.elastic_consistency_witness/energy<=1e-10
+            return state
+        try:
+            owner=new_owner();definition,points=build_definition()
+            rot=rotation(np.array((2e-4,-1e-4,3e-4)))
+            positions=points@rot.T+np.array((.002,-.001,.003))
+            low=np.zeros((3,3));low[0,0]=low[2,0]=1e-18
+            cells=np.tile(rot,(2,1,1));velocity=initial_velocity(positions)
+            initial=owner.initialize(positions,cells,velocity,position_low=low)
+            initial_account=owner.endpoint_accounting(initial)
+            evidence['initial_energy_j']=initial_account.total_energy
+>           evidence['initial_accounting']=json.loads(canonical(initial_account))
+                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_ge_beam3_native_dynamic_restart.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\anysolver\_ge_beam3_p5_seeded\core.py:37: in canonical
+    return (json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False,
+C:\Python\Python314\Lib\json\__init__.py:242: in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+C:\Python\Python314\Lib\json\encoder.py:202: in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python\Python314\Lib\json\encoder.py:263: in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+item = b'{"algebraic_condition":46900.21092261729,"algebraic_rank":27,"algebraic_sigma_max":1.6173357097176733,"algebraic_sig...33616647030842,"physical_mass_max_eigenvalue":2.1685761019501197,"physical_mass_min_eigenvalue":0.12439048912547099}\n'
+
+    def encode(item):
+        if is_dataclass(item): return asdict(item)
+        if isinstance(item, np.ndarray): return item.tolist()
+>       raise TypeError('unsupported private state value')
+E       TypeError: unsupported private state value
+E       when serializing dict item 'rank_mass_checks'
+E       when serializing anysolver._ge_beam3_native_midpoint.EndpointAccounting object
+
+src\anysolver\_ge_beam3_p5_seeded\core.py:36: TypeError
+============================== warnings summary ===============================
+tests/test_ge_beam3_native_dynamic_restart.py::test_committed_native_dynamic_split_restart
+  tests\test_ge_beam3_native_dynamic_restart.py:21: PytestWarning: record_property is incompatible with junit_family 'xunit2' (use 'legacy' or 'xunit1')
+    def test_committed_native_dynamic_split_restart(record_property):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+ERROR tests/test_ge_beam3_native_dynamic_restart.py::test_package_manifest_relative_transitive_binding
+FAILED tests/test_ge_beam3_native_dynamic_restart.py::test_committed_native_dynamic_split_restart
+1 failed, 1 warning, 1 error in 2.35s
+{"pytest_exit_code": 1, "verified_source_count": 444}

@@ -1,0 +1,78 @@
+{
+  "status": "TESTED_DEVELOPMENT_NONPASS_ANGULAR_MOMENTUM_GATE",
+  "checks_disposition": "local work/inertia PASS; repaired coarse/fine registered checks NONPASS strictH; exact fresh restart and actualCLI PASS",
+  "prior_failure": "V2 KeyError stage preserved; V3b schema repair tested",
+  "measured_execution_s": 119.1498137001181,
+  "remaining_scope_s": 120.8501862998819,
+  "scope": "C7_NATIVE_NONPRINCIPAL_DEV",
+  "terminal_attempts": 5,
+  "peak_tree_bytes": 171405312,
+  "guards": 0,
+  "coarse_H_error": 8.141713955288152e-06,
+  "fine_H_error": 2.0416609389404326e-06,
+  "H_target": 1e-06,
+  "H_refinement_ratio": 3.9877894512266487,
+  "ODE_refinement_error": 3.454450633278831e-12,
+  "response_coarse": 0.0019808154324603903,
+  "response_fine": 0.0005022594954832697,
+  "energy_defect_coarse": 0.0007198276754856106,
+  "energy_defect_fine": 0.0001803555517275904,
+  "metrics_adjudication": "Response/refinement numerical inequalities independently checked from saved metrics although pytest stopped first at strictH. Registered coarse/fine tests remain NONPASS; no retroactive pass.",
+  "cause": "Observed totalH increment matches exact finiteSO3 midpoint time defect; local equilibrium and discrete-impulse accounting pass.",
+  "resources": [
+    {
+      "attempt": "nonprincipal_cli_v3b",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_s": 20.128917300025932,
+      "peak_tree_bytes": 151244800,
+      "cap_s": 40.0,
+      "spent_before_s": 99.02089640009217,
+      "total_spent_s": 119.1498137001181
+    },
+    {
+      "attempt": "nonprincipal_coarse_replay_v3b",
+      "status": "completed",
+      "exit_code": 1,
+      "elapsed_s": 5.143309099948965,
+      "peak_tree_bytes": 171102208,
+      "cap_s": 60.0,
+      "spent_before_s": 29.178968400112353,
+      "total_spent_s": 34.32227750006132
+    },
+    {
+      "attempt": "nonprincipal_local_coarse_v2",
+      "status": "completed",
+      "exit_code": 1,
+      "elapsed_s": 29.178968400112353,
+      "peak_tree_bytes": 169783296,
+      "cap_s": 60.0,
+      "spent_before_s": 0,
+      "total_spent_s": 29.178968400112353
+    },
+    {
+      "attempt": "nonprincipal_restart_v3b",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_s": 24.747751099988818,
+      "peak_tree_bytes": 171405312,
+      "cap_s": 60.0,
+      "spent_before_s": 74.27314530010335,
+      "total_spent_s": 99.02089640009217
+    },
+    {
+      "attempt": "nonprincipal_temporal_v3b",
+      "status": "completed",
+      "exit_code": 1,
+      "elapsed_s": 39.95086780004203,
+      "peak_tree_bytes": 171397120,
+      "cap_s": 60.0,
+      "spent_before_s": 34.32227750006132,
+      "total_spent_s": 74.27314530010335
+    }
+  ],
+  "product_changed": false,
+  "scientific_acceptance": false,
+  "new_profile_release": false,
+  "next_source_candidate": "Prospective dt1/256,16steps at SAME physical horizon/model; use two checkpointed8-step segments for job admission. One targeted corrective candidate from measured second-order convergence; no automatic further refinement. Bind inputs/scope/budget before any new launch, keep old4/8 NONPASS and authority history."
+}

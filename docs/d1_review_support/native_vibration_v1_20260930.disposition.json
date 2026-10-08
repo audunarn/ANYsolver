@@ -1,0 +1,10 @@
+{
+  "status": "NONPASS",
+  "accepted_steps": 0,
+  "reason": "GeneralizedCellHistory raw serialization TypeError before rank gates",
+  "mechanical_time_steps_executed": 0,
+  "rank_or_eigen_gates_passed": 0,
+  "no_mechanics_failure_claim": true,
+  "preserved_inputs_sha256": "360b995532361507167f0d2da95035d5119e3d49414349c1e7a8cc621c0cfadb",
+  "replacement_delta": "Canonical history JSON projection for diagnostics only; mechanics/criteria unchanged"
+}

@@ -1,0 +1,11 @@
+{
+  "status": "USER_AUTHORIZED",
+  "date": "2026-10-07",
+  "user_statement": "I approve executions needed to finish the plan/goal defined.",
+  "scope": "Prospective executions necessary to finish the full general-contact goal and plan in the owned reconciliation checkout",
+  "historical_grants": "Preserved and scope-separated; no retrospective renewal or pooling",
+  "scientific_gates": "Unchanged",
+  "resource_limits": "Retain per-job60s,953MiB,serial numerical execution and protected reserves; use bounded scoped ledgers",
+  "future_scopes": "Derive necessary bounded execution scopes from this approval; no repeated fixture permission request within the approved goal",
+  "publication": "Not authorized"
+}

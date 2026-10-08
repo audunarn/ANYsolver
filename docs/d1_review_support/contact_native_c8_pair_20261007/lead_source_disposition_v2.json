@@ -1,0 +1,11 @@
+{
+  "status": "SOURCE_IDENTITY_SYNTAX_CHECK_PASS_NUMERICS_UNVERIFIED",
+  "files": 10,
+  "python_ast": 9,
+  "report_sha256": "c626ae9a1f61fe3c0f5ebf4f96666e835fe4464b3ec0d8e12754a12cebf45d86",
+  "numerical_jobs": 0,
+  "solver_imports": 0,
+  "old_budget_reuse": false,
+  "worker_ownership": "ten-file candidate; lead notes/ledger preserved",
+  "scope": "C8_NATIVE_PAIR_DEV"
+}

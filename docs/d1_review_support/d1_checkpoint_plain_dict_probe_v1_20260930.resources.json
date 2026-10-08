@@ -1,0 +1,19 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 50.43138699998963,
+  "peak_process_tree_memory_mb": 183.361536,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "docs/d1_review_support/d1_checkpoint_plain_dict_probe_dev.py",
+    "--saved",
+    "docs/d1_review_support/d1_radial_nonmatching_swept_search_coupled_v8_20260930.json",
+    "--baseline-source",
+    "C:/ANYworkspaceWork/general-contact-final-590d7a42/target/anysolver/nonlinear_restart.py",
+    "--output",
+    "docs/d1_review_support/d1_checkpoint_plain_dict_probe_v1_20260930.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_checkpoint_plain_dict_probe_v1_20260930.log"
+}

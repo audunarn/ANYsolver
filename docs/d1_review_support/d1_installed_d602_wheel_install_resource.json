@@ -1,0 +1,20 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 3.082152600007248,
+  "peak_process_tree_memory_mb": 75.788288,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pip",
+    "install",
+    "--no-index",
+    "--no-deps",
+    "--target",
+    "C:\\ANYworkspaceWork\\general-contact-standalone-d602bba5\\target",
+    "C:\\ANYworkspaceWork\\general-contact-standalone-d602bba5\\wheel\\anysolver-0.4.7-py3-none-any.whl"
+  ],
+  "log": "docs\\d1_review_support\\d1_installed_d602_wheel_install.log"
+}

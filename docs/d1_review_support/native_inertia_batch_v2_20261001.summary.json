@@ -1,0 +1,74 @@
+{
+  "status": "PASS",
+  "module_sha256": "9ee021df59f5974092e94a002ed6da8b8143e0a9ed891982992a60e50d194682",
+  "test_sha256": "272374dcbbc1095de95469b8d0445d69b8c6560e1cd920c19988fb1430e30d00",
+  "input_sha256": "ee5d4873b1f8a2b9332d3cd9f7302ea3629e1f6fe4a17dce6590fc3039b6d633",
+  "raw_sha256": "73c9294674103aa801272b769257c66615cae05b15535e2eb800b73cb804065a",
+  "resource": {
+    "status": "completed",
+    "exit_code": 0,
+    "elapsed_seconds": 4.824288600008003,
+    "peak_process_tree_memory_mb": 197.033984,
+    "time_limit_seconds": 180.0,
+    "memory_limit_bytes": 1073741824,
+    "command": [
+      "C:/Python/Python314/python.exe",
+      "docs/d1_review_support/native_inertia_batch_v2_20261001.entry.py",
+      "docs/d1_review_support/native_inertia_batch_v2_20261001.inputs.json",
+      "ee5d4873b1f8a2b9332d3cd9f7302ea3629e1f6fe4a17dce6590fc3039b6d633"
+    ],
+    "log": "docs\\d1_review_support\\native_inertia_batch_v2_20261001.log"
+  },
+  "source_passes": 452,
+  "source_bindings": 452,
+  "reused_resolved_cases": [
+    "rest",
+    "finite_off_axis",
+    "fast_finite_off_axis"
+  ],
+  "v1_remains_nonpass": true,
+  "analytic_zero": {
+    "batch_norm": 2.4970217657046832e-17,
+    "difference_norm": 6.529171490485728e-19,
+    "scalar_norm": 2.497334517166942e-17
+  },
+  "virtual_work": {
+    "generalized": -255.956115921563,
+    "independent_station": -255.95611592156294,
+    "relative_error": 2.220826748215992e-16
+  },
+  "directional": [
+    {
+      "configuration_error": 6.049466701912904e-11,
+      "configuration_signal_norm": 146.42373953602203,
+      "interval": 1e-05,
+      "velocity_error": 7.2826300135175714e-09
+    },
+    {
+      "configuration_error": 7.603095257471652e-10,
+      "configuration_signal_norm": 146.42373953602203,
+      "interval": 2e-06,
+      "velocity_error": 2.67962717475998e-08
+    }
+  ],
+  "negative_controls": [
+    "negative_measure",
+    "nonpositive_section",
+    "improper_frame",
+    "nonfinite_velocity"
+  ],
+  "scalar_seconds": [
+    0.3069096000108402,
+    0.31323579998570494
+  ],
+  "batch_seconds": [
+    0.0465150999953039,
+    0.043831099988892674
+  ],
+  "mean_scalar_seconds": 0.3100726999982726,
+  "mean_batch_seconds": 0.04517309999209829,
+  "measured_kernel_ratio_scalar_over_batch": 6.864100538871822,
+  "measured_kernel_fraction_saved": 0.8543144882076044,
+  "scope": "pure prepared48-station finitekernel only; no native timesteps, dispatch integration or whole-route benchmark",
+  "decision": "Locally verified candidate is ready for independent result review and lead integratedcost/parity. Keep old scalar/centered owners and defaultpublicadmission unchanged."
+}

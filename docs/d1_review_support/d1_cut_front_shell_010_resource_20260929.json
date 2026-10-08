@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 1.7350121999916155,
+  "peak_process_tree_memory_mb": 157.433856,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "docs\\d1_review_support\\d1_cut_front_shell_work.py",
+    "--theta",
+    "0.1",
+    "--output",
+    "docs\\d1_review_support\\d1_cut_front_shell_010_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_cut_front_shell_010_log_20260929.txt"
+}

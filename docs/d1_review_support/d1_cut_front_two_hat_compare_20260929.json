@@ -1,0 +1,51 @@
+{
+  "status": "development_two_body_cut_front_corrob",
+  "production_probe_sha256": "de28b67c2a5386f8d68ec1a41daf3f8e41d0fe5313808571c33935814a289e1f",
+  "oracle_null_residual_l2": 1.5040209277792026e-17,
+  "oracle_limit_matrix": [
+    [
+      -0.0254160785300636,
+      -0.00928327774099183
+    ],
+    [
+      0.025416078530063627,
+      0.009283277740991858
+    ]
+  ],
+  "oracle_coefficients": [
+    0.3430831936537267,
+    -0.939305020870409
+  ],
+  "zero_cut_minimum_stiffness_eigenvalue": 0.09306774473613608,
+  "maximum_source_oracle_relative_error": 8.548717289613705e-15,
+  "maximum_target_oracle_relative_error": 6.655326733267818e-14,
+  "rows": [
+    {
+      "theta": 0.1,
+      "source_oracle_relative_error": 0.0,
+      "target_oracle_relative_error": 8.509977251346621e-16,
+      "discrete_dual_over_theta_cubed": 0.182871620052738,
+      "all_supported_complementarity_l1_n": 6.913925066378622e-14,
+      "process_elapsed_s": 3.2568832999968436,
+      "peak_process_tree_memory_mb": 170.262528
+    },
+    {
+      "theta": 0.05,
+      "source_oracle_relative_error": 1.4432899320127035e-15,
+      "target_oracle_relative_error": 6.655326733267818e-14,
+      "discrete_dual_over_theta_cubed": 0.20450822587210732,
+      "all_supported_complementarity_l1_n": 6.56401917436759e-14,
+      "process_elapsed_s": 3.056583199999295,
+      "peak_process_tree_memory_mb": 168.964096
+    },
+    {
+      "theta": 0.025,
+      "source_oracle_relative_error": 8.548717289613705e-15,
+      "target_oracle_relative_error": 1.3208954530320071e-14,
+      "discrete_dual_over_theta_cubed": 0.21916379373631462,
+      "all_supported_complementarity_l1_n": 6.935158766444526e-14,
+      "process_elapsed_s": 3.057228899997426,
+      "peak_process_tree_memory_mb": 170.65984
+    }
+  ]
+}

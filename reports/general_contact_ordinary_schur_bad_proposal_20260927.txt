@@ -1,0 +1,38 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+________ test_ordinary_schur_rejects_bad_candidate_and_restores_state _________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002A87D57F100>
+
+    def test_ordinary_schur_rejects_bad_candidate_and_restores_state(monkeypatch):
+        model, load, definition, settings = build_case(2, supported_schur=True)
+    
+        def bad_proposal(manager, *_args, **_kwargs):
+            # Deliberately claim the wrong active branch. The analysis owner must
+            # verify it after equilibrium rather than trusting this local claim.
+            trial = manager.normal_multipliers.copy()
+            source, target = manager._positions(_args[0])
+            state = manager.law.evaluate(source, target, trial)
+            trial[state.reference_support > 0.0] += 0.5
+            return SupportedSchurProposal(
+                trial, (0,), None, 1.0, 1.0, 0.1,
+            )
+    
+        monkeypatch.setattr(linearized_pivot,
+                            "refined_patch_supported_schur", bad_proposal)
+        result = solve_static_nonlinear(
+            model, load, contact=definition, contact_settings=settings,
+            control="force", kinematics="von_karman", num_steps=1,
+            max_load_factor=0.5, max_iterations=12,
+            min_step_fraction=0.5,
+        )
+        assert result.status != "completed"
+>       assert len(result.steps) == 0
+E       AssertionError: assert 1 == 0
+E        +  where 1 = len([NonlinearStaticStep(step_index=1, load_factor=0.25, iterations=2, residual_norm=1.661813717174113e-10, displacement_n...31885747238e-18, -0.05000000000000001, 0.0), 'source_supported_edge': (0.0, 0.0, 0.10000000028160227, 0.0, 0.0, 0.0)})])
+E        +    where [NonlinearStaticStep(step_index=1, load_factor=0.25, iterations=2, residual_norm=1.661813717174113e-10, displacement_n...31885747238e-18, -0.05000000000000001, 0.0), 'source_supported_edge': (0.0, 0.0, 0.10000000028160227, 0.0, 0.0, 0.0)})] = NonlinearStaticResult(steps=[NonlinearStaticStep(step_index=1, load_factor=0.25, iterations=2, residual_norm=1.6618137...ance': 5e-05, 'maximum_candidate_pairs': 100000, 'swept_trial_cutbacks': 0, 'normal_stiffness': 1000.0}}, snapshots=()).steps
+
+tests\test_general_contact_ordinary_supported_schur.py:73: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_ordinary_supported_schur.py::test_ordinary_schur_rejects_bad_candidate_and_restores_state
+1 failed in 86.12s (0:01:26)

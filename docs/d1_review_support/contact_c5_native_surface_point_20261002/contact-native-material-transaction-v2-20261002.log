@@ -1,0 +1,15 @@
+[development] exact targets=1; record=C:\ANYworkspaceWork\contact-native-material-transaction-v2-20261002\anysolver-portable-ci-87qn8x27\P01
+[portable-ci] starting P01/01 with 1 modules
+.......                                                                  [100%]
+============================ slowest 10 durations =============================
+1.33s call     tests/test_general_contact_native_surface_transaction.py::test_existing_owner_material_driver_and_restored_driver_match_open_reference
+1.07s call     tests/test_general_contact_native_surface_transaction.py::test_bound_open_equilibrium_commit_split_replay_and_stale_proposal
+0.54s call     tests/test_general_contact_native_surface_transaction.py::test_initial_penetration_and_record_cap_fail_before_physical_commit
+0.48s call     tests/test_general_contact_native_surface_transaction.py::test_checkpoint_history_tampering_and_foreign_settings_are_rejected
+0.27s call     tests/test_general_contact_native_surface_transaction.py::test_failed_equilibrium_cancellation_and_definition_change_do_not_commit
+0.21s call     tests/test_general_contact_native_surface_transaction.py::test_empty_checkpoint_binds_the_initial_origin
+0.16s call     tests/test_general_contact_native_surface_transaction.py::test_existing_owner_material_driver_cancellation_preserves_transaction
+
+(3 durations < 0.005s hidden.  Use -vv to show these durations.)
+7 passed in 7.76s
+[portable-ci] P01 exit=0

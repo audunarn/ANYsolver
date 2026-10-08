@@ -1,0 +1,98 @@
+{
+  "cases": [
+    {
+      "source_columns": 8,
+      "source_rows": 4,
+      "target_s3_faces": 4,
+      "oracle_active_node_id": 22,
+      "oracle_active_node_ids": [
+        22
+      ],
+      "oracle_method": "enumerated_singleton",
+      "integrated_normal_force_n": 0.003155812767202828,
+      "sample_xy_m": [
+        [
+          0.6,
+          0.6
+        ],
+        [
+          0.6,
+          0.7
+        ],
+        [
+          0.6,
+          0.9
+        ]
+      ],
+      "source_vertical_displacement_m": [
+        -0.000247738507142735,
+        -0.00021824436596253266,
+        -0.00013920252335378332
+      ],
+      "structural_free_coordinates": 224
+    },
+    {
+      "source_columns": 8,
+      "source_rows": 8,
+      "target_s3_faces": 4,
+      "oracle_active_node_id": 40,
+      "oracle_active_node_ids": [
+        40
+      ],
+      "oracle_method": "enumerated_singleton",
+      "integrated_normal_force_n": 0.003152679928683261,
+      "sample_xy_m": [
+        [
+          0.6,
+          0.6
+        ],
+        [
+          0.6,
+          0.7
+        ],
+        [
+          0.6,
+          0.9
+        ]
+      ],
+      "source_vertical_displacement_m": [
+        -0.00022930904474040387,
+        -0.000215215399381132,
+        -0.00013211605527253491
+      ],
+      "structural_free_coordinates": 396
+    },
+    {
+      "source_columns": 8,
+      "source_rows": 16,
+      "target_s3_faces": 4,
+      "oracle_active_node_id": null,
+      "oracle_active_node_ids": [
+        76,
+        85
+      ],
+      "oracle_method": "cholesky_nnls",
+      "integrated_normal_force_n": 0.00320384474502702,
+      "sample_xy_m": [
+        [
+          0.6,
+          0.6
+        ],
+        [
+          0.6,
+          0.7
+        ],
+        [
+          0.6,
+          0.9
+        ]
+      ],
+      "source_vertical_displacement_m": [
+        -0.0002253325636527477,
+        -0.0002127879275531385,
+        -0.0001316151514401536
+      ],
+      "structural_free_coordinates": 740
+    }
+  ]
+}

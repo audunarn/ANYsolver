@@ -1,0 +1,109 @@
+{
+  "status": "COMPLETE_SUPPORTING_SOURCE_REVIEW_IMPLEMENTED_UNVERIFIED",
+  "family_independence": "SAME_FAMILY_SUPPORT_NOT_ENGINEERING_ACCEPTANCE",
+  "root": "C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001",
+  "author_source_check_sha256": "2659c2ba69aa0fbdeb4a88f64d4923dbf6dfb8d57c5dcf3a6ce7cb7e6d446711",
+  "source_snapshot": "C:\\ANYworkspaceWork\\contact_native_shell_c8_20261007\\author_source_snapshot_v1",
+  "files": [
+    {
+      "bytes": 23943,
+      "owned": true,
+      "path": "src/anysolver/_ge_beam3_native_shell_contact.py",
+      "sha256": "791447c155f4b45db21fcb6ff4f7cd7bafcfdfd25ebd246d743eace5b7284bf6"
+    },
+    {
+      "bytes": 3237,
+      "owned": true,
+      "path": "src/anysolver/general_contact/native_transient_shell.py",
+      "sha256": "0cbbb335e71cb0a82a0e94cc58e4e51b0f0d7483a9947afe7975da52279d8d27"
+    },
+    {
+      "bytes": 30875,
+      "owned": true,
+      "path": "src/anysolver/_ge_beam3_connected_dynamic.py",
+      "sha256": "fc479d74504544e02a3f86145f7c7a7c63aa1baee620b37a4227f83140c792d6"
+    },
+    {
+      "bytes": 20702,
+      "owned": true,
+      "path": "src/anysolver/_ge_beam3_connected_trajectory.py",
+      "sha256": "f6869a6c67908767b70612b3b893cdc4d4aeaf1c1100893b0c2fc4b054db9e19"
+    },
+    {
+      "bytes": 13878,
+      "owned": true,
+      "path": "tests/test_general_contact_native_transient_shell.py",
+      "sha256": "00d4e2c0ae5064ac95700dfe909195033854618ee786a8683422cf1ad0b340b8"
+    },
+    {
+      "bytes": 3911,
+      "owned": true,
+      "path": "examples/general_contact_native_shell_impact_dev.py",
+      "sha256": "f8507e00603dfa273e567d4d56201b2b2bc47bd2b091c4ca0896d62f2eea0925"
+    },
+    {
+      "bytes": 11776,
+      "owned": true,
+      "path": "docs/GENERAL_CONTACT_NATIVE_SHELL_TRANSIENT_DEV.md",
+      "sha256": "6fc1b73d2e9caca54cd179c61960a3b23e5819401130deab0dd3c734e1022dd1"
+    },
+    {
+      "bytes": 32645,
+      "owned": false,
+      "path": "src/anysolver/__init__.py",
+      "sha256": "f5e1f33cf0e991e2968dd28dff64ffe10d80c4e1f4fd2d4a32094b651b1e9447"
+    },
+    {
+      "bytes": 5440,
+      "owned": false,
+      "path": "src/anysolver/general_contact/__init__.py",
+      "sha256": "03d2e676fb056b7b6191bcc7604b496f742897731ab8ddfd0f0cfd7a8678ffee"
+    },
+    {
+      "bytes": 20365,
+      "owned": false,
+      "path": "src/anysolver/general_contact/native_retained_line_s3.py",
+      "sha256": "d7d1ca7a88a3c0573b62792ef6538a5e22575430c13766fdc5476e18c5dd4c25"
+    },
+    {
+      "bytes": 3542,
+      "owned": false,
+      "path": "src/anysolver/general_contact/native_retained_line_s3_work.py",
+      "sha256": "470c036e015c6e18181233cf1a36b3ee6a74e9b42e36a769d53aa37b73c3633c"
+    },
+    {
+      "bytes": 4685,
+      "owned": false,
+      "path": "src/anysolver/general_contact/s3_skin_work.py",
+      "sha256": "6a90f38d00ec2e6d81c8baa22742d76927527711c5c569a2ad4a8c794159d184"
+    },
+    {
+      "bytes": 20224,
+      "owned": false,
+      "path": "src/anysolver/general_contact/overlap.py",
+      "sha256": "3c6d98ac0e346669cff3f423d52367766e12d7c9a9d476f761fda2bf1c62deca"
+    },
+    {
+      "bytes": 104098,
+      "owned": false,
+      "path": "src/anysolver/e4_pl_s3_v2d_element.py",
+      "sha256": "13ba4b7ba3a34df714ab0a981e770a005242a88bf175dc6328bd3ebcaad90a59"
+    },
+    {
+      "bytes": 5062,
+      "owned": false,
+      "path": "src/anysolver/_native_midpoint_controller.py",
+      "sha256": "ed9352bfc4e883367b1c9712d997581391f579657075371c39920b8342042b45"
+    }
+  ],
+  "all_current_hashes_match": true,
+  "review_sha256": "10c7789d1c439a08cd54e6a1329740aa814281d00a10abd2cf61da186f42cf37",
+  "numerical_jobs": 0,
+  "solver_reference_imports": 0,
+  "tests_executed": 0,
+  "builds": 0,
+  "product_edits": 0,
+  "confirmed_unrepaired_source_findings": 0,
+  "missing_evidence": "Eight fixtures, installed runtime/public CLI, full descriptor convergence and mechanics, split restart/tamper, historical default owner byte parity, different-family assessment and broader engineering qualification",
+  "execution_authority": "NONE_FOR_THIS_SLICE"
+}

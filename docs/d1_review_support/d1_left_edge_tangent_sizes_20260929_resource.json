@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 42.430193399995915,
+  "peak_process_tree_memory_mb": 392.474624,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_d1_interior_profile.py::test_corrected_left_edge_slide_contact_directional_tangent",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d1_left_edge_tangent_sizes_20260929.log"
+}

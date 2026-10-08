@@ -1,0 +1,35 @@
+Wed Sep 30 09:50:04 2026    docs/d1_review_support/d1_authority_cache_saved_profile_v1_20260930.pstats
+
+         153245640 function calls (143458502 primitive calls) in 70.711 seconds
+
+   Ordered by: cumulative time
+   List reduced from 10009 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+   1869/1    0.194    0.000   70.728   70.728 {built-in method builtins.exec}
+        1    0.000    0.000   70.727   70.727 docs/d1_review_support/d1_installed_entry.py:1(<module>)
+        1    0.000    0.000   70.711   70.711 docs/d1_review_support/d1_installed_entry.py:19(main)
+        1    0.000    0.000   69.183   69.183 <frozen runpy>:262(run_path)
+        1    0.000    0.000   69.182   69.182 <frozen runpy>:91(_run_module_code)
+        1    0.000    0.000   69.182   69.182 <frozen runpy>:65(_run_code)
+        1    0.000    0.000   69.182   69.182 docs\d1_review_support\d1_saved_checkpoint_roundtrip_dev.py:1(<module>)
+        1    0.003    0.003   69.181   69.181 docs\d1_review_support\d1_saved_checkpoint_roundtrip_dev.py:172(main)
+        2    0.004    0.002   68.890   34.445 docs\d1_review_support\d1_saved_checkpoint_roundtrip_dev.py:70(roundtrip_saved_checkpoint)
+     3994    0.024    0.000   56.586    0.014 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\current_state_tangent.py:1177(guard)
+     3994    1.425    0.000   56.562    0.014 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\current_state_tangent.py:878(_require_exact_qualified_component_lifecycle_api_implementation)
+     5556    0.004    0.000   55.994    0.010 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_restart.py:149(_checkpoint_observation_guard)
+       12    0.001    0.000   45.832    3.819 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_restart.py:624(model_configuration_fingerprint)
+       12    0.008    0.001   45.748    3.812 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_restart.py:478(model_configuration_descriptor)
+        6    0.004    0.001   40.474    6.746 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_restart.py:926(validate_nonlinear_checkpoint)
+   191712    2.261    0.000   36.846    0.000 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\current_state_tangent.py:688(_qualified_profile_api_failure)
+        2    0.002    0.001   35.331   17.666 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_restart.py:704(create_nonlinear_checkpoint)
+      708    0.010    0.000   22.283    0.031 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_restart.py:379(_object_payload)
+1354548/1350554    0.726    0.000   18.722    0.000 {built-in method builtins.sorted}
+8398688/1168303    9.658    0.000   16.049    0.000 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\e4_pl_s3_state.py:235(signature)
+601760/882    0.801    0.000   15.537    0.018 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_restart.py:165(_normalize_json)
+   127808    0.273    0.000   11.691    0.000 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\current_state_tangent.py:287(_validate_s3_v2d_serialization_authority)
+        2    0.001    0.000   10.406    5.203 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_restart.py:650(_state_records)
+     7988    0.503    0.000    9.465    0.001 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\current_state_tangent.py:998(<genexpr>)
+ 10288544    6.343    0.000    9.106    0.000 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\current_state_tangent.py:860(lookup)
+
+

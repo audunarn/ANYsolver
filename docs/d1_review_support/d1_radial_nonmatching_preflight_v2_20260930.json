@@ -1,0 +1,37 @@
+{
+  "source_guided_shear_n_m": 1602.5641025641025,
+  "target_guided_shear_n_m": 3163.400547104653,
+  "target_phi_squared_range": [
+    0.39479238827866037,
+    0.3947923882786611
+  ],
+  "target_p1_energy_max_relative_error": 4.491729488897204e-16,
+  "target_cells": 12,
+  "target_y0_m": -0.113,
+  "target_right_x_m": 1.297,
+  "gap_m": 7.741263872132846e-06,
+  "exact_force_n": 0.020435219974701022,
+  "status": "development_radial_preflight",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "total_dofs": 2028,
+  "source_faces": 144,
+  "target_faces": 288,
+  "physical_load_n": 0.08,
+  "boundary_trace_scope": "continuous analytic traces; nodal interpolation is spatial discretization",
+  "source_trace_error_bound": {
+    "body": "source",
+    "edge_count": 48,
+    "max_error_m": 2.8713460256311824e-08,
+    "max_edge_length_m": 0.08333333333333348,
+    "minimum_boundary_radius_m": 0.4999999999999999,
+    "max_hessian_upper_per_m": 3.3077906215271194e-05
+  },
+  "target_trace_error_bound": {
+    "body": "target",
+    "edge_count": 48,
+    "max_error_m": 4.27385452688871e-09,
+    "max_edge_length_m": 0.10941666666666672,
+    "minimum_boundary_radius_m": 0.5999999999999999,
+    "max_hessian_upper_per_m": 2.8558984616172328e-06
+  }
+}

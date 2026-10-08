@@ -1,0 +1,22 @@
+[
+  {
+    "divisions": 4,
+    "elapsed_seconds": 4.444932099984726,
+    "active_pressure_dofs": 20,
+    "overlapping_pairs": 18,
+    "pair_geometry_evaluations": 114,
+    "energy_evaluations": 82,
+    "force_z_n": 0.6890000000000168,
+    "tangent_nnz": 11042
+  },
+  {
+    "divisions": 8,
+    "elapsed_seconds": 11.424230900011025,
+    "active_pressure_dofs": 42,
+    "overlapping_pairs": 40,
+    "pair_geometry_evaluations": 424,
+    "energy_evaluations": 296,
+    "force_z_n": 0.6890000000000207,
+    "tangent_nnz": 25896
+  }
+]

@@ -1,0 +1,78 @@
+{
+  "status": "SOURCE_AUTHORED_NOT_EXECUTED",
+  "owned_paths": [
+    "tests/native_forced_response_reference.py",
+    "tests/test_ge_beam3_native_forced_response.py"
+  ],
+  "source_sha256": {
+    "reference": "4d9a62656122a4e2a2e54e27775d39fc6473538e8f1b8e965a6f8e8b3bb0cf01",
+    "test": "568dc23aaf88c590154d33cbc560e00bbac725abb784c2b38bcdf4520d79ea9e"
+  },
+  "criteria": {
+    "duration_seconds": 0.004,
+    "coarse_steps": 4,
+    "fine_steps": 8,
+    "half_load_fine_steps": 8,
+    "maximum_accepted_steps": 20,
+    "internal_time_limit_seconds": 120.0,
+    "force_density_n_per_m": [
+      0.2,
+      -0.15,
+      0.1
+    ],
+    "couple_density_nm_per_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "explicit_stage_solve_tolerance": 1e-12,
+    "scientific_stage_gate": 1e-11,
+    "endpoint_balance_gate": 1e-11,
+    "normalized_defect_limit": 1e-06,
+    "elastic_witness_limit": 1e-10,
+    "nonlinear_to_discrete_limit": 0.002,
+    "trajectory_floor": 1e-06,
+    "invariant_floor": 1e-10,
+    "time_refinement_ratio": 0.4,
+    "amplitude_refinement_ratio": 0.75,
+    "resolved_coarse_phase_limit": 0.4,
+    "origin_high_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "origin_low_m": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "supervisor": {
+    "seconds": 180,
+    "memory_bytes": 1073741824,
+    "threads": 1,
+    "internal_seconds": 120
+  },
+  "history": {
+    "raw_sha256": "705b627848aef2df9ce17cdce2dda937ea1ae29d1031a855f48ff567181248f7",
+    "input_sha256": "07b3f12777cd21ed5932fe14f51ec3254ba1796f6627d3ce8373be4c2996926d",
+    "fixture_sha256": "426f673d40e82a4d554c3964dc9b51b4ca5638f180f3f985e4ba85c974ebc05d",
+    "projection_sha256": "171105027214b8dafe5e144b5cab43e6c13914011c6a60c684938bd05dcee1c0"
+  },
+  "fixture": "Authentic curved Q2/P1 two-cell single ellipsoid elastic element, all15 free physical/all27 algebraic, mass/length2.7kg/m, actual section centroid(.035,-.025,.012)m/cross inertia retained; line force through lifted reference line rather than section mass centroid",
+  "equations": "z_j=f_j(1-cos(omega_j t))/omega_j^2 and zdot_j=f_j sin(omega_j t)/omega_j; six rigid z=.5f t^2/zdot=f t; midpoint phase n2atan(omega_j h/2); algebraic-only Ke reduction with full15M",
+  "shared_spatial_boundary": "Exact saved K42/M42/M15/Ke15/Z and spectrum are declared accepted spatial inputs, not newly independent spatial qualification. Actual current reference geometry/history/section inertia/free supports and virgin structural/mass/Ke are checked before steps; no new modal eigensolve.",
+  "positive_mode_screen": {
+    "fraction": 0.11960067320449241,
+    "positive_modal_force_norm": 0.0284076799936897,
+    "rigid_modal_force_norm": 0.23581616334268135,
+    "quadrature4_to24_full_relative": 2.8165679375473134e-09,
+    "quadrature_positive_relative": 4.193544915494738e-08
+  },
+  "scales": "Per full/half branch: positive independent continuous reference q/v M-norms and positive-mode norms atT; E*=.5qKeq+.5vMv>0, P*=|integrated f|T,H*=2P*, force/moment scales positive. Never divide byE0=0.",
+  "algorithmic_setting": "Explicit stage solve tolerance1e-12, immutable bound identity; existing scientific stage/endpoint gates1e-11 and correction tolerance/default unchanged. A priori residual-only P/H envelope below half fixed1e-10 refinement floor even halfload; no retuning if unattainable.",
+  "decision": "All15+positive9 nonlinear versus exact discrete trajectories .002; continuum versus discrete phase separately; common-time coarse/fine ratio .4 where above original floors and predicted dispersion eligible; half-load normalized nonlinear remainder ratio .75. Below-floor pairs support no order claim; coarse<=floor/fine>floor unresolvedNONPASS. Original physical work/impulse/energy gates1e-6/witness1e-10 retained. Firstfailure stops; no automatic tolerance/amplitude/time campaign.",
+  "captures": "Actual initialized complete state/a/R/J/M/I and full42 balance; signed unissued original-returned trial observations under transparent128-cap wrapper; authenticated accepted candidate unknown42/R/I/e/J/M/epoch/context/audit-authentication session before commit; all endpointq/v/a/frames/stress/history and exact path vs midpoint work/impulse",
+  "ownership": "NEW managed test/reference only, existing main D6 living note and new immutable snapshots/proposal. Production sources/defaults/guards and all old failed evidence unchanged.",
+  "execution": "No production numerical evaluation, initializer, eigensolve, temporal step or test run has occurred. Only authorized authentic saved-mode force projection and source/AST/hash inspection performed."
+}

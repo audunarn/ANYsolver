@@ -1,0 +1,16 @@
+{
+  "purpose": "development reference-surface pressure-field comparison",
+  "reference_report": "reports\\general_contact_d1_mixed_8q4_interior_distributed_0p3n_four_phase_20260927.json",
+  "reference_columns": 8,
+  "reference_target_columns": 1,
+  "measure": "exact squared piecewise-bilinear L2 over common-refined unit reference strip",
+  "comparisons": [
+    {
+      "report": "reports\\general_contact_d1_distributed_8q4_4s3_target_press_dev_20260928.json",
+      "columns": 8,
+      "target_columns": 2,
+      "pressure_basis": "fine_nodal_q1",
+      "relative_reference_l2": 5.056268871250974e-13
+    }
+  ]
+}

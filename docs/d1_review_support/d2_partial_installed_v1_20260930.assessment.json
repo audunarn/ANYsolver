@@ -1,0 +1,15 @@
+{
+  "checks": {
+    "completed": true,
+    "ten_poses": true,
+    "actual_open_recontact": true,
+    "final_q_parity": true,
+    "force_gap_control_parity": true,
+    "complete_material_state_parity": true
+  },
+  "development_checks_met": true,
+  "q_max_abs_error_m": 0.0,
+  "maximum_force_gap_control_abs_difference": 0.0,
+  "accepted": false,
+  "released": false
+}

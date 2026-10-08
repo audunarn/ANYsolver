@@ -1,0 +1,7 @@
+{
+  "status": "development_independent_gap_pass",
+  "saved_pose": "docs\\d1_review_support\\d1_pressure_work_16q4_press_20260929.json",
+  "independent_conservative_lower_gap_m": -3.5966045441322506e-05,
+  "solver_conservative_lower_gap_m": -3.5966052950586286e-05,
+  "gap_tolerance_m": 5e-05
+}

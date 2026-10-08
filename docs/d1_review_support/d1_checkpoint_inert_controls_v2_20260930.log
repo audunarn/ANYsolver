@@ -1,0 +1,34 @@
+...................F...F...........                                      [100%]
+================================== FAILURES ===================================
+______ test_exact_array_uses_pure_observation_and_keeps_canonical_values ______
+
+    def test_exact_array_uses_pure_observation_and_keeps_canonical_values():
+        observed = []
+        result = _normalize_json(np.array([0.0, -0.0, 1.25]),
+            _exact_guard=lambda *a, **k: observed.append(k), _guard_model=object())
+>       assert result == [0.0, 0.0, 1.25] and observed == []
+E       AssertionError: assert ([0.0, 0.0, 1.25] == [0.0, 0.0, 1.25]
+E         
+E         Use -v to get more diff and [{'context': ...vation at $'}] == []
+E         
+E         Left contains one more item: {'context': 'nonlinear checkpoint array observation at $'}
+E         Use -v to get more diff)
+
+tests\test_nonlinear_checkpoint_guarded_normalization.py:102: AssertionError
+_____ test_explicit_array_cast_is_inert_only_for_exact_native_same_dtype ______
+
+    def test_explicit_array_cast_is_inert_only_for_exact_native_same_dtype():
+        from anysolver.nonlinear_restart import _inert_array_conversion
+        for dtype in (np.float64, np.int64):
+>           assert _inert_array_conversion(np.ones(3, dtype=dtype), np.asarray, dtype)
+E           AssertionError: assert False
+E            +  where False = <function _inert_array_conversion at 0x000002171EEAAFB0>(array([1., 1., 1.]), <built-in function asarray>, <class 'numpy.float64'>)
+E            +    where array([1., 1., 1.]) = <function ones at 0x000002171AC1B1C0>(3, dtype=<class 'numpy.float64'>)
+E            +      where <function ones at 0x000002171AC1B1C0> = np.ones
+E            +    and   <built-in function asarray> = np.asarray
+
+tests\test_nonlinear_checkpoint_guarded_normalization.py:146: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_nonlinear_checkpoint_guarded_normalization.py::test_exact_array_uses_pure_observation_and_keeps_canonical_values
+FAILED tests/test_nonlinear_checkpoint_guarded_normalization.py::test_explicit_array_cast_is_inert_only_for_exact_native_same_dtype
+2 failed, 33 passed in 25.33s

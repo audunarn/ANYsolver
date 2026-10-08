@@ -1,0 +1,19 @@
+{"anysolver_file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py", "input_sha256": "3cf5e333d4b97acc10f8cf62edcc730fae69466a42a326e9374402c21f6ed158", "numpy": "2.4.6", "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]", "scipy": "1.17.1", "threadpools": [{"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.31.188.0"}, {"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.30"}]}
+F
+================================== FAILURES ===================================
+________ test_independent_linearized_path_locates_swept_resource_limit ________
+
+    def test_independent_linearized_path_locates_swept_resource_limit():
+        m,d,s=fixture();constraints(m)
+        indices=np.array([m.mesh.dof_manager.get_node_dofs(n)[2] for n in (2,5)])
+        K,_=assemble_stiffness_matrix(m);K2=K[indices][:,indices].toarray()
+        reference=root(lambda y:K2@y+independent_contact_gradient(y)-np.array((-.001,0.)),(-.001,-.003),tol=1.e-11)
+>       assert reference.success
+E       assert False
+E        +  where False =  message: The iteration is not making good progress, as measured by the \n           improvement from the last ten iter...-01]\n           [-4.418e-01 -8.971e-01]]\n       r: [-3.913e+03  1.153e+02 -4.725e-02]\n     qtf: [-4.177e-04 -4.531e-05].success
+
+tests\test_general_contact_deformable_beam_s3_static.py:134: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_deformable_beam_s3_static.py::test_independent_linearized_path_locates_swept_resource_limit
+1 failed, 3 deselected in 0.93s
+{"pytest_exit_code": 1, "verified_source_count": 442}

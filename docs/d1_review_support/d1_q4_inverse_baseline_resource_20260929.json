@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 1.3654982000007294,
+  "peak_process_tree_memory_mb": 135.43424,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "scripts/general_contact_d1_overlap_shape_bench.py",
+    "--repeats",
+    "5",
+    "--output",
+    "docs/d1_review_support/d1_q4_inverse_baseline_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_q4_inverse_baseline_20260929.log"
+}

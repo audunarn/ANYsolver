@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.902" timestamp="2026-10-01T00:49:24.553664+02:00" hostname="WORK_STABEIST1"><testcase classname="tests.test_general_contact_deformable_beam_s3_static" name="test_independent_linearized_path_locates_swept_resource_limit" time="0.274"><failure message="assert False">def test_independent_linearized_path_locates_swept_resource_limit():
+        m,d,s=fixture();constraints(m)
+        indices=np.array([m.mesh.dof_manager.get_node_dofs(n)[2] for n in (2,5)])
+        K,_=assemble_stiffness_matrix(m);K2=K[indices][:,indices].toarray()
+        reference=root(lambda y:K2@y+independent_contact_gradient(y)-np.array((-.001,0.)),(-.00102946,-.00290194),jac=lambda y:K2+independent_contact_hessian(y),tol=1.e-11)
+        assert reference.success
+        manager=DeformableBeamS3Manager(m,d,s);u=np.zeros(m.mesh.dof_manager.total_dofs);u[indices]=reference.x
+        b0,s0=manager._positions(np.zeros_like(u));b1,s1=manager._positions(u)
+        outcomes={str(cap):manager.kernel.swept_admissible(b0,s0,b1,s1,gap_tolerance=manager.gap_tolerance,maximum_intervals=cap) for cap in (128,512)}
+        print('SWEPT_RESOURCE_DISCRIMINATOR '+json.dumps({'reference':reference.x.tolist(),'minimum_gap':manager.kernel.evaluate(b1,s1).minimum_gap,'budgets':outcomes},sort_keys=True))
+&gt;       assert outcomes['512']
+E       assert False
+
+tests\test_general_contact_deformable_beam_s3_static.py:155: AssertionError</failure></testcase></testsuite></testsuites>

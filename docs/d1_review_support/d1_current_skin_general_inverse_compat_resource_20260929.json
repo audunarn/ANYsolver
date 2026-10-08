@@ -1,0 +1,14 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 2.5690668000024743,
+  "peak_process_tree_memory_mb": 163.680256,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "docs.d1_review_support.d1_two_body_current_skin_quadrature"
+  ],
+  "log": "docs\\d1_review_support\\d1_current_skin_general_inverse_compat_20260929.log"
+}

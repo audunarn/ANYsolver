@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_two_body_oracle_dev.py", line 11, in <module>
+    from docs.d1_review_support.d1_two_body_reference_oracle import (
+        solve_reference, solve_reference_singleton,
+    )
+ModuleNotFoundError: No module named 'docs'

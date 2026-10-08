@@ -1,0 +1,32 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 28.35068550000142,
+  "peak_process_tree_memory_mb": 343.8592,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "scripts/general_contact_d1_interior_press_dev.py",
+    "docs/d1_review_support/d1_sloped_source_couple_press_20260929.json",
+    "--force-n",
+    "0.04",
+    "--reference-slope",
+    "0.01",
+    "--source-support",
+    "perimeter",
+    "--source-columns",
+    "4",
+    "--source-rows",
+    "4",
+    "--target-columns",
+    "1",
+    "--target-rows",
+    "1",
+    "--load-shape",
+    "interior_distributed",
+    "--slide-body",
+    "target"
+  ],
+  "log": "docs\\d1_review_support\\d1_sloped_source_couple_press_20260929.log"
+}

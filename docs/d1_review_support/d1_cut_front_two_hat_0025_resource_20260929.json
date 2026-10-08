@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 2.5637520999880508,
+  "peak_process_tree_memory_mb": 170.237952,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "docs\\d1_review_support\\d1_cut_front_shell_work.py",
+    "--theta",
+    "0.025",
+    "--two-hat-mode",
+    "--output",
+    "docs\\d1_review_support\\d1_cut_front_two_hat_0025_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_cut_front_two_hat_0025_log_20260929.txt"
+}

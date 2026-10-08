@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_source_y_resolution.py", line 263, in <module>
+    main()
+    ~~~~^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_source_y_resolution.py", line 235, in main
+    run(nx, ny, pressure_nx, args.comparison_nx)
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_source_y_resolution.py", line 155, in run
+    pressure = _nonnegative_quadratic(compliance, linear, support)
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_linearized_front_reference.py", line 119, in _nonnegative_quadratic
+    raise RuntimeError(
+    ...<3 lines>...
+    )
+RuntimeError: linearized pressure solve failed: STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT; minimum gap=-4.066e-20 m, complementarity=4.17e-19 Pa m

@@ -1,0 +1,50 @@
+{"mode": "existing", "status": "completed", "failure_reason": null, "elapsed_s": 115.08201539999573, "accepted_steps": 1, "total_newton_iterations": 14, "active_pressure_dofs": 6, "gap_tolerance_met": true, "energy_evaluations_last": 176, "integration_triangles_last": 32, "integration_force": [-1.3019209805478097e-07, -6.260720524687135e-07, 0.07558333827016978], "target_force": [1.3019209862095272e-07, 6.260720528719694e-07, -0.07558333826627703]}
+{"mode": "jet2_q4_s3_dev", "status": "completed", "failure_reason": null, "elapsed_s": 22.960786899988307, "accepted_steps": 1, "total_newton_iterations": 14, "active_pressure_dofs": 6, "gap_tolerance_met": true, "energy_evaluations_last": 12, "integration_triangles_last": 32, "integration_force": [-1.3019209836051164e-07, -6.260720524355709e-07, 0.07558333825432523], "target_force": [1.3019209836049692e-07, 6.260720524355803e-07, -0.07558333825432521]}
+{
+  "baseline": {
+    "accepted_steps": 1,
+    "active_pressure_dofs": 6,
+    "elapsed_s": 115.08201539999573,
+    "energy_evaluations_last": 176,
+    "failure_reason": null,
+    "gap_tolerance_met": true,
+    "integration_force": [
+      -1.3019209805478097e-07,
+      -6.260720524687135e-07,
+      0.07558333827016978
+    ],
+    "integration_triangles_last": 32,
+    "mode": "existing",
+    "status": "completed",
+    "target_force": [
+      1.3019209862095272e-07,
+      6.260720528719694e-07,
+      -0.07558333826627703
+    ],
+    "total_newton_iterations": 14
+  },
+  "candidate": {
+    "accepted_steps": 1,
+    "active_pressure_dofs": 6,
+    "elapsed_s": 22.960786899988307,
+    "energy_evaluations_last": 12,
+    "failure_reason": null,
+    "gap_tolerance_met": true,
+    "integration_force": [
+      -1.3019209836051164e-07,
+      -6.260720524355709e-07,
+      0.07558333825432523
+    ],
+    "integration_triangles_last": 32,
+    "mode": "jet2_q4_s3_dev",
+    "status": "completed",
+    "target_force": [
+      1.3019209836049692e-07,
+      6.260720524355803e-07,
+      -0.07558333825432521
+    ],
+    "total_newton_iterations": 14
+  },
+  "maximum_displacement_difference": 6.951036968239066e-15,
+  "note": "One exploratory pair; no statistical or acceptance claim."
+}

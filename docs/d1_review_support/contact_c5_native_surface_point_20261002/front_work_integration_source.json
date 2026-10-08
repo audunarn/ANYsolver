@@ -1,0 +1,6 @@
+{
+  "src/anysolver/general_contact/native_surface_front_work.py": "69b6ca3a0e8538d7f9c9f1c567b129d32f49fdf0b4f2c0d63018408c23222cf9",
+  "src/anysolver/general_contact/native_surface_front.py": "d3e67f26ee0eafd07dc0410172276dbabdffb1c77fd8a73300ecbc754aed3741",
+  "src/anysolver/general_contact/native_surface_friction_integral.py": "f868117aeedfc5d97d6fb74f50320d131e113075a02f8a0836acc5b3572e9a03",
+  "tests/test_general_contact_native_surface_sequence_integral.py": "030ba489965b716a18f6891fd407fa2b5c984a1c271649b7ffc08719e99b3faa"
+}

@@ -1,0 +1,72 @@
+{
+  "status": "PASS",
+  "input_sha256": "2174d96e49206822324bfac176f57370fcf55f9466d1efcf408fb5949f191428",
+  "raw_sha256": "a7e53612d3688a84edea4842da92e9eb7ebe87b471c08e2c2dde9e5c32743a54",
+  "resources": {
+    "status": "completed",
+    "exit_code": 0,
+    "elapsed_seconds": 64.51808969999547,
+    "peak_process_tree_memory_mb": 190.959616,
+    "time_limit_seconds": 180.0,
+    "memory_limit_bytes": 1073741824,
+    "command": [
+      "C:/Python/Python314/python.exe",
+      "docs/d1_review_support/native_validation_cost_v1_20261001.entry.py",
+      "docs/d1_review_support/native_validation_cost_v1_20261001.inputs.json",
+      "2174d96e49206822324bfac176f57370fcf55f9466d1efcf408fb5949f191428"
+    ],
+    "log": "docs\\d1_review_support\\native_validation_cost_v1_20261001.log"
+  },
+  "physical_steps": 16,
+  "original_stage_records": 48,
+  "state_records": 20,
+  "source_postverify_count": 452,
+  "source_binding_count": 452,
+  "full_operation_seconds": [
+    13.937663299991982,
+    13.822124900005292
+  ],
+  "scoped_operation_seconds": [
+    13.254419699980645,
+    13.171632999990834
+  ],
+  "mean_full_seconds": 13.879894099998637,
+  "mean_scoped_seconds": 13.21302634998574,
+  "mean_operation_seconds_saved": 0.6668677500128979,
+  "measured_operation_fraction_saved": 0.048045593518826875,
+  "pair_fraction_saved": [
+    0.049021387969081634,
+    0.04706164245514879
+  ],
+  "full_callbacks_per_four_steps": 3888,
+  "scoped_full_callbacks_per_four_steps": 96,
+  "scoped_local_guards_per_four_steps": 3984,
+  "full_model_guards_per_four_steps": 4348,
+  "scoped_full_model_guards_per_four_steps": 556,
+  "maximum_stage_norm": 1.61725656163784e-13,
+  "maximum_endpoint_balance": 1.6011153412811023e-13,
+  "max_step_defects": {
+    "E": 1.026176685810523e-07,
+    "P": 7.762617296655886e-09,
+    "H": 6.305485324368931e-10
+  },
+  "max_cumulative_defects": {
+    "E": 2.299427593031352e-07,
+    "P": 3.092421742297806e-08,
+    "H": 2.487864480796878e-09
+  },
+  "parity": [
+    true,
+    true,
+    true,
+    true
+  ],
+  "cancellation_control": {
+    "full_callbacks_on_error": 2,
+    "rejected": true,
+    "stage": "ge-beam3.local-operator"
+  },
+  "scope_finally_reset": true,
+  "journal_format": "one compact JSON object per nonempty line, followed by an additional blank separator line; recorded lengths/hashes include both LF bytes",
+  "decision": "Existing default120 scope is numerically identical and removes repeated full checks, but measured whole-route savings are only about5%. It does not by itself justify a larger accuracy-refinement campaign or change the explicit rejection of scope under840. No profiling or new long case is launched."
+}

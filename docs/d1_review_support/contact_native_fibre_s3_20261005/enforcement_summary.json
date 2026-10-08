@@ -1,0 +1,51 @@
+{
+  "status": "failed",
+  "failure": "RuntimeError: native/S3 line-search/gap limit: iteration=7, rejected={'geometry': 9, 'gap': 0, 'swept': 0, 'merit': 0}, last=curved axial front bracket work uncertainty exceeds integration budget",
+  "completed": 0,
+  "candidates": 37,
+  "rejections": 34,
+  "energy_error_range_J": [
+    4.747705149122564e-23,
+    1.622244817751769e-20
+  ],
+  "force_error_range_N": [
+    6.628002983629476e-16,
+    1.1096359939472463e-15
+  ],
+  "scaled_tangent_error_range": [
+    1.0102193914938825e-06,
+    1.6003607351706193e-06
+  ],
+  "tangent_limit": 1e-06,
+  "classification": "geometry/integration admission; no accepted target; enforcement response comparison unavailable",
+  "coarse_preflight": {
+    "independent_gaps_m": [
+      -1.5012400676018185e-05,
+      -1.5012400676018185e-05
+    ],
+    "production_gap_lower_m": -1.501308397780244e-05,
+    "quantities": {
+      "contact_force_n": [
+        2.2092523597930985e-08,
+        -7.364174532643656e-09,
+        0.005402098720396405
+      ],
+      "contact_moment_nm": [
+        0.00024199869336398423,
+        -0.010160266864571749,
+        -1.484022126994229e-08
+      ],
+      "tip_z_m": -0.00016000259947796737,
+      "target_z_m": -4.0896186355344814e-05
+    }
+  },
+  "resources": {
+    "status": "completed",
+    "returncode": 1,
+    "elapsed_s": 4.937459900043905,
+    "peak_bytes": 181395456
+  },
+  "raw_directory": "C:\\ANYworkspaceWork\\contact_native_fibre_s3_20261005\\candidate04",
+  "source_head": "5c724261",
+  "wheel_sha256": "50cff5fe9e52b68d25cd65d5f6dc46a946596db0d8f5e5d6ebff49db8a2adfc0"
+}

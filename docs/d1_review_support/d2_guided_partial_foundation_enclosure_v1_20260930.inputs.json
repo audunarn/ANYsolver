@@ -1,0 +1,26 @@
+{
+  "accepted": false,
+  "released": false,
+  "cells": 1000000,
+  "analytic_relative_target": 0.001,
+  "inputs": [
+    {
+      "path": "docs\\d1_review_support\\d2_guided_partial_foundation_n79_v1_20260930.json",
+      "sha256": "b0b1f10e52dc101eded53c855af49dc709bc92e596bc15745422fad796904fc6"
+    },
+    {
+      "path": "docs\\d1_review_support\\d2_guided_partial_foundation_n159_v1_20260930.json",
+      "sha256": "c604268c746d4a425fd0223a22b8287ff2d2b234747b52202c720245184788c7"
+    }
+  ],
+  "source_sha256": "788976baa384cc481ea1025a67ef4f1a3d0315cdc8fb4b3a8abdd4a402a80747",
+  "derivation_sha256": "d8fc561eb8801cac229b7387aa55d43ecb446a435201fea173e62c15b9a65199",
+  "decimal_precision": 80,
+  "decimal_rounding": "ROUND_HALF_EVEN",
+  "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+  "resource_caps": {
+    "seconds": 180,
+    "process_tree_bytes": 1073741824
+  },
+  "limits": "fixed guided partial-support benchmark only; no installed admission, uniform stability or radial regrade"
+}

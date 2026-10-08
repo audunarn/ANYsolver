@@ -1,0 +1,9 @@
+# Current-source installed wheel: deformable-target development cycle
+
+Source commit `1d0b6c4b` on `codex/general-contact-core`. The wheel was built with Python 3.14.2 from that clean source using the project's normal wheel build. Wheel SHA-256: `9b844b3e3d586733c1cca27e496f747c278dd86c4d4ac9ecbab9c8ed8c9031f4`. The standalone example SHA-256 is `1c74ff3065c9719542303743167491e660e23f16a2ea6486495129f455dd68ce`.
+
+The wheel was installed with `--no-index --no-deps` into `C:\ANYworkspaceWork\general-contact-standalone-1d0b6c4b\target`. The example ran from that separate directory with `PYTHONPATH` containing only the install target. Its reported `anysolver.__file__` resolves inside the target. In the same working directory and environment, ANYgeometry resolves to the host's editable sibling checkout at `C:\Github\ANYgeometry\src\anygeometry`, distribution version 0.4.3. The wheel metadata declares `ANYgeometry>=0.4.3,<0.5` for the `general-contact` extra. Thus this checks the installed ANYsolver artifact with the host's already available optional search dependency; it does not test dependency installation from an index.
+
+The four-Q4/two-S3 eight-step press/slide/open/recontact example completed in 38.05 s with 399.77 MB peak process-tree RSS under the existing 180 s/1 GB development cap. Split restart reproduced the final displacement and contact force exactly. Every result field except the expected module path is exactly equal to the current source-loaded run at `2b6fb94f`, including all step mechanics and independent projected gap diagnostics.
+
+[Installed result](d1_tree_installed_cycle_result_1d0b6c4b_20260928.json), [bounded resource record](d1_tree_installed_cycle_resource_1d0b6c4b_20260928.json), [console](d1_tree_installed_cycle_console_1d0b6c4b_20260928.txt) and [source-loaded result](d1_tree_free_target_cycle_20260928.json) are retained. This is development package verification, not independent D1 acceptance or release.

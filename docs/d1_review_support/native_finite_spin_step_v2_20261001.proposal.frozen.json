@@ -1,0 +1,89 @@
+{
+  "status": "SOURCE_AUTHORED_NOT_EXECUTED",
+  "workspace": "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver",
+  "owned_new_path": "tests/test_ge_beam3_native_finite_spin_step.py",
+  "selected_test": "tests/test_ge_beam3_native_finite_spin_step.py::test_one_finite_spin_step_resolution_and_actual_balance",
+  "criteria": {
+    "spatial_spin_rad_per_s": [
+      35.0,
+      -25.0,
+      20.0
+    ],
+    "dt_seconds": 0.0005,
+    "maximum_accepted_steps": 1,
+    "internal_time_limit_seconds": 120.0,
+    "explicit_stage_solve_tolerance": 1E-12,
+    "scientific_stage_gate": 1E-11,
+    "endpoint_balance_gate": 1E-11,
+    "normalized_defect_limit": 1E-06,
+    "elastic_witness_limit": 1E-10,
+    "origin_high_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "origin_low_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "length_scale_m": 2.0,
+    "maximum_returned_stage_observations": 128
+  },
+  "resource_bounds": {
+    "threads": 1,
+    "internal_seconds": 120.0,
+    "memory_limit_bytes": 1073741824,
+    "maximum_accepted_steps": 1,
+    "supervisor_seconds": 180.0,
+    "no_checkpoint_segments": true
+  },
+  "source_sha256": {
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_native_finite_spin_step.py": "fd6236f0a26f0cada2ecd335d67d1343cdba97e90af4015b9b2f3bae5480d6f0",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_native_midpoint.py": "426f673d40e82a4d554c3964dc9b51b4ca5638f180f3f985e4ba85c974ebc05d",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\native_forced_response_reference.py": "4d9a62656122a4e2a2e54e27775d39fc6473538e8f1b8e965a6f8e8b3bb0cf01",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_centered_finite_inertia.py": "3334699c5a4c14ef67cbfcef3ad54c3be8c80a15b98f2c34aa6840be70d32f84",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py": "9586af4379a566f8bfa51c6454bba173dd110966d09a7d7f36ba967aedcd8498",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_midpoint.py": "f2c494a93315b541500a8f6aa7330bfae2f731ac9f2251f1585704638f03f71a",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_dynamic_analysis.py": "13185a6c0d9ee0c09b08fdba05cfde5e33e7f06926b253abd7b88488d2d87215",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_dynamic_restart.py": "3f26dc51cd9e87998c2b89610b92dce297ff4d1ed0194a5fd464e7954b7fa4af",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\ge_beam3_native_dynamics.py": "ddd77596e60629fe96d5920b6362ee60985510c6fbe40aeb4ee8ab0024504a20"
+  },
+  "historical": {
+    "raw": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_vibration_v2_20260930.raw.json",
+      "sha256": "705b627848aef2df9ce17cdce2dda937ea1ae29d1031a855f48ff567181248f7"
+    },
+    "inputs": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_vibration_v2_20260930.inputs.json",
+      "sha256": "07b3f12777cd21ed5932fe14f51ec3254ba1796f6627d3ce8373be4c2996926d"
+    },
+    "fixture": {
+      "path": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_native_midpoint.py",
+      "sha256": "426f673d40e82a4d554c3964dc9b51b4ca5638f180f3f985e4ba85c974ebc05d"
+    }
+  },
+  "historical_source_overrides": {
+    "_ge_beam3_native_midpoint.py": "f2c494a93315b541500a8f6aa7330bfae2f731ac9f2251f1585704638f03f71a"
+  },
+  "future_environment": {
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "NUMBA_CACHE_DIR": "LEAD_FROZEN_EFFECTIVE_WRITABLE_CACHE",
+    "PYTHONPATH": "src;tests;.;examples",
+    "NATIVE_FINITE_SPIN_STEP_RAW_OUTPUT": "NEW_EXCLUSIVE_RAW_OUTPUT",
+    "OPENBLAS_NUM_THREADS": "1",
+    "NATIVE_FINITE_SPIN_STEP_INPUTS": "LEAD_FROZEN_INPUT_PATH"
+  },
+  "physical_fixture": "Authentic free curved elastic ellipsoid, nonzero physical section centroid/cross inertia; virgin physical q and v_node=Omega cross x, both physical cell spinsOmega; proper algebraic frame placeholders followed by actual consistency/acceleration initialization; zero load/supports",
+  "scales": "Independent authenticated fullM42: m=trace(T^T M T)/3, E0=.5 v24^T M24 v24, v*=sqrt(2E0/m), P*=m*v*, H*=m*2*v*; allpositive and actual initial M/kineticwork agree<=1e-12",
+  "saved_initial": "Full issued state/history/velocity/acceleration and actualR/I/J/M/Iv/Iq/balance, guardedscales, initializationrankmasschecks and provenance savedbeforegates",
+  "returned_stage_capture": "Transparent observer calls original_stage exactlyonce, persists actual signed unknown42/R/I/e/J/M/vm/am/pose before diagnostic arithmetic, returns sameobject; everyoriginalreturnedstage retainedonfailure, max128",
+  "resolution_diagnostics": "Fraction arithmetic of represented u/h and2*(u/h-v0)/h; actualvsrationalvm/am; compensatedposehalfdelta; unknownulp42, |J|ulp localindicator; mass-affine accelerationrounding effect separatefrom firstordervelocityeffect; Newtoncorrection/condition and rigidR/I/e workblocks. No full nonlinear-error bound or causal attribution",
+  "issued_candidate": "Officialauditbeforecommit, authenticstage/epoch/predecessor/context and audit-authentication session distinctfrom original trialscope; no auditcredentialreissuance",
+  "endpoint": "If issued/committed, actual complete endpoint R/I/J/M/balance/accounting and compensatedP/H/E defects savedbefore original1e-6 gates; failure never retunes/replays",
+  "decision": "One targeted cancellation-versus-work/Newton-map screen; a comparison to localulp indicators does not prove roundoff or derivative correctness. Further derivative or formulation action requires saved evidence/new explicit task",
+  "claim_boundary": "One step only, not finite-anglecoverage/trajectory/spatialaccuracy, rigidrotor, C7acceptance or release",
+  "authoring": "Compile-only syntax and bounded source/hash reads; no authored/production imports, reference numerical preparation, eigensolve, initializer, stage, test or timestep execution.112stepmacro unexecuted; no production or livingD6note edits.",
+  "isolated_v2_correction": "Public initial_checks is already a dict; remove redundant json.loads at initial evidence only. All mathematics/gates/settings/caps unchanged. V1 frozen snapshot/proposal preserved SOURCE_AUTHORED_NOT_EXECUTED; no numerical runs."
+}

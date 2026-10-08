@@ -1,0 +1,14 @@
+{
+  "status": "time_limit_exceeded",
+  "exit_code": 15,
+  "elapsed_seconds": 40.01268970000092,
+  "peak_process_tree_memory_mb": 116.44928,
+  "time_limit_seconds": 40.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "C:/Python/Python314/python.exe",
+    "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_forced_response_startup_v1_20261001.py",
+    "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_forced_response_v1_20261001.inputs.json"
+  ],
+  "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_forced_response_startup_v1_20261001.log"
+}

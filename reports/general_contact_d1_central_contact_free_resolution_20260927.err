@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "<stdin>", line 2, in <module>
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_finite_area_load.py", line 14, in <module>
+    from anysolver import (
+    ...<3 lines>...
+    )
+ImportError: cannot import name 'ContactDefinition' from 'anysolver' (C:\Github\ANYsolver\src\anysolver\__init__.py)

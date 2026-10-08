@@ -1,0 +1,56 @@
+{
+  "archive_sha256": "810819736d986b687fd4e306642b21f1b2fbb06479ee59e307bda90df2e5dcc1",
+  "files": {
+    "native_loaded_clamped_restart_v1_20261001.entry.py": {
+      "sha256": "f2fc48b936e905e698ad42be8884193672b73ca9b255c8f5f8f5b003b1a2131e",
+      "bytes": 2129,
+      "normalised_checkout_text_equal": true
+    },
+    "native_loaded_clamped_restart_v1_20261001.environment.json": {
+      "sha256": "add7c08579654de7cc20df270071eb763f6a6aee71cf2ba1489b470603171cff",
+      "bytes": 1909,
+      "normalised_checkout_text_equal": true
+    },
+    "native_loaded_clamped_restart_v1_20261001.inputs.json": {
+      "sha256": "11f89ba5a5953cd259853c07054d0a24cad98a0bdce447c67739f795d871cca6",
+      "bytes": 81609,
+      "normalised_checkout_text_equal": true
+    },
+    "native_loaded_clamped_restart_v1_20261001.log": {
+      "sha256": "5a6a4e3ec15b4b1a74818f3a01b14d28ac2c97f769606018922d373fc10198b5",
+      "bytes": 3819,
+      "normalised_checkout_text_equal": true
+    },
+    "native_loaded_clamped_restart_v1_20261001.proposal.json": {
+      "sha256": "3f924d36fa6cba59c56119eaf0d97c369e0e7cce396e002a284e91d4b79e5b39",
+      "bytes": 3121,
+      "normalised_checkout_text_equal": true
+    },
+    "native_loaded_clamped_restart_v1_20261001.raw.json": {
+      "sha256": "d76df97e366b07767503ae6e1cfdcecf7eaefdebc3e050012a6ca0fd27641def",
+      "bytes": 1326028,
+      "normalised_checkout_text_equal": true
+    },
+    "native_loaded_clamped_restart_v1_20261001.resources.json": {
+      "sha256": "fee13bc1026742f54602ad77c14308995c7bfc0f1e2c0abd938ea2c5f590086e",
+      "bytes": 590,
+      "normalised_checkout_text_equal": true
+    },
+    "native_loaded_clamped_restart_v1_20261001.stages.jsonl": {
+      "sha256": "d1a6f6fe612798537c29b2d8fef2bd4f48a620b8476f50a4499481c54ed116b5",
+      "bytes": 1502044,
+      "normalised_checkout_text_equal": true
+    },
+    "native_loaded_clamped_restart_v1_20261001.test.source.py": {
+      "sha256": "38b289a53c1b46fcafc94a0fe1fa8a82bf7e3af3e5e61b758ccd92db5e964365",
+      "bytes": 17836,
+      "normalised_checkout_text_equal": true
+    },
+    "native_loaded_clamped_restart_v1_20261001.xml": {
+      "sha256": "823e39204ebcbc6c47fbb25bae64a379c6170c51a6fd8de6e4c259eae796036b",
+      "bytes": 427,
+      "normalised_checkout_text_equal": true
+    }
+  },
+  "scope": "Exact original consumed evidence; line-ending-normalised checkout is not its byte identity; no rerun or scientific-data change"
+}

@@ -1,0 +1,16 @@
+{
+  "base": "4f55e051",
+  "scope": "owned working-tree temporal/error development slice; not qualification or installed artifact",
+  "source_sha256": {
+    "src/anysolver/general_contact/native_surface_front.py": "97d735d8b1887c7334d2d658df8beddc67476fce7581b7bdc8466edcb6d0fbc0",
+    "src/anysolver/general_contact/native_surface_friction_integral.py": "7a8d281bd4b2b738ee87bc219087af3bd990c5b3a8bc99886005bc616ddf733f",
+    "tests/test_general_contact_native_surface_temporal_fronts.py": "e767a80d639357fe5b5efc5c763512c37d425e35632b4026c6ec808f6bd9be06",
+    "tests/test_general_contact_native_surface_local_fronts.py": "d062e56844529ab338c51db56a1b5fd00bf41c0f5b3f41be5d799d1e6b278549",
+    "tests/test_general_contact_native_surface_prepared_fronts.py": "679153daf92533246759e42460a8ac1f9ea1b2b41d94a49d21629893247dfedc",
+    "scripts/run_portable_ci.py": "7f4ff98a4d4d66b2bf40ae4e007ad8e3df9cf7db7f7c901de1ed1c888f04b0de",
+    "scripts/development_test_runtime.py": "8caf0b692a498e950e12a9646b66826d9a5aad44d43df74873b826ea646cacab"
+  },
+  "raw": "temporal_front_raw.zip",
+  "review": "temporal_front_review.md",
+  "execution": "portable --development exact selectors, jit off,180s/953MiB; see saved selection/runtime/resource per run"
+}

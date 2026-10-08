@@ -1,0 +1,9 @@
+Exploratory spectrum probe, 26 September 2026.
+The original report path was subsequently overwritten by the corrected expected-failure test run. This is the terminal failure excerpt retained from the first run, not the complete raw pytest output.
+
+FAILED tests/test_general_contact_supported_schur_path.py::test_ill_conditioned_schur_declines_and_preserves_static_failure
+Expected trace[1]["schur_ineligible"] == "scaled_response_ill_conditioned".
+Observed trace[1]["schur_ineligible"] == "projection_branch_or_nonfinite_response".
+1 failed in 64.50s.
+
+Interpretation: the projection-branch guard prevented the proposed spectrum measurement. The test expectation was updated to retain the guarded non-success. No Schur spectrum or coupled acceptance was established.

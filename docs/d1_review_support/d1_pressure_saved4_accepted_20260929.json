@@ -1,0 +1,38 @@
+{
+  "status": "exploratory_saved_pose_pressure_screen",
+  "saved_pose": "docs\\d1_review_support\\d1_pressure_family_source4_coupled_preflight_20260929.json",
+  "pose_rule": "saved_accepted_development_pose",
+  "source_cells": [
+    4,
+    4
+  ],
+  "target_cells": [
+    4,
+    4
+  ],
+  "target_y0_m": -0.1,
+  "source_reference_normal": [
+    -9.9999999499989e-05,
+    0.0,
+    0.999999995
+  ],
+  "signed_interior_modes": 9,
+  "active_modes": 2,
+  "negative_gap_interior_modes": 0,
+  "minimum_interior_gap_m": 9.176543146433566e-19,
+  "reference_support_min_m2": 0.06250000031249994,
+  "reference_support_max_m2": 0.06250000031250005,
+  "mass_minimum_eigenvalue_m2": 0.011608145025081068,
+  "path_control_error": 0.0,
+  "structural_constraint_error": null,
+  "full_constrained_energy_dimension": 228,
+  "full_constrained_stiffness_symmetry_error": 1.234808534141929e-18,
+  "full_constrained_minimum_cholesky_pivot": 1.4915959854536736,
+  "eta": 0.9999998112597468,
+  "kappa": 1386.3960961359128,
+  "gamma_constructive": 0.0007212943150277712,
+  "provisional_eta_level": 0.9,
+  "provisional_kappa_level": 2110.0,
+  "provisional_levels_met": true,
+  "scope_note": "Reference-energy saved-pose screen only; no nonlinear norm equivalence or acceptance claim."
+}

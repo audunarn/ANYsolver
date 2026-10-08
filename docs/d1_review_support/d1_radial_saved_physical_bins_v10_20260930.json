@@ -1,0 +1,315 @@
+{
+  "source_guided_shear_n_m": 1602.5641025641025,
+  "target_guided_shear_n_m": 3163.400547104653,
+  "target_phi_squared_range": [
+    0.39479238827866037,
+    0.3947923882786611
+  ],
+  "target_p1_energy_max_relative_error": 4.491729488897204e-16,
+  "target_cells": 12,
+  "target_y0_m": -0.113,
+  "target_right_x_m": 1.297,
+  "gap_m": 7.741263872132846e-06,
+  "exact_force_n": 0.020435219974701022,
+  "status": "development_saved_physical_source_bins",
+  "input_sha256": "96f0bcec3b5a3fcc6bd913d3cff192e8b66a7ba9d34e2d3d0dedeaea7c0fc001",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "quadrature_tolerance_n": 2.0435219974701022e-10,
+  "maximum_triangles": 14144,
+  "evidence": {
+    "scope": "guided flat-reference source whole-face vertical work bins; no target-bin or moment claim",
+    "bin_edges": [
+      0.1,
+      0.6,
+      1.1
+    ],
+    "slope_conversion_bound": {
+      "source_slope_max": 1.332354785247962e-05,
+      "target_slope_max": 3.0194946159239144e-06,
+      "physical_projection_cosine_lower": 0.9999999996449661,
+      "kappa_lower": 0.9999999996047357,
+      "kappa_upper": 1.000000000128989,
+      "relative_conversion_bound": 3.952642657623074e-10
+    },
+    "reference_pressure_bins_n": [
+      [
+        0.005070884920296949,
+        0.005053154079769646
+      ],
+      [
+        0.00504831454741857,
+        0.0050727589077318854
+      ]
+    ],
+    "reference_pressure_estimated_error_bins_n": [
+      [
+        2.8824643551939455e-16,
+        2.872385539245469e-16
+      ],
+      [
+        2.869634583600242e-16,
+        2.883529593720985e-16
+      ]
+    ],
+    "independent_geometry_work_bins_n": [
+      [
+        0.005070884920287114,
+        0.005053154079760353
+      ],
+      [
+        0.005048314547409285,
+        0.0050727589077218145
+      ]
+    ],
+    "estimated_quadrature_error_bins_n": [
+      [
+        5.774060734708459e-16,
+        5.755206094256627e-16
+      ],
+      [
+        5.747967848142374e-16,
+        5.776766714401647e-16
+      ]
+    ],
+    "conversion_allowance_bins_n": [
+      [
+        2.00433960478633e-12,
+        1.9973312371239574e-12
+      ],
+      [
+        1.995418342922576e-12,
+        2.0050803250538483e-12
+      ]
+    ],
+    "visited_triangles": 1408,
+    "production_comparison": {
+      "status": "measured",
+      "source_pair_gradient_bins_n": [
+        [
+          0.005070884920287109,
+          0.0050531540797603474
+        ],
+        [
+          0.005048314547409279,
+          0.005072758907721809
+        ]
+      ],
+      "moving_normalization_term_bins_n": [
+        [
+          4.6917714663137795e-40,
+          -3.6734198463196485e-40
+        ],
+        [
+          -2.9846536251347144e-40,
+          8.609577764811676e-40
+        ]
+      ],
+      "pair_energy_evaluations": 2576,
+      "straight_jet2_work_branch_validated": true,
+      "validated_total_source_vertical_work_n": 0.02024511245517855,
+      "sum_of_bins_minus_validated_total_n": -6.938893903907228e-18,
+      "gradient_minus_independent_bins_n": [
+        [
+          -5.204170427930421e-18,
+          -5.204170427930421e-18
+        ],
+        [
+          -6.071532165918825e-18,
+          -5.204170427930421e-18
+        ]
+      ]
+    }
+  },
+  "exact_disk_observables": {
+    "integration_measure": "uniform analytic disk pressure on reference area",
+    "total": {
+      "force_n": 0.020435219974701026,
+      "first_x_nm": 0.012261131984820614,
+      "first_y_nm": 0.012261131984820614,
+      "moment_nm": [
+        -1.734723475976807e-18,
+        1.734723475976807e-18,
+        0.0
+      ],
+      "resultant_xy_m": [
+        0.5999999999999999,
+        0.5999999999999999
+      ],
+      "estimated_absolute_error": [
+        2.9040194213367024e-16,
+        2.758818450269867e-16,
+        2.758818450269867e-16
+      ],
+      "estimated_moment_error_nm": [
+        4.501230103071889e-16,
+        4.501230103071889e-16,
+        0.0
+      ]
+    },
+    "bins": [
+      [
+        {
+          "force_n": 0.005108804993675256,
+          "first_x_nm": 0.0023063975327049092,
+          "first_y_nm": 0.0023063975327049092,
+          "moment_nm": [
+            -0.0007588854635002442,
+            0.0007588854635002442,
+            0.0
+          ],
+          "resultant_xy_m": [
+            0.4514553864475644,
+            0.4514553864475644
+          ],
+          "estimated_absolute_error": [
+            2.4159474761922314e-16,
+            2.1808863612153115e-16,
+            2.1808863612153115e-16
+          ],
+          "estimated_moment_error_nm": [
+            3.6304548469306505e-16,
+            3.6304548469306505e-16,
+            0.0
+          ]
+        },
+        {
+          "force_n": 0.005108804993675256,
+          "first_x_nm": 0.003824168459705397,
+          "first_y_nm": 0.0023063975327049092,
+          "moment_nm": [
+            -0.0007588854635002442,
+            -0.0007588854635002438,
+            0.0
+          ],
+          "resultant_xy_m": [
+            0.7485446135524355,
+            0.4514553864475644
+          ],
+          "estimated_absolute_error": [
+            2.4159474761922314e-16,
+            2.1808863612153115e-16,
+            2.1808863612153115e-16
+          ],
+          "estimated_moment_error_nm": [
+            3.6304548469306505e-16,
+            3.6304548469306505e-16,
+            0.0
+          ]
+        }
+      ],
+      [
+        {
+          "force_n": 0.005108804993675256,
+          "first_x_nm": 0.0023063975327049092,
+          "first_y_nm": 0.003824168459705397,
+          "moment_nm": [
+            0.0007588854635002438,
+            0.0007588854635002442,
+            0.0
+          ],
+          "resultant_xy_m": [
+            0.4514553864475644,
+            0.7485446135524355
+          ],
+          "estimated_absolute_error": [
+            2.4159474761922314e-16,
+            2.1808863612153115e-16,
+            2.1808863612153115e-16
+          ],
+          "estimated_moment_error_nm": [
+            3.6304548469306505e-16,
+            3.6304548469306505e-16,
+            0.0
+          ]
+        },
+        {
+          "force_n": 0.005108804993675256,
+          "first_x_nm": 0.003824168459705397,
+          "first_y_nm": 0.003824168459705397,
+          "moment_nm": [
+            0.0007588854635002438,
+            -0.0007588854635002438,
+            0.0
+          ],
+          "resultant_xy_m": [
+            0.7485446135524355,
+            0.7485446135524355
+          ],
+          "estimated_absolute_error": [
+            2.4159474761922314e-16,
+            2.1808863612153115e-16,
+            2.1808863612153115e-16
+          ],
+          "estimated_moment_error_nm": [
+            3.6304548469306505e-16,
+            3.6304548469306505e-16,
+            0.0
+          ]
+        }
+      ]
+    ],
+    "x_bin_edges": [
+      0.1,
+      0.6,
+      1.1
+    ],
+    "y_bin_edges": [
+      0.1,
+      0.6,
+      1.1
+    ],
+    "material_force_threshold_n": 8e-08
+  },
+  "assessment": {
+    "scope": "guided whole-source-face physical vertical-force bins",
+    "development_checks_met": true,
+    "physical_bins_n": [
+      [
+        0.005070884920287109,
+        0.0050531540797603474
+      ],
+      [
+        0.005048314547409279,
+        0.005072758907721809
+      ]
+    ],
+    "exact_bins_n": [
+      [
+        0.005108804993675256,
+        0.005108804993675256
+      ],
+      [
+        0.005108804993675256,
+        0.005108804993675256
+      ]
+    ],
+    "uncertainty_bins_n": [
+      [
+        2.0052104614657483e-12,
+        1.9981992004577355e-12
+      ],
+      [
+        1.996286174697916e-12,
+        2.0059515588550885e-12
+      ]
+    ],
+    "uncertainty_budget_bins_n": [
+      [
+        1.021760998735051e-05,
+        1.021760998735051e-05
+      ],
+      [
+        1.021760998735051e-05,
+        1.021760998735051e-05
+      ]
+    ],
+    "physical_bin_force_l1_relative_error": 0.00930293482320386,
+    "physical_bin_force_l2_relative_error": 0.009535882605060607,
+    "uncertainty_accounted_l1_relative_error": 0.009302935214961198,
+    "uncertainty_accounted_l2_relative_error": 0.009535882987065912,
+    "bins_to_reassembled_force_relative_difference": 8.673617379884035e-17,
+    "reassembled_to_saved_force_relative_difference": 4.336808689942018e-17,
+    "uncertainty_budget_met": true
+  },
+  "elapsed_seconds": 84.48496299999533
+}

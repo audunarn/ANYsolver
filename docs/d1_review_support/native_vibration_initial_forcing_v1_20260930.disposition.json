@@ -1,0 +1,5 @@
+{
+  "status": "NOT_EXECUTED",
+  "reason": "Isolated pre-run finite diagnostic ratio fix after source review; no mechanical checks consumed",
+  "test_sha256": "36b14a192b9e2aca8c4c8616c1f396f7fbd552fdfe42e83ad5f756915434701a"
+}

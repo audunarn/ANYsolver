@@ -1,0 +1,6 @@
+{"event": "preparation_begin", "imported_source": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py"}
+{"event": "preparation_end", "elapsed_seconds": 38.67682370002149}
+{"event": "_gap_lower", "calls": 1, "seconds": 2.3558511000010185, "elapsed_seconds": 41.03287540000747}
+{"event": "swept_projected_coverage_admissible", "calls": 1, "seconds": 0.9602201000088826, "elapsed_seconds": 44.778252000018256}
+{"event": "overlap_local_swept_lower", "calls": 1, "seconds": 0.003885499987518415, "elapsed_seconds": 45.263322900020285}
+{"event": "overlap_local_swept_lower", "calls": 500, "seconds": 3.7958811999415047, "elapsed_seconds": 49.06119650002802}

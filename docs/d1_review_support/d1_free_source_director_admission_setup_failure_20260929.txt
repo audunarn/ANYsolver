@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_free_source_director_press.py", line 14, in <module>
+    from anysolver.general_contact.core import suspend_contact
+ModuleNotFoundError: No module named 'anysolver.general_contact'

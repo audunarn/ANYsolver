@@ -1,0 +1,24 @@
+{
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\reports\\d1_no_contact_shell_route.py",
+    "--source",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src",
+    "--label",
+    "current",
+    "--case",
+    "clamped_q4",
+    "--output",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d1_no_contact_runs\\d1_final_0b2_20260930_q4_nocontact\\clamped_q4_pair07_current.json"
+  ],
+  "return_code": 0,
+  "elapsed_process_seconds": 3.8990042000077665,
+  "sampled_peak_tree_rss_bytes": 227389440,
+  "limits": {
+    "child_wall_seconds": 180.0,
+    "child_tree_memory_bytes": 1000000000,
+    "outer_wall_seconds": 900.0,
+    "outer_tree_memory_bytes": 4000000000
+  },
+  "failure": null
+}

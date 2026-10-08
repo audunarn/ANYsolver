@@ -1,0 +1,22 @@
+{
+  "status": "completed",
+  "failure_reason": null,
+  "elapsed_seconds": 12.897183100001712,
+  "accepted_steps": 2,
+  "step_counters": [
+    {
+      "step_index": 1,
+      "semismooth_iterations": 3,
+      "candidate_evaluations": 5,
+      "backtracks": 0,
+      "complementarity_relative_force": 2.1582098756567885e-16
+    },
+    {
+      "step_index": 2,
+      "semismooth_iterations": 3,
+      "candidate_evaluations": 5,
+      "backtracks": 0,
+      "complementarity_relative_force": 3.547200565960233e-15
+    }
+  ]
+}

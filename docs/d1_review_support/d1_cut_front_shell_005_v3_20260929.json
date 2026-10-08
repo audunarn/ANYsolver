@@ -1,0 +1,69 @@
+{
+  "status": "development_fixed_pose_work_map",
+  "theta": 0.05,
+  "source_commit": "4a3ba157b5d8c174569045c97cca9a27c40f155a",
+  "probe_sha256": "60867df781d76c6b10c39f1aba6029474dffa9d843eea9373c390c00f635e8cf",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "environment": {
+    "python": "3.14.2",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "openblas_threads": "1",
+    "omp_threads": "1"
+  },
+  "source_faces": 8,
+  "target_faces": 2,
+  "pressure_modes": 15,
+  "pressure_node_ids": [
+    3,
+    8,
+    13
+  ],
+  "pressure_coefficients": [
+    0.0020305279372636893,
+    -0.0040610558745273785,
+    1.0
+  ],
+  "pressure_support_m2": [
+    0.24999999999999994,
+    0.27437499999999976,
+    0.0006249999999999901
+  ],
+  "minimum_gap_m": 3.999999999999665e-05,
+  "expected_scalar_last_y_work": 3.67595574849461e-05,
+  "expected_scalar_continuous_witness_work": -3.3842132287728154e-05,
+  "source_full_work_l2": 1.2996466185511036e-05,
+  "target_full_work_l2": 0.00012196906887816391,
+  "all_full_work_l2": 0.0001226595365078371,
+  "source_normal_work_l2": 1.2996466185511036e-05,
+  "source_rotation_work_l2": 6.219360896690467e-23,
+  "target_normal_work_l2": 0.0001219690688781639,
+  "source_normal_work_by_node": [
+    0.0,
+    6.776263578034403e-21,
+    -2.710505431213761e-20,
+    -1.3552527156068805e-20,
+    0.0,
+    0.0,
+    1.3552527156068805e-19,
+    9.215718466126788e-19,
+    1.8973538018496328e-19,
+    0.0,
+    0.0,
+    3.0632964570788386e-06,
+    1.2253185828315354e-05,
+    3.0632964570788407e-06,
+    0.0
+  ],
+  "target_normal_work_by_node": [
+    -5.191001344547719e-05,
+    6.726690861289075e-05,
+    -7.639936117555772e-05,
+    4.2662687265669944e-05
+  ],
+  "source_free_normal_work_l2": 1.2996466185511036e-05,
+  "target_free_normal_work_l2": 0.0001017924328345104,
+  "target_rotation_work_l2": 3.7718455604717776e-23,
+  "virtual_work_residual_l2": 7.205507702159722e-20,
+  "elapsed_s": 1.1987102000130108
+}

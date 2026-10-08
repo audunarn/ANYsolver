@@ -1,0 +1,212 @@
+{
+  "scope": "D3 static classical radial hemisphere line-plus-point development; not engineering acceptance",
+  "source_parent": "76a3519f4ce78c50cc98717d727ddf76b9fd645a",
+  "source_files": {
+    "src/anysolver/general_contact/beam_end_radial_geometry.py": "6aa053d489657dd3cc0dcf252986a4cf136b71374797febe508e841683d47291",
+    "src/anysolver/general_contact/beam_radial_ends.py": "a09b7edff45c1bfe7a6578adb67da675232cbbb5651490839f358b590cb2b663",
+    "src/anysolver/general_contact/core.py": "f9abf525fc0c47947ddfd702508485c43d392f1a71afbead9de45b4caedb53ad",
+    "tests/test_general_contact_radial_beam_ends.py": "fa7566d8a0f1fa68c28648dad02f1c2671a6ed669dea5c0fb41e6a72cd1a0a95",
+    "examples/general_contact_beam_end_capped_cylinder.py": "5d952da95d67c25fb8cece63f63488effe606c6a2ae14747a9482bf4a9707950"
+  },
+  "wheels": {
+    "anyfem-0.4.1-py3-none-any.whl": "f756af3524fa0e6b3e3b91f3d8f7ee61e032656bc45c03a764d790bcff7fb59d",
+    "anysolver-0.4.7-py3-none-any.whl": "1d83631bfcbfa9ce034543bde693a078c821e2f3ae1be7468eb33d14230ee0b7"
+  },
+  "runs": {
+    "actual_candidate_exception": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 3.0876179999904707,
+        "peak_bytes": 186085376
+      },
+      "outcomes": {
+        "passed": 2
+      }
+    },
+    "build": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 10.254034899990074,
+        "peak_bytes": 110608384
+      },
+      "outcomes": null
+    },
+    "complete_path_work": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 26.418283900013193,
+        "peak_bytes": 192917504
+      },
+      "outcomes": {
+        "passed": 3,
+        "failed": 2
+      }
+    },
+    "degree_zero_curve_fix": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 2.2318136999965645,
+        "peak_bytes": 178946048
+      },
+      "outcomes": {
+        "passed": 2
+      }
+    },
+    "exact_activation_cuts": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 3.4300501000252552,
+        "peak_bytes": 183246848
+      },
+      "outcomes": {
+        "passed": 9,
+        "failed": 1
+      }
+    },
+    "exact_repeated_grazing": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 2.2257391000166535,
+        "peak_bytes": 184135680
+      },
+      "outcomes": {
+        "passed": 1
+      }
+    },
+    "grazing_and_sweep_limits": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 2.345393099996727,
+        "peak_bytes": 184336384
+      },
+      "outcomes": {
+        "passed": 2
+      }
+    },
+    "install": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 4.072686699975748,
+        "peak_bytes": 84209664
+      },
+      "outcomes": null
+    },
+    "installed_final": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 31.110222699993756,
+        "peak_bytes": 336408576
+      },
+      "outcomes": {
+        "passed": 37
+      }
+    },
+    "pocket_and_regularity": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 2.3773110999609344,
+        "peak_bytes": 182108160
+      },
+      "outcomes": {
+        "passed": 2
+      }
+    },
+    "radial_first": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 4.058263599989004,
+        "peak_bytes": 216932352
+      },
+      "outcomes": {
+        "failed": 7,
+        "passed": 3
+      }
+    },
+    "regular_curved_fixture": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 3.607170600036625,
+        "peak_bytes": 181010432
+      },
+      "outcomes": {
+        "passed": 1
+      }
+    },
+    "state_and_public": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 3.302871400024742,
+        "peak_bytes": 187047936
+      },
+      "outcomes": {
+        "passed": 4,
+        "failed": 1
+      }
+    }
+  },
+  "installed_modules_matching": 211,
+  "installed_package_files_matching": 494,
+  "effective_jit_disabled": true,
+  "effective_numba_threads": 1,
+  "effective_pools": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "version": "0.3.31.188.0",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "version": "0.3.30",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "openmp",
+      "internal_api": "openmp",
+      "num_threads": 1,
+      "prefix": "vcomp",
+      "filepath": "C:\\Windows\\System32\\vcomp140.dll",
+      "version": null
+    }
+  ],
+  "raw_records": 78,
+  "raw_sha256": "1bf6d25f9b81fba82599cdfa0e123d3a5aa41e15c1f5653eab494c0fbc8e1c14",
+  "tool_work_storage_relative_errors": {
+    "sphere": 2.67963800054508e-12,
+    "cylinder": 2.67963800054508e-12
+  },
+  "tool_work_history_relative_errors": {
+    "sphere": 4.29387551447689e-11,
+    "cylinder": 4.29387551447689e-11
+  },
+  "limits": "180s/953MiB process tree; elastic scalar/von-Karman; fixed radial map and affine static paths; exterior centreline; rejected closed end ownership changes, unresolved integration and geometry; no native, friction, dynamics, normal application admission, release or engineering acceptance",
+  "retained_failures": {
+    "radial_first": "7 integration-limit nonpasses: floating activation cuts left closed slivers",
+    "exact_activation_cuts": "9 pass, singular collinear B3 fixture failed existing geometry guard",
+    "complete_path_work": "3 pass, 2 B2 constant-derivative restriction errors",
+    "state_and_public": "4 pass, callback test incorrectly expected progress-callback exception propagation"
+  },
+  "review_disposition": "supporting same-family review only; B2 derivative control promoted to constant degree-one; rotating and collapsing path checked; moving tool/tilted map/multiple pockets/grazing/budget discriminators implemented and installed-tested"
+}

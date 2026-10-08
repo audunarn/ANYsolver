@@ -1,0 +1,27 @@
+...........................................F.........                    [100%]
+================================== FAILURES ===================================
+______ TestStaticIsolation.test_source_bindings_and_no_existing_routing _______
+
+self = <test_ge_beam3_g3c_so3_numerics.TestStaticIsolation object at 0x000001FDDAEB3C50>
+
+    def test_source_bindings_and_no_existing_routing(self):
+        contract = runner.environment.strict((ROOT/runner.CONTRACT).read_bytes().replace(b'\r\n', b'\n'))
+>       runner.verify_sources(contract)
+
+tests\test_ge_beam3_g3c_so3_numerics.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+contract = {'base': {'commit': '02b9a4ac4dad65a4a9daf12ed9d3f4fc079e316f', 'tree': 'c490dc567955e02a161131b48e6c8c043e9ddca8'}, '...ange_authorized': False, 'environment_sha256': '2ce154b866565e1d03019651b1ae7fdd070e5554f38d72adf21d8080558b6756', ...}
+root = WindowsPath('C:/ANYworkspaceWork/ANYsolver-general-contact')
+
+    def verify_sources(contract,root=ROOT):
+        for row in contract['sources']:
+            raw=environment.regular(root/row['path']).read_bytes().replace(b'\r\n',b'\n')
+            if dict(bytes=len(raw),sha256=sha256(raw).hexdigest())!={k:row[k] for k in ('bytes','sha256')}:
+>               raise ValueError('changed bound source '+row['path'])
+E               ValueError: changed bound source src/anysolver/_ge_beam3_mixed_ad.py
+
+scripts\run_ge_beam3_g3c_so3_numerics.py:64: ValueError
+=========================== short test summary info ===========================
+FAILED tests/test_ge_beam3_g3c_so3_numerics.py::TestStaticIsolation::test_source_bindings_and_no_existing_routing
+1 failed, 52 passed in 73.90s (0:01:13)

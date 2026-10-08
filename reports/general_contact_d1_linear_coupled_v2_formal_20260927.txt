@@ -1,0 +1,30 @@
+warning: unable to access 'C:\Users\AudunArnesenNyhus/.config/git/ignore': Permission denied
+warning: unable to access 'C:\Users\AudunArnesenNyhus/.config/git/ignore': Permission denied
+warning: unable to access 'C:\Users\AudunArnesenNyhus/.config/git/ignore': Permission denied
+warning: unable to access 'C:\Users\AudunArnesenNyhus/.config/git/ignore': Permission denied
+warning: unable to access 'C:\Users\AudunArnesenNyhus/.config/git/ignore': Permission denied
+warning: unable to access 'C:\Users\AudunArnesenNyhus/.config/git/ignore': Permission denied
+warning: unable to access 'C:\Users\AudunArnesenNyhus/.config/git/ignore': Permission denied
+warning: unable to access 'C:\Users\AudunArnesenNyhus/.config/git/ignore': Permission denied
+{
+  "case_id": "general_contact_d1_linear_coupled_v2",
+  "status": "passed_numerical_gate",
+  "checks": {
+    "reference_identity": true,
+    "status": true,
+    "accepted_steps": true,
+    "displacement": true,
+    "integrated_force": true,
+    "pressure": true,
+    "gap": true,
+    "gap_tolerance": true,
+    "active_modes": true,
+    "equilibrium": true,
+    "multiplier_change": true,
+    "force_balance": true,
+    "moment_balance": true,
+    "checkpoint": true,
+    "wall_budget": true
+  },
+  "elapsed_seconds": 25.14886889999616
+}

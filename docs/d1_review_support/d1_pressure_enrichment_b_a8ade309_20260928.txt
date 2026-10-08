@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_fixed_structure_pressure_probe.py", line 282, in <module>
+    run_enrichment(Path(sys.argv[2]))
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_fixed_structure_pressure_probe.py", line 150, in run_enrichment
+    solution, diagnostics = solve_fixed_structure(
+                            ~~~~~~~~~~~~~~~~~~~~~^
+        pressure_x, structure_x, structure_y, pressure_y)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_fixed_structure_pressure_probe.py", line 74, in solve_fixed_structure
+    pressure = oracle.pdas_lcp(compliance, rhs, support)
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_rim_oracle.py", line 115, in pdas_lcp
+    raise RuntimeError("PDAS did not settle")
+RuntimeError: PDAS did not settle

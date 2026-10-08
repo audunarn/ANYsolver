@@ -1,0 +1,30 @@
+{
+  "status": "PASS_DEVELOPMENT_ROUTING_ONLY",
+  "scope": "actual main-worktree public two-step example; no temporal or C7 qualification",
+  "resource": {
+    "status": "completed",
+    "exit_code": 0,
+    "elapsed_seconds": 6.2822670999739785,
+    "peak_process_tree_memory_mb": 197.926912,
+    "time_limit_seconds": 180.0,
+    "memory_limit_bytes": 1073741824,
+    "command": [
+      "C:/Python/Python314/python.exe",
+      "docs/d1_review_support/contact_development_check.py",
+      "docs/d1_review_support/native_dynamic_main_example_v1_20261001.inputs.json"
+    ],
+    "log": "docs\\d1_review_support\\native_dynamic_main_example_v1_20261001.log"
+  },
+  "artifact_sha256": {
+    "docs/d1_review_support/native_dynamic_main_example_v1_20261001.inputs.json": "107f82f44cdbbc1536831062e5b8028816fb092705bedda792ad283d30176c60",
+    "docs/d1_review_support/native_dynamic_main_example_v1_20261001.log": "372622e20e12f68ada39f9eb9fecbccbc777c7f90ff8713fe2e96f5ac538cc3c",
+    "docs/d1_review_support/native_dynamic_main_example_v1_20261001.resources.json": "587a2614af6b5df5bc3993ac3cde6192c080043421ac9ebbd37107b1c51a1bd6",
+    "docs/d1_review_support/native_dynamic_main_example_v1_20261001.xml": "927521ccb7c54ad20ed6811bc1924bc47cbdb75a095c5eb4aa936de4cf6679dc"
+  },
+  "imported_source_count": 448,
+  "effective_stage_residual_tolerance": 1e-11,
+  "accepted_endpoints": 2,
+  "final_time_seconds": 0.002,
+  "prior_evidence": "native_dynamic_interface_v4_20261001.summary.json",
+  "impact": "five copied production files byte-identical to managed reviewed owners; separate example initial velocity actually executed; no existing native public guard changed"
+}

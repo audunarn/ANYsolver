@@ -1,0 +1,33 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_______ test_saved_sloped_press_has_resolved_free_source_contact_couple _______
+
+    def test_saved_sloped_press_has_resolved_free_source_contact_couple():
+        saved = Path(__file__).resolve().parents[1] / (
+            "docs/d1_review_support/d1_sloped_source_couple_press_20260929.json"
+        )
+        pose = json.loads(saved.read_text(encoding="utf-8"))
+        assert pose["status"] == "completed" and pose["accepted_steps"] == 2
+        model, definition, settings, _program = build_interior_press(
+            force_n=0.04, reference_slope=0.01,
+            source_support="perimeter", source_columns=4, source_rows=4,
+            target_columns=1, target_rows=1,
+            load_shape="interior_distributed", slide_body="target",
+        )
+        manager = GeneralS3PatchManager(model, definition, settings)
+        manager.set_normal_multipliers(
+            pose["history"][-1]["contact"]["normal_multiplier_estimate_pa"])
+        displacement = np.asarray(pose["displacements"])
+        force, tangent, center = manager.evaluate(displacement, tangent=True)
+        free_source_nodes = (7, 8, 9, 12, 13, 14, 17, 18, 19)
+        selected = max(free_source_nodes, key=lambda node: abs(
+            force[model.mesh.dof_manager.get_node_dofs(node)[4]]))
+        dofs = model.mesh.dof_manager.get_node_dofs(selected)
+>       assert abs(force[dofs[4]]) > 1.0e-7
+E       assert np.float64(7.577812378971193e-09) > 1e-07
+E        +  where np.float64(7.577812378971193e-09) = abs(np.float64(7.577812378971193e-09))
+
+tests\test_general_contact_d1_interior_profile.py:207: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_d1_interior_profile.py::test_saved_sloped_press_has_resolved_free_source_contact_couple
+1 failed in 2.55s

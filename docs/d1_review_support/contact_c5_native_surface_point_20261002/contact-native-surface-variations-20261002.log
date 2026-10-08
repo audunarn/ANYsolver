@@ -1,0 +1,8 @@
+[development] exact targets=1; record=C:\ANYworkspaceWork\contact-native-surface-variations-20261002\anysolver-portable-ci-waakdztx\P01
+[portable-ci] starting P01/01 with 1 modules
+....                                                                     [100%]
+============================ slowest 10 durations =============================
+
+(10 durations < 0.005s hidden.  Use -vv to show these durations.)
+4 passed in 3.71s
+[portable-ci] P01 exit=0

@@ -1,0 +1,217 @@
+{
+  "independent_end_displacements_m": [
+    -0.0020017998198592264,
+    0.0020017998198592264
+  ],
+  "solved_end_displacements_m": [
+    -0.0020017998198592277,
+    0.002001799819859238
+  ],
+  "contact": {
+    "profile": "MULTIPLE_EXPLICIT_ROUND_BEAM_FIXED_RIGID_PHYSICAL_ENDS_STATIC_DEV_V1",
+    "minimum_gap": -1.7998198592744652e-06,
+    "gap_tolerance_met": true,
+    "work_convention": "sum_of_explicit_pair_potentials_same_authoritative_coordinates",
+    "normal_law": "penalty",
+    "beam_force": [
+      -5.030670324757125e-12,
+      0.0,
+      0.0
+    ],
+    "rigid_force": [
+      5.030670324757125e-12,
+      0.0,
+      0.0
+    ],
+    "beam_moment": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "rigid_moment": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "algorithmic_contact_potential": 3.23935171627587e-07,
+    "candidate_cells": 2,
+    "pairs": [
+      {
+        "interaction": "left pair",
+        "contact": {
+          "profile": "CLASSICAL_B2_B3_ROUND_TUBE_FIXED_PLANE_LINE_PENALTY_STATIC_DEV_V0",
+          "minimum_gap": -1.7998198592328318e-06,
+          "line_contact_energy": 9.52638289597565e-15,
+          "endpoint_contact_energy": 1.6196757628288344e-07,
+          "algorithmic_contact_potential": 1.6196758580926633e-07,
+          "active_line_length": 1.7644981386899518e-06,
+          "active_line_cells": 1,
+          "active_endpoints": 1,
+          "candidate_cells": 1,
+          "active_intervals": 1,
+          "integration_points": 3,
+          "endpoint_candidates": 2,
+          "beam_force": [
+            0.1799820018013098,
+            0.0,
+            0.0
+          ],
+          "rigid_force": [
+            -0.1799820018013098,
+            -0.0,
+            -0.0
+          ],
+          "beam_moment": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rigid_moment": [
+            -0.0,
+            -0.0,
+            -0.0
+          ],
+          "gap_tolerance_met": true,
+          "normal_law": "penalty",
+          "line_stiffness_N_per_m2": 10000.0,
+          "endpoint_stiffness_N_per_m": 100000.0
+        },
+        "rigid_body": "left"
+      },
+      {
+        "interaction": "right pair",
+        "contact": {
+          "profile": "CLASSICAL_B2_B3_ROUND_TUBE_RADIAL_HEMISPHERE_ENDS_STATIC_DEV_V1",
+          "obstacle_kind": "cylinder",
+          "minimum_gap": -1.7998198592744652e-06,
+          "line_contact_energy": 9.526382896820906e-15,
+          "algorithmic_contact_potential": 1.6196758581832066e-07,
+          "active_line_length": 1.7644981387343604e-06,
+          "active_line_cells": 1,
+          "active_intervals": 1,
+          "integration_points": 24,
+          "maximum_integration_relative_error": 5.0807688736606045e-12,
+          "candidate_cells": 1,
+          "beam_force": [
+            -0.17998200180634047,
+            0.0,
+            0.0
+          ],
+          "rigid_force": [
+            0.17998200180634047,
+            -0.0,
+            -0.0
+          ],
+          "beam_moment": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rigid_moment": [
+            -0.0,
+            -0.0,
+            -0.0
+          ],
+          "gap_tolerance_met": true,
+          "normal_law": "penalty",
+          "line_stiffness_N_per_m2": 10000.0,
+          "endpoint_contact_energy": 1.6196757629193778e-07,
+          "candidate_endpoints": 2,
+          "active_endpoints": 1,
+          "endpoint_stiffness_N_per_m": 100000.0,
+          "endpoint_fields": [
+            {
+              "node_id": 1,
+              "element_id": 1,
+              "local_endpoint": 0,
+              "center_offset_gap_m": 0.20400179981985922,
+              "state": "open",
+              "physical_force_N": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "node_id": 3,
+              "element_id": 1,
+              "local_endpoint": 2,
+              "center_offset_gap_m": -1.7998198592744652e-06,
+              "state": "owned_active",
+              "physical_force_N": [
+                -0.17998198592744652,
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "minimum_gap_kind": "conservative_full_curve_lower_bound",
+          "gap_enclosure_accuracy_m": 1.0000000000000002e-06,
+          "moment_origin": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "moment_units": "N*m",
+          "beam_end_cap_geometry": "outward_hemisphere_point_penalty",
+          "geometry_kinematics": "literal_fixed_radial_map_affine_static_v1"
+        },
+        "rigid_body": "right"
+      }
+    ],
+    "line_contact_energy": 1.9052765792796557e-14,
+    "endpoint_contact_energy": 3.2393515257482125e-07,
+    "active_endpoints": 2,
+    "candidate_endpoints": 4,
+    "moment_origin": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "moment_units": "N*m",
+    "rigid_bodies": [
+      {
+        "name": "left",
+        "rigid_force": [
+          -0.1799820018013098,
+          0.0,
+          0.0
+        ],
+        "rigid_moment": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "name": "right",
+        "rigid_force": [
+          0.17998200180634047,
+          0.0,
+          0.0
+        ],
+        "rigid_moment": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ],
+    "pair_enforcement": [
+      {
+        "interaction": "left pair",
+        "line_stiffness_N_per_m2": 10000.0,
+        "gap_tolerance_m": 1e-05,
+        "endpoint_stiffness_N_per_m": 100000.0
+      },
+      {
+        "interaction": "right pair",
+        "line_stiffness_N_per_m2": 10000.0,
+        "gap_tolerance_m": 1e-05,
+        "endpoint_stiffness_N_per_m": 100000.0
+      }
+    ],
+    "maximum_candidate_pairs": 100000,
+    "swept_trial_cutbacks": 0
+  }
+}

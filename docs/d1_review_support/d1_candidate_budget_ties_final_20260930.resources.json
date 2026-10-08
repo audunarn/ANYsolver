@@ -1,0 +1,19 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 23.270124400005443,
+  "peak_process_tree_memory_mb": 320.282624,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_jet2_candidate_budget.py",
+    "tests/test_general_contact_q4_s3_pair_resolution.py::test_opt_in_exact_shared_edge_limit_preserves_exact_state_and_wrench",
+    "tests/test_general_contact_q4_s3_pair_resolution.py::test_recontact_tiny_shared_edge_wedge_uses_resolved_limit",
+    "tests/test_general_contact_q4_s3_pair_resolution.py::test_tiny_wedge_requires_verified_reduced_derivatives",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d1_candidate_budget_ties_final_20260930.log"
+}

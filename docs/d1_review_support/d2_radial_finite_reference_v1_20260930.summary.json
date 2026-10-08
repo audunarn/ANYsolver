@@ -1,0 +1,114 @@
+{
+  "status": "development_discriminator_complete",
+  "accepted": false,
+  "released": false,
+  "source_and_evidence_sha256": {
+    "docs\\d1_review_support\\d2_radial_finite_reference_dev.py": "812428b39dcced3bf0b4aed946d17cd77c469723f809241308ff30dd5a6b8d43",
+    "docs\\d1_review_support\\d2_radial_finite_reference_v1_20260930.json": "70e4adadb8ca4bccf61be02d945640770567e4c15053531d503e3c5d1bd3a658",
+    "docs\\d1_review_support\\d2_radial_finite_reference_v1_20260930.inputs.json": "8ecfc802431f7d3d62af0a0b8de2d8e3848d2b7222196ddc7c6192d7ec151e3c",
+    "docs\\d1_review_support\\d2_radial_finite_reference_v1_20260930.log": "139fdfba4f2987d56c3fd7024b73c0d8bde1f15044d97a012c384efcb2546fb4",
+    "docs\\d1_review_support\\d2_radial_finite_reference_v1_20260930.resource.json": "1c9db7e918f67e8b931f4f39cfc768ce9054cf9904c610edd8ec240d7332e22e"
+  },
+  "resource": {
+    "status": "completed",
+    "exit_code": 0,
+    "elapsed_seconds": 6.495979100000113,
+    "peak_process_tree_memory_mb": 196.13696,
+    "time_limit_seconds": 180.0,
+    "memory_limit_bytes": 1073741824,
+    "command": [
+      "C:/Python/Python314/python.exe",
+      "docs/d1_review_support/d2_radial_finite_reference_dev.py",
+      "--actual",
+      "docs/d1_review_support/d2_projected_penalty_radial_v1_20260930.json",
+      "--hard",
+      "docs/d1_review_support/d1_radial_linear_nonmatching_v3_20260930.json",
+      "--hard-assessment",
+      "docs/d1_review_support/d1_final_spatial_v7_20260930_radial_linear_assess.json",
+      "--output",
+      "docs/d1_review_support/d2_radial_finite_reference_v1_20260930.json",
+      "--inputs-output",
+      "docs/d1_review_support/d2_radial_finite_reference_v1_20260930.inputs.json"
+    ],
+    "log": "docs\\d1_review_support\\d2_radial_finite_reference_v1_20260930.log"
+  },
+  "equations": {
+    "gap": "g=g0+A*y/S; A=G*free_map; G=[M,-H]",
+    "pressure": "p=kappa*max(-g,0)",
+    "gradient": "r=Kr*y-fr-A.T*p",
+    "active_tangent": "J=Kr+kappa*A_active.T*diag(1/S_active)*A_active",
+    "objective": "E=.5*y.T*Kr*y-fr.T*y+.5*kappa*sum(S*min(g,0)^2)"
+  },
+  "dimension": {
+    "full": 2028,
+    "structural": 244,
+    "free_normal": 242,
+    "pressure": 169
+  },
+  "checks": {
+    "force_relative_gate": 1e-06,
+    "pose_projection_relative_reference_gap_gate": 1e-06,
+    "finite_force_pass": true,
+    "pose_projection_pass": {
+      "finite": true,
+      "nonlinear_saved": true,
+      "hard_saved": true
+    },
+    "reference_consistent": true
+  },
+  "matrix_condition": {
+    "reduced_structural_eigenvalue_min_n_per_m": 215.9433158519502,
+    "reduced_structural_eigenvalue_max_n_per_m": 24877.91310084638,
+    "reduced_structural_condition_2": 115.20575667135986,
+    "final_active_tangent_eigenvalue_min_n_per_m": 312.97215398839614,
+    "final_active_tangent_eigenvalue_max_n_per_m": 168838.52610621863,
+    "final_active_tangent_condition_2": 539.4682049332688
+  },
+  "target_y085": {
+    "finite_prediction_m": -1.3028444528736441e-06,
+    "nonlinear_saved_m": -1.302844452819454e-06,
+    "hard_saved_m": -1.3060101853310741e-06,
+    "finite_minus_hard_m": 3.1657324574300026e-09,
+    "nonlinear_minus_finite_m": 5.4190203350014746e-17,
+    "continuum_m": -1.3311320742768099e-06,
+    "finite_relative_continuum_error": 0.021250799939242792,
+    "nonlinear_relative_continuum_error": 0.021250799979952655,
+    "hard_relative_continuum_error": 0.018872574278088985
+  },
+  "finite_error_added_percentage_points": 0.23782256611538066,
+  "force_comparison": {
+    "continuum_contact_n": 0.020435219974701022,
+    "finite_n": 0.02018887016388235,
+    "nonlinear_saved_n": 0.02018887016176005,
+    "nonlinear_reported_n": 0.02018887016172181,
+    "hard_saved_n": 0.020245112817361792,
+    "finite_relative_continuum_error": 0.012055158257344706
+  },
+  "displacement_comparison": {
+    "maximum_normal_nonlinear_minus_finite_m": 1.3608261923998138e-16,
+    "maximum_normal_finite_minus_hard_m": 7.86210269305286e-09
+  },
+  "pressure_comparison": {
+    "weighted_nonlinear_minus_finite_relative_force": 4.786820051109717e-11,
+    "maximum_nonlinear_minus_finite_pa": 3.865319175844206e-11
+  },
+  "newton_updates": 5,
+  "final_newton": {
+    "iteration": 5,
+    "energy_j": -2.395551333250387e-06,
+    "relative_force_residual": 5.166392692777276e-15,
+    "active_modes": 53,
+    "minimum_gap_m": -8.063096599274052e-09,
+    "estimated_maximum_newton_gap_correction_m": 1.9673268268037282e-21,
+    "estimated_active_set_stable": true
+  },
+  "saved_nonlinear_minimum_gap_m": -6.70550289376041e-08,
+  "interpretation": "For this frozen guided radial fixture, saved moving finite-law response is reproduced by the independent fixed-geometry finite law. At y=.85 the hard discrete spatial error is 1.8872574%; finite kappa adds .23782257 percentage points, giving 2.1250800%. This run supplies no material moving-projection, operator or trace discrepancy in these observables. The finite law itself remains different from hard contact.",
+  "recommendation": "Retain the finite-law radial NONPASS. Address the explicit penalty-versus-discrete-spatial error budget before another coupled run: choose any next penalty or spatial candidate prospectively using this reference, under separate execution authority. Current evidence does not justify a production-kernel fix or an automatic sweep.",
+  "limits": [
+    "fixed reference overlap/projection/normal, linear shared structural K and final fixed traces only",
+    "does not test exact moving-support derivative terms or nonlinear stability",
+    "hard saved pressure need not satisfy the finite constitutive law",
+    "no continuum/scientific acceptance, penalty sweep, mesh change or new coupled solve"
+  ]
+}

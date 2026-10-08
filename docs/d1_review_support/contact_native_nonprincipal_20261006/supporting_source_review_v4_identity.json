@@ -1,0 +1,67 @@
+{
+  "kind": "supporting_source_only_temporal_correction_review",
+  "status": "held_V4_no_source_critical_defect_identified",
+  "repository": "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001",
+  "checkpoint_base_reported_by_lead": "ee0a7735",
+  "git_head_not_read_in_this_assessment": true,
+  "source": [
+    {
+      "path": "examples/native_nonprincipal_reference.py",
+      "sha256": "6cd821b3ccc49aa73892b9704e541627511fc25b5c4f9f8fe4688ad96ffb8bfb"
+    },
+    {
+      "path": "examples/native_nonprincipal_dev.py",
+      "sha256": "36a9ea971bb58da46c6fd2ce2fd3a5f343c29e7c997b31a3ec60c5fb1da1f3cc"
+    },
+    {
+      "path": "tests/test_ge_beam3_native_nonprincipal.py",
+      "sha256": "2bef9e7f3152869a0a282c3b3834aa48736d9dea4b954445785e2800867528b1"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_NATIVE_NONPRINCIPAL_DEV.md",
+      "sha256": "27cdcb207dcc3ab24a414adadb2af0acdeec5421211accf8832285b5401fcdf3"
+    }
+  ],
+  "source_matches_held_manifest": [
+    true,
+    true,
+    true,
+    true
+  ],
+  "harness": [
+    {
+      "path": "execution_preparation_corrective_v4.json",
+      "sha256": "609d2c248718512ed0296749b2a6fb3d224c7613395b021d4051d2f99e6ccfb8"
+    },
+    {
+      "path": "nonprincipal_run_v4.py",
+      "sha256": "8a1251f5e913f149bcf350ab3491eb55e187cb4fc802099d0825214984aae9a3"
+    },
+    {
+      "path": "nonprincipal_corrective_revision_v4.json",
+      "sha256": "60c0d5efc00f97195060fb46591f0de292b8c24cbf9ae65f9cf9fb2fbb542504"
+    },
+    {
+      "path": "bind_corrective_prefix_v4.py",
+      "sha256": "c07bd9bd0b0b726c978a422d3661790c3f1af75232ddc84f5bc61c65748b6eed"
+    },
+    {
+      "path": "lead_scope_adoption_v4.json",
+      "sha256": "9db7f9f25a7f3bf76f99ab9faee1db85143afc0aa52487077c6641024338bcd6"
+    },
+    {
+      "path": "prospective_corrective_plan_v4.json",
+      "sha256": "c6a8a307142b1f1fd4f1dd4ea199fb1b21716defc2eff2574786ecbc8b27f08a"
+    }
+  ],
+  "original_4_8_nonpass_preserved": true,
+  "additional_authority_s": 0,
+  "remaining_s": 120.8501862998819,
+  "maximum_requested_job_s": 55,
+  "minimum_reserve_s": 10.8501862998819,
+  "numerical_execution": false,
+  "solver_or_reference_import": false,
+  "product_edits": false,
+  "engineering_acceptance": false,
+  "report": "supporting_source_review_v4.md"
+}

@@ -1,0 +1,12 @@
+[development] exact targets=1; record=C:\ANYworkspaceWork\contact-native-coupled-material-chart-20261002\anysolver-portable-ci-rwjo9wq3\P01
+[portable-ci] starting P01/01 with 1 modules
+....                                                                     [100%]
+============================ slowest 10 durations =============================
+0.40s call     tests/test_general_contact_native_surface_contributor.py::test_coupled_material_contributor_full_retained_tangent_and_no_line_double_count[1e-05-stick]
+0.39s call     tests/test_general_contact_native_surface_contributor.py::test_coupled_material_contributor_full_retained_tangent_and_no_line_double_count[0.001-slip]
+0.34s call     tests/test_general_contact_native_surface_contributor.py::test_finite_nonaxial_rotation_origin_chart_tangent
+0.12s call     tests/test_general_contact_native_surface_contributor.py::test_material_contributor_rejects_foreign_geometry_and_supported_state_changes
+
+(6 durations < 0.005s hidden.  Use -vv to show these durations.)
+4 passed in 4.85s
+[portable-ci] P01 exit=0

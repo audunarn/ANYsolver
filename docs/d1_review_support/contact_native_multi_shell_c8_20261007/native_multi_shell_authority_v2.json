@@ -1,0 +1,98 @@
+{
+  "accounting_basis": "MEASURED_WRAPPER_WALL_CONSERVATIVE_WITH_PRECISE_CHILD_LAUNCH_TO_WAIT",
+  "additional_seconds": 240,
+  "approved_seconds": 840,
+  "carried_attempt_count": 14,
+  "carried_resources": [
+    {
+      "charged_wall_s": 24.1799460000002,
+      "path": "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\nms8_admission_v1\\resource.json",
+      "sha256": "a9ed7085fdb84eb6fbb44ece57ce511942e25dddfe0fa7a244f7d72ba4dce203"
+    },
+    {
+      "charged_wall_s": 10.40674510000099,
+      "path": "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\nms8_build_v1\\resource.json",
+      "sha256": "0d675ca14008dd4d1a2f0957c5b91808fc187401ff768ae1d7e3ea0caea6f627"
+    },
+    {
+      "charged_wall_s": 9.416510600000038,
+      "path": "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\nms8_compat_v1\\resource.json",
+      "sha256": "db7005aa51282b12ae82aaa645d859db15d5cb620c407a85561ac950f22acef0"
+    },
+    {
+      "charged_wall_s": 5.943110300002445,
+      "path": "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\nms8_default_compat_v1\\resource.json",
+      "sha256": "6cf578a079fd470afc03a9fe9885eacfbedc891d67b8dc01b88bdff86cb74ffb"
+    },
+    {
+      "charged_wall_s": 20.756651599996985,
+      "path": "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\nms8_derivative_v1\\resource.json",
+      "sha256": "6d6a247327710f1c9119573d6a57f58f57c2369ad863963a5dafbe1960856864"
+    },
+    {
+      "charged_wall_s": 45.413124900002,
+      "path": "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\nms8_impact_v1\\resource.json",
+      "sha256": "5d1172ec055f9a31d75edbec4b90ccfbe2af3d77ecfe10a1953d6061e15a8425"
+    },
+    {
+      "charged_wall_s": 1.6328966000000946,
+      "path": "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\nms8_install_v1\\resource.json",
+      "sha256": "786c43ac87f190b19c9aef184832a0b1e7594ab18c410d389d88c8ed1fdbdd2f"
+    },
+    {
+      "charged_wall_s": 30.544433900002332,
+      "path": "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\nms8_limits_v1\\resource.json",
+      "sha256": "13e9c9eebf43c3bf0261d4c82701bc384e6f5cc3f80e4360888732dc99c5edc8"
+    },
+    {
+      "charged_wall_s": 44.76816289999988,
+      "path": "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\nms8_mass_map_v1\\resource.json",
+      "sha256": "782168eaf9ead20464b6ff70ba5b2f59eaf96348b1fe0f9e0c1df93edf5f5d7b"
+    },
+    {
+      "charged_wall_s": 57.04454619999888,
+      "path": "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\nms8_restart_full_v1\\resource.json",
+      "sha256": "0f58d5c66ffbb543df91f25bc20e58a44069b1cbbc9fc5c8bcd2985764623a16"
+    },
+    {
+      "charged_wall_s": 36.495760699999664,
+      "path": "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\nms8_restart_prefix_v1\\resource.json",
+      "sha256": "631fc566890ed575909bb24a95eb2ba501b5ccf3a7be49a722f3c3016aa3342e"
+    },
+    {
+      "charged_wall_s": 55.814147299999604,
+      "path": "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\nms8_restart_resumed_v1\\resource.json",
+      "sha256": "bb6b017f2504c85f189925fff839ef320bd30fc2a9b9116d36a6a88e20f3e787"
+    },
+    {
+      "charged_wall_s": 40.50289540000085,
+      "path": "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\nms8_restore_timing_v1\\resource.json",
+      "sha256": "d9762666cb18fb68e411b5520a0b9e034847b6e6ccf675c847ec74c0c8da7f25"
+    },
+    {
+      "charged_wall_s": 26.810349399998813,
+      "path": "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007\\nms8_rollback_v1\\resource.json",
+      "sha256": "3cf92f9bca5c5d4b620ff8fb13357c83f6996693fa8924c2af6c79f3b953fc99"
+    }
+  ],
+  "carried_spent_seconds": 409.7292809000028,
+  "concurrent_jobs": 1,
+  "date": "2026-10-07",
+  "derivation": "Explicit user full-goal execution approval; integrating lead allocates required bounded extension",
+  "full_goal_authority_sha256": "40e586d5d454fcdc1d5c4cbeb1c79db1061ce62d799dc505ad7dffd17af85404",
+  "historical_allowances": "PROTECTED_NO_POOLING",
+  "independent_acceptance": false,
+  "maximum_job_seconds": 60,
+  "memory_limit_mib": 953,
+  "previous_authority_file": "native_multi_shell_authority_v1.json",
+  "previous_authority_sha256": "29a48f3466fc9953e12e3c3f86e241183f7a7bc60ddd828469510ed4bf5d30b1",
+  "purpose": "Prospective targeted structural guard repair and fresh affected installed mechanics, authentic restart, safety and default CLI checks; all old attempts remain unchanged",
+  "reserve_seconds": 60,
+  "restart_checkpoint": "3468d3c8",
+  "scientific_criteria": "UNCHANGED",
+  "scope": "C8_NATIVE_MULTI_SHELL_DEV",
+  "source_candidate": "Existing multiple-native/S3 candidate plus independently checked guard-equivalence repair",
+  "source_checkpoint": "6362bdfb",
+  "status": "USER_AUTHORIZED",
+  "user_statement": "I approve executions needed to finish the plan/goal defined."
+}

@@ -1,0 +1,15 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 22.631244700001844,
+  "peak_process_tree_memory_mb": 320.024576,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "C:\\ANYworkspaceWork\\general-contact-standalone-19f66ea0\\general_contact_free_target_cycle_dev.py",
+    "--output",
+    "C:\\ANYworkspaceWork\\general-contact-standalone-19f66ea0\\result.json"
+  ],
+  "log": "C:\\ANYworkspaceWork\\general-contact-standalone-19f66ea0\\run.log"
+}

@@ -16,6 +16,17 @@ See the project README and ``docs/`` directory in the source repository for
 the capability boundary, architecture, theory, and qualification evidence.
 """
 
+from importlib import import_module
+
+# Establish CPython's lazy ABC metadata before any qualified MRO capture.
+# Do not execute an annotation callback supplied before package import.
+from abc import ABC as _stdlib_ABC
+if (type.__getattribute__(_stdlib_ABC, "__dict__").get("__annotate_func__") is not None
+        or type.__getattribute__(_stdlib_ABC, "__dict__").get("__annotate__") is not None):
+    raise RuntimeError("stdlib ABC annotation callback is incompatible with authority capture")
+type.__getattribute__(_stdlib_ABC, "__annotations__")
+del _stdlib_ABC
+
 from .fe_core import DOFManager, FEMesh, FEModel, Material, Node
 from .control import (
     CancellationToken,
@@ -244,6 +255,23 @@ from .contact import (
     solve_transient_sphere_impact,
     validate_contact_configuration,
 )
+_GENERAL_CONTACT_EXPORTS = frozenset({
+    'create_native_transient_pair_analysis', 'solve_native_transient_pair',
+    'create_native_transient_shell_analysis', 'solve_native_transient_shell',
+    "RigidCappedCylinder",
+    "ContactCapabilityReport", "ContactDefinition", "ContactInteraction", "ContactPathControl",
+    "ContactPathNodalForce", "ContactPathProgram", "ContactResults",
+    "ContactSolverSettings", "ContactSurface", "ContactValidationReport",
+    "RigidContactBody", "solve_static_contact_path",
+    "ContactNodalLoadHistory", "ContactTransientSolverControls",
+    "TransientContactResults", "TransientContactSettings",
+    "solve_transient_contact", "validate_general_contact",
+    "report_general_contact_capability",
+    "ContactRequestIdentity", "ContactRequestIdentityError",
+    "identify_general_contact_request", "verify_general_contact_request",
+    "ContactSkinGeometryError", "ContactShellSkinFace", "ContactShellSkinGeometry",
+    "recover_general_contact_shell_skins",
+})
 from .fracture import (
     DeletedElementRecord,
     ElementDeletionConfig,
@@ -502,6 +530,7 @@ from .sesam_fem import (
 __version__ = "0.4.7"
 
 __all__ = [
+    "RigidCappedCylinder",
     # Core classes
     "DOFManager",
     "FEMesh",
@@ -698,6 +727,35 @@ __all__ = [
     "recommend_sphere_contact_penalty",
     "solve_transient_sphere_impact",
     "validate_contact_configuration",
+    "ContactCapabilityReport",
+    "ContactDefinition",
+    "ContactInteraction",
+    "ContactPathControl",
+    "ContactPathNodalForce",
+    "ContactPathProgram",
+    "ContactResults",
+    "ContactSolverSettings",
+    "ContactSurface",
+    "ContactValidationReport",
+    "RigidContactBody",
+    "solve_static_contact_path",
+    "ContactNodalLoadHistory",
+    "ContactTransientSolverControls",
+    "TransientContactResults",
+    "TransientContactSettings",
+    "solve_transient_contact",
+    'create_native_transient_pair_analysis', 'solve_native_transient_pair',
+    'create_native_transient_shell_analysis', 'solve_native_transient_shell',
+    "validate_general_contact",
+    "report_general_contact_capability",
+    "ContactRequestIdentity",
+    "ContactRequestIdentityError",
+    "identify_general_contact_request",
+    "verify_general_contact_request",
+    "ContactSkinGeometryError",
+    "ContactShellSkinFace",
+    "ContactShellSkinGeometry",
+    "recover_general_contact_shell_skins",
     "DeletedElementRecord",
     "ElementDeletionConfig",
     "FractureConfig",
@@ -932,6 +990,18 @@ __all__ = [
     "validate_sesam_fem_document",
     "write_sesam_fem_document",
 ]
+
+
+def __getattr__(name: str):
+    if name not in _GENERAL_CONTACT_EXPORTS:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    value = getattr(import_module(".general_contact", __name__), name)
+    globals()[name] = value
+    return value
+
+
+def __dir__():
+    return sorted(set(globals()) | set(__all__))
 
 # Stable-ID, array-based progressive damage and hard-deletion lifecycle.
 from .activity import (

@@ -1,0 +1,21 @@
+{
+  "question": "Does authentic partial-slip split checkpoint resume to saved successful full trajectory?",
+  "selector": "tests/test_general_contact_s3_friction_replay.py::test_partial_overlap_saved_reference_split_restart",
+  "criteria": "Matching model/analysis fingerprints, final displacements rtol1e-7 atol1e-9, exact accepted history equality. Existing mechanics/gates unchanged.",
+  "reference_sha256": "BD3E9F8A06DD51C09A5075C9544384A88DF79F7A08121A6FD798BFB4F6525398",
+  "timeout_seconds": 900,
+  "source_snapshot": "C:/ANYworkspaceWork/contact-friction-replay-separation-restart-v1-20261002/frozen_source",
+  "sha256": {
+    "tests/test_general_contact_s3_friction_replay.py": "93B5F08FD7F71BB0ABB6537CEE6EC53694634B97CD1D38B5BA3FEF6E17E44FC5",
+    "src/anysolver/general_contact/s3_friction_static.py": "6670C349825CC18894FC4FB1A78534A3C1F1DE06512551335A1A7099D325BBC7",
+    "src/anysolver/general_contact/s3_friction_prepared_path.py": "C8F4C046B6453C3247B982D67D48F6B79E646A45D71B39AFE05FC798733EEC6C",
+    "src/anysolver/general_contact/s3_friction_touch.py": "42FF9E313B1536672D8AD17984DB5DF0DE54E0F872F8074B28F6A6F6EF1DE795",
+    "src/anysolver/general_contact/s3_friction_replay.py": "31A016265FB83D24F3DF90A2114AB8E795E6EEDA2749ECA56C2AC469BA5453AC",
+    "src/anysolver/general_contact/s3_sliding_friction.py": "B2995997051DC18C0EBD42E66B53A3EF0010603F9644CA8D02AD3D32B5F48655"
+  },
+  "jit": "off",
+  "memory_limit_mib": 953,
+  "kind": "prospective integrated restart development, not qualification",
+  "id": "C5_PARTIAL_REPLAY_SEPARATION_RESTART_V1_20261002",
+  "decision": "One fresh half solve and resumed continuation, no redundant full solve. Preserve checkpoint/output/failure; no automatic retry or cap increase."
+}

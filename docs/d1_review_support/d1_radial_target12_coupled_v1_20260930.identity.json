@@ -1,0 +1,26 @@
+{
+  "commit": "0dcb9532bc19f2b5af92663ab1f0a724df188729",
+  "source": {
+    "source": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src",
+    "python_file_count": 432,
+    "tree_sha256": "8ce63c69dbeaa258316ee22c54691022b63e67dac2766134819ce2fc0a0270d4"
+  },
+  "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+  "executable": "C:\\Python\\Python314\\python.exe",
+  "numpy": "2.4.6",
+  "scipy": "1.17.1",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "thread_environment": {
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": null,
+    "MKL_NUM_THREADS": null,
+    "NUMBA_NUM_THREADS": null
+  },
+  "input_files": {
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\scripts\\general_contact_d1_interior_press_dev.py": "559fa9221a2852eeb4f21be2315daf997d8dcb295acb86c6df22e4cf2c8779b4",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d1_radial_two_body_reference.py": "3e8587af06bbcedc4a0d922af23da073c5da25565f98fffc2ec2b873fe7bdf1d",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d1_radial_reference_observables.py": "6f0a94e1472206f2bb957ef91802976f0a213529573900d89c39661ae036e93d",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\D1_RADIAL_SPATIAL_CANDIDATE_20260930.md": "687e5fd46ac64a34c078cab8cd35e13192472a31bf9b4bb2bcd18650b24d5267"
+  },
+  "scope": "bounded development coupled discriminator; not formal acceptance"
+}

@@ -1,0 +1,15 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 14.117735500010895,
+  "peak_process_tree_memory_mb": 156.332032,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "C:/Python/Python314/python.exe",
+    "docs/d1_review_support/native_step_profile_v1_20261001.entry.py",
+    "docs/d1_review_support/native_step_profile_v1_20261001.inputs.json",
+    "af89abc111c4f219ca158dccae0d69860c281d7e476aa93737bfd1675df4a244"
+  ],
+  "log": "docs\\d1_review_support\\native_step_profile_v1_20261001.log"
+}

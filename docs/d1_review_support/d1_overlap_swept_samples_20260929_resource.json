@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 3.600662500000908,
+  "peak_process_tree_memory_mb": 213.008384,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_general_contact_d1_overlap_gap_bound_dev.py"
+  ],
+  "log": "docs\\d1_review_support\\d1_overlap_swept_samples_20260929.log"
+}

@@ -1,0 +1,381 @@
+{
+  "status": "PASS",
+  "accepted_steps_total": 20,
+  "elapsed_seconds": 41.958102799981134,
+  "comparisons": {
+    "continuum_time": {
+      "coarse": 0.01973646105607683,
+      "fine": 0.005023669469943517,
+      "floor": 1e-06,
+      "ratio": 0.25453750070338654,
+      "disposition": "bounded_comparison",
+      "passes": true
+    },
+    "amplitude": {
+      "coarse": 0.0011902055113561085,
+      "fine": 0.0005951041944274045,
+      "floor": 1e-06,
+      "ratio": 0.5000012088243051,
+      "disposition": "bounded_comparison",
+      "passes": true
+    },
+    "linear": {
+      "coarse": 1.0627414571866533e-13,
+      "fine": 2.7200262904749542e-14,
+      "floor": 1e-10,
+      "ratio": null,
+      "disposition": "resolution_limited",
+      "passes": true
+    },
+    "angular": {
+      "coarse": 6.94271833505305e-14,
+      "fine": 1.7831789662578374e-14,
+      "floor": 1e-10,
+      "ratio": null,
+      "disposition": "resolution_limited",
+      "passes": true
+    },
+    "energy": {
+      "coarse": 2.5132891055259877e-07,
+      "fine": 2.0998163963767706e-08,
+      "floor": 1e-10,
+      "ratio": 0.08354854170019232,
+      "disposition": "bounded_comparison",
+      "passes": true
+    }
+  },
+  "resolution_metrics": {
+    "coarse": {
+      "amplitude": 2.5e-05,
+      "accepted_steps": 4,
+      "actual_initial_energy_j": 1.7072804901711993e-09,
+      "initial_energy_identical_old": true,
+      "maximum_stage_residual": 1.164339919114729e-16,
+      "maximum_algebraic_residual": 7.008215522138256e-17,
+      "stage_iterations": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "maximum_nonlinear_to_discrete": 0.0006726679824195831,
+      "maximum_step_defects": {
+        "linear": 4.6680586107485446e-14,
+        "angular": 3.0518693292147506e-14,
+        "energy": 2.6511746483548444e-07
+      },
+      "maximum_cumulative_defects": {
+        "linear": 1.0627414571866533e-13,
+        "angular": 6.94271833505305e-14,
+        "energy": 2.5132891055259877e-07
+      },
+      "signed_stage_accounting": {
+        "linear": {
+          "final_integrated_vectors": {
+            "projected_structural_work": [
+              -6.343526563758531e-22,
+              -1.5224463753020475e-21,
+              3.1717632818792655e-23
+            ],
+            "projected_inertial_work": [
+              4.821080188456483e-21,
+              2.232921350443003e-20,
+              9.515289845637797e-23
+            ],
+            "projected_solve_residual": [
+              4.616897927185506e-21,
+              2.0806767129127982e-20,
+              1.2687053127517067e-22
+            ],
+            "kinetic_midpoint_to_endpoint_remainder": [
+              -1.2048645465091915e-17,
+              8.26117390648269e-18,
+              -8.034237297059791e-20
+            ],
+            "total_minus_projected_solve": [
+              -1.2048441282830644e-17,
+              8.262696352857992e-18,
+              -8.037409060341672e-20
+            ]
+          },
+          "maximum_cumulative_norms": {
+            "projected_structural_work": 1.649621855624213e-21,
+            "projected_inertial_work": 2.284394107819473e-20,
+            "projected_solve_residual": 2.1313221271490532e-20,
+            "kinetic_midpoint_to_endpoint_remainder": 1.4609014571610398e-17,
+            "total_minus_projected_solve": 1.460970733313268e-17
+          }
+        },
+        "angular": {
+          "final_integrated_vectors": {
+            "projected_structural_work": [
+              1.1894112307047246e-23,
+              -6.343526563758531e-23,
+              -1.014964250201365e-21
+            ],
+            "projected_inertial_work": [
+              6.898585138087402e-22,
+              -3.171763281879265e-23,
+              -6.2166560324833604e-21
+            ],
+            "projected_solve_residual": [
+              7.010607339340779e-22,
+              -7.136554896732634e-23,
+              -6.78474399614362e-21
+            ],
+            "kinetic_midpoint_to_endpoint_remainder": [
+              5.331386000403444e-19,
+              6.52673389777357e-19,
+              -1.90741516172594e-17
+            ],
+            "total_minus_projected_solve": [
+              5.33127397820219e-19,
+              6.527130376935055e-19,
+              -1.9073583529295744e-17
+            ]
+          },
+          "maximum_cumulative_norms": {
+            "projected_structural_work": 1.0170683183401382e-21,
+            "projected_inertial_work": 1.9792909978875724e-20,
+            "projected_solve_residual": 1.9816350597329205e-20,
+            "kinetic_midpoint_to_endpoint_remainder": 1.9092759864377278e-17,
+            "total_minus_projected_solve": 1.909219337270874e-17
+          }
+        }
+      },
+      "audit_snapshots": 4
+    },
+    "fine": {
+      "amplitude": 2.5e-05,
+      "accepted_steps": 8,
+      "actual_initial_energy_j": 1.7072804901711993e-09,
+      "initial_energy_identical_old": true,
+      "maximum_stage_residual": 7.211516994684776e-17,
+      "maximum_algebraic_residual": 6.829208088554291e-17,
+      "stage_iterations": [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "maximum_nonlinear_to_discrete": 0.0011902055113561085,
+      "maximum_step_defects": {
+        "linear": 5.994257694431377e-15,
+        "angular": 3.962381532394482e-15,
+        "energy": 2.5948626635853194e-08
+      },
+      "maximum_cumulative_defects": {
+        "linear": 2.7200262904749542e-14,
+        "angular": 1.7831789662578374e-14,
+        "energy": 4.055310631505746e-08
+      },
+      "signed_stage_accounting": {
+        "linear": {
+          "final_integrated_vectors": {
+            "projected_structural_work": [
+              2.220234297315486e-22,
+              2.5374106255034124e-22,
+              1.5858816409396328e-23
+            ],
+            "projected_inertial_work": [
+              3.679245406979949e-21,
+              2.6833117364698585e-20,
+              6.541761768875986e-23
+            ],
+            "projected_solve_residual": [
+              3.6158101413423626e-21,
+              2.711857606006772e-20,
+              8.325878614933079e-23
+            ],
+            "kinetic_midpoint_to_endpoint_remainder": [
+              -3.0807731248943497e-18,
+              2.101187525039766e-18,
+              -2.0972439006431615e-20
+            ],
+            "total_minus_projected_solve": [
+              -3.0807096896287125e-18,
+              2.100902066344397e-18,
+              -2.0990280174892188e-20
+            ]
+          },
+          "maximum_cumulative_norms": {
+            "projected_structural_work": 3.591943146908917e-22,
+            "projected_inertial_work": 2.758261712068145e-20,
+            "projected_solve_residual": 2.7792245758225934e-20,
+            "kinetic_midpoint_to_endpoint_remainder": 3.7291543150762635e-18,
+            "total_minus_projected_solve": 3.7289411735778585e-18
+          }
+        },
+        "angular": {
+          "final_integrated_vectors": {
+            "projected_structural_work": [
+              2.4779400639681765e-24,
+              -1.1894112307047246e-23,
+              -6.977879220134385e-22
+            ],
+            "projected_inertial_work": [
+              6.068475216658064e-22,
+              -3.667351294672901e-22,
+              -2.220234297315486e-20
+            ],
+            "projected_solve_residual": [
+              6.109123458894779e-22,
+              -3.885403847959279e-22,
+              -2.2861976413847113e-20
+            ],
+            "kinetic_midpoint_to_endpoint_remainder": [
+              1.3510125000664713e-19,
+              1.6626142332470382e-19,
+              -4.878528095783336e-18
+            ],
+            "total_minus_projected_solve": [
+              1.3509718518242345e-19,
+              1.662832285800325e-19,
+              -4.877868462342645e-18
+            ]
+          },
+          "maximum_cumulative_norms": {
+            "projected_structural_work": 1.0150958822314989e-21,
+            "projected_inertial_work": 2.2213662283993972e-20,
+            "projected_solve_residual": 2.287343750012838e-20,
+            "kinetic_midpoint_to_endpoint_remainder": 4.8832296269975575e-18,
+            "total_minus_projected_solve": 4.88257125882134e-18
+          }
+        }
+      },
+      "audit_snapshots": 8
+    },
+    "half_fine": {
+      "amplitude": 1.25e-05,
+      "accepted_steps": 8,
+      "actual_initial_energy_j": 4.268209790784753e-10,
+      "initial_energy_identical_old": true,
+      "maximum_stage_residual": 7.622604422172544e-17,
+      "maximum_algebraic_residual": 6.442798834839313e-17,
+      "stage_iterations": [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "maximum_nonlinear_to_discrete": 0.0005951041944274045,
+      "maximum_step_defects": {
+        "linear": 1.5259570590493739e-15,
+        "angular": 9.95440682575121e-16,
+        "energy": 9.022998303480167e-09
+      },
+      "maximum_cumulative_defects": {
+        "linear": 6.780091798905514e-15,
+        "angular": 4.575448913590666e-15,
+        "energy": 1.7205806862154232e-08
+      },
+      "signed_stage_accounting": {
+        "linear": {
+          "final_integrated_vectors": {
+            "projected_structural_work": [
+              9.515289845637797e-23,
+              -3.171763281879266e-22,
+              1.0407348268666341e-23
+            ],
+            "projected_inertial_work": [
+              -2.3788224614094495e-21,
+              -7.51707897805386e-21,
+              -8.375437416212437e-23
+            ],
+            "projected_solve_residual": [
+              -2.521304015087619e-21,
+              -7.850114122651184e-21,
+              -7.334702589345801e-23
+            ],
+            "kinetic_midpoint_to_endpoint_remainder": [
+              -3.8618665646562483e-19,
+              2.652709769659747e-19,
+              -2.5435459727061405e-21
+            ],
+            "total_minus_projected_solve": [
+              -3.860441749119467e-19,
+              2.6560401211057194e-19,
+              -2.5539533209748076e-21
+            ]
+          },
+          "maximum_cumulative_norms": {
+            "projected_structural_work": 5.075440698217067e-22,
+            "projected_inertial_work": 1.2633560727574089e-20,
+            "projected_solve_residual": 1.2983162328038124e-20,
+            "kinetic_midpoint_to_endpoint_remainder": 4.685245932485257e-19,
+            "total_minus_projected_solve": 4.68595901508159e-19
+          }
+        },
+        "angular": {
+          "final_integrated_vectors": {
+            "projected_structural_work": [
+              9.911760255872705e-25,
+              2.5770576665269033e-23,
+              -1.5858816409396327e-22
+            ],
+            "projected_inertial_work": [
+              -1.9154476694474e-22,
+              -2.676175269085629e-23,
+              -1.3004229455704986e-20
+            ],
+            "projected_solve_residual": [
+              -1.8749301703981975e-22,
+              -3.96446592549499e-24,
+              -1.3400734651093368e-20
+            ],
+            "kinetic_midpoint_to_endpoint_remainder": [
+              1.70519665328512e-20,
+              2.0968750394751214e-20,
+              -6.157607002806771e-19
+            ],
+            "total_minus_projected_solve": [
+              1.704791478294628e-20,
+              2.0945953107985855e-20,
+              -6.153641950852887e-19
+            ]
+          },
+          "maximum_cumulative_norms": {
+            "projected_structural_work": 2.5485369617579966e-22,
+            "projected_inertial_work": 1.5290974036410938e-20,
+            "projected_solve_residual": 1.5654042188562775e-20,
+            "kinetic_midpoint_to_endpoint_remainder": 6.163535495686747e-19,
+            "total_minus_projected_solve": 6.15956538193251e-19
+          }
+        }
+      },
+      "audit_snapshots": 8
+    }
+  },
+  "resource": {
+    "status": "completed",
+    "exit_code": 0,
+    "elapsed_seconds": 45.73872140000458,
+    "peak_process_tree_memory_mb": 210.563072,
+    "time_limit_seconds": 180.0,
+    "memory_limit_bytes": 1073741824,
+    "command": [
+      "C:/Python/Python314/python.exe",
+      "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_vibration_solve_control_v1_20261001.entry.source.py"
+    ],
+    "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_vibration_solve_control_v1_20261001.log"
+  },
+  "hashes": {
+    "raw.json": "e996922eb4919548f57a32f51999e103549554f4bcfaa516a15683020b6f1dc1",
+    "execution.json": "5d95b71740aaed7d4cc3ef2648cfc2b1657eae05651091733a931399fafb794b",
+    "log": "670e1cd3bf22616fea990ca4acdb05c2ba9a187cc6ffafaa3351cf538e375d44",
+    "resource.json": "f18493284a7f18e0066570d75d9c2028e688cdc1e1706968d3ea08ce7c1c0801",
+    "xml": "94e82e6a55faf323a2e9b236e1784c9ba7fbf21e537a51300978de83ee9fcbce",
+    "inputs.json": "fe47b910b01db4276ffc3f4eebfaeead9f383882147fd7263f6dc5b0375c2255",
+    "test.source.py": "8561378f9e3d7cad1296fb702571709d5cbc60d4909e519998294c9cba9ac569",
+    "entry.source.py": "45ce69fcccc5ef438bbf5216bbfc842f63f557f44467a9cac3463d536a800d15",
+    "midpoint.source.py": "36da82603885f6f110adf40404331a5d519c7dccbe284dc67bb93ec44f75d1ac"
+  }
+}

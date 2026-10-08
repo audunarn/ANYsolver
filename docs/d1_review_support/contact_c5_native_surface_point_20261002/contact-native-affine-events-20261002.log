@@ -1,0 +1,13 @@
+[development] exact targets=1; record=C:\ANYworkspaceWork\contact-native-affine-events-20261002\anysolver-portable-ci-742wq0r7\P01
+[portable-ci] starting P01/01 with 1 modules
+............                                                             [100%]
+============================ slowest 10 durations =============================
+0.01s call     tests/test_general_contact_native_surface_path.py::test_exact_touch_affine_activation_and_release_do_not_stall
+0.01s call     tests/test_general_contact_native_surface_path.py::test_affine_target_tilt_and_edge_contraction_with_rotating_source
+0.01s call     tests/test_general_contact_native_surface_path.py::test_affine_event_includes_target_motion_and_preserves_geometric_path[0.0--0.02-first_touch-0.5]
+0.01s call     tests/test_general_contact_native_surface_path.py::test_affine_event_includes_target_motion_and_preserves_geometric_path[-0.02-0.04-release-0.25]
+0.01s call     tests/test_general_contact_native_surface_path.py::test_certifies_persistent_rotating_material_point[True--0.02]
+
+(5 durations < 0.005s hidden.  Use -vv to show these durations.)
+12 passed in 3.61s
+[portable-ci] P01 exit=0

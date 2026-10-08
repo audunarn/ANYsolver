@@ -1,0 +1,173 @@
+{
+  "profile": "local_exact_50mm_q4_s3_tie_limits_dev",
+  "exact_active_pressure_dofs": 9,
+  "exact_minimum_sampled_gap_m": -4.000000000000531e-05,
+  "positive_overlap_touches": [
+    {
+      "source_face": 0,
+      "target_face": 0,
+      "overlap_area_m2": 0.031249999999999993,
+      "shared_edge_owner": true
+    },
+    {
+      "source_face": 0,
+      "target_face": 1,
+      "overlap_area_m2": 0.09374999999999997,
+      "shared_edge_owner": true
+    },
+    {
+      "source_face": 1,
+      "target_face": 0,
+      "overlap_area_m2": 0.0,
+      "shared_edge_owner": true
+    },
+    {
+      "source_face": 1,
+      "target_face": 1,
+      "overlap_area_m2": 0.05000000000000002,
+      "shared_edge_owner": true
+    }
+  ],
+  "rows": [
+    {
+      "offset_m": 1.2e-07,
+      "sides": {
+        "-1": {
+          "status": "smooth",
+          "active_pressure_dofs": 9,
+          "minimum_sampled_gap_m": -4.000000000000531e-05,
+          "force_norm": 0.009444944192807097,
+          "tangent_norm": 182.28773811598737,
+          "elapsed_seconds": 1.241386000008788
+        },
+        "1": {
+          "status": "smooth",
+          "active_pressure_dofs": 9,
+          "minimum_sampled_gap_m": -4.000000000000531e-05,
+          "force_norm": 0.009444938684307885,
+          "tangent_norm": 182.28764948547177,
+          "elapsed_seconds": 1.0368391000083648
+        }
+      },
+      "two_sided_residual_difference": 6.342325904385856e-09,
+      "two_sided_tangent_difference": 6.81433467261249e-07,
+      "two_sided_slide_action_difference": 8.395619434978574e-09,
+      "two_sided_normal_action_difference": 6.715052522311164e-07,
+      "residual_midpoint_norm": 0.00944494143855736
+    },
+    {
+      "offset_m": 6e-08,
+      "sides": {
+        "-1": {
+          "status": "smooth",
+          "active_pressure_dofs": 9,
+          "minimum_sampled_gap_m": -4.000000000000531e-05,
+          "force_norm": 0.009444942815682528,
+          "tangent_norm": 182.28771595836602,
+          "elapsed_seconds": 1.2336441999941599
+        },
+        "1": {
+          "status": "smooth",
+          "active_pressure_dofs": 9,
+          "minimum_sampled_gap_m": -4.000000000000531e-05,
+          "force_norm": 0.009444940061432868,
+          "tangent_norm": 182.28767164310824,
+          "elapsed_seconds": 1.0278537000122014
+        }
+      },
+      "two_sided_residual_difference": 3.171162998650496e-09,
+      "two_sided_tangent_difference": 3.4071669221511086e-07,
+      "two_sided_slide_action_difference": 4.197809715920075e-09,
+      "two_sided_normal_action_difference": 3.3575257711621197e-07,
+      "residual_midpoint_norm": 0.009444941438557666
+    },
+    {
+      "offset_m": 3e-08,
+      "sides": {
+        "-1": {
+          "status": "smooth",
+          "active_pressure_dofs": 9,
+          "minimum_sampled_gap_m": -4.000000000000531e-05,
+          "force_norm": 0.009444942127120179,
+          "tangent_norm": 182.28770487955344,
+          "elapsed_seconds": 1.2346010000037495
+        },
+        "1": {
+          "status": "smooth",
+          "active_pressure_dofs": 9,
+          "minimum_sampled_gap_m": -4.000000000000531e-05,
+          "force_norm": 0.009444940749995323,
+          "tangent_norm": 182.28768272192457,
+          "elapsed_seconds": 1.0368048000091221
+        }
+      },
+      "two_sided_residual_difference": 1.5855815218050377e-09,
+      "two_sided_tangent_difference": 1.7035833556862766e-07,
+      "two_sided_slide_action_difference": 2.098904825858299e-09,
+      "two_sided_normal_action_difference": 1.6787627618532846e-07,
+      "residual_midpoint_norm": 0.009444941438557742
+    },
+    {
+      "offset_m": 1.5e-08,
+      "sides": {
+        "-1": {
+          "status": "smooth",
+          "active_pressure_dofs": 9,
+          "minimum_sampled_gap_m": -4.000000000000531e-05,
+          "force_norm": 0.009444941782838962,
+          "tangent_norm": 182.28769934014667,
+          "elapsed_seconds": 1.2133063999935985
+        },
+        "1": {
+          "status": "smooth",
+          "active_pressure_dofs": 9,
+          "minimum_sampled_gap_m": -4.000000000000531e-05,
+          "force_norm": 0.009444941094276588,
+          "tangent_norm": 182.28768826133225,
+          "elapsed_seconds": 1.0172172999882605
+        }
+      },
+      "two_sided_residual_difference": 7.927907101298124e-10,
+      "two_sided_tangent_difference": 8.51791652052397e-08,
+      "two_sided_slide_action_difference": 1.0494524333684405e-09,
+      "two_sided_normal_action_difference": 8.393813517594187e-08,
+      "residual_midpoint_norm": 0.009444941438557774
+    },
+    {
+      "offset_m": 3e-09,
+      "sides": {
+        "-1": {
+          "status": "unresolved",
+          "error": "differentiated S3 overlap disagrees with mortar geometry (pair=2, support_error_m2=8.32667298845e-26, weighted_gap_error_m3=3.33067023794e-30, support_scale_m2=4.5000002597e-18, weighted_gap_scale_m3=1.80000010388e-22, support_roundoff_m2=2.04636319709e-30, weighted_gap_roundoff_m3=8.18545278834e-35, geometry_value_rtol=1e-09, integration_triangles=4, overlap_area_local_m2=4.50000020343e-18, overlap_area_m2=4.50000020343e-18, overlap_area_resolution_m2=6.38462010226e-21, support_local_m2=[4.50000025969634e-18, 1.7999998893373235e-26, 2.699999621509546e-35, 9.000000421695146e-27], support_derivative_m2=[4.50000017642961e-18, 1.800000111967847e-26, 2.700000251856929e-35, 9.000000640652025e-27], weighted_gap_local_m3=[-1.8000001038786292e-22, -7.19999955734967e-31, -1.0799998486038763e-39, -3.600000168678242e-31], weighted_gap_derivative_m3=[-1.8000000705719268e-22, -7.200000447871752e-31, -1.0800001007428253e-39, -3.600000256260964e-31])",
+          "elapsed_seconds": 0.564473199978238
+        },
+        "1": {
+          "status": "smooth",
+          "active_pressure_dofs": 9,
+          "minimum_sampled_gap_m": -4.000000000000531e-05,
+          "force_norm": 0.009444941369701549,
+          "tangent_norm": 182.2876926928582,
+          "elapsed_seconds": 1.0126326000026893
+        }
+      }
+    },
+    {
+      "offset_m": 3e-10,
+      "sides": {
+        "-1": {
+          "status": "unresolved",
+          "error": "differentiated S3 overlap disagrees with mortar geometry (pair=2, support_error_m2=8.32667494448e-27, weighted_gap_error_m3=3.33067018798e-31, support_scale_m2=4.50000282363e-20, weighted_gap_scale_m3=1.80000112945e-24, support_roundoff_m2=2.04636436303e-32, weighted_gap_roundoff_m3=8.18545745211e-37, geometry_value_rtol=1e-09, integration_triangles=4, overlap_area_local_m2=4.50000199366e-20, overlap_area_m2=4.50000199366e-20, overlap_area_resolution_m2=6.40390298506e-22, support_local_m2=[4.50000282363194e-20, 1.7999986851373615e-29, 2.6999955528272858e-39, 9.000003838419354e-30], support_derivative_m2=[4.5000019909644454e-20, 1.8000010875647072e-29, 2.7000023751354833e-39, 9.000006466313218e-30], weighted_gap_local_m3=[-1.8000011294528758e-24, -7.199994740549845e-34, -1.079998221130972e-43, -3.600001535367939e-34], weighted_gap_derivative_m3=[-1.800000796385857e-24, -7.200004350259188e-34, -1.0800009500542376e-43, -3.600002586525416e-34])",
+          "elapsed_seconds": 0.5568777000007685
+        },
+        "1": {
+          "status": "smooth",
+          "active_pressure_dofs": 9,
+          "minimum_sampled_gap_m": -4.000000000000531e-05,
+          "force_norm": 0.009444941431672117,
+          "tangent_norm": 182.28769368995148,
+          "elapsed_seconds": 1.0163327000045683
+        }
+      }
+    }
+  ]
+}

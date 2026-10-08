@@ -1,0 +1,18 @@
+{
+  "scope": "C8_NATIVE_MULTI_SHELL_DEV",
+  "status": "USER_AUTHORIZED",
+  "approved_seconds": 600,
+  "maximum_job_seconds": 60,
+  "memory_limit_mib": 953,
+  "concurrent_jobs": 1,
+  "reserve_seconds": 60,
+  "accounting_basis": "MEASURED_WRAPPER_WALL_CONSERVATIVE_WITH_PRECISE_CHILD_LAUNCH_TO_WAIT",
+  "user_statement": "I approve executions needed to finish the plan/goal defined.",
+  "date": "2026-10-07",
+  "source_checkpoint": "6362bdfb",
+  "restart_checkpoint": "3468d3c8",
+  "full_goal_authority_sha256": "40e586d5d454fcdc1d5c4cbeb1c79db1061ce62d799dc505ad7dffd17af85404",
+  "historical_allowances": "PROTECTED_NO_POOLING",
+  "scientific_criteria": "UNCHANGED",
+  "independent_acceptance": false
+}

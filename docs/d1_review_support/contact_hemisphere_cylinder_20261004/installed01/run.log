@@ -1,0 +1,54 @@
+........................................................................ [ 51%]
+............................................F....F...................    [100%]
+================================== FAILURES ===================================
+__ test_common_gap_fraction_and_admission_limits_preserve_old_plane_identity __
+
+    def test_common_gap_fraction_and_admission_limits_preserve_old_plane_identity():
+        model,definition,settings,_=bars();manager=MultipleBeamRigidManager(model,definition,settings)
+        start=np.zeros(model.mesh.dof_manager.total_dofs);end=start.copy()
+        end[model.mesh.dof_manager.get_node_dofs(3)[0]]=.003
+        assert not manager.swept_increment_admissible(start,end,0.,1.)
+        fraction=manager.admissible_step_fraction(start,end)
+        assert 0<fraction<1 and manager.swept_increment_admissible(start,fraction*end,0.,1.)
+        duplicate=replace(definition,interactions=(*definition.interactions,replace(definition.interactions[0],name='alias')))
+        assert not validate_general_contact(model,duplicate,settings).valid
+        assert not validate_general_contact(model,definition,replace(settings,maximum_candidate_pairs=1)).valid
+        for body in (replace(definition.rigid_bodies[1],kind='cylinder',normal=(0.,0.,1.)),
+                     replace(definition.rigid_bodies[1],path_translation=(.001,0.,0.))):
+>           assert not validate_general_contact(model,replace(definition,rigid_bodies=(definition.rigid_bodies[0],body)),settings).valid
+E           AssertionError: assert not True
+E            +  where True = ContactValidationReport(status='ok', issues=(), profile='MULTIPLE_EXPLICIT_B2_B3_HEMISPHERE_SUPPORT_ANALYTIC_CYLINDERS_STATIC_DEV_V1').valid
+E            +    where ContactValidationReport(status='ok', issues=(), profile='MULTIPLE_EXPLICIT_B2_B3_HEMISPHERE_SUPPORT_ANALYTIC_CYLINDERS_STATIC_DEV_V1') = validate_general_contact(FEModel(name='one guided B3 with two physical end contacts', mesh=FEMesh(nodes={1: Node(id=1, x=0.112, y=0.0, z=0.0, d...0.0, 'uz': 0.0, 'rx': 0.0, 'ry': 0.0, 'rz': 0.0})], load_cases=[], current_material='default', constraint_equations=[]), ContactDefinition(surfaces=(ContactSurface(name='tube', element_ids=(1,), side='midsurface', beam_radius=0.01, beam_en...ormal_stiffness=None, gap_tolerance=1e-05, normal_law='penalty', line_stiffness=10000.0, endpoint_stiffness=100000.0))), ContactSolverSettings(maximum_candidate_pairs=100000, pair_motion='general', sliding_difference_step=None, maximum_gap...shell_maximum_swept_intervals=None, beam_chain_tangent='finite_difference', beam_end_cap_work='hemisphere_support_dev'))
+E            +      where ContactDefinition(surfaces=(ContactSurface(name='tube', element_ids=(1,), side='midsurface', beam_radius=0.01, beam_en...ormal_stiffness=None, gap_tolerance=1e-05, normal_law='penalty', line_stiffness=10000.0, endpoint_stiffness=100000.0))) = replace(ContactDefinition(surfaces=(ContactSurface(name='tube', element_ids=(1,), side='midsurface', beam_radius=0.01, beam_en...ormal_stiffness=None, gap_tolerance=1e-05, normal_law='penalty', line_stiffness=10000.0, endpoint_stiffness=100000.0))), rigid_bodies=(RigidContactBody(name='left', kind='plane', point=(0.1, 0.0, 0.0), normal=(1.0, 0.0, 0.0), radius=None, path_translat...ody(name='right', kind='cylinder', point=(0.424, 0.0, 0.0), normal=(0.0, 0.0, 1.0), radius=0.1, path_translation=None)))
+
+tests\test_general_contact_multiple_hemisphere_analytic.py:173: AssertionError
+__ test_one_child_gap_gate_common_fraction_and_duplicate_resource_rejection ___
+
+    def test_one_child_gap_gate_common_fraction_and_duplicate_resource_rejection():
+        model,definition,settings=orthogonal();manager=MultipleBeamRigidManager(model,definition,settings)
+        start=np.zeros(model.mesh.dof_manager.total_dofs);end=start.copy()
+        end[model.mesh.dof_manager.get_node_dofs(2)[1]]=-.0055
+        end[model.mesh.dof_manager.get_node_dofs(2)[2]]=-.009
+        assert not manager.swept_increment_admissible(start,end,0.,1.)
+        fraction=manager.admissible_step_fraction(start,end)
+        assert 0<fraction<1 and manager.swept_increment_admissible(start,start+fraction*(end-start),0.,fraction)
+        duplicate=replace(definition,interactions=definition.interactions+(replace(definition.interactions[0],name='duplicate'),))
+        assert not validate_general_contact(model,duplicate,settings).valid
+        assert not validate_general_contact(model,definition,replace(settings,maximum_candidate_pairs=1)).valid
+        unsupported=replace(definition,rigid_bodies=(replace(definition.rigid_bodies[0],kind='cylinder',normal=(0.,0.,1.),radius=.01),definition.rigid_bodies[1]))
+>       assert not validate_general_contact(model,unsupported,settings).valid
+E       AssertionError: assert not True
+E        +  where True = ContactValidationReport(status='ok', issues=(), profile='MULTIPLE_EXPLICIT_B2_B3_HEMISPHERE_SUPPORT_ANALYTIC_CYLINDERS_STATIC_DEV_V1').valid
+E        +    where ContactValidationReport(status='ok', issues=(), profile='MULTIPLE_EXPLICIT_B2_B3_HEMISPHERE_SUPPORT_ANALYTIC_CYLINDERS_STATIC_DEV_V1') = validate_general_contact(FEModel(name='one_round_b3_two_obstacles', mesh=FEMesh(nodes={1: Node(id=1, x=-0.5, y=0.015, z=0.015, dofs=[0, 1, 2, 3...nts={'ux': 0.0, 'rx': 0.0, 'ry': 0.0, 'rz': 0.0})], load_cases=[], current_material='default', constraint_equations=[]), ContactDefinition(surfaces=(ContactSurface(name='tube', element_ids=(1,), side='midsurface', beam_radius=0.01, beam_en...rmal_stiffness=None, gap_tolerance=0.0008, normal_law='penalty', line_stiffness=200000.0, endpoint_stiffness=20000.0))), ContactSolverSettings(maximum_candidate_pairs=100000, pair_motion='general', sliding_difference_step=None, maximum_gap...shell_maximum_swept_intervals=None, beam_chain_tangent='finite_difference', beam_end_cap_work='hemisphere_support_dev'))
+
+tests\test_general_contact_multiple_hemisphere_planes.py:153: AssertionError
+============================= slowest 5 durations =============================
+13.60s call     tests/test_general_contact_radial_beam_ends.py::test_prescribed_tool_activation_open_restart_work_and_separation[cylinder]
+12.18s call     tests/test_general_contact_radial_beam_ends.py::test_prescribed_tool_activation_open_restart_work_and_separation[sphere]
+2.07s call     tests/test_general_contact_multiple_hemisphere_analytic.py::test_actual_simultaneous_bar_controls_and_restart_match_independent_balance[True]
+1.81s call     tests/test_general_contact_multiple_hemisphere_analytic.py::test_second_sphere_child_failure_or_cancel_restores_actual_solver[False]
+1.80s call     tests/test_general_contact_multiple_hemisphere_analytic.py::test_second_sphere_child_failure_or_cancel_restores_actual_solver[True]
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_multiple_hemisphere_analytic.py::test_common_gap_fraction_and_admission_limits_preserve_old_plane_identity
+FAILED tests/test_general_contact_multiple_hemisphere_planes.py::test_one_child_gap_gate_common_fraction_and_duplicate_resource_rejection
+2 failed, 139 passed in 53.65s

@@ -1,0 +1,35 @@
+{
+  "status": "NONPASS",
+  "failure": "pure_translation_velocity_derivative_relative_gate",
+  "resource": {
+    "status": "completed",
+    "exit_code": 1,
+    "elapsed_seconds": 4.0753269999986514,
+    "peak_process_tree_memory_mb": 196.435968,
+    "time_limit_seconds": 180.0,
+    "memory_limit_bytes": 1073741824,
+    "command": [
+      "C:/Python/Python314/python.exe",
+      "docs/d1_review_support/native_inertia_batch_v1_20261001.entry.py",
+      "docs/d1_review_support/native_inertia_batch_v1_20261001.inputs.json",
+      "aa82033132eecab24554534c5df7dbb7ae54966e57763a58d712f9c6e9e0c111"
+    ],
+    "log": "docs\\d1_review_support\\native_inertia_batch_v1_20261001.log"
+  },
+  "source_postverify_count": 451,
+  "bindings": 451,
+  "old_dv_norm": 8.991548770779526e-17,
+  "new_dv_norm": 8.987064087876487e-17,
+  "difference_norm": 4.690969419270644e-18,
+  "maximum_entry_difference": 2.504925637653261e-18,
+  "raw_sha256": "183f01c7b193863bb46eb97869843a92b6209cf74f801b64738c24e8b969bbc0",
+  "module_sha256": "9ee021df59f5974092e94a002ed6da8b8143e0a9ed891982992a60e50d194682",
+  "test_sha256": "184c3a0d42cadbfba7a2e1f8530e92c8fb8c6e87ff0aea4f90605a149cca1a8b",
+  "first_three_maximum_relative_error": 2.357459957661474e-16,
+  "unissued": [
+    "virtual_work",
+    "directional_derivative",
+    "kernel_timing"
+  ],
+  "interpretation": "Scalar derivative signal is cancellation-size on an analytically zero gyro derivative branch. Retain failed relative gate; no candidate acceptance or timing claim. Prospective physical arithmetic scaling requires separate review before any repeat."
+}

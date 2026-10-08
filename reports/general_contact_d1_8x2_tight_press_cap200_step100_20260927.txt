@@ -1,0 +1,19 @@
+{
+  "columns": 8,
+  "rows": 2,
+  "edge_control": true,
+  "gap_certificate": "projected_matching",
+  "gap_tolerance_m": 5e-05,
+  "normal_approach_m": 0.01504,
+  "four_phase": false,
+  "slide_distance_m": 0.05,
+  "pressure_tolerance_pa": 1e-05,
+  "schur_pressure_cap_pa": 200.0,
+  "schur_step_cap_pa": 100.0,
+  "stop_after_slide": false,
+  "elapsed_seconds": 111.40255209998577,
+  "status": "completed",
+  "failure_reason": null,
+  "accepted_steps": 1,
+  "has_restart_checkpoint": true
+}

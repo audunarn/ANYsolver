@@ -1,0 +1,4 @@
+{"stage": "fixture", "stiffness_pa_per_m": 1000000.0}
+{"stage": "solve", "stiffness_pa_per_m": 1000000.0}
+{"stage": "pose_checks", "stiffness_pa_per_m": 1000000.0, "step": 1}
+{"development_checks_met": false, "failures": ["independent guided skin oracle requires exactly zero in-plane/rotation motion"], "output": "docs\\d1_review_support\\d2_projected_penalty_shell_v1_20260930.json"}

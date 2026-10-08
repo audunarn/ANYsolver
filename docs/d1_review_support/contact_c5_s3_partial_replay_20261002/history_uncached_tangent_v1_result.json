@@ -1,0 +1,22 @@
+{
+  "source_bindings_verified": true,
+  "comparison": "history_cache_matched_comparison.json; force and tangent bitwise identical, single matched development observation",
+  "resource": {
+    "peak_sampled_bytes": 198737920,
+    "limit_mib": 953,
+    "elapsed_seconds": 630.2715043000062,
+    "status": "terminal",
+    "child_exit_codes": [
+      0
+    ]
+  },
+  "authority_consumed": true,
+  "status": "passed retained tangent",
+  "id": "C5_RECONTACT_HISTORY_UNCACHED_TANGENT_V1_20261002",
+  "cost": {
+    "elapsed_seconds": 622.7629597000196,
+    "cache_enabled": false,
+    "material_cache_points": 0,
+    "evaluations": 46
+  }
+}

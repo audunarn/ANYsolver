@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 28.771285000002536,
+  "peak_process_tree_memory_mb": 293.548032,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_general_contact_q4_s3_pair_resolution.py"
+  ],
+  "log": "reports\\d1_clipping_reviewed_a8ade309_20260928.txt"
+}

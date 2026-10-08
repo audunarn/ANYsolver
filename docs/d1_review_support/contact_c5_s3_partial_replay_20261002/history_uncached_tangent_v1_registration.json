@@ -1,0 +1,16 @@
+{
+  "question": "Measure uncached replay on the exact retained pose used by the 343.4807s cached tangent; compare force/tangent outputs and absolute cost.",
+  "kind": "prospective matched retained coupled tangent development",
+  "memory_limit_mib": 953,
+  "jit": "off",
+  "sha256": {
+    "src/anysolver/general_contact/s3_friction_prepared_path.py": "C8F4C046B6453C3247B982D67D48F6B79E646A45D71B39AFE05FC798733EEC6C",
+    "tests/test_general_contact_s3_friction_replay.py": "B8F6F30485EF76F3C6AFF732CDF710939D43CE20B534AC28053A56D1023B44CA",
+    "src/anysolver/general_contact/s3_friction_replay.py": "7BDF42CA0A2562E2ADAFF50B0510FA78AEBBBA1DBAD3EE46A85F2156F56C3901"
+  },
+  "timeout_seconds": 900,
+  "selector": "tests/test_general_contact_s3_friction_replay.py::test_saved_recontact_uncached_tangent_cost",
+  "decision": "One execution; no automatic retry or cap increase. Decide whether cache benefit warrants integration. Single matched observation is not balanced whole-route performance qualification.",
+  "source_snapshot": "C:/ANYworkspaceWork/contact-friction-history-uncached-tangent-v1-20261002/frozen_source",
+  "id": "C5_RECONTACT_HISTORY_UNCACHED_TANGENT_V1_20261002"
+}

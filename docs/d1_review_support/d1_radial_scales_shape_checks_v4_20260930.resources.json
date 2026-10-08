@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 1.5372298999864142,
+  "peak_process_tree_memory_mb": 119.119872,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_general_contact_radial_spatial_assessment.py",
+    "-k",
+    "changed_wrench or scalar_reference"
+  ],
+  "log": "docs\\d1_review_support\\d1_radial_scales_shape_checks_v4_20260930.log"
+}

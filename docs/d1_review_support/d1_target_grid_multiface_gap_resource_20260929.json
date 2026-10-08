@@ -1,0 +1,13 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 3.180762100004358,
+  "peak_process_tree_memory_mb": 172.535808,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "docs/d1_review_support/d1_two_body_multiface_saved_pose.py"
+  ],
+  "log": "docs\\d1_review_support\\d1_target_grid_multiface_gap_log_20260929.txt"
+}

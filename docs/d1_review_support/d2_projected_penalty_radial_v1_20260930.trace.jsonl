@@ -1,0 +1,18 @@
+{"event": "trace_begin", "elapsed_seconds": 0.0003276999923400581, "imported_source": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py", "scope": "development observer only; no state or numerical setting changes"}
+{"event": "preparation_begin", "elapsed_seconds": 69.19274559998303, "call": 1}
+{"event": "preparation_end", "elapsed_seconds": 104.37801729998318, "call": 1, "seconds": 35.185182699991856}
+{"event": "swept_begin", "elapsed_seconds": 119.10905849997653, "call": 1}
+{"event": "swept_end", "elapsed_seconds": 132.65639379998902, "call": 1, "seconds": 13.547246200003428, "admissible": true}
+{"event": "swept_begin", "elapsed_seconds": 173.37737179998658, "call": 2}
+{"event": "swept_end", "elapsed_seconds": 186.53457569997408, "call": 2, "seconds": 13.15714769999613, "admissible": true}
+{"event": "swept_begin", "elapsed_seconds": 230.44399209998664, "call": 3}
+{"event": "swept_end", "elapsed_seconds": 243.6788921999978, "call": 3, "seconds": 13.234858400013763, "admissible": true}
+{"event": "swept_begin", "elapsed_seconds": 281.07548949998454, "call": 4}
+{"event": "swept_end", "elapsed_seconds": 294.4133845999895, "call": 4, "seconds": 13.337840699998196, "admissible": true}
+{"event": "swept_begin", "elapsed_seconds": 328.74643509997986, "call": 5}
+{"event": "swept_end", "elapsed_seconds": 348.785207399982, "call": 5, "seconds": 20.038720499986084, "admissible": true}
+{"event": "swept_begin", "elapsed_seconds": 382.29471369998646, "call": 6}
+{"event": "swept_end", "elapsed_seconds": 395.4497007999744, "call": 6, "seconds": 13.154933399986476, "admissible": true}
+{"event": "swept_begin", "elapsed_seconds": 425.68728129999363, "call": 7}
+{"event": "swept_end", "elapsed_seconds": 438.581460299989, "call": 7, "seconds": 12.894062500010477, "admissible": true}
+{"event": "trace_end", "elapsed_seconds": 722.6632242999913, "calls": {"preparation": 1, "swept": 7}}

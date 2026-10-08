@@ -1,0 +1,19 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_press_dev.py", line 1139, in <module>
+    radial_linear_discriminator(arguments.output, target_cells=arguments.radial_target_cells,
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                target_right_x_m=arguments.radial_target_right_x_m)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_press_dev.py", line 743, in radial_linear_discriminator
+    model, definition, settings, program, reference, record = build_radial_guided_case(
+                                                              ~~~~~~~~~~~~~~~~~~~~~~~~^
+        target_cells=target_cells, target_right_x_m=target_right_x_m)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_press_dev.py", line 633, in build_radial_guided_case
+    value = float(reference.fields_xy([[point.x, point.y]])[body][0])
+                  ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_radial_two_body_reference.py", line 106, in fields_xy
+    raise ValueError("reference points must lie in the radius-R disk")
+ValueError: reference points must lie in the radius-R disk

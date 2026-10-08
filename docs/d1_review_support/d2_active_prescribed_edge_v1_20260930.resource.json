@@ -1,0 +1,15 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 13.907775500003481,
+  "peak_process_tree_memory_mb": 275.464192,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "docs/d1_review_support/d2_active_prescribed_edge_dev.py",
+    "--output",
+    "docs/d1_review_support/d2_active_prescribed_edge_v1_20260930.json"
+  ],
+  "log": "docs\\d1_review_support\\d2_active_prescribed_edge_v1_20260930.log"
+}

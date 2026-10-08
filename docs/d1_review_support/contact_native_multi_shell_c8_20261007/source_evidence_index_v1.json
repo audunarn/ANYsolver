@@ -1,0 +1,27 @@
+{
+  "status": "SOURCE_ONLY",
+  "numerical_jobs": 0,
+  "copied_files": [
+    {
+      "path": "author_design_checkpoint_v1.md",
+      "sha256": "0d32619914220e82bca7cf1b4c6135424dca242b73048f8bf0320042dcf44f2e"
+    },
+    {
+      "path": "author_source_check_v3.json",
+      "sha256": "4e00b706930c10d211204138771d6ceb27a405ef1797464d15c9d06d40de616b"
+    },
+    {
+      "path": "author_source_handoff_v1.json",
+      "sha256": "faae223f566ec39b267a7d5d4c6558f7fed3a1eaac374ceb95f3673efec02ef8"
+    },
+    {
+      "path": "supporting_source_review_v1.md",
+      "sha256": "bb0052003b8ce404cfa33875f860e7510af75a5a03420cc049f2428420457095"
+    },
+    {
+      "path": "lead_source_audit_v1.json",
+      "sha256": "f1cbc4f15c636bdd0a1cab02f7a71e8b7820e03ba09ac049510ad924d20670af"
+    }
+  ],
+  "raw_directory": "C:\\ANYworkspaceWork\\contact_native_multi_shell_c8_20261007"
+}

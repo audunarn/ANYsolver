@@ -1,0 +1,21 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 29.523792899999535,
+  "peak_process_tree_memory_mb": 336.93696,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_general_contact_monolithic_exact_seam.py::test_raw_nodal_force_exact_seam_has_supported_gap_rows_and_tangent",
+    "tests/test_general_contact_monolithic_exact_seam.py::test_seam_ownership_ignores_sloped_face_without_tie",
+    "tests/test_general_contact_monolithic_exact_seam.py::test_monolithic_guided_slide_reaches_exact_s3_diagonal",
+    "tests/test_general_contact_monolithic_exact_seam.py::test_raw_nodal_force_seam_rejects_unresolved_topology_and_resource_limit",
+    "tests/test_general_contact_q4_s3_pair_resolution.py::test_three_face_smooth_patch_owns_existing_internal_tie",
+    "tests/test_general_contact_q4_s3_pair_resolution.py::test_three_face_tie_rejects_rim_crease_and_ambiguous_topology"
+  ],
+  "log": "docs\\d1_review_support\\d1_clipping_bounded_pytest_20260929.log"
+}

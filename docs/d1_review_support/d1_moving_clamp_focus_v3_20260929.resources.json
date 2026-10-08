@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 4.80222889999277,
+  "peak_process_tree_memory_mb": 215.990272,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_d1_development_recording.py",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d1_moving_clamp_focus_v3_20260929.log"
+}

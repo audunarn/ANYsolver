@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 5.333949199994095,
+  "peak_process_tree_memory_mb": 215.175168,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_zero_weight_derivatives.py",
+    "tests/test_general_contact_nodal_force_linearization.py",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d1_zero_weight_derivative_checks_v2_20260930.log"
+}

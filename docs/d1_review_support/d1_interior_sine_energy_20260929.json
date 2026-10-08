@@ -1,0 +1,44 @@
+{
+  "input": "docs\\d1_review_support\\d1_interior_work_spectrum_20260929.json",
+  "young_pa": 100000.0,
+  "poisson": 0.3,
+  "thickness_m": 0.05,
+  "bending_n_m": 1.144688644688645,
+  "interpretation": "Idealized simply supported Kirchhoff source plate only; no full shell inf-sup or D1 acceptance claim",
+  "cases": [
+    {
+      "source_q4_faces": 16,
+      "source_grid": [
+        4,
+        4
+      ],
+      "discrete_two_body_dual_squared": 1.0209094474555312e-05,
+      "frozen_vertical_two_body_dual_squared": 1.0209145407427513e-05,
+      "idealized_source_kirchhoff_dual_squared": {
+        "16": 2.5246368000863206e-05,
+        "32": 2.5246475049853894e-05,
+        "64": 2.5246476181581625e-05,
+        "128": 2.5246476191286166e-05
+      },
+      "discrete_to_idealized_source_ratio_squared_128": 0.4043770068029924,
+      "reference_tail_fraction_64_to_128": 3.8439190905132225e-10
+    },
+    {
+      "source_q4_faces": 32,
+      "source_grid": [
+        8,
+        4
+      ],
+      "discrete_two_body_dual_squared": 1.0439886140165494e-06,
+      "frozen_vertical_two_body_dual_squared": 1.043977093927789e-06,
+      "idealized_source_kirchhoff_dual_squared": {
+        "16": 2.229011522783718e-06,
+        "32": 2.2293399486064778e-06,
+        "64": 2.2293455371440027e-06,
+        "128": 2.229345596291468e-06
+      },
+      "discrete_to_idealized_source_ratio_squared_128": 0.4682937521007204,
+      "reference_tail_fraction_64_to_128": 2.6531312805999506e-08
+    }
+  ]
+}

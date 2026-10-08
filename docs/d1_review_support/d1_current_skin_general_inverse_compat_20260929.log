@@ -1,0 +1,143 @@
+{
+  "status": "development_independent_current_skin_values_at_saved_slide",
+  "source_commit": "5af2e6af4870f834605683a6a045cc4f43b9cd87",
+  "saved_source_sha256": "ef69c6d174c3c189fc1d3f1f3fe809f5182b5f5b0799abffcfd1330290050311",
+  "oracle_source_sha256": "01e555611f59c5661c01882458b966f6a063f3c19afe810d51d98672937d52f1",
+  "python": "3.14.2",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "quadrature_points": 256,
+  "current_xy_overlap_area_m2": 0.9000000007988981,
+  "reference_overlap_area_m2": 0.9000000059651395,
+  "saved_production_reference_overlap_area_m2": 0.9000000059651252,
+  "support_relative_l2": 2.4340614367552554e-14,
+  "maximum_normalized_gap_difference_m": 7.062580704183911e-13,
+  "normalized_gap_difference_l2_m": 1.0974839248356509e-12,
+  "directional_checks": [
+    {
+      "direction": "source_4_ux",
+      "step": 2e-06,
+      "independent_gap_gradient_norm": 3.0375736262540003e-05,
+      "production_gap_gradient_norm": 3.037573641571862e-05,
+      "gradient_difference_norm": 2.241563987246455e-13,
+      "gradient_scaled_difference": 7.379455617367374e-09,
+      "independent_contact_work_derivative": 2.0934529543451625e-09,
+      "production_contact_work_derivative": 2.0934529701745436e-09,
+      "contact_work_derivative_difference": 1.582938108320011e-17
+    },
+    {
+      "direction": "source_4_uz",
+      "step": 2e-06,
+      "independent_gap_gradient_norm": 0.597769035082057,
+      "production_gap_gradient_norm": 0.5977690351272394,
+      "gradient_difference_norm": 4.4564796453515985e-10,
+      "gradient_scaled_difference": 7.455186507616616e-10,
+      "independent_contact_work_derivative": 4.119967326815391e-05,
+      "production_contact_work_derivative": 4.1199673286867315e-05,
+      "contact_work_derivative_difference": 1.8713404035999165e-14
+    },
+    {
+      "direction": "source_9_ux",
+      "step": 2e-06,
+      "independent_gap_gradient_norm": 2.6523195250934436e-05,
+      "production_gap_gradient_norm": 2.6523195224928457e-05,
+      "gradient_difference_norm": 9.56818751835057e-14,
+      "gradient_scaled_difference": 3.6074792034700555e-09,
+      "independent_contact_work_derivative": 3.046426275987659e-09,
+      "production_contact_work_derivative": 3.0464262784191306e-09,
+      "contact_work_derivative_difference": 2.4314717680006357e-18
+    },
+    {
+      "direction": "source_9_uz",
+      "step": 2e-06,
+      "independent_gap_gradient_norm": 0.5219955386526226,
+      "production_gap_gradient_norm": 0.5219955388514417,
+      "gradient_difference_norm": 2.1311993546064562e-10,
+      "gradient_scaled_difference": 4.0827922769144375e-10,
+      "independent_contact_work_derivative": 5.995613250687795e-05,
+      "production_contact_work_derivative": 5.995613253444232e-05,
+      "contact_work_derivative_difference": 2.7564369786247517e-14
+    },
+    {
+      "direction": "target_12_ux",
+      "step": 2e-06,
+      "independent_gap_gradient_norm": 5.5835957366916175e-05,
+      "production_gap_gradient_norm": 5.583595754006563e-05,
+      "gradient_difference_norm": 3.312094490223357e-13,
+      "gradient_scaled_difference": 5.93183073442724e-09,
+      "independent_contact_work_derivative": -2.3202910775147937e-09,
+      "production_contact_work_derivative": -2.3202910888514868e-09,
+      "contact_work_derivative_difference": 1.1336693101954619e-17
+    },
+    {
+      "direction": "target_12_uz",
+      "step": 2e-06,
+      "independent_gap_gradient_norm": 1.0987905046683886,
+      "production_gap_gradient_norm": 1.0987905057309972,
+      "gradient_difference_norm": 3.0354201462217296e-09,
+      "gradient_scaled_difference": 2.762510351509037e-09,
+      "independent_contact_work_derivative": -4.56637952390039e-05,
+      "production_contact_work_derivative": -4.5663795254642554e-05,
+      "contact_work_derivative_difference": 1.563865410867532e-14
+    },
+    {
+      "direction": "target_12_ry",
+      "step": 2e-05,
+      "independent_gap_gradient_norm": 8.375393746995836e-07,
+      "production_gap_gradient_norm": 8.375393631009845e-07,
+      "gradient_difference_norm": 2.0901885951357596e-14,
+      "gradient_scaled_difference": 2.495630279867502e-08,
+      "independent_contact_work_derivative": -3.480436692099905e-11,
+      "production_contact_work_derivative": -3.4804366332772303e-11,
+      "contact_work_derivative_difference": 5.882267451502404e-19
+    },
+    {
+      "direction": "target_13_uz",
+      "step": 2e-06,
+      "independent_gap_gradient_norm": 0.7688572467198308,
+      "production_gap_gradient_norm": 0.7688572465644384,
+      "gradient_difference_norm": 1.2730015287896071e-09,
+      "gradient_scaled_difference": 1.6557059642448412e-09,
+      "independent_contact_work_derivative": -5.938246118133758e-05,
+      "production_contact_work_derivative": -5.938246119435697e-05,
+      "contact_work_derivative_difference": 1.3019391066539793e-14
+    },
+    {
+      "direction": "target_13_ry",
+      "step": 2e-05,
+      "independent_gap_gradient_norm": 5.859927906256472e-07,
+      "production_gap_gradient_norm": 5.859928143929598e-07,
+      "gradient_difference_norm": 2.881535998851418e-14,
+      "gradient_scaled_difference": 4.917357223631575e-08,
+      "independent_contact_work_derivative": -4.525897950832689e-11,
+      "production_contact_work_derivative": -4.525898106583224e-11,
+      "contact_work_derivative_difference": 1.5575053547125142e-18
+    }
+  ],
+  "maximum_scaled_directional_gradient_difference": 4.917357223631575e-08,
+  "maximum_contact_work_derivative_difference": 2.7564369786247517e-14,
+  "independent_support_m2": [
+    0.061875000026766665,
+    0.12375000009177134,
+    0.12375000014912853,
+    0.12375000020648556,
+    0.06187500012236185,
+    0.05062500024089982,
+    0.10125000082594236,
+    0.10125000134215643,
+    0.1012500018583704,
+    0.05062500110125653
+  ],
+  "independent_normalized_gap_m": [
+    3.8216271803724725e-05,
+    2.1351869311748074e-05,
+    4.828934521879152e-06,
+    2.927009453286656e-16,
+    2.624174679141175e-06,
+    3.821606173292895e-05,
+    2.1351539666975935e-05,
+    4.828672497662051e-06,
+    2.960905634596499e-16,
+    2.6238579700090097e-06
+  ]
+}

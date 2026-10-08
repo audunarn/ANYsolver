@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 124.31429769998067,
+  "peak_process_tree_memory_mb": 285.564928,
+  "time_limit_seconds": 900.0,
+  "memory_limit_bytes": 4000000000,
+  "command": [
+    "python",
+    "-m",
+    "scripts.general_contact_d1_interior_press_dev",
+    "docs/d1_review_support/d1_radial_preparation_profile_v4_20260930.json",
+    "--radial-candidate-profile",
+    "docs/d1_review_support/d1_radial_linear_nonmatching_v3_20260930.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_radial_preparation_profile_v4_20260930.log"
+}

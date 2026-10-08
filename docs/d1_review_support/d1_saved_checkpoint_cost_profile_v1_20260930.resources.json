@@ -1,0 +1,29 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 79.01094020000892,
+  "peak_process_tree_memory_mb": 268.9024,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "cProfile",
+    "-o",
+    "docs/d1_review_support/d1_saved_checkpoint_cost_profile_v1_20260930.pstats",
+    "docs/d1_review_support/d1_installed_entry.py",
+    "--expected-root",
+    "C:/ANYworkspaceWork/general-contact-final-90baf01a/target",
+    "--identity-output",
+    "docs/d1_review_support/d1_saved_checkpoint_cost_profile_v1_20260930.import.json",
+    "--script",
+    "docs/d1_review_support/d1_saved_checkpoint_roundtrip_dev.py",
+    "--",
+    "docs/d1_review_support/d1_saved_checkpoint_cost_profile_v1_20260930.json",
+    "--active",
+    "docs/d1_review_support/d1_final_lifecycle_v1_20260930_active_prefix.json",
+    "--open",
+    "docs/d1_review_support/d1_final_lifecycle_v1_20260930_open_prefix.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_saved_checkpoint_cost_profile_v1_20260930.log"
+}

@@ -1,0 +1,98 @@
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 600, in _jet2_s3_work
+    value_rtol = _q4_s3_pair_value_rtol(
+        local.overlap_area, derivative.overlap_area,
+        derivative.overlap_area_resolution,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 113, in _q4_s3_pair_value_rtol
+    raise UnsupportedQ4S3Branch(
+    ...<4 lines>...
+    )
+anysolver.general_contact.q4_s3_overlap_derivatives.UnsupportedQ4S3Branch: Q4/S3 paired overlap area agreement is unresolved (area_difference_m2=2.2512865336e-27, area_resolution_m2=1.40193097207e-22, relative_value_allowance=2.13870082152e-06)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 211, in work
+    return self._work_unresolved(current_source, current_target,
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                 multipliers, tangent=tangent)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 423, in _work_unresolved
+    return self._jet2_s3_work(current_source, current_target,
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                              base, tangent=tangent)
+                              ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 605, in _jet2_s3_work
+    raise UnsupportedQ4S3Branch(
+        f"pair={pair_index}, overlap_area_m2={local.overlap_area:.12g}: {exc}"
+    ) from exc
+anysolver.general_contact.q4_s3_overlap_derivatives.UnsupportedQ4S3Branch: pair=2, overlap_area_m2=2.10528420895e-21: Q4/S3 paired overlap area agreement is unresolved (area_difference_m2=2.2512865336e-27, area_resolution_m2=1.40193097207e-22, relative_value_allowance=2.13870082152e-06)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_coupled_refinement.py", line 228, in <module>
+    main()
+    ~~~~^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_coupled_refinement.py", line 183, in main
+    result = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=12,
+        emit_restart_checkpoint=True,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_static.py", line 7713, in solve_static_nonlinear
+    return solve_static_contact_path(
+        model, contact, contact_settings, contact_path_program,
+    ...<4 lines>...
+        cancellation_token=cancellation_token,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 1134, in solve_static_contact_path
+    return _run_with_qualified_assembly_runtime_lease(
+        model, context="solve_static_contact_path", operation=operation,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\matrix_assembly.py", line 3651, in _run_with_qualified_assembly_runtime_lease
+    raise scoped_operation_error
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\matrix_assembly.py", line 3626, in _run_with_qualified_assembly_runtime_lease
+    result = operation(lease)
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 1132, in operation
+    return _run_with_nonlinear_state_cleanup(run)
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_state.py", line 271, in _run_with_nonlinear_state_cleanup
+    return operation(*args, **kwargs)
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 503, in run
+    internal, tangent, trial = _assemble_nonlinear_system(
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        model, u, committed_states, num_layers,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        kinematics="von_karman",
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_static.py", line 1556, in _assemble_nonlinear_system
+    contact_force, contact_tangent, _ = contact_manager.evaluate(
+                                        ~~~~~~~~~~~~~~~~~~~~~~~~^
+        displacements, tangent=tangent
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_static.py", line 482, in evaluate
+    work = (self.law.work(source, target, self.normal_multipliers, tangent=tangent)
+            ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 230, in work
+    return self._shared_edge_limit(current_source, current_target,
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                   multipliers, tangent=tangent)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 302, in _shared_edge_limit
+    candidate = self._work_unresolved(shifted, current_target,
+                                      multipliers, tangent=tangent)
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 423, in _work_unresolved
+    return self._jet2_s3_work(current_source, current_target,
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                              base, tangent=tangent)
+                              ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 621, in _jet2_s3_work
+    raise ValueError(
+    ...<16 lines>...
+    )
+ValueError: differentiated S3 overlap disagrees with mortar geometry (pair=2, support_error_m2=2.08719776532e-25, weighted_gap_error_m3=7.54055740007e-30, support_scale_m2=4.51948745673e-16, weighted_gap_scale_m3=1.63286958876e-20, support_roundoff_m2=2.05522494831e-28, weighted_gap_roundoff_m3=7.42543119832e-33, geometry_value_rtol=1.92318838515e-09, integration_triangles=4, overlap_area_local_m2=4.51948772639e-16, overlap_area_m2=4.51948772847e-16, overlap_area_resolution_m2=6.39649676366e-20, support_local_m2=[4.519487454640299e-16, 1.8117377530454103e-23, 2.7235015829559647e-31, 9.058527518931108e-24], support_derivative_m2=[4.519487456727497e-16, 1.81170526015859e-23, 2.72343591051397e-31, 9.058526160573776e-24], weighted_gap_local_m3=[-1.632869588006874e-20, -6.545723398157308e-28, -9.839883287839997e-36, -3.27280344229699e-28], weighted_gap_derivative_m3=[-1.6328695887609297e-20, -6.54560600288339e-28, -9.839646016391678e-36, -3.2728029515287893e-28])

@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 62.05165860000125,
+  "peak_process_tree_memory_mb": 190.976,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "scripts/general_contact_d1_interior_press_dev.py",
+    "docs/d1_review_support/d1_coupled_contrast_force08_rotation_20260929.json",
+    "--saved-rotation-probe",
+    "docs/d1_review_support/d1_coupled_contrast_force08_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_coupled_contrast_force08_rotation_20260929.log"
+}

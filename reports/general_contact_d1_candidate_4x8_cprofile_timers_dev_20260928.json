@@ -1,0 +1,55 @@
+{
+  "method": "process-local single active uniform-close candidate; not a coupled solve or acceptance",
+  "source_grid": [
+    4,
+    8
+  ],
+  "target_s3_faces": 2,
+  "closing_shift_m": -5e-05,
+  "elapsed_seconds": 20.280961099953856,
+  "unwrapped_seconds": 3.8440058999694884,
+  "timings": {
+    "aggregate_pair_geometry": {
+      "calls": 1,
+      "inclusive_seconds": 1.9141947000171058,
+      "exclusive_seconds": 1.9141947000171058,
+      "exceptions": 0
+    },
+    "contact_evaluate": {
+      "calls": 1,
+      "inclusive_seconds": 16.436955199984368,
+      "exclusive_seconds": 0.16223630006425083,
+      "exceptions": 0
+    },
+    "jet2_contact_work": {
+      "calls": 1,
+      "inclusive_seconds": 14.360029999981634,
+      "exclusive_seconds": 0.022124899900518358,
+      "exceptions": 0
+    },
+    "prepare_projected_state": {
+      "calls": 1,
+      "inclusive_seconds": 1.9143499999772757,
+      "exclusive_seconds": 0.0001552999601699412,
+      "exceptions": 0
+    },
+    "pressure_rank_diagnostics": {
+      "calls": 1,
+      "inclusive_seconds": 0.000338899961207062,
+      "exclusive_seconds": 0.000338899961207062,
+      "exceptions": 0
+    },
+    "q4_s3_jet2_pair": {
+      "calls": 42,
+      "inclusive_seconds": 14.337905100081116,
+      "exclusive_seconds": 14.337905100081116,
+      "exceptions": 0
+    }
+  },
+  "overlapping_pairs": 42,
+  "active_pressure_dofs": 45,
+  "contact_force_z_n": 0.09000000000002514,
+  "minimum_gap_m": -1.0000000036951285e-05,
+  "force_norm_n": 0.05175847946342174,
+  "tangent_nonzeros": 26837
+}

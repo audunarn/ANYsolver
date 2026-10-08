@@ -1,0 +1,68 @@
+{
+  "base": "ce0b06e8",
+  "runs": [
+    {
+      "run": "contact-native-space-time-discriminator-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 185696256,
+          "limit_mib": 953,
+          "elapsed_seconds": 5.39636650000466,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-space-time-scheduler-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 199135232,
+          "limit_mib": 953,
+          "elapsed_seconds": 10.977562699990813,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-support-box-bisection-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 199835648,
+          "limit_mib": 953,
+          "elapsed_seconds": 11.403944700025022,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-stationary-front-discriminator-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 183279616,
+          "limit_mib": 953,
+          "elapsed_seconds": 7.314949399966281,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    }
+  ],
+  "final_source_sha256": {
+    "src/anysolver/general_contact/native_surface_support.py": "0da598d2b0b68fa95d69e19df314c57a05064cd6bca2d1de5530a7267e367c3a",
+    "src/anysolver/general_contact/native_surface_crossing.py": "85bca179ae2b00db0d5b2746810ddd9e87029307a3dd8ce49dda25d3b3aa3b34",
+    "src/anysolver/general_contact/native_surface_friction_integral.py": "98ee728c4456651455660f1cc27ac837a19b775b6fe62f81ac698108dada0917",
+    "tests/test_general_contact_native_surface_crossing.py": "e0551876dd76a5c23f44a35709cf3a3d5aa338bb1bdd3d6a57fe88708dbf3747",
+    "tests/test_general_contact_native_surface_replay_owner.py": "158bd4249a021d9eca143464d903078ee28842b8dbe7c2cc3083eb5fdad6f30c"
+  }
+}

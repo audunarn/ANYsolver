@@ -1,0 +1,47 @@
+{
+  "baseline": null,
+  "cases": [
+    {
+      "source_columns": 8,
+      "source_rows": 8,
+      "target_columns": 6,
+      "target_rows": 6,
+      "target_s3_faces": 72,
+      "target_young_multiplier": 5.0,
+      "fixed_middle_left_nodes": [
+        89,
+        96,
+        103,
+        110,
+        117
+      ],
+      "load_shape": "physical_bump",
+      "integrated_normal_force_n": 0.01923674177899663,
+      "active_node_ids": [
+        40
+      ],
+      "independent_projected_lower_gap_m": -1.3680474122974406e-05,
+      "sample_xy_m": [
+        [
+          0.6,
+          0.6
+        ],
+        [
+          0.6,
+          0.7
+        ],
+        [
+          0.6,
+          0.9
+        ]
+      ],
+      "source_vertical_displacement_m": [
+        -0.00019220699099605567,
+        -0.00017792722836948408,
+        -0.00010353708205250228
+      ],
+      "structural_free_coordinates": 624,
+      "target_maximum_vertical_displacement_m": 0.0003705143813186078
+    }
+  ]
+}

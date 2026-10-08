@@ -1,0 +1,42 @@
+{"event": "recovery_trace_begin", "elapsed_seconds": 0.00031529998523183167, "scope": "scalar observers only; original functions unchanged"}
+{"event": "gap_bound_begin", "elapsed_seconds": 117.69515789998695, "call": 1}
+{"event": "gap_bound_end", "elapsed_seconds": 120.7616361999826, "call": 1, "seconds": 3.0664140000008047}
+{"event": "increment_begin", "elapsed_seconds": 124.1290439000004, "call": 1}
+{"event": "gap_bound_begin", "elapsed_seconds": 171.5214059999853, "call": 2}
+{"event": "gap_bound_end", "elapsed_seconds": 174.66359280000324, "call": 2, "seconds": 3.142116699978942}
+{"event": "gap_bound_begin", "elapsed_seconds": 174.66379299998516, "call": 3}
+{"event": "gap_bound_end", "elapsed_seconds": 178.06455059998552, "call": 3, "seconds": 3.400732699985383}
+{"event": "gap_bound_begin", "elapsed_seconds": 269.576719100005, "call": 4}
+{"event": "gap_bound_end", "elapsed_seconds": 272.70804969998426, "call": 4, "seconds": 3.131289500015555}
+{"event": "increment_end", "elapsed_seconds": 272.71156269998755, "call": 1, "seconds": 148.58245909999823}
+{"event": "report_begin", "elapsed_seconds": 272.7116694999859, "call": 1}
+{"event": "gap_bound_begin", "elapsed_seconds": 280.12659279999207, "call": 5}
+{"event": "gap_bound_end", "elapsed_seconds": 283.21356730000116, "call": 5, "seconds": 3.08691660000477}
+{"event": "report_end", "elapsed_seconds": 292.2905126999831, "call": 1, "seconds": 19.57882830000017}
+{"event": "admission_begin", "elapsed_seconds": 292.2908744000015, "call": 1}
+{"event": "admission_end", "elapsed_seconds": 300.38720860000467, "call": 1, "seconds": 8.096311999979662}
+{"event": "structural_recovery_begin", "elapsed_seconds": 300.38729449998937, "call": 1}
+{"event": "structural_recovery_end", "elapsed_seconds": 301.4520657999965, "call": 1, "seconds": 1.0647603999823332}
+{"event": "increment_begin", "elapsed_seconds": 301.4586288999999, "call": 2}
+{"event": "gap_bound_begin", "elapsed_seconds": 345.5872972999932, "call": 6}
+{"event": "gap_bound_end", "elapsed_seconds": 349.86726080000517, "call": 6, "seconds": 4.279940800013719}
+{"event": "gap_bound_begin", "elapsed_seconds": 349.86731589998817, "call": 7}
+{"event": "gap_bound_end", "elapsed_seconds": 353.8467917999951, "call": 7, "seconds": 3.9794619000167586}
+{"event": "gap_bound_begin", "elapsed_seconds": 467.1336634999898, "call": 8}
+{"event": "gap_bound_end", "elapsed_seconds": 471.2346802999964, "call": 8, "seconds": 4.100986100005684}
+{"event": "increment_end", "elapsed_seconds": 471.23988859998644, "call": 2, "seconds": 169.78122919998714}
+{"event": "report_begin", "elapsed_seconds": 471.2421507999825, "call": 2}
+{"event": "gap_bound_begin", "elapsed_seconds": 481.0937114999979, "call": 9}
+{"event": "gap_bound_end", "elapsed_seconds": 485.2895451000077, "call": 9, "seconds": 4.1957742999948096}
+{"event": "report_end", "elapsed_seconds": 529.1835840999847, "call": 2, "seconds": 57.94139069999801}
+{"event": "admission_begin", "elapsed_seconds": 529.1839349000074, "call": 2}
+{"event": "admission_end", "elapsed_seconds": 538.7720662000065, "call": 2, "seconds": 9.58811219999916}
+{"event": "structural_recovery_begin", "elapsed_seconds": 538.7729929999914, "call": 2}
+{"event": "structural_recovery_end", "elapsed_seconds": 540.0361140999885, "call": 2, "seconds": 1.2631042000139132}
+{"event": "finalize_begin", "elapsed_seconds": 540.0537478000042, "call": 1}
+{"event": "finalize_end", "elapsed_seconds": 540.0538063999848, "call": 1, "seconds": 1.700012944638729e-06}
+{"event": "seal_begin", "elapsed_seconds": 540.053821199981, "call": 1}
+{"event": "seal_end", "elapsed_seconds": 541.0711542000063, "call": 1, "seconds": 1.0173215999966487}
+{"event": "checkpoint_begin", "elapsed_seconds": 541.0724658999825, "call": 1}
+{"event": "checkpoint_end", "elapsed_seconds": 728.2847238999966, "call": 1, "seconds": 187.2122397000203}
+{"event": "recovery_trace_end", "elapsed_seconds": 731.5553708999942}

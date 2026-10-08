@@ -1,0 +1,167 @@
+{
+  "status": "local code checks and failed-state preservation; coupled yielding NONPASS",
+  "production_source": "fbdd5c27",
+  "test_source": "be0fa6bf",
+  "wheel_sha256": "db29c3e1c28a53f1d6e4cf5f56727f2216c8c953adf7fc77be46392b2bfdd360",
+  "raw_root": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate03",
+  "runtime_package": {
+    "source_files": 517,
+    "imported_modules": 223,
+    "source_installed_errors": [],
+    "extra_installed_files": [],
+    "outcomes": {
+      "passed": 36
+    },
+    "runs": {
+      "installed_checks": {
+        "resource": {
+          "status": "completed",
+          "returncode": 0,
+          "elapsed_s": 142.03249470004812,
+          "peak_bytes": 188338176
+        },
+        "runtime_errors": [],
+        "import_errors": [],
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "outcomes": {
+          "passed": 24
+        }
+      },
+      "installed_compat": {
+        "resource": {
+          "status": "completed",
+          "returncode": 0,
+          "elapsed_s": 6.164271799963899,
+          "peak_bytes": 325988352
+        },
+        "runtime_errors": [],
+        "import_errors": [],
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "outcomes": {
+          "passed": 7
+        }
+      },
+      "installed_plastic": {
+        "resource": {
+          "status": "completed",
+          "returncode": 0,
+          "elapsed_s": 19.35958859999664,
+          "peak_bytes": 185868288
+        },
+        "runtime_errors": [],
+        "import_errors": [],
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "outcomes": {
+          "passed": 3
+        }
+      },
+      "installed_plastic_restart": {
+        "resource": {
+          "status": "completed",
+          "returncode": 0,
+          "elapsed_s": 17.551199899986386,
+          "peak_bytes": 185135104
+        },
+        "runtime_errors": [],
+        "import_errors": [],
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "outcomes": {
+          "passed": 1
+        }
+      },
+      "installed_plastic_cycle": {
+        "resource": {
+          "status": "completed",
+          "returncode": 0,
+          "elapsed_s": 22.184086700086482,
+          "peak_bytes": 185233408
+        },
+        "runtime_errors": [],
+        "import_errors": [],
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "outcomes": {
+          "passed": 1
+        }
+      }
+    }
+  },
+  "local": {
+    "disposition": "local nonequilibrated plastic-branch code check; no coupled acceptance",
+    "maximum_accumulated": 0.00047989794855663565,
+    "owner_tangent_errors": [
+      5.032154381739058e-08,
+      2.3519097021091558e-09
+    ],
+    "minimum_gap_m": -1.900000056844625e-05
+  },
+  "lower_penalty": {
+    "disposition": "coupled yielding NONPASS; failed-trial state preservation checked",
+    "status": "failed",
+    "failure": "RuntimeError: native/S3 line-search/gap limit: iteration=7, rejected={'geometry': 0, 'gap': 9, 'swept': 0, 'merit': 0}, last=gap -5.0004469141817074e-05 m",
+    "completed_targets": 3,
+    "maximum_accumulated": 0.0003495126182675977,
+    "minimum_gap_m": -4.142508612225395e-05,
+    "checkpoint_sha256": "8401c28b169d26630e81e742e45c90e66fea4c3dd3f26af886dab3e9707ca8e5"
+  },
+  "higher_penalty": {
+    "disposition": "coupled yielding NONPASS; failed-trial state preservation checked",
+    "status": "failed",
+    "failure": "RuntimeError: native/S3 line-search/gap limit: iteration=1, rejected={'geometry': 0, 'gap': 7, 'swept': 0, 'merit': 2}, last=merit 0.008109321331313212 >= 0.0012109375000724733",
+    "completed_targets": 0,
+    "maximum_accumulated": 0.0,
+    "minimum_gap_m": 9.999999943156174e-05,
+    "checkpoint_sha256": "70a327d0173539cb431b1a36fcc8db6ab8a648fd20613a9adf7bd7e6cd898ee4"
+  },
+  "cycle_test_source": "aec4148a",
+  "bounded_cycle": {
+    "status": "completed",
+    "completed_targets": 7,
+    "peak_load_factor": 0.75,
+    "maximum_accumulated": 0.0003495126182676015,
+    "maximum_penetration_m": 4.142508612225395e-05,
+    "storage_j": [
+      7.2173368729795655e-09,
+      2.3687970918839474e-08,
+      4.791665404788983e-08,
+      0.0,
+      9.60108155258792e-09,
+      2.6427095028841733e-08,
+      4.7916654047900825e-08
+    ],
+    "normalized_force_balance": 4.67218856279902e-14,
+    "normalized_moment_balance": 4.3602839850354416e-14,
+    "metrics": [
+      1.5315567838515982e-16,
+      1.2996673420783398e-17,
+      9.194034422677078e-17
+    ],
+    "checkpoint_sha256": "32f5d019472299a96c3c86f62c9861cfc17abab468de7d9c29b4ea62d66f5b10"
+  },
+  "distinct_cases": 35,
+  "repeated_changed_restart_case": 1
+}

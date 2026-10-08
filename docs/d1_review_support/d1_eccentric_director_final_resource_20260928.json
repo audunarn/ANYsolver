@@ -1,0 +1,15 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 4.110388799999782,
+  "peak_process_tree_memory_mb": 169.598976,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-u",
+    "scripts/general_contact_d1_eccentric_source_director.py",
+    "reports/d1_eccentric_director_final_20260928.json"
+  ],
+  "log": "reports\\d1_eccentric_director_final_console_20260928.txt"
+}

@@ -1,0 +1,113 @@
+{
+  "status": "development_discriminator",
+  "profile": "Q4_S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1",
+  "normal_stiffness_pa_per_m": 1000000.0,
+  "fixed_multipliers_pa": [
+    1000.0,
+    1000.0,
+    1000.0,
+    1000.0,
+    1000.0,
+    1000.0
+  ],
+  "target_tip_rise_m": 0.001,
+  "source_downward_motion_m": 0.016,
+  "initial_active_pressure_modes": 0,
+  "initial_minimum_gap_m": 0.014999999999999989,
+  "active_pressure_modes": 6,
+  "integration_force_n": [
+    -1.5996120366513944,
+    -7.563394355258879e-16,
+    2065.4999999999995
+  ],
+  "integration_moment_nm": [
+    1136.0249390494753,
+    -1169.299187362994,
+    0.9407371442454514
+  ],
+  "pair_force_balance_n": 4.531581184534698e-16,
+  "pair_moment_balance_nm": 2.273746512230935e-13,
+  "minimum_gap_m": -0.002000000000031266,
+  "trials": [
+    {
+      "step_rad": 1e-05,
+      "branch_checks": [
+        {
+          "pressure": true,
+          "support": true,
+          "overlap": true,
+          "pair": true
+        },
+        {
+          "pressure": true,
+          "support": true,
+          "overlap": true,
+          "pair": true
+        }
+      ],
+      "smooth": true,
+      "groups": {
+        "source_force": {
+          "relative_error": 4.964188194447013e-10,
+          "action_scale": 17.41809040800487,
+          "absolute_error": 8.646667877322851e-09
+        },
+        "source_moment": {
+          "relative_error": 3.5809226856375506e-09,
+          "action_scale": 0.00037860571634586854,
+          "absolute_error": 1.3557577985749762e-12
+        },
+        "target_force": {
+          "relative_error": 7.300111874121057e-10,
+          "action_scale": 15.818886870654946,
+          "absolute_error": 1.1547964387984585e-08
+        },
+        "target_moment": {
+          "relative_error": 3.1200948114748348e-09,
+          "action_scale": 0.0002432853875439056,
+          "absolute_error": 7.590734753833842e-13
+        }
+      }
+    },
+    {
+      "step_rad": 5e-06,
+      "branch_checks": [
+        {
+          "pressure": true,
+          "support": true,
+          "overlap": true,
+          "pair": true
+        },
+        {
+          "pressure": true,
+          "support": true,
+          "overlap": true,
+          "pair": true
+        }
+      ],
+      "smooth": true,
+      "groups": {
+        "source_force": {
+          "relative_error": 1.3331229129769446e-09,
+          "action_scale": 17.418090422387184,
+          "absolute_error": 2.3220455442388624e-08
+        },
+        "source_moment": {
+          "relative_error": 8.63332470430929e-09,
+          "action_scale": 0.0003786057162944554,
+          "absolute_error": 3.268626083677636e-12
+        },
+        "target_force": {
+          "relative_error": 1.2442739197955093e-09,
+          "action_scale": 15.818886870654946,
+          "absolute_error": 1.968302837335155e-08
+        },
+        "target_moment": {
+          "relative_error": 1.0564240079769147e-08,
+          "action_scale": 0.00024328538740574161,
+          "absolute_error": 2.5701252404538997e-12
+        }
+      }
+    }
+  ]
+}

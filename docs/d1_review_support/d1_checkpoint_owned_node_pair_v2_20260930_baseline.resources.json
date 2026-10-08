@@ -1,0 +1,25 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 31.79830039999797,
+  "peak_process_tree_memory_mb": 252.55936,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "docs/d1_review_support/d1_installed_entry.py",
+    "--expected-root",
+    "C:/ANYworkspaceWork/general-contact-final-90baf01a/target",
+    "--identity-output",
+    "docs/d1_review_support/d1_checkpoint_owned_node_pair_v2_20260930_baseline.import.json",
+    "--script",
+    "docs/d1_review_support/d1_saved_checkpoint_roundtrip_dev.py",
+    "--",
+    "docs/d1_review_support/d1_checkpoint_owned_node_pair_v2_20260930_baseline.json",
+    "--active",
+    "docs/d1_review_support/d1_final_lifecycle_v1_20260930_active_prefix.json",
+    "--open",
+    "docs/d1_review_support/d1_final_lifecycle_v1_20260930_open_prefix.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_checkpoint_owned_node_pair_v2_20260930_baseline.log"
+}

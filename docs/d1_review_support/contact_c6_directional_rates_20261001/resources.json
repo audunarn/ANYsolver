@@ -1,0 +1,53 @@
+{
+  "1": {
+    "peak_sampled_bytes": 169586688,
+    "limit_mib": 953,
+    "elapsed_seconds": 7.619972400018014,
+    "status": "terminal",
+    "child_exit_codes": [
+      1
+    ]
+  },
+  "2": {
+    "peak_sampled_bytes": 171544576,
+    "limit_mib": 953,
+    "elapsed_seconds": 7.210736700042617,
+    "status": "terminal",
+    "child_exit_codes": [
+      0
+    ]
+  },
+  "3": {
+    "peak_sampled_bytes": 168755200,
+    "limit_mib": 953,
+    "elapsed_seconds": 5.856988499988802,
+    "status": "terminal",
+    "child_exit_codes": [
+      0
+    ]
+  },
+  "4": {
+    "peak_sampled_bytes": 169463808,
+    "limit_mib": 953,
+    "elapsed_seconds": 6.121719899994787,
+    "status": "terminal",
+    "child_exit_codes": [
+      0
+    ]
+  },
+  "installed": {
+    "exit_code": 0,
+    "status": "passed",
+    "process_tree_peak_rss_bytes": 157007872,
+    "elapsed_seconds": 4.195842400018591,
+    "timeout_seconds": 180,
+    "memory_limit_bytes": 999292928,
+    "label": "c6-directional-v2",
+    "targets": [
+      "test_general_contact_descriptor_directional_rates.py",
+      "test_general_contact_transient_s3_history.py::test_s3_history_nonuniform_load_retains_later_algebraic_rates",
+      "test_general_contact_transient_plane.py::test_s3_descriptor_nonuniform_load_initial_dae_acceleration",
+      "test_installed_example.py"
+    ]
+  }
+}

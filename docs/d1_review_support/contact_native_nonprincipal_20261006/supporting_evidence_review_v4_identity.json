@@ -1,0 +1,111 @@
+{
+  "kind": "supporting_saved_evidence_review",
+  "status": "recorded_DEVELOPMENT_CORRECTIVE16_PASS_supported",
+  "repository": "C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001",
+  "executed_source": [
+    {
+      "path": "examples/native_nonprincipal_reference.py",
+      "executed_sha256": "6cd821b3ccc49aa73892b9704e541627511fc25b5c4f9f8fe4688ad96ffb8bfb"
+    },
+    {
+      "path": "examples/native_nonprincipal_dev.py",
+      "executed_sha256": "36a9ea971bb58da46c6fd2ce2fd3a5f343c29e7c997b31a3ec60c5fb1da1f3cc"
+    },
+    {
+      "path": "tests/test_ge_beam3_native_nonprincipal.py",
+      "executed_sha256": "2bef9e7f3152869a0a282c3b3834aa48736d9dea4b954445785e2800867528b1"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_NATIVE_NONPRINCIPAL_DEV.md",
+      "executed_sha256": "27cdcb207dcc3ab24a414adadb2af0acdeec5421211accf8832285b5401fcdf3"
+    }
+  ],
+  "postexecution_guide_update_excluded_from_executed_identity": true,
+  "evidence": [
+    {
+      "path": "lead_numerical_disposition_v4.json",
+      "sha256": "df47e94a05e1f79d222017514ff3ab873c31b5f2d86be3a273a5773fdc33db5f"
+    },
+    {
+      "path": "corrective_prefix_binding_v4.json",
+      "sha256": "58341bb7714091abc0b63031658a0543d18deefba49f4fb4bf341c0a69fd0e16"
+    },
+    {
+      "path": "execution_preparation_corrective_v4.json",
+      "sha256": "609d2c248718512ed0296749b2a6fb3d224c7613395b021d4051d2f99e6ccfb8"
+    },
+    {
+      "path": "nonprincipal_corrective_revision_v4.json",
+      "sha256": "60c0d5efc00f97195060fb46591f0de292b8c24cbf9ae65f9cf9fb2fbb542504"
+    },
+    {
+      "path": "nonprincipal_run_v4.py",
+      "sha256": "8a1251f5e913f149bcf350ab3491eb55e187cb4fc802099d0825214984aae9a3"
+    },
+    {
+      "path": "nonprincipal_corrective_prefix_v4\\actual_results_corrective_prefix.json",
+      "sha256": "18b70097cdd3c140151ded5a83be85634e16317d02bda4aab02926236f0979fe"
+    },
+    {
+      "path": "nonprincipal_corrective_prefix_v4\\actual_results_corrective_prefix.checkpoint",
+      "sha256": "c56142aa416b7abbbc949843b70a9e3e25e1d7d18710d0ea534452a6a819e889"
+    },
+    {
+      "path": "nonprincipal_corrective_resumed_v4\\actual_results_corrective_full.json",
+      "sha256": "cefe1743df686965738487f750629d1c7716150f2d9d6ba5d2e3e5ee509edf71"
+    },
+    {
+      "path": "nonprincipal_corrective_resumed_v4\\actual_results_corrective_full.checkpoint",
+      "sha256": "daf10a3cfacdf439b8beb63635bc4b98a6c201e545d5e5840fc79bf147de1ced"
+    },
+    {
+      "path": "nonprincipal_corrective_resumed_v4\\inputs.json",
+      "sha256": "84abd2829c6c72e3fbc2636f3c4c97b2fe7bec4dab90101dbe34b254e58e0be6"
+    },
+    {
+      "path": "nonprincipal_temporal_v3b\\actual_results_fine.json",
+      "sha256": "c518043301e2ceb0d97b96bf52e433586b7bbc007cb8261fe73985c7b3a1f34d"
+    }
+  ],
+  "all_seven_resource_records": [
+    {
+      "path": "nonprincipal_local_coarse_v2\\resource.json",
+      "sha256": "43f5520b9ad91d3a155ed044122a9bc060170cf4117f9aac979dc22c012cfd40"
+    },
+    {
+      "path": "nonprincipal_coarse_replay_v3b\\resource.json",
+      "sha256": "b150451e386fc446bb43fb5e6d97914a51187e564f8633a1280b517489385d06"
+    },
+    {
+      "path": "nonprincipal_temporal_v3b\\resource.json",
+      "sha256": "c50ede91b7aae6c40676763e461b081e80ad31b48a76784dbf06827598647df6"
+    },
+    {
+      "path": "nonprincipal_restart_v3b\\resource.json",
+      "sha256": "e419061ba085b0c2415255d9134fa95d9dac0d7efc2f9727b480674ffff08c19"
+    },
+    {
+      "path": "nonprincipal_cli_v3b\\resource.json",
+      "sha256": "5f2e579e1d33c0a18eda0a5b5a66fc3041071dd204c20a7adb9fac7ef313d430"
+    },
+    {
+      "path": "nonprincipal_corrective_prefix_v4\\resource.json",
+      "sha256": "6f066f6dc6626c6096a61e5c40c68a339a899ab7ba5b7a67d3e5061c5b82dafd"
+    },
+    {
+      "path": "nonprincipal_corrective_resumed_v4\\resource.json",
+      "sha256": "029db1cbf96db0c2821763c808a8cfbf6ce8e0a62d1ee20454bebc7ccd975141"
+    }
+  ],
+  "spent_s": 202.89767590013798,
+  "remaining_s": 37.10232409986202,
+  "captured_stages": 16,
+  "prefix_chain": "ACTUAL_PUBLIC8_PLUS8_NO_SEPARATE_FRESH16_EQUALITY",
+  "old_4_8_nonpass_preserved": true,
+  "numerical_job_launched": false,
+  "solver_or_reference_import": false,
+  "source_or_product_edits": false,
+  "engineering_acceptance": false,
+  "git_head_not_read": true,
+  "report": "supporting_evidence_review_v4.md"
+}

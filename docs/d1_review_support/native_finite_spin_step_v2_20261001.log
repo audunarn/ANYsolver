@@ -1,0 +1,197 @@
+{"effective_numba_cache": "C:\\ANYworkspaceWork\\native_finite_spin_step_v2_20261001-cache", "numba_version": "0.65.1", "entry_sha256": "5e78500955231e4ac42aa05e09e9464ec054b9f62d26ced3d3a3efbb84a4ed1f"}
+{"anysolver_file": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\__init__.py", "input_sha256": "991f4bd14edcfd14367a258bedd1638c9ea75d132d3c72407cd658ddb518667d", "numpy": "2.4.6", "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]", "scipy": "1.17.1", "threadpools": [{"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.31.188.0"}, {"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.30"}]}
+{"stage": "authenticated_fixture_scales_before_initialization", "elapsed_seconds": 0.5896826999960467}
+{"stage": "actual_initial_signed_balance", "elapsed_seconds": 2.5756649999821093}
+{"stage": "original_returned_stage_1", "elapsed_seconds": 2.974464299972169}
+{"stage": "original_returned_stage_2", "elapsed_seconds": 3.195929299981799}
+{"stage": "original_returned_stage_3", "elapsed_seconds": 3.421710399998119}
+{"stage": "original_returned_stage_4", "elapsed_seconds": 3.6492103999771643}
+{"stage": "original_returned_stage_5", "elapsed_seconds": 3.8791203999717254}
+{"stage": "original_returned_stage_6", "elapsed_seconds": 4.112353999982588}
+{"stage": "original_returned_stage_7", "elapsed_seconds": 4.344733599980827}
+{"stage": "original_returned_stage_8", "elapsed_seconds": 4.581793199991807}
+{"stage": "original_returned_stage_9", "elapsed_seconds": 4.820297799975378}
+{"stage": "original_returned_stage_10", "elapsed_seconds": 5.061976799974218}
+{"stage": "original_returned_stage_11", "elapsed_seconds": 5.307575799990445}
+{"stage": "original_returned_stage_12", "elapsed_seconds": 5.562969099992188}
+{"stage": "original_returned_stage_13", "elapsed_seconds": 5.810430399986217}
+{"stage": "original_returned_stage_14", "elapsed_seconds": 6.060845999978483}
+{"stage": "original_returned_stage_15", "elapsed_seconds": 6.311414199997671}
+{"stage": "original_returned_stage_16", "elapsed_seconds": 6.566662599972915}
+{"stage": "original_returned_stage_17", "elapsed_seconds": 6.8223472999816295}
+{"stage": "original_returned_stage_18", "elapsed_seconds": 7.081487899995409}
+{"stage": "original_returned_stage_19", "elapsed_seconds": 7.346406999975443}
+{"stage": "original_returned_stage_20", "elapsed_seconds": 7.614694899995811}
+{"stage": "original_returned_stage_21", "elapsed_seconds": 7.8833090999978594}
+{"stage": "original_returned_stage_22", "elapsed_seconds": 8.168137399974512}
+{"stage": "trial_return_or_failure", "elapsed_seconds": 8.221202999993693}
+{"stage": "failure", "elapsed_seconds": 8.272439399996074}
+F
+================================== FAILURES ===================================
+___________ test_one_finite_spin_step_resolution_and_actual_balance ___________
+
+record_property = <function record_property.<locals>.append_property at 0x0000011BD0FCC670>
+
+    def test_one_finite_spin_step_resolution_and_actual_balance(record_property):
+        started = perf_counter()
+        inputs = json.loads(Path(os.environ['NATIVE_FINITE_SPIN_STEP_INPUTS']).read_text(encoding='utf-8-sig'))
+        output = Path(os.environ['NATIVE_FINITE_SPIN_STEP_RAW_OUTPUT'])
+        assert not output.exists() and inputs['criteria'] == CRITERIA
+        evidence = dict(status='RUNNING', accepted_steps=0, criteria=CRITERIA, unissued_stages=[],
+            scope='One finite-spin convergence/resolution screen; no finite-angle trajectory/reference claim')
+        def save(stage):
+            evidence.update(last_stage=stage, elapsed_seconds=perf_counter()-started)
+            output.write_text(json.dumps(evidence, indent=2, allow_nan=False)+'\n')
+            print(json.dumps(dict(stage=stage, elapsed_seconds=evidence['elapsed_seconds'])), flush=True)
+            assert evidence['elapsed_seconds'] < CRITERIA['internal_time_limit_seconds']
+        def authentic(label, expected):
+            item = inputs['historical'][label]
+            data = Path(item['path']).read_bytes()
+            assert item['sha256'] == expected == sha256(data).hexdigest()
+            return data
+        try:
+            saved = json.loads(authentic('raw', RAW_SHA))['reference']
+            old_inputs = json.loads(authentic('inputs', OLD_INPUT_SHA))
+            authentic('fixture', FIXTURE_SHA)
+            changed = inputs['historical_source_overrides']
+            assert changed == {'_ge_beam3_native_midpoint.py':
+                'f2c494a93315b541500a8f6aa7330bfae2f731ac9f2251f1585704638f03f71a'}
+            for path, expected in old_inputs['source_sha256'].items():
+                expected = changed.get(Path(path).name, expected)
+                assert sha256(Path(path).read_bytes()).hexdigest() == expected == inputs['source_sha256'][path]
+            for path, expected in inputs['source_sha256'].items():
+                assert sha256(Path(path).read_bytes()).hexdigest() == expected
+            _, definition = make_analysis()  # Authentic builder only; no old test body.
+            owner = create_analysis(SELECTOR, (definition,), (), inertia_order=24,
+                stage_residual_tolerance=CRITERIA['explicit_stage_solve_tolerance'],
+                momentum_origin_high=tuple(CRITERIA['origin_high_m']), momentum_origin_low=tuple(CRITERIA['origin_low_m']))
+            c = owner._context
+            assert c.fixed == () and tuple(c.physical_free) == P and tuple(c.algebraic_free) == Z
+            assert c.load_pattern is None and c.stage_residual_tolerance == 1e-12
+            assert c.element.operator.order == 4 and len(c.analysis._elements) == 1
+            assert canonical(c._reference_mechanical) == canonical(saved['reference_mechanical'])
+            assert canonical(c._reference_origins) == canonical(saved['virgin_histories'])
+            assert np.array_equal(c.analysis._inertias[c.element.element_id], saved['section_inertia'])
+            reference = c._reference_mechanical
+            omega = np.asarray(CRITERIA['spatial_spin_rad_per_s'])
+            velocity = np.zeros(24)
+            for node, point in enumerate(positions(reference)):
+                velocity[6*node:6*node+3] = np.cross(omega, point)
+            velocity[18:21] = velocity[21:24] = omega
+            m0 = np.asarray(saved['M42'])
+            translation = np.zeros((42, 3))
+            for node in range(3):
+                translation[6*node:6*node+3] = np.eye(3)
+            mass = float(np.trace(translation.T@m0@translation)/3.)
+            energy = float(.5*velocity@m0[:24, :24]@velocity)
+            speed = float(np.sqrt(2.*energy/mass))
+            scales = dict(mass=mass, energy=energy, velocity=speed, momentum=mass*speed,
+                angular_momentum=mass*CRITERIA['length_scale_m']*speed)
+            assert all(np.isfinite(x) and x > 0. for x in scales.values())
+            evidence.update(scales=scales, independent_mass_input_M42=saved['M42'],
+                definition=json.loads(definition.raw), section_inertia=saved['section_inertia'],
+                initial_velocity24=velocity.tolist(), provenance=workflow_provenance(owner))
+            save('authenticated_fixture_scales_before_initialization')
+            state = owner.initialize(physical_velocity15=velocity[list(P)])
+            initial = owner.endpoint_accounting(state)
+            with c._atomic_operation():
+                c._guard(); work = c._loaded_work(state.mechanical, state.histories)
+                inertia = c._inertia(state.mechanical, state.physical_velocity24, state.physical_acceleration24)
+                scale, length = c._gate_inputs()
+            balance = work.residual+inertia.mixed_inertia
+            evidence['initial'] = dict(state=json.loads(canonical(state)), accounting=accounting(initial),
+                R42=work.residual.tolist(), I42=inertia.mixed_inertia.tolist(), balance42=balance.tolist(),
+                J42=work.spatial_jacobian.tolist(), M42=inertia.mixed_mass.tolist(),
+                I_v42=inertia.mixed_velocity_derivative.tolist(), I_q42=inertia.mixed_configuration_derivative.tolist(),
+                actual_residual_scales42=np.asarray(scale).tolist(), actual_length_scale_m=float(length),
+                scaled_free_balance=float(np.linalg.norm((balance/scale)[list(c.free)])),
+                initial_checks=owner.initial_checks, current_state_sha256=sha(state))
+            save('actual_initial_signed_balance')
+            assert canonical(state.mechanical) == canonical(reference)
+            assert np.array_equal(state.physical_velocity24, velocity)
+            assert np.linalg.norm(inertia.mixed_mass-m0)/np.linalg.norm(m0) <= 1e-12
+            assert abs(initial.kinetic_energy-energy)/energy <= 1e-12
+            assert evidence['initial']['scaled_free_balance'] <= CRITERIA['endpoint_balance_gate']
+            assert np.count_nonzero(state.physical_velocity24[[i for i in range(24) if i not in P]]) == 0
+            assert np.count_nonzero(state.physical_acceleration24[[i for i in range(24) if i not in P]]) == 0
+            assert np.count_nonzero(inertia.mixed_inertia[list(Z)]) == 0
+            original_stage = c._stage
+            def observe(prior, unknown, h, token=None):
+                actual = original_stage(prior, unknown, h, token)
+                # Persist actual returned physics before any diagnostic arithmetic.
+                row = dict(unknown42=np.asarray(unknown).tolist(),
+                    R42=actual.structural_residual.tolist(), I42=actual.inertia.mixed_inertia.tolist(),
+                    e42=actual.residual.tolist(), J42=actual.jacobian.tolist(), M42=actual.inertia.mixed_mass.tolist(),
+                    actual_vm24=actual.physical_velocity24.tolist(), actual_am24=actual.physical_acceleration24.tolist(),
+                    mechanical=json.loads(canonical(actual.mechanical)), context_sha256=c._identity,
+                    predecessor_sha256=sha(prior), predecessor_epoch=prior.epoch,
+                    original_returned_stage_preserved=True)
+                evidence['unissued_stages'].append(row)
+                save('original_returned_stage_'+str(len(evidence['unissued_stages'])))
+                try:
+                    row.update(stage_snapshot(c, prior, unknown, h, actual))
+                except Exception as error:
+                    row['diagnostic_failure'] = {'type': type(error).__name__, 'message': str(error)}
+                    save('returned_stage_diagnostic_failure')
+                    raise
+                assert len(evidence['unissued_stages']) <= CRITERIA['maximum_returned_stage_observations']
+                return actual  # Same object; no production equation or solver decision replacement.
+            c._stage = observe
+            try:
+>               candidate = owner.trial(state, dt=CRITERIA['dt_seconds'])
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_ge_beam3_native_finite_spin_step.py:247: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\anysolver\_ge_beam3_native_dynamic_analysis.py:95: in trial
+    return self._owner().trial(accepted, dt=dt, cancellation_token=cancellation_token)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <anysolver._ge_beam3_native_midpoint.MidpointContext object at 0x0000011BD0B86F90>
+accepted = MidpointState(mechanical=Mechanical(positions=array([[-1. ,  0. ,  0. ],
+       [ 0. ,  0.2,  0. ],
+       [ 1. ,  0. ...e719121fd8a9334bb4d9e8d27bcf25bf62', context_sha256='6568f77ee12abbd90a5aef05b3c1dae719121fd8a9334bb4d9e8d27bcf25bf62')
+
+    def trial(self, accepted, *, dt, cancellation_token=None):
+        with self._atomic_operation():
+            self._time_step(dt)
+            self._guard(cancellation_token, 'midpoint.trial')
+            predecessor = self._require_current(accepted)
+            free = list(map(int, self.free))
+            p = list(self.physical_free)
+            u = np.zeros(42)
+            u[p] = dt*accepted.physical_velocity24[p]
+            backtracks = 0
+            for iteration in range(self.max_iterations+1):
+                stage = self._stage(accepted, u, dt, cancellation_token)
+                step = np.zeros(42)
+                step[free] = np.linalg.solve(stage.jacobian[np.ix_(free, free)], -stage.residual[free])
+                norm = self._norm(stage.residual, free)
+                if norm <= self.stage_residual_tolerance and self._correction(stage.mechanical, step) <= 1e-11:
+                    break
+                if iteration == self.max_iterations:
+                    raise ValueError('midpoint stage iteration limit')
+                for cut in range(self.max_backtracks+1):
+                    self._guard(cancellation_token, 'midpoint.stage.trial')
+                    proposed = u+2.**(-cut)*step
+                    next_stage = self._stage(accepted, proposed, dt, cancellation_token)
+                    backtracks += int(cut > 0)
+                    if self._norm(next_stage.residual, free) < norm:
+                        u = proposed
+                        break
+                else:
+>                   raise ValueError('midpoint stage residual backtracking failed')
+E                   ValueError: midpoint stage residual backtracking failed
+
+src\anysolver\_ge_beam3_native_midpoint.py:600: ValueError
+============================== warnings summary ===============================
+tests/test_ge_beam3_native_finite_spin_step.py::test_one_finite_spin_step_resolution_and_actual_balance
+  tests\test_ge_beam3_native_finite_spin_step.py:141: PytestWarning: record_property is incompatible with junit_family 'xunit2' (use 'legacy' or 'xunit1')
+    def test_one_finite_spin_step_resolution_and_actual_balance(record_property):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_ge_beam3_native_finite_spin_step.py::test_one_finite_spin_step_resolution_and_actual_balance
+1 failed, 1 warning in 8.91s
+{"pytest_exit_code": 1, "verified_source_count": 446}

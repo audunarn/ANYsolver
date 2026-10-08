@@ -1,0 +1,70 @@
+{
+  "status": "PASS_LOCAL_DEVELOPMENT_RESTART",
+  "scientific_acceptance": false,
+  "scope": "one centered elastic ellipsoid, free/None/default1e-11, two0.001s steps; fullsplitrestore and controls",
+  "accepted_steps": 4,
+  "canonical_state_exact": true,
+  "endpoint_accounting_exact": true,
+  "checkpoint_sha256": "10d6071ce52f43631a9719c092958d90d0568463105b3ac086605a51dfb82996",
+  "restore_checks": {
+    "algebraic_correction_norm": 6.868386599523124e-17,
+    "algebraic_residual_norm": 6.867923821562508e-17,
+    "elastic_consistency_witness": 1.2628215489749948e-27,
+    "epoch": 1,
+    "physical_balance_norm": 6.530128254036021e-19,
+    "rank_mass": {
+      "algebraic_condition": 46900.21092270823,
+      "algebraic_rank": 27,
+      "algebraic_sigma_max": 1.6173357097176737,
+      "algebraic_sigma_min": 3.448461484284262e-05,
+      "physical_mass_condition": 17.433616647021456,
+      "physical_mass_max_eigenvalue": 2.168576101950108,
+      "physical_mass_min_eigenvalue": 0.1243904891255373
+    },
+    "state_sha256": "e64d8f14a39c07c15ef0308ce9f6dadc42d3da057ab0709671a7d2351a2e6e21",
+    "time": 0.001
+  },
+  "controls": {
+    "pending_export_rejection": true,
+    "fresh_only": true,
+    "typed_semantics": true,
+    "correction_witness": true,
+    "cancellation": true,
+    "publication_rollback": true,
+    "canonical_roundtrip": true,
+    "old_object_rejection": true,
+    "split_state_exact": true
+  },
+  "negative_control_count": 12,
+  "max_cumulative_defects": {
+    "energy": 9.587394307751005e-12,
+    "P": 3.003110076187838e-15,
+    "H": 3.846763113327063e-15
+  },
+  "resource": {
+    "status": "completed",
+    "exit_code": 0,
+    "elapsed_seconds": 30.85659789998317,
+    "peak_process_tree_memory_mb": 205.6192,
+    "time_limit_seconds": 180.0,
+    "memory_limit_bytes": 1073741824,
+    "command": [
+      "C:/Python/Python314/python.exe",
+      "docs/d1_review_support/contact_development_check.py",
+      "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_dynamic_restart_v5_20261001.inputs.json"
+    ],
+    "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_dynamic_restart_v5_20261001.log"
+  },
+  "bound_source_count": 444,
+  "artifacts": {
+    "docs/d1_review_support/native_dynamic_restart_v5_20261001.inputs.json": "4a28c8d4c9b0318bf8d8ed6837c965ac46e094057fe87c002d9e2abcf35f06bc",
+    "docs/d1_review_support/native_dynamic_restart_v5_20261001.raw.json": "1355002525f84ae6974233be38a14804b10678b36584744bd8c9ebf65197b4d5",
+    "docs/d1_review_support/native_dynamic_restart_v5_20261001.resources.json": "3fe4338d96540060ccc36154200dc75d73db0a97b3877b810e1b2e8c0beaf23e",
+    "docs/d1_review_support/native_dynamic_restart_v5_20261001.log": "b6b034b3fd47c0342cc325c70daecc3cbed22f45816cfaf7ddb8dfc37d4fd98d",
+    "docs/d1_review_support/native_dynamic_restart_v5_20261001.xml": "e68bf062268cb35a3df5ae21f266701ec04cc5a0da3092bb38a65b085438b005",
+    "docs/d1_review_support/native_dynamic_restart_v5_20261001.test.source.py": "4760849a084fa98091c3f473ee0231d2cffbef27df3a6fbd7b9f1ffbd5821230",
+    "docs/d1_review_support/native_dynamic_restart_v5_20261001.proposal.json": "30d963b15876203c64450b46e5390fe10af53c0720c54281c37dd178d3dd5d9e"
+  },
+  "retained_failures": "V3 entry environment mismatch; V4 reporting TypeError and tmp_path access;0 accepted steps inboth",
+  "limits": "no loaded/clamped restart or temporal/nativeimpact/C7 admission; external digest is integrity anchor, not producer/trajectory signature; physical journals remaincaller-owned"
+}

@@ -1,0 +1,45 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_press_dev.py", line 758, in <module>
+    main(arguments.output, force_n=arguments.force_n,
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+         reference_slope=arguments.reference_slope,
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<25 lines>...
+         record_accepted_poses=arguments.record_accepted_poses,
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+         restart_checkpoint_path=arguments.restart_checkpoint)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_press_dev.py", line 314, in main
+    result = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+    ...<4 lines>...
+        record_increment_snapshots=record_accepted_poses,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_static.py", line 7713, in solve_static_nonlinear
+    return solve_static_contact_path(
+        model, contact, contact_settings, contact_path_program,
+    ...<5 lines>...
+        cancellation_token=cancellation_token,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 1700, in solve_static_contact_path
+    return _run_with_qualified_assembly_runtime_lease(
+        model, context="solve_static_contact_path", operation=operation,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\matrix_assembly.py", line 3651, in _run_with_qualified_assembly_runtime_lease
+    raise scoped_operation_error
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\matrix_assembly.py", line 3626, in _run_with_qualified_assembly_runtime_lease
+    result = operation(lease)
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 1698, in operation
+    return _run_with_nonlinear_state_cleanup(run)
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_state.py", line 271, in _run_with_nonlinear_state_cleanup
+    return operation(*args, **kwargs)
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 538, in run
+    validated = validate_nonlinear_checkpoint(
+        restart_checkpoint, analysis_kind="static", model=model,
+        analysis_contract=contract, num_layers=num_layers,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_restart.py", line 1000, in validate_nonlinear_checkpoint
+    raise NonlinearCheckpointError("checkpoint analysis contract is incompatible")
+anysolver.nonlinear_restart.NonlinearCheckpointError: checkpoint analysis contract is incompatible

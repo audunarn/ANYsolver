@@ -1,0 +1,121 @@
+..FF                                                                     [100%]
+================================== FAILURES ===================================
+______ test_linear_sweep_bound_covers_independent_planar_overlap_samples ______
+
+    def test_linear_sweep_bound_covers_independent_planar_overlap_samples():
+        source = np.asarray((
+            (0.0, 0.0, 0.0), (1.0, 0.0, -0.1),
+            (1.0, 1.0, -0.1), (0.0, 1.0, 0.0),
+        ))
+        target = np.asarray((
+            (0.01, 0.01, 0.0), (0.21, 0.01, 0.0),
+            (0.01, 0.21, 0.0),
+        ))
+        source_end = source + np.array((0.01, 0.0, -0.01))
+        target_end = target + np.array((-0.01, 0.0, 0.005))
+>       swept, visited = overlap_local_swept_lower(
+            source, source_end, target, target_end, 4,
+        )
+
+tests\test_general_contact_d1_overlap_gap_bound_dev.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+scripts\general_contact_d1_overlap_gap_bound_dev.py:188: in overlap_local_swept_lower
+    return recurse(0.0, 1.0, 0.0, 1.0, depth), visited
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts\general_contact_d1_overlap_gap_bound_dev.py:183: in recurse
+    return min(recurse(*bounds, remaining-1) for bounds in (
+scripts\general_contact_d1_overlap_gap_bound_dev.py:183: in <genexpr>
+    return min(recurse(*bounds, remaining-1) for bounds in (
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts\general_contact_d1_overlap_gap_bound_dev.py:183: in recurse
+    return min(recurse(*bounds, remaining-1) for bounds in (
+scripts\general_contact_d1_overlap_gap_bound_dev.py:183: in <genexpr>
+    return min(recurse(*bounds, remaining-1) for bounds in (
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts\general_contact_d1_overlap_gap_bound_dev.py:183: in recurse
+    return min(recurse(*bounds, remaining-1) for bounds in (
+scripts\general_contact_d1_overlap_gap_bound_dev.py:183: in <genexpr>
+    return min(recurse(*bounds, remaining-1) for bounds in (
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts\general_contact_d1_overlap_gap_bound_dev.py:183: in recurse
+    return min(recurse(*bounds, remaining-1) for bounds in (
+scripts\general_contact_d1_overlap_gap_bound_dev.py:183: in <genexpr>
+    return min(recurse(*bounds, remaining-1) for bounds in (
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts\general_contact_d1_overlap_gap_bound_dev.py:166: in recurse
+    physical = np.stack((
+C:\Python\Python314\Lib\site-packages\numpy\_core\shape_base.py:370: in _stack_dispatcher
+    arrays = _arrays_for_stack_dispatcher(arrays)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+arrays = <generator object overlap_local_swept_lower.<locals>.recurse.<locals>.<genexpr> at 0x000001F2B46BDB40>
+
+    def _arrays_for_stack_dispatcher(arrays):
+        if not hasattr(arrays, "__getitem__"):
+>           raise TypeError('arrays to stack must be passed as a "sequence" type '
+                            'such as list or tuple.')
+E           TypeError: arrays to stack must be passed as a "sequence" type such as list or tuple.
+
+C:\Python\Python314\Lib\site-packages\numpy\_core\shape_base.py:208: TypeError
+_________________ test_sweep_cannot_prune_a_midpath_crossing __________________
+
+    def test_sweep_cannot_prune_a_midpath_crossing():
+        source = np.asarray((
+            (0.0, 0.0, 0.0), (1.0, 0.0, 0.0),
+            (1.0, 1.0, 0.0), (0.0, 1.0, 0.0),
+        ))
+        target = np.asarray((
+            (1.1, 0.1, -0.01), (1.2, 0.1, -0.01),
+            (1.1, 0.2, -0.01),
+        ))
+        target_end = target + np.array((-1.3, 0.0, 0.0))
+        assert q4_source_planar_overlap_gap_lower(source, target) is None
+        assert q4_source_planar_overlap_gap_lower(source, target_end) is None
+        assert q4_source_planar_overlap_gap_lower(
+            source, 0.5*(target+target_end),
+        ) is not None
+>       swept, _ = overlap_local_swept_lower(
+            source, source, target, target_end, 3,
+        )
+
+tests\test_general_contact_d1_overlap_gap_bound_dev.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+scripts\general_contact_d1_overlap_gap_bound_dev.py:188: in overlap_local_swept_lower
+    return recurse(0.0, 1.0, 0.0, 1.0, depth), visited
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts\general_contact_d1_overlap_gap_bound_dev.py:183: in recurse
+    return min(recurse(*bounds, remaining-1) for bounds in (
+scripts\general_contact_d1_overlap_gap_bound_dev.py:183: in <genexpr>
+    return min(recurse(*bounds, remaining-1) for bounds in (
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts\general_contact_d1_overlap_gap_bound_dev.py:183: in recurse
+    return min(recurse(*bounds, remaining-1) for bounds in (
+scripts\general_contact_d1_overlap_gap_bound_dev.py:183: in <genexpr>
+    return min(recurse(*bounds, remaining-1) for bounds in (
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts\general_contact_d1_overlap_gap_bound_dev.py:183: in recurse
+    return min(recurse(*bounds, remaining-1) for bounds in (
+scripts\general_contact_d1_overlap_gap_bound_dev.py:183: in <genexpr>
+    return min(recurse(*bounds, remaining-1) for bounds in (
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts\general_contact_d1_overlap_gap_bound_dev.py:166: in recurse
+    physical = np.stack((
+C:\Python\Python314\Lib\site-packages\numpy\_core\shape_base.py:370: in _stack_dispatcher
+    arrays = _arrays_for_stack_dispatcher(arrays)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+arrays = <generator object overlap_local_swept_lower.<locals>.recurse.<locals>.<genexpr> at 0x000001F2AEB73640>
+
+    def _arrays_for_stack_dispatcher(arrays):
+        if not hasattr(arrays, "__getitem__"):
+>           raise TypeError('arrays to stack must be passed as a "sequence" type '
+                            'such as list or tuple.')
+E           TypeError: arrays to stack must be passed as a "sequence" type such as list or tuple.
+
+C:\Python\Python314\Lib\site-packages\numpy\_core\shape_base.py:208: TypeError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_d1_overlap_gap_bound_dev.py::test_linear_sweep_bound_covers_independent_planar_overlap_samples
+FAILED tests/test_general_contact_d1_overlap_gap_bound_dev.py::test_sweep_cannot_prune_a_midpath_crossing
+2 failed, 2 passed in 1.53s

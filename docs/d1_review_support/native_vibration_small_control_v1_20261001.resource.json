@@ -1,0 +1,13 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 40.404871099977754,
+  "peak_process_tree_memory_mb": 209.833984,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "C:/Python/Python314/python.exe",
+    "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_vibration_small_control_v1_20261001.entry.source.py"
+  ],
+  "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_vibration_small_control_v1_20261001.log"
+}

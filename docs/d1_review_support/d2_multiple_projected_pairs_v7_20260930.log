@@ -1,0 +1,70 @@
+F
+================================== FAILURES ===================================
+_________ test_ordinary_force_control_activates_both_supported_pairs __________
+
+    def test_ordinary_force_control_activates_both_supported_pairs():
+        model,definition,settings,_=build(rigid_normal=False)
+        load=LoadCase("two_clamped_sources")
+        # Independent structural K and exact Q1 overlap integrals: maximum weak
+        # excursion is 105 um and physical excursion is 124.342 um, against 100 um
+        # clearance and the unchanged 50 um physical-gap budget. A 105 um tip-only
+        # excursion remains weakly open (88.667 um weighted excursion).
+        force_per_node=0.066422064777328
+        for part in range(2):
+            for node in (2,3,5,6):
+                load.add_nodal_load(node+10*part,forces=(0.,0.,-force_per_node))
+        result=solve_static_nonlinear(model,load,contact=definition,contact_settings=settings,
+            control="force",num_steps=2,max_iterations=12,tolerance=1e-8,
+            emit_restart_checkpoint=True)
+        assert result.status=="completed",result.failure_reason
+        summary=result.info["general_contact"]
+>       print(json.dumps({"status":result.status,"force_per_node_n":force_per_node,
+                          "contact":summary,"displacements":result.displacements.tolist()}))
+
+tests\test_general_contact_multiple_projected_pairs.py:182: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Python\Python314\Lib\json\__init__.py:235: in dumps
+    return _default_encoder.encode(obj)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python\Python314\Lib\json\encoder.py:202: in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python\Python314\Lib\json\encoder.py:263: in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <json.encoder.JSONEncoder object at 0x000001D82639F4D0>, o = np.True_
+
+    def default(self, o):
+        """Implement this method in a subclass such that it returns
+        a serializable object for ``o``, or calls the base implementation
+        (to raise a ``TypeError``).
+    
+        For example, to support arbitrary iterators, you could
+        implement default like this::
+    
+            def default(self, o):
+                try:
+                    iterable = iter(o)
+                except TypeError:
+                    pass
+                else:
+                    return list(iterable)
+                # Let the base class default method raise the TypeError
+                return super().default(o)
+    
+        """
+>       raise TypeError(f'Object of type {o.__class__.__name__} '
+                        f'is not JSON serializable')
+E       TypeError: Object of type bool is not JSON serializable
+E       when serializing dict item 'gap_tolerance_met'
+E       when serializing dict item 'contact'
+E       when serializing list item 0
+E       when serializing dict item 'pairs'
+E       when serializing dict item 'contact'
+
+C:\Python\Python314\Lib\json\encoder.py:182: TypeError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_multiple_projected_pairs.py::test_ordinary_force_control_activates_both_supported_pairs
+1 failed, 7 deselected in 10.53s

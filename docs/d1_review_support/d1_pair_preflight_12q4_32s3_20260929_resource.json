@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 9.791512199997669,
+  "peak_process_tree_memory_mb": 142.749696,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "scripts/general_contact_d1_pair_search_preflight_dev.py",
+    "12",
+    "4",
+    "docs/d1_review_support/d1_pair_preflight_12q4_32s3_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_pair_preflight_12q4_32s3_20260929.log"
+}

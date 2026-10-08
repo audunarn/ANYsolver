@@ -1,0 +1,21 @@
+{
+  "status": "completed",
+  "exit_code": 2,
+  "elapsed_seconds": 2.9070919000077993,
+  "peak_process_tree_memory_mb": 187.858944,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "C:/Python/Python314/python.exe",
+    "-m",
+    "pytest",
+    "tests/test_ge_beam3_centered_finite_inertia.py",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "-o",
+    "junit_family=legacy",
+    "--junitxml=C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/d6_centered_finite_inertia_v1_20260930.xml"
+  ],
+  "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v1_20260930.log"
+}

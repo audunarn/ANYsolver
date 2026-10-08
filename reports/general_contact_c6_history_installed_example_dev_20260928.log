@@ -1,0 +1,8 @@
+profile: PLANAR_Q4_FIXED_PLANE_NEWMARK_PENALTY_DEV_V1
+constant downward load: 0.02 N
+load ramp duration: 0.012 s
+accepted steps: 80; cutbacks: 0
+minimum swept gap: -0.000707741568 m
+final normal velocity: 1.00428575 m/s
+peak compressive plane reaction: 70.2403633 N
+external nodal work: 5.92083517e-06 J

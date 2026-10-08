@@ -1,0 +1,30 @@
+elapsed=3.073769
+overlap_pairs=148
+integration_triangles=1184
+support_sum=0.900000000000099
+         6406079 function calls in 3.073 seconds
+
+   Ordered by: internal time
+   List reduced from 108 to 20 due to restriction <20>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+    21904    0.333    0.000    1.502    0.000 overlap.py:66(shape_values_and_gradient)
+    33792    0.305    0.000    0.907    0.000 numeric.py:1567(cross)
+   203599    0.211    0.000    0.338    0.000 numeric.py:1431(normalize_axis_tuple)
+    10952    0.175    0.000    2.420    0.000 q4_source_overlap.py:299(sample)
+    43966    0.163    0.000    0.392    0.000 _linalg.py:362(solve)
+   101376    0.141    0.000    0.544    0.000 numeric.py:1493(moveaxis)
+    45206    0.137    0.000    0.297    0.000 overlap.py:116(_to_frame)
+   125591    0.127    0.000    0.127    0.000 {method 'reduce' of 'numpy.ufunc' objects}
+    56288    0.115    0.000    0.160    0.000 _shape_base_impl.py:625(column_stack)
+    43966    0.113    0.000    0.162    0.000 overlap.py:103(_q4_shape)
+    64796    0.087    0.000    0.175    0.000 _linalg.py:2599(norm)
+   233364    0.086    0.000    0.086    0.000 {built-in method numpy.array}
+    74159    0.051    0.000    0.132    0.000 fromnumeric.py:66(_wrapreduction)
+   701472    0.048    0.000    0.048    0.000 {built-in method builtins.len}
+   407198    0.043    0.000    0.063    0.000 numeric.py:1480(<genexpr>)
+    43966    0.043    0.000    0.091    0.000 _linalg.py:188(_commonType)
+        2    0.037    0.018    0.279    0.140 s3_patch_mortar_energy.py:199(_check_same_side_overlap)
+    21312    0.035    0.000    0.057    0.000 {built-in method builtins.sum}
+    51105    0.033    0.000    0.033    0.000 {method 'dot' of 'numpy.ndarray' objects}
+     1341    0.032    0.000    0.218    0.000 overlap.py:21(__post_init__)

@@ -1,0 +1,1 @@
+{"status": "diverged", "failure_reason": "contact_semismooth_candidate_failed: pair=5, overlap_area_m2=8.01600452682e-12: Q4/S3 paired overlap area agreement is unresolved (area_difference_m2=3.43284325019e-18, area_resolution_m2=1.21650205632e-17, relative_value_allowance=1.71299466646e-06)", "accepted_steps": 0, "elapsed_seconds": 5.6240351000014925, "contact_failure": null}

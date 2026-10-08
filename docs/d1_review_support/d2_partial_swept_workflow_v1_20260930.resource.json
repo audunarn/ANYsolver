@@ -1,0 +1,13 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 34.54742789999,
+  "peak_process_tree_memory_mb": 316.162048,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "python",
+    "docs/d1_review_support/d2_partial_swept_workflow_dev.py"
+  ],
+  "log": "docs\\d1_review_support\\d2_partial_swept_workflow_v1_20260930.log"
+}

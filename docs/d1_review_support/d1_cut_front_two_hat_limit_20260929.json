@@ -1,0 +1,48 @@
+{
+  "status": "independent_two_hat_target_limit",
+  "source_x_hat_centers": [
+    1.0,
+    1.5
+  ],
+  "target_free_node_order": "bottom_right_then_top_right",
+  "bulk_matrix": [
+    [
+      -0.0254160785300636,
+      -0.009283414682954967
+    ],
+    [
+      -0.09880267146993639,
+      -0.17073890674561643
+    ]
+  ],
+  "rim_delta_matrix": [
+    [
+      0.0,
+      0.0
+    ],
+    [
+      0.12421875000000002,
+      0.18002232142857144
+    ]
+  ],
+  "full_limit_matrix": [
+    [
+      -0.0254160785300636,
+      -0.009283414682954967
+    ],
+    [
+      0.025416078530063627,
+      0.009283414682955016
+    ]
+  ],
+  "unit_l2_null_coefficients": [
+    0.3430876589142838,
+    -0.9393033899122882
+  ],
+  "null_residual_l2": 3.638093124885888e-17,
+  "limit_singular_values": [
+    0.03826640396018588,
+    2.4709469501231595e-17
+  ],
+  "quadrature": "3-point x by 2-point y, split at Q1 knots and S3 diagonal"
+}

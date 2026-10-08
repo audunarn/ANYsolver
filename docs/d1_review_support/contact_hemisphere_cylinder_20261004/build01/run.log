@@ -1,0 +1,9 @@
+Processing c:\anyworkspacework\anysolver-contact-main-reconcile-20261001
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Building wheels for collected packages: ANYsolver
+  Building wheel for ANYsolver (pyproject.toml): started
+  Building wheel for ANYsolver (pyproject.toml): finished with status 'done'
+  Created wheel for ANYsolver: filename=anysolver-0.4.7-py3-none-any.whl size=2674231 sha256=f2308eb56cad3d4d6aa4531a55cbdc376de4201c92e6c750216dc0098de489ba
+  Stored in directory: C:\Users\AudunArnesenNyhus\AppData\Local\Temp\pip-ephem-wheel-cache-pa0u5hhm\wheels\f9\15\27\7b26c8cf3826643c7f594b56e77d3af0c33bf91ca2caa375f0
+Successfully built ANYsolver

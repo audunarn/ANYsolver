@@ -1,0 +1,268 @@
+{
+  "status": "DEVELOPMENT_VERIFIED_FOR_REPORTED_COVERAGE_WITH_RETAINED_FAILURES",
+  "source_candidate": "7986c5bdf04843dd403421e5f42bf399536ab7ab",
+  "wheel_sha256": "a9febab4c77ce607c00afe77dd04781b5f6c82e6f53232ec20284d8d1ef516b6",
+  "package_payloads_verified": 549,
+  "wheel_metadata_verified": 6,
+  "package_payload_errors": [],
+  "unique_successful_test_cases": 32,
+  "successful_nodeids": [
+    "tests/test_ge_beam3_native_connected_dynamic.py::test_complete_global_work_and_spatial_tangent",
+    "tests/test_ge_beam3_native_connected_dynamic.py::test_global_shared_map_mass_and_rigid_reference",
+    "tests/test_ge_beam3_native_connected_dynamic.py::test_stressed_spinning_shared_stage_complete_jacobian",
+    "tests/test_ge_beam3_native_connected_transient.py::test_actual_inflight_cancel_and_atomic_receipt_rollback",
+    "tests/test_ge_beam3_native_connected_transient.py::test_clipped_prefix_extended_history_fresh_restore",
+    "tests/test_ge_beam3_native_connected_transient.py::test_closed_adaptive_policy_metadata_refusal[accepted_halving]",
+    "tests/test_ge_beam3_native_connected_transient.py::test_closed_adaptive_policy_metadata_refusal[broken_halving]",
+    "tests/test_ge_beam3_native_connected_transient.py::test_closed_adaptive_policy_metadata_refusal[cutback_truncated]",
+    "tests/test_ge_beam3_native_connected_transient.py::test_closed_adaptive_policy_metadata_refusal[exhaustion]",
+    "tests/test_ge_beam3_native_connected_transient.py::test_closed_adaptive_policy_metadata_refusal[extra_key]",
+    "tests/test_ge_beam3_native_connected_transient.py::test_closed_adaptive_policy_metadata_refusal[first_exceeds_plan]",
+    "tests/test_ge_beam3_native_connected_transient.py::test_closed_adaptive_policy_metadata_refusal[floor]",
+    "tests/test_ge_beam3_native_connected_transient.py::test_closed_adaptive_policy_metadata_refusal[nonfinite]",
+    "tests/test_ge_beam3_native_connected_transient.py::test_closed_adaptive_policy_metadata_refusal[reason]",
+    "tests/test_ge_beam3_native_connected_transient.py::test_closed_adaptive_policy_metadata_refusal[untruncated_short]",
+    "tests/test_ge_beam3_native_connected_transient.py::test_closed_adaptive_policy_metadata_refusal[wrong_type]",
+    "tests/test_ge_beam3_native_connected_transient.py::test_closed_adaptive_policy_valid_halving_and_horizon_history",
+    "tests/test_ge_beam3_native_connected_transient.py::test_cutback_is_shared_and_incompatible_config_refuses",
+    "tests/test_ge_beam3_native_connected_transient.py::test_nonzero_physical_displacement_and_unsupported_controls",
+    "tests/test_ge_beam3_native_connected_transient.py::test_prepared_origin_and_restored_journal_failure_roll_back",
+    "tests/test_ge_beam3_native_connected_transient.py::test_public_connected_rigid_trajectory_exact_split_restart",
+    "tests/test_ge_beam3_native_connected_transient.py::test_real_trial_commit_interrupt_prefix_and_cleanup[before_commit]",
+    "tests/test_ge_beam3_native_connected_transient.py::test_real_trial_commit_interrupt_prefix_and_cleanup[commit_after_publish]",
+    "tests/test_ge_beam3_native_connected_transient.py::test_real_trial_commit_interrupt_prefix_and_cleanup[trial_after_issue]",
+    "tests/test_ge_beam3_native_connected_transient.py::test_resigned_controller_cadence_and_fixed_unknown_refusal[cutback_reason]",
+    "tests/test_ge_beam3_native_connected_transient.py::test_resigned_controller_cadence_and_fixed_unknown_refusal[fixed_unknown]",
+    "tests/test_ge_beam3_native_connected_transient.py::test_resigned_controller_cadence_and_fixed_unknown_refusal[next_dt]",
+    "tests/test_ge_beam3_native_connected_transient.py::test_resigned_controller_cadence_and_fixed_unknown_refusal[truncated]",
+    "tests/test_ge_beam3_native_connected_transient.py::test_restart_mechanical_replay_single_lease_and_cancellation[record]",
+    "tests/test_ge_beam3_native_connected_transient.py::test_restart_mechanical_replay_single_lease_and_cancellation[stage]",
+    "tests/test_ge_beam3_native_transient.py::test_controller_inflight_cancel_keeps_native_prefix",
+    "tests/test_ge_beam3_native_transient.py::test_public_native_trajectory_matches_manual_and_split"
+  ],
+  "successful_cases_by_module": {
+    "tests/test_ge_beam3_native_connected_dynamic.py": 3,
+    "tests/test_ge_beam3_native_connected_transient.py": 27,
+    "tests/test_ge_beam3_native_transient.py": 2
+  },
+  "cli": {
+    "status": "completed",
+    "accepted_steps": 2,
+    "profile": "NATIVE_CONNECTED_CONTACT_FREE_MIDPOINT_TRAJECTORY_DEV_V1",
+    "checkpoint_bytes": 58749,
+    "engineering_accepted": false
+  },
+  "retained_history_audit_status": "PACKAGE_EVIDENCE_FAIL",
+  "retained_history_errors": [
+    "job non-success: connected_shared_legacy1",
+    "missing terminal import provenance: connected_shared_legacy1",
+    "missing terminal effective runtime: connected_shared_legacy1",
+    "job non-success: connected_shared_workflow1",
+    "failed case reports: connected_shared_workflow1"
+  ],
+  "failure_disposition": [
+    {
+      "attempt": "connected_shared_workflow1",
+      "classification": "test defect: mutable assignment to frozen TransientConfig",
+      "resolution": "nine dataclasses.replace substitutions; unchanged values/assertions; affected origin case and subsequent checks PASS",
+      "evidence": "worker_test_repair_v3.json",
+      "recovery": "connected_shared_origin_repair1"
+    },
+    {
+      "attempt": "connected_shared_legacy1",
+      "classification": "process-tree timeout; partial first CALL PASS without terminal provenance/runtime",
+      "resolution": "same two required legacy cases rerun within unchanged allowance and PASS with complete metadata",
+      "recovery": "connected_shared_legacy_retry1",
+      "partial_not_counted_as_complete_session": true
+    }
+  ],
+  "jobs": [
+    {
+      "tag": "connected_shared_build1",
+      "mode": "BUILD",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_s": 7.981139600044116,
+      "peak_tree_bytes": 50036736
+    },
+    {
+      "tag": "connected_shared_cli1",
+      "mode": "EXAMPLE",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_s": 9.082247300073504,
+      "peak_tree_bytes": 156119040,
+      "import_record_complete": true,
+      "runtime_record_complete": true,
+      "imported_modules": 196,
+      "call_passes": 0,
+      "failed_reports": 0
+    },
+    {
+      "tag": "connected_shared_install1",
+      "mode": "INSTALL",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_s": 1.1614201000193134,
+      "peak_tree_bytes": 61820928
+    },
+    {
+      "tag": "connected_shared_legacy1",
+      "mode": "TEST",
+      "status": "timeout",
+      "exit_code": 15,
+      "elapsed_s": 40.093736800015904,
+      "peak_tree_bytes": 169820160,
+      "import_record_complete": false,
+      "runtime_record_complete": false,
+      "imported_modules": 0,
+      "call_passes": 1,
+      "failed_reports": 0
+    },
+    {
+      "tag": "connected_shared_legacy_retry1",
+      "mode": "TEST",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_s": 43.48197020008229,
+      "peak_tree_bytes": 169160704,
+      "import_record_complete": true,
+      "runtime_record_complete": true,
+      "imported_modules": 195,
+      "call_passes": 2,
+      "failed_reports": 0
+    },
+    {
+      "tag": "connected_shared_mechanics1",
+      "mode": "TEST",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_s": 9.564956499962136,
+      "peak_tree_bytes": 165109760,
+      "import_record_complete": true,
+      "runtime_record_complete": true,
+      "imported_modules": 190,
+      "call_passes": 2,
+      "failed_reports": 0
+    },
+    {
+      "tag": "connected_shared_origin_repair1",
+      "mode": "TEST",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_s": 4.403331299894489,
+      "peak_tree_bytes": 166121472,
+      "import_record_complete": true,
+      "runtime_record_complete": true,
+      "imported_modules": 196,
+      "call_passes": 1,
+      "failed_reports": 0
+    },
+    {
+      "tag": "connected_shared_replay1",
+      "mode": "TEST",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_s": 29.44926960009616,
+      "peak_tree_bytes": 168087552,
+      "import_record_complete": true,
+      "runtime_record_complete": true,
+      "imported_modules": 196,
+      "call_passes": 3,
+      "failed_reports": 0
+    },
+    {
+      "tag": "connected_shared_restart_refusal1",
+      "mode": "TEST",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_s": 21.621553700068034,
+      "peak_tree_bytes": 166690816,
+      "import_record_complete": true,
+      "runtime_record_complete": true,
+      "imported_modules": 196,
+      "call_passes": 4,
+      "failed_reports": 0
+    },
+    {
+      "tag": "connected_shared_safety1",
+      "mode": "TEST",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_s": 39.076273199985735,
+      "peak_tree_bytes": 166998016,
+      "import_record_complete": true,
+      "runtime_record_complete": true,
+      "imported_modules": 196,
+      "call_passes": 6,
+      "failed_reports": 0
+    },
+    {
+      "tag": "connected_shared_work1",
+      "mode": "TEST",
+      "status": "completed",
+      "exit_code": 0,
+      "elapsed_s": 6.035459300037473,
+      "peak_tree_bytes": 165380096,
+      "import_record_complete": true,
+      "runtime_record_complete": true,
+      "imported_modules": 190,
+      "call_passes": 1,
+      "failed_reports": 0
+    },
+    {
+      "tag": "connected_shared_workflow1",
+      "mode": "TEST",
+      "status": "completed",
+      "exit_code": 1,
+      "elapsed_s": 18.94521960010752,
+      "peak_tree_bytes": 166752256,
+      "import_record_complete": true,
+      "runtime_record_complete": true,
+      "imported_modules": 196,
+      "call_passes": 13,
+      "failed_reports": 1
+    }
+  ],
+  "total_authorized_s": 240.0,
+  "process_wall_spent_s": 230.89657720038667,
+  "remaining_s": 9.103422799613327,
+  "peak_tree_bytes": 169820160,
+  "complete_session_imported_modules_min_max": [
+    190,
+    196
+  ],
+  "complete_sessions_effective_runtime": "JIT disabled; Numba1; observed native pools1",
+  "historical_legacy_results": [
+    {
+      "name": "public_full.json",
+      "byte_equal": true,
+      "sha256": "a35369b2619566e8c2fc4059b6741e0a00262bf2a218d9383d8ea92e25caae52",
+      "old": "C:\\ANYworkspaceWork\\contact_native_transient_20261006\\native_transient_installed_workflow1\\actual_results\\public_full.json",
+      "current": "C:\\ANYworkspaceWork\\contact_native_connected_transient_20261006\\connected_shared_legacy_retry1\\actual_results\\public_full.json"
+    },
+    {
+      "name": "public_resumed.json",
+      "byte_equal": true,
+      "sha256": "a35369b2619566e8c2fc4059b6741e0a00262bf2a218d9383d8ea92e25caae52",
+      "old": "C:\\ANYworkspaceWork\\contact_native_transient_20261006\\native_transient_installed_workflow1\\actual_results\\public_resumed.json",
+      "current": "C:\\ANYworkspaceWork\\contact_native_connected_transient_20261006\\connected_shared_legacy_retry1\\actual_results\\public_resumed.json"
+    }
+  ],
+  "historical_legacy_provenance": {
+    "job": "C:\\ANYworkspaceWork\\contact_native_transient_20261006\\native_transient_installed_workflow1",
+    "private_target": "C:\\ANYworkspaceWork\\contact_native_transient_20261006\\native_transient_installed1",
+    "imports_checked": 194,
+    "inputs_sha256": "13732c7c772429bd8a7ab50e24156f71b7008be6fd91c7a37bc896ee2a3b52b6",
+    "no_new_execution": true
+  },
+  "scientific_accepted": false,
+  "full_C7_complete": false,
+  "released": false,
+  "remaining_gates": [
+    "independent deforming and finite-angle connected response",
+    "independent physical support force/moment/impulse",
+    "section/spatial and broader C7 qualification",
+    "C8 common-stage coupled contact/impact"
+  ]
+}

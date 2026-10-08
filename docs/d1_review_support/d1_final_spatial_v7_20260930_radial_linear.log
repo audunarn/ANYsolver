@@ -1,0 +1,1 @@
+{"kkt_passed": true, "steps": [{"step": 1, "kkt_passed": true, "equilibrium_relative_force": 3.823734519069213e-16, "complementarity_relative_force": 0.0}, {"step": 2, "kkt_passed": true, "equilibrium_relative_force": 7.493768895569653e-16, "complementarity_relative_force": 3.813791852989726e-09}]}

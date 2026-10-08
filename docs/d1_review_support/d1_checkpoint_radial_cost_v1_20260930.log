@@ -1,0 +1,5 @@
+{"stage": "saved_root", "kind": "radial", "expected_step": 2}
+{"stage": "load_integrity", "kind": "radial", "expected_step": 2, "elapsed_from_root_start_s": 3.9000005926936865e-06}
+{"stage": "original_canonical_and_saved_parity", "kind": "radial", "expected_step": 2, "elapsed_from_root_start_s": 0.2118657999963034}
+{"stage": "reconstruct_and_fingerprint", "kind": "radial", "expected_step": 2, "elapsed_from_root_start_s": 0.32229469998856075}
+{"roundtrip_checks_met": false, "failures": [{"kind": "radial", "type": "ValueError", "message": "reconstructed current path contract differs from the saved root"}], "output": "docs\\d1_review_support\\d1_checkpoint_radial_cost_v1_20260930.json"}

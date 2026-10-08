@@ -1,0 +1,319 @@
+{
+  "source": "current working tree",
+  "status": "diverged",
+  "failure_reason": "contact_semismooth_pivot_limit",
+  "accepted_steps": 0,
+  "requested_steps": 4,
+  "source_columns": 8,
+  "elapsed_seconds": 4.647746900001948,
+  "source_nodes": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18
+  ],
+  "left_rotation_support_nodes": [
+    1,
+    10
+  ],
+  "available_info_keys": [
+    "contact_failure",
+    "contact_path",
+    "control",
+    "failure_reason",
+    "force_displacement_history",
+    "general_contact",
+    "general_contact_profile",
+    "nonlinear_state_storage",
+    "profile",
+    "qualified_q4_committed_state_lifecycle",
+    "qualified_s3_committed_state_lifecycle",
+    "status_category",
+    "stop_reason",
+    "total_newton_iterations"
+  ],
+  "contact_failure": {
+    "pivot_limit": 12,
+    "pivot_trace": [
+      {
+        "from": [],
+        "to": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17
+        ]
+      },
+      {
+        "from": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17
+        ],
+        "to": [
+          0,
+          2,
+          4,
+          5,
+          6,
+          7,
+          8,
+          10,
+          12,
+          14,
+          16,
+          17
+        ]
+      },
+      {
+        "from": [
+          0,
+          2,
+          4,
+          5,
+          6,
+          7,
+          8,
+          10,
+          12,
+          14,
+          16,
+          17
+        ],
+        "to": [
+          1,
+          2,
+          5,
+          7,
+          10,
+          13,
+          14,
+          17
+        ]
+      },
+      {
+        "from": [
+          1,
+          2,
+          5,
+          7,
+          10,
+          13,
+          14,
+          17
+        ],
+        "to": [
+          2,
+          5,
+          6,
+          7,
+          8,
+          11,
+          12,
+          14
+        ]
+      },
+      {
+        "from": [
+          2,
+          5,
+          6,
+          7,
+          8,
+          11,
+          12,
+          14
+        ],
+        "to": [
+          3,
+          6,
+          8,
+          12,
+          15
+        ]
+      },
+      {
+        "from": [
+          3,
+          6,
+          8,
+          12,
+          15
+        ],
+        "to": [
+          4,
+          5,
+          6,
+          13,
+          14,
+          15
+        ]
+      },
+      {
+        "from": [
+          4,
+          5,
+          6,
+          13,
+          14,
+          15
+        ],
+        "to": [
+          5,
+          6,
+          7,
+          8,
+          14,
+          16,
+          17
+        ]
+      },
+      {
+        "from": [
+          5,
+          6,
+          7,
+          8,
+          14,
+          16,
+          17
+        ],
+        "to": [
+          6,
+          8,
+          15,
+          16
+        ]
+      },
+      {
+        "from": [
+          6,
+          8,
+          15,
+          16
+        ],
+        "to": [
+          6,
+          7,
+          16
+        ]
+      },
+      {
+        "from": [
+          6,
+          7,
+          16
+        ],
+        "to": [
+          7
+        ]
+      },
+      {
+        "from": [
+          7
+        ],
+        "to": [
+          7,
+          8,
+          15,
+          16,
+          17
+        ]
+      },
+      {
+        "from": [
+          7,
+          8,
+          15,
+          16,
+          17
+        ],
+        "to": [
+          7,
+          16
+        ]
+      }
+    ]
+  },
+  "contact_path": {
+    "accepted_step": 0,
+    "total_steps": 4,
+    "targets": [
+      0.0,
+      0.0
+    ],
+    "reaction_generalized": [
+      0.0,
+      0.0
+    ],
+    "profile": "Q4_S3_PATCH_REFINED_PROJECTED_AUGMENTED_PATH_DEV_V0",
+    "enforcement_solver": "monolithic_active_set",
+    "monolithic_linear_solver": "direct",
+    "monolithic_maximum_pivots": 12,
+    "nodal_forces_n": [
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0
+    ]
+  },
+  "swept_calls_count": 0,
+  "last_swept_calls": []
+}

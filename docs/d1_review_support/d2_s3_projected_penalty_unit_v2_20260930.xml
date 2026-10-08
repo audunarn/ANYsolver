@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="2" time="1.819" timestamp="2026-09-30T14:24:05.645688+02:00" hostname="WORK_STABEIST1"><testcase classname="tests.test_general_contact_s3_projected_penalty" name="test_scalar_p1_plane_full_both_body_work_and_prescribed_reaction" time="0.038" /><testcase classname="tests.test_general_contact_s3_projected_penalty" name="test_affine_gap_pressure_and_source_normal_work_use_exact_p1_mass" time="0.024"><failure message="AssertionError: &#10;Not equal to tolerance rtol=1e-07, atol=1e-14&#10;&#10;Mismatched elements: 2 / 4 (50%)&#10;Mismatch at indices:&#10; [0]: -0.005375679625092009 (ACTUAL), -0.005375676352705411 (DESIRED)&#10; [3]: -0.005091703520510515 (ACTUAL), -0.0050917014925373144 (DESIRED)&#10;Max absolute difference among violations: 3.2723866e-09&#10;Max relative difference among violations: 6.08739512e-07&#10; ACTUAL: array([-0.005376, -0.004994, -0.0047  , -0.005092])&#10; DESIRED: array([-0.005376, -0.004994, -0.0047  , -0.005092])">def test_affine_gap_pressure_and_source_normal_work_use_exact_p1_mass():
+        model, definition, settings = _candidate()
+        manager = GeneralS3PatchManager(model, definition, settings)
+        u = _normal_pose(model, manager)
+        source_gaps = []
+        for node in range(1, 5):
+            point = model.mesh.get_node(node)
+            value = -.02+.001*(point.x-.6)+.0005*(point.y-.6)
+            u[model.mesh.dof_manager.get_node_dofs(node)[2]] = value
+            source_gaps.append(.015+value)
+        force, _, result = manager.evaluate(u, tangent=False)
+        support, mass, _ = _independent_planar_moments()
+        gaps = mass@source_gaps/support
+        pressures = 1000*np.maximum(-gaps, 0.)
+&gt;       np.testing.assert_allclose(result.normalized_weighted_gap_m, gaps, atol=1e-14)
+E       AssertionError: 
+E       Not equal to tolerance rtol=1e-07, atol=1e-14
+E       
+E       Mismatched elements: 2 / 4 (50%)
+E       Mismatch at indices:
+E        [0]: -0.005375679625092009 (ACTUAL), -0.005375676352705411 (DESIRED)
+E        [3]: -0.005091703520510515 (ACTUAL), -0.0050917014925373144 (DESIRED)
+E       Max absolute difference among violations: 3.2723866e-09
+E       Max relative difference among violations: 6.08739512e-07
+E        ACTUAL: array([-0.005376, -0.004994, -0.0047  , -0.005092])
+E        DESIRED: array([-0.005376, -0.004994, -0.0047  , -0.005092])
+
+tests\test_general_contact_s3_projected_penalty.py:150: AssertionError</failure></testcase></testsuite></testsuites>

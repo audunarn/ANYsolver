@@ -1,0 +1,19 @@
+{
+  "status": "completed",
+  "exit_code": 2,
+  "elapsed_seconds": 32.68558949999715,
+  "peak_process_tree_memory_mb": 208.891904,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-u",
+    "-m",
+    "docs.d1_review_support.d1_two_body_work_reference",
+    "--saved-record",
+    "docs/d1_review_support/d1_target_grid_8x8_prediction_20260929.json",
+    "--output",
+    "docs/d1_review_support/d1_two_body_work_reference_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_two_body_work_reference_log_20260929.txt"
+}

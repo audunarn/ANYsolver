@@ -1,0 +1,111 @@
+{"stage": "effective_environment_preimport", "environment": {"PYTHONPATH": "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src;C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver", "PYTHONDONTWRITEBYTECODE": "1", "OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1", "NUMBA_CACHE_DIR": "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/d6_dynamic_elastic_state_v1_20260930.numba_cache", "D6_DYNAMIC_ELASTIC_OUTPUT": "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/d6_dynamic_elastic_state_v1_20260930.json", "D6_DYNAMIC_ELASTIC_CLAMP_REFERENCE": "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/d6_native_midpoint_v2_20260930.json"}}
+{"stage": "effective_import_verified", "anysolver": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\__init__.py", "dynamic_elastic": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py", "finite_inertia": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_centered_finite_inertia.py", "cache": "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/d6_dynamic_elastic_state_v1_20260930.numba_cache"}
+{"stage": "failed", "elapsed_seconds": 0.011707900004694238}
+F
+================================== FAILURES ===================================
+__________ test_dynamic_elastic_free_rank_mass_work_and_objectivity ___________
+
+record_property = <function record_property.<locals>.append_property at 0x0000020015F4DBC0>
+
+    def test_dynamic_elastic_free_rank_mass_work_and_objectivity(record_property):
+        output = Path(os.environ['D6_DYNAMIC_ELASTIC_OUTPUT'])
+        assert not output.exists()
+        started = perf_counter()
+        raw = dict(status='running', checks={}, elapsed_seconds=0.)
+    
+        def save(stage, **fields):
+            raw.update(fields)
+            raw['last_stage'] = stage
+            raw['elapsed_seconds'] = perf_counter()-started
+            output.write_text(json.dumps(raw, indent=2)+'\n')
+            print(json.dumps(dict(stage=stage, elapsed_seconds=raw['elapsed_seconds'])), flush=True)
+    
+        try:
+            imported = Path(inspect.getsourcefile(DynamicElasticContext)).resolve()
+            assert imported == Path(__file__).resolve().parents[1]/'src/anysolver/_ge_beam3_dynamic_elastic_state.py'
+            raw['source_identity'] = dict(module=str(imported), sha256=sha256(imported.read_bytes()).hexdigest(),
+                test_sha256=sha256(Path(__file__).read_bytes()).hexdigest(), cache=os.environ['NUMBA_CACHE_DIR'])
+            profile = PROFILE_BYTES
+            clamp_analysis, definition = make_analysis()
+            free_analysis = create_analysis(SELECTOR, (definition,), ())
+            raw['definition'] = json.loads(definition.raw)
+            assert free_analysis._admit_boundaries() == () and free_analysis.model.boundary_conditions == []
+            assert not free_analysis.model.constraint_equations and free_analysis.model.mesh.element_activity is None
+            assert not free_analysis.model.mesh.point_masses
+            with pytest.raises(ValueError, match='homogeneous supported selection'):
+>               _model(free_analysis.model, retained=True)
+
+tests\test_ge_beam3_dynamic_elastic_state.py:78: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\anysolver\_ge_beam3_native_generalized_restart.py:135: in _model
+    identity=(retained_model_identity if retained else model_identity)(model); elements=tuple(sorted(model.mesh.elements.items()))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_native_generalized_program.py:23: in retained_model_identity
+    return _model_identity(model, retained_limits()[0])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+model = FEModel(name='native-beam-analysis', mesh=FEMesh(nodes={1: Node(id=1, x=np.float64(-1.0), y=np.float64(0.0), z=np.floa...ct at 0x0000020015F280B0>}, boundary_conditions=[], load_cases=[], current_material='default', constraint_equations=[])
+maximum_elements = 24
+
+    def _model_identity(model, maximum_elements):
+        from ._ge_beam3_native_generalized_element import NativeGeneralizedStaticElement
+        elements=tuple(sorted(model.mesh.elements.items()));n=model.mesh.dof_manager.total_dofs
+        if not 1<=len(elements)<=maximum_elements or n!=6*len(model.mesh.nodes) or n>512:raise ValueError('bounded standalone distributed model required')
+        if model.constraint_equations or model.mesh.point_masses or model.mesh.element_activity is not None:
+            raise ValueError('distributed MPC/activity/dynamics not admitted')
+        for eid,e in elements:
+            if type(e) is not NativeGeneralizedStaticElement or eid!=e.element_id or model.materials.get(e.material_name) is not e.section:
+                raise ValueError('exact distributed element and section authority required')
+            e._check(model.mesh)
+        if set(model.mesh.nodes)!={i for _,e in elements for i in e.node_ids}:raise ValueError('unconnected distributed nodes')
+        fixed=set()
+        for bc in model.boundary_conditions:
+            for dof,value in bc.get_constrained_dofs(model.mesh.dof_manager):
+                if value!=0.:raise ValueError('homogeneous distributed supports required')
+                fixed.add(int(dof))
+>       if not fixed:raise ValueError('supported distributed model required')
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ValueError: supported distributed model required
+
+src\anysolver\_ge_beam3_native_generalized_program.py:42: ValueError
+
+During handling of the above exception, another exception occurred:
+
+record_property = <function record_property.<locals>.append_property at 0x0000020015F4DBC0>
+
+    def test_dynamic_elastic_free_rank_mass_work_and_objectivity(record_property):
+        output = Path(os.environ['D6_DYNAMIC_ELASTIC_OUTPUT'])
+        assert not output.exists()
+        started = perf_counter()
+        raw = dict(status='running', checks={}, elapsed_seconds=0.)
+    
+        def save(stage, **fields):
+            raw.update(fields)
+            raw['last_stage'] = stage
+            raw['elapsed_seconds'] = perf_counter()-started
+            output.write_text(json.dumps(raw, indent=2)+'\n')
+            print(json.dumps(dict(stage=stage, elapsed_seconds=raw['elapsed_seconds'])), flush=True)
+    
+        try:
+            imported = Path(inspect.getsourcefile(DynamicElasticContext)).resolve()
+            assert imported == Path(__file__).resolve().parents[1]/'src/anysolver/_ge_beam3_dynamic_elastic_state.py'
+            raw['source_identity'] = dict(module=str(imported), sha256=sha256(imported.read_bytes()).hexdigest(),
+                test_sha256=sha256(Path(__file__).read_bytes()).hexdigest(), cache=os.environ['NUMBA_CACHE_DIR'])
+            profile = PROFILE_BYTES
+            clamp_analysis, definition = make_analysis()
+            free_analysis = create_analysis(SELECTOR, (definition,), ())
+            raw['definition'] = json.loads(definition.raw)
+            assert free_analysis._admit_boundaries() == () and free_analysis.model.boundary_conditions == []
+            assert not free_analysis.model.constraint_equations and free_analysis.model.mesh.element_activity is None
+            assert not free_analysis.model.mesh.point_masses
+>           with pytest.raises(ValueError, match='homogeneous supported selection'):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: Regex pattern did not match.
+E             Expected regex: 'homogeneous supported selection'
+E             Actual message: 'supported distributed model required'
+
+tests\test_ge_beam3_dynamic_elastic_state.py:77: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_ge_beam3_dynamic_elastic_state.py::test_dynamic_elastic_free_rank_mass_work_and_objectivity
+1 failed in 0.51s

@@ -1,0 +1,87 @@
+{
+  "source": "dfd884aa",
+  "status": "local curved geometry/normal-work implementation and installed tests; not coupled or accepted",
+  "wheel_sha256": "4ed3ce907c8597e50894d39d2ca38f04de2b9ce3fb2c18e001f3904c8e3c943f",
+  "raw_evidence": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate07",
+  "package": {
+    "source_files": 522,
+    "imported_modules": 208,
+    "source_installed_errors": [],
+    "extra_installed_files": [],
+    "outcomes": {
+      "passed": 12
+    },
+    "runs": {
+      "installed_curved_work": {
+        "resource": {
+          "status": "completed",
+          "returncode": 0,
+          "elapsed_s": 19.313944899942726,
+          "peak_bytes": 182038528
+        },
+        "runtime_errors": [],
+        "import_errors": [],
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "outcomes": {
+          "passed": 12
+        }
+      }
+    }
+  },
+  "mechanics": {
+    "energy_error_j": 8.881784197001252e-16,
+    "force_error_n": 8.526512829121202e-14,
+    "moment_error_nm": 1.4912936209878577e-13,
+    "orientation_lower": 0.3692499572047596,
+    "gap_lower_m": -0.09220580631851312,
+    "gap_upper_m": -0.02830710569139096,
+    "intervals": 6,
+    "evaluations": 1920,
+    "estimated_errors": [
+      1.1798118038086614e-11,
+      5.314881867946042e-11,
+      8.350933833334295e-11
+    ]
+  },
+  "derivatives": {
+    "tangent_errors": [
+      1.1578560033409826e-09,
+      1.014041466327497e-08
+    ],
+    "work_errors_j": [
+      1.09977249529436e-10,
+      2.8761292653056714e-10
+    ]
+  },
+  "admission": "continuous whole-patch outward orientation and wholly open or compressed plane slab; mixed fronts explicitly unresolved",
+  "unchanged_controls": "existing Jet2/spatial work map and dimensioned integration settings,64interval fixture,180s/953MiB runner; no owner/history/default changes",
+  "failures": [
+    {
+      "path": "candidate06/curved_origin_discriminator/run.log",
+      "category": "scalar projection defect",
+      "outcome": "compressed tangential origin translation exhausted64intervals; open far-clear control passed"
+    },
+    {
+      "path": "candidate06/curved_open_origin_discriminator/run.log",
+      "category": "non-discriminating exploratory fixture",
+      "outcome": "first narrow open fixture passed; radial/lift placement did not reproduce defect"
+    },
+    {
+      "path": "candidate06/curved_open_origin_discriminator2/run.log",
+      "category": "scalar projection defect",
+      "outcome": "continuously proved>3mm open curved patch exhausted64intervals after phantom sampled contact"
+    },
+    {
+      "path": "candidate06/curved_resolution_delta/run.log",
+      "category": "test wiring defect",
+      "outcome": "underflow guard passed, misplaced original test statements raised NameError; repaired"
+    }
+  ],
+  "resolution": "exact binary projected products and partition-unity weights before scalar conversion; branch contradictions, lost nonzero scalar and coefficient underflow reject",
+  "impact_reuse": "Only three additive modules/tests changed. Existing normal law, owners, history/restart/API/defaults untouched; prior straight and curved search evidence reused."
+}

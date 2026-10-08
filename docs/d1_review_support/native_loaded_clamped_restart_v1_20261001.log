@@ -1,0 +1,34 @@
+{"stage": "authenticated_before_import", "input_sha256": "11f89ba5a5953cd259853c07054d0a24cad98a0bdce447c67739f795d871cca6", "source_bindings": 454}
+{"stage": "virgin_consistent_initialization", "elapsed_seconds": 1.5741526999918278, "committed": 0, "gate_passing": 0}
+{"stage": "prefix_trial_return_1", "elapsed_seconds": 2.9856797000102233, "committed": 0, "gate_passing": 0}
+{"stage": "prefix_candidate_before_gates_1", "elapsed_seconds": 3.7691837000020314, "committed": 0, "gate_passing": 0}
+{"stage": "prefix_committed_before_energy_gates_1", "elapsed_seconds": 4.58258059999207, "committed": 1, "gate_passing": 0}
+{"stage": "prefix_gate_pass_1", "elapsed_seconds": 4.5880682000133675, "committed": 1, "gate_passing": 1}
+{"stage": "prefix_trial_return_2", "elapsed_seconds": 6.060859799996251, "committed": 1, "gate_passing": 1}
+{"stage": "prefix_candidate_before_gates_2", "elapsed_seconds": 6.850884999992559, "committed": 1, "gate_passing": 1}
+{"stage": "prefix_committed_before_energy_gates_2", "elapsed_seconds": 7.689973300002748, "committed": 2, "gate_passing": 1}
+{"stage": "prefix_gate_pass_2", "elapsed_seconds": 7.697410499997204, "committed": 2, "gate_passing": 2}
+{"stage": "official_prefix_checkpoint", "elapsed_seconds": 8.74180270000943, "committed": 2, "gate_passing": 2}
+{"stage": "incompatible_chart_rejected_before_publication", "elapsed_seconds": 9.36005750001641, "committed": 2, "gate_passing": 2}
+{"stage": "incompatible_load_rejected_before_publication", "elapsed_seconds": 9.734006300015608, "committed": 2, "gate_passing": 2}
+{"stage": "incompatible_support_rejected_before_publication", "elapsed_seconds": 10.105805400002282, "committed": 2, "gate_passing": 2}
+{"stage": "matching_fresh_official_restore", "elapsed_seconds": 11.743805800011614, "committed": 2, "gate_passing": 2}
+{"stage": "direct_trial_return_3", "elapsed_seconds": 13.239855899999384, "committed": 2, "gate_passing": 2}
+{"stage": "direct_candidate_before_gates_3", "elapsed_seconds": 14.048257000016747, "committed": 2, "gate_passing": 2}
+{"stage": "direct_committed_before_energy_gates_3", "elapsed_seconds": 14.893513799994253, "committed": 3, "gate_passing": 2}
+{"stage": "direct_gate_pass_3", "elapsed_seconds": 14.904261299991049, "committed": 3, "gate_passing": 3}
+{"stage": "direct_trial_return_4", "elapsed_seconds": 16.418803500011563, "committed": 3, "gate_passing": 3}
+{"stage": "direct_candidate_before_gates_4", "elapsed_seconds": 17.212298099999316, "committed": 3, "gate_passing": 3}
+{"stage": "direct_committed_before_energy_gates_4", "elapsed_seconds": 18.056168700015405, "committed": 4, "gate_passing": 3}
+{"stage": "direct_gate_pass_4", "elapsed_seconds": 18.075963600014802, "committed": 4, "gate_passing": 4}
+{"stage": "restored_trial_return_3", "elapsed_seconds": 19.646240000001853, "committed": 4, "gate_passing": 4}
+{"stage": "restored_candidate_before_gates_3", "elapsed_seconds": 20.463566399994306, "committed": 4, "gate_passing": 4}
+{"stage": "restored_committed_before_energy_gates_3", "elapsed_seconds": 21.301928300003055, "committed": 5, "gate_passing": 4}
+{"stage": "restored_gate_pass_3", "elapsed_seconds": 21.320392199995695, "committed": 5, "gate_passing": 5}
+{"stage": "restored_trial_return_4", "elapsed_seconds": 22.884089800005313, "committed": 5, "gate_passing": 5}
+{"stage": "restored_candidate_before_gates_4", "elapsed_seconds": 23.70803189999424, "committed": 5, "gate_passing": 5}
+{"stage": "restored_committed_before_energy_gates_4", "elapsed_seconds": 24.640768100012792, "committed": 6, "gate_passing": 5}
+{"stage": "restored_gate_pass_4", "elapsed_seconds": 24.67635049999808, "committed": 6, "gate_passing": 6}
+{"stage": "complete", "elapsed_seconds": 26.462295800010907, "committed": 6, "gate_passing": 6}
+.
+1 passed in 27.01s

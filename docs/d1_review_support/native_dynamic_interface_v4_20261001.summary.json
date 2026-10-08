@@ -1,0 +1,81 @@
+{
+  "status": "PASS",
+  "accepted_steps": 2,
+  "controls": {
+    "mapping": true,
+    "default_unchanged": true,
+    "scope_rejection": true,
+    "stale_forged_audit_rejection": true,
+    "cancellation": true,
+    "publication_rollback": true,
+    "restart_rejection": true,
+    "live_settings_provenance_rejection": true
+  },
+  "initial_checks": {
+    "algebraic_condition": 46900.21092261729,
+    "algebraic_rank": 27,
+    "algebraic_sigma_max": 1.6173357097176733,
+    "algebraic_sigma_min": 3.448461484290947e-05,
+    "physical_mass_condition": 17.433616647030842,
+    "physical_mass_max_eigenvalue": 2.1685761019501197,
+    "physical_mass_min_eigenvalue": 0.12439048912547099
+  },
+  "stage_evaluation_counts": [
+    3,
+    3
+  ],
+  "endpoints": [
+    {
+      "defects": {
+        "energy": 2.4255058178520224e-12,
+        "linear": 1.5547407475881995e-15,
+        "angular": 1.9336891630707324e-15
+      },
+      "cumulative": {
+        "energy": 2.4255058178520224e-12,
+        "linear": 1.5547407475881995e-15,
+        "angular": 1.9336891630707324e-15
+      },
+      "stage_residual_norm": 2.5812434960886257e-13,
+      "endpoint_algebraic_norm": 6.867923821562508e-17
+    },
+    {
+      "defects": {
+        "energy": 7.1618884898989815e-12,
+        "linear": 1.4511774390088674e-15,
+        "angular": 1.9130796832798434e-15
+      },
+      "cumulative": {
+        "energy": 9.587394307751005e-12,
+        "linear": 3.003110076187838e-15,
+        "angular": 3.846763113327063e-15
+      },
+      "stage_residual_norm": 4.4666055901347826e-13,
+      "endpoint_algebraic_norm": 5.626926975627793e-17
+    }
+  ],
+  "stage_R_plus_I_minus_e_max": 0.0,
+  "resource": {
+    "status": "completed",
+    "exit_code": 0,
+    "elapsed_seconds": 7.300906899996335,
+    "peak_process_tree_memory_mb": 201.486336,
+    "time_limit_seconds": 180.0,
+    "memory_limit_bytes": 1073741824,
+    "command": [
+      "C:/Python/Python314/python.exe",
+      "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_dynamic_interface_v4_20261001.entry.source.py"
+    ],
+    "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_dynamic_interface_v4_20261001.log"
+  },
+  "artifact_sha256": {
+    ".raw.json": "382cdc423b74b161c154635391b6244afd00cf98a1983b6ea7c1c15189444ffc",
+    ".inputs.json": "15d2ccba2aa5a568d76862a4f7f9f1f6ff7c03daa77b2fe0c87d197c6413dea7",
+    ".entry.source.py": "145b33866e79780bcbd3140fe2e942b32dc649e0948d70f04e25165074a86ea5",
+    ".execution.json": "0d594897c5badbeebd7800b87e3742158282030a2940864557546b838c36ddd1",
+    ".resource.json": "cd57c27acce93ab6ba029bcb8c516d63a69b84e7d30aed5d4be70a9a7be53226",
+    ".log": "6748b6bb7af69011686f82a86af181714b357f875107d99b104c56d7585e3aa0",
+    ".xml": "38a5d0e59ff24e7453f38fd25df7bdd865a64440a88ecf7ecc33d63951ac8b29"
+  },
+  "scope": "Scoped development two-step API routing PASS at unchanged default tolerance1e-11; strict1e-15 V3 remains NONPASS; no cause attribution, temporal order, fullC7 or release claim."
+}

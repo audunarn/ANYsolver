@@ -1,0 +1,23 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 43.119487899995875,
+  "peak_process_tree_memory_mb": 207.42144,
+  "time_limit_seconds": 900.0,
+  "memory_limit_bytes": 4000000000,
+  "command": [
+    "python",
+    "docs/d1_review_support/d1_installed_entry.py",
+    "--expected-root",
+    "C:/ANYworkspaceWork/ANYsolver-general-contact/src",
+    "--identity-output",
+    "docs/d1_review_support/d1_checkpoint_radial_cost_v1_20260930.import.json",
+    "--script",
+    "docs/d1_review_support/d1_saved_checkpoint_roundtrip_dev.py",
+    "--",
+    "docs/d1_review_support/d1_checkpoint_radial_cost_v1_20260930.json",
+    "--radial",
+    "docs/d1_review_support/d1_radial_nonmatching_swept_search_coupled_v8_20260930.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_checkpoint_radial_cost_v1_20260930.log"
+}

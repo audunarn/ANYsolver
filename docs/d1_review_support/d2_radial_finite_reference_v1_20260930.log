@@ -1,0 +1,6 @@
+{"stage": "frozen_inputs_saved", "elapsed_seconds": 2.898126099986257}
+{"stage": "shared_structural_fixture", "elapsed_seconds": 2.9181903999997303}
+{"stage": "independent_normal_integrals", "elapsed_seconds": 3.579156599997077}
+{"stage": "finite_primal_solve", "elapsed_seconds": 4.79874060000293}
+{"stage": "saved_pose_comparisons", "elapsed_seconds": 4.805645699991146}
+{"status": "development_reference_consistent", "elapsed_seconds": 4.849652999982936}

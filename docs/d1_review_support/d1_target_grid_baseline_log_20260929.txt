@@ -1,0 +1,8 @@
+{
+  "status": "completed",
+  "failure_reason": null,
+  "source_q4_faces": 4,
+  "target_s3_faces": 2,
+  "accepted_steps": 2,
+  "elapsed_seconds": 7.425000699993689
+}

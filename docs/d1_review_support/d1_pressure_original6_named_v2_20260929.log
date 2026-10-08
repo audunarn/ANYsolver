@@ -1,0 +1,38 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_press_dev.py", line 643, in <module>
+    main(arguments.output, force_n=arguments.force_n,
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+         reference_slope=arguments.reference_slope,
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<22 lines>...
+         record_swept_fractions=arguments.record_swept_fractions,
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+         q4_gap_certificate=arguments.q4_gap_certificate)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_press_dev.py", line 240, in main
+    model, definition, settings, program = build_interior_press(
+                                           ~~~~~~~~~~~~~~~~~~~~^
+        force_n=force_n, reference_slope=reference_slope,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<14 lines>...
+        shared_edge_tie=shared_edge_tie,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_press_dev.py", line 86, in build_interior_press
+    model, definition, settings, _program = build_case(
+                                            ~~~~~~~~~~^
+        columns, source_rows=rows, full_width_target=True,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+        offline_structural_reference_y24=offline_structural_reference_y24,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_mixed_mesh_jet2_schur_press.py", line 63, in build_case
+    raise ValueError(
+        "only bounded 4/8/12/16/24/32-column Q4 refinements are admitted; "
+        "64 columns require the offline structural-reference opt-in")
+ValueError: only bounded 4/8/12/16/24/32-column Q4 refinements are admitted; 64 columns require the offline structural-reference opt-in

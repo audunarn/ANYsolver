@@ -1,0 +1,47 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+__________ test_force_control_augmented_patch_restarts_after_contact __________
+
+    def test_force_control_augmented_patch_restarts_after_contact():
+        model, definition, settings, load = _loaded_patch()
+        common = dict(contact=definition, contact_settings=settings,
+                      load_case=load, control="force", kinematics="von_karman",
+                      max_iterations=8, num_steps=2, min_step_fraction=0.1,
+                      emit_restart_checkpoint=True)
+        full = solve_static_nonlinear(model, **common)
+        assert full.status == "completed", (full.failure_reason, full.info)
+        assert full.info["general_contact"]["normal_law"] == "augmented"
+        assert full.info["general_contact"]["gap_tolerance_met"]
+        assert any(row["augmentation_iterations"] > 1 for row in
+                   full.info["force_displacement_history"])
+        half = solve_static_nonlinear(model, max_load_factor=0.5, **common)
+        assert half.status == "completed", half.failure_reason
+        assert max(half.to_restart_checkpoint()["path_state"]["normal_multipliers"]) > 0
+        resumed = solve_static_nonlinear(
+            model, restart_checkpoint=half.to_restart_checkpoint(), **common,
+        )
+        assert resumed.status == "completed", resumed.failure_reason
+        # This is a development smoke gate. Pressure is stopped at 0.02 Pa,
+        # so path splitting can move the tiny free-edge deflection by O(1e-7 m).
+>       np.testing.assert_allclose(resumed.displacements, full.displacements,
+                                   rtol=1e-2, atol=1e-6)
+E       AssertionError: 
+E       Not equal to tolerance rtol=0.01, atol=1e-06
+E       
+E       Mismatched elements: 2 / 48 (4.17%)
+E       Mismatch at indices:
+E        [8]: 2.2527526339483126e-05 (ACTUAL), 1.8090976910986782e-05 (DESIRED)
+E        [14]: -6.319841192232901e-05 (ACTUAL), -4.839071733375757e-05 (DESIRED)
+E       Max absolute difference among violations: 1.48076946e-05
+E       Max relative difference among violations: 0.30600279
+E        ACTUAL: array([ 0.000000e+00,  0.000000e+00,  0.000000e+00,  0.000000e+00,
+E               0.000000e+00,  0.000000e+00,  0.000000e+00,  0.000000e+00,
+E               2.252753e-05,  0.000000e+00,  0.000000e+00,  0.000000e+00,...
+E        DESIRED: array([ 0.000000e+00,  0.000000e+00,  0.000000e+00,  0.000000e+00,
+E               0.000000e+00,  0.000000e+00,  0.000000e+00,  0.000000e+00,
+E               1.809098e-05,  0.000000e+00,  0.000000e+00,  0.000000e+00,...
+
+tests\test_general_contact_force_augmented.py:58: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_force_augmented.py::test_force_control_augmented_patch_restarts_after_contact
+1 failed in 243.65s (0:04:03)

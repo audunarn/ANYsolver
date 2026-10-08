@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 6.384020999976201,
+  "peak_process_tree_memory_mb": 266.436608,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "docs/d1_review_support/d2_projected_penalty_spatial_coupled_dev.py",
+    "--candidate-only",
+    "--reference",
+    "docs/d1_review_support/d2_fixed_geometry_penalty_spatial_v1_20260930.json",
+    "--output",
+    "docs/d1_review_support/d2_spatial_reference_pose_operator_v1_20260930.json"
+  ],
+  "log": "docs\\d1_review_support\\d2_spatial_reference_pose_operator_v1_20260930.log"
+}

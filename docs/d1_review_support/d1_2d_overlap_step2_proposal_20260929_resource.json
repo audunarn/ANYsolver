@@ -1,0 +1,15 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 59.277257300011115,
+  "peak_process_tree_memory_mb": 356.343808,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "scripts/general_contact_d1_2d_gap_pair_dev.py",
+    "docs/d1_review_support/d1_2d_overlap_step2_proposal_20260929.json",
+    "--overlap-local"
+  ],
+  "log": "docs\\d1_review_support\\d1_2d_overlap_step2_proposal_20260929.log"
+}

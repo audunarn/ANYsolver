@@ -1,0 +1,20 @@
+{
+  "candidate": "d1_interior_analytic_guided_strip_dev",
+  "shared_edge_tie": false,
+  "shifted_target": true,
+  "columns": 16,
+  "status": "diverged",
+  "failure_reason": "contact_d1_interior_profile_rejected",
+  "accepted_steps": 0,
+  "elapsed_seconds": 12.880364700002247,
+  "shear_resultant_n_per_m": 1602.5641025641025,
+  "initial_opening_m": 4e-05,
+  "analytical_front_from_each_end_m": 0.25,
+  "total_distributed_load_n": 2.0512820512820515,
+  "analytical_integrated_reaction_n": 1.0256410256410258,
+  "computed_integrated_reaction_n": 0.0,
+  "reaction_relative_error": 1.0,
+  "minimum_gap_m": null,
+  "active_pressure_node_ids": [],
+  "history": []
+}

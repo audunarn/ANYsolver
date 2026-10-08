@@ -1,0 +1,85 @@
+{
+  "fixture": "neighbor_value_gate_pose",
+  "spring_n_per_m": 100000.0,
+  "pressure_step_pa": 0.03,
+  "active_pressure_mode": 1,
+  "selected_pressure_modes": [
+    0,
+    1,
+    2,
+    5,
+    6,
+    7,
+    10,
+    11,
+    12
+  ],
+  "predicted_gap_response_m_per_pa": [
+    5.505259176322261e-08,
+    1.1977295659491777e-07,
+    1.2111570315172294e-07,
+    1.4044028362975987e-08,
+    3.055432554746637e-08,
+    3.089686301030957e-08,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "observed_gap_response_m_per_pa": [
+    5.505259175799615e-08,
+    1.1977295658409541e-07,
+    1.2111570314634023e-07,
+    1.4044028362823144e-08,
+    3.055432554711847e-08,
+    3.089686301006234e-08,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "relative_error": 7.132219896447037e-11,
+  "records": [
+    {
+      "success": true,
+      "message": "The solution converged.",
+      "free_displacement_m": -7.43209996622092e-09,
+      "equilibrium_n": 0.0,
+      "gap": [
+        -3.871434042251498e-05,
+        -3.6910715032021105e-05,
+        -3.608247173132243e-05,
+        -3.876467359874981e-05,
+        -3.7029123889481174e-05,
+        -3.6226390522003565e-05,
+        -3.8884014889703086e-05,
+        -3.729995401108252e-05,
+        -3.653064970978622e-05
+      ],
+      "calls": 6
+    },
+    {
+      "success": true,
+      "message": "The solution converged.",
+      "free_displacement_m": 7.432099966085404e-09,
+      "equilibrium_n": 1.0842021724855044e-19,
+      "gap": [
+        -3.87110372670095e-05,
+        -3.690352865462606e-05,
+        -3.607520478913365e-05,
+        -3.876383095704804e-05,
+        -3.702729062994835e-05,
+        -3.622453671022296e-05,
+        -3.8884014889703086e-05,
+        -3.729995401108252e-05,
+        -3.653064970978622e-05
+      ],
+      "calls": 6
+    }
+  ],
+  "diagnostics": {
+    "schur_exact_seam_generalized_gradient": true,
+    "schur_exact_seam_one_sided_error": 1.7437584940807647e-10,
+    "schur_exact_seam_step_error": 6.109923678110363e-11,
+    "schur_exact_seam_geometry_evaluations": 3664
+  },
+  "elapsed_seconds": 111.3755853176117
+}

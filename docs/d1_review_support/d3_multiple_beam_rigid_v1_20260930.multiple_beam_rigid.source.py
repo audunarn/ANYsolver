@@ -1,0 +1,154 @@
+"""Sum explicitly owned round-beam/fixed-rigid work on shared coordinates.
+
+Reuses the admitted single-pair kernels; no automatic pairs, moving tools,
+caps, friction, pressure multipliers or new structural solver are introduced.
+"""
+from dataclasses import dataclass
+
+import numpy as np
+from scipy import sparse
+
+from .core import ContactDefinition, ContactSolverSettings, ContactValidationReport
+
+PROFILE = "MULTIPLE_EXPLICIT_ROUND_BEAM_FIXED_RIGID_STATIC_DEV_V0"
+
+
+def _parts(model, definition, settings, analysis_control):
+    from .core import validate_general_contact
+
+    if analysis_control not in {"force", "displacement"}:
+        raise ValueError("multiple beam interactions require force or displacement control")
+    if settings.enforcement_solver != "nested_augmented":
+        raise ValueError("multiple beam line penalties do not admit monolithic pressure enforcement")
+    if len(definition.interactions) < 2 or not definition.rigid_bodies:
+        raise ValueError("multiple beam-rigid profile requires at least two explicit interactions")
+    surfaces = {surface.name: surface for surface in definition.surfaces}
+    bodies = {body.name: body for body in definition.rigid_bodies}
+    used_surfaces, used_bodies, owned, parts = set(), set(), set(), []
+    candidate_count = 0
+    for interaction in sorted(definition.interactions, key=lambda item: item.name):
+        if interaction.surface not in surfaces or interaction.target not in bodies:
+            raise ValueError("each beam interaction must name a declared beam and rigid body")
+        source, body = surfaces[interaction.surface], bodies[interaction.target]
+        if source.beam_radius is None or source.beam_end_caps != "none":
+            raise ValueError("multiple beam-rigid profile requires explicit round radius and no caps")
+        if body.kind not in {"plane", "sphere", "cylinder"} or body.path_translation is not None:
+            raise ValueError("multiple beam-rigid profile admits fixed planes, spheres and infinite cylinders only")
+        if interaction.normal_law != "penalty":
+            raise ValueError("multiple beam-rigid profile requires explicitly dimensioned line penalties")
+        used_surfaces.add(source.name)
+        used_bodies.add(body.name)
+        candidate_count += len(source.element_ids)
+        if candidate_count > settings.maximum_candidate_pairs:
+            raise MemoryError("multiple beam-rigid aggregate candidate limit exceeded; no contacts dropped")
+        for element in source.element_ids:
+            feature = (element, body.name)
+            if feature in owned:
+                raise ValueError("duplicate beam element/rigid-body feature pair in explicit interactions")
+            owned.add(feature)
+        part = ContactDefinition(surfaces=(source,), rigid_bodies=(body,), interactions=(interaction,))
+        report = validate_general_contact(model, part, settings, analysis_control=analysis_control)
+        if not report.valid:
+            raise ValueError(f"{interaction.name}: " + "; ".join(report.issues))
+        parts.append((interaction.name, part))
+    if used_surfaces != set(surfaces) or used_bodies != set(bodies):
+        raise ValueError("multiple beam-rigid definition contains an unreferenced surface or body")
+    return tuple(parts)
+
+
+def validate_multiple_beam_rigid(model, definition, settings=None, *, analysis_control="force"):
+    controls = ContactSolverSettings() if settings is None else settings
+    try:
+        _parts(model, definition, controls, analysis_control)
+    except (ValueError, MemoryError, KeyError) as exc:
+        return ContactValidationReport("invalid", (str(exc),), PROFILE)
+    return ContactValidationReport("ok", (), PROFILE)
+
+
+@dataclass(frozen=True)
+class MultipleBeamRigidResults:
+    profile: str
+    pairs: tuple
+
+    @property
+    def minimum_gap(self):
+        return min(result.minimum_gap for _, result in self.pairs)
+
+    @property
+    def gap_tolerance_met(self):
+        return all(result.gap_tolerance_met for _, result in self.pairs)
+
+    def to_dict(self):
+        fields = [result.to_dict() for _, result in self.pairs]
+        return {"profile": self.profile, "minimum_gap": self.minimum_gap,
+                "gap_tolerance_met": self.gap_tolerance_met,
+                "work_convention": "sum_of_explicit_pair_potentials_same_authoritative_coordinates",
+                "normal_law": "penalty",
+                **{name: np.sum([field[name] for field in fields], axis=0).tolist()
+                   for name in ("beam_force", "rigid_force", "beam_moment", "rigid_moment")},
+                "algorithmic_contact_potential": float(sum(field["algorithmic_contact_potential"]
+                                                            for field in fields)),
+                "candidate_cells": sum(field["candidate_cells"] for field in fields),
+                "pairs": [{"interaction": name, "contact": field}
+                          for (name, _), field in zip(self.pairs, fields)]}
+
+
+class MultipleBeamRigidManager:
+    profile = PROFILE
+    augmented = False
+
+    def __init__(self, model, definition, settings=None, initial_displacement=None,
+                 *, analysis_control="force"):
+        from .beam_plane import _BeamPlaneManager
+        from .beam_radial import _BeamRadialManager
+
+        self.settings = ContactSolverSettings() if settings is None else settings
+        parts = _parts(model, definition, self.settings, analysis_control)
+        self.definition = definition
+        self.n_dof = model.mesh.dof_manager.total_dofs
+        self.pairs = tuple((name, (_BeamPlaneManager if part.rigid_bodies[0].kind == "plane"
+                                  else _BeamRadialManager)(model, part, self.settings, initial_displacement))
+                           for name, part in parts)
+        self.swept_trial_cutbacks = 0
+
+    def evaluate(self, displacement, *, tangent=True):
+        residual = np.zeros(self.n_dof)
+        stiffness = sparse.csr_matrix((self.n_dof, self.n_dof)) if tangent else None
+        results = []
+        for name, manager in self.pairs:
+            force, block, result = manager.evaluate(displacement, tangent=tangent)
+            residual += force
+            if tangent:
+                stiffness = stiffness + block
+            results.append((name, result))
+        return residual, stiffness, MultipleBeamRigidResults(self.profile, tuple(results))
+
+    def swept_increment_admissible(self, start, end, start_factor, end_factor):
+        admitted = [manager.swept_increment_admissible(start, end, start_factor, end_factor)
+                    for _, manager in self.pairs]
+        if not all(admitted):
+            self.swept_trial_cutbacks += 1
+        return all(admitted)
+
+    def admissible_step_fraction(self, start, end):
+        first, last = np.asarray(start), np.asarray(end)
+        fraction = min(manager.admissible_step_fraction(first, last) for _, manager in self.pairs)
+        # Recheck the actual common endpoint: roundoff at one child's chosen
+        # fraction must not hide another pair's independent dimensional gate.
+        for _ in range(self.settings.maximum_swept_subdivisions + 1):
+            if self.swept_increment_admissible(first, first+fraction*(last-first), 0., 1.):
+                return fraction
+            fraction *= .5
+        return 0.
+
+    def restart_contract(self):
+        return {"profile": self.profile, "composition_revision": "explicit_beam_rigid_work_sum_v1",
+                "pairs": [{"interaction": name, "contract": manager.restart_contract()}
+                          for name, manager in self.pairs],
+                "aggregate_candidate_limit": self.settings.maximum_candidate_pairs}
+
+    def summary_settings(self):
+        return {"normal_law": "penalty", "pair_enforcement": [
+            {"interaction": name, "line_stiffness_N_per_m2": manager.stiffness,
+             "gap_tolerance_m": manager.gap_tolerance}
+            for name, manager in self.pairs]}

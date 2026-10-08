@@ -1,0 +1,19 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 2.129720599994471,
+  "peak_process_tree_memory_mb": 165.306368,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-u",
+    "-m",
+    "docs.d1_review_support.d1_saved_tilted_source_moment",
+    "--saved",
+    "reports/general_contact_d1_distributed_8q4_tilted_target_press_dev_20260928.json",
+    "--output",
+    "docs/d1_review_support/d1_saved_tilted_source_moment_20260929.json"
+  ],
+  "log": "reports\\d1_saved_tilted_source_moment_log_dev_20260929.txt"
+}

@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 5.23153559997445,
+  "peak_process_tree_memory_mb": 224.804864,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_projected_penalty.py",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d2_projected_penalty_focused_v1_20260930.log"
+}

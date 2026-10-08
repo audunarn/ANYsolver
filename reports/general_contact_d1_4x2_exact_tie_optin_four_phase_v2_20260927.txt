@@ -1,0 +1,20 @@
+{
+  "columns": 4,
+  "rows": 2,
+  "edge_control": true,
+  "gap_certificate": "projected_matching",
+  "gap_tolerance_m": 5e-05,
+  "normal_approach_m": 0.01504,
+  "four_phase": true,
+  "slide_distance_m": 0.05,
+  "shared_edge_tie_step_m": 3e-08,
+  "pressure_tolerance_pa": 1e-05,
+  "schur_pressure_cap_pa": 100.0,
+  "schur_step_cap_pa": 50.0,
+  "stop_after_slide": false,
+  "elapsed_seconds": 64.64731550001306,
+  "status": "stopped_at_limit",
+  "failure_reason": "contact_derivative_branch_unresolved",
+  "accepted_steps": 3,
+  "has_restart_checkpoint": false
+}

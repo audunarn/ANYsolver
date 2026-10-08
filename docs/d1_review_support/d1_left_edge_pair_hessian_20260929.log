@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_tangent_pairs_dev.py", line 12, in <module>
+    from anysolver.general_contact.q4_s3_overlap_derivatives import q4_s3_overlap_derivatives
+ModuleNotFoundError: No module named 'anysolver.general_contact'

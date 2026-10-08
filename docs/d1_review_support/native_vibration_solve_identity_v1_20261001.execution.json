@@ -1,0 +1,60 @@
+{
+  "status": "PASS",
+  "exit_code": 0,
+  "elapsed_seconds": 1.6057216000044718,
+  "identity": {
+    "anysolver": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\__init__.py",
+    "module_paths": {
+      "_ge_beam3_native_midpoint.py": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+      "_ge_beam3_dynamic_elastic_state.py": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py",
+      "_ge_beam3_centered_finite_inertia.py": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_centered_finite_inertia.py"
+    },
+    "python": "C:\\Python\\Python314\\python.exe",
+    "numpy_version": "2.4.6",
+    "pytest_version": "9.0.3",
+    "environment": {
+      "PYTHONPATH": "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src;C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/tests;C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMBA_NUM_THREADS": "1",
+      "NUMBA_CACHE_DIR": "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_vibration_solve_identity_v1_20261001.numba_cache",
+      "NATIVE_VIBRATION_RAW_OUTPUT": "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_vibration_solve_identity_v1_20261001.raw.json",
+      "NATIVE_VIBRATION_INPUTS": "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_vibration_solve_identity_v1_20261001.inputs.json"
+    },
+    "source_count": 442,
+    "input_sha256": "89beb3c2f302ced5e5405e25beb2140d7cabc167a7d661b9713fa98f5cfa2e11",
+    "entry_sha256": "a54574723a31304e3fb3765fe82314fbdaf2680c82fa1edaab2a7faccd0ae65b"
+  },
+  "reports": [
+    {
+      "nodeid": "tests/test_ge_beam3_native_vibration_solve_control.py::test_explicit_stage_tolerance_default_identity_and_guard",
+      "when": "setup",
+      "outcome": "passed",
+      "duration_seconds": 0.0003066000062972307,
+      "properties": {},
+      "failure": null
+    },
+    {
+      "nodeid": "tests/test_ge_beam3_native_vibration_solve_control.py::test_explicit_stage_tolerance_default_identity_and_guard",
+      "when": "call",
+      "outcome": "passed",
+      "duration_seconds": 0.09236300000338815,
+      "properties": {
+        "time_steps": 0
+      },
+      "failure": null
+    },
+    {
+      "nodeid": "tests/test_ge_beam3_native_vibration_solve_control.py::test_explicit_stage_tolerance_default_identity_and_guard",
+      "when": "teardown",
+      "outcome": "passed",
+      "duration_seconds": 0.00019420002354308963,
+      "properties": {
+        "time_steps": 0
+      },
+      "failure": null
+    }
+  ]
+}

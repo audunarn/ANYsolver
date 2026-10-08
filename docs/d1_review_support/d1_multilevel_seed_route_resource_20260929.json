@@ -1,0 +1,25 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 146.82412369999656,
+  "peak_process_tree_memory_mb": 533.7088,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-u",
+    "-m",
+    "docs.d1_review_support.d1_multilevel_seed_route",
+    "--saved-record",
+    "docs/d1_review_support/d1_target_grid_8x8_prediction_20260929.json",
+    "--preflight",
+    "docs/d1_review_support/d1_multilevel_seed_preflight_20260929.json",
+    "--seed-trace",
+    "docs/d1_review_support/d1_multilevel_seed_route_seed_trace_20260929.jsonl",
+    "--progress-trace",
+    "docs/d1_review_support/d1_multilevel_seed_route_progress_20260929.jsonl",
+    "--output",
+    "docs/d1_review_support/d1_multilevel_seed_route_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_multilevel_seed_route_log_20260929.txt"
+}

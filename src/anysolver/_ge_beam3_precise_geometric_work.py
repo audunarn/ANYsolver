@@ -105,7 +105,8 @@ def _proper(a):
 
 def potential(reference_coordinates, reference_triads, positions, position_low,
               nodal_frames, cell_rotations, increment, resultants,
-              material_potential, *, check=lambda: None):
+              material_potential, *, check=lambda: None,
+              effective_nodal_deltas=None, effective_cell_deltas=None):
     """Resultants are the already updated native p; do not add their increment.
 
     material_potential is its actual high/low conjugate value pair. Inputs and
@@ -119,6 +120,16 @@ def potential(reference_coordinates, reference_triads, positions, position_low,
         d = _array(increment, (42,)); p = _array(resultants, (18,)); material = _array(material_potential, (2,))
         for frame in f0+q+u:
             _proper(frame)
+        if effective_nodal_deltas is not None or effective_cell_deltas is not None:
+            if effective_nodal_deltas is None or effective_cell_deltas is None:
+                raise ValueError('complete explicit effective SO3 base required')
+            dq = _array(effective_nodal_deltas, (3, 3, 3)); du = _array(effective_cell_deltas, (2, 3, 3))
+            # Preserve tiny D BEFORE adding I in Decimal80, using the exact same
+            # captured effective base as the complete Jet2 successor work.
+            q = [[[D(i == j)+dq[n][i][j] for j in range(3)] for i in range(3)] for n in range(3)]
+            u = [[[D(i == j)+du[c][i][j] for j in range(3)] for i in range(3)] for c in range(2)]
+            for frame in q+u:
+                _proper(frame)
         made_q = [_mul(_exp(d[6*n+3:6*n+6]), q[n]) for n in range(3)]
         z = []; ell = []
         for c, (left, right) in enumerate(((0, 1), (1, 2))):

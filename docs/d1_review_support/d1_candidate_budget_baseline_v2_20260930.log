@@ -1,0 +1,376 @@
+FFFFF                                                                    [100%]
+================================== FAILURES ===================================
+__________ test_q4_s3_jet2_static_work_matches_existing_smooth_patch __________
+
+    def test_q4_s3_jet2_static_work_matches_existing_smooth_patch():
+        model, definition, settings = _two_q4_two_s3()
+        reference = GeneralS3PatchManager(model, definition, settings)
+        candidate = GeneralS3PatchManager(model, definition, _settings(settings))
+        free = [model.mesh.dof_manager.get_node_dofs(node)[axis]
+                for node in range(1, 7) for axis in (0, 2)]
+        transform = sparse.eye(candidate.n_dof, format="csr")[:, free]
+        reference.restrict_tangent_to_reduced_variations(transform)
+        candidate.restrict_tangent_to_reduced_variations(transform)
+        displacement = np.zeros(candidate.n_dof)
+        for node in range(1, 7):
+            displacement[model.mesh.dof_manager.get_node_dofs(node)[2]] = -0.02
+        old_force, old_tangent, old_state = reference.evaluate(displacement)
+        force, tangent, state = candidate.evaluate(displacement)
+        assert state.active_pressure_dofs == old_state.active_pressure_dofs == 6
+        np.testing.assert_allclose(force, old_force, rtol=3e-4, atol=1e-6)
+>       np.testing.assert_allclose(tangent.toarray(), old_tangent.toarray(),
+                                   rtol=3e-3, atol=3e-4)
+E       AssertionError: 
+E       Not equal to tolerance rtol=0.003, atol=0.0003
+E       
+E       Mismatched elements: 182 / 3600 (5.06%)
+E       First 5 mismatches are at indices:
+E        [1, 2]: -0.018431766646052426 (ACTUAL), 0.0 (DESIRED)
+E        [1, 8]: -0.01976448155019581 (ACTUAL), 0.0 (DESIRED)
+E        [1, 14]: -0.002712842712842697 (ACTUAL), 0.0 (DESIRED)
+E        [1, 20]: 0.03912337662337658 (ACTUAL), 0.0 (DESIRED)
+E        [1, 26]: 0.005422077922077793 (ACTUAL), 0.0 (DESIRED)
+E       Max absolute difference among violations: 92.57625518
+E       Max relative difference among violations: inf
+E        ACTUAL: array([[ 0.000000e+00,  0.000000e+00, -2.669848e-17, ...,  0.000000e+00,
+E                0.000000e+00,  0.000000e+00],
+E              [ 4.589715e-19,  0.000000e+00, -1.843177e-02, ...,  0.000000e+00,...
+E        DESIRED: array([[ 5.502326e-09,  0.000000e+00, -1.192204e-09, ...,  0.000000e+00,
+E                0.000000e+00,  0.000000e+00],
+E              [ 0.000000e+00,  0.000000e+00,  0.000000e+00, ...,  0.000000e+00,...
+
+tests\test_general_contact_q4_s3_jet2_static_owner.py:56: AssertionError
+__________ test_q4_s3_jet2_partial_shared_pressure_work[-0.01505-0] ___________
+
+press_shift = -0.01505, inactive_faces = 0
+
+    @pytest.mark.parametrize(("press_shift", "inactive_faces"), (
+        (-0.01505, 0), (-0.01495, 1),
+    ))
+    def test_q4_s3_jet2_partial_shared_pressure_work(press_shift, inactive_faces):
+        model, definition, settings = _two_q4_two_s3()
+        reference = GeneralS3PatchManager(model, definition, settings)
+        candidate = GeneralS3PatchManager(model, definition, _settings(settings))
+        free = [model.mesh.dof_manager.get_node_dofs(node)[axis]
+                for node in range(1, 7) for axis in (0, 2)]
+        transform = sparse.eye(candidate.n_dof, format="csr")[:, free]
+        reference.restrict_tangent_to_reduced_variations(transform)
+        candidate.restrict_tangent_to_reduced_variations(transform)
+        displacement = np.zeros(candidate.n_dof)
+        for node in range(1, 7):
+            position = model.mesh.get_node(node)
+            displacement[model.mesh.dof_manager.get_node_dofs(node)[2]] = (
+                press_shift + 0.002*(position.x-0.6)
+            )
+        old_force, old_tangent, old_state = reference.evaluate(displacement)
+        force, tangent, state = candidate.evaluate(displacement)
+        assert 0 < state.active_pressure_dofs < 6
+        assert state.active_pressure_dofs == old_state.active_pressure_dofs
+        assert sum(not np.any(np.asarray(state.numerical_pressure_pa)[face])
+                   for face in candidate.law.source_face_indices) == inactive_faces
+        np.testing.assert_allclose(force, old_force, rtol=3e-4, atol=1e-6)
+>       np.testing.assert_allclose(tangent.toarray(), old_tangent.toarray(),
+                                   rtol=3e-3, atol=3e-4)
+E       AssertionError: 
+E       Not equal to tolerance rtol=0.003, atol=0.0003
+E       
+E       Mismatched elements: 129 / 3600 (3.58%)
+E       First 5 mismatches are at indices:
+E        [1, 2]: -0.0018321319955665876 (ACTUAL), 0.0 (DESIRED)
+E        [1, 20]: 0.004623103537757163 (ACTUAL), 0.0 (DESIRED)
+E        [1, 26]: 0.0022669856629278684 (ACTUAL), 0.0 (DESIRED)
+E        [1, 32]: 0.00030154470959835783 (ACTUAL), 0.0 (DESIRED)
+E        [7, 2]: -0.001967249339337749 (ACTUAL), 0.0 (DESIRED)
+E       Max absolute difference among violations: 74.87412345
+E       Max relative difference among violations: inf
+E        ACTUAL: array([[ 5.835925e-09,  0.000000e+00, -2.916253e-06, ...,  0.000000e+00,
+E                0.000000e+00,  0.000000e+00],
+E              [ 1.002826e-09,  0.000000e+00, -1.832132e-03, ...,  0.000000e+00,...
+E        DESIRED: array([[ 5.104274e-09,  0.000000e+00, -2.917171e-06, ...,  0.000000e+00,
+E                0.000000e+00,  0.000000e+00],
+E              [ 0.000000e+00,  0.000000e+00,  0.000000e+00, ...,  0.000000e+00,...
+
+tests\test_general_contact_q4_s3_jet2_static_owner.py:86: AssertionError
+__________ test_q4_s3_jet2_partial_shared_pressure_work[-0.01495-1] ___________
+
+press_shift = -0.01495, inactive_faces = 1
+
+    @pytest.mark.parametrize(("press_shift", "inactive_faces"), (
+        (-0.01505, 0), (-0.01495, 1),
+    ))
+    def test_q4_s3_jet2_partial_shared_pressure_work(press_shift, inactive_faces):
+        model, definition, settings = _two_q4_two_s3()
+        reference = GeneralS3PatchManager(model, definition, settings)
+        candidate = GeneralS3PatchManager(model, definition, _settings(settings))
+        free = [model.mesh.dof_manager.get_node_dofs(node)[axis]
+                for node in range(1, 7) for axis in (0, 2)]
+        transform = sparse.eye(candidate.n_dof, format="csr")[:, free]
+        reference.restrict_tangent_to_reduced_variations(transform)
+        candidate.restrict_tangent_to_reduced_variations(transform)
+        displacement = np.zeros(candidate.n_dof)
+        for node in range(1, 7):
+            position = model.mesh.get_node(node)
+            displacement[model.mesh.dof_manager.get_node_dofs(node)[2]] = (
+                press_shift + 0.002*(position.x-0.6)
+            )
+        old_force, old_tangent, old_state = reference.evaluate(displacement)
+        force, tangent, state = candidate.evaluate(displacement)
+        assert 0 < state.active_pressure_dofs < 6
+        assert state.active_pressure_dofs == old_state.active_pressure_dofs
+        assert sum(not np.any(np.asarray(state.numerical_pressure_pa)[face])
+                   for face in candidate.law.source_face_indices) == inactive_faces
+        np.testing.assert_allclose(force, old_force, rtol=3e-4, atol=1e-6)
+>       np.testing.assert_allclose(tangent.toarray(), old_tangent.toarray(),
+                                   rtol=3e-3, atol=3e-4)
+E       AssertionError: 
+E       Not equal to tolerance rtol=0.003, atol=0.0003
+E       
+E       Mismatched elements: 70 / 3600 (1.94%)
+E       First 5 mismatches are at indices:
+E        [1, 2]: -0.0017615150534743002 (ACTUAL), 0.0 (DESIRED)
+E        [1, 8]: -0.0010090597095959602 (ACTUAL), 0.0 (DESIRED)
+E        [1, 20]: 0.0035439364423631155 (ACTUAL), 0.0 (DESIRED)
+E        [1, 26]: 0.0006155327651515075 (ACTUAL), 0.0 (DESIRED)
+E        [7, 2]: -0.0016021536246782339 (ACTUAL), 0.0 (DESIRED)
+E       Max absolute difference among violations: 39.35308433
+E       Max relative difference among violations: inf
+E        ACTUAL: array([[ 4.115767e-09,  0.000000e+00, -2.140107e-06, ...,  0.000000e+00,
+E                0.000000e+00,  0.000000e+00],
+E              [ 7.096204e-10,  0.000000e+00, -1.761515e-03, ...,  0.000000e+00,...
+E        DESIRED: array([[ 3.886368e-09,  0.000000e+00, -2.140279e-06, ...,  0.000000e+00,
+E                0.000000e+00,  0.000000e+00],
+E              [ 0.000000e+00,  0.000000e+00,  0.000000e+00, ...,  0.000000e+00,...
+
+tests\test_general_contact_q4_s3_jet2_static_owner.py:86: AssertionError
+____________ test_q4_s3_jet2_runs_coupled_static_path_and_restart _____________
+
+    def test_q4_s3_jet2_runs_coupled_static_path_and_restart():
+        model, definition, settings = _two_q4_two_s3()
+        definition = replace(definition, interactions=(replace(
+            definition.interactions[0], gap_tolerance=0.005,
+        ),))
+        settings = replace(_settings(settings), maximum_augmentations=8)
+        model.add_boundary_condition(BoundaryCondition(
+            "target_fixed", (7, 8, 9, 10),
+            {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+        ))
+        model.add_boundary_condition(BoundaryCondition(
+            "source_guide", (1, 2, 3, 4, 5, 6),
+            {name: 0.0 for name in ("uy", "rx", "ry", "rz")},
+        ))
+        program = ContactPathProgram(
+            controls=(ContactPathControl.node(1, "ux"),
+                      ContactPathControl.node(1, "uz")),
+            waypoints=((0.0, 0.0), (0.0, -0.01505)),
+            steps_per_segment=1,
+        )
+        options = dict(contact=definition, contact_settings=settings,
+                       contact_path_program=program, max_iterations=12,
+                       emit_restart_checkpoint=True)
+>       result = solve_static_nonlinear(model, **options)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_general_contact_q4_s3_jet2_static_owner.py:205: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\anysolver\nonlinear_static.py:7713: in solve_static_nonlinear
+    return solve_static_contact_path(
+src\anysolver\general_contact\static_path.py:1700: in solve_static_contact_path
+    return _run_with_qualified_assembly_runtime_lease(
+src\anysolver\matrix_assembly.py:3651: in _run_with_qualified_assembly_runtime_lease
+    raise scoped_operation_error
+src\anysolver\matrix_assembly.py:3626: in _run_with_qualified_assembly_runtime_lease
+    result = operation(lease)
+             ^^^^^^^^^^^^^^^^
+src\anysolver\general_contact\static_path.py:1698: in operation
+    return _run_with_nonlinear_state_cleanup(run)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\nonlinear_state.py:271: in _run_with_nonlinear_state_cleanup
+    return operation(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def run():
+        with contact_scope(model, definition, settings,
+                           allow_augmented=augmented) as manager:
+            contract = {
+                "schema": "ANYSOLVER_STATIC_RESTART_CONTRACT_V2",
+                "control": "contact_path",
+                "profile": profile,
+                "general_contact": manager.restart_contract(),
+                "program": program.contract(),
+                "num_layers": num_layers,
+                "max_iterations": max_iterations,
+                "tolerance": float(tolerance),
+            }
+            if settings.augmentation_acceleration != "none":
+                contract["augmentation_acceleration"] = settings.augmentation_acceleration
+            if semismooth:
+                contract["enforcement_solver"] = "monolithic_active_set"
+                contract["control_residual_scaling"] = "per_control_waypoint_max_v1"
+            if displacement_only:
+                contract["force_reference_method"] = (
+                    "contact_free_elastic_displacement_v1"
+                )
+            validated = None
+            if restart_checkpoint is not None:
+                validated = validate_nonlinear_checkpoint(
+                    restart_checkpoint, analysis_kind="static", model=model,
+                    analysis_contract=contract, num_layers=num_layers,
+                )
+            model.apply_boundary_conditions()
+            stiffness, _stiffness_info = assemble_stiffness_matrix(model)
+            zeros = np.zeros(model.mesh.dof_manager.total_dofs)
+            _, _, T, u0, _independent, _constraint_info = (
+                build_constraint_transformation(stiffness, zeros, model)
+            )
+            if hasattr(manager, "restrict_tangent_to_reduced_variations"):
+                manager.restrict_tangent_to_reduced_variations(T)
+            controls = np.zeros((len(program.controls), len(zeros)))
+            for index, control in enumerate(program.controls):
+                for node_id, dof_name, weight in control.terms:
+                    if model.mesh.get_node(node_id) is None:
+                        raise ValueError(f"missing contact path node {node_id}")
+                    dof = model.mesh.dof_manager.get_node_dofs(node_id)[
+                        _DOF[dof_name]
+                    ]
+                    controls[index, dof] += weight
+            rows = np.asarray(controls @ T, dtype=float)
+            if np.linalg.matrix_rank(rows) != len(program.controls):
+                raise ValueError("contact path controls are constrained or dependent")
+            if np.any(np.abs(controls @ u0) > 1.0e-12):
+                raise ValueError("contact path requires zero reference control offsets")
+            displacement_force_predictor = None
+            if displacement_only:
+                displacement_force_predictor = (
+                    _elastic_displacement_force_predictor(
+                        stiffness, T, rows, program.waypoints[1:],
+                    )
+                )
+>               if (settings.complementarity_force_scale_n
+                        > displacement_force_predictor*(1.0+1.0e-12)):
+E                       TypeError: '>' not supported between instances of 'NoneType' and 'float'
+
+src\anysolver\general_contact\static_path.py:571: TypeError
+___________ test_refined_q4_pressure_failure_uses_path_transaction ____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001F925739940>
+
+    def test_refined_q4_pressure_failure_uses_path_transaction(monkeypatch):
+        model, definition, settings = _two_q4_two_s3()
+        model.add_boundary_condition(BoundaryCondition(
+            "target_fixed", (7, 8, 9, 10),
+            {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+        ))
+        model.add_boundary_condition(BoundaryCondition(
+            "source_guide", (1, 2, 3, 4, 5, 6),
+            {name: 0.0 for name in ("uy", "rx", "ry", "rz")},
+        ))
+        program = ContactPathProgram(
+            controls=(ContactPathControl.node(1, "ux"),
+                      ContactPathControl.node(1, "uz")),
+            waypoints=((0.0, 0.0), (0.001, 0.001)),
+            steps_per_segment=1,
+        )
+        calls = []
+    
+        def forced_failure(_manager, result, _projected):
+            calls.append(result.minimum_gap)
+            return True
+    
+        monkeypatch.setattr(
+            GeneralS3PatchManager, "has_unresolved_weak_open_gap", forced_failure,
+        )
+>       result = solve_static_nonlinear(
+            model, contact=definition, contact_settings=settings,
+            contact_path_program=program, max_iterations=12,
+            emit_restart_checkpoint=True,
+        )
+
+tests\test_general_contact_q4_s3_refined_patch.py:202: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\anysolver\nonlinear_static.py:7713: in solve_static_nonlinear
+    return solve_static_contact_path(
+src\anysolver\general_contact\static_path.py:1700: in solve_static_contact_path
+    return _run_with_qualified_assembly_runtime_lease(
+src\anysolver\matrix_assembly.py:3651: in _run_with_qualified_assembly_runtime_lease
+    raise scoped_operation_error
+src\anysolver\matrix_assembly.py:3626: in _run_with_qualified_assembly_runtime_lease
+    result = operation(lease)
+             ^^^^^^^^^^^^^^^^
+src\anysolver\general_contact\static_path.py:1698: in operation
+    return _run_with_nonlinear_state_cleanup(run)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\nonlinear_state.py:271: in _run_with_nonlinear_state_cleanup
+    return operation(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def run():
+        with contact_scope(model, definition, settings,
+                           allow_augmented=augmented) as manager:
+            contract = {
+                "schema": "ANYSOLVER_STATIC_RESTART_CONTRACT_V2",
+                "control": "contact_path",
+                "profile": profile,
+                "general_contact": manager.restart_contract(),
+                "program": program.contract(),
+                "num_layers": num_layers,
+                "max_iterations": max_iterations,
+                "tolerance": float(tolerance),
+            }
+            if settings.augmentation_acceleration != "none":
+                contract["augmentation_acceleration"] = settings.augmentation_acceleration
+            if semismooth:
+                contract["enforcement_solver"] = "monolithic_active_set"
+                contract["control_residual_scaling"] = "per_control_waypoint_max_v1"
+            if displacement_only:
+                contract["force_reference_method"] = (
+                    "contact_free_elastic_displacement_v1"
+                )
+            validated = None
+            if restart_checkpoint is not None:
+                validated = validate_nonlinear_checkpoint(
+                    restart_checkpoint, analysis_kind="static", model=model,
+                    analysis_contract=contract, num_layers=num_layers,
+                )
+            model.apply_boundary_conditions()
+            stiffness, _stiffness_info = assemble_stiffness_matrix(model)
+            zeros = np.zeros(model.mesh.dof_manager.total_dofs)
+            _, _, T, u0, _independent, _constraint_info = (
+                build_constraint_transformation(stiffness, zeros, model)
+            )
+            if hasattr(manager, "restrict_tangent_to_reduced_variations"):
+                manager.restrict_tangent_to_reduced_variations(T)
+            controls = np.zeros((len(program.controls), len(zeros)))
+            for index, control in enumerate(program.controls):
+                for node_id, dof_name, weight in control.terms:
+                    if model.mesh.get_node(node_id) is None:
+                        raise ValueError(f"missing contact path node {node_id}")
+                    dof = model.mesh.dof_manager.get_node_dofs(node_id)[
+                        _DOF[dof_name]
+                    ]
+                    controls[index, dof] += weight
+            rows = np.asarray(controls @ T, dtype=float)
+            if np.linalg.matrix_rank(rows) != len(program.controls):
+                raise ValueError("contact path controls are constrained or dependent")
+            if np.any(np.abs(controls @ u0) > 1.0e-12):
+                raise ValueError("contact path requires zero reference control offsets")
+            displacement_force_predictor = None
+            if displacement_only:
+                displacement_force_predictor = (
+                    _elastic_displacement_force_predictor(
+                        stiffness, T, rows, program.waypoints[1:],
+                    )
+                )
+>               if (settings.complementarity_force_scale_n
+                        > displacement_force_predictor*(1.0+1.0e-12)):
+E                       TypeError: '>' not supported between instances of 'NoneType' and 'float'
+
+src\anysolver\general_contact\static_path.py:571: TypeError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_q4_s3_jet2_static_owner.py::test_q4_s3_jet2_static_work_matches_existing_smooth_patch
+FAILED tests/test_general_contact_q4_s3_jet2_static_owner.py::test_q4_s3_jet2_partial_shared_pressure_work[-0.01505-0]
+FAILED tests/test_general_contact_q4_s3_jet2_static_owner.py::test_q4_s3_jet2_partial_shared_pressure_work[-0.01495-1]
+FAILED tests/test_general_contact_q4_s3_jet2_static_owner.py::test_q4_s3_jet2_runs_coupled_static_path_and_restart
+FAILED tests/test_general_contact_q4_s3_refined_patch.py::test_refined_q4_pressure_failure_uses_path_transaction
+5 failed in 15.82s

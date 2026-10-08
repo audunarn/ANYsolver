@@ -1,0 +1,100 @@
+"""Explicit opposite-role shell route through the existing static contributor."""
+from dataclasses import replace
+import numpy as np
+import pytest
+from anysolver import (FEModel, create_shell_element, BoundaryCondition, ContactSurface,
+    ContactInteraction, ContactDefinition, ContactPathControl, ContactPathProgram,
+    validate_general_contact)
+from anysolver.general_contact.s3_patch_static import (
+    GeneralS3PatchManager, S3_Q4_PROJECTED_PENALTY_PROFILE,
+)
+from anysolver.general_contact.s3_q4_swept import s3_q4_affine_lower
+from anysolver.general_contact.static_path import solve_static_contact_path
+from test_general_contact_projected_penalty import _candidate
+
+
+def build():
+    model = FEModel('s3_source_original_q4_target')
+    model.add_material('elastic', 1e5, .3, density=1.)
+    xy = ((.1,.1),(.9,.1),(.9,.9),(.1,.9),(0,0),(1,0),(1,1),(0,1))
+    for n,(x,y) in enumerate(xy,1):
+        model.add_node(n,x,y,.0601 if n<=4 else 0.)
+    for eid,nodes in ((1,(1,2,4)),(2,(2,3,4)),(3,(5,6,7,8))):
+        options = dict(formulation='e4-pl-s3-v2d',reference_surface_offset=.01) if eid<=2 else {}
+        model.add_element(eid,create_shell_element(eid,nodes,'elastic',thickness=.05,
+            reference_normal=(0,0,1),**options))
+    model.add_boundary_condition(BoundaryCondition('source_guides',(1,2,3,4),
+        {name:0. for name in ('uy','rx','ry','rz')}))
+    model.add_boundary_condition(BoundaryCondition('target_guides',(5,6,7,8),
+        {name:0. for name in ('ux','uy','rx','ry','rz')}))
+    for master,nodes,axes in ((1,(2,3,4),(0,2)),(5,(6,7,8),(2,))):
+        for node in nodes:
+            for axis in axes:
+                model.add_constraint_equation(terms=((int(model.mesh.dof_manager.get_node_dofs(node)[axis]),1.),
+                    (int(model.mesh.dof_manager.get_node_dofs(master)[axis]),-1.)),source_id=f'tie_{node}_{axis}')
+    definition = ContactDefinition((ContactSurface('s3',(1,2),'bottom'),ContactSurface('q4',(3,),'top')),
+        (), (ContactInteraction('pair','s3','q4',1e7,5e-5,normal_law='projected_penalty'),))
+    settings = replace(_candidate()[2], general_s3_differentiation='jet2_s3_q4_dev',
+        q4_source_gap_certificate='whole_face',q4_target_weighted_gap_tolerance=1e-12,
+        maximum_q4_target_integration_triangles=128)
+    return model,definition,settings
+
+
+def test_both_body_reaction_shared_pressure_tangent_and_scope():
+    model,definition,settings=build()
+    report=validate_general_contact(model,definition,settings)
+    assert report.valid,report.issues
+    assert report.profile==S3_Q4_PROJECTED_PENALTY_PROFILE
+    manager=GeneralS3PatchManager(model,definition,settings)
+    u=np.zeros(manager.n_dof); direction=np.zeros_like(u)
+    for node in range(1,9):
+        dofs=model.mesh.dof_manager.get_node_dofs(node)
+        if node<=4: u[dofs[2]]=-130e-6
+        direction[dofs[2]]=.03*(node-4.5)
+        direction[dofs[0]]=.002*(node-4)
+    residual,tangent,contact=manager.evaluate(u)
+    np.testing.assert_allclose(contact.integration_force,(0,0,192),atol=1e-8)
+    np.testing.assert_allclose(contact.target_force,(0,0,-192),atol=1e-8)
+    np.testing.assert_allclose(contact.integration_moment,(96,-96,0),atol=1e-8)
+    np.testing.assert_allclose(np.add(contact.integration_moment,contact.target_moment),0,atol=1e-8)
+    assert len(contact.source_pressure_node_ids)==4
+    assert contact.pressure_gram_rank==4
+    for h in (1e-7,3e-8):
+        fd=(manager.evaluate(u+h*direction,tangent=False)[0]-manager.evaluate(u-h*direction,tangent=False)[0])/(2*h)
+        assert np.linalg.norm(fd-tangent@direction)/np.linalg.norm(tangent@direction)<1e-5
+    assert manager.evaluate(np.zeros_like(u),tangent=False)[2].active_pressure_dofs==0
+    assert not validate_general_contact(model,definition,replace(settings,
+        general_s3_differentiation='existing')).valid
+    assert not validate_general_contact(model,definition,replace(settings,
+        q4_source_support_hessian_tolerance=None)).valid
+
+
+def test_all_four_corner_and_original_affine_swept_certificate():
+    a=np.array(((.1,.1,.0251),(.9,.1,.0251),(.1,.9,.0251)))
+    b=np.array(((0.,0.,.025),(1.,0.,.025),(1.,1.,.025),(0.,1.,.025)))
+    end=a+np.array((.02,0,-130e-6))
+    bound=s3_q4_affine_lower(a,end,b,b)
+    assert -30.00001e-6 < bound <= -30e-6
+    # Three corners have positive polarity but the fourth inverts a Q4 corner.
+    bad=b.copy();bad[3,:2]=(2.,.5)
+    assert np.cross(bad[1]-bad[0],bad[2]-bad[0])[2]>0
+    assert s3_q4_affine_lower(a,a,bad,bad)==-np.inf
+    rotated=b.copy();rotated[:,:2]=1.-rotated[:,:2]
+    assert np.isfinite(s3_q4_affine_lower(a,a,rotated,rotated))
+    assert s3_q4_affine_lower(a,a,b,rotated)==-np.inf
+    with pytest.raises(ValueError,match='enclosure'):
+        s3_q4_affine_lower(a,a,b,b,endpoint_errors=(-1.,0.,0.,0.))
+
+
+def test_existing_path_press_slide_open_recontact_and_target_motion():
+    model,definition,settings=build()
+    program=ContactPathProgram(controls=(ContactPathControl.node(1,'uz'),
+        ContactPathControl.node(1,'ux'),ContactPathControl.node(5,'uz')),
+        waypoints=((0.,0.,0.),(-130e-6,0.,0.),(-130e-6,.02,0.),(0.,.02,0.),
+                   (-130e-6,.02,-10e-6)),steps_per_segment=1)
+    result=solve_static_contact_path(model,definition,settings,program,emit_restart_checkpoint=True)
+    assert result.converged,result
+    history=result.contact_history
+    np.testing.assert_allclose([item['integration_force'][2] for item in history],(192,192,0,128),atol=1e-7)
+    assert all(item['gap_tolerance_met'] for item in history)
+    assert result.restart_checkpoint is not None

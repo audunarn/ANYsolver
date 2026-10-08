@@ -1,0 +1,310 @@
+{
+  "method": "development partial-width source-only y-resolution screen, nx=4; not a coupled or accepted result",
+  "cases": [
+    {
+      "nx": 4,
+      "ny": 1,
+      "pressure_nx": 4,
+      "obstacle_y_right": 0.9,
+      "pressure_knots": null,
+      "comparison_x_bins": 4,
+      "pressure_modes": 10,
+      "unsupported_pressure_modes": 0,
+      "active_modes": 4,
+      "active_scaled_compliance_minimum_eigenvalue": 0.012698673253662097,
+      "active_scaled_compliance_condition": 295.48602992667816,
+      "integrated_reaction_n": 0.10359422237151497,
+      "minimum_weak_gap_m": 0.0,
+      "minimum_represented_gap_m": -6.061135371179403e-07,
+      "equilibrium_residual_n": 1.0045307195726161e-16,
+      "pressure_qp": {
+        "preliminary_optimizer_success": true,
+        "preliminary_optimizer_message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "active_set_iterations": 1,
+        "minimum_pressure_pa": 0.0,
+        "minimum_gap_m": 0.0,
+        "active_stationarity_gap_m": 0.0,
+        "inactive_minimum_gap_m": 3.848362445414837e-06,
+        "maximum_complementarity_pa_m": 0.0,
+        "certificate_passed": true
+      },
+      "pressure_grid_pa": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.1525025193147378,
+          0.3088866494980175
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.32194976299780764,
+          0.6520940378291026
+        ]
+      ],
+      "line_pressure_n_per_m": [
+        0.0,
+        0.0,
+        0.0,
+        0.2058784010749073,
+        0.4169969768223052
+      ],
+      "x_force_n": [
+        0.0,
+        0.0,
+        0.02573480013436341,
+        0.07785942223715156
+      ]
+    },
+    {
+      "nx": 4,
+      "ny": 2,
+      "pressure_nx": 4,
+      "obstacle_y_right": 0.9,
+      "pressure_knots": null,
+      "comparison_x_bins": 4,
+      "pressure_modes": 15,
+      "unsupported_pressure_modes": 0,
+      "active_modes": 6,
+      "active_scaled_compliance_minimum_eigenvalue": 0.010541255044057167,
+      "active_scaled_compliance_condition": 483.392589044468,
+      "integrated_reaction_n": 0.10359422237151479,
+      "minimum_weak_gap_m": -6.776263578034403e-21,
+      "minimum_represented_gap_m": -6.0611353711792e-07,
+      "equilibrium_residual_n": 6.936725160643159e-17,
+      "pressure_qp": {
+        "preliminary_optimizer_success": true,
+        "preliminary_optimizer_message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "active_set_iterations": 1,
+        "minimum_pressure_pa": 0.0,
+        "minimum_gap_m": -6.776263578034403e-21,
+        "active_stationarity_gap_m": 6.776263578034403e-21,
+        "inactive_minimum_gap_m": 3.8483624454148466e-06,
+        "maximum_complementarity_pa_m": 3.257382755192883e-21,
+        "certificate_passed": true
+      },
+      "pressure_grid_pa": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.23733204568357452,
+          0.48070484828126403
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.14297111185757488,
+          0.2895812339043784
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.4780596552737602,
+          0.968287250867768
+        ]
+      ],
+      "line_pressure_n_per_m": [
+        0.0,
+        0.0,
+        0.0,
+        0.20587840107490696,
+        0.41699697682230435
+      ],
+      "x_force_n": [
+        0.0,
+        0.0,
+        0.02573480013436337,
+        0.07785942223715142
+      ]
+    },
+    {
+      "nx": 4,
+      "ny": 4,
+      "pressure_nx": 4,
+      "obstacle_y_right": 0.9,
+      "pressure_knots": null,
+      "comparison_x_bins": 4,
+      "pressure_modes": 25,
+      "unsupported_pressure_modes": 0,
+      "active_modes": 10,
+      "active_scaled_compliance_minimum_eigenvalue": 0.005632971691724719,
+      "active_scaled_compliance_condition": 1366.5327615914325,
+      "integrated_reaction_n": 0.103594222371515,
+      "minimum_weak_gap_m": 0.0,
+      "minimum_represented_gap_m": -6.061135371179471e-07,
+      "equilibrium_residual_n": 1.1937848764174007e-16,
+      "pressure_qp": {
+        "preliminary_optimizer_success": true,
+        "preliminary_optimizer_message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "active_set_iterations": 1,
+        "minimum_pressure_pa": 0.0,
+        "minimum_gap_m": 0.0,
+        "active_stationarity_gap_m": 7.365503889167827e-21,
+        "inactive_minimum_gap_m": 3.848362445414841e-06,
+        "maximum_complementarity_pa_m": 2.9248281428998815e-21,
+        "certificate_passed": true
+      },
+      "pressure_grid_pa": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.21310220462140153,
+          0.4316284496932584
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.19143079398192847,
+          0.3877340310803883
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.25644502590033613,
+          0.519417286918996
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.018059508866187183,
+          0.036578682177440626
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.4026218552765273,
+          2.8409443157775307
+        ]
+      ],
+      "line_pressure_n_per_m": [
+        0.0,
+        0.0,
+        0.0,
+        0.20587840107490815,
+        0.4169969768223037
+      ],
+      "x_force_n": [
+        0.0,
+        0.0,
+        0.02573480013436352,
+        0.07785942223715148
+      ]
+    },
+    {
+      "nx": 4,
+      "ny": 8,
+      "pressure_nx": 4,
+      "obstacle_y_right": 0.9,
+      "pressure_knots": null,
+      "comparison_x_bins": 4,
+      "pressure_modes": 45,
+      "unsupported_pressure_modes": 0,
+      "active_modes": 16,
+      "active_scaled_compliance_minimum_eigenvalue": 0.007678303696422585,
+      "active_scaled_compliance_condition": 1525.5931854221603,
+      "integrated_reaction_n": 0.10355861746491432,
+      "minimum_weak_gap_m": -6.776263578034401e-21,
+      "minimum_represented_gap_m": -6.394765520350079e-07,
+      "equilibrium_residual_n": 2.5697909037088365e-16,
+      "pressure_qp": {
+        "preliminary_optimizer_success": true,
+        "preliminary_optimizer_message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "active_set_iterations": 1,
+        "minimum_pressure_pa": 0.0,
+        "minimum_gap_m": -6.776263578034401e-21,
+        "active_stationarity_gap_m": 6.776263578034403e-21,
+        "inactive_minimum_gap_m": 4.2671403155717086e-08,
+        "maximum_complementarity_pa_m": 3.2654372794021247e-21,
+        "certificate_passed": true
+      },
+      "pressure_grid_pa": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.2058188777810328,
+          0.41681730368611813
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.20606366594276318,
+          0.41721046813669527
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.20556903799612097,
+          0.41633984122685663
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.20687206984348017,
+          0.4182461247895892
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.20464621270623076,
+          0.4150184457468436
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.20497166501095276,
+          0.4110889065230616
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.23739795285153767,
+          0.4818934862550512
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          14.391638648696455,
+          27.350998040114796
+        ]
+      ],
+      "line_pressure_n_per_m": [
+        0.0,
+        0.0,
+        0.0,
+        0.20703285202694144,
+        0.4144032356654317
+      ],
+      "x_force_n": [
+        0.0,
+        0.0,
+        0.02587910650336768,
+        0.07767951096154664
+      ]
+    }
+  ]
+}

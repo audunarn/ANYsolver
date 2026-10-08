@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 9.260017200009315,
+  "peak_process_tree_memory_mb": 80.797696,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "build",
+    "--wheel",
+    "--no-isolation",
+    "--outdir",
+    "C:\\ANYworkspaceWork\\general-contact-standalone-d602bba5\\wheel"
+  ],
+  "log": "docs\\d1_review_support\\d1_installed_d602_wheel_build.log"
+}

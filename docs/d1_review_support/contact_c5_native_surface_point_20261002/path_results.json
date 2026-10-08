@@ -1,0 +1,54 @@
+{
+  "kind": "development; not engineering acceptance",
+  "runs": [
+    {
+      "run": "contact-native-material-path-20261002",
+      "resource_path": "C:\\ANYworkspaceWork\\contact-native-material-path-20261002\\anysolver-portable-ci-7owbi844\\P01\\resource.json",
+      "resource": {
+        "peak_sampled_bytes": 171732992,
+        "limit_mib": 953,
+        "elapsed_seconds": 5.077990000019781,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      }
+    },
+    {
+      "run": "contact-native-material-path-ownership-20261002",
+      "resource_path": "C:\\ANYworkspaceWork\\contact-native-material-path-ownership-20261002\\anysolver-portable-ci-khv0hoj7\\P01\\resource.json",
+      "resource": {
+        "peak_sampled_bytes": 173346816,
+        "limit_mib": 953,
+        "elapsed_seconds": 4.9499855999602005,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      }
+    },
+    {
+      "run": "contact-native-material-path-moving-20261002",
+      "resource_path": "C:\\ANYworkspaceWork\\contact-native-material-path-moving-20261002\\anysolver-portable-ci-vay5lbo0\\P01\\resource.json",
+      "resource": {
+        "peak_sampled_bytes": 173129728,
+        "limit_mib": 953,
+        "elapsed_seconds": 4.744718200003263,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      }
+    }
+  ],
+  "source_hashes": [
+    {
+      "Path": "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\src\\anysolver\\general_contact\\native_surface_path.py",
+      "Hash": "C92EE4B592A4D315DB514D4BD64EE6390B3EA9572CF4A64182727F7C3ADE0C7F"
+    },
+    {
+      "Path": "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\tests\\test_general_contact_native_surface_path.py",
+      "Hash": "00E8F0F7F584020993B33D18F352B897E69C843C539325094BC571FF9F06D6D3"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "status": "captured",
+  "solver_status": "stopped_at_limit",
+  "failure_reason": "maximum_augmentations_reached",
+  "accepted_steps": 2,
+  "schur_calls": 2,
+  "fraction": 0.75,
+  "active_indices": [
+    28,
+    29
+  ],
+  "predicted_active_indices": [
+    28
+  ],
+  "actual_active_indices": [
+    28
+  ],
+  "overlap_signature_matches": true,
+  "maximum_gap_response_error_m": 9.581685293476495e-08,
+  "predicted_projected_residual_pa": 0.0007311184603225767,
+  "actual_projected_residual_pa": 0.0007311184603225767,
+  "elapsed_seconds": 118.09948490001261
+}

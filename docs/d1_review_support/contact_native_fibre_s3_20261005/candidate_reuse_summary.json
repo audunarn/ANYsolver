@@ -1,0 +1,118 @@
+{
+  "disposition": "11 installed development controls pass; local three-use reduction only; both4e7 coupled attempts resource NONPASS; no acceptance/release/full-route saving",
+  "jobs": {
+    "installed_candidate_reuse_contracts": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 80.25665330002084,
+      "peak_bytes": 186097664
+    },
+    "candidate_contact_reuse_controls": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 27.86845120007638,
+      "peak_bytes": 181661696
+    },
+    "candidate_contact_reuse_repaired": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 23.759444300085306,
+      "peak_bytes": 187944960
+    },
+    "candidate_contact_reuse_admissible_controls": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 34.73185940005351,
+      "peak_bytes": 181649408
+    },
+    "BUILD2": {
+      "status": "completed",
+      "returncode": 2,
+      "elapsed_s": 36.081191100063734,
+      "peak_bytes": 361598976
+    },
+    "candidate_reuse_wheel_build": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 8.479829900083132,
+      "peak_bytes": 109461504
+    },
+    "installed_seeded_enforcement_k4e7": {
+      "status": "timeout",
+      "returncode": 15,
+      "elapsed_s": 120.08340749994386,
+      "peak_bytes": 184418304
+    },
+    "candidate_reuse_wheel_install": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 3.402625000104308,
+      "peak_bytes": 76021760
+    },
+    "INSTALL2": {
+      "status": "completed",
+      "returncode": 2,
+      "elapsed_s": 20.896964900079183,
+      "peak_bytes": 361734144
+    },
+    "installed_candidate_reuse_timing": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 25.471060000010766,
+      "peak_bytes": 177377280
+    },
+    "installed_seeded_enforcement_k4e7_candidate_reuse": {
+      "status": "timeout",
+      "returncode": 15,
+      "elapsed_s": 120.05462150007952,
+      "peak_bytes": 182210560
+    }
+  },
+  "review": "Supporting same-family Read found CSR buffer-rebinding hazard; integrity guard/tests resolve counterexample; no consequential remaining finding, no independent acceptance",
+  "installed_import_count": 220,
+  "raw_root": "C:/ANYworkspaceWork/contact_native_fibre_s3_20261005/candidate08",
+  "wheel_sha256": "681ee5c5a486ba63e08344ffc79d9011bc1ba1205cc3f1c5b5954ee27b31a012",
+  "source_hashes": {
+    "src/anysolver/general_contact/native_shell_static_driver.py": "420bd4cc7e3de3389f5c401aec7010cbdd51b6ac691cf367c02597c6a608e30d",
+    "docs/d1_review_support/contact_native_fibre_s3_20261005/candidate_reuse_timing.py": "fa419637243e856b5465b885f81cb5da4c5087239a2c034fe75c4ee71287a6dc",
+    "tests/test_general_contact_native_fibre_enforcement.py": "69dc9bd504655629d71a05c4f8a0a64d16dd5651ce906020807a1b27a2ec02c4",
+    "tests/test_general_contact_native_candidate_reuse.py": "85ec0c073ec2b6b2da516b7535255e50327ee559b3d9c02244a41c8cf17d07a1",
+    "src/anysolver/general_contact/native_multi_s3_static.py": "382a26292a849a86181c1b4597468225c10a8c28077830d0bb6864a0a26b8432"
+  },
+  "installed_import_errors": [],
+  "parent_head": "744b8162",
+  "timing": {
+    "scope": "three-use saved-pose admission/assembly pattern; no complete solve speedup claim",
+    "runs": [
+      {
+        "reuse": false,
+        "elapsed_s": 7.660494999960065,
+        "pair_evaluations": 3,
+        "hits": 0
+      },
+      {
+        "reuse": true,
+        "elapsed_s": 2.64658950001467,
+        "pair_evaluations": 1,
+        "hits": 2
+      },
+      {
+        "reuse": true,
+        "elapsed_s": 2.6329109999351203,
+        "pair_evaluations": 1,
+        "hits": 2
+      },
+      {
+        "reuse": false,
+        "elapsed_s": 7.898479799972847,
+        "pair_evaluations": 3,
+        "hits": 0
+      }
+    ],
+    "median_s": {
+      "False": 7.779487399966456,
+      "True": 2.6397502499748953
+    },
+    "relative_time_reduction": 0.6606781251440452
+  }
+}

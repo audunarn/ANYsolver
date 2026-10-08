@@ -1,0 +1,1 @@
+{"profile": "Q4_S3_PATCH_REFINED_OVERLAP_LOCAL_AUGMENTED_STATIC_DEV_V0", "status": "stopped_at_limit", "failure_reason": "contact_semismooth_backtracking_failed", "accepted_steps": 1, "elapsed_seconds": 59.14643110000179}

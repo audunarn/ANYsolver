@@ -1,0 +1,24 @@
+{
+  "case_id": "general_contact_d1_distributed_restart_v1",
+  "status": "pass",
+  "registration_sha256": "fb43bda30e18315957b83d15a1a6850117d732112f4d1fb111c9a7e2ad14fa30",
+  "reference_sha256": "f4a3942b2bf3c0112f4774b6593464a80c8da479582b586eff7962570f935815",
+  "report_sha256": "7e565d6870586a3f337ba68c2852561d8fc302754c4cb7194977e99985e93d35",
+  "checks": {
+    "reference_hash": true,
+    "probe_blob": true,
+    "reference_identity": true,
+    "step_records": true,
+    "prefix_steps": true,
+    "resumed_steps": true,
+    "all_active_nodes_match": true,
+    "all_gap_and_pressure_gates_met": true,
+    "maximum_force_difference_n": true,
+    "maximum_gap_difference_m": true,
+    "maximum_multiplier_change_difference_pa": true,
+    "final_displacement_difference_m": true,
+    "final_pressure_difference_pa": true,
+    "all_step_wrenches": true
+  },
+  "independent_review": "pending"
+}

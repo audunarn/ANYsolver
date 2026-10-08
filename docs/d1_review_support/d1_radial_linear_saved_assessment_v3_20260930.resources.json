@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 5.157113699999172,
+  "peak_process_tree_memory_mb": 203.513856,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "docs.d1_review_support.d1_radial_linear_saved_assessment",
+    "docs/d1_review_support/d1_radial_linear_nonmatching_v3_20260930.json",
+    "docs/d1_review_support/d1_radial_linear_saved_assessment_v3_20260930.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_radial_linear_saved_assessment_v3_20260930.log"
+}

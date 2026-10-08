@@ -1,0 +1,24 @@
+..................F..                                                    [100%]
+================================== FAILURES ===================================
+_____ test_module_getattribute_descriptor_is_rejected_without_observation _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C033D965D0>
+
+    def test_module_getattribute_descriptor_is_rejected_without_observation(monkeypatch):
+        from types import ModuleType
+        from anysolver import nonlinear_restart as restart
+        observed = []
+        class Descriptor:
+            def __get__(self, instance, owner):
+                observed.append(True)
+                return ModuleType.__getattribute__
+        class CustomModule(ModuleType):
+            __getattribute__ = Descriptor()
+        proxy = CustomModule("numpy_proxy")
+>       monkeypatch.setattr(restart, "np", proxy)
+E       TypeError: descriptor '__getattribute__' requires a 'module' object but received a 'str'
+
+tests\test_nonlinear_checkpoint_guarded_normalization.py:247: TypeError
+=========================== short test summary info ===========================
+FAILED tests/test_nonlinear_checkpoint_guarded_normalization.py::test_module_getattribute_descriptor_is_rejected_without_observation
+1 failed, 20 passed in 16.80s

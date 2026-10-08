@@ -1,0 +1,12 @@
+{
+  "anysolver_module": "C:\\ANYworkspaceWork\\general-contact-partial-swept-dev\\target\\anysolver\\__init__.py",
+  "anysolver_file_sha256": "677237ea706773bfa0e511c77e368f37f55a3289b073a872437909be51d82ebe",
+  "script": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\examples\\general_contact_partial_shell_cycle.py",
+  "script_sha256": "7844a2df15bbb184b9de42f8968087bf9f41eccb09a4b118af375cf5f21bb3fa",
+  "python_executable": "C:\\Python\\Python314\\python.exe",
+  "python_version": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1",
+  "pythonpath": "C:/ANYworkspaceWork/general-contact-partial-swept-dev/target",
+  "wrapper_sha256": "843dc2e36904c8d587ab4840aa16d287300134c70ed6c689e24016a45ed1cec5"
+}

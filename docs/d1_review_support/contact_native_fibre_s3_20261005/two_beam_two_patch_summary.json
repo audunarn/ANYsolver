@@ -1,0 +1,100 @@
+{
+  "scope": "two curved physical-fibre beams / two connected deformable S3 interiors; development-tested, no native engineering acceptance",
+  "source_parent": "3692f237",
+  "core_wheel_sha256": "51f988cf3be490af2498fc8a4009e51316a637a99ba3bebc513a9192deb0da30",
+  "source_hashes": {
+    "examples\\general_contact_native_curved_material_s3.py": "70cb58ede7c4c41b2408da541a1a77dc8671f2e8979a1c5c437f7d9f0bb8a346",
+    "tests\\test_general_contact_native_two_fibre_s3.py": "e1cc0db04b02387efbbde05d11ed2b8c0cce9a55403ce743e02f3284141f4fae",
+    "tests\\data\\general_contact_native_fibre_s3_plastic_two_beams_two_patches_v1.checkpoint": "38263a956e22496693d968c8c3b6a59f91120c94d4a9e412c4624919814bb28b"
+  },
+  "runs": {
+    "installed_two_beam_two_patch_local": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 18.6484361999901,
+        "peak_bytes": 185274368
+      },
+      "import_count": 218,
+      "import_errors": [],
+      "actual_result.json-two-beam-local.json": {
+        "count": 84,
+        "shared_target": 92,
+        "two_facets": true,
+        "directional_errors": [
+          1.6703433225434e-08,
+          4.152038881419835e-09
+        ],
+        "independent_virtual_work_errors": [
+          8.736615474592352e-08,
+          2.2093898373248694e-08
+        ]
+      }
+    },
+    "installed_two_beam_two_patch_actual": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 78.66206420003437,
+        "peak_bytes": 184262656
+      },
+      "import_count": 219,
+      "import_errors": [],
+      "actual_result.json-two-beam.json": {
+        "status": "completed",
+        "failure": null,
+        "completed": 1,
+        "two_facets": true,
+        "candidates": 46,
+        "pair_evaluations": 76,
+        "reuse_hits": 27,
+        "trial_failures": [],
+        "material": {
+          "yielded": 16,
+          "dissipation_j": 3.668612150560096e-09
+        },
+        "equilibrium": [
+          2.205365215488033e-14,
+          8.85915443970981e-17,
+          1.2866010340450984e-14
+        ],
+        "checkpoint_sha256": "38263a956e22496693d968c8c3b6a59f91120c94d4a9e412c4624919814bb28b",
+        "pair_force_z": [
+          0.0,
+          0.005368080076358492,
+          0.0,
+          0.003201179048063231
+        ]
+      }
+    },
+    "installed_four_pair_saved_recovery": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 4.845883000059985,
+        "peak_bytes": 186355712
+      },
+      "import_count": 220,
+      "import_errors": [],
+      "actual_result.json-two-beam-recovery.json": {
+        "independent_gap_m": [
+          0.00011233491217265344,
+          -6.264237385767597e-06,
+          0.00010824301119722643,
+          -4.5440353969855196e-06
+        ],
+        "normalized_force_balance": 3.690407354717348e-12,
+        "normalized_moment_balance": 2.7750255389898226e-12,
+        "checkpoint_sha256": "38263a956e22496693d968c8c3b6a59f91120c94d4a9e412c4624919814bb28b",
+        "element_ids": [
+          1,
+          2
+        ],
+        "two_facets": true
+      }
+    }
+  },
+  "review": "Same-family supporting delta review: no consequential defect found; negative/positive-cell oracle and beam_indices mapping checked. Mistral cached unavailable, no new probe.",
+  "limits": "120 seconds/953 MiB per native process/owner, including idle, no clock reset. Stiffness8e7, gap30um, work1e-10J/1e-8N/1e-6 scaled tangent,64intervals unchanged.",
+  "scope_boundary": "Accepted four-pair fixture has left patches open, right patches active. Not simultaneous four-pair pressure, spatial convergence or engineering acceptance."
+}

@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 54.26158160000341,
+  "peak_process_tree_memory_mb": 197.67296,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "scripts.general_contact_d1_interior_press_dev",
+    "docs/d1_review_support/d1_radial_saved_swept_profile_v7_20260930.json",
+    "--radial-swept-profile",
+    "docs/d1_review_support/d1_radial_linear_nonmatching_v3_20260930.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_radial_saved_swept_profile_v7_20260930.log"
+}

@@ -1,0 +1,43 @@
+Mon Sep 28 10:22:59 2026    reports/general_contact_d1_candidate_4x8_cprofile_dev_20260928.prof
+
+         27908124 function calls (27542983 primitive calls) in 22.133 seconds
+
+   Ordered by: cumulative time
+   List reduced from 7028 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+   1770/1    0.205    0.000   22.144   22.144 {built-in method builtins.exec}
+        1    0.000    0.000   22.144   22.144 <frozen runpy>:201(run_module)
+        1    0.000    0.000   22.141   22.141 <frozen runpy>:65(_run_code)
+        1    0.000    0.000   22.141   22.141 general_contact_d1_profile_coupled.py:1(<module>)
+        1    0.000    0.000   20.282   20.282 general_contact_d1_profile_coupled.py:27(main)
+     47/1    0.001    0.000   16.437   16.437 general_contact_d1_profile_coupled.py:38(measured)
+        1    0.000    0.000   16.437   16.437 s3_patch_static.py:515(evaluate)
+        1    0.000    0.000   14.428   14.428 s3_patch_augmented.py:344(work)
+        1    0.001    0.001   14.428   14.428 s3_patch_augmented.py:655(_work_unresolved)
+        1    0.008    0.008   14.360   14.360 s3_patch_augmented.py:839(_jet2_s3_work)
+       42    0.001    0.000   14.338    0.341 q4_s3_overlap_derivatives.py:493(q4_s3_overlap_derivatives)
+       42    0.008    0.000   14.336    0.341 q4_s3_overlap_derivatives.py:280(_evaluate)
+       84    0.013    0.000   14.103    0.168 q4_s3_overlap_derivatives.py:385(integrate)
+      420    0.200    0.000   14.049    0.033 q4_s3_overlap_derivatives.py:348(rule)
+   595662    5.089    0.000    9.742    0.000 _ge_beam3_mixed_ad.py:53(__mul__)
+    92148    0.059    0.000    6.987    0.000 q4_s3_overlap_derivatives.py:62(_sum)
+   110762    0.340    0.000    6.772    0.000 {built-in method builtins.sum}
+     2940    0.090    0.000    6.599    0.002 q4_s3_overlap_derivatives.py:197(_natural)
+      117    0.003    0.000    4.482    0.038 __init__.py:1(<module>)
+  1233372    3.711    0.000    4.395    0.000 numeric.py:909(outer)
+        1    0.000    0.000    3.830    3.830 s3_patch_static.py:394(__init__)
+      192    0.010    0.000    3.522    0.018 q4_source_overlap.py:255(q4_source_overlap_integrals)
+    20580    0.053    0.000    3.493    0.000 q4_s3_overlap_derivatives.py:193(_map_xy)
+        2    0.000    0.000    3.257    1.629 s3_patch_mortar_energy.py:70(__init__)
+      252    0.006    0.000    3.098    0.012 q4_source_overlap.py:339(integrate)
+     9324    0.228    0.000    3.095    0.000 q4_source_overlap.py:299(sample)
+     1260    0.029    0.000    3.088    0.002 q4_source_overlap.py:323(rule)
+   205800    0.075    0.000    2.776    0.000 q4_s3_overlap_derivatives.py:194(<genexpr>)
+    57475    0.814    0.000    2.263    0.000 numeric.py:1567(cross)
+      130    0.000    0.000    2.215    0.017 s3_patch_mortar_energy.py:164(<genexpr>)
+      128    0.001    0.000    2.215    0.017 q4_source_mortar_energy.py:48(__init__)
+    18648    0.014    0.000    1.959    0.000 overlap.py:61(shape_values)
+    18648    0.426    0.000    1.945    0.000 overlap.py:66(shape_values_and_gradient)
+        1    0.000    0.000    1.914    1.914 s3_patch_augmented.py:325(prepare_work_state)
+        1    0.000    0.000    1.914    1.914 s3_patch_augmented.py:319(evaluate)

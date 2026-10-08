@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "C:\Users\AudunArnesenNyhus\.codex\worktrees\general-contact-native-dynamics\ANYsolver\docs\d1_review_support\contact_development_check.py", line 20, in <module>
+    raise RuntimeError(f"development check environment mismatch: {key}")
+RuntimeError: development check environment mismatch: NATIVE_DYNAMIC_RESTART_RAW_OUTPUT

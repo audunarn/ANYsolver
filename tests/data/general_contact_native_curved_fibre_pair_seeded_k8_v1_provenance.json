@@ -1,0 +1,36 @@
+{
+  "scope": "Installed development enforcement comparison; no native engineering acceptance or release",
+  "baseline_head": "e62ce2be",
+  "wheel_sha256": "b9b5aadc8def43e7408d4e86c465a89b71e5f009967e701fce12690efcbf2c2a",
+  "source_static_sha256": "411a150bf81ed7a3e5561dcafe876c0e6d4468ff619a39e5ff0a6b6008057474",
+  "checkpoint_sha256": "4b3766ad9dfc1dfecd46bda9b321b0aa9f842223b6e5115fb7083f936f39d7d5",
+  "resource": {
+    "status": "completed",
+    "returncode": 0,
+    "elapsed_s": 74.67997980001383,
+    "peak_bytes": 200192000
+  },
+  "comparison": {
+    "scope": "fixed-discretization development enforcement comparison only",
+    "reference_checkpoint_sha256": "a1d72a795421b1d7351d9bcbcfb06faa55c7fe1a3a732a204bd92c27de879086",
+    "current_checkpoint_sha256": "4b3766ad9dfc1dfecd46bda9b321b0aa9f842223b6e5115fb7083f936f39d7d5",
+    "initialization": "disposable frozen mechanical trial; virgin physical history",
+    "stiffnesses_n_per_m2": [
+      4000.0,
+      8000.0
+    ],
+    "response_target": 0.02,
+    "gaps_m": [
+      -1.943226776410486E-05,
+      -1.3602236061436836E-05
+    ],
+    "errors": {
+      "force_a_n": 0.0010592467484123861,
+      "moment_a_nm": 0.0002836746925264089,
+      "beam_a_tip": 0.0008018025829059094,
+      "beam_b_tip": 0.0006251863811555196
+    }
+  },
+  "raw_evidence": "C:/ANYworkspaceWork/contact_native_fibre_s3_20261005/candidate25/installed_seeded_curved_normal_refinement",
+  "remaining": "Spatial/section breadth, lifecycle and independent native engineering acceptance; full C0-C9"
+}

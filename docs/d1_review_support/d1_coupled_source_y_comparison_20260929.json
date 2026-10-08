@@ -1,0 +1,90 @@
+{
+  "cases": [
+    {
+      "saved_pose": "docs\\d1_review_support\\d1_pressure_family_8x8_20260929.json",
+      "source_rows": 8,
+      "source_sample_xy_m": [
+        [
+          0.6,
+          0.6
+        ],
+        [
+          0.6,
+          0.7
+        ],
+        [
+          0.6,
+          0.9
+        ]
+      ],
+      "production_source_vertical_displacement_m": [
+        -0.00022930453242312281,
+        -0.0002152111721344744,
+        -0.00013211338697600314
+      ],
+      "oracle_source_vertical_displacement_m": [
+        -0.00022930904474040387,
+        -0.000215215399381132,
+        -0.00013211605527253491
+      ],
+      "relative_source_displacement_difference": [
+        1.967788617393345e-05,
+        1.9641933940347175e-05,
+        2.0196610671390714e-05
+      ],
+      "production_active_node_ids": [
+        40
+      ],
+      "oracle_active_node_ids": [
+        40
+      ],
+      "production_integrated_normal_force_n": 0.0031527152997965916,
+      "oracle_integrated_normal_force_n": 0.003152679928683261,
+      "relative_integrated_force_difference": 1.1219379743750094e-05
+    },
+    {
+      "saved_pose": "docs\\d1_review_support\\d1_coupled_source_y16_20260929.json",
+      "source_rows": 16,
+      "source_sample_xy_m": [
+        [
+          0.6,
+          0.6
+        ],
+        [
+          0.6,
+          0.7
+        ],
+        [
+          0.6,
+          0.9
+        ]
+      ],
+      "production_source_vertical_displacement_m": [
+        -0.00022532805189621514,
+        -0.00021278348175855427,
+        -0.00013161221965675326
+      ],
+      "oracle_source_vertical_displacement_m": [
+        -0.0002253325636527477,
+        -0.0002127879275531385,
+        -0.0001316151514401536
+      ],
+      "relative_source_displacement_difference": [
+        2.002265655447717e-05,
+        2.0893077137168507e-05,
+        2.2275424738363e-05
+      ],
+      "production_active_node_ids": [
+        76,
+        85
+      ],
+      "oracle_active_node_ids": [
+        76,
+        85
+      ],
+      "production_integrated_normal_force_n": 0.0032038992488294255,
+      "oracle_integrated_normal_force_n": 0.00320384474502702,
+      "relative_integrated_force_difference": 1.7011998627578942e-05
+    }
+  ]
+}

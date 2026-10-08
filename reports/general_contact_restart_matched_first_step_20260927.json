@@ -1,0 +1,382 @@
+{
+  "source_case": "tests/test_general_contact_force_augmented.py:_loaded_patch",
+  "matched_first_step": true,
+  "elapsed_seconds": 123.00645800001803,
+  "settings": {
+    "pressure_tolerance_pa": 0.02,
+    "maximum_augmentations": 6,
+    "normal_stiffness": 1000.0
+  },
+  "full": {
+    "status": "completed",
+    "failure_reason": null,
+    "accepted_steps": 2,
+    "load_factor": 1.0,
+    "displacements": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.8090976910986782e-05,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -4.839071733375757e-05,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "augmentation_history": [
+      {
+        "load_factor": 0.5,
+        "augmentation_iterations": 3,
+        "normal_multiplier_change": 0.01449586584315321,
+        "contact": {
+          "profile": "S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1",
+          "minimum_gap": -3.8183639824814526e-05,
+          "gap_tolerance_met": true,
+          "active_pressure_dofs": 3,
+          "integration_force": [
+            2.1754254114498545e-07,
+            4.563242412892499e-07,
+            0.016853342433095927
+          ],
+          "target_force": [
+            -2.1754254053001705e-07,
+            -4.5632424128687087e-07,
+            -0.01685334243846849
+          ],
+          "integration_moment": [
+            0.011816075197444587,
+            -0.011491228441353583,
+            1.2979577887225814e-07
+          ],
+          "target_moment": [
+            -0.01181607520474483,
+            0.01149122844854781,
+            -1.2979577967508465e-07
+          ]
+        }
+      },
+      {
+        "load_factor": 1.0,
+        "augmentation_iterations": 4,
+        "normal_multiplier_change": 0.013928993779518506,
+        "contact": {
+          "profile": "S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1",
+          "minimum_gap": -3.6903476082411757e-05,
+          "gap_tolerance_met": true,
+          "active_pressure_dofs": 3,
+          "integration_force": [
+            4.5049791677419926e-07,
+            9.60777206132778e-07,
+            0.0333454210499836
+          ],
+          "target_force": [
+            -4.5049791428470045e-07,
+            -9.607772063232886e-07,
+            -0.03334542106251351
+          ],
+          "integration_moment": [
+            0.02421141582821698,
+            -0.02314867672176338,
+            2.894062020427327e-07
+          ],
+          "target_moment": [
+            -0.0242114158447954,
+            0.023148676737994138,
+            -2.8940620234003935e-07
+          ]
+        }
+      }
+    ],
+    "pressure_pa": [
+      0.0,
+      0.01797278164082067,
+      0.22316675359605018,
+      0.033867177242344684
+    ],
+    "active_pressure_dofs": 3,
+    "minimum_gap_m": -3.6903476082411757e-05,
+    "contact_force_n": [
+      4.5049791677419926e-07,
+      9.60777206132778e-07,
+      0.0333454210499836
+    ],
+    "has_checkpoint": true
+  },
+  "half": {
+    "status": "completed",
+    "failure_reason": null,
+    "accepted_steps": 1,
+    "load_factor": 0.5,
+    "displacements": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.8383816135564037e-05,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -5.002752693029908e-05,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "augmentation_history": [
+      {
+        "load_factor": 0.5,
+        "augmentation_iterations": 3,
+        "normal_multiplier_change": 0.01449586584315321,
+        "contact": {
+          "profile": "S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1",
+          "minimum_gap": -3.8183639824814526e-05,
+          "gap_tolerance_met": true,
+          "active_pressure_dofs": 3,
+          "integration_force": [
+            2.1754254114498545e-07,
+            4.563242412892499e-07,
+            0.016853342433095927
+          ],
+          "target_force": [
+            -2.1754254053001705e-07,
+            -4.5632424128687087e-07,
+            -0.01685334243846849
+          ],
+          "integration_moment": [
+            0.011816075197444587,
+            -0.011491228441353583,
+            1.2979577887225814e-07
+          ],
+          "target_moment": [
+            -0.01181607520474483,
+            0.01149122844854781,
+            -1.2979577967508465e-07
+          ]
+        }
+      }
+    ],
+    "pressure_pa": [
+      0.0,
+      0.015560985377177358,
+      0.08919901787229421,
+      0.017901980006746112
+    ],
+    "active_pressure_dofs": 3,
+    "minimum_gap_m": -3.8183639824814526e-05,
+    "contact_force_n": [
+      2.1754254114498545e-07,
+      4.563242412892499e-07,
+      0.016853342433095927
+    ],
+    "has_checkpoint": true
+  },
+  "resumed": {
+    "status": "completed",
+    "failure_reason": null,
+    "accepted_steps": 2,
+    "load_factor": 1.0,
+    "displacements": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.8090976910986782e-05,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -4.839071733375757e-05,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "augmentation_history": [
+      {
+        "load_factor": 0.5,
+        "augmentation_iterations": 3,
+        "normal_multiplier_change": 0.01449586584315321,
+        "contact": {
+          "profile": "S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1",
+          "minimum_gap": -3.8183639824814526e-05,
+          "gap_tolerance_met": true,
+          "active_pressure_dofs": 3,
+          "integration_force": [
+            2.1754254114498545e-07,
+            4.563242412892499e-07,
+            0.016853342433095927
+          ],
+          "target_force": [
+            -2.1754254053001705e-07,
+            -4.5632424128687087e-07,
+            -0.01685334243846849
+          ],
+          "integration_moment": [
+            0.011816075197444587,
+            -0.011491228441353583,
+            1.2979577887225814e-07
+          ],
+          "target_moment": [
+            -0.01181607520474483,
+            0.01149122844854781,
+            -1.2979577967508465e-07
+          ]
+        }
+      },
+      {
+        "load_factor": 1.0,
+        "augmentation_iterations": 4,
+        "normal_multiplier_change": 0.013928993779518506,
+        "contact": {
+          "profile": "S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1",
+          "minimum_gap": -3.6903476082411757e-05,
+          "gap_tolerance_met": true,
+          "active_pressure_dofs": 3,
+          "integration_force": [
+            4.5049791677419926e-07,
+            9.60777206132778e-07,
+            0.0333454210499836
+          ],
+          "target_force": [
+            -4.5049791428470045e-07,
+            -9.607772063232886e-07,
+            -0.03334542106251351
+          ],
+          "integration_moment": [
+            0.02421141582821698,
+            -0.02314867672176338,
+            2.894062020427327e-07
+          ],
+          "target_moment": [
+            -0.0242114158447954,
+            0.023148676737994138,
+            -2.8940620234003935e-07
+          ]
+        }
+      }
+    ],
+    "pressure_pa": [
+      0.0,
+      0.01797278164082067,
+      0.22316675359605018,
+      0.033867177242344684
+    ],
+    "active_pressure_dofs": 3,
+    "minimum_gap_m": -3.6903476082411757e-05,
+    "contact_force_n": [
+      4.5049791677419926e-07,
+      9.60777206132778e-07,
+      0.0333454210499836
+    ],
+    "has_checkpoint": true
+  },
+  "maximum_absolute_displacement_difference_m": 0.0
+}

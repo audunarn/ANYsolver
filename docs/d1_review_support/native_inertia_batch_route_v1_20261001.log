@@ -1,0 +1,22 @@
+{"stage": "authenticated_before_import", "input_sha256": "8afde3788d8d0ec2a20b26c66924c5826f6f53b55ce9c3e7f59b1bfbc66714ca"}
+{"stage": "phase_start", "index": 0, "mode": "scalar", "elapsed": 0.0037452999968081713}
+{"stage": "step_pass", "phase": 0, "step": 1, "elapsed": 5.584303999989061}
+{"stage": "step_pass", "phase": 0, "step": 2, "elapsed": 9.093530499987537}
+{"stage": "step_pass", "phase": 0, "step": 3, "elapsed": 12.558438599982765}
+{"stage": "step_pass", "phase": 0, "step": 4, "elapsed": 16.02068839999265}
+{"stage": "phase_start", "index": 1, "mode": "batch", "elapsed": 16.020740099978866}
+{"stage": "step_pass", "phase": 1, "step": 1, "elapsed": 20.114140699995914}
+{"stage": "step_pass", "phase": 1, "step": 2, "elapsed": 22.639377799991053}
+{"stage": "step_pass", "phase": 1, "step": 3, "elapsed": 25.202427299984265}
+{"stage": "step_pass", "phase": 1, "step": 4, "elapsed": 27.69596429998637}
+{"stage": "phase_start", "index": 2, "mode": "batch", "elapsed": 27.755656699999236}
+{"stage": "step_pass", "phase": 2, "step": 1, "elapsed": 31.850472399994032}
+{"stage": "step_pass", "phase": 2, "step": 2, "elapsed": 34.370152799994685}
+{"stage": "step_pass", "phase": 2, "step": 3, "elapsed": 36.83276130000013}
+{"stage": "step_pass", "phase": 2, "step": 4, "elapsed": 39.42498769998201}
+{"stage": "phase_start", "index": 3, "mode": "scalar", "elapsed": 39.48478519998025}
+{"stage": "step_pass", "phase": 3, "step": 1, "elapsed": 45.10791259998223}
+{"stage": "step_pass", "phase": 3, "step": 2, "elapsed": 48.71026570000686}
+{"stage": "step_pass", "phase": 3, "step": 3, "elapsed": 52.144223399984185}
+{"stage": "step_pass", "phase": 3, "step": 4, "elapsed": 55.64823239998077}
+{"stage": "complete", "status": "PASS", "elapsed": 55.710258299979614}

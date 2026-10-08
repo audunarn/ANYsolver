@@ -1,0 +1,102 @@
+{
+  "reference": "reports\\general_contact_d1_distributed_cycle_response_v1_formal_20260927.json",
+  "base_active_count": 18,
+  "base_active_indices": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49
+  ],
+  "rows": [
+    {
+      "direction": "tilt",
+      "step_m": -1e-06,
+      "changed_pressure_nodes": [],
+      "active_count": 18,
+      "support_count": 50,
+      "max_normalized_gap_change_m": 4.3696581133941264e-07
+    },
+    {
+      "direction": "tilt",
+      "step_m": 1e-06,
+      "changed_pressure_nodes": [
+        15,
+        40
+      ],
+      "active_count": 20,
+      "support_count": 50,
+      "max_normalized_gap_change_m": 4.3696581133950857e-07
+    },
+    {
+      "direction": "tilt",
+      "step_m": -5e-07,
+      "changed_pressure_nodes": [],
+      "active_count": 18,
+      "support_count": 50,
+      "max_normalized_gap_change_m": 2.184829056699314e-07
+    },
+    {
+      "direction": "tilt",
+      "step_m": 5e-07,
+      "changed_pressure_nodes": [
+        15,
+        40
+      ],
+      "active_count": 20,
+      "support_count": 50,
+      "max_normalized_gap_change_m": 2.1848290566957596e-07
+    },
+    {
+      "direction": "rigid_z",
+      "step_m": -1e-06,
+      "changed_pressure_nodes": [],
+      "active_count": 18,
+      "support_count": 50,
+      "max_normalized_gap_change_m": 5.000000035101912e-07
+    },
+    {
+      "direction": "rigid_z",
+      "step_m": 1e-06,
+      "changed_pressure_nodes": [
+        15,
+        40
+      ],
+      "active_count": 20,
+      "support_count": 50,
+      "max_normalized_gap_change_m": 5.000000035102725e-07
+    },
+    {
+      "direction": "rigid_z",
+      "step_m": -5e-07,
+      "changed_pressure_nodes": [],
+      "active_count": 18,
+      "support_count": 50,
+      "max_normalized_gap_change_m": 2.500000017553226e-07
+    },
+    {
+      "direction": "rigid_z",
+      "step_m": 5e-07,
+      "changed_pressure_nodes": [
+        15,
+        40
+      ],
+      "active_count": 20,
+      "support_count": 50,
+      "max_normalized_gap_change_m": 2.5000000175451624e-07
+    }
+  ]
+}

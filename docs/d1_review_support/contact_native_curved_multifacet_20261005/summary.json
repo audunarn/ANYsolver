@@ -1,0 +1,226 @@
+{
+  "scope": "Development verification only; no independent engineering acceptance/release",
+  "core_source": "12ae5bbcd6f79ccc6c4a04d68aa1dc7915ffbc8b",
+  "checkpoint_parent": "ddf92e49",
+  "profile": "NATIVE_B3_GE_CURVED_MATERIAL_PATCHES_S3_STATIC_DEV_V1",
+  "definition": "one curved beam/two connected S3 facets; xi(-.9,-.1)/(.1,.9), unselected central/end bands",
+  "production_source_files": 523,
+  "imported_modules": 218,
+  "source_installed_errors": [],
+  "reused_wheel_sha256": "ded36dc7c512e51f4c8277178656eefad7323745c33adf5806a8cfbdfeee4057",
+  "wheel_reuse_basis": "All production Python bytes unchanged and imported hashes checked",
+  "fresh_installed_runs": {
+    "installed_multifacet_checks": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 58.117152300081216,
+        "peak_bytes": 181006336
+      },
+      "outcomes": {
+        "passed": 2
+      },
+      "effective_pool_threads": [
+        1,
+        1
+      ],
+      "jit_disabled": true
+    },
+    "installed_multifacet_virtual_work": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 54.25111960002687,
+        "peak_bytes": 180449280
+      },
+      "outcomes": {
+        "passed": 1
+      },
+      "effective_pool_threads": [
+        1,
+        1
+      ],
+      "jit_disabled": true
+    }
+  },
+  "unique_installed_checks": 2,
+  "note": "The virtual-work test repeats the local check with the added independent energy-derivative gate; do not count it as another unique case",
+  "completed_mechanical_candidate": {
+    "status": "completed",
+    "candidate_evaluations": 37,
+    "pair_evaluations": 74,
+    "contact": {
+      "active_intervals": null,
+      "beam_force_n": [
+        -5.168357337238863e-09,
+        6.2020288046866324e-09,
+        0.0054106177956565
+      ],
+      "beam_moment_nm": [
+        0.00024441220963087457,
+        -0.010170445456525663,
+        1.1891545059137953e-08
+      ],
+      "energy_error_j": 1.4795363455310092e-17,
+      "force_error_n": 5.735194961917047e-13,
+      "integration_evaluations": 11200,
+      "integration_intervals": 12,
+      "measure": "fixed_reference_material_area",
+      "minimum_gap_estimate_m": null,
+      "minimum_gap_m": -1.4495494762399252e-05,
+      "minimum_rim_clearance_m": 0.07000002772849671,
+      "pairs": [
+        {
+          "active_intervals": null,
+          "beam_element": 1,
+          "beam_force_n": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "beam_moment_nm": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "energy_error_j": 0.0,
+          "force_error_n": 0.0,
+          "gap_tolerance_m": 3e-05,
+          "integration_evaluations": 320,
+          "integration_intervals": 1,
+          "maximum_swept_intervals": 128,
+          "measure": "fixed_reference_material_area",
+          "minimum_gap_estimate_m": null,
+          "minimum_gap_m": 0.00010891620426847712,
+          "minimum_rim_clearance_m": 0.07000002920263662,
+          "name": "curved material / top 21",
+          "potential_j": 0.0,
+          "shell_body": 7,
+          "shell_element": 21,
+          "shell_force_n": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "shell_moment_nm": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "shell_side": "top",
+          "tangent_error_n_per_m": 0.0
+        },
+        {
+          "active_intervals": null,
+          "beam_element": 1,
+          "beam_force_n": [
+            -5.168357337238863e-09,
+            6.2020288046866324e-09,
+            0.0054106177956565
+          ],
+          "beam_moment_nm": [
+            0.00024441220963087457,
+            -0.010170445456525663,
+            1.1891545059137953e-08
+          ],
+          "energy_error_j": 1.4795363455310092e-17,
+          "force_error_n": 5.735194961917047e-13,
+          "gap_tolerance_m": 3e-05,
+          "integration_evaluations": 10880,
+          "integration_intervals": 11,
+          "maximum_swept_intervals": 128,
+          "measure": "fixed_reference_material_area",
+          "minimum_gap_estimate_m": null,
+          "minimum_gap_m": -1.4495494762399252e-05,
+          "minimum_rim_clearance_m": 0.07000002772849671,
+          "name": "curved material / top 22",
+          "potential_j": 2.2363546661237893e-08,
+          "shell_body": 7,
+          "shell_element": 22,
+          "shell_force_n": [
+            5.168357337238861e-09,
+            -6.202028804686631e-09,
+            -0.005410617795656495
+          ],
+          "shell_moment_nm": [
+            -0.00024441220963086763,
+            0.010170445456525656,
+            -1.1891545059137953e-08
+          ],
+          "shell_side": "top",
+          "tangent_error_n_per_m": 3.0296773860877017e-07
+        }
+      ],
+      "potential_j": 2.2363546661237893e-08,
+      "shell_force_n": [
+        5.168357337238861e-09,
+        -6.202028804686631e-09,
+        -0.005410617795656495
+      ],
+      "shell_moment_nm": [
+        -0.00024441220963086763,
+        0.010170445456525656,
+        -1.1891545059137953e-08
+      ],
+      "tangent_error_n_per_m": 3.0296773860877017e-07
+    },
+    "fixture_sha256": "d858486bd2cb5edf128b71a6ce1b3c703604f906df930372eedb20b2cdb0d5b1",
+    "source_checkpoint_sha256": "d858486bd2cb5edf128b71a6ce1b3c703604f906df930372eedb20b2cdb0d5b1",
+    "source_installed_checkpoint_byte_equal": true
+  },
+  "local_work": {
+    "directional_errors": [
+      4.405073056193291e-09,
+      2.014267918919912e-10
+    ],
+    "independent_virtual_work_errors": [
+      1.2390805396557116e-08,
+      1.2855063022725008e-09
+    ],
+    "pair_force_z": [
+      0.24011559731227017,
+      0.24011559731227017
+    ],
+    "energy_j": 3.8508766412014136e-06
+  },
+  "nonpasses": {
+    "source_multifacet": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 7.058630399988033,
+      "peak_bytes": 184270848
+    },
+    "source_multifacet_corrected": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 107.32570489996579,
+      "peak_bytes": 180776960
+    },
+    "source_shared_map": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 2.6284270000178367,
+      "peak_bytes": 182231040
+    },
+    "source_shared_map_target_pose": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 12.175640799920075,
+      "peak_bytes": 187199488
+    },
+    "installed_multifacet": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 102.33092109998688,
+      "peak_bytes": 181395456
+    }
+  },
+  "scientific_limits": "Full patch containment only; manufactured local two-active pose is not equilibrium/admission; no full multifacet cycle, convergence or general section/material acceptance",
+  "review": "Same-family supporting Read; no independent engineering acceptance",
+  "raw_directory": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261005\\candidate01",
+  "changed_inputs": {
+    "examples\\general_contact_native_curved_material_s3.py": "649c653e2eb3747b70def9f7d8d711a07ddd7f13b165c925821a4bff5f94e779",
+    "tests\\test_general_contact_native_curved_s3_multifacet.py": "4f6c78885c572cf866f27d40c2ce02f76f56aa42571597034099ae782941d553",
+    "tests\\data\\general_contact_native_curved_s3_multifacet_v1.checkpoint": "d858486bd2cb5edf128b71a6ce1b3c703604f906df930372eedb20b2cdb0d5b1"
+  }
+}

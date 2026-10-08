@@ -1,0 +1,267 @@
+diff --git a/src/anysolver/general_contact/q4_s3_tiny_wedge.py b/src/anysolver/general_contact/q4_s3_tiny_wedge.py
+index 50efb7bb..eb3230e3 100644
+--- a/src/anysolver/general_contact/q4_s3_tiny_wedge.py
++++ b/src/anysolver/general_contact/q4_s3_tiny_wedge.py
+@@ -57,14 +57,24 @@ def verify_tiny_wedge_derivatives(
+     active = np.asarray(active_local_coordinates, dtype=np.intp)
+     local = np.concatenate((source, target)).reshape(-1)
+     count = local.size
+-    if (len(active) == 0 or len(active) > 12
++    if (len(active) == 0 or len(active) > 24
+             or np.any(active < 0) or np.any(active >= count)):
+         raise UnsupportedQ4S3Branch(
+-            "tiny seam wedge needs 1 to 12 resolved local tangent coordinates"
++            "tiny seam wedge needs 1 to 24 resolved local tangent coordinates "
++            f"(present={len(active)})"
+         )
+     if (difference_step_m <= 0.0 or not np.isfinite(difference_step_m)
+             or maximum_evaluations < 1):
+         raise UnsupportedQ4S3Branch("tiny seam wedge difference budget is invalid")
++    # Each scale visits the origin, both signs of every physical coordinate,
++    # and four corners for each active mixed Hessian entry. Admit the complete
++    # local check before beginning it; never truncate the derivative matrix.
++    required_evaluations = 2*(1 + 2*count + 4*len(active)*(len(active)-1)//2)
++    if required_evaluations > maximum_evaluations:
++        raise MemoryError(
++            "tiny seam wedge full local derivative exceeds evaluation budget "
++            f"(required={required_evaluations}, available={maximum_evaluations})"
++        )
+     pressure = np.asarray(pressure, dtype=float)
+     normalized_gap = np.asarray(normalized_gap, dtype=float)
+     if (pressure.shape != (len(source),)
+diff --git a/src/anysolver/general_contact/s3_patch_augmented.py b/src/anysolver/general_contact/s3_patch_augmented.py
+index 578adcc7..b10ac4bc 100644
+--- a/src/anysolver/general_contact/s3_patch_augmented.py
++++ b/src/anysolver/general_contact/s3_patch_augmented.py
+@@ -430,7 +430,7 @@ class MovingS3PatchProjectedNormal:
+                 try:
+                     candidate = self._nodal_force_unresolved(
+                         shifted, current_target, z, tangent=tangent,
+-                        tiny_wedge_pair=recoverable_pair,
++                        tiny_wedge_pair=-1,
+                     )
+                 except (UnsupportedQ4S3Branch, ValueError) as exc:
+                     raise UnsupportedQ4S3Branch(
+@@ -1149,8 +1149,7 @@ class MovingS3PatchProjectedNormal:
+         gap_pair_value_budget = np.zeros(source_count)
+         absolute_support_difference = np.zeros(source_count)
+         absolute_gap_difference = np.zeros(source_count)
+-        tiny_wedge_verified = False
+-        tiny_wedge_scenarios = None
++        tiny_wedge_scenarios = []
+         weighted_hessian = np.zeros((len(active_coordinates),
+                                      len(active_coordinates))) if tangent else None
+         support_hessian = np.zeros_like(weighted_hessian) if tangent else None
+@@ -1258,9 +1257,21 @@ class MovingS3PatchProjectedNormal:
+                         derivative.overlap_area_resolution,
+                     )
+                 except UnsupportedQ4S3Branch as exc:
+-                    raise UnsupportedQ4S3Branch(
+-                        f"pair={pair_index}, overlap_area_m2={local.overlap_area:.12g}: {exc}"
+-                    ) from exc
++                    # The raw two-face seam limit may create several wedges
++                    # whose area is O(tie_step**2). Require the independent
++                    # float derivative and complete aggregate work bounds
++                    # below instead of a relative area test at that scale.
++                    tiny_area_limit = (4.0*self.shared_edge_tie[0]**2
++                                       if self.shared_edge_tie is not None else 0.0)
++                    if (not nodal_force_mode or tiny_wedge_pair != -1
++                            or min(local.overlap_area,
++                                   derivative.overlap_area) <= 0.0
++                            or max(local.overlap_area,
++                                   derivative.overlap_area) > tiny_area_limit):
++                        raise UnsupportedQ4S3Branch(
++                            f"pair={pair_index}, overlap_area_m2={local.overlap_area:.12g}: {exc}"
++                        ) from exc
++                    value_rtol = 0.0
+             support_difference = np.abs(
+                 derivative.reference_support-local.reference_support)
+             gap_difference = np.abs(
+@@ -1313,14 +1324,15 @@ class MovingS3PatchProjectedNormal:
+                     rtol=value_rtol, atol=weighted_gap_roundoff,
+                 )
+             if not support_agrees or not gap_agrees:
+-                if (pair_index == tiny_wedge_pair
++                if ((pair_index == tiny_wedge_pair
++                     or (nodal_force_mode and tiny_wedge_pair == -1))
+                         and len(source_nodes) == 4
+                         and self.shared_edge_tie is not None):
+                     if basis is not None:
+                         raise UnsupportedQ4S3Branch(
+                             "macro pressure tiny seam wedge needs separate qualification"
+                         )
+-                    if tiny_wedge_verified:
++                    if tiny_wedge_scenarios and tiny_wedge_pair != -1:
+                         raise UnsupportedQ4S3Branch(
+                             "multiple tiny seam wedges need separate derivative qualification"
+                         )
+@@ -1369,11 +1381,10 @@ class MovingS3PatchProjectedNormal:
+                             self.geometry.maximum_energy_evaluations-evaluations),
+                     )
+                     evaluations += used
+-                    tiny_wedge_verified = True
+-                    tiny_wedge_scenarios = (
++                    tiny_wedge_scenarios.append((
+                         source_nodes.copy(), coordinate_map,
+                         local_active, scenarios, force_scale, min(edge_lengths),
+-                    )
++                    ))
+                 else:
+                     support_error = float(np.max(np.abs(
+                         derivative.reference_support-local.reference_support,
+@@ -1446,7 +1457,7 @@ class MovingS3PatchProjectedNormal:
+         # compare against the sum of contribution magnitudes so roundoff and
+         # allowed pair errors do not turn into a false zero-scale mismatch.
+         summation_tolerance = 1.0e-9 + 64.0*np.finfo(float).eps
+-        if tiny_wedge_verified:
++        if tiny_wedge_scenarios:
+             reference_length = min(
+                 np.linalg.norm(face.reference_positions[index]
+                                - face.reference_positions[(index+1) % 4])
+@@ -1462,66 +1473,95 @@ class MovingS3PatchProjectedNormal:
+                 raise UnsupportedQ4S3Branch(
+                     "tiny seam wedge exceeds non-cancelling nodal value budget"
+                 )
+-            (tiny_source, tiny_coordinate_map, tiny_active, scenarios,
+-             force_scale, length_scale) = tiny_wedge_scenarios
+             selected = active_coordinates
+             D = (jw[:, selected]
+                  - fine_work_gap[:, None]*js[:, selected])
+-            for gradient_error, hessian_error in scenarios:
+-                delta_support = np.zeros((source_count, len(selected)))
+-                delta_weighted = np.zeros_like(delta_support)
++            # Each wedge is checked against independent float derivatives
++            # above. Bound simultaneous discrepancies by summing the largest
++            # componentwise error of each wedge; opposing errors cannot cancel.
++            total_support_error = np.zeros((source_count, len(selected)))
++            total_gap_work_error = np.zeros_like(total_support_error)
++            total_hessian_error = 0.0
++            force_scale = tiny_wedge_scenarios[0][4]
++            length_scale = min(item[5] for item in tiny_wedge_scenarios)
++            for (tiny_source, tiny_coordinate_map, tiny_active, scenarios,
++                 _force_scale, _length_scale) in tiny_wedge_scenarios:
++                wedge_support_error = np.zeros_like(total_support_error)
++                wedge_gap_work_error = np.zeros_like(total_gap_work_error)
++                wedge_hessian_error = 0.0
+                 selected_global = tiny_coordinate_map[tiny_active]
+                 selected_columns = np.searchsorted(selected, selected_global)
+-                delta_support[np.ix_(tiny_source, selected_columns)] = (
+-                    gradient_error[0][:, tiny_active])
+-                delta_weighted[np.ix_(tiny_source, selected_columns)] = (
+-                    gradient_error[1][:, tiny_active])
+-                E = delta_weighted-fine_work_gap[:, None]*delta_support
+-                if nodal_force_mode:
+-                    supported_rows = fine_base.reference_support > 0.0
+-                    normalized_gap_error = np.linalg.norm(
+-                        E[supported_rows], axis=1,
+-                    )/fine_base.reference_support[supported_rows]
+-                    if (not np.all(np.isfinite(normalized_gap_error))
+-                            or np.any(normalized_gap_error > 1.0e-7)):
+-                        raise UnsupportedQ4S3Branch(
+-                            "tiny seam wedge raw supported gap derivative is unresolved"
+-                        )
+-                tangent_error_bound = 0.0
+-                for node in np.flatnonzero(
+-                        fine_pressure != 0.0 if nodal_force_mode
+-                        else fine_pressure > 0.0):
+-                    support = fine_base.reference_support[node]
+-                    if support <= 0.0:
+-                        raise UnsupportedQ4S3Branch(
+-                            "tiny seam wedge active pressure lacks support"
+-                        )
+-                    p = abs(fine_pressure[node])
+-                    d_norm = float(np.linalg.norm(D[node]))
+-                    e_norm = float(np.linalg.norm(E[node]))
+-                    ds_norm = float(np.linalg.norm(delta_support[node]))
+-                    js_norm = float(np.linalg.norm(js[node, selected]))
+-                    tangent_error_bound += (
+-                        self.stiffness/support
+-                        * (2.0*d_norm*e_norm+e_norm*e_norm)
+-                        + p/support*(ds_norm*d_norm+js_norm*e_norm
+-                                     + ds_norm*e_norm)
++                for gradient_error, hessian_error in scenarios:
++                    delta_support = np.zeros_like(total_support_error)
++                    delta_weighted = np.zeros_like(total_gap_work_error)
++                    delta_support[np.ix_(tiny_source, selected_columns)] = (
++                        gradient_error[0][:, tiny_active])
++                    delta_weighted[np.ix_(tiny_source, selected_columns)] = (
++                        gradient_error[1][:, tiny_active])
++                    E = delta_weighted-fine_work_gap[:, None]*delta_support
++                    wedge_support_error = np.maximum(
++                        wedge_support_error, np.abs(delta_support))
++                    wedge_gap_work_error = np.maximum(
++                        wedge_gap_work_error, np.abs(E))
++                    local_hessian_error = sum(
++                        abs(fine_pressure[node])*(
++                            np.linalg.norm(hessian_error[1][local_node])
++                            + abs(fine_work_gap[node])
++                            * np.linalg.norm(hessian_error[0][local_node])
++                        ) for local_node, node in enumerate(tiny_source)
+                     )
+-                for local_node, node in enumerate(tiny_source):
+-                    p = abs(fine_pressure[node])
+-                    g = fine_work_gap[node]
+-                    tangent_error_bound += p*(
+-                        np.linalg.norm(hessian_error[1][local_node])
+-                        + abs(g)*np.linalg.norm(hessian_error[0][local_node])
++                    wedge_hessian_error = max(wedge_hessian_error,
++                                              local_hessian_error)
++                total_support_error += wedge_support_error
++                total_gap_work_error += wedge_gap_work_error
++                total_hessian_error += wedge_hessian_error
++            if nodal_force_mode:
++                supported_rows = fine_base.reference_support > 0.0
++                normalized_gap_error = np.linalg.norm(
++                    total_gap_work_error[supported_rows], axis=1,
++                )/fine_base.reference_support[supported_rows]
++                if (not np.all(np.isfinite(normalized_gap_error))
++                        or np.any(normalized_gap_error > 1.0e-7)):
++                    raise UnsupportedQ4S3Branch(
++                        "tiny seam wedge raw supported gap derivative is unresolved"
+                     )
+-                budget = 1.0e-5*force_scale/length_scale
+-                if (not np.isfinite(tangent_error_bound)
+-                        or tangent_error_bound > budget):
++                if len(tiny_wedge_scenarios) > 1:
++                    force_error_bound = float(np.sum(
++                        np.abs(fine_pressure)
++                        * np.linalg.norm(total_gap_work_error, axis=1)
++                    ))
++                    if force_error_bound > 1.0e-6*force_scale:
++                        raise UnsupportedQ4S3Branch(
++                            "multiple tiny seam wedges exceed combined force budget"
++                        )
++            tangent_error_bound = total_hessian_error
++            for node in np.flatnonzero(
++                    fine_pressure != 0.0 if nodal_force_mode
++                    else fine_pressure > 0.0):
++                support = fine_base.reference_support[node]
++                if support <= 0.0:
+                     raise UnsupportedQ4S3Branch(
+-                        "tiny seam wedge projected tangent error is unresolved "
+-                        f"(bound_n_per_m={tangent_error_bound:.12g}, "
+-                        f"budget_n_per_m={budget:.12g})"
++                        "tiny seam wedge active pressure lacks support"
+                     )
++                p = abs(fine_pressure[node])
++                d_norm = float(np.linalg.norm(D[node]))
++                e_norm = float(np.linalg.norm(total_gap_work_error[node]))
++                ds_norm = float(np.linalg.norm(total_support_error[node]))
++                js_norm = float(np.linalg.norm(js[node, selected]))
++                tangent_error_bound += (
++                    self.stiffness/support
++                    * (2.0*d_norm*e_norm+e_norm*e_norm)
++                    + p/support*(ds_norm*d_norm+js_norm*e_norm
++                                 + ds_norm*e_norm)
++                )
++            budget = 1.0e-5*force_scale/length_scale
++            if (not np.isfinite(tangent_error_bound)
++                    or tangent_error_bound > budget):
++                raise UnsupportedQ4S3Branch(
++                    "tiny seam wedge projected tangent error is unresolved "
++                    f"(bound_n_per_m={tangent_error_bound:.12g}, "
++                    f"budget_n_per_m={budget:.12g})"
++                )
+         if (not all(np.all(np.isfinite(values)) for values in (
+                     assembled_support, fine_base.reference_support,
+                     assembled_gap, fine_base.reference_weighted_gap,

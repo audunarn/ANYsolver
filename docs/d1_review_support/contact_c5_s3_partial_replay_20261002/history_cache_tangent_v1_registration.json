@@ -1,0 +1,16 @@
+{
+  "sha256": {
+    "src/anysolver/general_contact/s3_friction_replay.py": "7BDF42CA0A2562E2ADAFF50B0510FA78AEBBBA1DBAD3EE46A85F2156F56C3901",
+    "src/anysolver/general_contact/s3_friction_prepared_path.py": "C8F4C046B6453C3247B982D67D48F6B79E646A45D71B39AFE05FC798733EEC6C",
+    "tests/test_general_contact_s3_friction_replay.py": "BE722BECC71A5ECC3A5AAEFD5DD6F93B99588A82DBD2FBA59C11DD34FB466891"
+  },
+  "id": "C5_RECONTACT_HISTORY_CACHE_TANGENT_V1_20261002",
+  "decision": "One execution; no automatic retry or cap increase. Compare with retained 374.553s tangent only as unpaired development observation.",
+  "timeout_seconds": 900,
+  "question": "Does exact committed-history reuse reduce the retained expensive recontact tangent while preserving its derivative-resolution gates?",
+  "source_snapshot": "C:/ANYworkspaceWork/contact-friction-history-cache-tangent-v1-20261002/frozen_source",
+  "jit": "off",
+  "kind": "prospective retained coupled tangent development",
+  "selector": "tests/test_general_contact_s3_friction_replay.py::test_saved_recontact_cached_tangent_cost",
+  "memory_limit_mib": 953
+}

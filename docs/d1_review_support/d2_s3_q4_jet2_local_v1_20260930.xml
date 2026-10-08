@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="5" time="2.561" timestamp="2026-09-30T20:31:10.373558+02:00" hostname="WORK_STABEIST1"><testcase classname="tests.test_general_contact_s3_q4_overlap_derivatives" name="test_original_bilinear_target_matches_independent_simplex_moments" time="0.053" /><testcase classname="tests.test_general_contact_s3_q4_overlap_derivatives" name="test_scalar_projection_parity_and_complete_coordinate_directional_derivatives[False]" time="0.162"><failure message="AssertionError: assert (np.float64(9.813088191146494e-12) / np.float64(1.6959077820213952e-17)) &lt; 1e-05&#10; +  where np.float64(9.813088191146494e-12) = &lt;function norm at 0x000001619A56AF70&gt;((array([ 1.66513635e-17, -2.47746456e-18, -2.05050833e-18]) - array([-6.9388939e-12,  0.0000000e+00, -6.9388939e-12])))&#10; +    where &lt;function norm at 0x000001619A56AF70&gt; = &lt;module 'numpy.linalg' from 'C:\\Python\\Python314\\Lib\\site-packages\\numpy\\linalg\\__init__.py'&gt;.norm&#10; +      where &lt;module 'numpy.linalg' from 'C:\\Python\\Python314\\Lib\\site-packages\\numpy\\linalg\\__init__.py'&gt; = np.linalg&#10; +  and   np.float64(1.6959077820213952e-17) = &lt;function norm at 0x000001619A56AF70&gt;(array([ 1.66513635e-17, -2.47746456e-18, -2.05050833e-18]))&#10; +    where &lt;function norm at 0x000001619A56AF70&gt; = &lt;module 'numpy.linalg' from 'C:\\Python\\Python314\\Lib\\site-packages\\numpy\\linalg\\__init__.py'&gt;.norm&#10; +      where &lt;module 'numpy.linalg' from 'C:\\Python\\Python314\\Lib\\site-packages\\numpy\\linalg\\__init__.py'&gt; = np.linalg">partial = False
+
+    @pytest.mark.parametrize("partial",(False,True))
+    def test_scalar_projection_parity_and_complete_coordinate_directional_derivatives(partial):
+        source,target=positions(partial=partial)
+        result=s3_q4_overlap_derivatives(source,source,target,**CONTROLS)
+        scalar=q4_target_overlap_integrals(PlanarFace((1,1),source),target,
+            reference_area_ratio=1.,weighted_gap_tolerance=1e-13,maximum_triangles=200)
+        np.testing.assert_allclose(result.reference_support,scalar.support,rtol=1e-12,atol=1e-14)
+        np.testing.assert_allclose(result.reference_weighted_gap,scalar.weighted_gap,rtol=1e-11,atol=1e-16)
+        direction=np.random.default_rng(510+int(partial)).normal(size=21)
+        direction/=np.linalg.norm(direction)
+        coordinates=np.concatenate((source,target)).reshape(-1)
+        for step in (1e-6,3e-7):
+            plus=(coordinates+step*direction).reshape(7,3)
+            minus=(coordinates-step*direction).reshape(7,3)
+            a=s3_q4_overlap_derivatives(source,plus[:3],plus[3:],**CONTROLS)
+            b=s3_q4_overlap_derivatives(source,minus[:3],minus[3:],**CONTROLS)
+            for value,gradient,hessian in (
+                ("reference_support","support_gradient","support_hessian"),
+                ("reference_weighted_gap","weighted_gap_gradient","weighted_gap_hessian")):
+                for analytic,difference in (
+                    (getattr(result,gradient)@direction,(getattr(a,value)-getattr(b,value))/(2*step)),
+                    (getattr(result,hessian)@direction,(getattr(a,gradient)-getattr(b,gradient))/(2*step))):
+&gt;                   assert np.linalg.norm(analytic-difference)/np.linalg.norm(analytic)&lt;1e-5
+E                   AssertionError: assert (np.float64(9.813088191146494e-12) / np.float64(1.6959077820213952e-17)) &lt; 1e-05
+E                    +  where np.float64(9.813088191146494e-12) = &lt;function norm at 0x000001619A56AF70&gt;((array([ 1.66513635e-17, -2.47746456e-18, -2.05050833e-18]) - array([-6.9388939e-12,  0.0000000e+00, -6.9388939e-12])))
+E                    +    where &lt;function norm at 0x000001619A56AF70&gt; = &lt;module 'numpy.linalg' from 'C:\\Python\\Python314\\Lib\\site-packages\\numpy\\linalg\\__init__.py'&gt;.norm
+E                    +      where &lt;module 'numpy.linalg' from 'C:\\Python\\Python314\\Lib\\site-packages\\numpy\\linalg\\__init__.py'&gt; = np.linalg
+E                    +  and   np.float64(1.6959077820213952e-17) = &lt;function norm at 0x000001619A56AF70&gt;(array([ 1.66513635e-17, -2.47746456e-18, -2.05050833e-18]))
+E                    +    where &lt;function norm at 0x000001619A56AF70&gt; = &lt;module 'numpy.linalg' from 'C:\\Python\\Python314\\Lib\\site-packages\\numpy\\linalg\\__init__.py'&gt;.norm
+E                    +      where &lt;module 'numpy.linalg' from 'C:\\Python\\Python314\\Lib\\site-packages\\numpy\\linalg\\__init__.py'&gt; = np.linalg
+
+tests\test_general_contact_s3_q4_overlap_derivatives.py:70: AssertionError</failure></testcase><testcase classname="tests.test_general_contact_s3_q4_overlap_derivatives" name="test_scalar_projection_parity_and_complete_coordinate_directional_derivatives[True]" time="0.515" /><testcase classname="tests.test_general_contact_s3_q4_overlap_derivatives" name="test_common_rigid_transform_and_both_body_translation" time="0.212" /><testcase classname="tests.test_general_contact_s3_q4_overlap_derivatives" name="test_explicit_resource_and_geometry_failures" time="0.004" /></testsuite></testsuites>

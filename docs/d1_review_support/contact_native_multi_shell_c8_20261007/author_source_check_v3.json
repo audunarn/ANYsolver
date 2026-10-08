@@ -1,0 +1,109 @@
+{
+  "numerical_attempts": 0,
+  "solver_imports": 0,
+  "files": [
+    {
+      "path": "src/anysolver/_ge_beam3_native_multi_shell_contact.py",
+      "sha256": "725691d2cc757d1e8cef6a5c28c666d5eb58c043254a20421c462cba82eeda25",
+      "size": 33120,
+      "ast": "PASS"
+    },
+    {
+      "path": "src/anysolver/general_contact/native_transient_multi_shell.py",
+      "sha256": "1c0e459e6fde7b5f0b80cf62e0086cec90c23cd0f22e63e826abf5848bb658b1",
+      "size": 7708,
+      "ast": "PASS"
+    },
+    {
+      "path": "src/anysolver/general_contact/native_retained_line_s3.py",
+      "sha256": "1be5799466e08e97eae80237732512756339fc23074f6de63f93f833fe1b16cb",
+      "size": 20377,
+      "ast": "PASS"
+    },
+    {
+      "path": "src/anysolver/general_contact/native_retained_line_s3_work.py",
+      "sha256": "cc02f7dafe47cceb025a93c477380832004b2291db11b281f18e922d47aba18c",
+      "size": 3764,
+      "ast": "PASS"
+    },
+    {
+      "path": "tests/test_general_contact_native_transient_multi_shell.py",
+      "sha256": "ad93fa71038d9833f45363ea76103afa526cf82742f1f6cbc15dff58b819e106",
+      "size": 18218,
+      "ast": "PASS"
+    },
+    {
+      "path": "examples/general_contact_native_multi_shell_impact_dev.py",
+      "sha256": "f55b35fa78d15c6d17c7f58d93ba5b22214393f086e2fde101e7bf8e3735e52a",
+      "size": 5256,
+      "ast": "PASS"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_NATIVE_MULTI_SHELL_TRANSIENT_DEV.md",
+      "sha256": "b5f71ca1451ea5a95b964bf580a617e5c24bb21faaecda4ebccf0e28a60e8997",
+      "size": 12304
+    },
+    {
+      "path": "src/anysolver/general_contact/__init__.py",
+      "sha256": "d766137752d5436387bbf6e45e4e28be41dbffb371bfbc505b5e97a94befc117",
+      "size": 5822,
+      "ast": "PASS"
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_connected_dynamic.py",
+      "sha256": "fc479d74504544e02a3f86145f7c7a7c63aa1baee620b37a4227f83140c792d6",
+      "size": 30875,
+      "ast": "PASS"
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_connected_trajectory.py",
+      "sha256": "f6869a6c67908767b70612b3b893cdc4d4aeaf1c1100893b0c2fc4b054db9e19",
+      "size": 20702,
+      "ast": "PASS"
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_native_shell_contact.py",
+      "sha256": "791447c155f4b45db21fcb6ff4f7cd7bafcfdfd25ebd246d743eace5b7284bf6",
+      "size": 23943,
+      "ast": "PASS"
+    },
+    {
+      "path": "src/anysolver/general_contact/native_transient_shell.py",
+      "sha256": "0cbbb335e71cb0a82a0e94cc58e4e51b0f0d7483a9947afe7975da52279d8d27",
+      "size": 3237,
+      "ast": "PASS"
+    }
+  ],
+  "errors": [],
+  "baseline_defaults": [
+    {
+      "path": "native_retained_line_s3.py",
+      "default_ast_equal": true,
+      "baseline_sha256": "d7d1ca7a88a3c0573b62792ef6538a5e22575430c13766fdc5476e18c5dd4c25"
+    },
+    {
+      "path": "native_retained_line_s3_work.py",
+      "default_ast_equal": true,
+      "baseline_sha256": "470c036e015c6e18181233cf1a36b3ee6a74e9b42e36a769d53aa37b73c3633c"
+    }
+  ],
+  "status": "PASS",
+  "ast_files": 13,
+  "held_count": 565,
+  "build_count": 560,
+  "groups": 15,
+  "runner_sha256": "2c8434787b224aa7677c6e9170551304eb0847386123ab430bae791d5efee257",
+  "pending_manifest_sha256": "e63546a4c498daa539943eff9a8be867433e6c92e94a3ee517899136f7ddce54",
+  "selectors": [
+    "test_global_shared_node_structural_assembly_and_actual_mass_once",
+    "test_full210_common_stage_derivative_work_shared_skin_rotation_and_crossblocks",
+    "test_actual_error_map_row_column_bounds_zero_curvature_and_aggregate_gates",
+    "test_public_coupled_two_step_multiple_body_response_and_both_path_legs",
+    "test_genuine_split_restart_chain_and_authenticated_translation_work_tamper",
+    "test_aggregate_geometry_integration_and_two_leg_path_nonrenewal",
+    "test_internal_edge_transition_refusal_and_inverted_skin_restore_admission",
+    "test_topology_duplicate_pair_model_alias_and_definition_mutation_refusals",
+    "test_cancellation_unresolved_path_atomic_rollback_and_common_native_map",
+    "test_default_none_kernel_compatibility_and_old_exact_owner_identity"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 51.737820499998634,
+  "peak_process_tree_memory_mb": 378.064896,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_d1_interior_profile.py::test_guarded_active_press_restarts_and_binds_profile_settings",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d1_interior_guard_restart_20260929.log"
+}

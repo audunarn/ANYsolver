@@ -1,0 +1,50 @@
+{
+  "id": "C5_PARTIAL_REPLAY_PREPARED_PARTIAL_FULL_V1_20261002",
+  "status": "failed: 900-second limit during recontact tangent",
+  "resource": {
+    "peak_sampled_bytes": 202661888,
+    "limit_mib": 953,
+    "elapsed_seconds": 910.0849806000479,
+    "status": "timeout",
+    "child_exit_codes": [
+      1
+    ]
+  },
+  "accepted_history_frames": 4,
+  "source_bindings_verified": true,
+  "authority_consumed": true,
+  "full_workflow_completed": false,
+  "restart_completed": false,
+  "last_completed_evaluations": [
+    {
+      "seconds": 0.013866099994629622,
+      "frames": 3,
+      "tangent": false,
+      "total_evaluations": 710,
+      "cached_frames": 4096
+    },
+    {
+      "seconds": 0.020597999973688275,
+      "frames": 4,
+      "tangent": false,
+      "total_evaluations": 714,
+      "cached_frames": 4096
+    },
+    {
+      "seconds": 0.23811059998115525,
+      "frames": 4,
+      "tangent": true,
+      "total_evaluations": 760,
+      "cached_frames": 4096
+    },
+    {
+      "seconds": 374.5532391999732,
+      "frames": 4,
+      "tangent": true,
+      "total_evaluations": 806,
+      "cached_frames": 4096
+    }
+  ],
+  "saved_candidate": "docs\\d1_review_support\\contact_c5_s3_partial_replay_20261002\\prepared_partial_full_v1_last_tangent_candidate.json",
+  "decision": "No automatic full solve or cap increase. Count exact committed-material query reuse on the retained tangent geometry, then decide bounded memoization versus another route."
+}

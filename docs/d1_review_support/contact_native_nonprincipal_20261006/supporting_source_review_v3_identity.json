@@ -1,0 +1,32 @@
+{
+  "review_kind": "supporting_source_only_integration_repair",
+  "repository": "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001",
+  "head": "e166100ca171f54911b4e75e8de2985030fe5cba",
+  "status": "held_V3b_no_remaining_source_critical_defect_identified",
+  "files": [
+    {
+      "path": "examples/native_nonprincipal_reference.py",
+      "sha256": "6cd821b3ccc49aa73892b9704e541627511fc25b5c4f9f8fe4688ad96ffb8bfb"
+    },
+    {
+      "path": "examples/native_nonprincipal_dev.py",
+      "sha256": "93fc94c55c507b0247910d8719d15d48083263e61246d3d560fb29983f4cd480"
+    },
+    {
+      "path": "tests/test_ge_beam3_native_nonprincipal.py",
+      "sha256": "9b3e727538dae82cb61d1b62c165558ae249201a02efee651129fc9042fc6d49"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_NATIVE_NONPRINCIPAL_DEV.md",
+      "sha256": "86fe48f0ecace27aae636933b362fb68b2e2de6e90dae969cd8875fe9b654b41"
+    }
+  ],
+  "author_snapshot": "test_source_snapshot_v3b.py",
+  "author_checkpoint": "author_repair_checkpoint_v3.json",
+  "prior_failure": "KeyError stage in nonprincipal_local_coarse_v2 preserved",
+  "numerical_execution": false,
+  "solver_imports": false,
+  "product_edits": false,
+  "engineering_acceptance": false,
+  "report": "supporting_source_review_v3.md"
+}

@@ -1,0 +1,31 @@
+{
+  "status": "V4A_TEST_ONLY_AUTHENTICATED_POLICY_MISMATCH_UNEXECUTED",
+  "test": "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\tests\\test_ge_beam3_native_connected_bending.py",
+  "previous_sha256": "56572f4d14c319c602e0d2e4fd84d9eb1273002af177ca8618ca537f1f0a0ac6",
+  "sha256": "2c13517c2eb7fbce2c0308eeb27658818f895a9eff3389bfe0070c6423193a91",
+  "snapshot": "C:\\ANYworkspaceWork\\contact_native_connected_bending_20261006\\source_snapshots_v4a\\test_ge_beam3_native_connected_bending.py",
+  "AST": "PASS",
+  "unchanged_test_functions": [
+    "_save",
+    "_plane",
+    "_rz",
+    "_state_errors",
+    "_account_errors",
+    "test_public_bending_stage_support_response_and_semidiscrete_bound",
+    "test_independent_bending_mass_complete_virtual_work_and_tangent_interval",
+    "test_fresh_bending_four_equals_two_plus_two_complete_restart",
+    "test_linear_midpoint_modal_phase_refinement",
+    "test_stable_so3_successor_zero_arbitrary_axis_branches_and_jets"
+  ],
+  "changed_function": "test_stable_so3_definition_identity_restore_and_legacy_policy_isolation",
+  "product_edits": false,
+  "author_numerical_jobs": 0,
+  "prior_V4_records_preserved": true,
+  "delta": "Supply authenticated checkpoint SHA before bound policy mismatch; fresh old owner current remains identical None after refusal.",
+  "lead_accounting_at_request": {
+    "spent_s": 64.21858669988461,
+    "remaining_s": 195.7814133001154,
+    "total_s": 260
+  },
+  "source_check_note": "Initial literal replacement refused before write due to original CRLF; successful replacement preserves original CRLF."
+}

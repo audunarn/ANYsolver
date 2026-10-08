@@ -1,0 +1,8 @@
+{
+  "method": "process-local Jet2 multiplication type count for active 4x8 candidate",
+  "counts": {
+    "jet": 595662,
+    "scalar": 0
+  },
+  "elapsed_seconds": 11.44674970000051
+}

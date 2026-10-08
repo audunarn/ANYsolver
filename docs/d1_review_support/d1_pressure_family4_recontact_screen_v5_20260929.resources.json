@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 10.779154000003473,
+  "peak_process_tree_memory_mb": 186.646528,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "scripts.general_contact_d1_pressure_gate_screen_dev",
+    "docs/d1_review_support/d1_pressure_family4_moving_edge_cycle_v4_20260929.json",
+    "docs/d1_review_support/d1_pressure_family4_recontact_screen_v5_20260929.json",
+    "--lifecycle",
+    "--independent-check"
+  ],
+  "log": "docs\\d1_review_support\\d1_pressure_family4_recontact_screen_v5_20260929.log"
+}

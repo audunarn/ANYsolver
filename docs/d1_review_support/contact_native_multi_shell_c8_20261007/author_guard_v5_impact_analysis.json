@@ -1,0 +1,11 @@
+{
+  "changed_methods": [
+    "_shell_configuration",
+    "_guard"
+  ],
+  "all_other_owner_methods_ast_equal": true,
+  "unchanged_shared_driver": true,
+  "interpretation": "V4_DERIVATIVE_WORK_REUSE_ROOT_ADOPTED_PENDING_ACTUAL_IMPACT_MATRIX_IDENTITY_AND_FULL_BYTE_PARITY",
+  "old_manifest": "native_multi_shell_guard_manifest_v4.json",
+  "new_manifest": "native_multi_shell_guard_manifest_v5.json"
+}

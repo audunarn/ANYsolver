@@ -1,0 +1,34 @@
+{
+  "reference": "reports\\general_contact_d1_distributed_cycle_response_v1_formal_20260927.json",
+  "candidate": "distributed_24q4_target_tangent_dev",
+  "target_nodes": [
+    52,
+    53
+  ],
+  "target_direction": "0.5 uz each",
+  "physical_rows": 162,
+  "pressure_replay_error_pa": 0.0,
+  "base_active_modes": 18,
+  "overlap_pair_branches": 48,
+  "action_scale_n_per_m": 755.4959451576312,
+  "runs": [
+    {
+      "step_m": 1e-06,
+      "smooth_branch": false,
+      "relative_tangent_error": 0.03213051811634655,
+      "action_scale_n_per_m": 772.7718641889684,
+      "source_action_scale_n_per_m": 282.94487331423863,
+      "target_action_scale_n_per_m": 700.5114715797394
+    },
+    {
+      "step_m": 5e-07,
+      "smooth_branch": false,
+      "relative_tangent_error": 0.009461083549458224,
+      "action_scale_n_per_m": 760.4588855527948,
+      "source_action_scale_n_per_m": 282.94487331423863,
+      "target_action_scale_n_per_m": 700.5114715797394
+    }
+  ],
+  "status": "inconclusive_or_failed_development",
+  "elapsed_seconds": 32.50012369995238
+}

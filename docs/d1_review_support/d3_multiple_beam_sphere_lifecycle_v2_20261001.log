@@ -1,0 +1,82 @@
+{"anysolver_file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py", "input_sha256": "811089ac6b97eed9d0c912c03f8b489aff606b2804de3744318bb48a171bbd39", "numpy": "2.4.6", "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]", "scipy": "1.17.1", "threadpools": [{"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.31.188.0"}, {"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.30"}]}
+F
+================================== FAILURES ===================================
+________ test_sphere_plane_coupling_cancelled_path_and_full_checkpoint ________
+
+    def test_sphere_plane_coupling_cancelled_path_and_full_checkpoint():
+        model,definition,settings=fixture()
+        load=LoadCase("sphere_plane");load.add_nodal_load(2,forces=(0.,-10.,-12.))
+        controls=dict(contact=definition,contact_settings=settings,num_steps=4,max_iterations=22,
+                      tolerance=1e-8,emit_restart_checkpoint=True)
+        full=solve_static_nonlinear(model,load,**controls)
+        assert full.status=="completed",full.failure_reason
+        contact=full.info["general_contact"]
+        assert contact["gap_tolerance_met"]
+        assert all(p["contact"]["active_line_length"]>0 for p in contact["pairs"])
+        indices=np.array(model.mesh.dof_manager.get_node_dofs(2)[1:3])
+        manager=MultipleBeamRigidManager(model,definition,settings)
+        residual,_,_=manager.evaluate(full.displacements)
+        expected=independent_force(full.displacements[indices])
+        np.testing.assert_allclose(residual[indices],expected,rtol=1e-8,atol=1e-9)
+        np.testing.assert_allclose(np.array(contact["beam_force"])+contact["rigid_force"],0.,atol=1e-9)
+        np.testing.assert_allclose(np.array(contact["beam_moment"])+contact["rigid_moment"],0.,atol=1e-9)
+        force_scale=np.hypot(10.,12.)
+        assert full.steps[-1].residual_norm/force_scale<1e-8
+        token=CancellationToken()
+        def stop(event):
+            if event.event_type=="nonlinear_static_step" and event.metadata["load_factor"]>=.5:
+                token.cancel("same-path restart control")
+        prefix_model,_,_=fixture()
+>       prefix=solve_static_nonlinear(prefix_model,load,cancellation_token=token,progress_callback=stop,**controls)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_general_contact_multiple_beam_sphere_lifecycle.py:64: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\anysolver\nonlinear_performance_batch_c.py:262: in wrapper
+    return _run_with_context(original, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\nonlinear_performance_batch_c.py:248: in _run_with_context
+    return original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\nonlinear_static.py:8025: in solve_static_nonlinear
+    return run_under_lease(
+src\anysolver\matrix_assembly.py:3651: in _run_with_qualified_assembly_runtime_lease
+    raise scoped_operation_error
+src\anysolver\matrix_assembly.py:3626: in _run_with_qualified_assembly_runtime_lease
+    result = operation(lease)
+             ^^^^^^^^^^^^^^^^
+src\anysolver\nonlinear_static.py:7963: in operation
+    result = run_solver()
+             ^^^^^^^^^^^^
+src\anysolver\nonlinear_static.py:7897: in run_solver
+    return _run_with_nonlinear_state_cleanup(
+src\anysolver\nonlinear_state.py:271: in _run_with_nonlinear_state_cleanup
+    return operation(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\threading_policy.py:412: in wrapped
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\nonlinear_analysis_diagnostics.py:443: in wrapped
+    result = func(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\nonlinear_static.py:6882: in _solve_static_nonlinear_under_lease
+    cancellation_safe_point(
+src\anysolver\control.py:86: in cancellation_safe_point
+    token.raise_if_cancelled(stage)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <anysolver.control.CancellationToken object at 0x0000020C003FE7B0>
+stage = 'nonlinear_static.force.step:3'
+
+    def raise_if_cancelled(self, stage: str = "") -> None:
+        """Raise :class:`SolveCancelled` when cancellation was requested."""
+    
+        if self._event.is_set():
+>           raise SolveCancelled(self.reason, stage=stage)
+E           anysolver.control.SolveCancelled: Solve cancelled at nonlinear_static.force.step:3: same-path restart control
+
+src\anysolver\control.py:71: SolveCancelled
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_multiple_beam_sphere_lifecycle.py::test_sphere_plane_coupling_cancelled_path_and_full_checkpoint
+1 failed in 1.45s
+{"pytest_exit_code": 1, "verified_source_count": 448}

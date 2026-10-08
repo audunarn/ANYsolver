@@ -1,0 +1,11 @@
+[development] exact targets=3; record=C:\ANYworkspaceWork\contact-testing-reconciliation-20261001\anysolver-portable-ci-i5bj8ayb\P01
+[portable-ci] starting P01/01 with 3 modules
+...                                                                      [100%]
+============================ slowest 10 durations =============================
+3.68s call     tests/test_general_contact_ordinary_supported_schur.py::test_ordinary_force_control_verifies_schur_before_committing
+2.12s call     tests/test_general_contact_ordinary_supported_schur.py::test_schur_checkpoint_rejects_self_healing_token_before_element_work
+0.05s call     tests/test_general_contact_transient_s3_history.py::test_s3_history_nonuniform_load_retains_later_algebraic_rates
+
+(6 durations < 0.005s hidden.  Use -vv to show these durations.)
+3 passed in 11.45s
+[portable-ci] P01 exit=0

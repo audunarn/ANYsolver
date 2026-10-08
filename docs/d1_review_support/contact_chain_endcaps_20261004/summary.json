@@ -1,0 +1,184 @@
+{
+  "scope": "D3 explicit nearest-curve B2 chain physical-end work; developmental code verification, not engineering acceptance",
+  "source_parent": "f2f0010ce5fc8dbb2e53eb5a6cea7c8623c91b57",
+  "source_files": {
+    "src/anysolver/general_contact/beam_chain_ends.py": "a498da7a87a1e18fcc8b112a5d13e2e16ead5decbd6d13fec75914fc4fe409c2",
+    "src/anysolver/general_contact/beam_chain_end_geometry.py": "08314f3ddfcf148a89309d1f596f64cdf058bd344d0d85ff9d155161fcac0a99",
+    "src/anysolver/general_contact/beam_pair_ends.py": "6b7867cd1c7212c3d2bf322cbbfcae7c145c375aa751b982e1d4000c97bc3687",
+    "src/anysolver/general_contact/core.py": "d88a9ce248bf853170227dd331f712b56b2abdca7575fbd1680b22146531240d",
+    "tests/test_general_contact_beam_chain_ends.py": "a8609740378ddf35cc41645c1565a9d47e0f3dc656c64fcc619c5c6ba3da0c25",
+    "examples/general_contact_beam_chain_ends.py": "97d184d5d58c4a82b91a7c70a989df7583af06a3dc64097c198d9bf8641fe84e"
+  },
+  "wheels": {
+    "anyfem-0.4.1-py3-none-any.whl": "571f0b6c60e56b0fb2babc751803523e7d37136adbe4f5f7f9c26e48e1fbed7c",
+    "anysolver-0.4.7-py3-none-any.whl": "61c324bd9a16b46e30af052dd13fbf916c5fdfeb297b39d3d7b90f74115e7460"
+  },
+  "runs": {
+    "build01": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 11.832262700016145,
+        "peak_bytes": 110747648
+      },
+      "outcomes": null
+    },
+    "install01": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 3.821389899996575,
+        "peak_bytes": 102854656
+      },
+      "outcomes": null
+    },
+    "installed_final": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 31.57167119998485,
+        "peak_bytes": 336089088
+      },
+      "outcomes": {
+        "passed": 42
+      }
+    },
+    "source01": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 11.356819599983282,
+        "peak_bytes": 182677504
+      },
+      "outcomes": {
+        "passed": 6
+      }
+    },
+    "source02": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 3.9099240000359714,
+        "peak_bytes": 183689216
+      },
+      "outcomes": {
+        "passed": 3,
+        "failed": 1
+      }
+    },
+    "source03": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 2.469340800016653,
+        "peak_bytes": 179277824
+      },
+      "outcomes": {
+        "passed": 1,
+        "failed": 1
+      }
+    },
+    "source04": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 8.942027000011876,
+        "peak_bytes": 183209984
+      },
+      "outcomes": {
+        "passed": 5
+      }
+    },
+    "source05": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 8.319453400035854,
+        "peak_bytes": 184320000
+      },
+      "outcomes": {
+        "passed": 4
+      }
+    },
+    "source06": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 3.481201799993869,
+        "peak_bytes": 181952512
+      },
+      "outcomes": {
+        "passed": 2
+      }
+    },
+    "source07": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 2.601394400000572,
+        "peak_bytes": 184184832
+      },
+      "outcomes": {
+        "passed": 1
+      }
+    }
+  },
+  "installed_modules_matching": 215,
+  "installed_package_files_matching": 498,
+  "effective_jit_disabled": true,
+  "effective_numba_threads": 1,
+  "effective_pools": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "version": "0.3.31.188.0",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "version": "0.3.30",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "openmp",
+      "internal_api": "openmp",
+      "num_threads": 1,
+      "prefix": "vcomp",
+      "filepath": "C:\\Windows\\System32\\vcomp140.dll",
+      "version": null
+    }
+  ],
+  "independent_bar_relative_errors": {
+    "bar_2_2": 1.3004249206491965e-15,
+    "bar_4_3": 9.265527559625616e-15,
+    "bar_8_8": 7.224582892495543e-16
+  },
+  "bar_relative_target": 1e-06,
+  "bar_gap_budget_m": 1e-05,
+  "raw_records": 70,
+  "raw_sha256": "74df7ae392ad2bb595c8e53156ca6a7ba28e9c3219452e7cabcae665c3211473",
+  "environment": {
+    "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "versions": {
+      "numpy": "2.4.6",
+      "scipy": "1.17.1",
+      "numba": "0.65.1",
+      "ANYmaterial": "0.2.0",
+      "ANYgeometry": "0.4.3"
+    }
+  },
+  "review_disposition": "source03 reproduces nonreciprocal cap activation admitted by independent endpoint paths; common all-end interval proof now binds reciprocal partners, cutback and candidate/work admission; installed source04/source05 successor checks pass",
+  "retained_failures": "source02 fixture confounded nearest-feature tie with zero ownership; corrected finite-normal independent fixture. source03 actual reciprocal swept-admission mechanics omission retained before correction; no scientific tolerance change.",
+  "supporting_geometry_checks": "1045 exact assertions passed in 1.57s; source explicitly pinned but memory/runtime settings uninstrumented; supporting only, no measured cap claim",
+  "limits": "180s/953MiB process tree measured runs; one-to-sixteen elastic scalar/von-Karman B2 cells/side and existing candidate cap; explicit hemisphere point penalties; strict resolved feature branches or shared equivalent material junction; no B3/generalized closed switches, native/friction/dynamics, normal application admission, release or independent engineering acceptance"
+}

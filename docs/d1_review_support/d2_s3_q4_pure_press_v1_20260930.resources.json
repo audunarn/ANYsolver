@@ -1,0 +1,20 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 8.423899500019616,
+  "peak_process_tree_memory_mb": 358.248448,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_s3_q4_static_dev.py",
+    "-q",
+    "-k",
+    "pure_press or zero_predictor",
+    "--basetemp=docs/d1_review_support/pytest_tmp_s3_q4_pure_press_v1",
+    "--junitxml=docs/d1_review_support/d2_s3_q4_pure_press_v1_20260930.xml"
+  ],
+  "log": "docs\\d1_review_support\\d2_s3_q4_pure_press_v1_20260930.log"
+}

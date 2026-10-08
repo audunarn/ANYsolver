@@ -1,0 +1,19 @@
+{
+  "method": "process-local derivative-order count, single active 4x8 candidate; not a solve or acceptance",
+  "source_import": "worktree src/anysolver",
+  "elapsed_seconds": 16.735619099985342,
+  "counts": {
+    "((False, False), (False, False))": 38010,
+    "((False, False), (False, True))": 284,
+    "((False, False), (True, True))": 44490,
+    "((False, True), (False, True))": 32,
+    "((False, True), (True, True))": 2164,
+    "((True, False), (False, True))": 444,
+    "((True, False), (True, False))": 1638,
+    "((True, False), (True, True))": 1194,
+    "((True, True), (False, False))": 35064,
+    "((True, True), (False, True))": 3568,
+    "((True, True), (True, False))": 132300,
+    "((True, True), (True, True))": 336474
+  }
+}

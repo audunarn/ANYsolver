@@ -1,0 +1,19 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 74.0425555000038,
+  "peak_process_tree_memory_mb": 399.138816,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-u",
+    "-m",
+    "docs.d1_review_support.d1_multilevel_seed_preflight",
+    "--saved-record",
+    "docs/d1_review_support/d1_target_grid_8x8_prediction_20260929.json",
+    "--output",
+    "docs/d1_review_support/d1_multilevel_seed_preflight_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_multilevel_seed_preflight_log_20260929.txt"
+}

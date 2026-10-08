@@ -1,0 +1,9 @@
+{"status": "completed", "failure_reason": null, "accepted_steps": 2, "elapsed_seconds": 755.0976338000037, "force_relative_error": 0.012055158363070952}
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d2_projected_penalty_radial_dev.py", line 87, in <module>
+    main()
+    ~~~~^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d2_projected_penalty_radial_dev.py", line 77, in main
+    independent_gap=bool(result["independent_gap_lower_m"]["gap_tolerance_met"]))
+                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'float' object is not subscriptable

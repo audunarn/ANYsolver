@@ -1,0 +1,15 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 21.615598000003956,
+  "peak_process_tree_memory_mb": 317.022208,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "general_contact_free_target_cycle_dev.py",
+    "--output",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\reports\\d1_example_independent_gap_installed_result_4abcc181_20260928.json"
+  ],
+  "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\reports\\d1_example_independent_gap_installed_4abcc181_20260928.txt"
+}

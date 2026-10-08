@@ -1,0 +1,61 @@
+{
+  "status": "development_enriched_shell_reference_singular",
+  "source_commit": "f2d841b6022e18077e59259e5e9ba98259af0c5f",
+  "probe_sha256": "ea7cb54e3b22992631f88a4e8dd46178f11cd15e106fdf6028d82946a5b2db14",
+  "saved_source_sha256": "8293e528837cc2a8a25444aa079944c9f8371f5a5b50280bb6dc91816d19b852",
+  "saved_runtime_identity": {
+    "python": "3.14.2",
+    "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+    "anymaterial_module": "C:\\Github\\ANYmaterial\\src\\anymaterial\\__init__.py",
+    "compiled_bjet_mul_enabled": false
+  },
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "coarse_source_cells": [
+    16,
+    8
+  ],
+  "fine_source_cells": [
+    16,
+    16
+  ],
+  "structural_refinement_factors": [
+    1,
+    2
+  ],
+  "pressure_modes": 153,
+  "settled_active_modes": 48,
+  "source_skin_interpolation_error_m": 2.482534153247273e-16,
+  "pressure_support_l2_relative": 7.12677314948191e-16,
+  "normalized_gap_maximum_error_m": 3.148929684712587e-17,
+  "reference_overlap_area_relative_error": 1.9737298215556174e-15,
+  "constraint_orthonormality_relative": 0.0,
+  "structural_prolongation_reconstruction_relative": 0.0,
+  "prolongated_pressure_work_relative": 7.713407389442036e-09,
+  "prolongated_structural_energy_relative": 0.018180863516941315,
+  "coarse_free_coordinates": 295,
+  "fine_free_coordinates": 559,
+  "coarse_metric_scaled_minimum_eigenvalue": 0.0016688263429592803,
+  "fine_metric_scaled_minimum_eigenvalue": 0.0008937997504210661,
+  "coarse_response_relative_residual": 5.375173902691149e-15,
+  "fine_response_relative_residual": 1.108854017137338e-14,
+  "common_metric": {
+    "prolongation_minimum_singular_ratio": 0.7124982932086685,
+    "restricted_energy_scaled_minimum_eigenvalue": 0.0016498626033269667,
+    "restricted_response_relative_residual": 5.719228821181918e-15,
+    "pressure_work_bridge_compliance_relative": 3.6950513746218937e-10,
+    "fine_minus_restricted_scaled_minimum_eigenvalue": -6.144660030333071e-16,
+    "settled_active_enrichment_ratio_range": [
+      0.7320099473514678,
+      0.9999974694921925
+    ],
+    "settled_active_metric_ratio_range": [
+      0.9999999999998149,
+      1.0000000000001237
+    ]
+  },
+  "full_supported": {
+    "reference_scaled_minimum_eigenvalue": -4.2938441934617387e-16
+  },
+  "elapsed_seconds": 28.84487010000157,
+  "peak_process_working_set_mb": 231.952384
+}

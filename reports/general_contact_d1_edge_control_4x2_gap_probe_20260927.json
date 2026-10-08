@@ -1,0 +1,17 @@
+{
+  "input": "reports\\general_contact_d1_edge_control_4x2_pose_20260927.json",
+  "scope": "fixed horizontal planar target; rotation-locked Q4 graph source",
+  "target_z_m": 0.015000000000000001,
+  "minimum_source_vertex_vertical_gap_m": -5.000000000000143e-05,
+  "lowest_source_nodes": [
+    1,
+    6,
+    11
+  ],
+  "maximum_graph_x_slope": 0.0006210636079842041,
+  "maximum_graph_y_slope": 1.3731591550928147e-05,
+  "source_normal_cosine_lower": 0.9999998070457748,
+  "independent_physical_gap_lower_m": -5.000000964771455e-05,
+  "reported_whole_face_lower_m": -0.0004295038808469912,
+  "reported_sampled_overlap_gap_m": -5.000000964300063e-05
+}
