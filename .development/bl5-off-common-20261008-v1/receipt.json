@@ -1,0 +1,21 @@
+{
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_stiffened_shell_bl5_projected_density.py::test_supported_broken_translation_is_visible_to_fine_p1_but_not_p0"
+  ],
+  "source_commit": "9cdb25447ff6dc18e92b83c1f73713a96ad51394",
+  "test_sha256": "c8f84554e53057519468c86dcd570431c989790cb7555cfb7a9e2bda33745fcf",
+  "status": "COMPLETED",
+  "exit_code": 0,
+  "wall_seconds": 5.093455,
+  "process_cap_seconds": 30.0,
+  "memory_cap_bytes": 2147483648,
+  "cpu_affinity_requested": 1,
+  "numerical_threads_requested": 1,
+  "jit_disabled_requested": true,
+  "stdout": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-off-common-20261008-v1\\stdout.log",
+  "stderr": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\.development\\bl5-off-common-20261008-v1\\stderr.log"
+}

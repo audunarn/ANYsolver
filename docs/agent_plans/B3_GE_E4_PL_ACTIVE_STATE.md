@@ -81,6 +81,23 @@ transfer. Only a law with a justified work norm advances to the prospective
 growing-space F03 assessment. No new common-field helper is needed. Do not
 select a line law from the saved ratios.
 
+A bounded 1:1, five-channel BL5 source check now supplies one concrete
+off-common witness: alternating lateral translations of `±1e-4 m` at the five
+native beam nodes respect the fixed supports. The actual sampled continuous
+gap exceeds `5e-5 m`, while every P0 weak row is below `1e-13`; the same law
+with continuous-P1 rows detects it above `1e-6`, and the physical operator
+after stationary-resultant elimination has positive strain energy. Thus this
+motion is prohibited by the declared continuous translation law but invisible
+to that P0 projection. It is not a zero-energy mechanism, the saved 2:1
+Fy/rotation mode, or evidence for six-channel L1/P1 selection. The changed
+focused test passed 1/1 in 2.55 s (5.45 s process wall); preserve both
+[attempts](../../.development/bl5-off-common-20261008-v2/receipt.json), with
+v1 superseded by the added actual-gap/weak-row parity check. CPU affinity 1
+was observed; one thread/JIT-off were requested, not independently observed.
+The sampled parent RSS field is not a reliable process-tree peak. The next
+decision still requires physical work and a justified norm for the disputed
+off-ratio mode before any formal F03 comparison.
+
 ## Delivered experimental behavior and open acceptance
 
 - The sparse multi-element Q4/mixed Q4-S3/all-S3 GE point workflow, physical

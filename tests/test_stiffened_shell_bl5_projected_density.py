@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 
 from anysolver import b3_ge, stiffened_shell as api
+from anysolver._ge_beam3_retained_generalized_state import Mechanical
 from anysolver._stiffened_shell_l1_assembly_experimental import _sample_rows
 from test_stiffened_shell_bl5_affine_supports import candidate
 from test_stiffened_shell_l1_assembly_experimental import _bl5_joint_mesh_definition
@@ -20,6 +21,52 @@ BASIS = "discontinuous_p1_cell_average"
 def projected_definition(shell_edges=4, halfcells=4):
     base = candidate(shell_edges, halfcells)
     return replace(base, lines=(replace(base.lines[0], basis=BASIS),))
+
+
+def test_supported_broken_translation_is_visible_to_fine_p1_but_not_p0():
+    """A weak P0 null is not a zero-gap or zero-energy physical connection."""
+    base = _bl5_joint_mesh_definition(4, 4, 1)
+    p1 = replace(base, lines=(replace(base.lines[0], basis="continuous_p1"),))
+    coarse = api.create_analysis(definition=base)
+    fine = api.create_analysis(definition=p1)
+    try:
+        assert coarse._K.shape == fine._K.shape
+        assert len(coarse._beam_ids) == 5
+        amplitude = 1e-4
+        q = np.zeros(coarse._K.shape[0])
+        for i in range(len(coarse._beam_ids)):
+            q[coarse._shell_count + 6*i + 1] = amplitude*(-1.)**i
+        assert np.count_nonzero(q[coarse._fixed]) == 0
+
+        positions = np.array([coarse._beam_nodes[n][0] for n in coarse._beam_ids])
+        state = Mechanical(positions + q[coarse._shell_count:
+            coarse._shell_count + 6*len(coarse._beam_ids)].reshape(-1, 6)[:, :3],
+            np.zeros_like(positions), np.tile(np.eye(3), (len(positions), 1, 1)),
+            np.tile(np.eye(3), (len(coarse._beam_parts), 2, 1, 1)),
+            np.zeros((len(coarse._beam_parts), 18)))
+        gaps = np.array([op.evaluate(np.zeros((2, 6)), state, np.zeros(5)).gap
+                         for op, *_ in coarse._line_samples])
+        assert np.max(np.abs(gaps[:, 1])) > amplitude/2
+        integrated = np.zeros(coarse._C.shape[0])
+        supports = len(base.lines[0].beam_halfcells)
+        for gap, (_, _, weight, edge, _) in zip(gaps, coarse._line_samples):
+            for channel in range(5):
+                integrated[channel*supports + edge] += weight*gap[channel]
+        np.testing.assert_allclose(integrated, coarse._C @ q, rtol=0., atol=1e-13)
+        assert np.max(np.abs(coarse._C @ q)) < 1e-13
+        assert np.max(np.abs(fine._C @ q)) > amplitude/100
+
+        # Eliminate only stationary resultants for a physical strain-energy
+        # check; they are not arbitrary positive-energy coordinates.
+        physical = (coarse._shell_count + 6*len(coarse._beam_ids) +
+                    6*len(coarse._beam_parts))
+        k = coarse._K.toarray()
+        kp = k[:physical, :physical] - k[:physical, physical:] @ np.linalg.solve(
+            k[physical:, physical:], k[physical:, :physical])
+        assert float(q[:physical] @ kp @ q[:physical]) > 0.
+    finally:
+        coarse.close()
+        fine.close()
 
 
 def test_distinct_identity_and_complete_member_admission():
