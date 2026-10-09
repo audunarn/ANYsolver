@@ -657,3 +657,5 @@ scripts/b3_e4_f03_primal_ritz.py text eol=lf
 # Keep the exact registered bytes on Linux as well as Windows checkouts.
 scripts/b3_e4_bl5_riesz_controls_dev.py text eol=crlf
 scripts/b3_e4_bl5_modal_reference_dev.py text eol=crlf
+scripts/r8_bl5_projected_reference_action_dev.py text eol=lf
+scripts/r8_bl5_external_affine_reference_dev.py text eol=lf

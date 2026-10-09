@@ -10,6 +10,21 @@ CHECKED=set()
 
 
 @pytest.fixture(scope='module',autouse=True)
+def raw_output_directory(tmp_path_factory):
+    # Explicit evidence destinations retain their original behavior. Ordinary
+    # portable checks get fresh outputs instead of requiring a machine-local
+    # environment setting or sharing prior numerical evidence.
+    if 'ANYSOLVER_WEAK_RAW' in os.environ:
+        yield
+        return
+    os.environ['ANYSOLVER_WEAK_RAW']=str(tmp_path_factory.mktemp('weak-reference-raw'))
+    try:
+        yield
+    finally:
+        del os.environ['ANYSOLVER_WEAK_RAW']
+
+
+@pytest.fixture(scope='module',autouse=True)
 def prior_prerequisite_evidence():
     path=os.environ.get('ANYSOLVER_WEAK_REUSE')
     if path:
