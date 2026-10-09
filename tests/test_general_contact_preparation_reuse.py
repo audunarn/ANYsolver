@@ -52,6 +52,8 @@ def gap_fixture():
     manager = object.__new__(owner.GeneralS3PatchManager)
     manager.law = law
     manager.augmented = False
+    manager.profile = owner.SOURCE_Q4_PROFILE
+    manager.projected_work = False
     manager.settings = SimpleNamespace(q4_source_gap_certificate='overlap_local_dev')
     return manager, law.reference_source.copy(), law.reference_target.copy()
 
