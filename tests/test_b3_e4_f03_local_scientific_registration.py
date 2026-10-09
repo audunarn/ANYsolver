@@ -240,9 +240,20 @@ def test_registration_rejects_hardlinked_source_file(tmp_path):
 
 def test_registration_rejects_filesystem_alias_of_source_as_run_root(tmp_path):
     value = _registration(tmp_path)
-    alias = value.run_root.upper()
-    if alias == value.run_root:
-        pytest.skip("no distinct case alias available")
+    # A same-file alias must exist on every platform: case-insensitive
+    # filesystems accept the uppercased spelling, and case-sensitive ones
+    # still resolve to the run root through an existing child directory.
+    alias = next(
+        (candidate for candidate in (
+            value.run_root.upper(),
+            os.path.join(value.run_root, "cases", ".."),
+        )
+         if candidate != value.run_root
+         and Path(candidate).is_dir()
+         and os.path.samefile(candidate, value.run_root)),
+        None,
+    )
+    assert alias is not None, "no same-file run-root alias on this platform"
     changed = replace(
         value, repository_root=alias,
         commands=tuple(replace(command, working_directory=alias)

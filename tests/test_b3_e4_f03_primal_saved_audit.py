@@ -18,9 +18,14 @@ def fake_parent(tmp_path,monkeypatch):
     # Supply Git's byte-returning boundary explicitly. This unit fixture does
     # not depend on checkout depth and does not open frozen numerical evidence.
     source_blob=(Path(__file__).parent/'data/b3_e4_f03_primal_ritz_e7908c1a.py.txt').read_bytes()
-    def source_at_head(command, *, cwd, stderr):
-        prefix=('git','show')
-        assert command[:2]==prefix and cwd==audit.ROOT
+    original_check_output=audit.subprocess.check_output
+    def source_at_head(command,*args,**kwargs):
+        # Scoped git-show boundary: unrelated subprocess callers (such as
+        # platform.uname probing the kernel with text=True) keep the
+        # original check_output behavior instead of failing the mock.
+        if tuple(command[:2])!=('git','show'):
+            return original_check_output(command,*args,**kwargs)
+        assert kwargs.get('cwd')==audit.ROOT and 'stderr' in kwargs
         head,relative=command[2].split(':',1)
         assert head==audit.PARENT_HEAD
         if relative=='scripts/b3_e4_f03_primal_ritz.py':return source_blob
