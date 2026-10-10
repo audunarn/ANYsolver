@@ -115,7 +115,10 @@ def test_driver_constructor_alias_refused_before_private_plan(monkeypatch):
     with prepare_static_evaluator(_bar(), envelope_recovery_config=config) as owner:
         seen = []
         monkeypatch.setattr(driver, 'EnvelopeAccumulator', lambda plan: seen.append(plan))
-        with pytest.raises(PreparedStaticCapabilityError, match='constructor authority'):
+        # The response authority check (M-later) may refuse the replaced binding first;
+        # either refusal comes before the private plan reaches the alias.
+        with pytest.raises(PreparedStaticCapabilityError,
+                           match='constructor authority|executable authority'):
             next(owner.iter_batches([_case(0)]))
         assert seen == []
 

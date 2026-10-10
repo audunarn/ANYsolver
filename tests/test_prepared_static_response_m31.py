@@ -10,6 +10,7 @@ from anysolver import LoadCase, RecoveryConfig, prepare_static_evaluator, prepar
 from anysolver.prepared_static import _plain_deepcopy
 from anysolver.prepared_static_loads import load_packet_storage_bytes
 from anysolver.static_batch import StaticCase
+import prepared_static_response_m16_assessment  # noqa: F401  (adds scripts/ to sys.path)
 from benchmark_static_batches import mixed_free_model
 from test_prepared_static_response_m26 import _grid_model
 

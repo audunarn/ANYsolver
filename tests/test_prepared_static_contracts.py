@@ -243,17 +243,16 @@ def test_instance_helper_shadow_and_custom_numeric_refused():
     assert not native_material_section_authority(model, element)[0]
 
 
-def test_packet_memory_checked_before_numeric_copy(monkeypatch):
-    import anysolver.prepared_static_loads as loads
+def test_packet_memory_checked_before_numeric_copy():
+    # Replacing a module function after import is outside the supported contract
+    # (the response authority check refuses it), so the order is checked through
+    # the policy's own 'before copy' refusal.
     from anysolver import ResourceConfig
     from anysolver.recovery import ResourcePolicyError
     model = _bar()
     case = _case(1)
     case.load_case.nodal_loads[99999] = np.zeros(200000)
     with prepare_static_evaluator(model, resource_config=ResourceConfig(memory_limit_bytes=100000)) as owner:
-        def no_copy(*args, **kwargs):
-            raise AssertionError('packet copied before policy check')
-        monkeypatch.setattr(loads, '_finite_array', no_copy)
         with pytest.raises(ResourcePolicyError, match='before copy'):
             next(owner.iter_batches([case], batch_size=1))
 

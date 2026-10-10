@@ -1,15 +1,21 @@
 """M17 formal holdout assessment (A1-A4) of the vectorized route under the frozen M16 criteria."""
 import json
+import os
 from pathlib import Path
+
+import pytest
 
 import prepared_static_response_m16_assessment as assessment
 
 EVIDENCE = Path(__file__).resolve().parents[1] / '.prepared-static-evidence' / 'm17-assessment-01.json'
 
 
+@pytest.mark.skipif(os.environ.get('PREPARED_STATIC_WRITE_EVIDENCE') != 'm17-assessment-01',
+                    reason='one-shot milestone evidence; opt in with PREPARED_STATIC_WRITE_EVIDENCE=m17-assessment-01')
 def test_m17_formal_holdout_assessment():
     mode = 'certified_vectorized'
     summaries = [assessment.holdout_a1(mode), assessment.holdout_a2(mode), assessment.holdout_a3(mode), assessment.holdout_a4(mode)]
+    EVIDENCE.parent.mkdir(parents=True, exist_ok=True)
     with EVIDENCE.open('x', encoding='utf-8') as handle:
         json.dump({'stress_execution': mode, 'holdouts': summaries,
                    'go': all(s['failure_count'] == 0 for s in summaries)}, handle, indent=1, default=float)

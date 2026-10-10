@@ -36,6 +36,7 @@ from anysolver.elements import BeamElement
 from anysolver.fe_core import _QualifiedStateMapping
 from anysolver.prepared_static_recovery import (_capture_owned_local_recovery, _recover_owned_local,
                                                 owned_recovery_scope)
+import prepared_static_response_m16_assessment  # noqa: F401  (adds scripts/ to sys.path)
 from benchmark_static_batches import mixed_free_model
 from test_prepared_static_evaluator import _bar, _shell_model
 import prepared_static_response_m16_assessment as assessment

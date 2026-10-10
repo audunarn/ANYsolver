@@ -3,14 +3,14 @@
     {
       "distribution": "numpy",
       "licence": "BSD-3-Clause AND bundled-component-licences",
-      "requirement": "numpy>=1.26",
+      "requirement": "numpy>=2.0",
       "scope": "runtime",
       "status": "not-bundled"
     },
     {
       "distribution": "scipy",
       "licence": "BSD-3-Clause AND bundled-component-licences",
-      "requirement": "scipy>=1.11",
+      "requirement": "scipy>=1.13",
       "scope": "runtime",
       "status": "not-bundled"
     },
@@ -40,6 +40,20 @@
       "licence": "MPL-2.0",
       "requirement": "ANYfileio>=0.3.2,<0.4",
       "scope": "runtime",
+      "status": "not-bundled"
+    },
+    {
+      "distribution": "ANYhydro",
+      "licence": "MPL-2.0",
+      "requirement": "ANYhydro>=0.1.0",
+      "scope": "optional-runtime",
+      "status": "not-bundled"
+    },
+    {
+      "distribution": "ANYloads",
+      "licence": "MPL-2.0",
+      "requirement": "ANYloads>=0.1.0",
+      "scope": "optional-runtime",
       "status": "not-bundled"
     },
     {
