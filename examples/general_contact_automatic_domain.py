@@ -75,9 +75,20 @@ def solve_shell_pair(model,domain,settings,resolution,path,**controls):
         contact_path_program=path,max_iterations=15,**controls)
 
 
-def build_projected_shell_pair():
-    """Separate refined projected-penalty development fixture; one press."""
+def build_projected_shell_pair(*,lifecycle=False,path_predictor='none',sliding=False):
+    """Refined deformable development fixture with fixed reference roles.
+
+    ``lifecycle=True`` presses, separates and presses again. All six source
+    normal coordinates share the declared actuator displacement; the target
+    retains its free normal coordinate. The projected weak-gap law reports
+    regularization storage separately from contact work.
+    ``sliding=True`` inserts a declared 20mm lateral actuator stage under
+    press, then separates and recontacts at that lateral position. It requires
+    the explicit development predictor; other source ux remain unknowns.
+    """
     from anysolver import ContactPathControl,ContactPathProgram
+    if sliding and path_predictor!='control_projection_dev':
+        raise ValueError('sliding example requires explicit control_projection_dev')
     model=FEModel('declared-automatic-refined-projected-q4-s3')
     model.add_material('elastic',1e5,.3,density=1.)
     source=((.1,.1,.055),(.6,.1,.055),(1.1,.1,.055),
@@ -95,6 +106,12 @@ def build_projected_shell_pair():
     model.add_boundary_condition(BoundaryCondition('target-guide',(7,8,9,10),
         {name:0. for name in ('ux','uy','rx','ry','rz')}))
     model.add_boundary_condition(BoundaryCondition('target-support',(7,8,10),{'uz':0.}))
+    # One ordinary actuator coordinate with equal source transverse travel.
+    actuator=model.mesh.dof_manager.get_node_dofs(1)[2]
+    for node in range(2,7):
+        dependent=model.mesh.dof_manager.get_node_dofs(node)[2]
+        model.add_constraint_equation(terms=((dependent,1.),(actuator,-1.)),
+            source_id=f'source-normal-actuator-{node}',dependent_dof=dependent)
     domain=AutomaticContactDomain('refined-projected-two-shells',(
         AutomaticContactParticipant(ContactSurface('q4_source',(1,2),'bottom'),'q4-body'),
         AutomaticContactParticipant(ContactSurface('s3_target',(3,4),'top'),'s3-body')),
@@ -105,17 +122,38 @@ def build_projected_shell_pair():
         q4_source_area_tolerance=1e-9,q4_source_weighted_gap_tolerance=1e-10,
         q4_source_support_gradient_tolerance=1e-5,q4_source_support_hessian_tolerance=1e-5,
         q4_source_weighted_gap_gradient_tolerance=1e-5,q4_source_weighted_gap_hessian_tolerance=1e-5,
-        maximum_q4_source_integration_triangles=128)
-    resolution=resolve_automatic_contact_domain(model,domain,settings,analysis_control='displacement')
+        maximum_q4_source_integration_triangles=128,path_predictor=path_predictor)
+    resolution=resolve_automatic_contact_domain(model,domain,settings,
+        analysis_control='contact_path' if path_predictor!='none' else 'displacement')
+    # Five-micrometre nominal press retains the 50-micrometre swept gap guard.
+    travel=(0.,-.015005,0.,-.015005) if lifecycle else (0.,-.015005)
+    waypoints=((0.,0.),(0.,-.015005),(.02,-.015005),(.02,0.),(.02,-.015005)) if sliding else tuple((0.,value) for value in travel)
     path=ContactPathProgram(controls=(ContactPathControl.node(1,'ux'),ContactPathControl.node(1,'uz')),
-        waypoints=((0.,0.),(0.,-.01502)),steps_per_segment=1)
+        waypoints=waypoints,steps_per_segment=1 if lifecycle or sliding else 2)
     return model,domain,settings,resolution,path
 
 
 if __name__=='__main__':
-    import json
-    model,load,domain,settings,resolution=build()
-    result=solve(model,load,domain,settings,resolution,emit_restart_checkpoint=True)
+    import argparse,json
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--deformable-press',action='store_true',
+        help='guided Q4 source press against a deformable S3 target (development profile)')
+    parser.add_argument('--deformable-lifecycle',action='store_true',
+        help='guided press/open/recontact with the explicit development control predictor')
+    parser.add_argument('--deformable-sliding',action='store_true',
+        help='guided press/20mm slide/open/recontact (frictionless development profile)')
+    args=parser.parse_args()
+    if args.deformable_press or args.deformable_lifecycle or args.deformable_sliding:
+        model,domain,settings,resolution,path=build_projected_shell_pair(
+            lifecycle=args.deformable_lifecycle or args.deformable_sliding,
+            sliding=args.deformable_sliding,
+            path_predictor='control_projection_dev' if args.deformable_lifecycle or args.deformable_sliding else 'none')
+        result=solve_shell_pair(model,domain,settings,resolution,path,emit_restart_checkpoint=True)
+    else:
+        model,load,domain,settings,resolution=build()
+        result=solve(model,load,domain,settings,resolution,emit_restart_checkpoint=True)
     if result.status!='completed':raise RuntimeError(result.failure_reason)
     print(json.dumps(dict(domain=resolution.to_dict(),status=result.status,
-                         contact=result.info['general_contact']),indent=2))
+                         contact=result.info['general_contact'],
+                         phases=result.info.get('force_displacement_history')),indent=2,
+                     default=lambda x:x.item() if hasattr(x,'item') else x.tolist()))

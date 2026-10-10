@@ -1,0 +1,38 @@
+{
+  "baseline_wheel_sha256": "bc9404faac69dd2d2f09ba1f6300bfcfede3dcc96be14fdfaba4a17d9de552a5",
+  "candidate_wheel_sha256": "5d3a46fc75586a864a802037ba32e58bade5a51e6100e5b1d2b51ee382bb1407",
+  "changed_payloads": [
+    "anysolver/general_contact/q4_q4_overlap_derivatives.py"
+  ],
+  "unchanged_payload_count": 628,
+  "changed_functions": [
+    "_batched_rule",
+    "q4_q4_overlap_derivatives"
+  ],
+  "unchanged_chart_and_inverse_symbols": [
+    "Q4Q4OverlapDerivatives",
+    "_cross",
+    "_cross2",
+    "_dot",
+    "_map",
+    "_natural",
+    "_normalize",
+    "_q1",
+    "_sub",
+    "_sum",
+    "_zero",
+    "q4_q4_swept_chart_admissible"
+  ],
+  "reused_batch_helper": {
+    "path": "anysolver/general_contact/q4_s3_overlap_derivatives.py",
+    "sha256": "b16ef5a5f6287170fef8722bee3d832829300dac4b8a6aa75b8c8a1197fd559a",
+    "statement": "existing contact Jet2 batch algebra reused, unchanged; no newbackend/genericADedit"
+  },
+  "paired_full_displacement_max_abs_m": [
+    0.0,
+    0.0
+  ],
+  "default_settings_and_history_unchanged": true,
+  "law_and_all_controls_unchanged": true,
+  "no_contact_and_other_routes": "no callsite or payload changes outside Q4/Q4 kernel; no no-contact performance execution/claim"
+}

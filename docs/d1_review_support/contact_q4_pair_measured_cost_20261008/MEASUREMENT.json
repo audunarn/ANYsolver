@@ -1,0 +1,193 @@
+{
+  "primary_order": "ABBA: old baseline2,new1,new2,postold",
+  "runs": [
+    {
+      "stage": "full-baseline-2",
+      "process_wall_s": 41.99972079999861,
+      "route_wall_s": 39.59935370000312,
+      "peak_rss_mib": 184.859375,
+      "coarse_metrics": {
+        "swept_admission": {
+          "calls": 8,
+          "wall_s": 3.785503000006429
+        },
+        "float_geometry": {
+          "calls": 18,
+          "wall_s": 1.1931245999585371
+        },
+        "float_preparation": {
+          "calls": 18,
+          "wall_s": 1.193924999985029
+        },
+        "local_Q4_Jet2": {
+          "calls": 84,
+          "wall_s": 27.996387800056254
+        },
+        "shared_Jet2_work": {
+          "calls": 14,
+          "wall_s": 28.014055599982385
+        },
+        "manager_evaluate": {
+          "calls": 18,
+          "wall_s": 30.417422900005477
+        }
+      },
+      "input_sha256": "813a4917fa1030d0fbc391e34dd2c79b71f6ca3a59468be1c7a6e775c0a0efba",
+      "runtime_sha256": "fe7fb941427b75ab3fd3ad7b2c5ea6328613b1622e4cc807148f2ddd07618aa6"
+    },
+    {
+      "stage": "full-candidate-1",
+      "process_wall_s": 18.33376120000321,
+      "route_wall_s": 16.213380100001814,
+      "peak_rss_mib": 186.875,
+      "coarse_metrics": {
+        "swept_admission": {
+          "calls": 8,
+          "wall_s": 3.479660299999523
+        },
+        "float_geometry": {
+          "calls": 18,
+          "wall_s": 1.1877053000062006
+        },
+        "float_preparation": {
+          "calls": 18,
+          "wall_s": 1.1885218000243185
+        },
+        "local_Q4_Jet2": {
+          "calls": 84,
+          "wall_s": 5.578557900022133
+        },
+        "shared_Jet2_work": {
+          "calls": 14,
+          "wall_s": 5.5946630999824265
+        },
+        "manager_evaluate": {
+          "calls": 18,
+          "wall_s": 7.963230699970154
+        }
+      },
+      "input_sha256": "a2f854a5e423fd3901cc45eec8b382f8beb2cfba131b5581ed34af05fe031e02",
+      "runtime_sha256": "8742587f37a136ab87e4330d0162469eeed4e96c30a090450f7eb38881368dcd"
+    },
+    {
+      "stage": "full-candidate-2",
+      "process_wall_s": 19.689124199998332,
+      "route_wall_s": 17.561684499989497,
+      "peak_rss_mib": 186.5078125,
+      "coarse_metrics": {
+        "swept_admission": {
+          "calls": 8,
+          "wall_s": 4.047431999992114
+        },
+        "float_geometry": {
+          "calls": 18,
+          "wall_s": 1.3417555000050925
+        },
+        "float_preparation": {
+          "calls": 18,
+          "wall_s": 1.3426608000008855
+        },
+        "local_Q4_Jet2": {
+          "calls": 84,
+          "wall_s": 5.90818799995759
+        },
+        "shared_Jet2_work": {
+          "calls": 14,
+          "wall_s": 5.925723299995298
+        },
+        "manager_evaluate": {
+          "calls": 18,
+          "wall_s": 8.606133699970087
+        }
+      },
+      "input_sha256": "56b1da80d3af5358ccde07f11a974ece1d33da4deabfd2a2d2ca5b52c9492b0e",
+      "runtime_sha256": "547851a105f5357d635c0701b5115891760ab1f9b5f786d202a2cb079c9973dc"
+    },
+    {
+      "stage": "full-baseline-post",
+      "process_wall_s": 42.92093560000649,
+      "route_wall_s": 37.68919459999597,
+      "peak_rss_mib": 184.9453125,
+      "coarse_metrics": {
+        "swept_admission": {
+          "calls": 8,
+          "wall_s": 3.4897261000151047
+        },
+        "float_geometry": {
+          "calls": 18,
+          "wall_s": 1.1947446999693057
+        },
+        "float_preparation": {
+          "calls": 18,
+          "wall_s": 1.1955828000063775
+        },
+        "local_Q4_Jet2": {
+          "calls": 84,
+          "wall_s": 27.069596599932993
+        },
+        "shared_Jet2_work": {
+          "calls": 14,
+          "wall_s": 27.087067200031015
+        },
+        "manager_evaluate": {
+          "calls": 18,
+          "wall_s": 29.471861800004262
+        }
+      },
+      "input_sha256": "273fde4e8a7be87b8b3f82eea767cbc140629dee0743f8c6e6c373aee4fda1b7",
+      "runtime_sha256": "c76d963815cbc0e07d397f553edf23f41e81c4755540d38f0beca6cde090d4b9"
+    }
+  ],
+  "stats": {
+    "baseline": {
+      "process_wall_s": {
+        "raw_values": [
+          41.99972079999861,
+          42.92093560000649
+        ],
+        "median": 42.46032820000255,
+        "spread": 0.9212148000078741
+      },
+      "route_wall_s": {
+        "raw_values": [
+          39.59935370000312,
+          37.68919459999597
+        ],
+        "median": 38.644274149999546,
+        "spread": 1.9101591000071494
+      }
+    },
+    "candidate": {
+      "process_wall_s": {
+        "raw_values": [
+          18.33376120000321,
+          19.689124199998332
+        ],
+        "median": 19.01144270000077,
+        "spread": 1.3553629999951227
+      },
+      "route_wall_s": {
+        "raw_values": [
+          16.213380100001814,
+          17.561684499989497
+        ],
+        "median": 16.887532299995655,
+        "spread": 1.3483043999876827
+      }
+    }
+  },
+  "process_median_ratio": 2.2334090510659053,
+  "route_median_ratio": 2.2883316202456347,
+  "earlier_matched_group_measurement_sha256": "f2da6fbcde580abece5a69299c89289c546950cc96e2290c3b783b23bd7407e0",
+  "baseline1": "retained separately; excluded from ABBA primary",
+  "profile_excluded": true,
+  "interpretation": "same coarse timers/controls; descriptive two-per-group measurement, not release/no-contact/spatial qualification",
+  "chronological_route_order": [
+    "full-baseline-1",
+    "full-baseline-2",
+    "full-candidate-1",
+    "full-candidate-2",
+    "full-baseline-post"
+  ],
+  "actual_chronological_design": "OO NN O, with inner ABBA primary: baseline2,candidate1,candidate2,postold; baseline1 retained separately"
+}

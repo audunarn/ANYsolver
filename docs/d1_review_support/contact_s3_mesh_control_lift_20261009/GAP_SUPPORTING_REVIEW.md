@@ -1,0 +1,18 @@
+# Source-ray gap supporting mechanics review
+
+9 October 2026. Source and saved diagnostic read only; no numerical execution or product edits. This is same-family supporting scrutiny, not engineering acceptance.
+
+The old `_vertex_gap_lower` and `_swept_gap_lower` minimize `Ns_unit·(source_corner−target_vertex)` over all target vertices (`s3_pair_static.py:145-169`). A laterally distant target vertex can make that value negative even though the projected S3 mortar gap at the covered source point is nonnegative. The solver's S3 primal mortar computes `(point−target_shape(point)·target_corners)·Ns_unit` using a source-plane projected inverse (`triangle_mortar_energy.py:165-167`; `overlap.py:61-94,198-240`). For a planar target facet with raw normal `Nt`, source raw normal `Ns`, target corner `t0`, and positive `Nt·Ns`, the source-ray intersection gives exactly
+
+`g_f(x) = [Nt·(x−t0)] ||Ns|| / (Nt·Ns)`.
+
+This has the solver's sign: positive target-plane height along `Nt` is positive gap. On each affine S3 source face, `Nt`, `Ns` and the denominator are constant across its P1 points, so the minimum source point gap is at one of its three corners. Taking the minimum across **all** target facet planes is conservative for whichever facet the actual overlap uses, including a near-coplanar mesh; it may refuse a valid pose but cannot increase the lower bound if each ratio is enclosed correctly.
+
+Necessary conditions for the conditional replacement:
+
+- Restrict it to the exact mesh friction + `control_projection_dev` profile. Keep old pair/pointwise/default behavior. Retain positive source/target normals, each `Nt·Ns>0`, source/target facet orientation and the existing whole-chord union, coplanarity, orthogonal target projection and source-ray projection guards. A plane formula alone does not certify material-anchor ownership or the clipping branch.
+- Cover **all callers**: `_gap_lower` supplies endpoint and evaluated-certificate refusal (`s3_patch_static.py:866-875`); `_swept_admissible` checks committed/proposed endpoints, rounded subdivision midpoints and the swept branch (`:1090-1130,1260-1300`). Replacing only `_swept_gap_lower` would leave the fictitious all-vertex-pair obstruction.
+- Along an original affine fixed-map chord, `Nt(t)·(x(t)−t0(t))` is cubic, `Nt(t)·Ns(t)` quartic and `||Ns(t)||` a positive square root of a quartic. Bound all binary map and normal roundoff plus rounded child endpoint error; require a strictly positive denominator lower and norm bounds throughout. For negative numerator lower `L`, a safe ratio lower uses `L * norm_upper / denom_lower`; for nonnegative `L`, use `L * norm_lower / denom_upper`. Interval formulations that permit numerator sign crossing should branch at zero or conservatively use the negative case. Retain explicit refusal on unresolved signs, representability or clipping ties.
+- The equation is the exact geometric ray gap. The production law evaluates a rounded projected S3 inverse, target interpolation, subtraction and dot (`triangle_mortar_energy.py:165-167`). To claim a bound on that *computed* value, enclose this final evaluation error, including barycentric partition-of-unity error, or retain an independent finite-precision guard. Bounding only binary nodal map and raw normals does not automatically cover the last projection/integration operations.
+
+The v2-A3 saved diagnostic stops at iteration 15 with active modes 2 and signed nodal `z` containing two negative entries; it is not an accepted phase-three pose. The proposed geometric certificate can remove a false globalization refusal, but it does not prove that the semismooth equilibrium, hard closure, friction work or full lifecycle will converge.

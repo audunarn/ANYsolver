@@ -154,7 +154,6 @@ from .ge_beam3_element import (
     GeometricallyExactBeam3D3NElement,
 )
 from . import b3_ge
-from . import stiffened_shell
 from .boundary import (
     BoundaryCondition,
     FixedSupport,
@@ -993,6 +992,10 @@ __all__ = [
 
 
 def __getattr__(name: str):
+    if name == "stiffened_shell":
+        value = import_module(".stiffened_shell", __name__)
+        globals()[name] = value
+        return value
     if name not in _GENERAL_CONTACT_EXPORTS:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
     value = getattr(import_module(".general_contact", __name__), name)

@@ -233,6 +233,22 @@ def build_interior_press(*, force_n: float = 0.08,
     return model, definition, settings, program
 
 
+def validate_restart_poses(source, checkpoint):
+    """Validate caller-supplied prefix inventory and its checkpoint endpoint.
+
+    Earlier poses are caller-supplied evidence, not authenticated by a terminal
+    checkpoint. A guarded full-route comparison can verify their correspondence.
+    """
+    count=checkpoint['path_state']['accepted_step']
+    poses=np.asarray(source.get('accepted_pose_displacements',[]),dtype=float)
+    terminal=np.asarray(checkpoint['displacements'],dtype=float)
+    if (source.get('status')!='completed' or source.get('accepted_steps')!=count
+            or type(count) is not int or count<=0 or poses.shape!=(count,len(terminal))
+            or not np.all(np.isfinite(poses)) or not np.all(np.isfinite(terminal))
+            or not np.array_equal(poses[-1],terminal)):
+        raise ValueError('restart source has incompatible prefix poses or checkpoint endpoint')
+    return source['accepted_pose_displacements']
+
 def main(output: Path, *, force_n: float, reference_slope: float,
          target_columns: int, target_rows: int, source_support: str,
          target_young_multiplier: float,
@@ -285,6 +301,16 @@ def main(output: Path, *, force_n: float, reference_slope: float,
     report = validate_general_contact(model, definition, settings)
     if not report.valid:
         raise ValueError(f"fixture capability rejected: {report.issues}")
+    restart = None
+    restart_source_payload = None
+    if restart_checkpoint_path is not None:
+        restart_source_payload = json.loads(restart_checkpoint_path.read_text(
+            encoding="utf-8"))
+        restart = restart_source_payload["restart_checkpoint"]
+        if restart is None:
+            raise ValueError("restart source contains no committed checkpoint")
+        if record_accepted_poses:
+            validate_restart_poses(restart_source_payload,restart)
     captured = []
     swept_fractions = []
     original_admissible_fraction = None
@@ -304,12 +330,6 @@ def main(output: Path, *, force_n: float, reference_slope: float,
             return fraction
 
         GeneralS3PatchManager.admissible_step_fraction = capture_fraction
-    restart = None
-    if restart_checkpoint_path is not None:
-        restart = json.loads(restart_checkpoint_path.read_text(
-            encoding="utf-8"))["restart_checkpoint"]
-        if restart is None:
-            raise ValueError("restart source contains no committed checkpoint")
     try:
         result = solve_static_nonlinear(
             model, contact=definition, contact_settings=settings,
@@ -386,9 +406,18 @@ def main(output: Path, *, force_n: float, reference_slope: float,
     if record_swept_fractions:
         payload["swept_fraction_trace"] = swept_fractions
     if record_accepted_poses:
-        payload["accepted_pose_displacements"] = [
+        new_poses = [
             np.asarray(snapshot.displacements).tolist()
             for snapshot in result.snapshots]
+        prefix_poses = []
+        if restart_source_payload is not None:
+            prefix_poses = validate_restart_poses(restart_source_payload,restart)
+        payload["accepted_pose_displacements"] = prefix_poses + new_poses
+        payload["new_increment_count"] = len(new_poses)
+        payload["restart_prefix_pose_count"] = len(prefix_poses)
+        payload["prefix_pose_provenance"] = "caller-supplied earlier poses; checkpoint endpoint validated; input-file hash retained"
+        payload["restart_source_sha256"] = (hashlib.sha256(
+            restart_checkpoint_path.read_bytes()).hexdigest() if restart_checkpoint_path else None)
         payload["restart_checkpoint"] = (
             result.to_restart_checkpoint() if result.restart_checkpoint is not None
             else None)

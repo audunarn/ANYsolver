@@ -1,0 +1,18 @@
+{
+  "baseline_wheel_sha256": "bc9404faac69dd2d2f09ba1f6300bfcfede3dcc96be14fdfaba4a17d9de552a5",
+  "v1_wheel_sha256": "5d3a46fc75586a864a802037ba32e58bade5a51e6100e5b1d2b51ee382bb1407",
+  "current_v2_wheel_sha256": "d23e40b64e078f65940b9a0efd8260a98be72153f26a8ef248a0f5efc0e43c2b",
+  "changed_payloads_against_baseline": [
+    "anysolver/general_contact/q4_q4_overlap_derivatives.py",
+    "anysolver/general_contact/q4_s3_overlap_derivatives.py"
+  ],
+  "unchanged_payload_count": 627,
+  "v2_vs_v1_delta": [
+    "anysolver/general_contact/q4_s3_overlap_derivatives.py"
+  ],
+  "v2_helper_only_condition_changed_ast": true,
+  "q4_kernel_v1_v2_byte_identical": true,
+  "evidence_reuse": "V1 JIT-off/defaultFalse arithmetic and kernel payload unchanged; independent scalar/virtual-work/tangent,full/explicit/separatedprefix/freshresume/refusal and ABBA candidate timing retained; current backend scope test/CLI close V2",
+  "defaultFalse_numpy_branch": "AST identical after removing only21-coordinate eligibility condition",
+  "no_contact_and_other_routes": "no driver/structural/no-contact edits or benchmark; existing21compiled dispatch retained; no broad regression/release claim"
+}

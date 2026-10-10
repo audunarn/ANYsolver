@@ -1,0 +1,59 @@
+{
+  "state": "verified_against_assigned_development_criteria; lead_acceptance_pending",
+  "scope": "Q4_PAIR_JET2_DEV480",
+  "used_s": 242.6060650999716,
+  "remaining_s": 237.3939349000284,
+  "attempt_count": 17,
+  "counts": {
+    "tests": 13,
+    "failures": 5,
+    "errors": 0,
+    "skipped": 0
+  },
+  "passing_case_invocations": 8,
+  "retained_nonpass_jobs": [
+    "unit",
+    "unit-correct",
+    "unit-discriminator",
+    "unit-complete",
+    "safety"
+  ],
+  "maximum_process_wall_s": 30.051854099991033,
+  "maximum_process_tree_rss_mib": 195.671875,
+  "private_import_records": 3737,
+  "final_wheel_sha256": "4aa744ab969b2c5818f129b3c028a519052c358236879529c1a100c1795ac0a8",
+  "final_wheel": "C:\\ANYworkspaceWork\\contact_q4_pair_jet2_20261008\\candidate-v4\\wheel\\anysolver-0.4.7-py3-none-any.whl",
+  "payload_count": 628,
+  "snapshot_inventory": {
+    "full": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "explicit": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "prefix": [
+      1,
+      2,
+      3
+    ],
+    "resume": [
+      4
+    ]
+  },
+  "actual_public_CLI": true,
+  "all_recorded_effective_runtime_checks_pass": true,
+  "impacts": "V4_IMPACT.json",
+  "limits": [
+    "finite-precision swept GAP qualification open",
+    "arbitrary Q4 reference-offset capability open",
+    "finite-rotation/warped-reference/friction/role-exchange/refinement-stability not qualified",
+    "same-family supporting Read review; no engineering acceptance/release",
+    "atomic refusal checks cover declared FEModel repr fields and early allocation/BC traps, not complete hidden transaction proof"
+  ]
+}

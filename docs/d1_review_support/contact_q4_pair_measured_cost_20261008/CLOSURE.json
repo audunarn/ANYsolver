@@ -1,0 +1,249 @@
+{
+  "state": "verified bounded development outcome; lead inspection/acceptance pending",
+  "scope": "Q4_PAIR_MEASURED_COST_DEV360",
+  "limit_s": 360.0,
+  "used_s": 330.3535759000224,
+  "remaining_s": 29.646424099977594,
+  "attempt_count": 21,
+  "nonpass_jobs": 3,
+  "junit_passing_cases": 16,
+  "junit_failed_cases": 2,
+  "private_import_records": 5281,
+  "max_job_wall_s": 42.92093560000649,
+  "max_sampled_rss_mib": 191.21484375,
+  "reserve_released": true,
+  "v1_wheel_sha256": "5d3a46fc75586a864a802037ba32e58bade5a51e6100e5b1d2b51ee382bb1407",
+  "current_v2_wheel_sha256": "d23e40b64e078f65940b9a0efd8260a98be72153f26a8ef248a0f5efc0e43c2b",
+  "payload_count": 629,
+  "current_install_sha256": "9ba689df7b818ffe150635c9486fcb1b4831eee6948f075ee7006e05e3811f68",
+  "abba_measurement_sha256": "6f978cf974d508d0e42286d98bcb82f4f7b03ebed9fa50f5256867904d420caa",
+  "v2_impact_sha256": "e3d74040625d25dcc9eb52a01943cb7337e9a0670e3444571356ee838f0c61a8",
+  "outputs": {
+    "backend-corrective.json": "3ea81bdcf5e3a1328b99ffb7139f247069755948ea973f74b837139bdff5a3e8",
+    "example-v2.json": "c47bc6b1235bc7c751b10b97a2b527e10cd1950452417875ee324012c5afe772",
+    "example.json": "c47bc6b1235bc7c751b10b97a2b527e10cd1950452417875ee324012c5afe772",
+    "explicit.json": "083c8768fdb409f6988cf7ba6b704d99a40d9d607274f104f8e7ca3715839cc0",
+    "full-baseline-1.json": "ba274299c9316737d1007ad4eb5690d7dbb92e092013345063ee694d236d7ec6",
+    "full-baseline-2.json": "ba274299c9316737d1007ad4eb5690d7dbb92e092013345063ee694d236d7ec6",
+    "full-baseline-post.json": "ba274299c9316737d1007ad4eb5690d7dbb92e092013345063ee694d236d7ec6",
+    "full-candidate-1.json": "004fe029dc7ab62f0afdfb55b3f8217113c3c923b2bbdcc9e3dcc26a8e1c9095",
+    "full-candidate-2.json": "004fe029dc7ab62f0afdfb55b3f8217113c3c923b2bbdcc9e3dcc26a8e1c9095",
+    "full.json": "004fe029dc7ab62f0afdfb55b3f8217113c3c923b2bbdcc9e3dcc26a8e1c9095",
+    "parity-runtime.json": "6334ca0cd383c9415813bcfddb2650e184dbca5ef3e7ba66e4dfa0d09cfb39d1",
+    "parity.json": "687a3760cee0ed4f7201c5267d439302ae1eeef3cb3e6ef84b4469bb9e8c5e4d",
+    "prefix.json": "9850364cdf514f072b8f63bd5aafa8e6e6f2c1da7cf4e1bcafdd3c6937c00008",
+    "profile-corrective.json": "49a556c78a530ee21d90357134a534e10b6a8ee9cc257cabaff69e6bcb6f6b1c",
+    "refusal.json": "5b4a6e4516eccade31e4b234a2883b8cdac19239b8316a428baf482f396cd1af",
+    "resume.json": "6acbbe92441f2d22d7566c7c41b71c412f0b6409a4820d3a364bd8244c6ef821",
+    "safety.json": "ca428ca85954832dd2d0b24a62c0288cf68ef863662e14e0aa11640342e2c734",
+    "unit.json": "d0a1c7ac8a640bac224ef3ab951013536dcded3b356f0306b67e7ebd2a9992db"
+  },
+  "attempts": [
+    {
+      "stage": "full-baseline-1",
+      "status": "pass",
+      "wall_s": 39.50216889999865,
+      "input_sha256": "d8cb097d8c6d71e14c8b67f27c34afb086084a722b77a31c2b4dddcc56e7089b",
+      "result_sha256": "09c924696476830b0dd35d0e9f5b88f0f943a462733678a51b2fec920ce89ecc",
+      "runtime_sha256": "d78bc6baea10e3ce7a2d423b39f62b36790dcee7283aad0f744d4abbcfac3831",
+      "junit_sha256": "dea327acb14ab783a74074106fb9773242c5b2c0ceb8d534a892ef1d330a965f"
+    },
+    {
+      "stage": "profile",
+      "status": "nonpass",
+      "wall_s": 7.261490599994431,
+      "input_sha256": "674139f257716b0715cfca7b00b65d89b71508b519339ef08f5207bbcdd51b8e",
+      "result_sha256": "8bf297f636e3fa6c85e0b8399689281ff217419b1995fac7821cee3fcab0e98f",
+      "runtime_sha256": "9d0b844bc8c633150cee243c91fbbfc5cb2db0cf004a1a3961540eccd642fc9f",
+      "junit_sha256": "7cb00033c4d6d87c651709c77b104bef1791c6f75521de9e2656a0c3f5dd8e91"
+    },
+    {
+      "stage": "profile-corrective",
+      "status": "pass",
+      "wall_s": 4.87578790000407,
+      "input_sha256": "b0689c40a653901846dd7987acce67008e1634b24e4c2bf03dbffab79bdce108",
+      "result_sha256": "c7dafea86701a81f5d70ac3bd7110b5a41b978409e308ec617766787e74bf796",
+      "runtime_sha256": "c09325719a36712d192449f177825768fba66e1566a463f937e3f23dab6b355a",
+      "junit_sha256": "dafe59540291768eb715ce6e5222f51968f5ff7d873c203680a8371b5734d656"
+    },
+    {
+      "stage": "full-baseline-2",
+      "status": "pass",
+      "wall_s": 41.99972079999861,
+      "input_sha256": "813a4917fa1030d0fbc391e34dd2c79b71f6ca3a59468be1c7a6e775c0a0efba",
+      "result_sha256": "c4070695864691d54ded488ba4322614c3a9d923b7ffa65dd236e863c235abbe",
+      "runtime_sha256": "fe7fb941427b75ab3fd3ad7b2c5ea6328613b1622e4cc807148f2ddd07618aa6",
+      "junit_sha256": "cc9f0550e3dbfc408b26636d15c2ef5d2225a337274b15c90279bb987f3d07d8"
+    },
+    {
+      "stage": "build",
+      "status": "pass",
+      "wall_s": 11.440048999997089,
+      "input_sha256": "8e0e7ac36a29149cb775ca95dc35480107d1c757ba625d6d83b0c39c174cd79e",
+      "result_sha256": "51287a752128b5c804faab36a46d268e920387356529c67c496cca94ee838f0e",
+      "runtime_sha256": null,
+      "junit_sha256": null
+    },
+    {
+      "stage": "parity",
+      "status": "nonpass",
+      "wall_s": 13.567963900000905,
+      "input_sha256": "bd9aeaa4096d7d11ab30c2714f698a748adc6db9dcd09dc7cdcb9ff03f827e73",
+      "result_sha256": "e290374d355769725cb7ecb78ff3065fad808226e48048bc7d0de7c049d669fa",
+      "runtime_sha256": null,
+      "junit_sha256": "fe8306aa1cb2228af129a507184ee664ed265beab8e06f11be97712ddd289379"
+    },
+    {
+      "stage": "unit",
+      "status": "pass",
+      "wall_s": 7.204942399999709,
+      "input_sha256": "1aa6fd050dd5fcfe06bf66fa548dbdd8f03c2c223c55a2920613cca50cde791c",
+      "result_sha256": "f6558026f9f5379eb7f2db3a4624b54e0ad2bbda8cc6f44542ead1e6138f46da",
+      "runtime_sha256": "ca603f509bca5f808bccdc60dbbcbf0c0797232c77234536b2769b14e68eb6a5",
+      "junit_sha256": "7546f266e1f943da1dc31a0af69bfc4753420f4c9a590d87b11d6a1fc4b8f406"
+    },
+    {
+      "stage": "parity-runtime",
+      "status": "pass",
+      "wall_s": 14.198625100005302,
+      "input_sha256": "7b9cbf66c12276c9232bb804ca949158eca630272e12a241ace8a84ff70bc8fb",
+      "result_sha256": "024251c9d1af15046d3e02da79f24075268c8726961a4c4af6abded1243e58c0",
+      "runtime_sha256": "91cdb9369c3a566e1ddb782e6dffe09aa49da1e671a6f36468f83e60f19e5acf",
+      "junit_sha256": "0271ccfbb0975bf17396708f10a663fd795fb9b8ab9b40441169363241bb5dcf"
+    },
+    {
+      "stage": "full-candidate-1",
+      "status": "pass",
+      "wall_s": 18.33376120000321,
+      "input_sha256": "a2f854a5e423fd3901cc45eec8b382f8beb2cfba131b5581ed34af05fe031e02",
+      "result_sha256": "1a5516e28eb2dd3626388075404e7ff1b8d6861e9941ef129b4492881344eaad",
+      "runtime_sha256": "8742587f37a136ab87e4330d0162469eeed4e96c30a090450f7eb38881368dcd",
+      "junit_sha256": "764df9dd2fee167becf8b9ae8ffa1ada337c2dc590c6908387dc229601c4bf75"
+    },
+    {
+      "stage": "full-candidate-2",
+      "status": "pass",
+      "wall_s": 19.689124199998332,
+      "input_sha256": "56b1da80d3af5358ccde07f11a974ece1d33da4deabfd2a2d2ca5b52c9492b0e",
+      "result_sha256": "64ce0fdbe6ad5822796228cc978956d158782de49d8fcc1f26dec6baac0a816c",
+      "runtime_sha256": "547851a105f5357d635c0701b5115891760ab1f9b5f786d202a2cb079c9973dc",
+      "junit_sha256": "0d1ccfb76a8ab3debca3609b8c8f70be9a9e78271e1b7c70be6dd7b6902076ec"
+    },
+    {
+      "stage": "explicit",
+      "status": "pass",
+      "wall_s": 18.37737780000316,
+      "input_sha256": "a5a1b2fac34442f67ff9a17a77548cad68fa978728c734e6ea9fc8d5725f2e4e",
+      "result_sha256": "01d10af00653ba846e4798050d200ac68d8102adba2f2650960f5a9418907db0",
+      "runtime_sha256": "e72cfe316462cf893f9c48189e10afc2aa928fbdb425fc5c6eed86c14e01d4e0",
+      "junit_sha256": "706305a179adfc57f97333cc98f607a54b830268d51434747b4c945d4344ad4c"
+    },
+    {
+      "stage": "prefix",
+      "status": "pass",
+      "wall_s": 13.837141500000143,
+      "input_sha256": "9f6d05c0dde6c5feb900f10646a818a35dcec172c354aea4f86af09898d43a26",
+      "result_sha256": "85ac266e1e67bea2d795d91f8c31574bd09e17ba73974a1c27ac913e06d88676",
+      "runtime_sha256": "c33f9a3bfc7fad1600404c907966397f5a0ceda80edcf09adbf98c4d635afd02",
+      "junit_sha256": "9c7395adb9f6c7602fbb5d8a7ddcaa03954a081221ee0cacf98cd9a78d79b99d"
+    },
+    {
+      "stage": "resume",
+      "status": "pass",
+      "wall_s": 9.98683589999564,
+      "input_sha256": "cfdc4e09a371314845d401dca8c169aeef234020f1b2779afd80559c9c586e7b",
+      "result_sha256": "e9f5f107549545f7e490d6da1bc97269add0041a2c3ac28303ecf386a52752b7",
+      "runtime_sha256": "52ef2bf3cf2029af5ffe4fdb9ec825ab52d4033c5ecb09d31cf2bbd9039d8ff9",
+      "junit_sha256": "a34af8635b66ef38e4c85f024e43e8f52cca16b52d58811cc4471fb005dc5cbe"
+    },
+    {
+      "stage": "refusal",
+      "status": "pass",
+      "wall_s": 5.826857000007294,
+      "input_sha256": "8679ed0ec477552b092320e443c60f75d304fa966308b1d1a85090f47b15fd25",
+      "result_sha256": "7967596b012b7039a48ff78564cf885652f665466c5cc3f37540d35aa40cd206",
+      "runtime_sha256": "42fca2bb906f0374d6142e5c17ed22435f63904e741eb9779fcfd781022344b7",
+      "junit_sha256": "bd35f912960be362a200b46fa9a722b74ae00899dd84a1c26c7f0e98ce9285b7"
+    },
+    {
+      "stage": "safety",
+      "status": "pass",
+      "wall_s": 4.973944700002903,
+      "input_sha256": "d0247405b85b34da79eda7722e8a1e3ceda6a188fecb6cc48ca5629c0d45501f",
+      "result_sha256": "b21880b5a827d10c9ddce8c5ea6577a221e0cad256f526d69854a9f80c9fbdad",
+      "runtime_sha256": "f5aad922a36a60a40bf80320a67d784ff99d15ac42168601480647aaeca8c304",
+      "junit_sha256": "3970e25620d68dc3c53432f6758fc926ff59a3a1a91b6158de838f2da7e1b107"
+    },
+    {
+      "stage": "example",
+      "status": "pass",
+      "wall_s": 15.052249799991841,
+      "input_sha256": "d2640373c532b31e015455bf91baebe723280fb1599dd543db3f79822524f300",
+      "result_sha256": "5cb196e2d663a7737839e7436209a3d217f82a46033d384485a3e6fda9d7cae5",
+      "runtime_sha256": "c4fcf4ff497f3e8236cdc6c215a7151f25e612e17e7fd42799c8f1785731a40d",
+      "junit_sha256": null
+    },
+    {
+      "stage": "full-baseline-post",
+      "status": "pass",
+      "wall_s": 42.92093560000649,
+      "input_sha256": "273fde4e8a7be87b8b3f82eea767cbc140629dee0743f8c6e6c373aee4fda1b7",
+      "result_sha256": "5bde399ece49e1327e79fd53f91bb68e96b1eaeaadbbefd574adacfec1aac28f",
+      "runtime_sha256": "c76d963815cbc0e07d397f553edf23f41e81c4755540d38f0beca6cde090d4b9",
+      "junit_sha256": "b7177a8a4acaffb615b814e87a4ed852e8a62d856d70fa9045eb2f5087d3a7c2"
+    },
+    {
+      "stage": "build-v2",
+      "status": "pass",
+      "wall_s": 11.645845200007898,
+      "input_sha256": "feec64f561a8f232764187fb481e76ab27dda819fef2ad232cf6e759b863a8f5",
+      "result_sha256": "f70f601bd051ab45681394ac560fd82cc0042e9a78fa2a2203927a658f6a20a4",
+      "runtime_sha256": null,
+      "junit_sha256": null
+    },
+    {
+      "stage": "backend",
+      "status": "nonpass",
+      "wall_s": 10.586035400003311,
+      "input_sha256": "9a47b5755aceb2694c250a7eb43593e325005d14233fe3152655d0fe6d19eca4",
+      "result_sha256": "62d1b5b5ecd0b11fd2eeb996f255f31ff23524cc0f14a263774bd52b6390fe31",
+      "runtime_sha256": "f4099ad2a076643b907d3541882a94f961fd5e2f1e65f40faa5b8f3d503553ae",
+      "junit_sha256": "2130fe93801a17bdc140ae301f7eca0628e869c74c31943dbb2a6ee1f3a5e4f6"
+    },
+    {
+      "stage": "example-v2",
+      "status": "pass",
+      "wall_s": 14.937489200005075,
+      "input_sha256": "eea379fa03e56ffc32e55a993fa019d2e2541d45de74d4f1b47a3754f6da44d2",
+      "result_sha256": "52856e39d238bffe0815d89ff017a29265c6daf2d061d74e553c8941b14eb340",
+      "runtime_sha256": "d4ecd5442afbb58dd5cb85abd4e46eefd8da606540ed5403f2c1a893e63ad47d",
+      "junit_sha256": null
+    },
+    {
+      "stage": "backend-corrective",
+      "status": "pass",
+      "wall_s": 4.135229799998342,
+      "input_sha256": "e0bed5a375a6d99807367d989e7eb4d2786eaf35ec98c52030e4bd55604e1672",
+      "result_sha256": "24a8c7446693fde202be05821888d75fb70746bf3cd6bde2b65430e266441077",
+      "runtime_sha256": "9d840295ff9d4d213612c4080478405297875f26d72791ce5933bdb6f7825c9c",
+      "junit_sha256": "a20f45c02574c4cf9098b58703496271a726cccd0742a174e8e6eeec73d3611a"
+    }
+  ],
+  "failures": [
+    "profile import setup (no kernel executed); corrected exact settings source",
+    "parity testcase passed but peer namespace violated private-import gate; corrected explicit immutable peer identity, production unchanged",
+    "backend regression coincident clipping boundary correctly refused; corrected strictly interior proof fixture, production unchanged"
+  ],
+  "primary_performance": {
+    "process_median_ratio": 2.2334090510659053,
+    "route_median_ratio": 2.2883316202456347,
+    "chronology": "OO NN O; inner ABBA primary",
+    "baseline1_excluded_from_primary": true,
+    "profile_excluded": true
+  },
+  "source_reuse": "V1 Q4kernel bit unchanged inV2; helper only21eligibility condition; defaultFalse/JIToff NumPy branch unchanged by AST; V1 mechanics/ABBAtiming retained with currentV2 actualbackendscope+CLI checks",
+  "no_active_job": true,
+  "acceptance": false,
+  "release": false,
+  "next_scientific_gate": "deformable bending/normal trace with actual unconstrained transverse/rotational contact work, supported physical skins and independent work/tangent/gap; scientific admission decision before spatial-pressure/refinement campaign"
+}

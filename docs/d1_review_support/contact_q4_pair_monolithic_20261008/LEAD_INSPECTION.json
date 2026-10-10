@@ -1,0 +1,94 @@
+{
+  "kind": "lead_saved_artifact_monolithic_evidence_inspection",
+  "errors": [],
+  "payload_count": 629,
+  "changed_production_payloads": [
+    "anysolver/general_contact/core.py",
+    "anysolver/general_contact/s3_patch_augmented.py",
+    "anysolver/general_contact/s3_patch_static.py",
+    "anysolver/general_contact/static_path.py"
+  ],
+  "private_imports_rehashed": 3286,
+  "passing_cases": 8,
+  "retained_nonpass": [
+    "safety",
+    "safety-corrective"
+  ],
+  "jobs": [
+    {
+      "stage": "build",
+      "status": "pass",
+      "wall_s": 11.455513599998085,
+      "peak_mib": 103.421875
+    },
+    {
+      "stage": "unit",
+      "status": "pass",
+      "wall_s": 12.860782999996445,
+      "peak_mib": 193.61328125
+    },
+    {
+      "stage": "full",
+      "status": "pass",
+      "wall_s": 17.449628200003644,
+      "peak_mib": 186.1640625
+    },
+    {
+      "stage": "alternate-c",
+      "status": "pass",
+      "wall_s": 15.722733799993875,
+      "peak_mib": 188.6640625
+    },
+    {
+      "stage": "prefix",
+      "status": "pass",
+      "wall_s": 10.959646199989947,
+      "peak_mib": 185.25390625
+    },
+    {
+      "stage": "resume",
+      "status": "pass",
+      "wall_s": 11.737692599999718,
+      "peak_mib": 185.73046875
+    },
+    {
+      "stage": "safety",
+      "status": "nonpass",
+      "wall_s": 9.371824100002414,
+      "peak_mib": 199.8671875
+    },
+    {
+      "stage": "safety-corrective",
+      "status": "nonpass",
+      "wall_s": 9.371637599993846,
+      "peak_mib": 188.30859375
+    },
+    {
+      "stage": "safety-fields",
+      "status": "pass",
+      "wall_s": 9.451589700009208,
+      "peak_mib": 196.9453125
+    },
+    {
+      "stage": "legacy-monolithic",
+      "status": "pass",
+      "wall_s": 5.743302199989557,
+      "peak_mib": 194.44921875
+    },
+    {
+      "stage": "legacy-penalty",
+      "status": "pass",
+      "wall_s": 21.09296410001116,
+      "peak_mib": 188.03515625
+    },
+    {
+      "stage": "example",
+      "status": "pass",
+      "wall_s": 13.03074440000637,
+      "peak_mib": 170.03515625
+    }
+  ],
+  "process_wall_sum_s": 148.24805949999427,
+  "remaining_s": 451.75194050000573,
+  "wheel_sha256": "92f5da4ab8c3ff5da72b380d2a5fd95b63ec74eba400f11b888a5fab88261eec"
+}

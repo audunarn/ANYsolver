@@ -1,0 +1,11 @@
+# Source impact
+
+Against prior closed640-payload b4508283... wheel:6 changed payloads (core admission; static-path admission; normal scalar/swept dispatch; chart interval optional compression; mesh coverage optional constant physical paths; mesh owner method/integrity binding),2 new helpers (outward dyadic interval and covered-source ray gap),634 identical. Existing normal/friction q/z force/tangent, return/history, structural/backend/overlap/semismooth/state functions remain unchanged. Local shared q/z/unit evidence is reused only for those identical mechanics.
+
+Final integrity wheel b7091a3... differs from preceding current-scope wheel565260... in only s3_patch_static.py and s3_friction_mesh_monolithic.py: prepared settings/profile and expected-owner checks. Work/geometry algorithms/definition contracts unchanged. Actual installed press/stick, independent physical work/gap, rollback, controls, unsafe lift and legacy evidence under565260... reused through this line-level impact. New final-wheel selector mutation tests, authentic step2 continuation/default incompatible controls and terminal CLI passed. No checkpoint resealing/migration; FINAL_CONTINUATION_INPUT.json binds byte-identical checkpoint inputs. Final immutable product/live parity is represented by candidate-integrity/install.json.
+
+New test/example sources are captured per attempt. Example imports unchanged original fixture; test imports unchanged prior work/gap/state/refusal helpers. No old fixture or evidence overwritten. SOURCE versions and prior current wheel preserved. Package/request hashes change; no cross-package request identity preservation claim. Default omitted selectors/none checkpoint continuation are the compatibility evidence.
+
+Lead-owned PLAN/RESTART dirty files were not edited. No Git mutation or sibling access. Raw CLOSURE.json lists owned source and output SHA256 identities; initial manifests and all NONPASS/TIMEOUT evidence retained.
+
+Lead metadata audit LEAD_INSPECTION.json reports0 errors,7347 private import validations,676 input copies and133 external bindings. LEAD_AUDIT_MAPPING_REPAIR.md discloses initial inspector ambiguity between prelaunch attempt14 and successful build15 with identical commands; ordinal+command+result identity resolved it without numerical rerun. CLOSURE.json binds these lead-owned artifacts.

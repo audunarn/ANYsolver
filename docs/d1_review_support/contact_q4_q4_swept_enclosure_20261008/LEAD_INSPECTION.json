@@ -1,0 +1,99 @@
+{
+  "kind": "lead_read_only_artifact_saved_evidence_inspection",
+  "errors": [],
+  "payload_count": 629,
+  "private_imports_rehashed": 3465,
+  "changed_payloads": [
+    "anysolver/general_contact/q4_q4_overlap_derivatives.py",
+    "anysolver/general_contact/q4_q4_swept_bound.py",
+    "anysolver/general_contact/s3_patch_static.py"
+  ],
+  "retained_nonpass": [
+    "proof"
+  ],
+  "passing_cases": 11,
+  "wheel_sha256": "bc9404faac69dd2d2f09ba1f6300bfcfede3dcc96be14fdfaba4a17d9de552a5",
+  "jobs": [
+    {
+      "stage": "build",
+      "status": "pass",
+      "wall_s": 12.864693800001987,
+      "peak_mib": 103.35546875
+    },
+    {
+      "stage": "proof",
+      "status": "nonpass",
+      "wall_s": 10.313969599999837,
+      "peak_mib": 180.38671875
+    },
+    {
+      "stage": "proof-corrective",
+      "status": "pass",
+      "wall_s": 3.9471681999857537,
+      "peak_mib": 173.7734375
+    },
+    {
+      "stage": "controller",
+      "status": "pass",
+      "wall_s": 6.20248239999637,
+      "peak_mib": 183.18359375
+    },
+    {
+      "stage": "interior",
+      "status": "pass",
+      "wall_s": 3.79126160001033,
+      "peak_mib": 172.36328125
+    },
+    {
+      "stage": "full",
+      "status": "pass",
+      "wall_s": 29.340555700007826,
+      "peak_mib": 185.4921875
+    },
+    {
+      "stage": "explicit",
+      "status": "pass",
+      "wall_s": 29.581067000006442,
+      "peak_mib": 185.06640625
+    },
+    {
+      "stage": "prefix",
+      "status": "pass",
+      "wall_s": 20.139878099987982,
+      "peak_mib": 184.97265625
+    },
+    {
+      "stage": "controller-subdivision",
+      "status": "pass",
+      "wall_s": 6.723457899992354,
+      "peak_mib": 182.1328125
+    },
+    {
+      "stage": "resume",
+      "status": "pass",
+      "wall_s": 15.2667220000003,
+      "peak_mib": 184.85546875
+    },
+    {
+      "stage": "refusal",
+      "status": "pass",
+      "wall_s": 6.477339300006861,
+      "peak_mib": 181.68359375
+    },
+    {
+      "stage": "safety",
+      "status": "pass",
+      "wall_s": 5.614514500004589,
+      "peak_mib": 186.796875
+    },
+    {
+      "stage": "example",
+      "status": "pass",
+      "wall_s": 26.35470070000156,
+      "peak_mib": 169.12109375
+    }
+  ],
+  "process_wall_sum_s": 176.6178108000022,
+  "ledger_used_s": 176.6178108000022,
+  "remaining_s": 63.38218919999781
+}

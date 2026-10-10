@@ -1,0 +1,78 @@
+{
+  "kind": "lead_saved_artifact_bending_evidence_inspection",
+  "errors": [],
+  "payload_count": 629,
+  "changed_production_payloads": [],
+  "private_imports_rehashed": 2919,
+  "passing_cases": 6,
+  "retained_nonpass": [
+    "reference",
+    "full",
+    "refusal"
+  ],
+  "jobs": [
+    {
+      "stage": "reference",
+      "status": "nonpass",
+      "wall_s": 11.374327400000766,
+      "peak_mib": 187.640625
+    },
+    {
+      "stage": "reference-corrective",
+      "status": "pass",
+      "wall_s": 5.7802602000010666,
+      "peak_mib": 183.7109375
+    },
+    {
+      "stage": "full",
+      "status": "nonpass",
+      "wall_s": 18.160635200008983,
+      "peak_mib": 189.7109375
+    },
+    {
+      "stage": "full-accuracy",
+      "status": "pass",
+      "wall_s": 21.619471799989697,
+      "peak_mib": 187.8671875
+    },
+    {
+      "stage": "saved-pose",
+      "status": "pass",
+      "wall_s": 5.225572299998021,
+      "peak_mib": 181.05859375
+    },
+    {
+      "stage": "prefix",
+      "status": "pass",
+      "wall_s": 19.84593529999256,
+      "peak_mib": 187.25
+    },
+    {
+      "stage": "resume",
+      "status": "pass",
+      "wall_s": 17.016708299997845,
+      "peak_mib": 187.54296875
+    },
+    {
+      "stage": "refusal",
+      "status": "nonpass",
+      "wall_s": 6.337861499996507,
+      "peak_mib": 174.7109375
+    },
+    {
+      "stage": "refusal-corrective",
+      "status": "pass",
+      "wall_s": 6.669122699997388,
+      "peak_mib": 182.77734375
+    },
+    {
+      "stage": "example",
+      "status": "pass",
+      "wall_s": 15.577754300000379,
+      "peak_mib": 171.09375
+    }
+  ],
+  "process_wall_sum_s": 127.60764899998321,
+  "remaining_s": 292.3923510000168,
+  "wheel_sha256": "d23e40b64e078f65940b9a0efd8260a98be72153f26a8ef248a0f5efc0e43c2b"
+}

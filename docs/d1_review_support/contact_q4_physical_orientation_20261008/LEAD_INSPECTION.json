@@ -1,0 +1,163 @@
+{
+  "kind": "lead_saved_artifact_q4_physical_orientation_evidence_inspection",
+  "errors": [],
+  "payload_count": 629,
+  "changed_production_payloads": [
+    "anysolver/general_contact/core.py",
+    "anysolver/general_contact/s3_patch_static.py"
+  ],
+  "private_imports_rehashed": 6784,
+  "passing_cases": 21,
+  "retained_nonpass": [
+    "ordinary"
+  ],
+  "jobs": [
+    {
+      "stage": "build",
+      "status": "pass",
+      "wall_s": 11.300379300009809,
+      "peak_mib": 103.26171875
+    },
+    {
+      "stage": "unit",
+      "status": "pass",
+      "wall_s": 25.02633190000779,
+      "peak_mib": 197.1484375
+    },
+    {
+      "stage": "full-pp",
+      "status": "pass",
+      "wall_s": 18.156312599996454,
+      "peak_mib": 189.77734375
+    },
+    {
+      "stage": "proof-full-pp",
+      "status": "pass",
+      "wall_s": 11.159378900003503,
+      "peak_mib": 185.37890625
+    },
+    {
+      "stage": "full-mp",
+      "status": "pass",
+      "wall_s": 18.54655040000216,
+      "peak_mib": 188.7734375
+    },
+    {
+      "stage": "proof-full-mp",
+      "status": "pass",
+      "wall_s": 6.337221900001168,
+      "peak_mib": 185.21875
+    },
+    {
+      "stage": "full-pm",
+      "status": "pass",
+      "wall_s": 17.912642899987986,
+      "peak_mib": 188.78515625
+    },
+    {
+      "stage": "proof-full-pm",
+      "status": "pass",
+      "wall_s": 6.430513500003144,
+      "peak_mib": 185.21875
+    },
+    {
+      "stage": "full-mm",
+      "status": "pass",
+      "wall_s": 18.050849500010372,
+      "peak_mib": 189.22265625
+    },
+    {
+      "stage": "proof-full-mm",
+      "status": "pass",
+      "wall_s": 6.272893899993505,
+      "peak_mib": 185.22265625
+    },
+    {
+      "stage": "prefix-pp",
+      "status": "pass",
+      "wall_s": 13.42268000000331,
+      "peak_mib": 186.1484375
+    },
+    {
+      "stage": "proof-prefix-pp",
+      "status": "pass",
+      "wall_s": 5.682663800005685,
+      "peak_mib": 184.96484375
+    },
+    {
+      "stage": "prefix-mm",
+      "status": "pass",
+      "wall_s": 13.75503889999527,
+      "peak_mib": 187.8046875
+    },
+    {
+      "stage": "proof-prefix-mm",
+      "status": "pass",
+      "wall_s": 5.703664599990589,
+      "peak_mib": 185.33984375
+    },
+    {
+      "stage": "resume-pp",
+      "status": "pass",
+      "wall_s": 10.189246699999785,
+      "peak_mib": 188.24609375
+    },
+    {
+      "stage": "proof-resume-pp",
+      "status": "pass",
+      "wall_s": 5.278261700004805,
+      "peak_mib": 184.75390625
+    },
+    {
+      "stage": "resume-mm",
+      "status": "pass",
+      "wall_s": 10.658624000003329,
+      "peak_mib": 188.22265625
+    },
+    {
+      "stage": "proof-resume-mm",
+      "status": "pass",
+      "wall_s": 5.642731100000674,
+      "peak_mib": 184.1953125
+    },
+    {
+      "stage": "ordinary",
+      "status": "nonpass",
+      "wall_s": 7.32979579998937,
+      "peak_mib": 205.03515625
+    },
+    {
+      "stage": "ordinary-refusal",
+      "status": "pass",
+      "wall_s": 4.348837400000775,
+      "peak_mib": 181.671875
+    },
+    {
+      "stage": "safety",
+      "status": "pass",
+      "wall_s": 8.02756619999127,
+      "peak_mib": 190.9296875
+    },
+    {
+      "stage": "legacy-s3",
+      "status": "pass",
+      "wall_s": 4.471435300001758,
+      "peak_mib": 181.2421875
+    },
+    {
+      "stage": "legacy-monolithic",
+      "status": "pass",
+      "wall_s": 8.068941500008805,
+      "peak_mib": 184.9296875
+    },
+    {
+      "stage": "example",
+      "status": "pass",
+      "wall_s": 15.990668500002357,
+      "peak_mib": 170.9375
+    }
+  ],
+  "process_wall_sum_s": 257.7632303000137,
+  "remaining_s": 222.23676969998633,
+  "wheel_sha256": "082f9600e99b0daf5c8bda1a49235186b98ea190a4aaff479402f76f704c80e3"
+}

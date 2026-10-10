@@ -1020,7 +1020,10 @@ def _batch_b_plan_assemble(
         self.timings.non_shell_seconds += time.perf_counter() - non_shell_start
 
         scatter_start = time.perf_counter()
-        force = _performance._scatter_sum(
+        scatter = _performance._scatter_sum
+        if not self.shell_batches and not self.quadratic_beam_batches:
+            scatter = _performance._generic_beam_scatter_kernel(self)
+        force = scatter(
             self.force_values,
             self.force_dofs_flat,
             self.total_dofs,
@@ -1030,7 +1033,7 @@ def _batch_b_plan_assemble(
         tangent_matrix: Optional[sparse.csr_matrix]
         if tangent:
             scatter_start = time.perf_counter()
-            csr_data = _performance._scatter_sum(
+            csr_data = scatter(
                 self.tangent_values,
                 self.tangent_scatter,
                 self.nnz,

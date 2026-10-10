@@ -5377,6 +5377,10 @@ def _solve_static_nonlinear_under_lease(
             num_layers=num_layers,
         )
         exact_guard(model, context="nonlinear static checkpoint validation")
+        if active_manager is not None:
+            from .general_contact.finite_rigid_patch import PROFILE as finite_rigid_profile
+            if active_manager.profile == finite_rigid_profile:
+                active_manager.admit_validated_committed_state(validated_restart)
         restored_static_path = _restore_static_path_state(
             validated_restart.path_state,
             control_name=control_name,
@@ -7916,7 +7920,27 @@ def solve_static_nonlinear(
 
     if contact_friction is not None and contact_path_program is None:
         raise ValueError("development shell friction requires an explicit contact path program")
+    if contact_path_program is None and contact_settings is not None:
+        from .general_contact import ContactSolverSettings
+        if (type(contact_settings) is ContactSolverSettings
+                and contact_settings.finite_frame_seed != 'common_reference_frame_dev'):
+            raise ValueError('finite_frame_seed requires contact_path_program')
+        if (type(contact_settings) is ContactSolverSettings
+                and contact_settings.shell_skin_kinematics != "reference_linear"):
+            # Only the exact fixed-planar-rigid penalty profile composes the
+            # ordinary corotational force/displacement owner. All existing
+            # finite shell-pair profiles retain their contact-path guard.
+            from .general_contact.finite_rigid_patch import admitted_definition
+            if contact is None or not admitted_definition(model, contact, contact_settings):
+                raise ValueError("shell_skin_kinematics requires contact_path_program")
+        if (type(contact_settings) is ContactSolverSettings
+                and contact_settings.shell_pair_orientation != "legacy"):
+            raise ValueError("shell_pair_orientation requires contact_path_program")
+        if (type(contact_settings) is ContactSolverSettings
+                and contact_settings.path_predictor != "none"):
+            raise ValueError("path_predictor requires contact_path_program")
     if contact_path_program is not None:
+        from .general_contact import ContactSolverSettings
         from .general_contact.static_path import (
             ContactPathProgram,
             solve_static_contact_path,
@@ -7926,6 +7950,11 @@ def solve_static_nonlinear(
             raise TypeError("contact_path_program must be ContactPathProgram")
         if contact is None or contact_settings is None:
             raise ValueError("contact path requires contact and contact_settings")
+        finite_contact_path = (type(contact_settings) is ContactSolverSettings
+                               and contact_settings.shell_skin_kinematics != "reference_linear")
+        matching_kinematics = ((kinematics == "corotational" and corotational_tangent == "consistent")
+                               if finite_contact_path else
+                               (kinematics == "von_karman" and corotational_tangent == "auto"))
         if any(value is not None for value in (
             load_case, constant_load_case, imperfection, load_program,
             displacement_control, initial_element_states, convergence_settings,
@@ -7934,7 +7963,7 @@ def solve_static_nonlinear(
         )) or control not in {"force", "contact_path"} or (
             equilibrate_initial_state is not None
             or num_steps != 10 or min_step_fraction != 1.0 / 1024.0
-            or kinematics != "von_karman" or corotational_tangent != "auto"
+            or not matching_kinematics
         ):
             raise ValueError("contact path has its own prescribed controls and admitted settings")
         return solve_static_contact_path(
@@ -8010,6 +8039,10 @@ def solve_static_nonlinear(
             raise ValueError(
                 "monolithic_active_set currently requires contact_path_program"
             )
+        if contact_settings is not None and contact_settings.shell_pair_orientation != "legacy":
+            raise ValueError("shell_pair_orientation requires contact_path_program")
+        if contact_settings is not None and contact_settings.path_predictor != "none":
+            raise ValueError("path_predictor requires contact_path_program")
         if (contact_settings is not None
                 and contact_settings.augmentation_acceleration != "none"):
             if contact_settings.augmentation_acceleration != "supported_schur_dev":
@@ -8078,8 +8111,13 @@ def solve_static_nonlinear(
                      or corotational_tangent != "auto")):
             raise ValueError("radial rigid contact currently admits von_karman kinematics only")
         from .general_contact.triangulated_rigid import TriangulatedRigidContactBody
+        finite_rigid_contact = False
         if any(type(body) is TriangulatedRigidContactBody for body in contact.rigid_bodies):
-            if kinematics != 'von_karman' or corotational_tangent != 'auto':
+            from .general_contact.finite_rigid_patch import admitted_definition as admitted_finite_rigid
+            finite_rigid_contact = admitted_finite_rigid(model, contact, contact_settings)
+            if finite_rigid_contact and (kinematics != 'corotational' or corotational_tangent != 'consistent'):
+                raise ValueError('finite rigid V2D penalty contact requires consistent corotational mechanics')
+            if not finite_rigid_contact and (kinematics != 'von_karman' or corotational_tangent != 'auto'):
                 raise ValueError('triangulated rigid contact requires von_karman affine small-rotation skins')
             if initial_element_states is not None or initial_fields is not None or fracture_config is not None:
                 raise ValueError('triangulated rigid contact does not admit seeded material/initial fields or fracture')
@@ -8095,7 +8133,7 @@ def solve_static_nonlinear(
         if not contact.rigid_bodies:
             if str(kinematics).lower() != "von_karman":
                 raise ValueError("guided shell-pair contact requires von_karman kinematics")
-        if str(kinematics).lower() == "corotational":
+        if str(kinematics).lower() == "corotational" and not finite_rigid_contact:
             if any(surface.side != "midsurface" for surface in contact.surfaces):
                 raise ValueError("offset shell contact is admitted with von_karman kinematics only")
             if restart_checkpoint is not None or emit_restart_checkpoint:
@@ -8162,12 +8200,18 @@ def solve_static_nonlinear(
 
         if contact is not None:
             from .general_contact.core import contact_scope
-
-            with contact_scope(
-                model, contact, contact_settings, initial_displacements,
-                allow_augmented=augmented_contact_requested,
-                analysis_control=str(control).lower(),
-            ) as contact_manager:
+            if finite_rigid_contact and restart_checkpoint is not None:
+                from .nonlinear_restart import load_nonlinear_checkpoint
+                from .general_contact.finite_rigid_patch import validated_restart_scope
+                payload = load_nonlinear_checkpoint(restart_checkpoint,
+                    _exact_guard=exact_guard, _guard_model=model)
+                scope = validated_restart_scope(model, contact, contact_settings, payload,
+                    analysis_control=str(control).lower())
+            else:
+                scope = contact_scope(model, contact, contact_settings, initial_displacements,
+                    allow_augmented=augmented_contact_requested,
+                    analysis_control=str(control).lower())
+            with scope as contact_manager:
                 if augmented_contact_requested:
                     from .general_contact.s3_patch_static import (
                         AUGMENTED_PROFILE, AUGMENTED_MIXED_PROFILE,

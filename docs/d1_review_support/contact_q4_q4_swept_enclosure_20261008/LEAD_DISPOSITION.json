@@ -1,0 +1,23 @@
+{
+  "status": "verified_bounded_development_component",
+  "independently_accepted": false,
+  "released": false,
+  "scope": "Q4_Q4_SWEPT_ENCLOSURE_DEV240",
+  "passing_cases": 11,
+  "retained_nonpass": [
+    "proof"
+  ],
+  "recorded_jobs": 13,
+  "charged_process_wall_s": 176.6178108000022,
+  "remaining_scoped_s": 63.38218919999781,
+  "payloads_rehashed": 629,
+  "private_imports_rehashed": 3465,
+  "inspection_errors": [],
+  "wheel_sha256": "bc9404faac69dd2d2f09ba1f6300bfcfede3dcc96be14fdfaba4a17d9de552a5",
+  "limits": [
+    "sufficient bound may conservatively refuse safe geometry",
+    "fixed-map original-Q4 component only",
+    "projection,coverage,quadrature and spatial-pressure qualification remain open",
+    "finite rotation,warped reference,hidden-state and programme acceptance/release remain open"
+  ]
+}

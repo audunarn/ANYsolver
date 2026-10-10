@@ -158,8 +158,9 @@ def _clip_negative_gap(polygon,heights):
 
 
 class S3ReplayFrictionManager:
+    profile=PROFILE
     def __init__(self,model,normal,settings):
-        if type(settings) is not S3ReplayFrictionSettings:raise TypeError("replay friction settings required")
+        if type(settings) not in {S3ReplayFrictionSettings,S3RimReplayFrictionSettings}:raise TypeError("replay friction settings required")
         self.normal,self.friction_settings=normal,settings
         self.template=_PartialTemplate(model,normal,settings.material)
         self.n_dof=self.template.n_dof
@@ -189,6 +190,7 @@ class S3ReplayFrictionManager:
         self._prepared_path_cache=OrderedDict()
         self.prepared_pressure_samples=0
         self.prepared_partial_pressure_samples=0
+        self.prepared_uniform_pressure_samples=0
         self.initial_frame=self._frame(np.zeros(self.n_dof),check_path=False)
         if any(self.initial_frame["domains"]):
             raise ValueError("replay friction rejects unresolved initial penetration")
@@ -646,6 +648,7 @@ class S3ReplayFrictionManager:
         self.event_frame_cache_hits=0
         self.prepared_pressure_samples=0
         self.prepared_partial_pressure_samples=0
+        self.prepared_uniform_pressure_samples=0
         return self._query_material(source_index,bary,candidate=candidate)
 
     def _query_material(self,source_index,bary,*,candidate=None):
@@ -702,11 +705,14 @@ class S3ReplayFrictionManager:
         margin=128*np.finfo(float).eps*max(scale,np.finfo(float).tiny)
         return bool(np.all(np.isfinite(gaps)) and np.all(gaps>margin))
 
+    def _integration_partition_frames(self,frame,full,partition_history):
+        return (*self.frames,frame) if full else (self.frames if partition_history else ())
+
     def _quadrature(self,source_index,frame,level,*,full=False,partition_history=True):
         cells=[_rational_polygon(p) for p in ([_SOURCE_UV] if full else frame["domains"][source_index])]
         # Historical contact boundaries are fixed material lines, not moving
         # point indices; partition discontinuous release/activation history.
-        history=(*self.frames,frame) if full else (self.frames if partition_history else ())
+        history=self._integration_partition_frames(frame,full,partition_history)
         for past in history:
             for region in past["domains"][source_index]:
                 for a,b in zip(region,np.roll(region,-1,axis=0)):
@@ -751,6 +757,7 @@ class S3ReplayFrictionManager:
         self.event_frame_cache_hits=0
         self.prepared_pressure_samples=0
         self.prepared_partial_pressure_samples=0
+        self.prepared_uniform_pressure_samples=0
         frame=self._frame(u)
         local=np.zeros(len(self.work_columns));increment=storage=release=0.;count=0
         level=self.friction_settings.integration_refinement if level is None else level
@@ -787,7 +794,8 @@ class S3ReplayFrictionManager:
                               integration_points=count,event_pressure_evaluations=self.event_stage_evaluations,
                               event_frame_cache_hits=self.event_frame_cache_hits,
                               prepared_pressure_samples=self.prepared_pressure_samples,
-                              prepared_partial_pressure_samples=self.prepared_partial_pressure_samples)
+                              prepared_partial_pressure_samples=self.prepared_partial_pressure_samples,
+                              prepared_uniform_pressure_samples=self.prepared_uniform_pressure_samples)
 
     def _check_integration(self,force,summary,control,control_summary):
         if any(not np.all(np.isfinite(v)) for v in (force,control,*summary.values(),*control_summary.values())):
@@ -828,6 +836,9 @@ class S3ReplayFrictionManager:
                 # Cancellation also invalidates an unverified retry policy.
                 if not succeeded:self._canonical_partition_frames=previous
 
+    def _tangent_probe_force(self,u):
+        return self._integrate(u)[0]
+
     def _evaluate_once(self,u,*,tangent=True,comparison=None):
         directions=self.reduced_directions
         if tangent and 4*directions.shape[1]+2>self.friction_settings.material.maximum_candidate_evaluations:
@@ -845,9 +856,9 @@ class S3ReplayFrictionManager:
                 nonzero=direction!=0
                 step=np.min(limits[nonzero]/abs(direction[nonzero]))
                 delta=np.zeros(self.n_dof);delta[self.work_columns]=step*direction
-                plus=self._integrate(np.asarray(u)+delta)[0];minus=self._integrate(np.asarray(u)-delta)[0]
+                plus=self._tangent_probe_force(np.asarray(u)+delta);minus=self._tangent_probe_force(np.asarray(u)-delta)
                 coarse[:,j]=((plus-minus)/(2*step))[self.work_columns]
-                plus=self._integrate(np.asarray(u)+delta/2)[0];minus=self._integrate(np.asarray(u)-delta/2)[0]
+                plus=self._tangent_probe_force(np.asarray(u)+delta/2);minus=self._tangent_probe_force(np.asarray(u)-delta/2)
                 derivative[:,j]=((plus-minus)/step)[self.work_columns]
             if np.linalg.norm(derivative-coarse)>1e-5*max(np.linalg.norm(derivative),np.finfo(float).tiny):
                 raise _ReplayTangentUnresolved(f"replay friction tangent probes are unresolved: relative={np.linalg.norm(derivative-coarse)/max(np.linalg.norm(derivative),np.finfo(float).tiny):.8g}, norm={np.linalg.norm(derivative):.8g}, committed_frames={len(self.frames)}",force,summary)
@@ -873,7 +884,8 @@ class S3ReplayFrictionManager:
         summary.pop("event_frame_cache_hits")
         summary.pop("prepared_pressure_samples")
         summary.pop("prepared_partial_pressure_samples")
-        summary.update(profile=PROFILE,history_frames=len(self.frames)+1,
+        summary.pop("prepared_uniform_pressure_samples")
+        summary.update(profile=self.profile,history_frames=len(self.frames)+1,
                        traction_measure="force_per_source_reference_area",
                        dissipation_measure="endpoint_pressure_current_material_chord",
                        storage_change_j=summary["storage_j"]-self.committed_storage,
@@ -890,7 +902,7 @@ class S3ReplayFrictionManager:
         self.committed_storage=summary["storage_j"];self.last_committed_summary=summary
 
     def restart_contract(self):
-        return dict(normal=self.normal.restart_contract(),friction_profile=PROFILE,settings=asdict(self.friction_settings),
+        return dict(normal=self.normal.restart_contract(),friction_profile=self.profile,settings=asdict(self.friction_settings),
                     history=("material_event_partition_actual_pressure_midpoint_return_v2"
                              if self.friction_settings.event_subdivisions else
                              "replay_defined_material_coordinate_endpoint_return_v1"),
@@ -940,3 +952,143 @@ class S3ReplayFrictionManager:
         self._canonical_partition_frames=None
         self.cumulative_dissipation,self.committed_storage=values
         self.last_committed_summary=None
+
+
+@dataclass(frozen=True)
+class S3RimReplayFrictionSettings(S3ReplayFrictionSettings):
+    """Opt-in partial physical-rim replay with one full-reference partition.
+
+    Residual, tangent, recovery and accepted work use identical integration
+    domains. History is the immutable accepted-stage material-coordinate return
+    function; no state interpolation or candidate quadrature-index identity.
+    This first row requires parallel axis-aligned source/target planes, a fixed
+    target perpendicular coordinate, and a fixed second tangential coordinate
+    (slide axis is the lowest Cartesian index other than the normal axis).
+    It does not
+    establish generic event-free history or continuous energy integration.
+    """
+
+
+class S3RimReplayFrictionManager(S3ReplayFrictionManager):
+    profile='S3_PARTIAL_RIM_COMMON_PARTITION_REPLAY_STATIC_DEV_V0'
+
+    def __init__(self,model,normal,settings):
+        super().__init__(model,normal,settings)
+        if len(self.template.source_adapters)!=1 or len(self.template.target_adapters)>2:raise ValueError('rim replay first row requires one S3 source and at most two conforming target faces')
+        from .s3_friction_mesh_monolithic import _geometry_identity
+        self._rim_geometry=_geometry_identity((normal.settings,normal.profile,normal.reference,normal.map,normal.law.geometry,
+            self.template.source_adapters,self.template.target_adapters,self.friction_settings))
+        self._rim_path_cache=OrderedDict()
+        self.require_friction_path(np.zeros(self.n_dof),np.zeros(self.n_dof))
+
+    @property
+    def certified_material_path(self):return True
+
+    def require_friction_path(self,first,last):
+        from .s3_friction_rim_path import require_fixed_plane_path
+        from .s3_friction_mesh_monolithic import _geometry_identity
+        identity=_geometry_identity((self.normal.settings,self.normal.profile,self.normal.reference,self.normal.map,self.normal.law.geometry,
+            self.template.source_adapters,self.template.target_adapters,self.friction_settings))
+        if identity!=self._rim_geometry:raise ValueError('rim prepared geometry/settings mutated')
+        return require_fixed_plane_path(self.template,first,last)
+
+    def _frame(self,u,**kwargs):
+        from .s3_friction_rim_path import require_fixed_plane_path
+        if kwargs.get('check_path',True):
+            from .s3_friction_mesh_monolithic import _geometry_identity
+            identity=_geometry_identity((self.normal.settings,self.normal.profile,self.normal.reference,self.normal.map,self.normal.law.geometry,
+                self.template.source_adapters,self.template.target_adapters,self.friction_settings))
+            if '_rim_geometry' in self.__dict__ and identity!=self._rim_geometry:raise ValueError('rim prepared geometry/settings mutated')
+            first=kwargs.get('start_pose',self.committed_displacement)
+            key=(np.asarray(first,float).tobytes(),np.asarray(u,float).tobytes())
+            cache=self.__dict__.get('_rim_path_cache',{})
+            if key not in cache:
+                require_fixed_plane_path(self.template,first,u)
+                if '_rim_path_cache' in self.__dict__:
+                    cache[key]=True
+                    if len(cache)>16:cache.popitem(last=False)
+        return super()._frame(u,**kwargs)
+
+    def _integrate(self,u,*,level=None,full=False):
+        # Include zero-coverage regions for release/storage and use this same
+        # partition for physical force, its derivative and accepted work.
+        return super()._integrate(u,level=level,full=True)
+
+    def _integration_partition_frames(self,frame,full,partition_history):
+        history=super()._integration_partition_frames(frame,full,partition_history)
+        additional=[];first=self.initial_frame
+        for last in (*self.frames,frame):
+            # Uniform parallel-plane normal gap has at most one affine root.
+            # Coverage at that root separates material born by normal closure
+            # from material entering later through the rim. It is an integration
+            # partition only, never an intermediate physical/history commit.
+            g0=float((first['source'][0][0]-first['origin'])@first['normal'])
+            g1=float((last['source'][0][0]-last['origin'])@last['normal'])
+            if (g0<0<g1) or (g1<0<g0):
+                fraction=float(-Fraction(g0)/(Fraction(g1)-Fraction(g0)))
+                source=first['source'][0]+fraction*(last['source'][0]-first['source'][0])
+                target={e:c+fraction*(last['target'][e]-c) for e,c in first['target'].items()}
+                origin=first['origin']+fraction*(last['origin']-first['origin']);basis=first['basis'][:,:2]
+                xy=(source-origin)@basis;inverse=np.linalg.inv((xy[1:]-xy[0]).T);pieces=[]
+                for corners in target.values():
+                    projected=((corners-origin)@basis-xy[0])@inverse.T
+                    if _signed_area(projected)<0:projected=projected[::-1]
+                    polygon=_clip_convex(_SOURCE_UV,projected,0.,0.)
+                    if len(polygon)>=3 and _signed_area(polygon)>0:pieces.append(polygon)
+                additional.append(dict(domains=(tuple(pieces),)))
+                if len(additional)>self.friction_settings.maximum_history_frames+1:raise MemoryError('rim normal-birth partition cap exceeded')
+            first=last
+        return (*history,*additional)
+
+    def _evaluate_once(self,u,**kwargs):
+        previous=self.__dict__.get('_rim_empty_probe_origin',False)
+        self._rim_empty_probe_origin=not any(self._frame(u)['domains'])
+        try:return super()._evaluate_once(u,**kwargs)
+        finally:self._rim_empty_probe_origin=previous
+
+    def _tangent_probe_force(self,u):
+        if self.__dict__.get('_rim_empty_probe_origin',False):
+            frame=self._frame(u)
+            if not any(frame['domains']):
+                count=0;inactive=True
+                for i in range(len(self.template.source_adapters)):
+                    bary,weight=self._quadrature(i,frame,self.friction_settings.integration_refinement,full=True)
+                    count+=len(weight)
+                    if count>self.friction_settings.maximum_integration_points:raise MemoryError('replay total integration-point cap exceeded')
+                    x=bary@frame['source'][i]
+                    element,_=self._locate(x,frame)
+                    gap=(x-frame['origin'])@frame['normal']
+                    if np.any((gap<0)&(element>=0)):inactive=False;break
+                # This is the exact discrete force predicate used by _step:
+                # every current point inactive => traction and complete work
+                # gradient are zero, independent of old slip/storage. The
+                # full base/control/commit ledger remains evaluated normally.
+                if inactive:return np.zeros(self.n_dof)
+        previous=self.__dict__.get('_rim_force_only_open_origin',False)
+        self._rim_force_only_open_origin=True
+        try:return self._integrate(u)[0]
+        finally:self._rim_force_only_open_origin=previous
+
+    def _query_material(self,source_index,bary,*,candidate=None):
+        if (candidate is None and self.__dict__.get('_rim_force_only_open_origin',False)
+                and self._source_strictly_separated(source_index)):
+            # Strictly open last committed face releases every anchor/storage.
+            # Past additive plastic-loss/slip counters do not enter traction.
+            # Only force-only probes use this origin; all work/commit/recovery
+            # queries still replay and retain their complete physical ledger.
+            return self._empty(len(bary))
+        return super()._query_material(source_index,bary,candidate=candidate)
+
+    def prepare_commit(self,u):
+        pose,frame,summary=super().prepare_commit(u)
+        summary.update(integration_domain='full_reference_candidate_commit_normal_birth_partition_v2',
+                       history_field='immutable_accepted_stage_replay_no_interpolation',
+                       event_scope='bounded_discrete_replay_not_generic_event_free_or_path_energy')
+        return pose,frame,summary
+
+    def restart_contract(self):
+        contract=super().restart_contract()
+        contract.update(integration='full_reference_candidate_commit_normal_birth_partition_v2',
+                        geometry_path='rounded_parallel_axis_planes_oriented_convex_target_v1',
+                        structural_state_mode='validated_owned_mapping_invocation_publication_v1')
+        return contract

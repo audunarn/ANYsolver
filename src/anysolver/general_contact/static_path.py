@@ -25,7 +25,46 @@ from anysolver.nonlinear_restart import (
     create_nonlinear_checkpoint,
     validate_nonlinear_checkpoint,
 )
-from anysolver.nonlinear_state import _run_with_nonlinear_state_cleanup
+from anysolver.nonlinear_state import NonlinearStateStore, _run_with_nonlinear_state_cleanup
+
+
+def _control_projection_seed(rows, start, target):
+    """Minimum reduced-coordinate correction for independent scaled controls.
+
+    Row scaling does not change the affine constraint set. The correction lies
+    in its row space, so every direction in the control nullspace is retained.
+    This is a pose predictor only; it supplies no equilibrium or force estimate.
+    """
+    rows = np.asarray(rows, dtype=float)
+    start = np.asarray(start, dtype=float)
+    target = np.asarray(target, dtype=float)
+    if (rows.ndim != 2 or not 1 <= rows.shape[0] <= 64
+            or rows.shape[1] != start.size or start.ndim != 1
+            or target.shape != (rows.shape[0],)
+            or not all(np.all(np.isfinite(x)) for x in (rows, start, target))):
+        raise ValueError("control projection predictor needs finite bounded control rows")
+    # Avoid overflow/underflow in row norms before normalising.
+    largest = np.max(np.abs(rows), axis=1)
+    if np.any(largest == 0.):
+        raise ValueError("control projection predictor has a zero control row")
+    scaled = rows / largest[:, None]
+    lengths = np.linalg.norm(scaled, axis=1)
+    normalized = scaled / lengths[:, None]
+    gram = normalized @ normalized.T
+    eigenvalues = np.linalg.eigvalsh(gram)
+    guard = 64 * np.finfo(float).eps * len(target)
+    if eigenvalues[0] <= guard * eigenvalues[-1]:
+        raise ValueError("control projection predictor controls are ill-conditioned")
+    correction = ((target / largest) - scaled @ start) / lengths
+    seed = start + normalized.T @ np.linalg.solve(gram, correction)
+    residual = normalized @ seed - (target / largest) / lengths
+    rounding_scale = np.maximum(1., np.abs(normalized) @ np.abs(seed)
+                                + np.abs((target / largest) / lengths))
+    if (not np.all(np.isfinite(seed)) or not np.all(np.isfinite(residual))
+            or np.any(np.abs(residual) > guard * rounding_scale)):
+        raise ValueError("control projection predictor could not satisfy controls")
+    return seed
+
 from anysolver.nonlinear_static import (
     NonlinearStaticResult,
     NonlinearStaticStep,
@@ -50,6 +89,9 @@ from .core import (
     contact_scope,
     suspend_contact,
     validate_general_contact,
+    _CONTACT_PATH_PHYSICAL_SUBSTEPS_REVISION,
+    _INITIAL_CONTACT_SEED_REVISION,
+    _INITIAL_CONTACT_SEED_GLOBALIZATION_REVISION,
 )
 from .augmentation import ProjectedAugmentationSecant
 from .linearized_pivot import (
@@ -87,6 +129,7 @@ GENERAL_Q4_Q4_PROFILE = "Q4_Q4_GENERAL_NODAL_MULTI_CONTROL_PENALTY_PATH_DEV_V0"
 GENERAL_Q4_S3_PATCH_REFINED_PROJECTED_PENALTY_PROFILE = "Q4_S3_PATCH_REFINED_PROJECTED_FINITE_PENALTY_PATH_DEV_V0"
 GENERAL_S3_PATCH_PROJECTED_PENALTY_PROFILE = "S3_PATCH_PROJECTED_FINITE_PENALTY_STATIC_PATH_DEV_V0"
 _DOF = {"ux": 0, "uy": 1, "uz": 2}
+_FINITE_DOF = {**_DOF, "rx": 3, "ry": 4, "rz": 5}
 
 
 def _reported_lower_gap(certificate) -> float:
@@ -99,13 +142,17 @@ def _reported_lower_gap(certificate) -> float:
 @dataclass(frozen=True)
 class ContactPathControl:
     terms: tuple[tuple[int, str, float], ...]
+    coordinate_profile: str = "translation_v1"
 
     def __post_init__(self) -> None:
+        if self.coordinate_profile not in {"translation_v1", "finite_shell_spin_chart_dev"}:
+            raise ValueError("unsupported contact path control coordinate_profile")
+        allowed = (_DOF if self.coordinate_profile == "translation_v1" else _FINITE_DOF)
         terms = tuple(self.terms)
         if not terms or any(
             type(term) is not tuple or len(term) != 3
             or type(term[0]) is not int or term[0] <= 0
-            or term[1] not in _DOF
+            or term[1] not in allowed
             or not np.isfinite(term[2])
             for term in terms
         ):
@@ -119,8 +166,8 @@ class ContactPathControl:
         ))
 
     @classmethod
-    def node(cls, node_id: int, dof: str) -> ContactPathControl:
-        return cls(((node_id, dof, 1.0),))
+    def node(cls, node_id: int, dof: str, *, coordinate_profile="translation_v1") -> ContactPathControl:
+        return cls(((node_id, dof, 1.0),), coordinate_profile=coordinate_profile)
 
 
 @dataclass(frozen=True)
@@ -146,13 +193,20 @@ class ContactPathProgram:
     waypoints: tuple[tuple[float, ...], ...]
     steps_per_segment: int = 2
     nodal_forces: tuple[ContactPathNodalForce, ...] = ()
+    control_profile: str = "translation_v1"
 
     def __post_init__(self) -> None:
+        if self.control_profile not in {"translation_v1", "finite_shell_triplets_dev"}:
+            raise ValueError("unsupported contact path control_profile")
         controls = tuple(self.controls)
-        if len(controls) not in {0, 1, 2, 3} or any(
+        limit = 3 if self.control_profile == "translation_v1" else 24
+        if len(controls) > limit or any(
             type(item) is not ContactPathControl for item in controls
         ) or len({item.terms for item in controls}) != len(controls):
-            raise ValueError("contact path requires at most three distinct controls")
+            raise ValueError("contact path control count/profile is unsupported")
+        if self.control_profile == "translation_v1" and any(
+                item.coordinate_profile != "translation_v1" for item in controls):
+            raise ValueError("legacy contact path permits translation controls only")
         points = tuple(tuple(float(value) for value in row)
                        for row in self.waypoints)
         if len(points) < 2 or any(len(row) != len(controls) for row in points):
@@ -215,11 +269,15 @@ class ContactPathProgram:
 
     def contract(self) -> dict[str, object]:
         result = {
-            "controls": [{"terms": [list(term) for term in item.terms]}
+            "controls": [{"terms": [list(term) for term in item.terms],
+                          **({"coordinate_profile": item.coordinate_profile}
+                             if item.coordinate_profile != "translation_v1" else {})}
                          for item in self.controls],
             "waypoints": [list(row) for row in self.waypoints],
             "steps_per_segment": self.steps_per_segment,
         }
+        if self.control_profile != "translation_v1":
+            result["control_profile"] = self.control_profile
         if self.nodal_forces:
             result["nodal_forces"] = [
                 {"node_id": item.node_id, "dof": item.dof,
@@ -348,6 +406,184 @@ def _elastic_displacement_force_predictor(stiffness, transform, row,
     return maximum_reaction
 
 
+def _validate_continuation_history_record(record, program, settings):
+    """Validate one declared continuation trace before any Newton work.
+
+    Enabled continuation checkpoints carry an optional ``continuation``
+    block on accepted macro records. Every present block must declare the
+    bound numerical revision, the enabled halvings budget, a nonempty
+    cutback reason, and a contiguous finite dyadic tau chronology from 0
+    to the exact macro endpoint whose spans are exactly producer
+    reachable: interior spans are dyadic unit fractions 2^-k with
+    1 <= k <= maximum_halvings (the producer only ever halves or doubles
+    its span from 0.5, so no other interior span can occur), the final
+    span is a positive multiple of 2^-maximum_halvings no larger than
+    the producer's 0.5 cap, and the accepted span sequence must be
+    reachable from the producer's span state machine: a span can grow by
+    at most the single doubling the producer performs on acceptance, the
+    recorded halvings_used must satisfy the producer identity
+    1 + trial_count - accepted_substep_count, and the failures implied
+    by the spans (including producer-permitted repeated failures on the
+    final truncated interval) must fit that recorded count. Per-substep
+    diagnostics must be finite nonnegative counts/norms, the
+    external-nodal-work key must be present exactly when the program
+    declares nodal forces, the accounting fields must sit inside the
+    producer's recorded trial budget, the recorded stagnation controls
+    must equal the live settings, and the record's target must match the
+    program's own waypoint at its step. Disabled runs never produce
+    these blocks and never run this check.
+    """
+    if type(record) is not dict:
+        raise ValueError("contact path checkpoint history is incompatible")
+    continuation = record.get("continuation")
+    if continuation is None:
+        return
+    if (type(continuation) is not dict
+            or continuation.get("mode") != "declared_physical_dyadic_substeps"
+            or continuation.get("revision") != _CONTACT_PATH_PHYSICAL_SUBSTEPS_REVISION
+            or type(continuation.get("substeps")) is not list):
+        raise ValueError("contact path checkpoint continuation block is incompatible")
+    maximum_halvings = settings.path_continuation_maximum_halvings
+    recorded_halvings = continuation.get("maximum_halvings")
+    if (type(maximum_halvings) is not int
+            or not 0 < maximum_halvings <= 12
+            or type(recorded_halvings) is not int
+            or not 0 < recorded_halvings <= 12
+            or recorded_halvings != maximum_halvings):
+        raise ValueError(
+            "contact path checkpoint continuation halvings budget is incompatible")
+    cutback_reason = continuation.get("cutback_reason")
+    if type(cutback_reason) is not str or not cutback_reason:
+        raise ValueError(
+            "contact path checkpoint continuation cutback reason is invalid")
+    step_index = record.get("step_index")
+    if (type(step_index) is not int
+            or not 0 < step_index <= program.total_steps):
+        raise ValueError("contact path checkpoint continuation step is invalid")
+    target = np.asarray(record.get("target"), dtype=float)
+    if (target.shape != (len(program.controls),)
+            or not np.all(np.isfinite(target))
+            or not np.allclose(target, program.target_at(step_index),
+                               rtol=0.0, atol=1.0e-12)):
+        raise ValueError("contact path checkpoint continuation endpoint is inconsistent")
+    halvings_used = continuation.get("halvings_used")
+    trial_count = continuation.get("trial_count")
+    accepted_count = continuation.get("accepted_substep_count")
+    patience = continuation.get("stagnation_patience")
+    fraction = continuation.get("stagnation_fraction")
+    merit_rate = continuation.get("stagnation_merit_rate")
+    if (type(halvings_used) is not int
+            or not 1 <= halvings_used <= recorded_halvings
+            or type(trial_count) is not int
+            or not 1 <= trial_count <= (
+                (1 << (recorded_halvings + 1))
+                + 2*recorded_halvings + 2)
+            or type(accepted_count) is not int
+            or not 1 <= accepted_count == len(continuation["substeps"])
+            or accepted_count > trial_count
+            or halvings_used != 1 + trial_count - accepted_count
+            or type(patience) is not int or patience < 1
+            or patience != settings.path_stagnation_patience
+            or type(fraction) is not float or not np.isfinite(fraction)
+            or not 0.0 < fraction <= 1.0
+            or fraction != settings.path_stagnation_fraction
+            or type(merit_rate) is not float or not np.isfinite(merit_rate)
+            or not 0.0 < merit_rate < 1.0
+            or merit_rate != settings.path_stagnation_merit_rate):
+        raise ValueError(
+            "contact path checkpoint continuation accounting is invalid")
+
+    def _finite_nonnegative(value):
+        return (not isinstance(value, bool)
+                and isinstance(value, (int, float))
+                and np.isfinite(value) and value >= 0.0)
+
+    tau = 0.0
+    grid = float(1 << recorded_halvings)
+    expects_work = bool(program.nodal_forces)
+    # Producer span state: the nominal span starts at 0.5, halves on
+    # every failed trial and doubles (capped at 0.5) on every accepted
+    # substep, while the halvings counter only grows. depth is the
+    # nominal span exponent (nominal = 0.5 * 2^-depth); failures counts
+    # the producer failures implied by the accepted spans so far.
+    depth = 0
+    failures = 0
+    for substep in continuation["substeps"]:
+        if type(substep) is not dict:
+            raise ValueError("contact path checkpoint continuation substep is invalid")
+        if (type(substep.get("iterations")) is not int
+                or substep["iterations"] < 0
+                or type(substep.get("candidate_evaluations")) is not int
+                or substep["candidate_evaluations"] < 0
+                or type(substep.get("backtracks")) is not int
+                or substep["backtracks"] < 0
+                or not _finite_nonnegative(substep.get("residual_norm"))
+                or not _finite_nonnegative(substep.get("constraint_error"))
+                or not _finite_nonnegative(
+                    substep.get("complementarity_relative_force"))):
+            raise ValueError("contact path checkpoint continuation substep is invalid")
+        work = substep.get("external_nodal_work_trapezoid_j")
+        if expects_work:
+            # The producer emits the signed finite trapezoid work on
+            # every accepted substep exactly when the program declares
+            # nodal forces; presence must agree with the program.
+            if (isinstance(work, bool)
+                    or not isinstance(work, (int, float))
+                    or not np.isfinite(work)):
+                raise ValueError(
+                    "contact path checkpoint continuation substep is invalid")
+        elif work is not None:
+            raise ValueError("contact path checkpoint continuation substep is invalid")
+        start = substep.get("tau_start")
+        end = substep.get("tau_end")
+        if (type(start) is not float or type(end) is not float
+                or not np.isfinite(start) or not np.isfinite(end)
+                or not 0.0 <= start <= end <= 1.0
+                or start != tau):
+            raise ValueError("contact path checkpoint continuation chronology is invalid")
+        span = end - start
+        scaled = span * grid
+        if not (scaled > 0.0 and scaled.is_integer()):
+            raise ValueError("contact path checkpoint continuation chronology is invalid")
+        if end < 1.0:
+            # Producer interior spans are exact dyadic unit fractions
+            # 2^-k with 1 <= k <= recorded_halvings: on the 2^-M grid
+            # that is a power of two no larger than the 0.5 cap.
+            units = int(scaled)
+            if (units & (units - 1)) or units > (1 << (recorded_halvings - 1)):
+                raise ValueError(
+                    "contact path checkpoint continuation chronology is invalid")
+            # An accepted interior span is exactly the live nominal
+            # span, so it can be reached from the previous accepted span
+            # only through the producer's halvings: never by more than
+            # the one doubling the producer performs on acceptance.
+            trial_depth = recorded_halvings - units.bit_length()
+            if trial_depth < depth:
+                raise ValueError(
+                    "contact path checkpoint continuation chronology is invalid")
+            failures += trial_depth - depth
+            depth = trial_depth - 1 if trial_depth > 1 else 0
+        elif span > 0.5:
+            # The final span is 1 - tau for the trial that reached the
+            # macro endpoint: never larger than the producer's 0.5 cap.
+            raise ValueError("contact path checkpoint continuation chronology is invalid")
+        else:
+            # The final truncated interval is accepted with span 1 - tau
+            # while the nominal span stays at least that large; repeated
+            # failures on the same interval are producer permitted, so
+            # the remaining recorded halvings must fit the nominal span
+            # at the final acceptance.
+            remaining = (halvings_used - 1) - failures
+            final_depth = depth + remaining
+            if (remaining < 0
+                    or final_depth > recorded_halvings - 1
+                    or (1 << (recorded_halvings - 1 - final_depth))
+                    < int(scaled)):
+                raise ValueError(
+                    "contact path checkpoint continuation chronology is invalid")
+        tau = end
+    if not continuation["substeps"] or tau != 1.0:
+        raise ValueError("contact path checkpoint continuation does not reach the macro endpoint")
 def solve_static_contact_path(
         model, definition: ContactDefinition, settings: ContactSolverSettings,
         program: ContactPathProgram, *, max_path_fraction: float = 1.0,
@@ -368,13 +604,66 @@ def solve_static_contact_path(
         raise TypeError("contact path needs exact contact definitions and settings")
     if type(program) is not ContactPathProgram:
         raise TypeError("contact path needs ContactPathProgram")
-    report = validate_general_contact(model, definition, settings)
+    finite = settings.shell_skin_kinematics != "reference_linear"
+    if ((program.control_profile != "translation_v1") != finite):
+        raise ValueError("finite_shell_triplets_dev requires corotational_nodal_director_dev and conversely")
+    structural_kinematics = "corotational" if finite else "von_karman"
+    assembly_options = ({"corotational_tangent": "consistent"} if finite else {})
+    if settings.initial_contact_seed != "none" and friction is not None:
+        # Fail closed: the initial-contact seed is an initial-only
+        # frictionless cold-start initializer. Refuse explicitly before
+        # any route preparation instead of silently dropping the
+        # requested selection at the first macro attempt.
+        raise ValueError("initial_contact_seed requires frictionless contact")
+    if settings.general_s3_differentiation == "jet2_q4_q4_dev" and friction is not None:
+        raise ValueError("jet2_q4_q4_dev currently requires frictionless contact")
+    from .s3_sliding_friction import S3MovingNormalFrictionSettings, S3MeshMovingNormalFrictionSettings, S3MeshWeakPressureFrictionSettings, S3MeshWholeChordGapFrictionSettings, S3MeshHistoryPathFrictionSettings
+    from .s3_friction_replay import S3RimReplayFrictionSettings
+    rim_friction = type(friction) is S3RimReplayFrictionSettings
+    if rim_friction and settings.shell_pair_orientation != 'legacy':
+        raise ValueError('rim replay requires legacy parallel physical-side declarations')
+    history_friction = type(friction) is S3MeshHistoryPathFrictionSettings
+    history_policy = None
+    if history_friction:
+        from .s3_friction_history_path import expand_program
+        program, history_policy = expand_program(program, friction.physical_subincrements_per_user_increment)
+    whole_chord_friction = type(friction) in {S3MeshWholeChordGapFrictionSettings,S3MeshHistoryPathFrictionSettings}
+    weak_pressure_friction = type(friction) in {S3MeshWeakPressureFrictionSettings,S3MeshWholeChordGapFrictionSettings,S3MeshHistoryPathFrictionSettings}
+    mesh_moving_friction = type(friction) in {S3MeshMovingNormalFrictionSettings,S3MeshWeakPressureFrictionSettings,S3MeshWholeChordGapFrictionSettings,S3MeshHistoryPathFrictionSettings}
+    moving_friction = type(friction) in {S3MovingNormalFrictionSettings,S3MeshMovingNormalFrictionSettings,S3MeshWeakPressureFrictionSettings,S3MeshWholeChordGapFrictionSettings,S3MeshHistoryPathFrictionSettings}
+    if moving_friction and (settings.enforcement_solver != "monolithic_active_set"
+            or settings.general_s3_differentiation != "jet2_s3_dev"
+            or settings.shell_pair_orientation != "physical_sides_dev"
+            or (settings.path_predictor != "none" and not mesh_moving_friction)
+            or len(definition.surfaces) != 2 or len(definition.interactions) != 1
+            or (not mesh_moving_friction and any(len(s.element_ids) != 1 for s in definition.surfaces))
+            or definition.interactions[0].normal_law != "augmented"):
+        raise ValueError("moving-normal friction requires the explicit full-face S3 monolithic physical-side path")
+    if friction is not None and not moving_friction and (settings.shell_pair_orientation != "legacy"
+                                 or settings.path_predictor != "none"):
+        from .s3_sliding_friction import S3SlidingFrictionSettings
+        from anysolver.e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
+        if (type(friction) not in {S3SlidingFrictionSettings,S3RimReplayFrictionSettings}
+                or settings.general_s3_differentiation != "jet2_s3_dev"
+                or settings.normal_discretization != "primal_mortar"
+                or settings.enforcement_solver != "nested_augmented"
+                or definition.rigid_bodies or len(definition.surfaces) != 2
+                or len(definition.interactions) != 1
+                or definition.interactions[0].normal_law != "projected_penalty"
+                or not all(type(model.mesh.elements.get(eid)) is NativeParityE4PLS3V2DShellElement
+                           for surface in definition.surfaces for eid in surface.element_ids)):
+            raise ValueError("physical-side/predicted friction path requires S3SlidingFrictionSettings and the refined S3 projected-penalty owner")
+    report = validate_general_contact(model, definition, settings,
+                                      analysis_control="contact_path")
     if not report.valid:
         raise ValueError("unsupported contact path: " + "; ".join(report.issues))
     from .s3_patch_static import MIXED_PROFILE as mixed_patch_profile
+    from .s3_patch_static import S3_MONOLITHIC_PROFILE as s3_monolithic_profile
+    from .s3_patch_static import S3_MESH_MONOLITHIC_PROFILE as s3_mesh_monolithic_profile
     from .s3_patch_static import PROFILE as s3_patch_profile
     from .s3_patch_static import SOURCE_Q4_PROFILE as source_q4_patch_profile
     from .s3_patch_static import Q4_PAIR_PROFILE as q4_pair_profile
+    from .s3_patch_static import REFINED_Q4_Q4_PROJECTED_PENALTY_PROFILE as q4_q4_projected_profile
     from .s3_patch_static import AUGMENTED_PROFILE as general_augmented_profile
     from .s3_patch_static import AUGMENTED_MIXED_PROFILE as mixed_augmented_profile
     from .s3_patch_static import SOURCE_Q4_AUGMENTED_PROFILE as source_q4_augmented_profile
@@ -388,6 +677,10 @@ def solve_static_contact_path(
     from .s3_patch_static import REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE as refined_q4_s3_roundoff_profile
     from .s3_patch_static import REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE as refined_q4_s3_graph_profile
     from .s3_patch_static import REFINED_Q4_S3_PROJECTED_PENALTY_PROFILE as refined_q4_s3_projected_penalty_profile
+    from .s3_patch_static import REFINED_Q4_Q4_MONOLITHIC_AUGMENTED_PROFILE as q4_q4_monolithic_profile
+    from .s3_patch_static import FINITE_Q4_Q4_MONOLITHIC_PROFILE as finite_q4_profile
+    from .finite_mixed_state import STATIC_PROFILE as finite_mixed_profile,PROFILE as finite_mixed_path_profile
+    from .finite_v2d_state import STATIC_PROFILE as finite_v2d_profile,PROFILE as finite_v2d_path_profile
     from .s3_patch_static import S3_Q4_PROJECTED_PENALTY_PROFILE as s3_q4_projected_penalty_profile
     from .s3_patch_static import S3_PROJECTED_PENALTY_PROFILE as s3_projected_penalty_profile
     from .multiple_projected_pairs import PROFILE as multiple_projected_profile, PATH_PROFILE as multiple_path_profile
@@ -398,7 +691,7 @@ def solve_static_contact_path(
     general_s3_patch = report.profile in {
         rigid_mesh_profile, rigid_patch_profile,
         s3_patch_profile, mixed_patch_profile, source_q4_patch_profile,
-        q4_pair_profile, general_augmented_profile, mixed_augmented_profile,
+        q4_q4_projected_profile, q4_q4_monolithic_profile, finite_q4_profile, finite_mixed_profile, finite_v2d_profile, s3_monolithic_profile, s3_mesh_monolithic_profile, q4_pair_profile, general_augmented_profile, mixed_augmented_profile,
         refined_augmented_profile, refined_q4_s3_augmented_profile,
         refined_q4_s3_projected_profile, refined_q4_s3_projected_penalty_profile,
         s3_projected_penalty_profile, s3_q4_projected_penalty_profile, multiple_projected_profile,
@@ -408,6 +701,8 @@ def solve_static_contact_path(
         source_q4_projected_augmented_profile,
         q4_pair_augmented_profile, q4_pair_projected_augmented_profile,
     }
+    if report.profile == s3_mesh_monolithic_profile and not mesh_moving_friction:
+        raise ValueError("S3 mesh monolithic public path requires exact S3MeshMovingNormalFrictionSettings")
     if not general_s3_patch and "RESTRICTED_SLIDING" not in report.profile:
         raise ValueError("unsupported contact path profile: " + report.profile)
     if ((definition.rigid_bodies and report.profile not in (rigid_mesh_profile,rigid_patch_profile)) or
@@ -430,7 +725,7 @@ def solve_static_contact_path(
                 "one-control contact path requires one unit-weight nodal "
                 "translation and one nonzero target waypoint"
             )
-    if semismooth and (
+    if semismooth and report.profile not in {q4_q4_monolithic_profile, finite_q4_profile, finite_mixed_profile, finite_v2d_profile, s3_monolithic_profile, s3_mesh_monolithic_profile} and (
             not augmented
             or report.profile not in {
                 refined_q4_s3_augmented_profile,
@@ -469,7 +764,27 @@ def solve_static_contact_path(
                 refined_q4_s3_overlap_local_profile,
             }):
         raise ValueError("supported Schur route requires the refined Q4/S3 augmented patch profile")
-    profile = (multiple_path_profile if report.profile == multiple_projected_profile else
+    profile = ("S3_MESH_EQUILIBRATED_MATERIAL_SUBINCREMENTS_PATH_DEV_V0"
+               if history_friction else
+               "S3_MESH_WEAK_P1_WHOLE_CHORD_GAP_FRICTION_MONOLITHIC_PATH_DEV_V0"
+               if whole_chord_friction else
+               "S3_MESH_WEAK_P1_PRESSURE_MATERIAL_FRICTION_MONOLITHIC_PATH_DEV_V0"
+               if weak_pressure_friction else
+               "S3_FULL_MESH_HARD_MATERIAL_FRICTION_MONOLITHIC_PATH_DEV_V0"
+               if mesh_moving_friction else
+               "S3_FULL_FACE_HARD_MATERIAL_FRICTION_MONOLITHIC_PATH_DEV_V0"
+               if moving_friction else
+               "Q4_Q4_COROTATIONAL_NODAL_DIRECTOR_MONOLITHIC_PATH_DEV_V0"
+               if report.profile == finite_q4_profile else
+               finite_v2d_path_profile
+               if report.profile == finite_v2d_profile else
+               finite_mixed_path_profile
+               if report.profile == finite_mixed_profile else
+               "Q4_Q4_PATCH_REFINED_MONOLITHIC_PATH_STATIC_DEV_V0"
+               if report.profile == q4_q4_monolithic_profile else
+               "Q4_Q4_PATCH_REFINED_PROJECTED_FINITE_PENALTY_PATH_DEV_V0"
+               if report.profile == q4_q4_projected_profile else
+               multiple_path_profile if report.profile == multiple_projected_profile else
                "S3_Q4_PROJECTED_FINITE_PENALTY_PATH_STATIC_DEV_V0"
                if report.profile == s3_q4_projected_penalty_profile else
                GENERAL_S3_PATCH_PROJECTED_PENALTY_PROFILE
@@ -533,7 +848,8 @@ def solve_static_contact_path(
     def operation(_lease):
         def run():
             with contact_scope(model, definition, settings,
-                               allow_augmented=augmented) as manager:
+                               allow_augmented=augmented,
+                               analysis_control="contact_path") as manager:
                 if friction is not None:
                     from .s3_friction_static import create_s3_friction_manager
                     from .runtime import _ACTIVE_CONTACT
@@ -550,11 +866,65 @@ def solve_static_contact_path(
                     "max_iterations": max_iterations,
                     "tolerance": float(tolerance),
                 }
+                if history_friction:
+                    contract["material_history_path"] = history_policy
                 if settings.augmentation_acceleration != "none":
                     contract["augmentation_acceleration"] = settings.augmentation_acceleration
+                if settings.shell_pair_orientation != "legacy":
+                    contract["shell_pair_orientation"] = settings.shell_pair_orientation
+                if settings.path_predictor != "none":
+                    contract["path_predictor"] = settings.path_predictor
+                if finite:
+                    from .finite_rotation_state import COORDINATES
+                    if report.profile==finite_mixed_profile:
+                        from .finite_mixed_state import COORDINATES,owner_contract
+                        contract['finite_state_owners']=owner_contract(model)
+                    elif report.profile==finite_v2d_profile:
+                        from .finite_v2d_state import COORDINATES,owner_contract
+                        contract['finite_state_owners']=owner_contract(model)
+                    contract["element_state_coordinates"] = COORDINATES
+                    contract["shell_skin_kinematics"] = settings.shell_skin_kinematics
+                    contract["structural_kinematics"] = "corotational"
+                    contract["corotational_tangent"] = "consistent"
+                    contract["finite_constraint_domain"] = "zero_offset_selector_rotational_triplets_v1"
+                    contract["finite_trial_sweep"] = "every_actual_binary_candidate_chord_v1"
+                    contract["finite_rigid_seed"] = "common_reference_frame_left_transport_project_controls_v1"
+                    if settings.finite_frame_seed != 'common_reference_frame_dev':
+                        from .finite_rotation_predictor import per_surface_seed_descriptor
+                        finite_frames=per_surface_seed_descriptor(model,definition,program)
+                        contract['finite_frame_seed']=settings.finite_frame_seed
+                        contract['finite_rigid_seed']='per_surface_left_transport_project_controls_v1'
+                        contract['finite_surface_frames']=list(finite_frames)
                 if semismooth:
                     contract["enforcement_solver"] = "monolithic_active_set"
                     contract["control_residual_scaling"] = "per_control_waypoint_max_v1"
+                if settings.path_continuation_maximum_halvings:
+                    # Enabled continuation binds its numerical revision,
+                    # settings and owned state transaction into the analysis
+                    # identity so an incompatible checkpoint fails validation
+                    # before any Newton work; the disabled contract keeps its
+                    # exact prior shape.
+                    contract["contact_path_continuation"] = {
+                        "revision": _CONTACT_PATH_PHYSICAL_SUBSTEPS_REVISION,
+                        "state_transaction": "owned_elastic_mapping_macro_transaction_v1",
+                        "maximum_halvings": settings.path_continuation_maximum_halvings,
+                        "stagnation_patience": settings.path_stagnation_patience,
+                        "stagnation_fraction": settings.path_stagnation_fraction,
+                        "stagnation_merit_rate": settings.path_stagnation_merit_rate,
+                    }
+                if settings.initial_contact_seed != "none":
+                    # The enabled seed binds its revision and selection into
+                    # the analysis identity so an incompatible checkpoint
+                    # fails validation before any Newton work; the disabled
+                    # contract keeps its exact prior shape.
+                    contract["contact_initial_seed"] = {
+                        "revision": (
+                            _INITIAL_CONTACT_SEED_GLOBALIZATION_REVISION
+                            if settings.initial_contact_seed ==
+                            "linearized_kkt_merit_globalization_dev"
+                            else _INITIAL_CONTACT_SEED_REVISION),
+                        "selection": settings.initial_contact_seed,
+                    }
                 if displacement_only:
                     contract["force_reference_method"] = (
                         "contact_free_elastic_displacement_v1"
@@ -571,6 +941,13 @@ def solve_static_contact_path(
                 _, _, T, u0, _independent, _constraint_info = (
                     build_constraint_transformation(stiffness, zeros, model)
                 )
+                if finite:
+                    selector = T.tocsr()
+                    selector.eliminate_zeros()
+                    if (np.any(np.diff(selector.indptr)>1)
+                            or np.any(selector.data != 1.) or np.any(u0 != 0.)
+                            or np.any(np.bincount(selector.indices,minlength=selector.shape[1])>1)):
+                        raise ValueError("finite shell path requires zero-offset selector constraints without MPC rows")
                 if hasattr(manager, "restrict_tangent_to_reduced_variations"):
                     manager.restrict_tangent_to_reduced_variations(T)
                 controls = np.zeros((len(program.controls), len(zeros)))
@@ -579,12 +956,22 @@ def solve_static_contact_path(
                         if model.mesh.get_node(node_id) is None:
                             raise ValueError(f"missing contact path node {node_id}")
                         dof = model.mesh.dof_manager.get_node_dofs(node_id)[
-                            _DOF[dof_name]
+                            (_FINITE_DOF if finite else _DOF)[dof_name]
                         ]
                         controls[index, dof] += weight
                 rows = np.asarray(controls @ T, dtype=float)
                 if np.linalg.matrix_rank(rows) != len(program.controls):
                     raise ValueError("contact path controls are constrained or dependent")
+                if finite:
+                    from scipy.linalg import null_space
+                    variation = T @ null_space(rows)
+                    for node in model.mesh.nodes:
+                        dofs = model.mesh.dof_manager.get_node_dofs(node)[3:6]
+                        block = np.asarray(variation[dofs])
+                        rank = np.linalg.matrix_rank(block, tol=256*np.finfo(float).eps
+                                                     *max(1., float(np.linalg.norm(block))))
+                        if rank not in {0, 3}:
+                            raise ValueError("finite shell rotations must be all three constrained or all three free per node")
                 if np.any(np.abs(controls @ u0) > 1.0e-12):
                     raise ValueError("contact path requires zero reference control offsets")
                 displacement_force_predictor = None
@@ -671,6 +1058,10 @@ def solve_static_contact_path(
                     if (len(previous_steps) != accepted_step or
                              len(history) != accepted_step or total_iterations < 0):
                         raise ValueError("contact path checkpoint history is incomplete")
+                    if settings.path_continuation_maximum_halvings:
+                        for item in history:
+                            _validate_continuation_history_record(
+                                item, program, settings)
                     if augmented:
                         manager.set_normal_multipliers(
                             np.asarray(state["normal_multipliers"], dtype=float)
@@ -684,9 +1075,21 @@ def solve_static_contact_path(
                     committed_states = validated.element_states
                     if friction is not None:
                         manager.restore(state["friction_state"], validated.displacements)
+                if history_friction:
+                    from .s3_friction_history_path import register_entry, summarize_work_history
+                    register_entry(manager)
+                if rim_friction:
+                    from .s3_friction_rim_transaction import register_entry
+                    register_entry(manager)
                 if accepted_step > requested_step:
                     raise ValueError("contact path checkpoint is beyond requested target")
                 initial_u = np.asarray(T @ q + u0).reshape(-1)
+                if friction is not None and getattr(manager,"certified_material_path",False):
+                    manager.require_friction_path(initial_u,initial_u)
+                if finite:
+                    manager.require_finite_deformation(initial_u)
+                    if not manager._swept_admissible(initial_u, initial_u):
+                        raise ValueError("finite shell initial/restart pose is unsafe or uncertified")
                 if semismooth and restart_checkpoint is not None:
                     source, target_points = manager._positions(initial_u)
                     support_area = manager.law.geometry.evaluate(
@@ -700,15 +1103,54 @@ def solve_static_contact_path(
                     if not np.allclose(manager.normal_multipliers, expected_pressure,
                                        rtol=1.0e-10, atol=1.0e-12):
                         raise ValueError("contact path checkpoint pressure and nodal forces are incompatible")
-                committed_states = _prepare_qualified_q4_states_for_nonlinear_solve(
-                    model, initial_u, committed_states, num_layers, info,
-                    supplied_element_ids=tuple(sorted(int(k) for k in committed_states)),
-                    ordinary_restart=restart_checkpoint is not None,
-                )
-                committed_states = _activate_nonlinear_state_storage(
-                    model, committed_states, num_layers, info,
-                    kinematics="von_karman", committed_displacements=initial_u,
-                )
+                if finite:
+                    from .finite_rotation_state import prepare_finite_states
+                    if report.profile==finite_mixed_profile:
+                        from .finite_mixed_state import prepare_mixed_states as prepare_finite_states
+                    elif report.profile==finite_v2d_profile:
+                        from .finite_v2d_state import prepare_v2d_states as prepare_finite_states
+                    committed_states = prepare_finite_states(
+                        model, initial_u, committed_states, num_layers, info,
+                        restart=restart_checkpoint is not None)
+                else:
+                    committed_states = _prepare_qualified_q4_states_for_nonlinear_solve(
+                        model, initial_u, committed_states, num_layers, info,
+                        supplied_element_ids=tuple(sorted(int(k) for k in committed_states)),
+                        ordinary_restart=restart_checkpoint is not None,
+                    )
+                continuation_active = (semismooth
+                                       and settings.path_continuation_maximum_halvings > 0)
+                if continuation_active:
+                    # Explicit eligibility diagnosis before any state
+                    # activation: the continuation transaction owns one
+                    # plain elastic mapping. Actual foreign, store-backed or
+                    # formulation-native state owners are rejected here
+                    # instead of being silently ignored; the ordinary
+                    # activation's elastic store creation is not a refusal
+                    # reason by itself.
+                    if friction is not None:
+                        raise ValueError(
+                            "path continuation requires the frictionless elastic route")
+                    if (type(committed_states) is not dict
+                            or isinstance(committed_states, NonlinearStateStore)):
+                        raise ValueError(
+                            "path continuation requires its owned plain mapping state transaction")
+                    if any(bool(getattr(element,
+                                         "formulation_native_total_lagrangian", False))
+                           for element in model.mesh.elements.values()):
+                        raise ValueError(
+                            "path continuation rejects formulation-native state owners")
+                if history_friction or rim_friction:
+                    committed_states = copy.deepcopy(dict(committed_states))
+                    info["nonlinear_state_storage"] = {"mode": "validated_owned_mapping_invocation_publication_v1"}
+                elif continuation_active:
+                    committed_states = copy.deepcopy(dict(committed_states))
+                    info["nonlinear_state_storage"] = {"mode": "owned_elastic_mapping_macro_transaction_v1"}
+                else:
+                    committed_states = _activate_nonlinear_state_storage(
+                        model, committed_states, num_layers, info,
+                        kinematics=structural_kinematics, committed_displacements=initial_u,
+                    )
                 status = "completed"
                 failure_reason = None
                 scale = max(1.0e-9, max((abs(value) for row in program.waypoints
@@ -718,70 +1160,85 @@ def solve_static_contact_path(
                 ) if semismooth else None
                 if semismooth:
                     info["contact_path_control_scales_m"] = control_scales.tolist()
-                for step in range(accepted_step + 1, requested_step + 1):
-                    cancellation_safe_point(cancellation_token,
-                                            f"contact_path.step:{step}")
-                    start_q = q.copy()
-                    start_multipliers = multipliers.copy()
-                    start_normal_multipliers = manager.normal_multipliers.copy() if augmented else None
-                    start_normal_forces = normal_forces.copy() if semismooth else None
-                    target = program.target_at(step)
-                    force_values = program.force_values_at(step)
-                    external = np.zeros_like(zeros)
-                    external[force_dofs] = force_values
-                    reduced_external = np.asarray(T.T @ external).reshape(-1)
-                    if semismooth:
+                    if finite:
+                        info["contact_path_control_scales_m_rad"] = info.pop("contact_path_control_scales_m")
+
+                    def attempt_semismooth(step_index, attempt_target,
+                                           attempt_force_values, origin_q,
+                                           origin_multipliers,
+                                           origin_normal_forces, origin_states,
+                                           stagnation_controls,
+                                           initial_contact_seed=None):
+                        """One complete coupled semismooth admission attempt.
+
+                        Solves the increment from the supplied physical origin
+                        and runs every existing report/raw-certificate/D1 gate
+                        before the coordinated commit, so the default macro
+                        attempt and every continuation substep share one
+                        acceptance path. The attempt never mutates the
+                        caller's origin: on any refusal it returns the
+                        declared reason without committing (the caller owns
+                        rollback), and on success it returns the complete
+                        accepted physical state.
+                        """
+                        attempt_external = np.zeros_like(zeros)
+                        attempt_external[force_dofs] = attempt_force_values
+                        attempt_reduced_external = np.asarray(
+                            T.T @ attempt_external).reshape(-1)
                         step_result = solve_semismooth_increment(
                             model=model, manager=manager, settings=settings,
-                            q=q, reactions=multipliers,
-                            nodal_forces=normal_forces,
-                            committed_states=committed_states,
+                            q=origin_q, reactions=origin_multipliers,
+                            nodal_forces=origin_normal_forces,
+                            committed_states=origin_states,
                             transform=T, offset=u0, control_rows=rows,
-                            control_reactions=reactions, target=target,
-                            reduced_external=reduced_external,
+                            control_reactions=reactions, target=attempt_target,
+                            reduced_external=attempt_reduced_external,
                             num_layers=num_layers, max_iterations=max_iterations,
                             tolerance=tolerance, control_scales=control_scales,
-                            path_force_magnitude=float(np.sum(np.abs(force_values))),
-                            cancellation_token=cancellation_token, step=step,
+                            path_force_magnitude=float(np.sum(np.abs(attempt_force_values))),
+                            cancellation_token=cancellation_token, step=step_index,
+                            initial_contact_seed=initial_contact_seed,
+                            **({"stagnation_patience": stagnation_controls["patience"],
+                                "stagnation_fraction": stagnation_controls["fraction"],
+                                "stagnation_merit_rate": stagnation_controls["merit_rate"]}
+                               if stagnation_controls is not None else {}),
                         )
-                        total_iterations += step_result.iterations
+                        refused = {"completed": False,
+                                   "solver_refusal": True,
+                                   "reason": step_result.reason,
+                                   "diagnostics": step_result.diagnostics,
+                                   "iterations": step_result.iterations,
+                                   "candidate_evaluations":
+                                   step_result.candidate_evaluations,
+                                   "backtracks": step_result.backtracks,
+                                   "initial_seed": step_result.initial_seed}
                         if not step_result.completed:
-                            failure_reason = step_result.reason
-                            info["contact_failure"] = step_result.diagnostics
-                            _discard_nonlinear_state_candidate(committed_states)
-                            q = start_q
-                            multipliers = start_multipliers
-                            manager.set_normal_multipliers(start_normal_multipliers)
-                            status = "stopped_at_limit" if previous_steps else "diverged"
-                            break
-                        q = step_result.q
-                        multipliers = step_result.reactions
-                        normal_forces = step_result.nodal_forces
-                        accepted_u = np.asarray(T @ q + u0).reshape(-1)
+                            return refused
+                        attempt_q = step_result.q
+                        attempt_multipliers = step_result.reactions
+                        attempt_normal_forces = step_result.nodal_forces
+                        accepted_u = np.asarray(T @ attempt_q + u0).reshape(-1)
                         raw_contact = step_result.contact
                         support_area = np.asarray(raw_contact.state.reference_support)
                         pressure = np.zeros_like(support_area)
-                        np.divide(normal_forces, support_area, out=pressure,
+                        np.divide(attempt_normal_forces, support_area, out=pressure,
                                   where=support_area > 0.0)
                         manager.set_normal_multipliers(pressure)
                         reported_force, _reported_tangent, certificate = (
                             manager.evaluate(accepted_u, tangent=False)
                         )
                         force_scale = max(1.0, float(np.linalg.norm(
-                            reduced_external + reactions @ multipliers)))
+                            attempt_reduced_external + reactions @ attempt_multipliers)))
                         if (np.linalg.norm(reported_force-raw_contact.force)
                                 > tolerance*force_scale
                                 or not certificate.gap_tolerance_met
                                 or manager.has_unresolved_weak_open_gap(
                                     certificate, manager.normal_multipliers)):
-                            failure_reason = "contact_semismooth_report_or_gap_mismatch"
-                            _discard_nonlinear_state_candidate(committed_states)
-                            q = start_q
-                            multipliers = start_multipliers
-                            normal_forces = start_normal_forces
-                            manager.set_normal_multipliers(start_normal_multipliers)
-                            status = "stopped_at_limit" if previous_steps else "diverged"
-                            break
+                            refused.update(
+                                reason="contact_semismooth_report_or_gap_mismatch",
+                                solver_refusal=False,
+                                diagnostics=None)
+                            return refused
                         projected_pair_evaluations = certificate.pair_geometry_evaluations
                         certificate = raw_certificate(
                             manager, accepted_u, raw_contact, certificate,
@@ -791,65 +1248,411 @@ def solve_static_contact_path(
                         issue = (admission(certificate, accepted_u, T, control_rows=rows)
                                  if admission is not None else None)
                         if issue is not None:
-                            failure_reason = "contact_d1_interior_profile_rejected"
-                            info["contact_failure"] = {
-                                "step_index": step, "issue": issue,
+                            refused.update(
+                                reason="contact_d1_interior_profile_rejected",
+                                solver_refusal=False,
+                                diagnostics={"step_index": step_index,
+                                              "issue": issue})
+                            return refused
+                        friction_successor = (manager.validate_successor(accepted_u,attempt_normal_forces)
+                                              if moving_friction else None)
+                        if history_friction:
+                            # Owned scalar candidate mappings have no persistent trial token.
+                            # Recover before the physical tuple assignment; the invocation
+                            # guard also restores entry on post-commit/finalization errors.
+                            with suspend_contact():
+                                recovered, _K, _states = _assemble_nonlinear_system(
+                                    model, accepted_u, step_result.candidate_states, num_layers,
+                                    tangent=False, kinematics=structural_kinematics,
+                                    **assembly_options, require_full_coordinates=True,
+                                )
+                        accepted_states = _commit_nonlinear_state_candidate(
+                            origin_states, step_result.candidate_states,
+                            model=model, accepted_displacements=accepted_u,
+                        )
+                        if friction_successor is not None:
+                            manager.commit(friction_successor)
+                        if not history_friction:
+                            with suspend_contact():
+                                recovered, _K, _states = _assemble_nonlinear_system(
+                                    model, accepted_u, accepted_states, num_layers,
+                                    tangent=False, kinematics=structural_kinematics,
+                                    **assembly_options,
+                                    require_full_coordinates=True,
+                                )
+                        _discard_nonlinear_state_candidate(accepted_states)
+                        support = _support_reaction_resultants(
+                            model, recovered + raw_contact.force
+                            - controls.T @ attempt_multipliers - attempt_external,
+                        )
+                        return {"completed": True,
+                                "q": attempt_q,
+                                "multipliers": attempt_multipliers,
+                                "normal_forces": attempt_normal_forces,
+                                "committed_states": accepted_states,
+                                "accepted_u": accepted_u,
+                                "certificate": certificate,
+                                "projected_pair_evaluations":
+                                projected_pair_evaluations,
+                                "support": support,
+                                "friction_successor": friction_successor,
+                                "iterations": step_result.iterations,
+                                "candidate_evaluations":
+                                step_result.candidate_evaluations,
+                                "backtracks": step_result.backtracks,
+                                "residual_norm": step_result.residual_norm,
+                                "constraint_norm": step_result.constraint_norm,
+                                "complementarity_norm":
+                                step_result.complementarity_norm,
+                                "initial_seed": step_result.initial_seed}
+                for step in range(accepted_step + 1, requested_step + 1):
+                    cancellation_safe_point(cancellation_token,
+                                            f"contact_path.step:{step}")
+                    start_q = q.copy()
+                    start_multipliers = multipliers.copy()
+                    start_normal_multipliers = manager.normal_multipliers.copy() if augmented else None
+                    start_normal_forces = normal_forces.copy() if semismooth else None
+                    target = program.target_at(step)
+                    if finite:
+                        from .finite_rotation_predictor import finite_rigid_seed
+                        try:
+                            if settings.finite_frame_seed=='common_reference_frame_dev':
+                                seed,seed_info=finite_rigid_seed(model,program,target,T,u0,start_q,rows)
+                            else:
+                                from .finite_rotation_predictor import per_surface_rigid_seed
+                                seed,seed_info=per_surface_rigid_seed(
+                                    model,program,target,T,u0,start_q,rows,finite_frames)
+                            start_u=np.asarray(T@start_q+u0).reshape(-1)
+                            seed_u=np.asarray(T@seed+u0).reshape(-1)
+                            cancellation_safe_point(cancellation_token,f"contact_path.finite_seed:{step}")
+                            if not manager._swept_admissible(start_u,seed_u):
+                                raise ValueError('finite rigid seed whole path is unsafe or uncertified')
+                            manager.require_finite_deformation(seed_u)
+                        except ValueError as exc:
+                            failure_reason='finite_rigid_seed_refused'
+                            info['finite_rigid_seed_failure']=dict(step=step,reason=str(exc))
+                            status='stopped_at_limit' if previous_steps else 'diverged'
+                            break
+                        q=seed
+                        info.setdefault('finite_rigid_seed_history',[]).append(dict(step=step,**seed_info))
+                    if settings.path_predictor == "control_projection_dev":
+                        seed = _control_projection_seed(rows, start_q, target)
+                        start_u = np.asarray(T @ start_q + u0).reshape(-1)
+                        seed_u = np.asarray(T @ seed + u0).reshape(-1)
+                        # Admit the complete seed route before evaluating any
+                        # structural/material/contact candidate at the seed.
+                        seed_fraction = manager.admissible_step_fraction(start_u, seed_u)
+                        cancellation_safe_point(cancellation_token,
+                                                f"contact_path.predictor:{step}")
+                        if seed_fraction != 1.0:
+                            failure_reason = "contact_path_predictor_gap_exceeded"
+                            info["contact_path_predictor_failure"] = {
+                                "step": step, "admissible_fraction": float(seed_fraction),
                             }
+                            status = "stopped_at_limit" if previous_steps else "diverged"
+                            break
+                        q = seed
+                    force_values = program.force_values_at(step)
+                    external = np.zeros_like(zeros)
+                    external[force_dofs] = force_values
+                    reduced_external = np.asarray(T.T @ external).reshape(-1)
+                    if semismooth:
+                        stagnation_controls = (
+                            {"patience": settings.path_stagnation_patience,
+                             "fraction": settings.path_stagnation_fraction,
+                             "merit_rate": settings.path_stagnation_merit_rate}
+                            if continuation_active else None)
+                        macro_origin_states = (
+                            copy.deepcopy(dict(committed_states))
+                            if continuation_active else None)
+                        # The seed is initial-only: exactly the first macro
+                        # attempt of a fresh (non-restart) solve on the
+                        # frictionless reference-linear D1 overlap-local
+                        # route, whose origin is the stress-free reference
+                        # pose with zero control reactions and zero normal
+                        # force. Continuation substeps and restarts never
+                        # request it, so the behavior is deterministic.
+                        initial_seed_selection = (
+                            settings.initial_contact_seed
+                            if (restart_checkpoint is None and step == 1
+                                and friction is None and not finite
+                                and report.profile
+                                == refined_q4_s3_overlap_local_profile)
+                            else None)
+                        try:
+                            attempt = attempt_semismooth(
+                                step, target, force_values, q, multipliers,
+                                normal_forces, committed_states,
+                                stagnation_controls,
+                                initial_contact_seed=initial_seed_selection)
+                        except BaseException:
+                            if continuation_active:
+                                # Cancellation or exception anywhere in the
+                                # full macro attempt - including pressure,
+                                # report, commit and recovery - restores the
+                                # complete macro origin; no partial macro
+                                # publication survives. The default path
+                                # keeps its existing exception behavior.
+                                _discard_nonlinear_state_candidate(
+                                    committed_states)
+                                q = start_q
+                                multipliers = start_multipliers
+                                normal_forces = start_normal_forces
+                                manager.set_normal_multipliers(
+                                    start_normal_multipliers)
+                                committed_states = macro_origin_states
+                            raise
+                        if attempt["initial_seed"] is not None:
+                            info["contact_initial_seed"] = attempt["initial_seed"]
+                        total_iterations += attempt["iterations"]
+                        summed_iterations = attempt["iterations"]
+                        summed_candidate_evaluations = attempt["candidate_evaluations"]
+                        summed_backtracks = attempt["backtracks"]
+                        continuation_record = None
+                        if not attempt["completed"]:
                             _discard_nonlinear_state_candidate(committed_states)
+                            if not continuation_active:
+                                failure_reason = attempt["reason"]
+                                if (attempt["solver_refusal"]
+                                        or attempt["diagnostics"] is not None):
+                                    info["contact_failure"] = attempt["diagnostics"]
+                                q = start_q
+                                multipliers = start_multipliers
+                                normal_forces = start_normal_forces
+                                manager.set_normal_multipliers(start_normal_multipliers)
+                                status = "stopped_at_limit" if previous_steps else "diverged"
+                                break
+                            # Declared cutback: restore the complete macro
+                            # origin, then retry the same declared macro
+                            # segment as bounded physical dyadic substeps
+                            # along the program's own interpolation of
+                            # targets and nodal loads. A Newton line-search
+                            # alpha is never a physical load fraction.
                             q = start_q
                             multipliers = start_multipliers
                             normal_forces = start_normal_forces
                             manager.set_normal_multipliers(start_normal_multipliers)
-                            status = "stopped_at_limit" if previous_steps else "diverged"
-                            break
-                        committed_states = _commit_nonlinear_state_candidate(
-                            committed_states, step_result.candidate_states,
-                            model=model, accepted_displacements=accepted_u,
-                        )
-                        with suspend_contact():
-                            recovered, _K, _states = _assemble_nonlinear_system(
-                                model, accepted_u, committed_states, num_layers,
-                                tangent=False, kinematics="von_karman",
-                                require_full_coordinates=True,
-                            )
-                        _discard_nonlinear_state_candidate(committed_states)
-                        support = _support_reaction_resultants(
-                            model, recovered + raw_contact.force
-                            - controls.T @ multipliers - external,
-                        )
+                            committed_states = macro_origin_states
+                            continuation_record = {
+                                "mode": "declared_physical_dyadic_substeps",
+                                "revision": _CONTACT_PATH_PHYSICAL_SUBSTEPS_REVISION,
+                                "cutback_reason": attempt["reason"],
+                                "maximum_halvings":
+                                settings.path_continuation_maximum_halvings,
+                                "substeps": [],
+                            }
+                            previous_target = program.target_at(step-1)
+                            previous_force_values = program.force_values_at(step-1)
+                            boundary = {
+                                "q": start_q,
+                                "multipliers": start_multipliers,
+                                "normal_forces": start_normal_forces,
+                                "normal_multipliers": start_normal_multipliers,
+                                "force_values": previous_force_values,
+                                "u": np.asarray(T @ start_q + u0).reshape(-1),
+                            }
+                            tau = 0.0
+                            span = 0.5
+                            halvings = 1
+                            trials = 0
+                            trial_limit = (
+                                (1 << (settings.path_continuation_maximum_halvings + 1))
+                                + 2*settings.path_continuation_maximum_halvings + 2)
+                            substep_work = 0.0
+                            exhausted = None
+                            try:
+                                while tau < 1.0 and exhausted is None:
+                                    trials += 1
+                                    if trials > trial_limit:
+                                        exhausted = (
+                                            "contact_path_continuation_trial_limit")
+                                        break
+                                    tau_trial = (1.0 if tau + span >= 1.0
+                                                 else tau + span)
+                                    sub_target = ((1.0 - tau_trial)*previous_target
+                                                  + tau_trial*target)
+                                    sub_force_values = (
+                                        (1.0 - tau_trial)*previous_force_values
+                                        + tau_trial*force_values)
+                                    cancellation_safe_point(
+                                        cancellation_token,
+                                        f"contact_path.step:{step}.continuation:{trials}")
+                                    sub_attempt = attempt_semismooth(
+                                        step, sub_target, sub_force_values,
+                                        boundary["q"], boundary["multipliers"],
+                                        boundary["normal_forces"],
+                                        committed_states, stagnation_controls)
+                                    total_iterations += sub_attempt["iterations"]
+                                    summed_iterations += sub_attempt["iterations"]
+                                    summed_candidate_evaluations += (
+                                        sub_attempt["candidate_evaluations"])
+                                    summed_backtracks += sub_attempt["backtracks"]
+                                    if sub_attempt["completed"]:
+                                        accepted_sub_u = sub_attempt["accepted_u"]
+                                        sub_work = None
+                                        if program.nodal_forces:
+                                            sub_work = float(
+                                                0.5*(boundary["force_values"]
+                                                     + sub_force_values)
+                                                @ (accepted_sub_u
+                                                   - boundary["u"])[force_dofs])
+                                            substep_work += sub_work
+                                        continuation_record["substeps"].append({
+                                            "tau_start": float(tau),
+                                            "tau_end": float(tau_trial),
+                                            "iterations": sub_attempt["iterations"],
+                                            "residual_norm":
+                                            sub_attempt["residual_norm"],
+                                            "constraint_error":
+                                            sub_attempt["constraint_norm"],
+                                            "complementarity_relative_force":
+                                            sub_attempt["complementarity_norm"],
+                                            "candidate_evaluations":
+                                            sub_attempt["candidate_evaluations"],
+                                            "backtracks": sub_attempt["backtracks"],
+                                            **({"external_nodal_work_trapezoid_j":
+                                                sub_work}
+                                               if sub_work is not None else {}),
+                                        })
+                                        tau = tau_trial
+                                        span = min(2.0*span, 0.5)
+                                        attempt = sub_attempt
+                                        committed_states = (
+                                            sub_attempt["committed_states"])
+                                        boundary = {
+                                            "q": sub_attempt["q"],
+                                            "multipliers":
+                                            sub_attempt["multipliers"],
+                                            "normal_forces":
+                                            sub_attempt["normal_forces"],
+                                            "normal_multipliers":
+                                            manager.normal_multipliers.copy(),
+                                            "force_values": sub_force_values,
+                                            "u": accepted_sub_u,
+                                        }
+                                    else:
+                                        _discard_nonlinear_state_candidate(
+                                            committed_states)
+                                        if (halvings
+                                                >= settings.path_continuation_maximum_halvings):
+                                            exhausted = (
+                                                "contact_path_continuation_halvings_exhausted")
+                                            continue
+                                        halvings += 1
+                                        span *= 0.5
+                                        q = boundary["q"]
+                                        multipliers = boundary["multipliers"]
+                                        normal_forces = boundary["normal_forces"]
+                                        manager.set_normal_multipliers(
+                                            boundary["normal_multipliers"])
+                            except BaseException:
+                                # Failure, exception or cancellation at any
+                                # substep restores the complete macro origin;
+                                # no partial macro publication survives.
+                                _discard_nonlinear_state_candidate(
+                                    committed_states)
+                                q = start_q
+                                multipliers = start_multipliers
+                                normal_forces = start_normal_forces
+                                manager.set_normal_multipliers(
+                                    start_normal_multipliers)
+                                committed_states = macro_origin_states
+                                raise
+                            if exhausted is not None:
+                                failure_reason = exhausted
+                                info["contact_failure"] = {
+                                    "step_index": step,
+                                    "cutback_reason":
+                                    continuation_record["cutback_reason"],
+                                    "halvings": halvings,
+                                    "trials": trials,
+                                    "accepted_substeps":
+                                    len(continuation_record["substeps"]),
+                                }
+                                q = start_q
+                                multipliers = start_multipliers
+                                normal_forces = start_normal_forces
+                                manager.set_normal_multipliers(
+                                    start_normal_multipliers)
+                                committed_states = macro_origin_states
+                                status = ("stopped_at_limit" if previous_steps
+                                          else "diverged")
+                                break
+                            continuation_record.update({
+                                "halvings_used": halvings,
+                                "trial_count": trials,
+                                "accepted_substep_count":
+                                len(continuation_record["substeps"]),
+                                "stagnation_patience":
+                                settings.path_stagnation_patience,
+                                "stagnation_fraction":
+                                settings.path_stagnation_fraction,
+                                "stagnation_merit_rate":
+                                settings.path_stagnation_merit_rate,
+                            })
+                        q = attempt["q"]
+                        multipliers = attempt["multipliers"]
+                        normal_forces = attempt["normal_forces"]
+                        committed_states = attempt["committed_states"]
+                        accepted_u = attempt["accepted_u"]
+                        certificate = attempt["certificate"]
+                        projected_pair_evaluations = attempt["projected_pair_evaluations"]
+                        support = attempt["support"]
+                        friction_successor = attempt["friction_successor"]
                         accepted_step = step
                         record = {
                             "step_index": step,
+                            **({"user_increment_position": step / friction.physical_subincrements_per_user_increment,
+                                "completed_user_increments": step // friction.physical_subincrements_per_user_increment}
+                               if history_friction else {}),
+                            **({"friction":friction_successor[2]} if friction_successor is not None else {}),
                             "target": target.tolist(),
                             "reaction_generalized": multipliers.tolist(),
-                            "residual_norm": step_result.residual_norm,
-                            "constraint_error": step_result.constraint_norm,
+                            "residual_norm": attempt["residual_norm"],
+                            "constraint_error": attempt["constraint_norm"],
                             "augmentation_iterations": 0,
-                            "semismooth_iterations": step_result.iterations,
+                            "semismooth_iterations": summed_iterations,
                             "semismooth_linear_solver": settings.monolithic_linear_solver,
                             "semismooth_maximum_pivots": settings.monolithic_maximum_pivots,
                             "complementarity_relative_force":
-                            step_result.complementarity_norm,
-                            "candidate_evaluations": step_result.candidate_evaluations,
+                            attempt["complementarity_norm"],
+                            "candidate_evaluations": summed_candidate_evaluations,
                             "projected_diagnostic_pair_evaluations":
                             projected_pair_evaluations,
-                            "backtracks": step_result.backtracks,
+                            "backtracks": summed_backtracks,
                             "contact": certificate.to_dict(),
                         }
+                        if continuation_record is not None:
+                            record["continuation"] = continuation_record
+                        if attempt["initial_seed"] is not None:
+                            record["initial_seed"] = attempt["initial_seed"]
                         if program.nodal_forces:
                             previous_force_values = program.force_values_at(step-1)
                             start_u = np.asarray(T @ start_q + u0).reshape(-1)
                             record["nodal_forces_n"] = force_values.tolist()
-                            record["external_nodal_work_trapezoid_j"] = float(
-                                0.5*(previous_force_values + force_values)
-                                @ (accepted_u-start_u)[force_dofs]
-                            )
+                            if continuation_record is not None:
+                                # Summed per-substep trapezoid over the
+                                # actually accepted physical substep path.
+                                record["external_nodal_work_trapezoid_j"] = float(
+                                    substep_work)
+                                record["external_nodal_work_scope"] = (
+                                    "continuation_substep_trapezoid"
+                                    "_not_exact_path_integral")
+                            else:
+                                record["external_nodal_work_trapezoid_j"] = float(
+                                    0.5*(previous_force_values + force_values)
+                                    @ (accepted_u-start_u)[force_dofs]
+                                )
+                        if history_friction:
+                            record['control_work_trapezoid_j'] = float(
+                                .5*(start_multipliers+multipliers) @ (program.target_at(step)-program.target_at(step-1)))
+                            record['load_work_scope'] = 'accepted_subincrement_trapezoid_not_exact_path_integral'
                         history.append(record)
                         previous_steps.append(NonlinearStaticStep(
                             step_index=step,
                             load_factor=step / program.total_steps,
-                            iterations=step_result.iterations,
-                            residual_norm=step_result.residual_norm,
+                            iterations=summed_iterations,
+                            residual_norm=attempt["residual_norm"],
                             displacement_norm=float(np.linalg.norm(accepted_u)),
                             max_equivalent_plastic_strain=_max_plastic_strain(
                                 committed_states),
@@ -904,9 +1707,12 @@ def solve_static_contact_path(
                             total_iterations += 1
                             u = np.asarray(T @ q + u0).reshape(-1)
                             try:
+                                if friction is not None and getattr(manager,"certified_material_path",False):
+                                    manager.require_friction_path(manager.committed_displacement,u)
                                 internal, tangent, trial = _assemble_nonlinear_system(
                                     model, u, committed_states, num_layers,
-                                    kinematics="von_karman",
+                                    kinematics=structural_kinematics,
+                                    **assembly_options,
                                 )
                             except UnsupportedQ4S3Branch as exc:
                                 candidate_evaluation_error = str(exc)
@@ -1598,7 +2404,8 @@ def solve_static_contact_path(
                         manager.commit(friction_candidate)
                     recovered, _K, _states = _assemble_nonlinear_system(
                         model, accepted_u, committed_states, num_layers,
-                        tangent=False, kinematics="von_karman",
+                        tangent=False, kinematics=structural_kinematics,
+                        **assembly_options,
                         require_full_coordinates=True,
                     )
                     _discard_nonlinear_state_candidate(committed_states)
@@ -1666,18 +2473,29 @@ def solve_static_contact_path(
                                            if target.size else None),
                         ))
                 final_u = np.asarray(T @ q + u0).reshape(-1)
+                if finite:
+                    manager.require_finite_deformation(final_u)
                 finished_states = _materialize_final_nonlinear_states(
                     committed_states, info,
                 )
                 if previous_steps:
                     finished_states = _finalize_nonlinear_element_states(
                         model, final_u, finished_states, num_layers,
-                        kinematics="von_karman",
+                        kinematics=structural_kinematics,
                     )
-                    finished_states = _seal_final_qualified_q4_states(
-                        model, final_u, finished_states, num_layers, info,
-                        kinematics="von_karman",
-                    )
+                    if finite:
+                        from .finite_rotation_state import seal_finite_states
+                        if report.profile==finite_mixed_profile:
+                            from .finite_mixed_state import seal_mixed_states as seal_finite_states
+                        elif report.profile==finite_v2d_profile:
+                            from .finite_v2d_state import seal_v2d_states as seal_finite_states
+                        finished_states = seal_finite_states(
+                            model, final_u, finished_states, num_layers, info)
+                    else:
+                        finished_states = _seal_final_qualified_q4_states(
+                            model, final_u, finished_states, num_layers, info,
+                            kinematics=structural_kinematics,
+                        )
                 info.update({
                     "failure_reason": failure_reason,
                     "status_category": status,
@@ -1685,11 +2503,31 @@ def solve_static_contact_path(
                     "total_newton_iterations": total_iterations,
                     "force_displacement_history": history,
                     "contact_path": {
+                        **({"shell_skin_kinematics": settings.shell_skin_kinematics,
+                            "structural_kinematics": "corotational",
+                            "corotational_tangent": "consistent",
+                            "finite_deformation_maxima": list(manager.last_finite_deformation_maxima)}
+                           if finite else {}),
                         "accepted_step": accepted_step,
                         "total_steps": program.total_steps,
                         "targets": program.target_at(accepted_step).tolist(),
                         "reaction_generalized": multipliers.tolist(),
                         "profile": profile,
+                        **({'finite_frame_seed':settings.finite_frame_seed,
+                            'finite_surface_frames':list(finite_frames)}
+                           if finite and settings.finite_frame_seed!='common_reference_frame_dev' else {}),
+                        **({"shell_pair_orientation": settings.shell_pair_orientation}
+                           if settings.shell_pair_orientation != "legacy" else {}),
+                        **({"material_history_path": history_policy,
+                            "accepted_physical_subincrements": accepted_step,
+                            "user_increment_position": accepted_step / friction.physical_subincrements_per_user_increment,
+                            "completed_user_increments": accepted_step // friction.physical_subincrements_per_user_increment,
+                            "work_reporting": summarize_work_history(history)}
+                           if history_friction else {}),
+                        **({"finite_material_gap_error_scope": "whole_original_dof_chord" if whole_chord_friction else "accepted_endpoint_only"}
+                           if weak_pressure_friction else {}),
+                        **({"path_predictor": settings.path_predictor}
+                           if settings.path_predictor != "none" else {}),
                         **({"enforcement_solver": settings.enforcement_solver}
                            if semismooth else {}),
                         **({"monolithic_linear_solver": settings.monolithic_linear_solver,
@@ -1736,6 +2574,18 @@ def solve_static_contact_path(
 
         return _run_with_nonlinear_state_cleanup(run)
 
-    return _run_with_qualified_assembly_runtime_lease(
-        model, context="solve_static_contact_path", operation=operation,
-    )
+    def leased_operation():
+        return _run_with_qualified_assembly_runtime_lease(
+            model, context="solve_static_contact_path", operation=operation,
+        )
+    if history_friction or rim_friction:
+        if rim_friction:
+            from .s3_friction_rim_transaction import guarded_invocation
+        else:
+            from .s3_friction_history_path import guarded_invocation
+        def published_operation():
+            result = leased_operation()
+            cancellation_safe_point(cancellation_token, "contact_path.history_publication")
+            return result
+        return guarded_invocation(published_operation)
+    return leased_operation()

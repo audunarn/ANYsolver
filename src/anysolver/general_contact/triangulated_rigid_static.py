@@ -9,7 +9,7 @@ import hashlib
 import json
 import numpy as np
 from scipy import sparse
-from .core import ContactSolverSettings, ContactValidationReport
+from .core import ContactSolverSettings, ContactValidationReport, _contact_settings_contract
 from .triangulated_rigid import TriangulatedRigidContactBody
 from .s3_skin_work import S3SkinWorkAdapter
 from .s3_patch_mortar_energy import MovingS3PatchPrimalMortarPenalty, MovingS3PatchMortarWork, S3PatchFace
@@ -68,6 +68,29 @@ def _source_overlap_guard(points,faces):
 
 
 class _JetPenalty(MovingS3PatchPrimalMortarPenalty):
+    def evaluate(self,source,target):
+        state=super().evaluate(source,target)
+        if not getattr(self,'stable_plane_gap',False):
+            return state
+        from dataclasses import replace
+        support=np.zeros_like(state.reference_support)
+        weighted=np.zeros_like(state.reference_weighted_gap)
+        for index,pair in enumerate(state.pair_states):
+            if pair is None or pair.overlap_vertices==0:
+                continue
+            si=self.source_face_indices[index//len(self.target_faces)]
+            ti=self.target_face_indices[index%len(self.target_faces)]
+            d=s3_overlap_derivatives(self.reference_source[si],source[si],target[ti],stable_plane_gap=True)
+            support[si]+=d.reference_support
+            weighted[si]+=d.reference_weighted_gap
+        if np.any(support<=0) or not np.all(np.isfinite(weighted)):
+            raise ValueError('stable shared penalty requires every positive finite support')
+        normalized=weighted/support
+        pressure=self.stiffness*np.maximum(-normalized,0.)
+        energy=.5*self.stiffness*float(support@np.minimum(normalized,0.)**2)
+        return replace(state,reference_support=support,reference_weighted_gap=weighted,
+                       normalized_gap=normalized,pressure=pressure,energy=energy)
+
     def work(self, source, target, *, tangent=True):
         n, m = len(self.source_node_ids), self.n_coordinates
         _storage_guard(n,m,len(self.pair_laws))
@@ -80,7 +103,8 @@ class _JetPenalty(MovingS3PatchPrimalMortarPenalty):
                 continue
             si = self.source_face_indices[index//len(self.target_faces)]
             ti = self.target_face_indices[index%len(self.target_faces)]
-            d = s3_overlap_derivatives(self.reference_source[si], source[si], target[ti])
+            d = s3_overlap_derivatives(self.reference_source[si], source[si], target[ti],
+                                      stable_plane_gap=getattr(self,'stable_plane_gap',False))
             coords = np.r_[np.concatenate([np.arange(3*j,3*j+3) for j in si]),
                            np.concatenate([np.arange(3*n+3*j,3*n+3*j+3) for j in ti])]
             for row, node in enumerate(si):
@@ -195,6 +219,7 @@ class TriangulatedRigidManager(GeneralS3PatchManager):
         self.map=sparse.vstack((map_,sparse.csr_matrix((3*len(self.law.target_node_ids),self.n_dof)))).tocsr()
         self.stiffness,self.gap_tolerance=interaction.normal_stiffness,interaction.gap_tolerance
         self.augmented=self.projected_work=False
+        self.finite_skin=None
         self.swept_trial_cutbacks=0
         from .s3_pair_static import _normal
         self.reference_normals=(_normal(source[self.law.source_face_indices[0]]),_normal(self.law.reference_target[self.law.target_face_indices[0]]))
@@ -206,7 +231,7 @@ class TriangulatedRigidManager(GeneralS3PatchManager):
             raise ValueError('initial rigid mesh overclosure is unsupported')
 
     def _contract_bytes(self):
-        contract={'definition':asdict(self.definition),'settings':asdict(self.settings),
+        contract={'definition':asdict(self.definition),'settings':_contact_settings_contract(self.settings),
             'profile':self.profile,'reference':[a.reference_positions.tolist() for a in self.adapters],
             'model_reference':[S3SkinWorkAdapter.from_model(self.model,a.body_id,a.element_id,a.side).reference_positions.tolist() for a in self.adapters],
             'model_maps':[S3SkinWorkAdapter.from_model(self.model,a.body_id,a.element_id,a.side).work_map.toarray().tolist() for a in self.adapters],
@@ -232,7 +257,9 @@ class TriangulatedRigidManager(GeneralS3PatchManager):
         if self.profile==PATCH_PROFILE: _source_overlap_guard(positions[0],self.law.source_face_indices)
         return positions
 
-    def _gap_lower(self,positions):
+    def _gap_lower(self,positions,*,endpoint_errors=None):
+        if endpoint_errors is not None:
+            raise ValueError('affine rigid profile does not consume finite endpoint boxes')
         state=self.law.evaluate(*positions)
         value=state.minimum_physical_gap
         self._reject_edge_only(positions,state)

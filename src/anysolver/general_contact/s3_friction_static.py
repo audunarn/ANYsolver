@@ -241,9 +241,27 @@ class S3MaterialFrictionManager:
 def create_s3_friction_manager(model, normal, settings):
     """Explicit profile dispatch; never switch a failed candidate's friction law."""
     from .s3_sliding_friction import S3SlidingFrictionSettings, S3SlidingFrictionManager
-    from .s3_friction_replay import S3ReplayFrictionSettings,S3ReplayFrictionManager
+    from .s3_sliding_friction import S3MovingNormalFrictionSettings, S3MeshMovingNormalFrictionSettings, S3MeshWeakPressureFrictionSettings, S3MeshWholeChordGapFrictionSettings, S3MeshHistoryPathFrictionSettings
+    from .s3_friction_replay import S3ReplayFrictionSettings,S3ReplayFrictionManager,S3RimReplayFrictionSettings,S3RimReplayFrictionManager
+    if type(settings) is S3RimReplayFrictionSettings:
+        return S3RimReplayFrictionManager(model,normal,settings)
     if type(settings) is S3ReplayFrictionSettings:
         return S3ReplayFrictionManager(model,normal,settings)
+    if type(settings) is S3MeshHistoryPathFrictionSettings:
+        from .s3_friction_history_path import S3MeshHistoryPathFrictionManager
+        return S3MeshHistoryPathFrictionManager(model,normal,settings)
+    if type(settings) is S3MeshWholeChordGapFrictionSettings:
+        from .s3_friction_swept_gap import S3MeshWholeChordGapFrictionManager
+        return S3MeshWholeChordGapFrictionManager(model,normal,settings)
+    if type(settings) is S3MeshWeakPressureFrictionSettings:
+        from .s3_friction_weak_pressure import S3MeshWeakPressureFrictionManager
+        return S3MeshWeakPressureFrictionManager(model,normal,settings)
+    if type(settings) is S3MeshMovingNormalFrictionSettings:
+        from .s3_friction_mesh_monolithic import S3MeshMovingNormalFrictionManager
+        return S3MeshMovingNormalFrictionManager(model,normal,settings)
+    if type(settings) is S3MovingNormalFrictionSettings:
+        from .s3_friction_monolithic import S3MovingNormalFrictionManager
+        return S3MovingNormalFrictionManager(model,normal,settings)
     if type(settings) is S3SlidingFrictionSettings:
         return S3SlidingFrictionManager(model, normal, settings)
     return S3MaterialFrictionManager(model, normal, settings)

@@ -1,0 +1,31 @@
+# Automatic coarser S3 / deformable Q4 development outcome
+
+Existing jet2_s3_q4_dev / S3_Q4_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0 now admits the explicit control_projection_dev path. Three product changes only: exact core eligibility; actual sparse endpoint-map errors for S3/Q4 predictor opt-in only; public transient non-none predictor refusal before every admission branch. Existing21coordinate original-bilinear geometry,shared P1 pressure,weak-gap nonpotential law,physical work maps and native/element/material mechanics unchanged. Old predictor-none S3/Q4 path keeps its prior behavior/default identity.
+
+## Frozen physical fixture
+
+Upper two S3 faces(1,2,3)/(1,3,4),+z directors,t=.05m and supported reference_surface_offset+.01m,referencez=.065m: physical bottom=.03m via-.035m material offset. UpperXYsquare(-.2,-.15)..(1.8,1.85),eachtriangle area2m^2. Lower actual Q4unit square nodes5..8 atz=-.01m,+z/t=.05m: physicaltop=.015m via+.025m halfthickness; no unsupported Q4reference-offset keyword. Node7uz mechanically FREE,other3loweruz supported; lowerXY/rotations fixed. Four upperuz tied to declared actuator1,other3upperux equilibrium unknowns; UY/rotations guided. Automatic coarser-median rule selectsS3source2 vsQ4target1m^2,shared4P1pressure nodes includingIDs1/3.
+
+Frictionless press5um,20mm ACTUATOR lateral slide,open,recontact4increments; k1000/gap50um. Total covered targetarea1m^2 staysconstant while pairwisepartition changes(.54875 to.52955m^2 for firstpair); allactualupperux>10mm,onlyactuator coordinate is declared20mm. No rigid-body substitution,hidden springs,dropped positive support modes or Q4triangle approximation.
+
+## Independent and installed evidence
+
+Local proof uses exact Fraction clipped-polygon simplex moments for P1support and P1times originalbilinear Q4height,not production overlap/gap kernels. Shared material-node support/weightedgap sums and normalized pressure independently checked. Cross-face tangent block nonzero. Both-body complete force-vector directional tangent at2useful perturbations meets1e-5 (not full Jacobian inventory),common translationwork meets1e-6. Immutable previousQ4V4privatewheel usedforunchangedlocalmath; new625payloads unchangedbyimpact,only3public/controller modules differ.
+
+Installed full and explicit lifecycle passed. Lowernode7 finaluz=-1.10202549um; allfreeequilibrium normalised1.71e-10; force/moment cancellation<=4.337e-17 at separatelydeclaredpositive.02N/.02Nm scales. Actual bothbodyinstantaneous residual work and actuator/support reactions nonzero/opposite. Independent acceptedpose originaltargetQ1height extrema include polygon-edge/interior stationarypoints with exactbinary-pose Fractions. Fixedhorizontal-source/director/rotation and affine targetXY guards enforced; original targetbilinear height retained. Pressminimumgap-5um under50um; step3strictpositive15mmclearance,zeroactivepressure/storage andtargetreturn. Exact inventoryfull/explicit[1,2,3,4],separatedprefix[1,2,3],freshresume[4] required.
+
+Real opt-in controller/predictor trials used16whole-pathcertificate calls with finitepositiveactualmapenclosures(max1.0269563e-15m) onfull run. Wrapper onlyrecords inputs,returnsoriginalcertificate. Final safety checks distinguish legacy-none _position_errors trap from opt-in positiveinputs onactual _swept_admissible. Fresh restart/provenance/predictor/tamper,precancel/friction/unusedforce and actualpublicmultibeam transient allocation/BC traps and currentprivateCLI closure are recorded in finalCLOSURE.
+
+## Limits and provenance
+
+Bounded fixed-map planar-reference small-motion development outcome,not engineering acceptance/release. Whole-path interval S3/Q4 normal/chart/gap machinery is unchanged; inputmaperror wiring alone does not qualify full finite-precision sweptgeometry. Acceptedposeoracle coversstored binarypositions,not full map-roundoff qualification. Adaptive quadrature controls are measured resolution indicators; finite rotations,warpedreference,friction,refinement/stability and completehidden transaction qualification remainopen. Atomicrefusal checks coverdeclared FEModelrepr fields andearly allocation/BC traps. ArbitraryQ4referenceoffset remains unsupported; S3offset usesformulation-owned contract.
+
+Raw scope C:/ANYworkspaceWork/contact_automatic_s3_q4_20261008: PROSPECTIVE,SOURCE_READY,EARLY_SUPPORTING_REVIEW,IMPACT,ledger anduniqueattempt inputs/commands/source/install/bootstrap/privateimports/stdout/stderr/JUnit/process-wall/RSS/results. AUTOMATIC_S3_Q4_DEV240 only; oldscope balances/evidence protected. Staging/install are nonnumerical preparation; guarded build/tests/CLI charged by exactprocesswall. Leadowns independent artifact inspection/Git/acceptance. Finalaccounting andCLI status appended atclosure.
+
+## Final closure
+
+All9guardedjobsPASS: independentlocalproof,onefreshbuild,automaticfull,explicit,strictseparatedprefix,freshresume,provenance/predictor/tamperrefusal,safety2cases,actualcurrentprivateCLI. Eightpassingcaseinvocations,zeroerrors/skips/failures,4/4/3/1snapshotinventory. ExactAUTOMATIC_S3_Q4_DEV240 73.08528660002048s used / 166.91471339997952s remaining; maximumjob12.974855399996159s/RSS194.45703125MiB;2366private-importrecords,JIT0/Numba1/pools1validated. Noactivejob,oldbalancesuntouched. Onefresh628payloadwheelSHA256 7f1d5a48c8b2250a67e2f0b375cc9b2dd010eee4d9a1bd793df795c0ed859f0d; threechangedsource/candidate/wheel/privatepayloads matchbyte-exactly,625oldV4payloadsunchanged.
+
+SafetyJUnit preservesbothactualpassingcases and their full frozen inputs; final safetyJSON is the second case. CLIrawJSON recoveredfrompreservedstdout intooutputs/example.json with hash-bound attemptstdout,completed4phases/sameidentity asfull. CurrentCLI usage: python examples/general_contact_automatic_s3_q4.py. FinalCLOSURE/IMPACT/ledger retainexactscope/artifact/runtime/impactlimits; lead ownsfinalinspection/Git/acceptance.
+
+Supporting independent Read disposition: raw SUPPORTING_REVIEW_20261008.md found no concrete defect under this bounded fixture and kept acceptance/release false. Lead final byte/JUnit/process/private-runtime inspector reports zero errors. CLI recovered output is explicitly bound to retained stdout/attempt hashes in CLOSURE; no replay. No next execution scope started.

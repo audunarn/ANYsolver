@@ -159,7 +159,11 @@ class _BJet:
         if not isinstance(o, _BJet):
             return self.scale(o)
         a, b = self, o
-        if _COMPILED_BJET_MUL_ENABLED:
+        # The existing optional compiled experiment is scoped to its original
+        # 21-coordinate Q4/S3 and S3/Q4 algebra. A process-wide opt-in must not
+        # silently select another backend for the 24-coordinate Q4/Q4 route.
+        if (_COMPILED_BJET_MUL_ENABLED
+                and a.g.shape[1] == _SIZE and b.g.shape[1] == _SIZE):
             return _BJet(*_compiled_bjet_mul(a.v, a.g, a.h,
                                              b.v, b.g, b.h))
         og = a.g[:, :, None]*b.g[:, None, :]

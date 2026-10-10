@@ -14,6 +14,23 @@ PRELOAD_SCHEMA = 'ANYSOLVER_ARC_CONTACT_STATE_PRELOAD_V2'
 
 
 def validate_arc_contact(model, definition, settings=None):
+    if type(definition) is ContactDefinition and type(settings) is ContactSolverSettings:
+        if settings.finite_frame_seed != 'common_reference_frame_dev':
+            return ContactValidationReport('invalid', (
+                'finite_frame_seed requires contact_path_program; unsupported in arc contact',), PROFILE)
+        if settings.shell_skin_kinematics != 'reference_linear':
+            return ContactValidationReport('invalid', (
+                'shell_skin_kinematics requires contact_path_program; unsupported in arc contact',), PROFILE)
+        if settings.path_predictor != 'none':
+            return ContactValidationReport('invalid', (
+                'path_predictor requires contact_path_program; unsupported in arc contact',), PROFILE)
+        if settings.shell_pair_orientation != 'legacy':
+            return ContactValidationReport('invalid', (
+                'shell_pair_orientation requires contact_path_program; unsupported in arc contact',), PROFILE)
+    if (type(definition) is ContactDefinition and type(settings) is ContactSolverSettings
+            and settings.general_s3_differentiation == "jet2_q4_q4_dev"):
+        return ContactValidationReport('invalid', (
+            'jet2_q4_q4_dev requires a static deformable Q4/Q4 projected-penalty pair; unsupported in arc contact',), PROFILE)
     if type(definition) is not ContactDefinition or not definition.rigid_bodies or any(
             type(body) is not TriangulatedRigidContactBody for body in definition.rigid_bodies):
         return ContactValidationReport('unsupported', ('arc contact requires fixed triangulated rigid tools',), PROFILE)

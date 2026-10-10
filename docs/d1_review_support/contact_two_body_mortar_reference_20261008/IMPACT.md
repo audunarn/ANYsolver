@@ -1,0 +1,11 @@
+# Impact and evidence reuse
+
+Owned repository additions are tests/test_general_contact_two_body_mortar_reference.py and this documentation/reference directory. Existing634 product payloads and prior tests/examples are read-only and unchanged; there is no new build. Lead-owned central records remain outside author ownership.
+
+The immutable private site is C:/ANYworkspaceWork/contact_paired_pressure_response_20261008/candidate-v2/site. Each new guarded process rehashed its payload manifest and checked imported modules came from that private site, with JIT disabled and Numba/BLAS pools one. The prior build, nonaffine path certificates, state/restart/default/refusal and structural-owner evidence are reused only for identical mechanics. This slice adds independent contact integration, physical-spin work, moving-normal/support derivative and overlap allocation checks.
+
+Authenticated base pose: C:/ANYworkspaceWork/contact_tilted_relative_sliding_20261008/outputs/v3/run-14.json, SHA256 a9a7cdefc74556964d4600009f42493dfefcc2eaced21e360d44fa8df66ccb29. Authenticated refined pose: C:/ANYworkspaceWork/contact_paired_pressure_response_20261008/outputs/v2/run-14.json, SHA256 0f3ace2e13a1c3e4dbb597ad0f79d550cabbd400c300c91cbf5b2d11368750a7. Both are fixture inputs, never checkpoint migrations or new-package continuations.
+
+Initial source-ready manifest and first planar/base passing attempts are retained. The subsequent source-review delta added target/source-bin chart guards without changing valid-chart arithmetic, relabelled pressure RHS loads and added previously absent flat scalar assertions. The focused guards test closed those assertions; passing production derivative cases were not replayed. Tangent resolution controls were added prospectively before its first run. Actual-trace mapping was added prospectively before the first fixed-operator stage. Per-attempt source copies bind each exact version.
+
+Reference contact mathematics imports no production geometry/projection/clip/shape/inverse/contact kernels. Qualified structural operators and public fixture constructors are reused openly. The old exact posed-gap/scientific checks are independent of contact projection and are used with their original frozen gates. Supporting source review is development support, not engineering acceptance or different-family qualification.

@@ -7,7 +7,7 @@ the candidate tangent differentiates the complete return. No finite-rotation,
 crease, partial source coverage, or swept friction qualification is implied.
 """
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 
 import numpy as np
 from scipy import sparse
@@ -72,6 +72,43 @@ class S3SlidingFrictionSettings:
 
 
 @dataclass(frozen=True)
+class S3MovingNormalFrictionSettings(S3SlidingFrictionSettings):
+    """Bounded full-face hard-normal material friction; legacy is unchanged."""
+    pressure_step_n: float = 1e-9
+    closed_point_gap_tolerance_m: float = 1e-10
+
+    def __post_init__(self):
+        super().__post_init__()
+        if (self.activation_history != "endpoint"
+                or not np.isfinite(self.pressure_step_n) or self.pressure_step_n <= 0.
+                or not np.isfinite(self.closed_point_gap_tolerance_m)
+                or not 0. < self.closed_point_gap_tolerance_m <= 1e-10):
+            raise ValueError("moving-normal friction requires endpoint history and bounded hard-closure controls")
+
+
+@dataclass(frozen=True)
+class S3MeshMovingNormalFrictionSettings(S3MovingNormalFrictionSettings):
+    """Distinct opt-in for a fully covered, connected moving S3 mesh."""
+
+
+@dataclass(frozen=True)
+class S3MeshWeakPressureFrictionSettings(S3MeshMovingNormalFrictionSettings):
+    """Weak P1 traction support with accepted-ENDPOINT material-gap error only.
+
+    No whole-path absolute-gap upper/history event bound is established. The
+    inherited hard-closure control is compatibility-only and must be default.
+    """
+    finite_material_gap_error_m: float = field(kw_only=True)
+
+    def __post_init__(self):
+        super().__post_init__()
+        if (self.closed_point_gap_tolerance_m != 1e-10
+                or not np.isfinite(self.finite_material_gap_error_m)
+                or self.finite_material_gap_error_m <= 0.):
+            raise ValueError("weak pressure friction needs explicit positive finite gap error and default hard-only compatibility field")
+
+
+@dataclass(frozen=True)
 class S3MaterialAnchorState:
     target_element: int | None = None
     barycentric: tuple[float, float, float] | None = None
@@ -103,12 +140,46 @@ def _skew(a):
     return np.array(((0, -z, y), (z, 0, -x), (-y, x, 0)))
 
 
+@dataclass(frozen=True)
+class S3MeshWholeChordGapFrictionSettings(S3MeshWeakPressureFrictionSettings):
+    """Whole-original-DOF-chord absolute gap geometry; history events unqualified.
+
+    Every source corner and stored dense point is checked against every target
+    facet, independent of pressure activation. Old endpoint/hard routes remain
+    separate. The inherited explicit material-gap budget applies throughout
+    the certified chord, without a path-energy or hidden pressure-event claim.
+    """
+    maximum_material_gap_evaluations: int = 65536
+
+    def __post_init__(self):
+        super().__post_init__()
+        if type(self.maximum_material_gap_evaluations) is not int or self.maximum_material_gap_evaluations<=0:
+            raise ValueError('maximum_material_gap_evaluations must be a positive integer')
+
+
+@dataclass(frozen=True)
+class S3MeshHistoryPathFrictionSettings(S3MeshWholeChordGapFrictionSettings):
+    """Finite-resolution equilibrated history, not an event-free certificate."""
+    physical_subincrements_per_user_increment: int = field(kw_only=True)
+
+    def __post_init__(self):
+        super().__post_init__()
+        if type(self.physical_subincrements_per_user_increment) is not int or self.physical_subincrements_per_user_increment<=0:
+            raise ValueError('physical_subincrements_per_user_increment must be a positive exact integer')
+
+
 class S3SlidingFrictionManager:
     def __init__(self, model, normal, settings):
         from .s3_patch_static import GeneralS3PatchManager
-        if type(settings) is not S3SlidingFrictionSettings:
+        mesh_moving = type(settings) in {S3MeshMovingNormalFrictionSettings,S3MeshWeakPressureFrictionSettings,S3MeshWholeChordGapFrictionSettings,S3MeshHistoryPathFrictionSettings}
+        moving = type(settings) in {S3MovingNormalFrictionSettings, S3MeshMovingNormalFrictionSettings,S3MeshWeakPressureFrictionSettings,S3MeshWholeChordGapFrictionSettings,S3MeshHistoryPathFrictionSettings}
+        if type(settings) not in {S3SlidingFrictionSettings, S3MovingNormalFrictionSettings, S3MeshMovingNormalFrictionSettings,S3MeshWeakPressureFrictionSettings,S3MeshWholeChordGapFrictionSettings,S3MeshHistoryPathFrictionSettings}:
             raise TypeError("sliding friction needs S3SlidingFrictionSettings")
-        if (type(normal) is not GeneralS3PatchManager or normal.augmented
+        from .s3_patch_static import S3_MONOLITHIC_PROFILE, S3_MESH_MONOLITHIC_PROFILE
+        if moving and (type(normal) is not GeneralS3PatchManager
+                       or normal.profile != (S3_MESH_MONOLITHIC_PROFILE if mesh_moving else S3_MONOLITHIC_PROFILE)):
+            raise ValueError("moving-normal material friction requires the S3 full-face monolithic owner")
+        if (type(normal) is not GeneralS3PatchManager or (normal.augmented and not moving)
                 or not normal.projected_work
                 or normal.settings.normal_discretization != "primal_mortar"):
             raise ValueError("material-anchor friction needs the projected S3 patch penalty owner")
@@ -119,10 +190,45 @@ class S3SlidingFrictionManager:
         interaction = normal.definition.interactions[0]
         surfaces = {s.name: s for s in normal.definition.surfaces}
         source, target = surfaces[interaction.surface], surfaces[interaction.target]
-        self.source_adapters = tuple(S3SkinWorkAdapter.from_model(model, 1, e, source.side)
-                                     for e in sorted(source.element_ids))
-        self.target_adapters = {e: S3SkinWorkAdapter.from_model(model, 2, e, target.side)
-                                for e in sorted(target.element_ids)}
+        if normal.settings.shell_pair_orientation == "physical_sides_dev":
+            from .s3_patch_static import S3_PROJECTED_PENALTY_PROFILE, _adapters
+            if (normal.profile not in ({S3_PROJECTED_PENALTY_PROFILE,S3_MONOLITHIC_PROFILE,S3_MESH_MONOLITHIC_PROFILE}
+                                       if moving else {S3_PROJECTED_PENALTY_PROFILE})
+                    or normal.settings.general_s3_differentiation != "jet2_s3_dev"):
+                raise ValueError("physical-side material friction requires the refined S3 projected profile")
+            # The normal owner has already applied the fixed reference atlas
+            # permutation to material IDs, physical positions and work rows.
+            # Use the SAME atlas for pressure interpolation, quadrature and
+            # target anchors; reconstructing raw winding would change the
+            # signed first-touch normal and barycentric history semantics.
+            prepared_source,prepared_target = _adapters(
+                model,(source,target),orientation="physical_sides_dev")
+            self.source_adapters = tuple(sorted(prepared_source,key=lambda a:a.element_id))
+            self.target_adapters = {a.element_id:a for a in
+                                    sorted(prepared_target,key=lambda a:a.element_id)}
+            if any(type(a) is not S3SkinWorkAdapter for a in
+                   (*self.source_adapters,*self.target_adapters.values())):
+                raise ValueError("physical-side material friction requires exact S3 work adapters")
+            # The normal manager currently retains its assembled nodal map,
+            # rather than adapter objects. Reuse its authoritative factory and
+            # verify exact node-aligned identity with that compiled map.
+            for side,items in enumerate((self.source_adapters,self.target_adapters.values())):
+                ids=normal.law.source_node_ids if side==0 else normal.law.target_node_ids
+                offset=0 if side==0 else len(normal.law.source_node_ids)
+                for adapter in items:
+                    for local,node in enumerate(adapter.node_ids):
+                        index=ids.index(node)
+                        difference=(adapter.work_map[3*local:3*local+3,:]
+                                    -normal.map[3*(offset+index):3*(offset+index)+3,:]).tocsr()
+                        if (difference.nnz and np.any(difference.data!=0)
+                                or not np.array_equal(adapter.reference_positions[local],normal.reference[side][index])):
+                            raise ValueError("friction physical material atlas differs from normal owner")
+        else:
+            # Legacy construction/order/contract is deliberately unchanged.
+            self.source_adapters = tuple(S3SkinWorkAdapter.from_model(model, 1, e, source.side)
+                                         for e in sorted(source.element_ids))
+            self.target_adapters = {e: S3SkinWorkAdapter.from_model(model, 2, e, target.side)
+                                    for e in sorted(target.element_ids)}
         edge_owners = {}
         for e, adapter in self.target_adapters.items():
             for i in range(3):
@@ -163,6 +269,29 @@ class S3SlidingFrictionManager:
 
     def __getattr__(self, name):
         return getattr(self.normal, name)
+
+    @property
+    def certified_material_path(self):
+        return (self.normal.settings.shell_pair_orientation!="legacy"
+                or self.normal.settings.path_predictor!="none")
+
+    def require_friction_path(self, first, last):
+        if self.certified_material_path:
+            from .s3_friction_coverage import full_coverage
+            if not full_coverage(self,first,last):
+                raise ValueError("S3 material friction whole path is outside certified constant-plane full coverage")
+
+    def admissible_step_fraction(self, first, last):
+        fraction=self.normal.admissible_step_fraction(first,last)
+        if not self.certified_material_path:return fraction
+        from .s3_friction_coverage import full_coverage
+        for _ in range(self.normal.settings.maximum_swept_subdivisions+1):
+            candidate=np.asarray(first)+fraction*(np.asarray(last)-first)
+            if (fraction>0 and full_coverage(self,first,candidate)
+                    and full_coverage(self,self.committed_displacement,candidate)):
+                return fraction
+            fraction*=.5
+        return 0.
 
     def restrict_tangent_to_reduced_variations(self, transform):
         self.normal.restrict_tangent_to_reduced_variations(transform)
@@ -280,7 +409,9 @@ class S3SlidingFrictionManager:
         return elastic, De, y
 
     def _friction(self, u, *, branches=None, validate=True, linearized_elements=None,
-                  linearized_barycentric=None, local_force=False,linearized_touch=None):
+                  linearized_barycentric=None, local_force=False,linearized_touch=None,
+                  normal_state=None):
+        if validate:self.require_friction_path(self.committed_displacement,u)
         if linearized_elements is not None and (validate or branches is None):
             raise ValueError("facet extrapolation is restricted to disposable tangent probes")
         if not validate and linearized_elements is None:
@@ -304,7 +435,8 @@ class S3SlidingFrictionManager:
         corners, n, frame, origin = self._patch(u, validate=validate)
         Dn = self._normal_variation(corners,n,local=True)
         source, target = self.normal._positions(u)
-        state = self.normal.law.evaluate(source, target, self.normal.normal_multipliers)
+        state = (self.normal.law.evaluate(source, target, self.normal.normal_multipliers)
+                 if normal_state is None else normal_state)
         settings = self.friction_settings
         kt, mu = settings.tangential_stiffness_Pa_per_m, settings.friction_coefficient
         residual, records, histories = np.zeros(len(self.work_columns)), [], []
@@ -318,7 +450,14 @@ class S3SlidingFrictionManager:
                 self.points, self.weights, self.pressure_indices, self.history)):
             x=self.point_reference[j]+self.point_maps[j]@local_u
             gap = float(n@(x-origin))
-            pressure = 0.0 if gap >= 0 else float(np.asarray(point.barycentric)@state.pressure[list(indices)])
+            pressure = (0.0 if gap >= 0 else float(np.asarray(point.barycentric)@state.pressure[list(indices)]))
+            if normal_state is not None:
+                c = point.adapter.current_positions(u)
+                sn = np.cross(c[1]-c[0], c[2]-c[0]); sn /= np.linalg.norm(sn)
+                alignment = float(sn@n)
+                if alignment <= 0. or not np.isfinite(alignment):
+                    raise ValueError("moving-normal friction source/target polarity is unresolved")
+                pressure = float(np.asarray(point.barycentric)@state.pressure[list(indices)])/alignment
             fixed = None if branches is None else branches[j]
             pressure = max(0.0, pressure)
             branch, traction, dissipation, plastic, storage, return_drop = "open", np.zeros(3), 0., 0., 0., 0.
@@ -327,7 +466,7 @@ class S3SlidingFrictionManager:
             new = (S3MaterialAnchorState(None,None,old.cumulative_plastic_slip_m,
                                          old.cumulative_dissipation_Pa_m)
                    if linearized_elements is None else None)
-            if (fixed is None and gap < 0) or fixed in ("stick", "slip", "activation"):
+            if (fixed is None and (pressure > 0. if normal_state is not None else gap < 0)) or fixed in ("stick", "slip", "activation"):
                 anchor_element,anchor_bary=old.target_element,old.barycentric
                 if anchor_element is None and touch_path is not None:
                     touch=touch_path.anchor(j,probe=None if linearized_touch is None else linearized_touch[j])
@@ -403,6 +542,7 @@ class S3SlidingFrictionManager:
         return residual, tuple(histories), records
 
     def evaluate(self, displacement, *, tangent=True):
+        self.require_friction_path(self.committed_displacement,displacement)
         force, stiffness, certificate = self.normal.evaluate(displacement, tangent=tangent)
         friction, _history, records = self._friction(displacement)
         if tangent:
@@ -458,7 +598,7 @@ class S3SlidingFrictionManager:
         return dict(displacement=self.committed_displacement.tolist(), history=[asdict(h) for h in self.history])
 
     def restart_contract(self):
-        return dict(normal=self.normal.restart_contract(), friction_profile=PROFILE,
+        contract = dict(normal=self.normal.restart_contract(), friction_profile=PROFILE,
                     friction_settings=asdict(self.friction_settings),
                     source_quadrature=[dict(element=p.adapter.element_id, barycentric=p.barycentric, weight_m2=w)
                                        for p, w in zip(self.points, self.weights)],
@@ -467,6 +607,14 @@ class S3SlidingFrictionManager:
                     activation_path=("affine_full_FE_constant_target_normal_v1" if self.friction_settings.activation_history
                                      =="linear_constant_normal_touch_dev" else "endpoint"),
                     tangent="bounded_fixed_return_facet_generalized_difference_v2")
+        if self.normal.settings.shell_pair_orientation == "physical_sides_dev":
+            contract["material_atlas"] = dict(
+                coordinate_profile="normal_owner_physical_side_material_nodes_v1",
+                source=[dict(element=a.element_id,node_ids=list(a.node_ids)) for a in self.source_adapters],
+                target=[dict(element=a.element_id,node_ids=list(a.node_ids)) for a in self.target_adapters.values()])
+        if self.certified_material_path:
+            contract["material_path"]="constant_plane_full_corner_fraction_bernstein_roundoff_v1"
+        return contract
 
     def restore(self, state, displacement):
         if type(state) is not dict or set(state) != {"displacement", "history"}:
@@ -477,6 +625,7 @@ class S3SlidingFrictionManager:
         if len(state["history"]) != len(self.history):
             raise ValueError("material-anchor checkpoint point count differs")
         history = tuple(S3MaterialAnchorState(**h) for h in state["history"])
+        self.require_friction_path(u,u)
         corners, n, _frame, _origin = self._patch(u)
         Dn = self._normal_variation(corners,n)
         for point, h in zip(self.points, history):

@@ -1,0 +1,173 @@
+{
+  "kind": "lead_saved_artifact_and_evidence_inspection",
+  "errors": [],
+  "payload_count": 629,
+  "changed_payloads": [
+    "anysolver/general_contact/q4_q4_overlap_derivatives.py",
+    "anysolver/general_contact/q4_s3_overlap_derivatives.py"
+  ],
+  "private_imports_rehashed": 5281,
+  "passing_cases": 16,
+  "retained_nonpass": [
+    "profile",
+    "parity",
+    "backend"
+  ],
+  "wheel_sha256": "d23e40b64e078f65940b9a0efd8260a98be72153f26a8ef248a0f5efc0e43c2b",
+  "retained_versions": [
+    "bc9404faac69dd2d2f09ba1f6300bfcfede3dcc96be14fdfaba4a17d9de552a5",
+    "5d3a46fc75586a864a802037ba32e58bade5a51e6100e5b1d2b51ee382bb1407",
+    "d23e40b64e078f65940b9a0efd8260a98be72153f26a8ef248a0f5efc0e43c2b"
+  ],
+  "jobs": [
+    {
+      "stage": "full-baseline-1",
+      "status": "pass",
+      "wall_s": 39.50216889999865,
+      "peak_mib": 184.92578125,
+      "wheel": "bc9404faac69dd2d2f09ba1f6300bfcfede3dcc96be14fdfaba4a17d9de552a5"
+    },
+    {
+      "stage": "profile",
+      "status": "nonpass",
+      "wall_s": 7.261490599994431,
+      "peak_mib": 181.54296875,
+      "wheel": "bc9404faac69dd2d2f09ba1f6300bfcfede3dcc96be14fdfaba4a17d9de552a5"
+    },
+    {
+      "stage": "profile-corrective",
+      "status": "pass",
+      "wall_s": 4.87578790000407,
+      "peak_mib": 181.8203125,
+      "wheel": "bc9404faac69dd2d2f09ba1f6300bfcfede3dcc96be14fdfaba4a17d9de552a5"
+    },
+    {
+      "stage": "full-baseline-2",
+      "status": "pass",
+      "wall_s": 41.99972079999861,
+      "peak_mib": 184.859375,
+      "wheel": "bc9404faac69dd2d2f09ba1f6300bfcfede3dcc96be14fdfaba4a17d9de552a5"
+    },
+    {
+      "stage": "build",
+      "status": "pass",
+      "wall_s": 11.440048999997089,
+      "peak_mib": 103.44921875,
+      "wheel": "bc9404faac69dd2d2f09ba1f6300bfcfede3dcc96be14fdfaba4a17d9de552a5"
+    },
+    {
+      "stage": "parity",
+      "status": "nonpass",
+      "wall_s": 13.567963900000905,
+      "peak_mib": 191.21484375,
+      "wheel": "5d3a46fc75586a864a802037ba32e58bade5a51e6100e5b1d2b51ee382bb1407"
+    },
+    {
+      "stage": "unit",
+      "status": "pass",
+      "wall_s": 7.204942399999709,
+      "peak_mib": 174.54296875,
+      "wheel": "5d3a46fc75586a864a802037ba32e58bade5a51e6100e5b1d2b51ee382bb1407"
+    },
+    {
+      "stage": "parity-runtime",
+      "status": "pass",
+      "wall_s": 14.198625100005302,
+      "peak_mib": 184.12890625,
+      "wheel": "5d3a46fc75586a864a802037ba32e58bade5a51e6100e5b1d2b51ee382bb1407"
+    },
+    {
+      "stage": "full-candidate-1",
+      "status": "pass",
+      "wall_s": 18.33376120000321,
+      "peak_mib": 186.875,
+      "wheel": "5d3a46fc75586a864a802037ba32e58bade5a51e6100e5b1d2b51ee382bb1407"
+    },
+    {
+      "stage": "full-candidate-2",
+      "status": "pass",
+      "wall_s": 19.689124199998332,
+      "peak_mib": 186.5078125,
+      "wheel": "5d3a46fc75586a864a802037ba32e58bade5a51e6100e5b1d2b51ee382bb1407"
+    },
+    {
+      "stage": "explicit",
+      "status": "pass",
+      "wall_s": 18.37737780000316,
+      "peak_mib": 186.30078125,
+      "wheel": "5d3a46fc75586a864a802037ba32e58bade5a51e6100e5b1d2b51ee382bb1407"
+    },
+    {
+      "stage": "prefix",
+      "status": "pass",
+      "wall_s": 13.837141500000143,
+      "peak_mib": 185.62109375,
+      "wheel": "5d3a46fc75586a864a802037ba32e58bade5a51e6100e5b1d2b51ee382bb1407"
+    },
+    {
+      "stage": "resume",
+      "status": "pass",
+      "wall_s": 9.98683589999564,
+      "peak_mib": 185.84765625,
+      "wheel": "5d3a46fc75586a864a802037ba32e58bade5a51e6100e5b1d2b51ee382bb1407"
+    },
+    {
+      "stage": "refusal",
+      "status": "pass",
+      "wall_s": 5.826857000007294,
+      "peak_mib": 181.69921875,
+      "wheel": "5d3a46fc75586a864a802037ba32e58bade5a51e6100e5b1d2b51ee382bb1407"
+    },
+    {
+      "stage": "safety",
+      "status": "pass",
+      "wall_s": 4.973944700002903,
+      "peak_mib": 186.9609375,
+      "wheel": "5d3a46fc75586a864a802037ba32e58bade5a51e6100e5b1d2b51ee382bb1407"
+    },
+    {
+      "stage": "example",
+      "status": "pass",
+      "wall_s": 15.052249799991841,
+      "peak_mib": 170.53515625,
+      "wheel": "5d3a46fc75586a864a802037ba32e58bade5a51e6100e5b1d2b51ee382bb1407"
+    },
+    {
+      "stage": "full-baseline-post",
+      "status": "pass",
+      "wall_s": 42.92093560000649,
+      "peak_mib": 184.9453125,
+      "wheel": "bc9404faac69dd2d2f09ba1f6300bfcfede3dcc96be14fdfaba4a17d9de552a5"
+    },
+    {
+      "stage": "build-v2",
+      "status": "pass",
+      "wall_s": 11.645845200007898,
+      "peak_mib": 103.453125,
+      "wheel": "5d3a46fc75586a864a802037ba32e58bade5a51e6100e5b1d2b51ee382bb1407"
+    },
+    {
+      "stage": "backend",
+      "status": "nonpass",
+      "wall_s": 10.586035400003311,
+      "peak_mib": 185.2421875,
+      "wheel": "d23e40b64e078f65940b9a0efd8260a98be72153f26a8ef248a0f5efc0e43c2b"
+    },
+    {
+      "stage": "example-v2",
+      "status": "pass",
+      "wall_s": 14.937489200005075,
+      "peak_mib": 170.70703125,
+      "wheel": "d23e40b64e078f65940b9a0efd8260a98be72153f26a8ef248a0f5efc0e43c2b"
+    },
+    {
+      "stage": "backend-corrective",
+      "status": "pass",
+      "wall_s": 4.135229799998342,
+      "peak_mib": 174.09765625,
+      "wheel": "d23e40b64e078f65940b9a0efd8260a98be72153f26a8ef248a0f5efc0e43c2b"
+    }
+  ],
+  "process_wall_sum_s": 330.3535759000224,
+  "remaining_s": 29.646424099977594
+}

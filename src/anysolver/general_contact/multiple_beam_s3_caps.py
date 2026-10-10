@@ -3,12 +3,12 @@
 Each S3 interaction keeps its whole-beam interior-face domain. This is not a
 piecewise target-patch union, rim kernel, or new normal law.
 """
-from dataclasses import asdict, dataclass, replace
+from dataclasses import dataclass, replace
 
 import numpy as np
 from scipy import sparse
 
-from .core import ContactDefinition, ContactValidationReport
+from .core import ContactDefinition, ContactValidationReport, _contact_settings_contract
 
 PROFILE = 'MULTIPLE_EXPLICIT_B2_B3_HEMISPHERE_DEFORMABLE_S3_FIXED_RIGID_STATIC_DEV_V1'
 
@@ -185,8 +185,8 @@ class MultipleBeamS3CapManager:
 
     def restart_contract(self):
         return {'profile': self.profile, 'composition_revision': 'explicit_complete_s3_fixed_rigid_cap_work_v1',
-            'settings': asdict(self.settings),
-            'pairs': [{'interaction': name, 'kind': kind, 'effective_settings': asdict(m.settings),
+            'settings': _contact_settings_contract(self.settings),
+            'pairs': [{'interaction': name, 'kind': kind, 'effective_settings': _contact_settings_contract(m.settings),
                        'contract': m.restart_contract()}
                       for name, _, kind, m in self.pairs]}
 

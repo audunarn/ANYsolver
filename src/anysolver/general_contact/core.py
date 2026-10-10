@@ -10,7 +10,7 @@ an intentionally narrow coupled-solver slice, not a general-contact claim.
 from __future__ import annotations
 
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import TYPE_CHECKING, Iterator
 
 import numpy as np
@@ -22,6 +22,39 @@ from .runtime import _ACTIVE_CONTACT, active_contact_manager, suspend_contact
 _Q4_PLANE_PROFILE = "PLANAR_Q4_RIGID_PLANE_PENALTY_MORTAR_V1"
 _S3_PLANE_PROFILE = "PLANAR_Q4_S3_RIGID_PLANE_PENALTY_MORTAR_V0"
 _MOVING_PLANE_PROFILE = "PLANAR_Q4_S3_TRANSLATING_PLANE_PENALTY_MORTAR_FORCE_STATIC_DEV_V0"
+
+
+_Q4_SOURCE_OVERLAP_DUAL_REVISION = 'constant_nonnegative_joint_bernstein_overlap_dual_v2'
+_CONTACT_PATH_PHYSICAL_SUBSTEPS_REVISION = 'declared_macro_path_physical_substeps_v1'
+_INITIAL_CONTACT_SEED_REVISION = 'origin_linearized_kkt_nonnegative_pressure_v1'
+_INITIAL_CONTACT_SEED_GLOBALIZATION_REVISION = 'origin_linearized_kkt_seed_merit_globalization_v2'
+_INITIAL_CONTACT_SEED_SELECTIONS = ('none', 'linearized_kkt_dev',
+                                    'linearized_kkt_merit_globalization_dev')
+
+
+def _contact_settings_contract(settings):
+    """Retain legacy settings contracts when the optional predictor is absent."""
+    value = asdict(settings)
+    if value.get('q4_source_overlap_dual_dev') is False:
+        value.pop('q4_source_overlap_dual_dev')
+    if value.get('path_continuation_maximum_halvings') == 0:
+        # Explicit OFF omits the whole continuation block so prior
+        # serialized settings shapes are preserved byte-for-byte.
+        for name in ('path_continuation_maximum_halvings',
+                     'path_stagnation_patience', 'path_stagnation_fraction',
+                     'path_stagnation_merit_rate'):
+            value.pop(name, None)
+    if value.get("path_predictor") == "none":
+        value.pop("path_predictor")
+    if value.get("initial_contact_seed") == "none":
+        value.pop("initial_contact_seed")
+    if value.get("shell_pair_orientation") == "legacy":
+        value.pop("shell_pair_orientation")
+    if value.get("shell_skin_kinematics") == "reference_linear":
+        value.pop("shell_skin_kinematics")
+    if value.get("finite_frame_seed") == "common_reference_frame_dev":
+        value.pop("finite_frame_seed")
+    return value
 
 if TYPE_CHECKING:
     from anysolver.fe_core import FEModel
@@ -233,8 +266,38 @@ class ContactSolverSettings:
     beam_shell_maximum_swept_intervals: int | None = None
     beam_chain_tangent: str = "finite_difference"
     beam_end_cap_work: str = "owned_point"
+    path_predictor: str = "none"
+    shell_pair_orientation: str = "legacy"
+    shell_skin_kinematics: str = "reference_linear"
+    finite_frame_seed: str = "common_reference_frame_dev"
+    q4_source_overlap_dual_dev: bool = False
+    path_continuation_maximum_halvings: int = 0
+    path_stagnation_patience: int = 2
+    path_stagnation_fraction: float = .125
+    path_stagnation_merit_rate: float = .05
+    initial_contact_seed: str = "none"
 
     def __post_init__(self) -> None:
+        if self.finite_frame_seed not in {"common_reference_frame_dev", "per_surface_reference_frames_dev"}:
+            raise ValueError("unsupported finite_frame_seed")
+        if self.shell_skin_kinematics not in {"reference_linear", "corotational_nodal_director_dev"}:
+            raise ValueError("unsupported shell_skin_kinematics")
+        if self.shell_pair_orientation not in {"legacy", "physical_sides_dev"}:
+            raise ValueError("unsupported shell_pair_orientation")
+        if self.path_predictor not in {"none", "control_projection_dev"}:
+            raise ValueError("unsupported path_predictor")
+        if self.initial_contact_seed not in _INITIAL_CONTACT_SEED_SELECTIONS:
+            raise ValueError("unsupported initial_contact_seed")
+        if self.initial_contact_seed != "none" and not (
+                self.d1_interior_profile
+                and self.q4_source_gap_certificate == 'overlap_local_dev'
+                and self.general_s3_differentiation == 'jet2_q4_s3_dev'
+                and self.q4_source_pressure_basis == 'fine_nodal_q1'
+                and self.enforcement_solver == 'monolithic_active_set'
+                and self.normal_discretization == 'primal_mortar'
+                and self.shell_skin_kinematics == 'reference_linear'
+                and self.shell_pair_orientation == 'legacy'):
+            raise ValueError('initial contact seed requires the D1 reference-linear fine-Q1 monolithic Q4/S3 overlap-local route')
         if self.beam_end_cap_work not in {"owned_point", "hemisphere_support_dev", "hemisphere_coupled_tool_dev"}:
             raise ValueError("unsupported beam_end_cap_work")
         if self.beam_chain_tangent not in {"finite_difference", "consistent_dev"}:
@@ -245,6 +308,49 @@ class ContactSolverSettings:
             raise ValueError("beam_shell_maximum_swept_intervals must be a positive integer")
         if type(self.d1_interior_profile) is not bool:
             raise TypeError("d1_interior_profile must be bool")
+        if type(self.q4_source_overlap_dual_dev) is not bool:
+            raise TypeError('q4_source_overlap_dual_dev must be bool')
+        if self.q4_source_overlap_dual_dev and not (
+                self.d1_interior_profile
+                and self.q4_source_gap_certificate == 'overlap_local_dev'
+                and self.general_s3_differentiation == 'jet2_q4_s3_dev'
+                and self.q4_source_pressure_basis == 'fine_nodal_q1'
+                and self.enforcement_solver == 'monolithic_active_set'
+                and self.normal_discretization == 'primal_mortar'
+                and self.shell_skin_kinematics == 'reference_linear'
+                and self.shell_pair_orientation == 'legacy'):
+            raise ValueError('overlap dual requires the D1 reference-linear fine-Q1 monolithic Q4/S3 overlap-local route')
+        if (type(self.path_continuation_maximum_halvings) is not int
+                or not 0 <= self.path_continuation_maximum_halvings <= 12):
+            raise ValueError("path_continuation_maximum_halvings must be an integer in [0, 12]")
+        if (type(self.path_stagnation_patience) is not int
+                or self.path_stagnation_patience < 1):
+            raise ValueError("path_stagnation_patience must be an integer >= 1")
+        if (type(self.path_stagnation_fraction) is not float
+                or not np.isfinite(self.path_stagnation_fraction)
+                or not 0.0 < self.path_stagnation_fraction <= 1.0):
+            raise ValueError("path_stagnation_fraction must be finite in (0, 1]")
+        if (type(self.path_stagnation_merit_rate) is not float
+                or not np.isfinite(self.path_stagnation_merit_rate)
+                or not 0.0 < self.path_stagnation_merit_rate < 1.0):
+            raise ValueError("path_stagnation_merit_rate must be finite in (0, 1)")
+        if self.path_continuation_maximum_halvings == 0 and (
+                self.path_stagnation_patience != 2
+                or self.path_stagnation_fraction != .125
+                or self.path_stagnation_merit_rate != .05):
+            raise ValueError("path stagnation controls require path_continuation_maximum_halvings > 0")
+        if self.path_continuation_maximum_halvings and self.path_predictor != "none":
+            raise ValueError("path continuation is incompatible with the path predictor")
+        if self.path_continuation_maximum_halvings and not (
+                self.d1_interior_profile
+                and self.q4_source_gap_certificate == 'overlap_local_dev'
+                and self.general_s3_differentiation == 'jet2_q4_s3_dev'
+                and self.q4_source_pressure_basis == 'fine_nodal_q1'
+                and self.enforcement_solver == 'monolithic_active_set'
+                and self.normal_discretization == 'primal_mortar'
+                and self.shell_skin_kinematics == 'reference_linear'
+                and self.shell_pair_orientation == 'legacy'):
+            raise ValueError('path continuation requires the D1 reference-linear fine-Q1 monolithic Q4/S3 overlap-local route')
         interior_controls = (self.d1_interior_coverage_tolerance_m2,
                              self.d1_interior_boundary_force_tolerance_n)
         if self.d1_interior_profile:
@@ -371,7 +477,7 @@ class ContactSolverSettings:
         ):
             raise ValueError("general_s3_difference_step must be finite and positive")
         if self.general_s3_differentiation not in {
-            "existing", "jet2_s3_dev", "jet2_q4_s3_dev", "jet2_s3_q4_dev",
+            "existing", "jet2_s3_dev", "jet2_q4_s3_dev", "jet2_s3_q4_dev", "jet2_q4_q4_dev",
         }:
             raise ValueError("general_s3_differentiation is not an admitted development mode")
         tie_values = (self.q4_s3_shared_edge_tie_step_m,
@@ -578,6 +684,21 @@ def _refined_q4_s3_patch(model: FEModel,
                         is NativeParityE4PLS3V2DShellElement for element_id in target.element_ids))
 
 
+def _exact_monolithic_s3_pair(model, definition, settings):
+    """Named full-face hard S3 row; historical single-pair routing stays intact."""
+    from anysolver.e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
+    return (settings is not None and settings.pair_motion == 'general'
+            and settings.general_s3_differentiation == 'jet2_s3_dev'
+            and settings.enforcement_solver == 'monolithic_active_set'
+            and settings.shell_pair_orientation == 'physical_sides_dev'
+            and not definition.rigid_bodies and len(definition.surfaces) == 2
+            and len(definition.interactions) == 1
+            and definition.interactions[0].normal_law == 'augmented'
+            and all(len(s.element_ids) == 1 for s in definition.surfaces)
+            and all(type(model.mesh.elements.get(e)) is NativeParityE4PLS3V2DShellElement
+                    for s in definition.surfaces for e in s.element_ids))
+
+
 def validate_general_contact(model: FEModel, definition: ContactDefinition,
                              settings: ContactSolverSettings | None = None,
                              *, analysis_control: str = "force") -> ContactValidationReport:
@@ -588,11 +709,141 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         return ContactValidationReport("invalid", ("ContactDefinition required",))
     if settings is not None and type(settings) is not ContactSolverSettings:
         return ContactValidationReport("invalid", ("ContactSolverSettings required",))
+    if settings is not None and settings.finite_frame_seed != "common_reference_frame_dev":
+        if (analysis_control != "contact_path"
+                or settings.shell_skin_kinematics != "corotational_nodal_director_dev"):
+            return ContactValidationReport("invalid", (
+                "per_surface_reference_frames_dev requires the finite Q4 contact_path_program",))
+        from .finite_rotation_predictor import finite_surface_partitions
+        try:
+            finite_surface_partitions(model, definition)
+        except ValueError as exc:
+            return ContactValidationReport("invalid", (str(exc),))
+    if settings is not None and settings.shell_skin_kinematics != "reference_linear":
+        from anysolver.e4_pl_element import QualifiedE4PLShellElement
+        from .finite_mixed_state import admitted_definition
+        finite_mixed = analysis_control=='contact_path' and admitted_definition(model,definition,settings)
+        from .finite_v2d_state import admitted_definition as admitted_v2d
+        finite_mixed = finite_mixed or (analysis_control=='contact_path' and admitted_v2d(model,definition,settings))
+        from .finite_rigid_patch import admitted_definition as admitted_finite_rigid
+        finite_mixed = finite_mixed or (analysis_control in {'force','displacement'}
+                                       and admitted_finite_rigid(model,definition,settings))
+        if not finite_mixed and (analysis_control != "contact_path" or definition.rigid_bodies
+                or settings.general_s3_differentiation != "jet2_q4_q4_dev"
+                or settings.enforcement_solver != "monolithic_active_set"
+                or settings.q4_source_gap_certificate != "whole_face"
+                or settings.path_predictor != "none" or settings.d1_interior_profile
+                or len(definition.surfaces) != 2 or len(definition.interactions) != 1
+                or definition.interactions[0].normal_law != "augmented"
+                or set(model.mesh.elements) != {eid for surface in definition.surfaces for eid in surface.element_ids}
+                or not all(surface.side in {"top", "bottom"} and surface.element_ids
+                           and all(type(model.mesh.elements.get(eid)) is QualifiedE4PLShellElement
+                                   for eid in surface.element_ids)
+                           for surface in definition.surfaces)):
+            return ContactValidationReport("invalid", (
+                "corotational_nodal_director_dev requires the explicit frictionless Q4/Q4 monolithic whole-face contact path",))
+    if settings is not None and settings.general_s3_differentiation == "jet2_q4_q4_dev":
+        from anysolver.e4_pl_element import QualifiedE4PLShellElement
+        if (analysis_control not in {"force", "displacement", "contact_path"}
+                or definition.rigid_bodies or len(definition.surfaces) != 2
+                or len(definition.interactions) != 1
+                or not (definition.interactions[0].normal_law == "projected_penalty"
+                        or (definition.interactions[0].normal_law == "augmented"
+                            and settings.enforcement_solver == "monolithic_active_set"))
+                or not all(surface.element_ids and surface.beam_radius is None
+                           and all(type(model.mesh.elements.get(eid)) is QualifiedE4PLShellElement
+                                   for eid in surface.element_ids) for surface in definition.surfaces)):
+            return ContactValidationReport("invalid", (
+                "jet2_q4_q4_dev requires a static deformable Q4/Q4 projected-penalty or monolithic augmented pair",))
+    if settings is not None and settings.shell_pair_orientation != "legacy":
+        if analysis_control != "contact_path":
+            return ContactValidationReport("invalid", ("shell_pair_orientation requires contact_path_program",))
+        from anysolver.e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
+        from anysolver.e4_pl_element import QualifiedE4PLShellElement
+        physical_s3 = (settings.general_s3_differentiation == "jet2_s3_dev"
+                       and definition.interactions
+                       and ((settings.enforcement_solver == "nested_augmented"
+                             and definition.interactions[0].normal_law == "projected_penalty")
+                            or (settings.enforcement_solver == "monolithic_active_set"
+                                and definition.interactions[0].normal_law == "augmented"
+                                and all(s.element_ids for s in definition.surfaces)))
+                       and all(all(type(model.mesh.elements.get(eid)) is NativeParityE4PLS3V2DShellElement
+                                   for eid in surface.element_ids) for surface in definition.surfaces))
+        physical_q4 = (settings.general_s3_differentiation == "jet2_q4_q4_dev"
+                       and settings.enforcement_solver == "monolithic_active_set"
+                       and definition.interactions
+                       and definition.interactions[0].normal_law == "augmented"
+                       and all(all(type(model.mesh.elements.get(eid)) is QualifiedE4PLShellElement
+                                   for eid in surface.element_ids) for surface in definition.surfaces))
+        from .finite_mixed_state import admitted_definition
+        physical_mixed = admitted_definition(model,definition,settings)
+        if (not (physical_s3 or physical_q4 or physical_mixed)
+                or settings.q4_source_gap_certificate != "whole_face"
+                or definition.rigid_bodies or len(definition.surfaces) != 2
+                or len(definition.interactions) != 1
+                or not all(surface.side in {"top", "bottom"} for surface in definition.surfaces)):
+            return ContactValidationReport("invalid", (
+                "physical_sides_dev requires the S3 projected-penalty or Q4/Q4 monolithic fixed-map contact path",))
+    if (settings is not None and settings.path_predictor != "none"
+            and analysis_control != "contact_path"):
+        return ContactValidationReport("invalid", ("path_predictor requires contact_path_program",))
+    if settings is not None and settings.path_predictor != "none":
+        from dataclasses import replace
+        from .s3_patch_static import (REFINED_Q4_S3_PROJECTED_PENALTY_PROFILE,
+                                      S3_PROJECTED_PENALTY_PROFILE, REFINED_Q4_Q4_PROJECTED_PENALTY_PROFILE, S3_Q4_PROJECTED_PENALTY_PROFILE, S3_MESH_MONOLITHIC_PROFILE)
+        baseline = validate_general_contact(model, definition,
+            replace(settings, path_predictor="none"),
+            analysis_control="contact_path" if settings.shell_pair_orientation != "legacy" else "force")
+        geometry = ((baseline.profile == REFINED_Q4_S3_PROJECTED_PENALTY_PROFILE
+                     and settings.general_s3_differentiation == "jet2_q4_s3_dev"
+                     and settings.q4_source_gap_certificate == "overlap_local_dev")
+                    or (baseline.profile == S3_PROJECTED_PENALTY_PROFILE
+                        and settings.general_s3_differentiation == "jet2_s3_dev"
+                        and settings.q4_source_gap_certificate == "whole_face")
+                    or (baseline.profile == S3_Q4_PROJECTED_PENALTY_PROFILE
+                        and settings.general_s3_differentiation == "jet2_s3_q4_dev"
+                        and settings.q4_source_gap_certificate == "whole_face")
+                    or (baseline.profile == REFINED_Q4_Q4_PROJECTED_PENALTY_PROFILE
+                        and settings.general_s3_differentiation == "jet2_q4_q4_dev"
+                        and settings.q4_source_gap_certificate == "whole_face"))
+        # This report admits only the normal prerequisite. The public path
+        # additionally requires the exact mesh material-friction owner.
+        mesh_lift = (baseline.profile == S3_MESH_MONOLITHIC_PROFILE
+                     and settings.enforcement_solver == "monolithic_active_set"
+                     and settings.shell_pair_orientation == "physical_sides_dev"
+                     and settings.general_s3_differentiation == "jet2_s3_dev"
+                     and settings.q4_source_gap_certificate == "whole_face")
+        if (not baseline.valid or not (mesh_lift or (geometry
+                and settings.enforcement_solver == "nested_augmented"))
+                or definition.rigid_bodies):
+            return ContactValidationReport("invalid", (
+                "control_projection_dev requires the refined Q4/S3 or S3/S3 projected-penalty fixed-map contact path",))
+        return baseline
+    if (settings is not None and settings.path_continuation_maximum_halvings
+            and analysis_control != "contact_path"):
+        # Enabled continuation declares macro physical substeps;
+        # only the contact_path driver implements them. Refuse
+        # before the internal contact_path->force conversion so
+        # no other driver can silently ignore the requested
+        # controls after validation passes.
+        return ContactValidationReport("invalid", (
+            "path_continuation requires contact_path_program",))
+    if (settings is not None and settings.initial_contact_seed != "none"
+            and analysis_control != "contact_path"):
+        # The seed is an initial-only cold-start initializer of the
+        # explicit contact path; no other driver may silently ignore it.
+        return ContactValidationReport("invalid", (
+            "initial_contact_seed requires contact_path_program",))
+    if analysis_control == "contact_path":
+        analysis_control = "force"
     if analysis_control == 'arc_length':
         from .arc_contact import validate_arc_contact
         return validate_arc_contact(model, definition, settings)
     from .triangulated_rigid import TriangulatedRigidContactBody
     if any(type(body) is TriangulatedRigidContactBody for body in definition.rigid_bodies):
+        if settings is not None and settings.shell_skin_kinematics == 'corotational_nodal_director_dev':
+            from .finite_rigid_patch import validate_finite_rigid_patch
+            return validate_finite_rigid_patch(model, definition, settings, analysis_control=analysis_control)
         from .triangulated_rigid_static import validate_triangulated_rigid
         return validate_triangulated_rigid(model, definition, settings, analysis_control=analysis_control)
     if settings is not None and settings.beam_end_cap_work == 'hemisphere_coupled_tool_dev':
@@ -670,11 +921,18 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         q4_route = (settings is not None and _refined_q4_s3_patch(model, definition)
                     and settings.general_s3_differentiation == "jet2_q4_s3_dev"
                     and settings.q4_source_gap_certificate == "overlap_local_dev")
+        from anysolver.e4_pl_element import QualifiedE4PLShellElement
+        q4_q4_route = (settings is not None
+                       and settings.general_s3_differentiation == "jet2_q4_q4_dev"
+                       and settings.q4_source_gap_certificate == "whole_face"
+                       and not definition.rigid_bodies and len(definition.surfaces) == 2
+                       and all(type(model.mesh.elements.get(eid)) is QualifiedE4PLShellElement
+                               for surface in definition.surfaces for eid in surface.element_ids))
         s3_q4_route = (settings is not None
                        and settings.general_s3_differentiation == "jet2_s3_q4_dev"
                        and settings.q4_source_gap_certificate == "whole_face")
         if (settings is None or settings.pair_motion != "general"
-                or not (s3_route or q4_route or s3_q4_route)
+                or not (s3_route or q4_route or s3_q4_route or q4_q4_route)
                 or len(definition.interactions) != 1
                 or settings.q4_source_pressure_basis != "fine_nodal_q1"
                 or settings.augmentation_support_resolution != "exact"
@@ -713,7 +971,11 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
                     and len(definition.surfaces) == 2
                     and len(definition.interactions) == 1
                     and definition.interactions[0].normal_law in {"augmented", "projected_penalty"}
-                    and sum(len(surface.element_ids) for surface in definition.surfaces) >= 3
+                    and (sum(len(surface.element_ids) for surface in definition.surfaces) >= 3
+                         or (settings.enforcement_solver == "monolithic_active_set"
+                             and definition.interactions[0].normal_law == "augmented"
+                             and settings.shell_pair_orientation == "physical_sides_dev"
+                             and all(len(surface.element_ids) == 1 for surface in definition.surfaces)))
                     and all(type(model.mesh.elements.get(element_id))
                             is NativeParityE4PLS3V2DShellElement
                             for surface in definition.surfaces
@@ -855,7 +1117,8 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
                          and len(definition.surfaces) == 2
                          and (any(len(item.element_ids) > 1
                                   for item in definition.surfaces)
-                              or _exact_single_q4_pair(model, definition)))
+                              or _exact_single_q4_pair(model, definition)
+                              or _exact_monolithic_s3_pair(model, definition, settings)))
         restricted_patch = (settings is not None
                             and settings.pair_motion == "restricted_sliding"
                             and not definition.rigid_bodies
@@ -870,7 +1133,8 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
     if not definition.rigid_bodies:
         if settings is not None and settings.pair_motion == "general":
             if (any(len(surface.element_ids) > 1 for surface in definition.surfaces)
-                    or _exact_single_q4_pair(model, definition)):
+                    or _exact_single_q4_pair(model, definition)
+                    or _exact_monolithic_s3_pair(model, definition, settings)):
                 from .s3_patch_static import validate_general_s3_patch
 
                 return validate_general_s3_patch(model, definition, settings)
@@ -1268,7 +1532,11 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
         report = validate_general_contact(model,definition,settings,analysis_control=analysis_control)
         if not report.valid:
             raise ValueError('unsupported rigid mesh contact: '+'; '.join(report.issues))
-        manager = TriangulatedRigidManager(model, definition, settings, initial_displacement)
+        if settings.shell_skin_kinematics == 'corotational_nodal_director_dev':
+            from .finite_rigid_patch import FiniteRigidPatchManager
+            manager = FiniteRigidPatchManager(model, definition, settings, initial_displacement)
+        else:
+            manager = TriangulatedRigidManager(model, definition, settings, initial_displacement)
         token = _ACTIVE_CONTACT.set(manager)
         try:
             yield manager
@@ -1360,7 +1628,8 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
     if any(item.normal_law == "augmented" for item in definition.interactions):
         if not allow_augmented:
             raise ValueError("augmented contact requires the contact path analysis owner")
-        report = validate_general_contact(model, definition, settings)
+        report = validate_general_contact(model, definition, settings,
+                                          analysis_control=analysis_control)
         if not report.valid:
             raise ValueError("unsupported augmented contact: " + "; ".join(report.issues))
     if not definition.rigid_bodies and any(
@@ -1453,7 +1722,8 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
     else:
         if settings.pair_motion == "general":
             if (any(len(surface.element_ids) > 1 for surface in definition.surfaces)
-                    or _exact_single_q4_pair(model, definition)):
+                    or _exact_single_q4_pair(model, definition)
+                    or _exact_monolithic_s3_pair(model, definition, settings)):
                 from .s3_patch_static import GeneralS3PatchManager
 
                 manager = GeneralS3PatchManager(
@@ -1491,4 +1761,9 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
     try:
         yield manager
     finally:
-        _ACTIVE_CONTACT.reset(token)
+        try:
+            discard = getattr(manager, "discard_geometry_preparation", None)
+            if discard is not None:
+                discard()
+        finally:
+            _ACTIVE_CONTACT.reset(token)

@@ -15,6 +15,12 @@ POLICY = 'DECLARED_SHELL_RIGID_AUTOMATIC_DOMAIN_DEV_V1'
 AREA_POLICY = 'SELECTED_PLANAR_SKIN_S3_EXACT_Q4_ANALYTIC_JACOBIAN_V1'
 
 
+def _settings_contract(settings):
+    # Keep this compiler module free of eager solver/numerical imports.
+    from .core import _contact_settings_contract
+    return _contact_settings_contract(settings)
+
+
 class AutomaticContactDomainError(ValueError):
     def __init__(self, code, message):
         self.code = code
@@ -175,6 +181,166 @@ class AutomaticContactResolution:
     def to_dict(self):
         return dict(identity=self.identity,contract=json.loads(self.canonical_contract_json),
                     selections=[asdict(row) for row in self.selections],definition=asdict(self.definition),outside_family_pair_count=self.outside_family_pair_count)
+
+    @classmethod
+    def from_dict(cls,value):
+        """Restore the exact fixed selection; never silently resolve a new one.
+
+        The digest binds this canonical record, not an external producer's
+        authenticity. The ordinary model/domain/settings verification is still
+        required immediately before solve, and checkpoint identity remains a
+        separate owner check.
+        """
+        required={'identity','contract','selections','definition','outside_family_pair_count'}
+        if type(value) is not dict or set(value)!=required:
+            _error('invalid_persistence','exact supported resolution fields required')
+        contract=value['contract'];identity=value['identity']
+        keys={'policy','area_policy','domain_name','participants','defaults','excluded_pairs','maximum_pairs',
+              'explicit_pairs','settings','domain_pair_overrides','explicit_input_provenance','persisted_domain',
+              'outside_family_pair_count','analysis_control','reference','selections'}
+        if (type(contract) is not dict or set(contract)!=keys or contract['policy']!=POLICY
+                or contract['area_policy']!=AREA_POLICY or type(identity) is not str
+                or len(identity)!=64 or any(c not in '0123456789abcdef' for c in identity)
+                or type(value['outside_family_pair_count']) is not int or value['outside_family_pair_count']<0):
+            _error('invalid_persistence','exact canonical resolution contract and digest required')
+        try:
+            canonical=_canonical(contract)
+            if hashlib.sha256(canonical.encode()).hexdigest()!=identity:
+                _error('invalid_persistence','resolution contract digest changed')
+            domain=AutomaticContactDomain.from_dict(contract['persisted_domain'])
+            if _canonical(domain.to_dict())!=_canonical(contract['persisted_domain']):
+                _error('invalid_persistence','domain persistence requires normalization')
+            declaration=dict(domain_name=domain.name,participants=[dict(body_id=p.body_id,participant=asdict(p.participant)) for p in domain.participants],
+                             defaults=asdict(domain.defaults),excluded_pairs=domain.excluded_pairs,maximum_pairs=domain.maximum_pairs)
+            if any(_canonical(v)!=_canonical(contract[k]) for k,v in declaration.items()):
+                _error('invalid_persistence','domain declaration mirrors changed')
+            overrides=sorted({_canonical(asdict(pair)) for pair in domain.pair_overrides})
+            if overrides!=contract['domain_pair_overrides']:
+                _error('invalid_persistence','domain override provenance changed')
+            from .core import ContactSolverSettings,ContactInteraction
+            settings=ContactSolverSettings(**contract['settings'])
+            if _canonical(_settings_contract(settings))!=_canonical(contract['settings']):
+                _error('invalid_persistence','settings are not exact canonical owner fields')
+            for field in ('explicit_pairs','explicit_input_provenance'):
+                if type(contract[field]) is not list:
+                    _error('invalid_persistence','explicit interaction inventory must be a list')
+                for pair in contract[field]:
+                    if type(pair) is not dict or _canonical(asdict(ContactInteraction(**pair)))!=_canonical(pair):
+                        _error('invalid_persistence','explicit interaction fields require normalization')
+            _verify_stored_selection_policy(contract,domain)
+            definition,records=_compiled_from_contract(contract,identity)
+            restored=cls(definition,records,identity,canonical,_canonical(contract['reference']),
+                         _canonical(contract['settings']),_canonical(asdict(definition)),contract['outside_family_pair_count'])
+            if _canonical(restored.to_dict())!=_canonical(value):
+                _error('invalid_persistence','selection, definition or metadata changed')
+            return restored
+        except AutomaticContactDomainError:
+            raise
+        except (KeyError,TypeError,ValueError,AttributeError,OverflowError) as exc:
+            _error('invalid_persistence',f'invalid canonical resolution record: {exc}')
+
+
+def _verify_stored_selection_policy(contract,domain):
+    """Validate recorded decisions against recorded declarations/reference.
+
+    No current model observation, resolver or replacement selection is used.
+    Current geometry/settings must still pass the ordinary verification guard.
+    """
+    from math import isfinite
+    from collections import Counter
+    from .core import ContactSurface,ContactInteraction
+    declarations={p.participant.name:p for p in domain.participants}
+    shells=tuple(n for n,p in declarations.items() if type(p.participant) is ContactSurface)
+    rigids=tuple(n for n in declarations if n not in shells)
+    areas={}
+    reference=contract['reference']
+    if type(reference) is not list or len(reference)!=len(declarations):
+        _error('invalid_persistence','complete reference participant inventory required')
+    face_keys={'element_id','node_ids','formulation','mesh_reference_positions_m','reference_positions_m',
+               'physical_director','physical_offset_m','reference_area_m2'}
+    for row,declared in zip(reference,domain.participants):
+        surface=declared.participant
+        expected={'name','body_id','side','faces'} if type(surface) is ContactSurface else {'name','body_id','rigid'}
+        if type(row) is not dict or set(row)!=expected or row['name']!=surface.name or row['body_id']!=declared.body_id:
+            _error('invalid_persistence','reference declaration order/identity/schema changed')
+        if type(surface) is not ContactSurface:
+            if _canonical(row['rigid'])!=_canonical(asdict(surface)):
+                _error('invalid_persistence','rigid reference properties changed')
+            continue
+        faces=row['faces']
+        if row['side']!=surface.side or type(faces) is not list or [f.get('element_id') for f in faces]!=list(surface.element_ids):
+            _error('invalid_persistence','complete canonical shell reference inventory required')
+        face_areas=[]
+        for f in faces:
+            if type(f) is not dict or set(f)!=face_keys:
+                _error('invalid_persistence','unknown/missing reference face fields')
+            ids=f['node_ids'];points=f['reference_positions_m'];mesh=f['mesh_reference_positions_m']
+            if (type(f['element_id']) is not int or type(ids) is not list or len(ids) not in (3,4)
+                    or any(type(n) is not int or n<1 for n in ids) or len(set(ids))!=len(ids)
+                    or type(f['formulation']) is not str or not f['formulation']):
+                _error('invalid_persistence','invalid stored face inventory')
+            for matrix in (points,mesh):
+                if (type(matrix) is not list or len(matrix)!=len(ids)
+                        or any(type(v) is not list or len(v)!=3 or any(type(x) not in (int,float) or not isfinite(x) for x in v) for v in matrix)):
+                    _error('invalid_persistence','invalid stored face coordinates')
+            director=f['physical_director']
+            if (type(director) is not list or len(director)!=3 or any(type(x) not in (int,float) or not isfinite(x) for x in director)
+                    or abs(sum(x*x for x in director)-1)>64*2.220446049250313e-16
+                    or type(f['physical_offset_m']) not in (int,float) or not isfinite(f['physical_offset_m'])
+                    or type(f['reference_area_m2']) not in (int,float) or not isfinite(f['reference_area_m2']) or f['reference_area_m2']<=0):
+                _error('invalid_persistence','invalid stored physical skin/area')
+            face_areas.append(f['reference_area_m2'])
+        areas[surface.name]=float(median(face_areas))
+    if contract['analysis_control'] not in ('force','displacement','contact_path'):
+        _error('invalid_persistence','unsupported stored analysis control')
+    excluded=set(domain.excluded_pairs)
+    if any(not set(key).intersection(shells) for key in excluded):
+        _error('invalid_persistence','unused rigid-rigid exclusion')
+    complete_keys=sorted(tuple(sorted(k)) for k in itertools.chain(itertools.combinations(shells,2),itertools.product(shells,rigids)))
+    count=len(complete_keys)-len(excluded)
+    if count<1 or count>domain.maximum_pairs:
+        _error('invalid_persistence','complete surviving pair count violates domain cap')
+    provenance=contract['explicit_input_provenance']
+    if _canonical(sorted(provenance,key=_canonical))!=_canonical(provenance):
+        _error('invalid_persistence','explicit provenance order is noncanonical')
+    available=Counter(_canonical(v) for v in provenance)
+    required=Counter(_canonical(asdict(v)) for v in domain.pair_overrides)
+    if any(available[v]<n for v,n in required.items()):
+        _error('invalid_persistence','domain override missing from explicit provenance')
+    overrides={};names={}
+    for record in provenance:
+        pair=ContactInteraction(**record);key=tuple(sorted((pair.surface,pair.target)))
+        if len(set(key))!=2 or not set(key)<=declarations.keys():
+            _error('invalid_persistence','explicit pair references invalid participants')
+        if key in excluded:continue
+        if not set(key).intersection(shells) or (key in overrides and overrides[key]!=pair) or (pair.name in names and names[pair.name]!=key):
+            _error('invalid_persistence','explicit pair precedence/conflict invalid')
+        overrides[key]=pair;names[pair.name]=key
+    if _canonical([asdict(overrides[k]) for k in sorted(overrides)])!=_canonical(contract['explicit_pairs']):
+        _error('invalid_persistence','effective explicit overrides differ from recorded provenance')
+    expected=[]
+    for key in complete_keys:
+        a,b=(declarations[n] for n in key)
+        if key in excluded:
+            expected.append(AutomaticContactPairSelection(key,'excluded',reason='explicit exclusion precedence'));continue
+        if a.body_id==b.body_id:
+            _error('invalid_persistence','unexcluded self-contact is unsupported')
+        if key in overrides:
+            pair=overrides[key]
+            if pair.surface not in areas:_error('invalid_persistence','explicit source must be deformable')
+            source,target=pair.surface,pair.target;original=pair.name
+            reason='explicit override preserves orientation and physical properties'
+        else:
+            source=(_coarser_source(key,areas) if all(n in shells for n in key) else next(n for n in key if n in shells))
+            target=next(n for n in key if n!=source);original=None
+            reason=('coarser reference median face area; participant ID breaks exact ties' if all(n in shells for n in key)
+                    else 'deformable integration side against rigid target')
+        expected.append(AutomaticContactPairSelection(key,'resolved',source,target,original,None,reason,areas.get(source),areas.get(target)))
+    outside=len(rigids)*(len(rigids)-1)//2
+    if outside==1:expected.append(AutomaticContactPairSelection(rigids,'outside_family',reason='rigid-rigid is not automatic contact'))
+    if (type(contract['outside_family_pair_count']) is not int or contract['outside_family_pair_count']!=outside
+            or _canonical([asdict(r) for r in expected])!=_canonical(contract['selections'])):
+        _error('invalid_persistence','complete pair/coarser/explicit selection policy changed')
 
 
 def _face_area(points):
@@ -359,7 +525,7 @@ def resolve_automatic_contact_domain(model,domain,settings=None,*,explicit_pairs
     contract=dict(policy=POLICY,area_policy=AREA_POLICY,domain_name=domain.name,
                   participants=[dict(body_id=p.body_id,participant=asdict(p.participant)) for p in domain.participants],
                   defaults=asdict(domain.defaults),excluded_pairs=domain.excluded_pairs,maximum_pairs=domain.maximum_pairs,
-                  explicit_pairs=[asdict(overrides[key]) for key in sorted(overrides)],settings=asdict(settings),
+                  explicit_pairs=[asdict(overrides[key]) for key in sorted(overrides)],settings=_settings_contract(settings),
                   domain_pair_overrides=sorted({_canonical(asdict(pair)) for pair in domain.pair_overrides}),
                   explicit_input_provenance=sorted(explicit_inputs,key=_canonical),
                   persisted_domain=domain.to_dict(),outside_family_pair_count=outside_count,
@@ -384,7 +550,7 @@ def resolve_automatic_contact_domain(model,domain,settings=None,*,explicit_pairs
     if _canonical(after)!=_canonical(reference):
         _error('stale_resolution','reference geometry changed during compilation')
     return AutomaticContactResolution(definition,final_rows,identity,canonical,_canonical(reference),
-                                      _canonical(asdict(settings)),_canonical(asdict(definition)),outside_count)
+                                      _canonical(_settings_contract(settings)),_canonical(asdict(definition)),outside_count)
 
 
 def _compiled_from_contract(contract,identity):
@@ -442,7 +608,7 @@ def verify_automatic_contact_resolution(model,domain,resolution,settings=None):
             or _canonical(contract['reference'])!=resolution.reference_json
             or _canonical(contract['settings'])!=resolution.settings_json):
         _error('stale_resolution','compiled definition/selection/metadata differs from canonical contract')
-    if (type(settings) is not ContactSolverSettings or _canonical(asdict(settings))!=resolution.settings_json
+    if (type(settings) is not ContactSolverSettings or _canonical(_settings_contract(settings))!=resolution.settings_json
             or _canonical(reference)!=resolution.reference_json or _canonical(asdict(resolution.definition))!=resolution.definition_json
             or hashlib.sha256(resolution.canonical_contract_json.encode()).hexdigest()!=resolution.identity):
         _error('stale_resolution','reference geometry/topology/formulation, settings or compiled definition changed')

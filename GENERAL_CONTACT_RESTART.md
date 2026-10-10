@@ -1,95 +1,90 @@
-# Common-main consolidation — 8 October 2026
+# General contact restart — PAUSED, 10 October 2026
 
-Human authorizes consolidation and coordination with contact task `01a0d278-3e81-77b1-a9b6-e6c1dc764a38`. Both feature programmes remain paused.
-The common checkout is `C:/Github/ANYsolver/.perf2-worktrees/common-main-20261008`;
-branch `codex/common-main-20261008`, PR #63. See
-`docs/development/COMMON_MAIN_CONSOLIDATION_20261008.md` for source/artifact checks
-and merge prerequisites. This prospective authority supersedes historical
-no-coordination/no-main-merge instructions only for consolidation. It does
-not resume development, consume old allowances, qualify incomplete gates
-or authorize publication. Original checkpoint follows unchanged.
+## Controlling state
 
----
+User requested: "Pause developing. Make a well defined restart point".
+No new development, workers, tests or reviews may start until the user resumes.
+Full C0–C9 remains incomplete; D1 is not independently accepted or released.
+Authoritative worktree: C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
+Branch: codex/contact-main-reconcile-20261001. This record is saved in the local
+pause checkpoint following 3f654669. Preserve 15 unrelated qualification deletions.
+No main/sibling edits, other-chat messages, push, merge or publication.
+Root coordinates Mistral CLI directly; no GPT-Astra agent has any assignment.
 
-# General contact - restart point
+[Goal](GENERAL_CONTACT_GOAL.md) · [Plan](GENERAL_CONTACT_PLAN.md) ·
+[Full programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md).
 
-7 October 2026. USER PAUSED implementation. Full C0-C9 incomplete.
-Launch no work until the user resumes. Goal tool is paused; no live owned
-processes, execution lock or unaccounted attempt. Workers have handed off.
-Only C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001. Never access the protected original
-checkout; no sibling edits, other-chat messaging, publication, merge or release.
-Local checkpoints authorized. Mistral/local cached unavailable; sustained OpenAI
-fallback author and same-family supporting review do not establish acceptance.
+## Preserved candidate and actual evidence
 
-## Current candidate and actual outcome
+The experimental third initializer selection is
+`linearized_kkt_merit_globalization_dev`, numerical revision
+`origin_linearized_kkt_seed_merit_globalization_v2`. It changes bounded QP
+sequencing and permits complete algorithmic-seed merit/path backtracking.
+Physical loads, supports, fine pressure space, 50 um gap, acceptance gates,
+physical commit and default-none/legacy identities remain binding.
 
-C8_NATIVE_MULTI_SHELL_DEV: one210-coordinate midpoint system,4 native beams,
-2 S3 bodies,81 physical/129 algebraic, shared shell K/M once and both-body work.
-Straight zero-lift, planar small-motion frictionless interior admission only.
-Physical rims/internal patch transitions remain explicitly unadmitted.
-Source base6362bdfb; final guard repair is preserved in this pause checkpoint.
-Owner SHA68e3b6eb65e3ba4180a775c47744b94da17fd469205a6b50f5dcf398e6417882.
-Final manifest native_multi_shell_guard_manifest_v5.json:
-SHA689ee70952e0a4ac3a9d003c1974a880fa12b95592f3e6af056456766898edbf.
-Wheel native_multi_shell_dist_v5/anysolver-0.4.7-py3-none-any.whl:
-SHA9f6c9565ec3cc71489fbea9e854cdd406776452f35cd17704ebc2c62ec08a5a8,
-private site native_multi_shell_site_v5. Raw root:
-C:/ANYworkspaceWork/contact_native_multi_shell_c8_20261007.
+On the ORIGINAL 16-Q4/32-S3, 300-coordinate, 25-pressure-mode fixture:
+- Legacy QP reaches its 116-iteration cap before geometry. Saved-operator evidence
+  identifies release/clamp cycling while the existing free face is nonstationary.
+- V2 obtains the same-operator optimum in 5 iterations, with unmasked KKT checks.
+  This is a local algorithm result, not a complete-route speedup claim.
+- Attempt 08 passed all four seed-decision/refusal cases. Full seed admitted;
+  actual merit 0.125 -> 0.0781887807266064. No physical commit during seeding.
+- Attempt 09 completed original increment 1 at load factor 0.125 in two Newton
+  iterations. Independent gap lower bound -48.784124147 um meets 50 um;
+  normalized wrench balances are below 1e-6. Test NONPASS is preserved: its
+  `is True` assertion rejected an actual NumPy Boolean true.
+- Latest test edits fix that Boolean assertion, separate the dimensional moment
+  scale, request/capture a producer checkpoint and require its presence.
+  THESE FINAL EDITS HAVE NOT RUN. Attempt 09 requested no checkpoint.
 
-Original9/10 selectors and old single-S3 compatibility passed. Final guard's
-3 mutation/rollback selectors pass. Actual V5 IMPACT returns2 steps at.006;
-public result AND checkpoint exactly match original successful impact bytes.
-V4 full210 FD/work at both original perturbations passes; root AST comparison
-shows only guard/configuration methods changed in V5, supporting affected-evidence
-reuse. Actual V5 prefix CLI returns1 step at.003 and is ready for binding.
-Fresh resumed solve, authentic split/tamper verification and default/full2 CLI
-remain UNMET. The module/programme is not fully verified or accepted.
+Owned product: core.py, initial_contact_seed.py, semismooth_path.py,
+request_identity.py and static_path.py under src/anysolver/general_contact/.
+Owned tests: test_general_contact_original_workflow_{qp_mechanism,seed_decision,
+first_increment}.py. Optional vertex-interval prototype stays UNWIRED/UNVERIFIED.
 
-Measured blocker: thousands of K/M and derived S3 adapter/topology preparations
-inside the native operator guard. Final repair compares all authoritative input
-snapshots and exact implementation identities; full K/M witnesses remain at
-construction and atomic operation boundaries. No law/profile/gate changed.
-Four TIMEOUTs (original full CLI, resumed, timing diagnostic, V4 impact) remain
-non-success. Static test-fixture defects were repaired before dispatch; superseded
-builds are preserved. V5 impact27.8512208s is one observation, not a reliable
-complete-route speed-up claim. Supporting review found no confirmed source
-omission; final terminal evidence audit is pending. Root direct site reads are
-OS-denied; author/framework private payload/import checks are separate evidence.
+## Worker/process state and execution balance
 
-## Execution authority and next resume action
+Owned CLI handles 11953, 92383, 89897, 9024 and 62842 are no longer live;
+independent Read 99108 is also terminal. They exhausted/interrupted without a
+complete final handoff. The last log ends after the checkpoint assertion edit.
+62842 is absent from the exec session registry. A privileged CIM check found
+no remaining process matching this milestone or the Mistral wrapper. No active
+numerical marker or tenth attempt exists. No new work was launched for this pause.
 
-Human approved executions needed to finish the plan/goal. Approval persists
-within scope after resume; do not request another fixture allowance unnecessarily.
-Fresh bounded scopes/extensions may derive prospectively; preserve old grants,
-failed/frozen evidence and exact spent charges. Never pool historical balances.
-Current native_multi_shell_authority_v2.json:840 total=600+240;
-SHAfc2f444ba4c943d41827160f65cca789146a9b469a9c68e159854d6e8b6ea5e6.
-26 terminal attempts charge673.7089404000108s;166.29105959998924 remains,
-including60s protected reserve (106.29105959998924 usable).
-Keep<=60s/job,953MiB,serial jobs,JITdisabled/Numba1/observed pools1, actual
-private import hashes and precise process-wall accounting. Old grants unchanged.
+Authoritative ledger:
+../contact_mistral_original_workflow_delivery_20261010/original-workflow-dev600-v1/ledger.json
+Scope D1_ORIGINAL_WORKFLOW_DELIVERY_DEV600_V1 remains OPEN administratively,
+but work is PAUSED: 232.5507088000304 / 600 measured seconds used, 9/10 attempts.
+367.4492911999696 s remain including protected 90 s reserve; usable 277.4492911999696 s.
+One attempt slot remains; named first-increment cap 180 s, 953 MiB, serial,
+immutable-source checks only. No build/install/full-eight-step permission in this
+scope. Read the ledger again on resume; this handoff never renews authority.
+All preceding scopes and their unused balances remain CLOSED.
 
-On explicit resume, reuse the frozen V5 package. Use raw binder V3 to bind the
-actual successful nms8_restart_prefix_v5, then fresh RESUMED. Full reference may
-be ONLY the exact terminal-successful nms8_impact_v5 publicfull2 selector, with
-all phases/source/runtime/resource/capture checks. Require exact result/capsule
-and predecessor chain, then guarded RESTART_VERIFY authenticated tamper checks.
-Default/full2 CLI remains a separate actual job. If remaining<115s before CLI,
-issue a fresh bounded extension from existing full-goal approval, preserving
-charges; no extension was issued at pause. Do not shorten that job into a likely
-timeout. No more open-ended guard optimization; finish the remaining delivery.
-Author owns connected checks/repair/handoff; root owns contracts/Git/disposition.
+## Exact next actions after explicit resume
 
-## Evidence and programme
+1. Verify checkpoint, owned dirty state, ledger and no active process. Return the
+   existing DELTA_V6 artifacts to the same Mistral implementation owner; avoid
+   repeating the completed investigation or passed checks.
+2. Finish the already specified first-increment/checkpoint check within the one
+   remaining guard attempt; preserve outcome and obtain a complete handoff.
+3. Close final independent review, default-none/v1/v2 identity, incompatible
+   restart, producer roundtrip and interruption/state checks under applicable
+   authority. Preliminary reviewer R1/R2 findings were repaired, but its missing
+   final report does not establish independent acceptance.
+4. Verify a new installed artifact before attributing prior installed evidence
+   to this candidate. Then address the original complete eight-step trajectory
+   and remaining D1 acceptance gaps. First-increment success is not D1 completion.
 
-[Author pause](docs/d1_review_support/contact_native_multi_shell_c8_20261007/author_paused_handoff_v1.md)
-contains exact rows, files and next commands; its JSON binds26 outcomes.
-[Supporting review](docs/d1_review_support/contact_native_multi_shell_c8_20261007/supporting_paused_handoff_v2.md),
-[paused outcome](docs/d1_review_support/contact_native_multi_shell_c8_20261007/paused_development_v5.md),
-[plan](GENERAL_CONTACT_PLAN.md),[goal](GENERAL_CONTACT_GOAL.md),
-[ledger](docs/GENERAL_CONTACT_CAPABILITIES.md). Prior note and old purse balances
-are preserved in restart_history_before_20261007_implementation_pause.md.
-Temporal/spatial/section qualification, independent C7/C8 acceptance, curved
-native geometry/friction/patch-union, broader shell/search/mixed contributors,
-application/package/scale completion remain OPEN. No full-programme claim.
+## Evidence and retained history
+
+Milestone root: ../contact_mistral_original_workflow_delivery_20261010/.
+Actual captures: original-workflow-dev600-v1/attempt-08-seed-decision-original-04/temp/
+and attempt-09-first-increment-original-01/temp/.
+Briefs, adopted deltas V2–V6, worker logs and independent-review-v1.log remain there.
+[Owned note](docs/GENERAL_CONTACT_ORIGINAL_WORKFLOW_MISTRAL_WORK_20261010.md).
+[Previous detailed restart](docs/GENERAL_CONTACT_RESTART_HISTORY_20261010_PRE_ORIGINAL_QP_REPAIR.md)
+preserves original source/artifact identities, historical failures, frozen/consumed
+restrictions and broader programme gaps. Existing b9 installed results stay bound
+to their original source/artifact. No engineering acceptance transfers to new code.

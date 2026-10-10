@@ -7,8 +7,9 @@ moving overlap support; this avoids frictionless boundary-motion work.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, fields, is_dataclass, replace
 import re
+import sys
 
 import numpy as np
 
@@ -17,7 +18,7 @@ from .overlap import PlanarFace, planar_projected_overlap
 from .pressure_basis import PressureBasis
 from .q4_source_overlap import projected_q4_source_face
 from .q4_s3_overlap_derivatives import (
-    UnsupportedQ4S3Branch, q4_s3_overlap_derivatives,
+    Q4S3OverlapDerivatives, UnsupportedQ4S3Branch, q4_s3_overlap_derivatives,
     q4_s3_overlap_first_derivatives,
 )
 from .q4_s3_tiny_wedge import verify_tiny_wedge_derivatives
@@ -51,6 +52,54 @@ def _prepared_inputs(*arrays):
     return tuple((item.shape, item.tobytes()) for item in (
         np.ascontiguousarray(value, dtype=float) for value in arrays
     ))
+
+
+def _geometry_preparation_size(value, seen=None):
+    """Conservative retained Python metadata, key and array payload bytes."""
+    seen = set() if seen is None else seen
+    if id(value) in seen:
+        return 0
+    seen.add(id(value))
+    size = sys.getsizeof(value)
+    if isinstance(value, np.ndarray):
+        # Charge data even for a view; owned arrays may be double charged.
+        return size+value.nbytes
+    if isinstance(value, dict):
+        return size+sum(_geometry_preparation_size(k, seen)
+                        + _geometry_preparation_size(v, seen)
+                        for k, v in value.items())
+    if isinstance(value, (tuple, list)):
+        return size+sum(_geometry_preparation_size(x, seen) for x in value)
+    if is_dataclass(value) and not isinstance(value, type):
+        return size+_geometry_preparation_size(vars(value), seen)
+    return size
+
+
+def _geometry_preparation_value(value):
+    """Exact bounded snapshots of owned geometry configuration, not history."""
+    if value is None or type(value) in (bool, int, str, bytes):
+        return value
+    if isinstance(value, (float, np.floating)):
+        return ("float", np.float64(value).tobytes())
+    if isinstance(value, np.integer):
+        return ("int", int(value))
+    if isinstance(value, np.ndarray):
+        if value.dtype.hasobject:
+            raise TypeError("object-valued geometry is not cacheable")
+        return ("array", value.dtype.str, value.shape,
+                np.ascontiguousarray(value).tobytes())
+    if isinstance(value, (tuple, list)):
+        return (type(value), tuple(_geometry_preparation_value(x) for x in value))
+    if isinstance(value, dict):
+        return ("dict", tuple((k, _geometry_preparation_value(v))
+                              for k, v in sorted(value.items())))
+    if is_dataclass(value):
+        return (type(value), tuple((f.name, _geometry_preparation_value(
+            getattr(value, f.name))) for f in fields(value)))
+    if (type(value).__module__.startswith("anysolver.general_contact.")
+            and hasattr(value, "__dict__")):
+        return (type(value), id(value), _geometry_preparation_value(vars(value)))
+    raise TypeError("unsupported geometry configuration is not cacheable")
 
 
 def _touching_projected_boundaries(first: PlanarFace, second: PlanarFace,
@@ -210,7 +259,7 @@ def _q4_s3_gap_operand_roundoff(source, target, support_scale: float) -> float:
     """
     source = np.asarray(source, dtype=float)
     target = np.asarray(target, dtype=float)
-    if (source.shape != (4, 3) or target.shape != (3, 3)
+    if (source.shape != (4, 3) or target.shape not in {(3, 3), (4, 3)}
             or not np.all(np.isfinite(source))
             or not np.all(np.isfinite(target))
             or not np.isfinite(support_scale) or support_scale <= 0.0):
@@ -326,6 +375,66 @@ class MovingS3PatchProjectedNormal:
         # Verified prototype, but the saved-candidate profile was slower
         # than batched Jet2. Keep it available only for explicit experiments.
         self.zero_weight_first_order = False
+        # Private disposable geometry only. Never serialized or owner state.
+        self._geometry_preparation_enabled = False
+        self._geometry_preparation = None
+        self._geometry_preparation_working = None
+        self._geometry_preparation_limit_bytes = 32*1024*1024
+
+    def discard_geometry_preparation(self):
+        self._geometry_preparation = None
+        self._geometry_preparation_working = None
+
+    def _geometry_preparation_key(self, source, target):
+        if (not self._geometry_preparation_enabled or self.zero_weight_first_order
+                or self.pressure_basis is not None
+                or self.geometry.differentiation != "jet2_q4_s3"):
+            return None
+        try:
+            return (_prepared_inputs(source, target),
+                    _geometry_preparation_value(self.geometry),
+                    _geometry_preparation_value((
+                        self.reference_source, self.reference_target,
+                        self.source_node_ids, self.target_node_ids,
+                        self.source_face_indices, self.target_face_indices,
+                        self.pressure_mode_ids, self.support_resolution,
+                        self.tangent_active_coordinates, self.shared_edge_tie,
+                        self.zero_weight_first_order)),
+                    q4_s3_overlap_derivatives,
+                    self._geometry_preparation_limit_bytes)
+        except (TypeError, RecursionError):
+            # Unknown mutable configuration executes the original path.
+            return None
+
+    def _prepared_full_pair_derivative(self, pair_index, evaluator,
+                                       reference, source, target, **options):
+        working = self._geometry_preparation_working
+        if working is None or evaluator is not q4_s3_overlap_derivatives:
+            return evaluator(reference, source, target, **options)
+        key = (pair_index, evaluator, _prepared_inputs(reference, source, target),
+               _geometry_preparation_value(options))
+        if key in working[1]:
+            return working[1][key]
+        derivative = evaluator(reference, source, target, **options)
+        if type(derivative) is not Q4S3OverlapDerivatives:
+            return derivative
+        arrays = {f.name: getattr(derivative, f.name) for f in fields(derivative)
+                  if isinstance(getattr(derivative, f.name), np.ndarray)}
+        # Include request bytes, dataclass/array metadata and dictionary growth.
+        # Over-counting shared references is safe; never under-charge payload.
+        size = (_geometry_preparation_size(key)
+                + _geometry_preparation_size(derivative)
+                + 256)  # Conservative per-entry dictionary allocation allowance.
+        if working[2]+size > self._geometry_preparation_limit_bytes:
+            self.discard_geometry_preparation()
+            return derivative
+        copies = {name: a.copy() for name, a in arrays.items()}
+        for a in copies.values():
+            a.setflags(write=False)
+        owned = replace(derivative, **copies)
+        working[1][key] = owned
+        working[2] += size
+        return owned
 
     def set_shared_edge_tie(self, step_m, direction, relative_tolerance):
         """Opt in to a bounded local limit at the D1 two-face S3 diagonal."""
@@ -418,14 +527,54 @@ class MovingS3PatchProjectedNormal:
 
     def nodal_force_linearization(self, current_source, current_target,
                                   nodal_forces, *, tangent=True):
+        """Reuse only successful full raw derivatives at a byte-exact pose.
+
+        Evaluation counts remain logical request/resource accounting. Pressure,
+        normalized work, force and tangent contractions always run anew.
+        """
+        previous = self._geometry_preparation
+        self.discard_geometry_preparation()
+        try:
+            key = self._geometry_preparation_key(current_source, current_target)
+        except BaseException:
+            self.discard_geometry_preparation()
+            raise
+        if key is None:
+            self._geometry_preparation_working = None
+        elif previous is not None and previous[0] == key:
+            # Reuse owned immutable records; no old/pending array duplication.
+            self._geometry_preparation_working = previous
+        else:
+            working = [key, {}, 0]
+            working[2] = _geometry_preparation_size(working)
+            if working[2] <= self._geometry_preparation_limit_bytes:
+                self._geometry_preparation_working = working
+            else:
+                self._geometry_preparation_working = None
+        previous = None  # Drop old-pose arrays before computing another pose.
+        try:
+            result = self._nodal_force_linearization_uncached(
+                current_source, current_target, nodal_forces, tangent=tangent)
+            working = self._geometry_preparation_working
+            if working is not None and result.gradient_only_pairs == 0:
+                self._geometry_preparation = working
+            return result
+        except BaseException:
+            self.discard_geometry_preparation()
+            raise
+        finally:
+            self._geometry_preparation_working = None
+
+    def _nodal_force_linearization_uncached(self, current_source, current_target,
+                                           nodal_forces, *, tangent=True):
         """Evaluate the fine Q1 work with independent nodal forces in N.
 
         All supported gap rows are differentiated, even at zero pressure, so
         an inactive mode can enter the semismooth active set. No multiplier or
         physical material state is changed by this disposable evaluation.
         """
-        if self.pressure_basis is not None or self.geometry.differentiation != "jet2_q4_s3":
-            raise ValueError("nodal-force linearization requires fine Q1 Q4/S3 Jet2 geometry")
+        if self.pressure_basis is not None or self.geometry.differentiation not in {"jet2_s3", "jet2_q4_s3", "jet2_q4_q4"}:
+            raise ValueError("nodal-force linearization requires fine Q1 Q4/S3 or Q4/Q4 Jet2 geometry")
         z = np.asarray(nodal_forces, dtype=float)
         if z.shape != (len(self.pressure_mode_ids),) or not np.all(np.isfinite(z)):
             raise ValueError("nodal contact forces must be finite")
@@ -452,6 +601,7 @@ class MovingS3PatchProjectedNormal:
                     or not self._only_artificial_shared_edge_ties(
                         current_source, current_target, failed_pair=failed_pair)):
                 raise
+            self.discard_geometry_preparation()
             return self._shared_edge_nodal_force_limit(
                 current_source, current_target, z,
                 tangent=tangent, recoverable_pair=failed_pair,
@@ -1053,7 +1203,7 @@ class MovingS3PatchProjectedNormal:
             return MovingS3PatchMortarWork(
                 base, np.zeros(count), np.zeros((count, count)) if tangent else None,
                 len(self.geometry.pair_laws)
-                if self.geometry.differentiation in {"pair_local", "jet2_s3", "jet2_q4_s3", "jet2_s3_q4"} else 1,
+                if self.geometry.differentiation in {"pair_local", "jet2_s3", "jet2_q4_s3", "jet2_s3_q4", "jet2_q4_q4"} else 1,
             )
         for source_index in self.source_face_indices:
             source_positions = np.asarray(current_source)[source_index]
@@ -1073,9 +1223,9 @@ class MovingS3PatchProjectedNormal:
                         and _has_shared_edge_transition(first, second, overlap)):
                     raise ValueError("S3 patch shared-edge derivative is nonunique")
                 if (overlap is None
-                        and self.geometry.differentiation in {"jet2_s3", "jet2_q4_s3", "jet2_s3_q4"}
+                        and self.geometry.differentiation in {"jet2_s3", "jet2_q4_s3", "jet2_s3_q4", "jet2_q4_q4"}
                         and _touching_projected_boundaries(first, second)):
-                    if self.geometry.differentiation in {"jet2_s3", "jet2_s3_q4"}:
+                    if self.geometry.differentiation in {"jet2_s3", "jet2_s3_q4", "jet2_q4_q4"}:
                         raise UnsupportedOverlapBranch(
                             "S3 patch zero-area touching overlap has no smooth derivative"
                         )
@@ -1116,7 +1266,7 @@ class MovingS3PatchProjectedNormal:
         if self.geometry.differentiation == "pair_local":
             return self._pair_local_work(current_source, current_target,
                                          base, tangent=tangent)
-        if self.geometry.differentiation in {"jet2_s3", "jet2_q4_s3", "jet2_s3_q4"}:
+        if self.geometry.differentiation in {"jet2_s3", "jet2_q4_s3", "jet2_s3_q4", "jet2_q4_q4"}:
             return self._jet2_s3_work(current_source, current_target,
                                       base, tangent=tangent,
                                       tiny_wedge_pair=tiny_wedge_pair)
@@ -1213,6 +1363,8 @@ class MovingS3PatchProjectedNormal:
                       tiny_wedge_pair=None, nodal_force_mode=False,
                       allow_gradient_only=True, zero_force_modes=None):
         """Assemble differentiated pair geometry into shared pressure nodes."""
+        if (not nodal_force_mode or tiny_wedge_pair is not None):
+            self.discard_geometry_preparation()
         count = self.n_coordinates
         source_count = len(self.source_node_ids)
         active_coordinates = (
@@ -1316,7 +1468,10 @@ class MovingS3PatchProjectedNormal:
                         "weighted_gap_hessian_tolerance": tolerances[3],
                     }
                     evaluator = q4_s3_overlap_derivatives
-                    if (self.zero_weight_first_order and allow_gradient_only
+                    if len(target_nodes) == 4:
+                        from .q4_q4_overlap_derivatives import q4_q4_overlap_derivatives
+                        evaluator = q4_q4_overlap_derivatives
+                    if (len(target_nodes) == 3 and self.zero_weight_first_order and allow_gradient_only
                             and nodal_force_mode
                             and tiny_wedge_pair is None
                             and zero_force_modes is not None
@@ -1332,13 +1487,14 @@ class MovingS3PatchProjectedNormal:
                         evaluator = q4_s3_overlap_first_derivatives
                         derivative_options.pop("support_hessian_tolerance")
                         derivative_options.pop("weighted_gap_hessian_tolerance")
-                    derivative = evaluator(
+                    derivative = self._prepared_full_pair_derivative(
+                        pair_index, evaluator,
                         self.geometry.source_faces[source_face].reference_positions,
                         local_source, local_target,
                         area_tolerance=self.geometry.q4_source_area_tolerance,
                         weighted_gap_tolerance=self.geometry.q4_source_weighted_gap_tolerance,
                         maximum_triangles=self.geometry.maximum_q4_source_integration_triangles,
-                        allow_warped_source=True,
+                        **({"allow_warped_source": True} if len(target_nodes) == 3 else {}),
                         **derivative_options,
                     )
                 except UnsupportedQ4S3Branch as exc:
@@ -1518,6 +1674,7 @@ class MovingS3PatchProjectedNormal:
                             "tiny seam wedge has no resolved absolute nodal force"
                         )
                     self.geometry._check_energy_evaluation_budget(evaluations+1)
+                    self.discard_geometry_preparation()
                     used, scenarios = verify_tiny_wedge_derivatives(
                         law, local_source, local_target, derivative,
                         fine_pressure[source_nodes],

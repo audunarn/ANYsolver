@@ -1,0 +1,15 @@
+# Outcome: partial connected mesh implementation
+
+Implemented connected nonmatching2/2 S3 moving-normal material friction with exact opt-in settings, shared fineP1 support, both projection-domain whole-chord union guards, strict convexity/coplanarity checks, all-facet corner+dense successor gaps, material anchors, geometry-only exact success cache and prepared correspondence tamper refusal. Legacy identities/routes are preserved by selected installed controls, not a broad regression claim.
+
+Verified installed public press/stick and active continuation (A1 V2 -> A2 final V6). Local manufactured displaced-overlap unit gives full both-body/all-four-z directional errors3.14e-8/3.64e-8 against1e-5, four positive supports/rank4 and material anchor facets5->6. This is not an independently solved nonlinear reference or completed large-slide workflow.
+
+Final installed saved press/stick proof: maximum equilibrium6.924e-16, force wrench8.674e-17, physical-skin moment5.899e-17 against1e-6 with separate Fref.02N/Mref.02Nm; physical virtual-work error1.535e-16; C1.446e-15 against1e-8; exact binary corner+dense gaps against every target facet meet1e-10m hard closure (registered dimensional budget50um unchanged). Accepted-endpoint finite-gap friction work bound<=3.503e-25J against1e-12J, not a path maximum or integral. Target birth tilt does not prove integrated normal change.
+
+Final controls, public normal-only/wrong-owner refusal, checkpoint tamper/settings rejection, precancel, actual active-A2 trial exception/inflight cancellation, selected legacy2cases and installed zero-new-increment step2 CLI pass. Elastic fixture checks declared inputs/context/committed history; no generic hidden material rollback claim.
+
+UNMET: phase3 large slide, actual public facet transfer/target-normal change, reversal/open/recontact/open restart, alternate suffix state parity, six-phase proof and fresh six-phase CLI. Original independent B2/4/6 plan and later shared-prefix alternate suffix never completed. Phase3 timed out twice at60s; one separately authorized35s capture reached iteration1 merit backtracking without geometry exception. No unchanged retry or load/tolerance sweep follows.
+
+Retained4 NONPASS setup/guard tests: unit1 interval normalization propagation, unit2 lost affine correlation, smoke6 tuple shape cache and controls11 initialized-history assumption. Six TIMEOUT jobs: unit3 (passing assertions but incomplete runtime), smoke4, capture5, A3-13, A3-19 and bounded diagnostic20. V1-V6 artifact/build inputs retained; six builds required by preverification correspondence/admission repair checkpoints.
+
+26 terminal guarded jobs;16 pass jobs,4 NONPASS,6 timeouts.10 passing testcase invocations in successful pytest jobs, plus one passing JUnit invocation in timeout3 (not a job pass), and CLI pass. Exact child-wall625.2643626000063/720s;94.73563739999372s remain. Final reserve release is recorded solely for named closure checks. No active job. Full logs, identities and count disposition: CLOSURE.json/ledger.json and attempt directories. Next action: NEXT_ACTION.md. Development verification only; engineering acceptance/release false.

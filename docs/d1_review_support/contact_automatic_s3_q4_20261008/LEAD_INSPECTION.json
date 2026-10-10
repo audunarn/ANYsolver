@@ -1,0 +1,73 @@
+{
+  "kind": "lead_read_only_artifact_saved_evidence_inspection",
+  "errors": [],
+  "payload_count": 628,
+  "private_imports_rehashed": 2366,
+  "changed_payloads": [
+    "anysolver/general_contact/core.py",
+    "anysolver/general_contact/s3_patch_static.py",
+    "anysolver/general_contact/transient.py"
+  ],
+  "retained_nonpass": [],
+  "passing_cases": 8,
+  "wheel_sha256": "7f1d5a48c8b2250a67e2f0b375cc9b2dd010eee4d9a1bd793df795c0ed859f0d",
+  "jobs": [
+    {
+      "stage": "unit",
+      "status": "pass",
+      "wall_s": 9.496897499993793,
+      "peak_mib": 175.1640625
+    },
+    {
+      "stage": "build",
+      "status": "pass",
+      "wall_s": 11.775392499999725,
+      "peak_mib": 103.3671875
+    },
+    {
+      "stage": "full",
+      "status": "pass",
+      "wall_s": 12.974855399996159,
+      "peak_mib": 194.45703125
+    },
+    {
+      "stage": "explicit",
+      "status": "pass",
+      "wall_s": 8.231169500009855,
+      "peak_mib": 183.26953125
+    },
+    {
+      "stage": "prefix",
+      "status": "pass",
+      "wall_s": 6.799287400004687,
+      "peak_mib": 183.25
+    },
+    {
+      "stage": "resume",
+      "status": "pass",
+      "wall_s": 6.335522100009257,
+      "peak_mib": 183.50390625
+    },
+    {
+      "stage": "refusal",
+      "status": "pass",
+      "wall_s": 5.154433700008667,
+      "peak_mib": 181.56640625
+    },
+    {
+      "stage": "safety",
+      "status": "pass",
+      "wall_s": 5.187700499998755,
+      "peak_mib": 185.671875
+    },
+    {
+      "stage": "example",
+      "status": "pass",
+      "wall_s": 7.130027999999584,
+      "peak_mib": 166.69140625
+    }
+  ],
+  "process_wall_sum_s": 73.08528660002048,
+  "ledger_used_s": 73.08528660002048,
+  "remaining_s": 166.91471339997952
+}

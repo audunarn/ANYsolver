@@ -1,6 +1,13 @@
 # ANYsolver General Contact — full delivery programme
 
-**Current controlling basis:** [D1-interior goal](../GENERAL_CONTACT_GOAL.md)
+**Current controlling basis:** current [goal](../GENERAL_CONTACT_GOAL.md),
+[plan](../GENERAL_CONTACT_PLAN.md) and [restart](../GENERAL_CONTACT_RESTART.md).
+The acceptance statements below apply to their named historical source/artifact;
+they do not transfer to current private packages. The exact648 current bounded-
+interior claim remains implemented/tested with acceptance pending after the
+10October independent review. Full C0–C9 scope and criteria below are unchanged.
+
+**Historical source-bound snapshot (30 September 2026):** [D1-interior goal](../GENERAL_CONTACT_GOAL.md)
 revision2026-09-30.1 and [adaptable plan](../GENERAL_CONTACT_PLAN.md). Development
 is ACTIVE30September2026, current installed0b2ac9be with physics87c53913.
 Installed force/displacement/restart, analytical/matched-code, pressure and

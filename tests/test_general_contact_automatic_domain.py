@@ -266,7 +266,7 @@ def test_actual_nonmatching_shell_pair_path_parity_and_restart():
                     displacement_rtol=1e-7,displacement_atol_m=1e-9,gap_budget_m=5e-5))
     def save():
         if os.environ.get('AUTOMATIC_DOMAIN_RESULT'):
-            Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(report,indent=2,default=lambda x:x.tolist()),encoding='utf-8')
+            Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(report,indent=2,default=lambda x:x.item() if isinstance(x,np.generic) else x.tolist()),encoding='utf-8')
     def record(name,result):
         report['stages'][name]=dict(status=result.status,failure_reason=result.failure_reason,
             contact=result.info.get('general_contact'),phases=result.info.get('force_displacement_history'))
@@ -340,7 +340,7 @@ def test_actual_nonmatching_shell_pair_path_parity_and_restart():
 
 @pytest.mark.skipif(os.environ.get('ANY_RUN_AUTOMATIC_PROJECTED_SHELL_PAIR')!='1',
                    reason='bounded refined projected Q4/S3 automatic-domain press')
-def test_actual_projected_shell_pair_press_and_checkpoint():
+def test_actual_projected_shell_pair_press_and_checkpoint(monkeypatch):
     from examples.general_contact_automatic_domain import build_projected_shell_pair,solve_shell_pair
     import anysolver,numba
     from threadpoolctl import threadpool_info
@@ -357,23 +357,188 @@ def test_actual_projected_shell_pair_press_and_checkpoint():
             pools=threadpool_info()))
     def save():
         if os.environ.get('AUTOMATIC_DOMAIN_RESULT'):
-            Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(report,indent=2,default=lambda x:x.tolist()),encoding='utf-8')
+            Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(report,indent=2,default=lambda x:x.item() if isinstance(x,np.generic) else x.tolist()),encoding='utf-8')
     save()
+    if os.environ.get('AUTOMATIC_WORKFLOW_STAGE','').startswith('press-trace'):
+        from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+        original=GeneralS3PatchManager._swept_admissible
+        trace=[];report['proposal_trace']=trace
+        def observed(manager,start,end):
+            answer=original(manager,start,end)
+            if len(trace)<24:
+                trace.append(dict(admissible=answer,
+                    start_lower=manager._gap_lower(manager._positions(start)),
+                    end_lower=manager._gap_lower(manager._positions(end)),
+                    source_uz=[float(end[model.mesh.dof_manager.get_node_dofs(n)[2]]) for n in range(1,7)],
+                    target_uz=float(end[model.mesh.dof_manager.get_node_dofs(9)[2]])))
+            save()
+            return answer
+        monkeypatch.setattr(GeneralS3PatchManager,'_swept_admissible',observed)
     result=solve_shell_pair(model,domain,settings,resolution,path,emit_restart_checkpoint=True)
     report.update(status=result.status,failure_reason=result.failure_reason,
         contact=result.info.get('general_contact'),phases=result.info.get('force_displacement_history'))
     if result.restart_checkpoint is not None:report['checkpoint']=result.to_restart_checkpoint()
     save()
     assert result.status=='completed',result.failure_reason
+    if settings.path_predictor!='none':
+        assert result.info['contact_path']['path_predictor']==settings.path_predictor
     contact=result.info['general_contact']
     force_error=float(np.linalg.norm(np.array(contact['integration_force'])+contact['target_force'])/.02)
     moment_error=float(np.linalg.norm(np.array(contact['integration_moment'])+contact['target_moment'])/.02)
     target_dof=model.mesh.dof_manager.get_node_dofs(9)[2]
     report.update(force_balance_error=force_error,moment_balance_error=moment_error,
         target_node9_uz_m=float(result.displacements[target_dof]));save()
-    assert contact['active_pressure_dofs']>0 and contact['penalty_energy']>0.
+    assert contact['active_pressure_dofs']>0 and contact['regularization_storage_j']>0.
+    assert contact['contact_work_convention']=='projected_weak_gap_nonpotential_v1'
     assert contact['gap_tolerance_met'] and contact['minimum_gap']>=-5e-5
     assert contact['wrench_origin_m']==[0.,0.,0.]
     assert max(force_error,moment_error)<=1e-6
     assert abs(result.displacements[target_dof])>1e-10
     assert report['checkpoint']
+
+
+@pytest.mark.skipif(os.environ.get('ANY_RUN_AUTOMATIC_PROJECTED_WORKFLOW')!='1',
+                   reason='bounded installed refined automatic deformable lifecycle')
+def test_actual_projected_shell_pair_lifecycle_and_restart():
+    """One guarded stage per invocation, sharing only retained JSON evidence."""
+    import anysolver,numba
+    from threadpoolctl import threadpool_info
+    from anysolver import ContactDefinition,solve_static_nonlinear
+    from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+    from examples.general_contact_automatic_domain import build_projected_shell_pair,solve_shell_pair
+    raw_stage=os.environ.get('AUTOMATIC_WORKFLOW_STAGE','full-press-v3')
+    press_only='-press' in raw_stage
+    stage=raw_stage.split('-')[0] if press_only else raw_stage
+    evidence=Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])
+    output=Path(os.environ['AUTOMATIC_DOMAIN_RESULT'])
+    model,domain,settings,resolution,path=build_projected_shell_pair(lifecycle=not press_only,
+        path_predictor=os.environ.get('AUTOMATIC_PATH_PREDICTOR','none'))
+    report=dict(stage=stage,identity=resolution.identity,selections=[asdict(x) for x in resolution.selections],
+        domain=domain.to_dict(),settings=asdict(settings),criteria=dict(
+            force_scale_n=.02,moment_scale_nm=.02,virtual_translation_m=1e-6,
+            force_moment_normalized_tolerance=1e-6,gap_budget_m=5e-5,
+            displacement_parity_rtol=1e-7,displacement_parity_atol_m=1e-9,
+            scale_basis='k1000 * area1 * nominal20um penetration; lever1m'),
+        runtime_before_solve=dict(anysolver_path=anysolver.__file__,
+            automatic_domain_path=__import__('inspect').getfile(resolve),
+            jit_disabled=bool(numba.config.DISABLE_JIT),numba_threads=int(numba.get_num_threads()),
+            pools=threadpool_info()))
+    def save():
+        output.write_text(json.dumps(report,indent=2,
+            default=lambda x:x.item() if isinstance(x,np.generic) else x.tolist()),encoding='utf-8')
+    save()
+    assert report['runtime_before_solve']['jit_disabled']
+    assert report['runtime_before_solve']['numba_threads']==1
+    assert all(pool['num_threads']==1 for pool in report['runtime_before_solve']['pools'])
+    controls=dict(emit_restart_checkpoint=True)
+    prefix_file='prefix-press-v2.json' if press_only else 'prefix.json'
+    full_file='full-press-v3.json' if press_only else 'full.json'
+    if stage=='prefix':controls['max_load_factor']=.5 if press_only else 2/3
+    if stage=='resume':
+        prefix=json.loads((evidence/prefix_file).read_text(encoding='utf-8'))
+        assert prefix['identity']==resolution.identity and prefix['verified']
+        controls['restart_checkpoint']=prefix['checkpoint']
+    if stage=='refusal':
+        prefix=json.loads((evidence/prefix_file).read_text(encoding='utf-8'))
+        before=repr(model)
+        changed=replace(domain,name='changed-shell-provenance')
+        changed_resolution=resolve(model,changed,settings,analysis_control='contact_path' if settings.path_predictor!='none' else 'displacement')
+        with pytest.raises(ValueError,match='incompatible'):
+            solve_shell_pair(model,changed,settings,changed_resolution,path,
+                restart_checkpoint=prefix['checkpoint'])
+        assert repr(model)==before
+        if settings.path_predictor!='none':
+            changed_settings=replace(settings,path_predictor='none')
+            changed_resolution=resolve(model,domain,changed_settings,analysis_control='displacement')
+            with pytest.raises(ValueError,match='incompatible'):
+                solve_shell_pair(model,domain,changed_settings,changed_resolution,path,
+                    restart_checkpoint=prefix['checkpoint'])
+            assert repr(model)==before
+            report['predictor_refusal']=True
+        report.update(verified=True,provenance_refusal=True,atomic_refusal=True);save();return
+    if stage=='explicit':
+        definition=ContactDefinition(resolution.definition.surfaces,(),(
+            ContactInteraction('ordinary-explicit','q4_source','s3_target',1000.,5e-5,
+                               normal_law='projected_penalty'),))
+        result=solve_static_nonlinear(model,contact=definition,contact_settings=settings,
+            contact_path_program=path,max_iterations=15,**controls)
+    else:result=solve_shell_pair(model,domain,settings,resolution,path,**controls)
+    report.update(status=result.status,failure_reason=result.failure_reason,
+        contact=result.info.get('general_contact'),phases=result.info.get('force_displacement_history'),
+        displacements=result.displacements)
+    if result.restart_checkpoint is not None:report['checkpoint']=result.to_restart_checkpoint()
+    save()
+    assert result.status=='completed',result.failure_reason
+    phases=report['phases']
+    if settings.path_predictor!='none':
+        assert result.info['contact_path']['path_predictor']==settings.path_predictor
+        report['executed_path_predictor']=result.info['contact_path']['path_predictor'];save()
+    expected=({'full':[False,True],'explicit':[False,True],'prefix':[False],'resume':[False,True]} if press_only
+              else {'full':[True,False,True],'explicit':[True,False,True],
+                    'prefix':[True,False],'resume':[True,False,True]})[stage]
+    assert [row['contact']['active_pressure_dofs']>0 for row in phases]==expected
+    wrench=[]
+    for row,active in zip(phases,expected):
+        contact=row['contact']
+        errors=dict(force=float(np.linalg.norm(np.asarray(contact['integration_force'])+contact['target_force'])/.02),
+                    moment=float(np.linalg.norm(np.asarray(contact['integration_moment'])+contact['target_moment'])/.02))
+        wrench.append(errors)
+        assert max(errors.values())<=1e-6
+        assert contact['wrench_origin_m']==[0.,0.,0.]
+        assert contact['gap_tolerance_met'] and contact['minimum_gap']>=-5e-5
+        assert contact['contact_work_convention']=='projected_weak_gap_nonpotential_v1'
+        assert (contact['regularization_storage_j']>0.)==active
+        assert contact['penalty_energy']==0.
+    report['phase_wrench_errors']=wrench;save()
+    target_dof=model.mesh.dof_manager.get_node_dofs(9)[2]
+    report['target_node9_uz_m']=float(result.displacements[target_dof])
+    if stage!='prefix':
+        assert abs(result.displacements[target_dof])>1e-10
+        manager=GeneralS3PatchManager(model,resolution.definition,settings)
+        residual,_,contact_result=manager.evaluate(result.displacements,tangent=False)
+        from anysolver.nonlinear_static import _assemble_nonlinear_system,_discard_nonlinear_state_candidate
+        structural,_,states=_assemble_nonlinear_system(model,result.displacements,result.element_states,
+            5,tangent=False,kinematics='von_karman')
+        _discard_nonlinear_state_candidate(states)
+        equilibrium=(structural+residual)[target_dof]
+        report['target_equilibrium_normalized_error']=abs(float(equilibrium))/.02
+        report['support_reactions']=result.steps[-1].support_reactions
+        report['actuator_reaction_n']=float(np.sum((structural+residual)[
+            [model.mesh.dof_manager.get_node_dofs(n)[2] for n in range(1,7)]]))
+        report['target_support_reaction_n']=float(np.sum((structural+residual)[
+            [model.mesh.dof_manager.get_node_dofs(n)[2] for n in (7,8,10)]]))
+        save()
+        assert abs(equilibrium)/.02<=1e-6
+        assert abs(report['actuator_reaction_n'])>1e-6
+        assert abs(report['target_support_reaction_n'])>1e-6
+        assert abs(report['actuator_reaction_n']+report['target_support_reaction_n'])/.02<=1e-6
+        source_probe=np.zeros(manager.n_dof);target_probe=np.zeros(manager.n_dof)
+        for node in range(1,7):source_probe[model.mesh.dof_manager.get_node_dofs(node)[2]]=1e-6
+        for node in range(7,11):target_probe[model.mesh.dof_manager.get_node_dofs(node)[2]]=1e-6
+        ws=float(residual@source_probe);wt=float(residual@target_probe)
+        source_work=float(residual@(result.displacements*(source_probe!=0)))
+        target_work=float(residual@(result.displacements*(target_probe!=0)))
+        report['both_body_work']=dict(source_virtual_work_j=ws,target_virtual_work_j=wt,
+            common_translation_normalized_error=abs(ws+wt)/(.02*1e-6),
+            source_residual_dot_displacement_j=source_work,target_residual_dot_displacement_j=target_work,
+            interpretation='instantaneous residual work; not path-integrated work or regularization storage')
+        save()
+        assert abs(ws)>1e-12 and abs(wt)>1e-12
+        assert abs(ws+wt)/(.02*1e-6)<=1e-6
+        assert abs(source_work)>1e-12 and abs(target_work)>1e-12
+        np.testing.assert_allclose(ws,-contact_result.integration_force[2]*1e-6,rtol=1e-6,atol=2e-14)
+        np.testing.assert_allclose(wt,-contact_result.target_force[2]*1e-6,rtol=1e-6,atol=2e-14)
+    if stage in ('explicit','resume'):
+        full=json.loads((evidence/full_file).read_text(encoding='utf-8'))
+        assert full['identity']==resolution.identity and full['verified']
+        np.testing.assert_allclose(result.displacements,full['displacements'],rtol=1e-7,atol=1e-9)
+        response_errors={}
+        for key,scale in (('integration_force',.02),('target_force',.02),
+                          ('integration_moment',.02),('target_moment',.02),
+                          ('minimum_gap',5e-5),('regularization_storage_j',2e-7)):
+            error=float(np.linalg.norm(np.asarray(report['contact'][key])-full['contact'][key])/scale)
+            response_errors[key]=error
+            assert error<=1e-6
+        report['normalized_response_parity']=response_errors;save()
+    assert report['checkpoint']
+    report['verified']=True;save()

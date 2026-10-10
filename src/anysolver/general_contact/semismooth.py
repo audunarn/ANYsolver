@@ -1,4 +1,4 @@
-"""Fine-Q1 nodal-force equations for the opt-in static active-set route."""
+"""Nonnegative nodal P1/Q1 force equations for the opt-in static active-set route."""
 
 from __future__ import annotations
 
@@ -17,14 +17,25 @@ class ContactLinearization:
     local_force: np.ndarray
     evaluations: int
     gradient_only_pairs: int = 0
+    force_gradient: np.ndarray | None = None
+    force_pressure_gradient: np.ndarray | None = None
 
 
 def reference_nodal_support(law) -> np.ndarray:
-    """Integrate the full reference source surface's nonnegative Q1 basis."""
+    """Integrate the full reference source surface's nonnegative P1/Q1 basis."""
     node_index = {node: i for i, node in enumerate(law.pressure_mode_ids)}
     support = np.zeros(len(node_index))
     gauss = (-1.0/np.sqrt(3.0), 1.0/np.sqrt(3.0))
     for face in law.geometry.source_faces:
+        if len(face.node_ids) == 3:
+            coordinates = face.reference_positions
+            area = .5*np.linalg.norm(np.cross(coordinates[1]-coordinates[0],
+                                             coordinates[2]-coordinates[0]))
+            if not np.isfinite(area) or area <= 0.:
+                raise ValueError("invalid active-set S3 reference surface")
+            for node in face.node_ids:
+                support[node_index[node]] += area/3.
+            continue
         if len(face.node_ids) != 4:
             raise ValueError("active-set source requires Q4 faces")
         coordinates = face.reference_positions
@@ -47,11 +58,26 @@ def reference_nodal_support(law) -> np.ndarray:
 
 def linearize(manager, displacement, nodal_forces, *, tangent=True):
     """Pull the local unprojected force and all gap rows to structural DOFs."""
+    combined = getattr(manager, "linearize_contact", None)
+    if combined is not None:
+        return combined(displacement, nodal_forces, tangent=tangent)
     source, target = manager._positions(displacement)
     manager.require_d1_coverage(source, target)
     raw = manager.law.nodal_force_linearization(
         source, target, nodal_forces, tangent=tangent,
     )
+    if getattr(manager, "finite_skin", None) is not None:
+        pose = manager.finite_skin.pose(displacement)
+        spin = pose.spin_map; chart = pose.coordinate_map
+        force = np.asarray(spin.T @ raw.residual).reshape(-1)
+        gap_gradient = np.asarray(raw.gap_gradient @ chart)
+        force_gradient = np.asarray(raw.gap_gradient @ spin)
+        stiffness = (sparse.csr_matrix(spin.T @ raw.tangent @ chart)
+                     + manager.finite_skin.spin_force_derivative(pose, raw.residual)
+                     if tangent else None)
+        return ContactLinearization(raw.state, force, stiffness, gap_gradient,
+                                    raw.residual, raw.energy_evaluations,
+                                    raw.gradient_only_pairs, force_gradient)
     force = np.asarray(manager.map.T @ raw.residual).reshape(-1)
     gap_gradient = np.asarray(raw.gap_gradient @ manager.map)
     stiffness = (sparse.csr_matrix(manager.map.T @ raw.tangent @ manager.map)

@@ -1,0 +1,11 @@
+# Source and evidence impact
+
+Baseline checkpointcbc8af4d976e3df07ee75c57750d48e80937b641,629-payload wheel082f9600e99b0daf5c8bda1a49235186b98ea190a4aaff479402f76f704c80e3.
+
+Final immutable V6 wheel11a7fa4221d36b9fac7928051c96f49443f72bbcd29a28a92cd81c06acf6be67,633 payloads:620 identical,9 modified,4 new. Modified payloads: nonlinear_restart, nonlinear_static contact entry, core, s3_patch_static, semismooth, semismooth_path, static_path, transient admission and arc admission. New modules: finite_rotation_skin, finite_rotation_sweep, finite_rotation_predictor, finite_rotation_state. No structural law, generic AD, existing Q4 overlap kernel or enforcement equation was replaced. Parent-owned GENERAL_CONTACT_RESTART.md remains separate.
+
+V1 local work/coupled derivative proof is reused by exact whole-file identity of finite_rotation_skin and exact function-source identity of semismooth.linearize/complementarity and manager.evaluate/_positions. V2 finite sweep proof is reused by exact whole-file identity of finite_rotation_sweep. V6 changes after those proofs concern actual-candidate safety, owner reference cache, control seed, profile/route admission and constitutive checkpoint coordinates; the current installed chain/safety/legacy tests exercise them. CLOSURE.json contains all comparison hashes.
+
+Six immutable development artifacts and failed attempts remain preserved. Final example changes after early source snapshots only add CLI step1 choice, terminal-restart reporting and machine-result emission; build/solve/geometry/program functions are unchanged. Tests appended focused metadata/refusal controls; existing coupled inputs/results are immutable. Final new-input hashes and every output hash are in raw CLOSURE.json. Commands bind each attempt's exact input snapshot, package, harness and bootstrap; runtime records rehash private imports (5313 observations).
+
+The 60-degree force cycle is one fresh-process checkpoint chain, not a separate uninterrupted full-versus-split replay. Its phase and previous-SHA inventory is exact. Active/open restart is demonstrated by real checkpoints13/14 consumed in fresh processes, and terminal restart by the CLI. No claim of an additional unexecuted full-chain comparison is made.

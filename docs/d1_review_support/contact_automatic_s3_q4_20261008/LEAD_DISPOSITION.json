@@ -1,0 +1,26 @@
+{
+  "status": "verified_bounded_development",
+  "independently_accepted": false,
+  "released": false,
+  "scientific_gates_unchanged": true,
+  "historical_evidence_preserved": true,
+  "changed_payloads": [
+    "anysolver/general_contact/core.py",
+    "anysolver/general_contact/s3_patch_static.py",
+    "anysolver/general_contact/transient.py"
+  ],
+  "wheel_sha256": "7f1d5a48c8b2250a67e2f0b375cc9b2dd010eee4d9a1bd793df795c0ed859f0d",
+  "passing_cases": 8,
+  "recorded_jobs": 9,
+  "charged_process_wall_s": 73.08528660002048,
+  "remaining_scoped_s": 166.91471339997952,
+  "payloads_rehashed": 628,
+  "private_imports_rehashed": 2366,
+  "inspection_errors": [],
+  "limits": [
+    "fixed-map small-motion elastic frictionless fixture",
+    "finite-precision swept GAP qualification remains open",
+    "rigorous quadrature,rotation,warped-reference and pressure/spatial qualification remain open",
+    "broader hidden-state and programme acceptance/release remain open"
+  ]
+}

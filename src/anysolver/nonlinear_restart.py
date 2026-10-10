@@ -1139,6 +1139,15 @@ def validate_nonlinear_checkpoint(
         ) from exc
     if payload["analysis_fingerprint"] != observed_analysis_fingerprint:
         raise NonlinearCheckpointError("checkpoint analysis contract is incompatible")
+    finite_local_states = False
+    if (normalized_analysis_contract.get("profile") == "Q4_Q4_COROTATIONAL_NODAL_DIRECTOR_MONOLITHIC_PATH_DEV_V0"
+            or normalized_analysis_contract.get("shell_skin_kinematics") == "corotational_nodal_director_dev"
+            or normalized_analysis_contract.get("element_state_coordinates") == "qualified_q4_corotational_reference_deformational_u_d_v1"):
+        from .general_contact.finite_rotation_state import finite_state_contract
+        try:
+            finite_local_states = finite_state_contract(normalized_analysis_contract)
+        except ValueError as exc:
+            raise NonlinearCheckpointError(str(exc)) from exc
     total_dofs = int(model.mesh.dof_manager.total_dofs)
     if payload["total_dofs"] != total_dofs:
         raise NonlinearCheckpointError("checkpoint DOF count is incompatible")
@@ -1187,6 +1196,8 @@ def validate_nonlinear_checkpoint(
         raise NonlinearCheckpointError("deleted_element_ids must be sorted and unique")
     if not set(deleted).issubset(model_ids):
         raise NonlinearCheckpointError("checkpoint deletion state references missing elements")
+    if finite_local_states and deleted:
+        raise NonlinearCheckpointError("finite shell checkpoint does not admit deleted states")
 
     path_state = payload["path_state"]
     if not isinstance(path_state, dict):
@@ -1375,6 +1386,16 @@ def validate_nonlinear_checkpoint(
 
     for element_id, state in states.items():
         element = model.mesh.elements[element_id]
+        if finite_local_states:
+            from .general_contact.finite_mixed_state import PROFILE as mixed_profile
+            from .e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
+            mixed = normalized_analysis_contract.get('profile') == mixed_profile
+            from .general_contact.finite_v2d_state import PROFILE as v2d_profile
+            v2d_pair=normalized_analysis_contract.get('profile')==v2d_profile
+            allowed = ((NativeParityE4PLS3V2DShellElement,) if v2d_pair else
+                       (QualifiedE4PLShellElement, NativeParityE4PLS3V2DShellElement) if mixed else (QualifiedE4PLShellElement,))
+            if type(element) not in allowed:
+                raise NonlinearCheckpointError("finite shell checkpoint owner does not match its exact profile")
         element_namespace = vars(element)
         raw_material_name = element_namespace.get("material_name")
         if type(raw_material_name) is not str:
@@ -1445,6 +1466,9 @@ def validate_nonlinear_checkpoint(
                         raise ValueError(
                             "noncurrent qualified Q4 state is not continuable"
                         )
+                    if finite_local_states:
+                        from .general_contact.finite_rotation_state import owner_local_coordinates
+                        local_u = owner_local_coordinates(model, element, local_u)
                     QualifiedE4PLShellElement.validate_committed_current_tangent_state(
                         element,
                         model.mesh,
@@ -1510,6 +1534,18 @@ def validate_nonlinear_checkpoint(
             if str(getattr(element, "formulation_id", "")) == (
                 "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1"
             ):
+                if finite_local_states:
+                    from .general_contact.finite_mixed_state import local_coordinates
+                    validated = element.validate_model_bound_nonlinear_state(
+                        model.mesh, material, state, int(num_layers),
+                        expected_committed_total_u=local_u,
+                    )
+                    if (validated['solver_kinematics'] != 'COROTATIONAL'
+                            or not np.array_equal(validated['committed_constitutive_u'],
+                                                  local_coordinates(model, element, local_u))):
+                        raise ValueError('finite V2D checkpoint global/local coordinate identity changed')
+                    normalized_states[element_id] = copy.deepcopy(validated)
+                    continue
                 disposition = (
                     state.get("qualified_s3_activity_disposition")
                     if isinstance(state, Mapping)

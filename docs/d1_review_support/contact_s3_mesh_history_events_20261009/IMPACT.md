@@ -1,0 +1,13 @@
+# Source and evidence impact
+
+Four existing product payloads change (__init__ export, exact subtype/factory lists, static_path exact new-profile branches) and one internal history module is added. Prior644-payload wheel is otherwise byte-identical. No friction return/normal mortar/geometry interval/enforcement/structural law/backend changes. New settings inherit whole-chord geometry guard unchanged. Oldtype/default paths retain programme, profile and settings identity, persistent-state activation and recovery ordering.
+
+SOURCE immutable candidate provides actual4/8 physical equilibria and independent saved-pose gap/force/work/2h directional evidence. First installed V1 artifact continued SOURCE active1 through2/3/4 and matched u/z/full committed friction history exactly. Final V2 artifact differs only at newprofile final publication cancellation observation; authentic V1 open3 checkpoint continues to current recontact4, no reseal. Mechanics/work trajectory reused by this control-only function-level impact, not falsely reported as a fresh whole final-wheel chain.
+
+V1/V2 product snapshots and wheels remain immutable. Tests corrected array comparison, contract/result reporting paths, preserved cap MemoryError and direct oldprofile public-call setup; completed source mechanical checkpoints from reporting-NONPASS remain authenticated and were not replayed. Final public atomic tests prove reached/returned injection sites, reason, input declarations/context/checkpoint and origin restoration. Two selected original legacy friction cases pass installed. No cross-package request-identity preservation claim; request manifests intentionally bind source/package.
+
+Ratio1 protected refusal is a real control-seed geometry limit. Independent Fraction binary-pose predicate shows physical penetration approximately50.354um>50um. It publishes unchanged last valid prefix without a second checkpoint; no accepted terminal comparator or energy-error conclusion. Old historical profile not executed as comparator.
+
+Guarded wall includes two wheel builds and all test/CLI children. Source copying, private wheel unpacking, metadata/audits and document preparation are separate unmeasured metadata operations; no installation/performance savings claim. Full CLOSURE hashes/counts/attempt statuses and metadata review are in raw evidence.
+
+Lead reported saved-artifact review:0 errors,11998 private imports,514 input copies,1111 external bindings and final645-payload parity. Missing runtime is exactly the2 build jobs, whose command/environment/process-wall evidence remains recorded. Supporting source review is development evidence, not engineering acceptance. Saved review `LEAD_INSPECTION.json` is now bound by SHA256 in raw CLOSURE.json.

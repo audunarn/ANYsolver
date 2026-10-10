@@ -1,0 +1,7 @@
+# Impact
+
+Ten existing product payloads changed plus three new friction modules (638 total,625 old payloads unchanged against635 baseline). Changes are exact new-profile admission/export, S3 area/3 fixed-z owner support, optional complete pressure-force derivative, pre-material new friction path, sparse selected-coordinate friction derivative, and pre-commit history/result/restart integration. Existing default settings/normal/fixed-normal profile strings and contracts remain unchanged; old default contract hash and two selected legacy cases actually passed.
+
+V4 installed local math, SOURCEv8 shortening unit and SOURCEv9 actual first press are retained supporting evidence. Final wheel adds distinct new-only PATH label and direct dense-point accepted gap checks; actual final installed partition/proof/safety/rollback/legacy/CLI gates close those affected paths. Source checkpoints were never migrated to the final artifact. Request identities across changed packages are not claimed preserved.
+
+Next useful connected capability is moving-normal multi-facet/partial contact. Its principal dependency is physical slip/work and accepted closure at partially active support plus certified union/facet projection and anchor transitions. Keep the existing hard-normal owner/history stack; do not obtain this capability by replacing physical contact points with normal-ray proxies or dropping positive support modes. Current full-face row is a useful integrated prerequisite, not that remaining C5 pass.

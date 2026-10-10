@@ -5,14 +5,14 @@ ordinary Newmark driver owns the single structural/mass assembly and commits.
 This is an opt-in development profile; verification does not confer acceptance.
 """
 from contextlib import contextmanager
-from dataclasses import dataclass,asdict
+from dataclasses import dataclass
 import numpy as np
 from scipy import sparse
 from anymaterial.isotropic import IsotropicMaterial
 from anysolver.elements import BeamElement,QuadraticBeamElement
 from anysolver.e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
 from anysolver.nonlinear_restart import model_configuration_fingerprint
-from .core import ContactDefinition,ContactSolverSettings
+from .core import ContactDefinition,ContactSolverSettings,_contact_settings_contract
 from .beam_shell import validate_beam_shell_contact
 from .deformable_beam_s3_static import PROFILE as CHILD_PROFILE
 from .beam_s3_transient import BeamS3TransientManager,hermite_gap_bounds
@@ -182,7 +182,7 @@ class MultipleBeamS3TransientManager:
     def restart_contract(self):
         self.guard()
         return dict(profile=PROFILE,revision='COMPLETE_EXPLICIT_PAIR_GLOBAL_WORK_V1',
-            settings=asdict(self.settings),pair_order=[n for n,_ in self.pairs],
+            settings=_contact_settings_contract(self.settings),pair_order=[n for n,_ in self.pairs],
             actual_scalar_beam_operators=_beam_operator_binding(self.model),
             pairs=[{'name':n,'contact':c.restart_contract()} for n,c in self.pairs],
             shared_coordinate_policy='ONE_GLOBAL_STRUCTURAL_MASS_ORIGIN',

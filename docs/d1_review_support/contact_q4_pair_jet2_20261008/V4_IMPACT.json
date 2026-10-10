@@ -1,0 +1,29 @@
+{
+  "v1": "41696e952dfe89fadc99d608d6f5676497e56e4f3df778b7690f7d97c23a3e0f",
+  "v2": "313679114da4069b821d10ccc997aa42ee71102dfb37bdcee50cceb72cc51aa6",
+  "final_v4": "4aa744ab969b2c5818f129b3c028a519052c358236879529c1a100c1795ac0a8",
+  "v2_v4_delta": [
+    "anysolver/general_contact/arc_contact.py"
+  ],
+  "unchanged_v2_payloads": 627,
+  "source_candidate_wheel_private_exact_for_all_changed_payloads": true,
+  "baseline_existing_changed": [
+    "anysolver/general_contact/arc_contact.py",
+    "anysolver/general_contact/core.py",
+    "anysolver/general_contact/s3_patch_augmented.py",
+    "anysolver/general_contact/s3_patch_mortar_energy.py",
+    "anysolver/general_contact/s3_patch_static.py",
+    "anysolver/general_contact/static_path.py",
+    "anysolver/general_contact/transient.py"
+  ],
+  "baseline_added": [
+    "anysolver/general_contact/q4_q4_overlap_derivatives.py"
+  ],
+  "reused": {
+    "local_proof": "V1 unit-proof; math/mortar7payloads identicalV4",
+    "static": "V2 full/explicit/prefix/freshresume/refusal; all static/contributor/controller/compiler payloads identicalV4",
+    "transient": "V2 genuinelegacy-valid publicmulti-beam refusal; transientpayload identicalV4"
+  },
+  "superseded_v3": "Built immutable candidate before late existing selector family review; no install/tests. Preserved wheel/build evidence.",
+  "v2_arc": "Original safety NONPASS retained. V2 all unused arc selector claim UNMET; V4 focused actual public refusal closes it if final recorded job passes."
+}

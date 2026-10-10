@@ -1,0 +1,57 @@
+# S3 physical-side orientation development outcome
+
+Delivered the unchanged physically equivalent **+z/coarser-lower** automatic S3 press/20mm actuator slide/open/recontact input through the ordinary static driver. Matched -z input, explicit same-role response, separation prefix and fresh restart for **both** declarations, selector/provenance/predictor/tamper refusal, unused-route/friction/precancel and installed public example are verified. This is bounded development evidence; lead acceptance remains separate.
+
+## Candidate and mechanics
+
+ContactSolverSettings appends shell_pair_orientation: legacy (default) or physical_sides_dev. Only the existing refined elastic S3-V2D projected-penalty / Jet2 / whole-face / nested / fixed-map frictionless contact_path admits the opt-in. The patch contributor itself rejects augmented mode, not just core validation. Unsupported/unused standard static routes refuse before driver evaluation. The initial V1 all-transient claim was incomplete: direct multiple-beam transient admission bypassed core. The V2 admission repair and actual public refusal below close that concrete branch before all transient branches. No Q4, beam/native mechanics, pressure law, residual/tangent, gap tolerance, structural element/director/offset, or automatic coarser-role rule changed.
+
+For each reference face, let role r=-1(source),+1(target), side sigma=-1(bottom),+1(top), and physical reference director d. The contact chart must align with r*sigma*d. If the reference raw corner normal has opposite sign, exchange local corners1/2 once, applying the **same permutation** to material node IDs, reference positions and three work-map rows per node. Zero/unresolved reference alignment fails. Element/body feature IDs, physical sides and authoritative structural DOFs remain unchanged. Moving normals follow that fixed reference chart; there is no current-pose sign choice or normal flip. Existing mutual chart, physical-side, directed reference-gap and whole-path admission checks remain active.
+
+For P the physical row permutation, x'=Px and W'=PW. P1 hats/pressure modes remain attached to the same material node IDs. When comparing the **same canonical directed physical chart and material-node mapping**, f'=Pf and K'=P*K*P^T imply W'^T*f'=W^T*f and W'^T*K'*W'=W^T*K*W. This does not establish equivalence to an invalid reversed-normal legacy chart. Structural polarity equivalence is demonstrated only for the exercised guided fixture, not inferred from contact covariance.
+
+## Frozen physical fixture and criteria
+
+Reuse prior six upper nodes/four S3 triangles, two lower S3 triangles, E100000Pa/nu.3/thickness.05m. +z upper physical bottom and lower physical top with offset+.01 retain the physical skins at z=.03/.015m; the matching -z declarations use upper top and lower bottom with offset-.01. Physical node-aligned skin positions/work maps match. Lower median face area.5m^2 versus upper.25m^2 selects lower pressure integration side, with pressure IDs[7,8,9,10]. Lower9uz is an actual equilibrium unknown; upper alluz are tied to actuator1uz and other five upperux remain unknowns. Only actuator1ux is prescribed20mm; other upperux are gated above10mm.
+
+Same path (ux,uz)m: (0,0),(0,-.015005),(.02,-.015005),(.02,0),(.02,-.015005), one increment/segment. k1000Pa/m, gap50um, control_projection_dev, force/moment scales.02N/.02Nm, normalized equilibrium/wrench<=1e-6, directional tangent<=1e-5, displacement/response parity and strict positive independent opening criteria are retained. Full/explicit inventories4; separated prefixes3; fresh resumes1. Activation pattern is active/active/open/active, opening has zero pressure/storage and free lower return~0.
+
+## Independent proof and actual checks
+
+For every pair and accepted pose, the reused independent Fraction oracle constructs physical binary positions from declared skins, requires fixed rotations/lowerxy and horizontal upper height, projects upper triangles orthogonally onto lower source planes, clips clockwise triangles exactly in XY and lifts overlap vertices. With oriented normal N, Nz<0, the gap is C*sqrt(N.N), C=(pz-upperz)/Nz. Negative admission is exact C^2*(N.N)<=Fraction(50um)^2 and strict opening C>0 at all vertices. Scalar support and weighted-gap P1 integrals use exact polynomial triangle formulas. XY shoelace is reference/projected-XY measure, not tilted physical area. Radical values are approximate display only.
+
+The installed initial two-case discriminator checks canonical +/- material/node/work maps, independent scalar gap/support/work, full contact force-vector and tangent-action parity, and both-body directional FD at2h. Four directional errors (both declarations) are3.96e-11/1.19e-10, below1e-5. Sixteen scalar pair comparisons match production support within2.46e-17m^2 and weighted gap within5.44e-20m^3. Endpoint-beyond-limit path refusal is checked; it is not a new through-crossing qualification. The default preserves historical automatic identity and actually reads the old legacy terminal checkpoint; direct augmented constructor, ignored option, friction and public precancel refuse correctly.
+
+Actual +/- full phases match pressure-node ordering and contact response within2.91e-15 normalized (required1e-6); independent gaps are~-5um in active poses and strictly positive15mm on opening. Lower source normalXY squared~5.69e-10 shows genuine tilt. Actual lower9uz~-16.6861um at recontact; both physical bodies' instantaneous residual work and actuator/support reactions are nonzero and balanced. All-free equilibrium errors5.86424e-9(+z)/5.86439e-9(-z), below1e-6. Explicit and fresh resumes match endpoints/per-phase response. Existing projected_weak_gap_nonpotential_v1 storage/work distinction is retained.
+
+One test-only failure is preserved: the **completed** minus separated prefix was compared to plus full recontact at the final parity assertion. The correction uses the saved exact minus result and matching plus separated prefix, binds original result/source hashes, proves phase3 parity and retains the identical authenticated minus checkpoint. Fresh actual minus resume consumes that corrective artifact and compares identity against its newly constructed -z fixture. No solver replay, checkpoint mutation, physics/tolerance adjustment or failure erasure occurred. Original failed result remains outputs/prefix-minus.json; corrective result outputs/parity-repair.json; checkpointSHA11C22ACEEB2BEC1EAF99FDC0BCFFF346708187246FB5DB0A6386EADD2A0200FB.
+
+## Compatibility, evidence and limits
+
+The shared settings-contract helper omits only default legacy, so automatic and used wholesale manager serializers preserve historical bytes; nondefault selector binds automatic, manager and path restart, and executed result.info['contact_path'] reports it. Selector continuation mismatch is tested on the same -z physical model. The raw request identity still binds current package/settings and may change; no historical raw request-hash claim is made. Existing Q4/beam/kernel/geometry-bound evidence is reused by four-file source impact; the legacy branch returns its original adapters. No broad suite is claimed.
+
+V1 static source files: core.py, s3_patch_static.py, static_path.py and nonlinear_static.py; new example/test/this guide. Supporting source scrutiny is recorded in SUPPORTING_REVIEW_20261008.md (same-family supporting review, not engineering acceptance). All defaults/old tests and prior artifacts remain protected.
+
+Raw root C:/ANYworkspaceWork/contact_s3_physical_orientation_20261008: prospective note/checkpoints, immutable632input candidate,627payload wheel/private site, exact commands/source/oldbaseline snapshots and hashes, complete stdout/stderr/JUnit/results/runtime/RSS, ledger and CLOSURE.json. V1 wheelSHA efc5ca28dcf9866f74f7506c3e42ad703783ba9b52bb01920ec32e3a57cc1112.V1:13 serial jobs,11 passing cases plus actual CLI,1 retained test failure. V1 used77.14429509999172/360 process seconds,282.8557049000083remaining. Max11.554164s/job, peak194.27MiB; JIToff/Numba1/pools1/private imports verified. Final60 reserve released by lead after scalar/coupled review; old budgets unchanged, no active job.
+
+Use installed site on PYTHONPATH with JIT disabled and pools1:
+
+```powershell
+$env:PYTHONPATH='C:/ANYworkspaceWork/contact_s3_physical_orientation_20261008/candidate-v2/site'
+$env:NUMBA_DISABLE_JIT='1'; $env:NUMBA_NUM_THREADS='1'
+$env:OMP_NUM_THREADS='1'; $env:OPENBLAS_NUM_THREADS='1'; $env:MKL_NUM_THREADS='1'
+C:/Python/Python314/python.exe examples/general_contact_s3_physical_orientation.py
+```
+
+Existing S3 swept128eps and unenclosed midpoint arithmetic remain development confidence limits; no directed finiteprecision/D1 mapped-path qualification is asserted. Refusal/precancel compare declared FEModel repr fields, not a full hidden-state audit. No generic director polarity, arbitrary finite rotation, friction/native, finite-mesh role-exchange equivalence or release claim.
+
+
+## Late V2 transient admission repair and final artifact
+
+Lead found a concrete unused-route gap after V1: allow_multiple_deformable_beam_s3_dev called pair_definitions/beam-shell validation directly and could ignore shell_pair_orientation. V1's all-transient refusal claim was UNMET on that route, even though all static/scalar/lifecycle/restart results remain valid. The original guide is retained with a hash in raw v1-guide-before-transient-admission-repair.md; V1 CLOSURE/wheel/results remain unchanged.
+
+Fifth product file transient.py now rejects nonlegacy shell_pair_orientation at _admit before every branch, once definition/settings have the exact required types. Existing wrong-type paths and legacy defaults remain unchanged. No transient mechanics changed. A focused installed actual solve_transient_contact test selects the real legacy-valid two-beam/shared-S3 fixture, confirms its old profile and wrong-type contracts, then traps pair inventory, manager construction and boundary-condition mutation. The named selector refusal occurs before all traps; visible model repr remains unchanged. This is actual public caller ordering evidence, not a helper-only pass. Lead inspected and adopted the narrow source/test delta; the existing supporting report is the V1 four-file review and this paragraph records its late disposition.
+
+One isolated V2 build/install, public-refusal check and actual current CLI passed (11.928608199988957s /9.487564399998519s /4.122001399999135s). Of627 payloads, **only** anysolver/general_contact/transient.py differs from V1; all626 other payloads, including the four static/contributor payloads, are byte-identical. V2-IMPACT.json links original immutable static evidence to their identical hashes. No static suite/full solve was replayed for artifact churn; the actual V2 CLI confirms the public current-artifact workflow.
+
+Final wheelSHA f4b187163458ca9c046a615e4b818fb2bd3044c61890f75474db96593875bbe1, private site C:/ANYworkspaceWork/contact_s3_physical_orientation_20261008/candidate-v2/site. The usage command above points to that final site. Aggregate16 jobs,12 passing case invocations plus two actual CLI runs,1 retained phase-comparison failure; exact102.68246909997833/360 process seconds consumed,257.31753090002167remain. JIToff/Numba1/pools1/private imports/953MiB caps preserved, no active job and no old-budget pooling. Final evidence V2-CLOSURE.json and V2-IMPACT.json; all V1 confidence limits and lead-acceptance separation remain.

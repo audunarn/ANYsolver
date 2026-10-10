@@ -1,0 +1,11 @@
+# Measured contributor and candidate
+Baseline1 process39.5021689s,route37.4355803s; local84Q4Jet2calls27.090417s dominate.
+Saved actual endpoint pair cProfile.286s:140inverse calls.158s,980maps.137s,18811Jet2 multiplications.199s/30588outerallocations.
+One candidate: vectorize unchanged seven samples with EXISTING _BJet implementation, same full24 gradients/Hessians. Perpoint Newton convergence freeze, same numeric initial2x2solves, original Q1 maps/normals/pointwiseJref, sequential point/node accumulation and unchanged adaptivecontrol comparisons. No cache/backend/geometry/physics change. Only q4_q4_overlap_derivatives.py product.
+First profile setup importNONPASS retained, corrected to derive exact controls fromsettings; proofvalues unaffected.
+Before/after use same coarse counters, separate cProfile job not pooled into benchmark. Two complete baseline and candidate routes, parity1e-13/branches/subdivisions, independentproof, installed full/explicit/separatedrestart/refusal/CLI. DEV360/60protected, no otherpurses.
+
+## Executed source proof and measurement
+One changed payload q4_q4_overlap_derivatives.py, no cache. Candidate wheel5d3a46fc75586a864a802037ba32e58bade5a51e6100e5b1d2b51ee382bb1407;629payloads. All local value/gradient/Hessian fields bit identical on rectangle/nonaffine reference/warpedcurrent; branches and cell counts identical. Actual fullmanager residual/tangent bit identical. Independent scalar/Fraction/sharedsum/crossface/two-hdirectional test passes; tangent2.5538921377757292e-11/6.064267348798083e-11. Perpoint convergence mask freezes original Newton solution, final output ownership copies arrays, no retained candidate cache.
+Two baseline/two candidate routes pass: process medians40.75094485→19.01144270s; samecoarse-timer route medians38.517467→16.8875323s. Full values/spreads/component counts in MEASUREMENT.json. cProfile job excluded. Stale earlier29s is not a comparison.
+Preserved profile setup importNONPASS and mathematically passing first parity whose private-runtime guard NONPASSed deliberate baselinepeer namespace; repaired metadata isolation binds peer source/hash/wheel explicitly, focused runtime gate passes. Product unchanged by these repairs. Baseline package immutable; current private imports exclusive except deliberately separate peer module test.

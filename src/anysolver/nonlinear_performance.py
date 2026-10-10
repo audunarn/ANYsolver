@@ -157,6 +157,49 @@ def _scatter_sum(values: np.ndarray, positions: np.ndarray, output_size: int) ->
     return result
 
 
+def _scatter_sum_python_ordered(
+    values: np.ndarray, positions: np.ndarray, output_size: int
+) -> np.ndarray:
+    """Unbuffered binary64 additions in original order for owned flat buffers.
+
+    ``add.at`` handles duplicate indices without regrouping their additions.
+    Other layouts retain the original kernel, including its error behavior.
+    This helper is selected only for exact generic Beam plans with JIT disabled.
+    """
+    if (
+        type(values) is not np.ndarray
+        or values.dtype != np.dtype(np.float64)
+        or values.ndim != 1
+        or type(positions) is not np.ndarray
+        or positions.ndim != 1
+        or positions.dtype != np.dtype(np.intp)
+        or positions.shape != values.shape
+        or type(output_size) is not int
+        or output_size < 0
+    ):
+        return _scatter_sum(values, positions, output_size)
+    result = np.zeros(output_size, dtype=np.float64)
+    np.add.at(result, positions, values)
+    return result
+
+
+def _generic_beam_scatter_kernel(plan: "NonlinearAssemblyPlan") -> Any:
+    """Select a layout-only optimization, without caching model eligibility."""
+    import sys
+    from .elements import BeamElement
+
+    numba = sys.modules.get("numba")
+    if (
+        bool(getattr(getattr(numba, "config", None), "DISABLE_JIT", False))
+        and not plan.shell_batches
+        and not plan.quadratic_beam_batches
+        and plan.non_shell_elements
+        and all(type(record.element) is BeamElement for record in plan.non_shell_elements)
+    ):
+        return _scatter_sum_python_ordered
+    return _scatter_sum
+
+
 def _revision_tuple(mesh: "FEMesh") -> Tuple[int, ...]:
     revisions = getattr(mesh, "revision_signature", lambda: {})()
     return tuple(

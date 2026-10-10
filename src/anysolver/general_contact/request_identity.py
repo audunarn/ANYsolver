@@ -21,7 +21,11 @@ from ..nonlinear_restart import (
     canonical_checkpoint_json_bytes, load_nonlinear_checkpoint,
     model_configuration_fingerprint, load_case_descriptor,
 )
-from .core import ContactDefinition, ContactSolverSettings, validate_general_contact
+from .core import (ContactDefinition, ContactSolverSettings, validate_general_contact,
+                   _Q4_SOURCE_OVERLAP_DUAL_REVISION,
+                   _CONTACT_PATH_PHYSICAL_SUBSTEPS_REVISION,
+                   _INITIAL_CONTACT_SEED_REVISION,
+                   _INITIAL_CONTACT_SEED_GLOBALIZATION_REVISION)
 from .static_path import ContactPathProgram, _program_from_dead_nodal_load_case
 
 
@@ -111,7 +115,8 @@ def identify_general_contact_request(
             or not np.isfinite(tolerance) or tolerance <= 0.):
         raise ContactRequestIdentityError("invalid_controls", "finite explicit static solve controls required")
     _guard(model, context="contact request before observation")
-    validation = validate_general_contact(model, definition, settings)
+    validation = validate_general_contact(model, definition, settings,
+        analysis_control="contact_path" if contact_path_program is not None else "force")
     if not validation.valid:
         raise ContactRequestIdentityError("unsupported_profile", "; ".join(validation.issues))
     if contact_path_program is not None:
@@ -127,6 +132,19 @@ def identify_general_contact_request(
     checkpoint = None if restart_checkpoint is None else load_nonlinear_checkpoint(
         restart_checkpoint, _exact_guard=_guard, _guard_model=model)
     files = _package_manifest()
+    settings_record = asdict(settings)
+    if settings_record.get('q4_source_overlap_dual_dev') is False:
+        settings_record.pop('q4_source_overlap_dual_dev')
+    if settings_record.get('initial_contact_seed') == 'none':
+        # Default-none keeps the exact legacy serialized request shape.
+        settings_record.pop('initial_contact_seed')
+    if settings_record.get('path_continuation_maximum_halvings') == 0:
+        # Explicit OFF omits the whole continuation block so prior
+        # serialized request identities keep their exact shape.
+        for name in ('path_continuation_maximum_halvings',
+                     'path_stagnation_patience', 'path_stagnation_fraction',
+                     'path_stagnation_merit_rate'):
+            settings_record.pop(name, None)
     request = {
         "schema": "ANYSOLVER_STATIC_CONTACT_REQUEST_V1",
         "solver_package_files": files,
@@ -134,7 +152,18 @@ def identify_general_contact_request(
         "runtime": {"python": platform.python_version(), "numpy": np.__version__,
                     "scipy": scipy.__version__},
         "model_fingerprint": model_configuration_fingerprint(model, _exact_guard=_guard),
-        "definition": asdict(definition), "settings": asdict(settings),
+        "definition": asdict(definition), "settings": settings_record,
+        **({'contact_numerical_method_revision':_Q4_SOURCE_OVERLAP_DUAL_REVISION}
+           if settings.q4_source_overlap_dual_dev else {}),
+        **({'contact_path_continuation_revision':
+            _CONTACT_PATH_PHYSICAL_SUBSTEPS_REVISION}
+           if settings.path_continuation_maximum_halvings else {}),
+        **({'contact_initial_seed_revision': (
+               _INITIAL_CONTACT_SEED_GLOBALIZATION_REVISION
+               if settings.initial_contact_seed ==
+               'linearized_kkt_merit_globalization_dev'
+               else _INITIAL_CONTACT_SEED_REVISION)}
+           if settings.initial_contact_seed != 'none' else {}),
         "implemented_profile": validation.profile, "loading": loading,
         "solve_controls": {"max_load_factor": max_load_factor,
                            "max_iterations": max_iterations, "tolerance": tolerance,

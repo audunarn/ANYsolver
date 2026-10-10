@@ -102,6 +102,58 @@ class PreparedS3PlanePressurePath:
         result=np.empty_like(pressure);result[:,self.indices]=pressure
         return result
 
+    def _uniform_partial_pressure(self,source,target,corners,normal,origin):
+        """Exact constant-gap P1 recovery on this certified affine disk.
+
+        For a uniform gap, each nonzero nodal support moment cancels from
+        its pressure quotient. Keep the ordinary projected polygon clipping
+        and shape admission and prove positive P1 support before cancellation.
+        The path certificate already proves the target
+        disk's orientation and convexity throughout this immutable segment.
+        """
+        from .overlap import PlanarFace,_to_frame,_signed_area,_clip_convex
+        positions=source[np.asarray(self.indices)]
+        # The exact path certificate supplements, rather than replaces, the
+        # ordinary current floating finite/area/convexity cutoffs.
+        PlanarFace((1,1),positions)
+        for element,triangle in corners.items():PlanarFace((2,int(element)),triangle)
+        gaps=(positions-origin)@normal
+        cross=np.cross(positions[1]-positions[0],positions[2]-positions[0])
+        if (not np.all(gaps==gaps[0]) or
+                not np.array_equal(cross/np.linalg.norm(cross),normal) or
+                np.any((target-origin)@normal!=0.)):
+            return None
+        tangent=positions[1]-positions[0];tangent/=np.linalg.norm(tangent)
+        binormal=np.cross(normal,tangent);base=positions[0]
+        source_xy=_to_frame(positions,base,tangent,binormal)
+        source_inverse=np.linalg.inv((source_xy[1:]-source_xy[0]).T)
+        support=np.zeros(3)
+        for triangle in corners.values():
+            target_xy=_to_frame(triangle,base,tangent,binormal)
+            clip=target_xy if _signed_area(target_xy)>=0 else target_xy[::-1]
+            span=max(float(np.max(np.linalg.norm(source_xy-source_xy[0],axis=1))),
+                     float(np.max(np.linalg.norm(target_xy-target_xy[0],axis=1))))
+            length=1e-12*span
+            polygon=_clip_convex(source_xy,clip,length*span,length)
+            if len(polygon)<3 or abs(_signed_area(polygon))<=length*length:continue
+            shapes=[]
+            for xy,inverse in ((source_xy,source_inverse),
+                    (target_xy,np.linalg.inv((target_xy[1:]-target_xy[0]).T))):
+                bary=(polygon-xy[0])@inverse.T
+                shape=np.c_[1-bary.sum(axis=1),bary]
+                if (not np.all(np.isfinite(shape)) or np.min(shape)<-1e-8
+                        or np.max(abs(shape.sum(axis=1)-1))>1e-9):return None
+                shapes.append(shape)
+            for j in range(1,len(polygon)-1):
+                triangle=polygon[[0,j,j+1]]
+                area=abs(_signed_area(triangle))
+                support+=area*shapes[0][[0,j,j+1]].sum(axis=0)/3
+        result=np.zeros(len(source))
+        if np.any(support):
+            if np.any(support<=0) or not np.all(np.isfinite(support)):return None
+            result[np.asarray(self.indices)]=self.stiffness*max(-float(gaps[0]),0.)
+        return result
+
     def frames(self,fractions):
         """Small disposable batches; no quadrature domains or physical state."""
         t=np.asarray(fractions,dtype=float)
@@ -124,8 +176,14 @@ class PreparedS3PlanePressurePath:
             physical=[a+t[:,None,None]*(b-a) for a,b in zip(self.position_first,self.position_last)]
             pressure=[]
             for i in range(len(t)):
-                values=self.owner._partial_planar_pressure(physical[0][i],physical[1][i],
-                    {e:c[i] for e,c in targets.items()},normal[i],initial[i,0])
+                corners={e:c[i] for e,c in targets.items()}
+                values=self._uniform_partial_pressure(physical[0][i],physical[1][i],
+                    corners,normal[i],initial[i,0])
+                if values is None:
+                    values=self.owner._partial_planar_pressure(physical[0][i],physical[1][i],
+                        corners,normal[i],initial[i,0])
+                else:
+                    self.owner.prepared_uniform_pressure_samples+=1
                 pressure.append(values)
         frames=[]
         for i in range(len(t)):

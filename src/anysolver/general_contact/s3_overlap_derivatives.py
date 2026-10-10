@@ -124,6 +124,7 @@ def _triangle(points: np.ndarray, label: str) -> np.ndarray:
 def s3_overlap_derivatives(
     reference_source: np.ndarray, current_source: np.ndarray,
     current_target: np.ndarray, *, relative_branch_tolerance: float = 1e-10,
+    stable_plane_gap: bool = False,
 ) -> S3OverlapDerivatives:
     """Integrate P1 source support and normal gap on a fixed smooth branch.
 
@@ -179,11 +180,17 @@ def s3_overlap_derivatives(
     weighted_gap = [Jet2.constant(0, 18) for _ in range(3)]
     source_shapes = [_barycentric(source_xy, point) for point in polygon]
     gaps: list[Jet2] = []
-    for point in polygon:
-        target_shape = _barycentric(target_xy, point)
-        target_point = [sum((target_shape[j]*t[j][k] for j in range(3)),
-                            start=Jet2.constant(0, 18)) for k in range(3)]
-        gaps.append(_dot(_sub(s[0], target_point), normal))
+    if stable_plane_gap:
+        from .s3_stable_plane_gap import stable_corner_gap_jets
+        corner_gaps=stable_corner_gap_jets(s,t,source,target)
+        gaps=[sum((shape[j]*corner_gaps[j] for j in range(3)),
+                  start=Jet2.constant(0,18)) for shape in source_shapes]
+    else:
+        for point in polygon:
+            target_shape = _barycentric(target_xy, point)
+            target_point = [sum((target_shape[j]*t[j][k] for j in range(3)),
+                                start=Jet2.constant(0, 18)) for k in range(3)]
+            gaps.append(_dot(_sub(s[0], target_point), normal))
     for i in range(1, len(polygon)-1):
         indices = (0, i, i+1)
         area = _cross2(_xy_sub(polygon[i], polygon[0]),

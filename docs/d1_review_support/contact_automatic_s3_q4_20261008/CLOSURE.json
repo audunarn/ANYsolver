@@ -1,0 +1,69 @@
+{
+  "state": "verified_against_assigned_bounded_development_criteria; lead_acceptance_pending",
+  "scope": "AUTOMATIC_S3_Q4_DEV240",
+  "used_s": 73.08528660002048,
+  "remaining_s": 166.91471339997952,
+  "attempts": 9,
+  "counts": {
+    "tests": 8,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "passing_case_invocations": 8,
+  "retained_failures": [],
+  "private_import_records": 2366,
+  "maximum_process_wall_s": 12.974855399996159,
+  "maximum_process_tree_rss_mib": 194.45703125,
+  "wheel_sha256": "7f1d5a48c8b2250a67e2f0b375cc9b2dd010eee4d9a1bd793df795c0ed859f0d",
+  "wheel": "C:\\ANYworkspaceWork\\contact_automatic_s3_q4_20261008\\candidate\\wheel\\anysolver-0.4.7-py3-none-any.whl",
+  "payload_count": 628,
+  "changed_product_payloads": [
+    "anysolver/general_contact/core.py",
+    "anysolver/general_contact/s3_patch_static.py",
+    "anysolver/general_contact/transient.py"
+  ],
+  "unaffected_payloads": 625,
+  "actual_public_CLI": true,
+  "exact_snapshot_inventory": {
+    "full": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "explicit": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "prefix": [
+      1,
+      2,
+      3
+    ],
+    "resume": [
+      4
+    ]
+  },
+  "safety": "2 passing JUnit cases+immutable source: actual multi-beam predictor refusal before inventory/manager/BC,wrongtypes; final safetyJSON is second default/legacy-identity/map-error/physical-skin/precancel/friction/force refusal case",
+  "limits": [
+    "fixed-map planar-reference small-motion frictionless development only",
+    "map-error wiring is not full finite-precision swept qualification",
+    "binary accepted-pose oracle is not complete reference-map roundoff enclosure",
+    "adaptive quadrature differences are measured controls",
+    "finite rotations/warped references/refinement-stability/role-exchange/general deformable qualification remainopen",
+    "declared FEModelrepr/early allocation traps are not full hidden transaction proof",
+    "same-family supporting review; no engineering acceptance/release"
+  ],
+  "CLI_result_recovery": {
+    "source_stdout": "C:\\ANYworkspaceWork\\contact_automatic_s3_q4_20261008\\attempt-09-example\\stdout.txt",
+    "source_stdout_sha256": "558a82f59cfc14d167921f6baad62d0fd5fea8dde5f9f1b586ab868c92d5670e",
+    "attempt_result_sha256": "6dd55b02e504033f184162c2637bee415d18249de1c907ed94c47781ddd6e5d9",
+    "recovered_machine_result": "outputs/example.json",
+    "recovered_sha256": "27663022ed66ebabc5dc65a8d5c6f30c77234aa084d4f7653b31ca604fb9c587",
+    "interpretation": "Parsed existing recorded CLI stdout; no rerun"
+  },
+  "supporting_review": "SUPPORTING_REVIEW_20261008.md; no concrete defect within bounded development; acceptance/release false"
+}

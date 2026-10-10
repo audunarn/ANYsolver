@@ -1,0 +1,26 @@
+# Automatic S3 pair: supporting source review (2026-10-08)
+
+Scope: read-only review of the S3 predictor eligibility and the new example/test source. This is OpenAI same-family supporting scrutiny. No numerical checks were run, and this is not an independent engineering assessment or acceptance.
+
+## Findings
+
+- **Physical orientation and eligibility: no defect found.** The lower contact source uses clockwise S3 corners and director −z, with `bottom` offset −0.025 − (−0.01) = −0.015 along that director, placing its skin at z = +0.015. The upper target uses `top` offset +0.025 along −z, placing its skin at z = 0.030. The lower source normal points −z, so its reference signed source-minus-target gap is +0.015 m. See `examples/general_contact_automatic_s3_pair.py:20-45`, `src/anysolver/general_contact/s3_skin_work.py:34-45`, and `src/anysolver/general_contact/s3_patch_static.py:396-415`. `src/anysolver/general_contact/core.py:605-622` admits the predictor only after the validated S3 projected-penalty profile, Jet2 S3, whole-face gap route, nested enforcement and absence of rigid bodies; `src/anysolver/general_contact/s3_patch_static.py:277-286,325-355` validates that profile. The historical +z orientation is deliberately refused for this lower-source role (`tests/test_general_contact_automatic_s3_pair.py:288-299`), despite the test showing equal physical fixed work maps under the side/order representation change. That equality does not establish body-role exchange equivalence.
+
+- **Tilted accepted-pose oracle: algebra sound under its guards.** For raw lower normal `N` with `N_z < 0`, each upper target vertex is orthogonally projected to the lower source plane using rational `(q−s₀)·N/(N·N)`. Clipping the projected clockwise triangle against the source clockwise triangle in xy is valid because xy is a one-to-one chart when `N_z < 0`. At a clipped source point `p`, `C=(p_z−z_upper)/N_z` and the source unit-normal gap is `C√(N·N)`. The exact negative-gap criterion `C²(N·N) ≤ tolerance²` when `C < 0`, and `C > 0` for strict opening, are correct (`tests/test_general_contact_automatic_s3_pair.py:27-78,184-202`). The oracle checks zero rotations/uy, lower ux, upper per-face constant height, normal sign, positive pair overlap, exact snapshot inventory, nonzero source tilt and strict open pose. It explicitly labels the rounded radical as display only and its result as a stored-binary-pose check, not swept/map-error qualification.
+
+- **P1 scalar integration: no defect found.** On each clipped fan triangle of projected xy area `A`, the rational shape functions `h_i` and rational gap coefficient `C` are affine. The code uses `∫h_i=A Σh_i/3` and `∫h_i C=A[(Σh_i)(ΣC)+Σ(h_i C_i)]/12`; multiplying the latter by `√(N·N)` yields the source-normal weighted gap (`tests/test_general_contact_automatic_s3_pair.py:53-71`). Lower source xy is fixed by the fixture, so the current-plane area factor `√(N·N)/|N_z|` cancels the production reference/current source-area ratio, leaving xy shoelace as the reference support measure (`src/anysolver/general_contact/s3_overlap_derivatives.py:141,176-186`). `tests/test_general_contact_automatic_s3_pair.py:318-332` compares the positive-overlap pair support and weighted gap with that production kernel at the same tilted pose. The field is correctly named `projected_xy_reference_area_m2`; the radical display is explicitly approximate.
+
+- **Low: report role labels remain reversed.** `tests/test_general_contact_automatic_s3_pair.py:118-120` still describes z = 0.055 and offset −0.025 as `source`, and z = 0.0 with +0.015 as `target`; the automatic contact source is the lower body. The `source_x` and `all_source_lateral_motion_min_m` labels likewise refer to upper actuator nodes (`tests/test_general_contact_automatic_s3_pair.py:115,178-181`). The checks themselves apply to the intended nodes. Relabel metadata so downstream readers do not infer the wrong integration side.
+
+## Confidence boundary
+
+The independent Fraction oracle covers accepted stored binary poses and positive-overlap scalar pair integrals. It does not enclose full sparse work-map rounding or every Newton trial. The S3 whole-face swept path uses float midpoint/normal controls and a 128ε heuristic, with no directed endpoint-error propagation on that route (`src/anysolver/general_contact/s3_pair_static.py:133-169`; `src/anysolver/general_contact/s3_patch_static.py:883-889,1027-1052`). A formal finite-precision swept qualification would need an independent enclosure of the actual mapped trial path. The unsafe-path check at `tests/test_general_contact_automatic_s3_pair.py:338-342` ends beyond the gap limit and demonstrates endpoint refusal; it does not isolate an interior crossing with admissible endpoints.
+
+## Lead closure disposition
+
+Reviewed exact private evidence:9 passing cases plus CLI;627 payloads and2639
+imports rehashed, only core.py changed, zero discrepancies.64.44131170000765s
+charged, no active job. Role-label repair is prospective in source; original
+reports retained with METADATA_ERRATUM.json. Supporting review findings resolved
+without rerunning unaffected mechanics. The recorded swept/polarity limitations
+remain. This is development verification, not independent engineering acceptance.

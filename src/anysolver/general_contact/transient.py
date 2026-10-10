@@ -1204,6 +1204,24 @@ def _admit_free_shell_coordinates(model, transformation, prescribed):
 
 def _admit(model, definition: ContactDefinition, settings: ContactSolverSettings,
            controls: ContactTransientSolverControls) -> str:
+    if (type(definition) is ContactDefinition and type(settings) is ContactSolverSettings
+            and settings.finite_frame_seed != 'common_reference_frame_dev'):
+        raise ValueError('finite_frame_seed requires contact_path_program; unsupported in transient contact')
+    if (type(definition) is ContactDefinition and type(settings) is ContactSolverSettings
+            and settings.shell_skin_kinematics != "reference_linear"):
+        raise ValueError("shell_skin_kinematics requires contact_path_program; unsupported in transient contact")
+    # Every transient route, including direct multi-beam admission, must
+    # reject the static-only selector before inventory/manager allocation.
+    # Preserve each existing wrong-type admission contract.
+    if (type(definition) is ContactDefinition and type(settings) is ContactSolverSettings
+            and settings.path_predictor != "none"):
+        raise ValueError("path_predictor requires contact_path_program; unsupported in transient contact")
+    if (type(definition) is ContactDefinition and type(settings) is ContactSolverSettings
+            and settings.general_s3_differentiation == "jet2_q4_q4_dev"):
+        raise ValueError("jet2_q4_q4_dev is unsupported in transient contact")
+    if (type(definition) is ContactDefinition and type(settings) is ContactSolverSettings
+            and settings.shell_pair_orientation != "legacy"):
+        raise ValueError("shell_pair_orientation requires contact_path_program; unsupported in transient contact")
     if controls.allow_multiple_deformable_beam_s3_dev:
         from .multiple_beam_s3_transient import pair_definitions,PROFILE
         pair_definitions(model,definition,settings)

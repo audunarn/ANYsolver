@@ -1,0 +1,14 @@
+{
+  "old_q4_v4_wheel_sha256": "4aa744ab969b2c5818f129b3c028a519052c358236879529c1a100c1795ac0a8",
+  "current_wheel_sha256": "7f1d5a48c8b2250a67e2f0b375cc9b2dd010eee4d9a1bd793df795c0ed859f0d",
+  "changed_payloads": [
+    "anysolver/general_contact/core.py",
+    "anysolver/general_contact/s3_patch_static.py",
+    "anysolver/general_contact/transient.py"
+  ],
+  "unchanged_payload_count": 625,
+  "payload_count": 628,
+  "local_proof_reuse": "Existing S3/Q4 21-coordinate geometry/mortar/work kernels unchanged; unit ran from old immutable Q4V4privateartifact. Current3changes exact predictor admission/opt-in controller maperrors/publictransient refusal only.",
+  "all_changed_source_candidate_wheel_private_bytes_match": true,
+  "default_behavior": "S3_Q4 predictor-none endpoint-map wiring unchanged; dedicated production-path trap in final safety. Automatic/restart defaultsettings unchanged."
+}
