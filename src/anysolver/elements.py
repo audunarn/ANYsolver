@@ -3374,8 +3374,12 @@ class ShellElement(Element):
         displacements: np.ndarray,
         material: "Material",
         return_global: bool = False,
+        *,
+        natural_points=None,
     ) -> Dict[str, Any]:
         if self.shell_section is not None:
+            if natural_points is not None:
+                raise ValueError('custom stress points are unsupported for generalized shell sections')
             return self._compute_generalized_section_results(
                 mesh,
                 displacements,
@@ -3387,7 +3391,10 @@ class ShellElement(Element):
         h = self.thickness
         kappa = 5.0 / 6.0
 
-        num_ip = len(self.gauss_points)
+        recovery_points=self.gauss_points if natural_points is None else np.asarray(natural_points,dtype=float)
+        if natural_points is not None and (recovery_points.ndim!=2 or recovery_points.shape[1]!=2 or len(recovery_points)==0 or not np.all(np.isfinite(recovery_points)) or np.any(np.abs(recovery_points)>1)):
+            raise ValueError('natural stress points must be nonempty finite Nx2 in [-1,1]')
+        num_ip = len(recovery_points)
         stresses: Dict[str, np.ndarray] = {
             "membrane_xx": np.zeros(num_ip),
             "membrane_yy": np.zeros(num_ip),
@@ -3455,7 +3462,7 @@ class ShellElement(Element):
             tri3_B_s, _ = self._tri3_assumed_shear_b_matrix(coords, R_center)
             tri3_u_local = self._local_dof_transform(R_center) @ u_elem_global
 
-        for idx, (xi, eta) in enumerate(self.gauss_points):
+        for idx, (xi, eta) in enumerate(recovery_points):
             N, dN_dxi, dN_deta = self.compute_shape_functions(float(xi), float(eta))
             R, dN_dx, dN_dy, _ = self._local_frame_and_derivatives(coords, dN_dxi, dN_deta)
             Q_local, G_local, _strain_to_material, stress_to_local = _shell_material_matrices(
@@ -3733,6 +3740,44 @@ class BeamElement(Element):
         self._c_z = self.cross_section.get("c_z")
         self._torsion_modulus = self.cross_section.get("torsion_modulus")
 
+    def set_linear_nodal_offsets(self, offsets) -> None:
+        """Global node-to-centroid rigid arms for the linear static route only."""
+        values=np.asarray(offsets,dtype=float)
+        if self.num_nodes!=2 or values.shape!=(2,3) or not np.all(np.isfinite(values)):
+            raise ValueError('linear beam offsets require two finite global vectors')
+        self._linear_nodal_offsets=values.copy()
+
+    def _linear_rigid_arm_map(self) -> np.ndarray:
+        arm=np.eye(12)
+        for i,d in enumerate(getattr(self,'_linear_nodal_offsets',np.zeros((2,3)))):
+            x,y,z=d
+            arm[i*6:i*6+3,i*6+3:i*6+6]=np.array([[0,z,-y],[-z,0,x],[y,-x,0]])
+        return arm
+
+    def recover_linear_section_forces(self, mesh, displacements, material, stations):
+        """Global force/moment on a positive local-x cut; no beam distributed loads."""
+        stations=np.asarray(stations,dtype=float)
+        if stations.ndim!=2 or stations.shape[1]!=3 or len(stations)==0 or not np.all(np.isfinite(stations)):
+            raise ValueError('beam stations must be nonempty finite Nx3 coordinates')
+        coords=self.get_node_coordinates(mesh)
+        length,transform=self._beam_frame_and_transform(coords)
+        local=transform@self._get_element_displacements(mesh,displacements)
+        end=self._local_linear_stiffness(length,material)@local
+        rotation=_beam_rotation_matrix((coords[1]-coords[0])/length,self._orientation)
+        output=[]
+        for station in stations:
+            distance=float(np.dot(station-coords[0],rotation[:,0]))
+            if distance < -1e-6 or distance>length+1e-6 or np.linalg.norm(station-(coords[0]+distance*rotation[:,0]))>1e-6:
+                raise ValueError('beam result station is not on physical centroid line')
+            force=-end[:3]
+            moment=-end[3:6]+np.cross([distance,0,0],end[:3])
+            output.append(np.r_[rotation@force,rotation@moment])
+        return np.asarray(output)
+
+    def _refuse_offset_route(self, route):
+        if np.any(getattr(self,'_linear_nodal_offsets',0)):
+            raise ValueError(f'offset beam {route} is not admitted; linear static only')
+
     def _fiber_distances(self) -> Tuple[float, float]:
         """Extreme fiber distances (local y, local z), estimated when not given."""
         c_y = self._c_y
@@ -3800,7 +3845,7 @@ class BeamElement(Element):
             if node is None:
                 raise ValueError(f"Beam element {self.element_id} references missing node {node_id}")
             coords[i] = node.coords()
-        return coords
+        return coords+getattr(self,'_linear_nodal_offsets',0)
 
     def _beam_frame_and_transform(self, coords: np.ndarray) -> Tuple[float, np.ndarray]:
         length = float(np.linalg.norm(coords[1] - coords[0]))
@@ -3814,7 +3859,7 @@ class BeamElement(Element):
             b = i * 6
             T[b:b + 3, b:b + 3] = Rt
             T[b + 3:b + 6, b + 3:b + 6] = Rt
-        return length, T
+        return length, T@self._linear_rigid_arm_map()
 
     def _local_linear_stiffness(self, length: float, material: "Material", include_axial: bool = True) -> np.ndarray:
         L = float(length)
@@ -3880,6 +3925,8 @@ class BeamElement(Element):
         try:
             L, T = self._beam_frame_and_transform(coords)
         except ValueError:
+            if np.any(getattr(self,'_linear_nodal_offsets',0)):
+                raise
             return np.zeros((self.total_dofs, self.total_dofs))
         K = self._local_linear_stiffness(L, material)
         K_global = T.T @ K @ T
@@ -3887,6 +3934,7 @@ class BeamElement(Element):
         return K_global
 
     def compute_mass_matrix(self, mesh: "FEMesh", material: "Material") -> np.ndarray:
+        self._refuse_offset_route('mass/dynamics')
         coords = self.get_node_coordinates(mesh)
         try:
             L, T = self._beam_frame_and_transform(coords)
@@ -3995,6 +4043,7 @@ class BeamElement(Element):
         ``axial_compression`` in ``state`` therefore produces a positive
         destabilizing ``KG``.
         """
+        self._refuse_offset_route('geometric stiffness')
         axial_compression = self._axial_compression_from_state(state)
         if axial_compression == 0.0:
             return np.zeros((self.total_dofs, self.total_dofs), dtype=float)
@@ -4546,6 +4595,7 @@ class BeamElement(Element):
         provided, in which case axial/bending response is integrated over a
         uniaxial fiber section using the material hardening curve.
         """
+        self._refuse_offset_route('nonlinear response')
         if self._geometric_nonlinearity in {"corotational", "co_rotational", "corot"}:
             return self._compute_corotational_nonlinear_response(
                 mesh, material, u_elem, state, tangent

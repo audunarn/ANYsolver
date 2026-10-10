@@ -6086,8 +6086,8 @@ class QualifiedE4PLShellElement(
 
         This private entry point is intentionally point-agnostic so bounded
         research checks can compare Q4 and S3 resultants at common physical
-        locations.  The public recovery contract remains the established four
-        Gauss records.
+        locations. Public recovery defaults to the established four Gauss
+        records and optionally admits explicit bounded planar homogeneous points.
         """
 
         element_displacements = self._get_element_displacements(mesh, displacements)
@@ -6475,9 +6475,14 @@ class QualifiedE4PLShellElement(
         material: Any,
         return_global: bool = False,
         *,
+        natural_points=None,
         _qualified_runtime_post_observation: Optional[Callable[[], None]] = None,
     ) -> Dict[str, Any]:
-        """Recover formulation-native planar physical fields at four points.
+        """Recover formulation-native planar fields at four default Gauss points.
+
+        Explicit natural_points samples the unchanged stationary field for a
+        planar homogeneous section. It adds development recovery sampling only;
+        default quadrature and qualification authority remain unchanged.
 
         Planar resultants come from the same 35-field stationary system used
         by the condensed tangent.  PL and drilling-hourglass fields are not
@@ -6486,6 +6491,15 @@ class QualifiedE4PLShellElement(
         """
 
         _validate_q4_quadrature_authority(self)
+        recovery_points = _GAUSS if natural_points is None else np.asarray(natural_points,dtype=float)
+        if natural_points is not None:
+            if recovery_points.ndim!=2 or recovery_points.shape[1]!=2 or len(recovery_points)==0 or not np.all(np.isfinite(recovery_points)) or np.any(np.abs(recovery_points)>1):
+                raise ValueError("natural stress points must be nonempty finite Nx2 in [-1,1]")
+            if self.shell_section is not None:
+                raise ValueError("custom stress points are unsupported for generalized shell sections")
+            if _qualified_runtime_post_observation is not None:
+                _qualified_runtime_post_observation()
+            _validate_q4_quadrature_authority(self)
         observed_displacements = np.asarray(displacements, dtype=float)
         if _qualified_runtime_post_observation is not None:
             _qualified_runtime_post_observation()
@@ -6493,6 +6507,8 @@ class QualifiedE4PLShellElement(
         coordinates = self.get_node_coordinates(mesh)
         _frame, _local, warpage = equation7_frame(coordinates)
         if warpage > self.planar_tolerance:
+            if natural_points is not None:
+                raise ValueError("custom stress points are unsupported for warped Q4 recovery")
             if self.warped_formulation == "reject":
                 raise ValueError(
                     f"E4-PL element {self.element_id} is warped by {warpage:.6e}, "
@@ -6523,7 +6539,7 @@ class QualifiedE4PLShellElement(
             mesh,
             displacements,
             material,
-            _GAUSS,
+            recovery_points,
             post_observation=_qualified_runtime_post_observation,
         )
         numbered_frame = mixed["frame"]
@@ -6555,6 +6571,7 @@ class QualifiedE4PLShellElement(
             )
         )
         recovered: Dict[str, Any] = {
+            "natural_point_coordinates": np.asarray(recovery_points,dtype=float).copy(),
             "recovery_scope": (
                 "section_resultants_only"
                 if self.shell_section is not None
@@ -6587,10 +6604,10 @@ class QualifiedE4PLShellElement(
             recovered["generalized_stress_scope"] = "section_resultants_only"
 
         if return_global:
-            global_membrane = np.zeros((len(_GAUSS), 3, 3), dtype=float)
+            global_membrane = np.zeros((len(recovery_points), 3, 3), dtype=float)
             global_bending = np.zeros_like(global_membrane)
-            global_shear = np.zeros((len(_GAUSS), 3), dtype=float)
-            for index in range(len(_GAUSS)):
+            global_shear = np.zeros((len(recovery_points), 3), dtype=float)
+            for index in range(len(recovery_points)):
                 membrane = resultants[index, :3]
                 bending = resultants[index, 3:6]
                 membrane_tensor = np.asarray(
@@ -6663,7 +6680,7 @@ class QualifiedE4PLShellElement(
                 )
             )
             recovered["von_mises"] = np.maximum(vm_top, vm_bottom)
-            recovered["hill_utilization"] = np.zeros(len(_GAUSS), dtype=float)
+            recovered["hill_utilization"] = np.zeros(len(recovery_points), dtype=float)
             hill_yield = getattr(material, "hill_yield", None)
             if hill_yield is not None:
                 _membrane, _shear, _strain_to_material, stress_to_local = (
@@ -6692,7 +6709,7 @@ class QualifiedE4PLShellElement(
 
             if return_global:
                 for surface, values in (("top", top), ("bot", bottom)):
-                    local_tensors = np.zeros((len(_GAUSS), 3, 3), dtype=float)
+                    local_tensors = np.zeros((len(recovery_points), 3, 3), dtype=float)
                     local_tensors[:, 0, 0] = values[:, 0]
                     local_tensors[:, 1, 1] = values[:, 1]
                     local_tensors[:, 0, 1] = values[:, 2]

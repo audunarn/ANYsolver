@@ -33,6 +33,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+marine-excitation = ["ANYhydro>=0.1.0"]
+marine-morison = ["ANYloads>=0.1.0"]
 general-contact = ["ANYgeometry>=0.4.3,<0.5"]
 numba = ["numba>=0.59"]
 pardiso = ["pypardiso>=0.4"]
