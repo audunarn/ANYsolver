@@ -9,6 +9,7 @@ No line, geometric stiffness, nonlinear state or qualification is inferred.
 
 from __future__ import annotations
 
+from functools import wraps
 from dataclasses import dataclass, field
 from hashlib import sha256
 from math import fsum, isfinite
@@ -48,6 +49,10 @@ from .e4_pl_s3_v2d_element import (
 )
 from ._b2_physical_flexibility_linear import RepresentabilityError
 from ._b2_loaded_point_trace_dev import LoadedPointMember, checked_sparse_action
+from ._stiffened_shell_b2_affine_resolution import certify_affine
+from ._b2_attachment_elimination_dev import prepare_attachment_elimination
+from .e4_pl_element import _retire_q4_private_mesh_caches
+from ._stiffened_shell_b2_assembly_diagnostics import active_capture, DiagnosticRefusal
 from .elements import create_shell_element
 from .fe_core import FEModel
 from .linalg import MatrixClass, factorize_cached
@@ -458,6 +463,24 @@ class ExperimentalB2Q4PanelResponseEnvelope:
 
 
 @dataclass(frozen=True)
+class ExperimentalB2Q4PanelMemberResultantEnvelope:
+    """Signed local sectional-resultant extrema at one requested station.
+
+    Components are N, Qy, Qz, Mx, My, Mz in the member's local frame.
+    Station indices distinguish repeated normalized station coordinates.
+    """
+
+    member_id: str
+    station_index: int
+    station_normalized: float
+    component: str
+    minimum: float
+    minimum_case_id: str
+    maximum: float
+    maximum_case_id: str
+
+
+@dataclass(frozen=True)
 class ExperimentalB2Q4PanelBatchResult:
     status: str
     selected_dofs: tuple[int, ...]
@@ -470,6 +493,7 @@ class ExperimentalB2Q4PanelBatchResult:
     production_qualified: bool = False
     displacement_envelopes: tuple[ExperimentalB2Q4PanelResponseEnvelope, ...] = ()
     affine_reaction_envelopes: tuple[ExperimentalB2Q4PanelResponseEnvelope, ...] = ()
+    member_resultant_envelopes: tuple[ExperimentalB2Q4PanelMemberResultantEnvelope, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -700,6 +724,30 @@ def _supports_all_panel_rigid_fields(transformation, shell_positions, beam_posit
     return bool(singular[-1] > 64*np.finfo(float).eps*max(6, len(fixed))*singular[0])
 
 
+def _retire_private_q4_mesh(owner):
+    mesh = owner._private_q4_mesh
+    for element in owner._private_q4_elements:
+        _retire_q4_private_mesh_caches(element, mesh)
+    owner._private_q4_elements.clear()
+    owner._private_q4_mesh = None
+
+
+def _private_q4_constructor_lifetime(initialize):
+    @wraps(initialize)
+    def guarded(owner, *args, **kwargs):
+        owner._private_q4_mesh = None
+        owner._private_q4_elements = []
+        try:
+            return initialize(owner, *args, **kwargs)
+        except BaseException as original:
+            try:
+                _retire_private_q4_mesh(owner)
+            except BaseException as cleanup:
+                original.add_note("private Q4 retirement failed: " + repr(cleanup))
+            raise
+    return guarded
+
+
 class ExperimentalB2Q4PanelAnalysis:
     """Own one connected reference-linear panel and its sparse factorization.
 
@@ -711,6 +759,7 @@ class ExperimentalB2Q4PanelAnalysis:
 
     _mixed_shells = False
 
+    @_private_q4_constructor_lifetime
     def __init__(self, shell_nodes_m: Mapping[int, Sequence[float]],
                  shells: Sequence[Q4PanelShell],
                  members: Sequence[PhysicalB2Member | CompiledPhysicalB2Member],
@@ -721,6 +770,11 @@ class ExperimentalB2Q4PanelAnalysis:
                  reference_boundary_policy: str | None = None,
                  point_trace_policy: str | None = None,
                  physical_footprints: Sequence[B2PhysicalRigidFootprint] = ()):
+        diagnostic = active_capture()
+        if diagnostic is not None:
+            diagnostic.begin()
+            if not physical_footprints or points or footprints or reference_inertia_policy is not None or reference_boundary_policy is not None or point_trace_policy is not None:
+                raise DiagnosticRefusal("capture admits physical static footprint compilation only")
         shells = tuple(shells)
         supplied_members = tuple(members)
         points = tuple(points)
@@ -728,8 +782,8 @@ class ExperimentalB2Q4PanelAnalysis:
         physical_footprints = tuple(physical_footprints)
         self._physical_footprint_law = bool(physical_footprints)
         if physical_footprints:
-            if points or footprints or reference_inertia_policy is not None or reference_boundary_policy is not None or point_trace_policy is not None or self._mixed_shells:
-                raise ValueError("separate Q4 physical footprint static/buckling family required")
+            if points or footprints or reference_inertia_policy is not None or reference_boundary_policy is not None or point_trace_policy is not None:
+                raise ValueError("separate physical footprint static family required")
             footprints = physical_footprints
         modal_mass = reference_inertia_policy is not None
         if reference_boundary_policy is not None and (
@@ -751,7 +805,7 @@ class ExperimentalB2Q4PanelAnalysis:
                 self._mixed_shells or has_s3 or footprints or modal_mass):
             raise ValueError("explicit Q4-only fixed-end loaded point trace without footprints or modes required")
         self._point_trace_policy = point_trace_policy
-        if has_s3 and footprints:
+        if has_s3 and footprints and not self._physical_footprint_law:
             raise ValueError("S3 mixed-panel nodal footprints are unsupported")
         admitted_shells = ((Q4PanelShell, S3V2DPanelShell) if self._mixed_shells
                            else (Q4PanelShell,))
@@ -773,6 +827,9 @@ class ExperimentalB2Q4PanelAnalysis:
         definitions = tuple(member.definition if isinstance(
             member, CompiledPhysicalB2Member) else member
             for member in supplied_members)
+        if diagnostic is not None and (any(shell.density_kg_m3 is not None for shell in shells) or
+                                       any(member.mass is not None for member in definitions)):
+            raise DiagnosticRefusal("capture of physical mass/body-map storage is not admitted")
         if modal_mass:
             for shell in shells:
                 density = shell.density_kg_m3
@@ -791,10 +848,12 @@ class ExperimentalB2Q4PanelAnalysis:
         _unique_ids(definitions, "member_id")
         _require_connected_panel(shells, definitions, points, footprints)
         cache = PhysicalB2OperatorCache()
+        if diagnostic is not None: diagnostic.mark("member_compilation")
         compiled = tuple(
             member if isinstance(member, CompiledPhysicalB2Member)
             else member.compile_local(operator_cache=cache)
             for member in supplied_members)
+        if diagnostic is not None: diagnostic.mark("topology_mapping")
         shell_ids = tuple(sorted(shell_nodes_m))
         if any(type(node_id) is not int for node_id in shell_ids):
             raise ValueError("integer shell node IDs required")
@@ -838,7 +897,9 @@ class ExperimentalB2Q4PanelAnalysis:
                               and all(member.definition.mass is not None for member in compiled))
         body_map = np.zeros((total, 3)) if complete_body_mass else None
         body_masses = []
+        if diagnostic is not None: diagnostic.mark("shell_model_setup")
         model = FEModel("experimental-multi-Q4-B2-point")
+        self._private_q4_mesh = model.mesh
         for node_id in shell_ids:
             model.add_node(node_id, *positions[node_id])
         rows, columns, values = [], [], []
@@ -872,9 +933,12 @@ class ExperimentalB2Q4PanelAnalysis:
                 element = create_shell_element(
                     index, shell.node_ids, material_id, formulation="e4-pl", thickness=shell.thickness_m,
                     reference_normal=np.asarray(shell.reference_normal, dtype=float))
+            if count == 4:
+                self._private_q4_elements.append(element)
             model.add_element(index, element)
             pieces.append((shell, vertices, element, material_id, count))
         # Native S3 scope validation must see the complete shell registry.
+        if diagnostic is not None: diagnostic.mark("shell_response_scatter")
         for shell, vertices, element, material_id, count in pieces:
             local = element.compute_stiffness_matrix(
                 model.mesh, model.get_material(material_id))
@@ -919,6 +983,7 @@ class ExperimentalB2Q4PanelAnalysis:
                     body_map[slots[6*i:6*i+3]] += weight*np.eye(3)
                 body_masses.append(3.*weight)
             shell_lookup[shell.shell_id] = (vertices, slots)
+        if diagnostic is not None: diagnostic.mark("beam_response_scatter")
         member_lookup = {}
         for member in compiled:
             frame = member.local_dof_map()
@@ -940,8 +1005,11 @@ class ExperimentalB2Q4PanelAnalysis:
                 body_map[slots] += _beam_body_map(member, frame)
                 body_masses.append(member.definition.length_m*member.definition.mass.matrix_per_m[0][0])
             member_lookup[member.definition.member_id] = (member, slots)
+        if diagnostic is not None: diagnostic.mark("K_CSR")
         K = sparse.coo_matrix((values, (rows, columns)),
                               shape=(total, total)).tocsr()
+        _release_coo_scratch(rows, columns, values, diagnostic, "K_CSR")
+        if diagnostic is not None: diagnostic.mark("attachment_rows")
         constraint_rows, constraint_cols, constraint_values = [], [], []
         point_reference_frames = []
         point_laws = []
@@ -992,9 +1060,12 @@ class ExperimentalB2Q4PanelAnalysis:
                     constraint_rows.append(item.row_start+local_row)
                     constraint_cols.append(slot)
                     constraint_values.append(local[local_row, local_col])
+        if diagnostic is not None: diagnostic.mark("C_CSR")
         C = sparse.coo_matrix(
             (constraint_values, (constraint_rows, constraint_cols)),
             shape=(6*len(points)+sum(getattr(item,"row_count",6) for item in footprint_incidence), total)).tocsr()
+        _release_coo_scratch(constraint_rows, constraint_cols, constraint_values, diagnostic, "C_CSR")
+        if diagnostic is not None: diagnostic.mark("support_reduction_scaling_elimination")
         loaded_members = {}
         H = None
         if point_trace_policy is not None:
@@ -1048,13 +1119,42 @@ class ExperimentalB2Q4PanelAnalysis:
         # Without this, a valid slender B2 section can leave point gaps above
         # the physical acceptance tolerance despite a sound local operator.
         handle = factor_scale = None
+        attachment_maps = None
+        attachment_reason = "not_physical_static_family"
         if not self._modal_only:
             scaled_kkt, factor_scale = _scaled_point_kkt(reduced_k, reduced_c, H)
-            handle = factorize_cached(
-                scaled_kkt, MatrixClass.SYMMETRIC_INDEFINITE)
+            if self._physical_footprint_law and not points and point_trace_policy is None and H is None:
+                attachment_maps, attachment_reason = prepare_attachment_elimination(
+                    scaled_kkt, reduced_k.shape[0], T, footprint_incidence)
+            # Ineligible attachment layouts use the exact existing factor path.
+            # An eligible path factors once and restores the full scaled answer
+            # before original physical checks/recovery; spectral operators are
+            # still prepared from original K/C/T, not these static embeddings.
+            if diagnostic is not None:
+                diagnostic.prefactor(
+                    dict(K=K,C=C,T=T,u0=u0,H=H,reduced_k=reduced_k,reduced_c=reduced_c,
+                         scaled_kkt=scaled_kkt,factor_scale=factor_scale,attachment_maps=attachment_maps,
+                         model=model,positions=positions,beam_positions=beam_positions,shell_index=shell_index,
+                         beam_index=beam_index,shell_lookup=shell_lookup,member_lookup=member_lookup,
+                         footprint_incidence=footprint_incidence,compiled=compiled,cache=cache,
+                         private_q4_elements=self._private_q4_elements),
+                    dict(rows=rows,columns=columns,values=values,constraint_rows=constraint_rows,
+                         constraint_cols=constraint_cols,constraint_values=constraint_values,
+                         pieces=pieces,local=local,slots=slots,frame=frame),
+                    (*shells,*definitions,*footprints,*(m.section for m in definitions),
+                     *(m for m in supplied_members if isinstance(m,CompiledPhysicalB2Member))))
+            handle = (attachment_maps.factorize() if attachment_maps is not None else
+                      factorize_cached(scaled_kkt, MatrixClass.SYMMETRIC_INDEFINITE))
             if handle.status != "ok":
                 raise ExperimentalB2Q4PanelError(
                     "panel factorization failed: " + str(handle.failure_reason))
+        if diagnostic is not None:
+            try: diagnostic.mark("owner_publication")
+            except BaseException:
+                if handle is not None:
+                    try: handle.close()
+                    except BaseException: pass
+                raise
         self._modal_positions = (np.array(
             [positions[i] for i in shell_ids]+[beam_positions[i] for i in beam_ids],
             dtype=float, copy=True) if self._modal_only else None)
@@ -1171,17 +1271,206 @@ class ExperimentalB2Q4PanelAnalysis:
              _supports_all_panel_rigid_fields(T, positions, beam_positions)))
         self._ku0 = np.asarray(K @ u0).reshape(-1)
         self._cu0 = np.asarray(C @ u0).reshape(-1)
+        # Exact homogeneous singleton constraints prescribe a reduced
+        # coordinate to zero. Store those substitutions once, rather than
+        # allowing factor roundoff to turn a mathematically zero channel into
+        # its own nonzero relative compatibility scale.
+        self._physical_singletons = ()
+        if self._physical_footprint_law and not self._modal_only:
+            self._physical_singletons = self._structural_physical_singletons(C, T, u0)
         self._factor_scale = factor_scale
         self._handle = handle
+        self._attachment_elimination = attachment_maps
+        self._attachment_elimination_info = ({"status": "eligible", **attachment_maps.info}
+                                             if attachment_maps is not None else
+                                             {"status": "legacy_fallback", "reason": attachment_reason})
+        # Retain the full original scaled operator on the physical route.
+        # Eligible handles factorize its attachment reduction and recover full
+        # answers; original checks/correction still use the same reused factors.
+        self._physical_scaled_kkt = (scaled_kkt if self._physical_footprint_law
+                                     and not self._modal_only else None)
         self._resolution_kkt = None
+        self._affine_resolution_cache = None
         self._closed = False
+        if diagnostic is not None:
+            try: diagnostic.finish()
+            except BaseException:
+                try: self.close()
+                except BaseException: pass
+                raise
 
-    def _explicit_load_resolved(self, answer, rhs, explicit_rhs) -> bool:
+    def _physical_equilibrium_ratio(self, answer, applied):
+        """Measure the existing per-row equilibrium check before recovery."""
+        q, lam = answer[:-len(self._cu0)], answer[-len(self._cu0):]
+        u = np.asarray(self._T @ q).reshape(-1)+self._u0
+        force = np.asarray(self._K @ u).reshape(-1)
+        constraint_force = np.asarray(self._C.T @ lam).reshape(-1)
+        projected = self._project(force+constraint_force-applied)
+        physical_force_scale = np.asarray(
+            self._abs_K @ np.abs(u)+self._abs_Ct @ np.abs(lam)+
+            np.abs(applied)).reshape(-1)
+        equilibrium_scale = np.asarray(self._abs_Tt @ physical_force_scale).reshape(-1)
+        by_node = physical_force_scale.reshape(-1, 6)
+        physical_roundoff = np.tile(
+            (float(np.max(by_node[:, :3])),)*3+
+            (float(np.max(by_node[:, 3:])),)*3, len(by_node))
+        projected_roundoff = np.asarray(self._abs_Tt @ physical_roundoff).reshape(-1)
+        tolerance = (1e-9*equilibrium_scale+
+                     len(answer)*np.finfo(float).eps*projected_roundoff)
+        if (not np.isfinite(projected).all() or
+                not np.isfinite(tolerance).all() or np.any(tolerance < 0.)):
+            raise _NumericalFailure("panel equilibrium correction is not representable")
+        with np.errstate(divide="ignore", invalid="ignore"):
+            ratios = np.divide(np.abs(projected), tolerance,
+                               out=np.full_like(projected, np.inf),
+                               where=tolerance > 0.)
+        ratios[(tolerance == 0.) & (projected == 0.)] = 0.
+        return float(np.max(ratios))
+
+    def _physical_work_ratio(self, answer, applied):
+        """Check one explicit physical load against homogeneous-constraint work."""
+        if np.any(self._u0 != 0.):
+            return 0.
+        q = answer[:-len(self._cu0)]
+        u = np.asarray(self._T @ q).reshape(-1)
+        with np.errstate(over="ignore", under="ignore", invalid="ignore"):
+            internal = float(u @ (self._K @ u))
+            external = float(u @ applied)
+        if not isfinite(internal) or not isfinite(external):
+            raise _NumericalFailure("panel physical footprint work is not representable")
+        defect = abs(internal-external)
+        # The physical-footprint family admits no points, body-load driver or
+        # nonzero constraint RHS. Keep the registered work absolute allowance.
+        tolerance = 1e-12 + 1e-8*abs(external)
+        return defect/tolerance
+
+    @staticmethod
+    def _structural_physical_singletons(C, T, u0):
+        """Admit only a single product with individually zero offset terms.
+
+        Rounded cancellation in C@T or C@u0 never establishes eligibility.
+        Coupled rows and even cancellation within one reduced column remain
+        on the ordinary factor/guard route.
+        """
+        constraints = C.tocsr(copy=True)
+        transform = T.tocsr(copy=True)
+        constraints.eliminate_zeros()
+        transform.eliminate_zeros()
+        singletons = []
+        for row in range(constraints.shape[0]):
+            start, end = constraints.indptr[row:row+2]
+            physical = constraints.indices[start:end]
+            if np.any(u0[physical] != 0.):
+                continue
+            products = []
+            for index, coefficient in zip(physical, constraints.data[start:end]):
+                first, last = transform.indptr[index:index+2]
+                for column, value in zip(transform.indices[first:last], transform.data[first:last]):
+                    products.append((int(column), float(coefficient*value)))
+                    if len(products) > 1:
+                        break
+                if len(products) > 1:
+                    break
+            if len(products) == 1 and np.isfinite(products[0][1]) and products[0][1] != 0.:
+                singletons.append((row, *products[0]))
+        return tuple(singletons)
+
+    def _restore_physical_singletons(self, answer):
+        """Enforce exact zero coordinates only for roundoff-sized residues.
+
+        This changes the candidate, never a compatibility tolerance. Material
+        errors remain for the existing equilibrium/correction/refusal checks.
+        Translation and rotation amplitudes retain their separate units.
+        """
+        if not self._physical_singletons:
+            return answer
+        q = answer[:-len(self._cu0)]
+        u = np.asarray(self._T @ q).reshape(-1)+self._u0
+        poses = np.abs(u).reshape(-1, 6)
+        amplitude = np.tile((float(np.max(poses[:, :3])),)*3+
+                            (float(np.max(poses[:, 3:])),)*3, len(poses))
+        bounds = len(answer)*np.finfo(float).eps*np.asarray(
+            self._abs_C @ amplitude).reshape(-1)
+        if not np.isfinite(bounds).all():
+            raise _NumericalFailure("physical singleton substitution is not representable")
+        restored = answer.copy()
+        for row, column, coefficient in self._physical_singletons:
+            if abs(coefficient*q[column]) <= bounds[row]:
+                restored[column] = 0.
+        return restored
+
+    def _physical_original_residual(self, answer, applied):
+        """Original affine/constraint covectors at the actual scored candidate.
+
+        Use the same original K/C/T and ordinary arithmetic as recovery; no
+        rounded reduced/congruence matrix supplies this target. This private
+        residual is used only by the physical footprint reference-static route.
+        """
+        # Constructor admission excludes points and point_trace_policy, so H
+        # and body/fixed-end constraint RHS d are absent on this route. Typed
+        # body loads are refused before the sole solve_linear caller; batches
+        # delegate to that caller. Refuse a corrupted/foreign private owner
+        # rather than silently evaluating Cu=0 for [C,-H] or nonzero d.
+        if (not self._physical_footprint_law or self.point_ids or
+                self._point_trace_policy is not None or
+                (self._H is not None and self._H.nnz != 0)):
+            raise _NumericalFailure("original correction requires the separate physical footprint static family")
+        if (answer.shape != self._factor_scale.shape or
+                applied.shape != self._u0.shape or
+                not np.isfinite(answer).all() or not np.isfinite(applied).all()):
+            raise _NumericalFailure("finite original physical correction inputs required")
+        nq = self._T.shape[1]
+        q, lam = answer[:nq], answer[nq:]
+        u = np.asarray(self._T @ q).reshape(-1)+self._u0
+        reaction = np.asarray(self._K @ u).reshape(-1)+np.asarray(self._C.T @ lam).reshape(-1)-applied
+        target = np.r_[self._project(reaction), np.asarray(self._C @ u).reshape(-1)]
+        if not np.isfinite(u).all() or not np.isfinite(target).all():
+            raise _NumericalFailure("original physical correction target is not representable")
+        return target
+
+    def _correct_physical_equilibrium(self, scaled_answer, scaled_rhs, applied):
+        """One original-operator correction using the existing factorization.
+
+        ``scaled_rhs`` remains in this private calling convention, but cannot
+        define the original target. Restoration precedes both scoring and RHS
+        formation; the correction is added to that same restored candidate.
+        Physical equation/work/compatibility acceptance remains unchanged.
+        """
+        answer = self._restore_physical_singletons(self._factor_scale*scaled_answer)
+        original_ratio = self._physical_equilibrium_ratio(answer, applied)
+        original_work_ratio = self._physical_work_ratio(answer, applied)
+        original_score = max(original_ratio, original_work_ratio)
+        if original_score <= 1.:
+            return answer
+        original_target = self._physical_original_residual(answer, applied)
+        with np.errstate(over="ignore", under="ignore", invalid="ignore"):
+            correction_rhs = -self._factor_scale*original_target
+        if (not np.isfinite(correction_rhs).all() or
+                np.any((original_target != 0.) & (correction_rhs == 0.))):
+            raise _NumericalFailure("panel equilibrium correction is not representable")
+        try:
+            delta = np.asarray(self._handle.solve(correction_rhs), dtype=float)
+        except RuntimeError as exc:
+            raise _NumericalFailure("panel equilibrium correction failed: " + str(exc)) from exc
+        with np.errstate(over="ignore", under="ignore", invalid="ignore"):
+            candidate = answer+self._factor_scale*delta
+        if candidate.shape != answer.shape or not np.isfinite(candidate).all():
+            raise _NumericalFailure("finite panel equilibrium correction required")
+        candidate = self._restore_physical_singletons(candidate)
+        candidate_score = max(self._physical_equilibrium_ratio(candidate, applied),
+                              self._physical_work_ratio(candidate, applied))
+        if candidate_score >= original_score:
+            raise _NumericalFailure("panel equilibrium correction did not improve")
+        return candidate
+
+    def _explicit_load_resolved(self, answer, rhs, explicit_rhs, *, applied=None, reconstructed=None) -> bool:
         """Certify active stored KKT rows without a model-wide force floor.
 
-        Fixed affine combinations and nonzero prescribed offsets can lose
-        explicit load information before this seam and remain ineligible.
-        Pure unit selectors copy stored entries, loads and coordinates exactly.
+        Pure unit selectors retain the stored KKT certificate. Zero-offset
+        footprint affine maps certify exact physical virtual equilibrium and
+        the actual reconstruction error from original sparse operators/load.
+        Nonzero offsets and loaded-point affine maps remain ineligible. This
+        resolves net projected loads only, not cancelling individual actions.
         All existing physical equilibrium/compatibility checks still apply.
         """
         if (np.any(self._u0 != 0.) or not np.isfinite(answer).all() or
@@ -1192,7 +1481,13 @@ class ExperimentalB2Q4PanelAnalysis:
         if (np.any(np.diff(selector.indptr) != 1) or
                 np.any(selector.data != 1.) or
                 len(np.unique(selector.indices)) != selector.shape[1]):
-            return False
+            if not self.footprints or self._point_trace_policy is not None or applied is None or reconstructed is None:
+                return False
+            if self._affine_resolution_cache is None:self._affine_resolution_cache = {}
+            try:
+                return certify_affine(self._K,self._C,self._T,answer,applied,reconstructed,self._affine_resolution_cache)
+            except B2NumericalSolveFailure:
+                return False
         active = np.flatnonzero(explicit_rhs > 0.)
         with np.errstate(over="ignore", under="ignore", invalid="ignore"):
             cap = np.nextafter(1e-9*explicit_rhs[active], 0.)
@@ -1218,8 +1513,9 @@ class ExperimentalB2Q4PanelAnalysis:
     def _footprint_gap_tolerance(self, u, gap_scale, roundoff_fraction):
         """Quiet-channel solve admission, bounded by reference compatibility.
 
-        Called only after explicit-load certification for unit selectors and
-        zero offsets. This is a solve/compatibility convention, not a bound on
+        Called only after explicit-load certification for unit selectors or
+        proved general-affine footprint maps, with zero offsets. This is a
+        solve/compatibility convention, not a bound on
         rounding in C@u. Translation and rotation amplitudes stay separate;
         actual row coefficients include eccentric lever arms. Historical point
         rows retain their original check. Every footprint row also stays below
@@ -1244,8 +1540,8 @@ class ExperimentalB2Q4PanelAnalysis:
         if self._physical_footprint_law:
             return B2PhysicalRigidFootprintCapabilities(
                 attachment="physical rigid-region translations and director tangents; five rows per selected node",
-                operations=("solve_linear","solve_linear_many","buckling","close"),
-                spectral_domain="explicit physical-footprint conservative reference buckling request; modes unavailable without mass contract",
+                operations=(("solve_linear","solve_linear_many","close") if self._has_s3 else ("solve_linear","solve_linear_many","buckling","close")),
+                spectral_domain=("S3/mixed physical footprint modes and buckling unsupported" if self._has_s3 else "explicit physical-footprint conservative reference buckling request; modes unavailable without mass contract"),
                 footprints=self.footprints)
         if self._modal_only:
             return ExperimentalB2Q4PanelCapabilities(
@@ -1642,9 +1938,14 @@ class ExperimentalB2Q4PanelAnalysis:
                 solve_count=self._handle.solve_count,
                 failure_reason="panel right-hand side scaling is not representable")
         try:
-            answer = self._factor_scale*np.asarray(
-                self._handle.solve(scaled_rhs), dtype=float)
-        except RuntimeError as exc:
+            scaled_answer = np.asarray(self._handle.solve(scaled_rhs), dtype=float)
+            answer = self._factor_scale*scaled_answer
+            if self._physical_footprint_law and answer.shape == rhs.shape and np.isfinite(answer).all():
+                answer = self._correct_physical_equilibrium(
+                    scaled_answer, scaled_rhs, applied)
+                if self._physical_work_ratio(answer, applied) > 1.:
+                    raise _NumericalFailure("panel physical footprint work consistency failed")
+        except (RuntimeError, _NumericalFailure) as exc:
             return self._panel_result(
                 "failed", factorization_count=self._handle.factorization_count,
                 solve_count=self._handle.solve_count, failure_reason=str(exc))
@@ -1702,14 +2003,14 @@ class ExperimentalB2Q4PanelAnalysis:
             if np.any(resolution_floor[active] >
                       1e-9*explicit_rhs[active]):
                 certified = (bool(self.footprints) or self._point_trace_policy is not None) and self._explicit_load_resolved(
-                    answer, rhs, explicit_rhs)
+                    answer, rhs, explicit_rhs, applied=applied, reconstructed=u)
                 if not certified:
                     raise _NumericalFailure("panel mixed-load resolution insufficient")
             equilibrium_tolerance = (1e-9*equilibrium_scale+
                                      roundoff_fraction*projected_roundoff)
             gap_tolerance = 1e-9*gap_scale
             if (self.footprints and np.any(np.abs(gap) > gap_tolerance) and
-                    (certified or self._explicit_load_resolved(answer, rhs, explicit_rhs))):
+                    (certified or self._explicit_load_resolved(answer, rhs, explicit_rhs, applied=applied, reconstructed=u))):
                 gap_tolerance = self._footprint_gap_tolerance(u, gap_scale, roundoff_fraction)
             for item in self._footprint_incidence:
                 width=getattr(item,"row_count",6)
@@ -1848,8 +2149,9 @@ class ExperimentalB2Q4PanelAnalysis:
         final-case closure still returns completed. Callback and programming
         errors propagate. This development route uses one RHS at a
         time, avoiding full displacement/reaction batches for large panels.
-        Selected displacement/reaction envelopes describe only complete cases
-        in the returned prefix, with the first submitted case governing ties.
+        Selected displacement, reaction and local member-resultant envelopes
+        describe only complete cases in the returned prefix, with the first
+        submitted case governing ties.
         """
         if self._closed:
             raise ExperimentalB2Q4PanelError("experimental panel is closed")
@@ -1922,6 +2224,28 @@ class ExperimentalB2Q4PanelAnalysis:
                     getattr(maximum, attribute)[index], maximum.case_id))
             return tuple(extrema)
 
+        def member_envelopes():
+            if not completed or not recovery:
+                return ()
+            sections = tuple((case.case_id, dict(case.beam_resultants_local))
+                             for case in completed)
+            extrema = []
+            for member_id, stations in recovery.items():
+                if any(member_id not in rows or len(rows[member_id]) != len(stations)
+                       for _, rows in sections):
+                    raise RuntimeError("incomplete selected B2 member recovery")
+                for station_index, station in enumerate(stations):
+                    for component_index, component in enumerate(
+                            ("N", "Qy", "Qz", "Mx", "My", "Mz")):
+                        values = tuple((case_id, rows[member_id][station_index][component_index])
+                                       for case_id, rows in sections)
+                        minimum = min(values, key=lambda item: item[1])
+                        maximum = max(values, key=lambda item: item[1])
+                        extrema.append(ExperimentalB2Q4PanelMemberResultantEnvelope(
+                            member_id, station_index, station, component,
+                            minimum[1], minimum[0], maximum[1], maximum[0]))
+            return tuple(extrema)
+
         def finish(status, failure_reason=None):
             result_type = (ExperimentalB2Q4FootprintBatchResult if self.footprints
                            else ExperimentalB2Q4PanelBatchResult)
@@ -1934,7 +2258,8 @@ class ExperimentalB2Q4PanelAnalysis:
                 factorization_count, solve_count,
                 failure_reason=failure_reason,
                 displacement_envelopes=envelopes("selected_displacements"),
-                affine_reaction_envelopes=envelopes("selected_affine_reactions"), **extra)
+                affine_reaction_envelopes=envelopes("selected_affine_reactions"),
+                member_resultant_envelopes=member_envelopes(), **extra)
 
         for index, (case_id, load) in enumerate(submitted):
             if self._closed or (cancellation_token is not None and
@@ -1990,13 +2315,31 @@ class ExperimentalB2Q4PanelAnalysis:
 
     def close(self) -> None:
         self._closed = True
-        self._handle = None
-        if self._point_trace_policy is not None:
-            for compiled_load in self._loaded_members.values():
-                compiled_load._recovery_maps.clear()
-            self._loaded_members.clear()
-            self._H = self._abs_H = self._resolution_kkt = None
-        self._resolution_kkt = None
+        try:
+            _retire_private_q4_mesh(self)
+        finally:
+            self._handle = None
+            self._physical_scaled_kkt = None
+            self._attachment_elimination = None
+            if self._point_trace_policy is not None:
+                for compiled_load in self._loaded_members.values():
+                    compiled_load._recovery_maps.clear()
+                self._loaded_members.clear()
+                self._H = self._abs_H = self._resolution_kkt = None
+            self._resolution_kkt = None
+            self._affine_resolution_cache = None
+            self._buckling_model = None
+            self._buckling_shells = ()
+
+
+def _release_coo_scratch(rows, columns, values, diagnostic, phase):
+    # CSR owns its arrays; these compiler lists have no later mechanics use.
+    counts = tuple(map(len, (rows, columns, values))) if diagnostic is not None else None
+    rows.clear()
+    columns.clear()
+    values.clear()
+    if diagnostic is not None:
+        diagnostic.record_coo_release(phase, counts)
 
 
 def _scatter(rows, columns, values, slots, local):
@@ -2089,14 +2432,14 @@ class ExperimentalB2MixedPanelAnalysis(ExperimentalB2Q4PanelAnalysis):
             attachment=existing.attachment,
             operations=existing.operations,
             body_load_domain=existing.body_load_domain,
-            spectral_domain=(existing.spectral_domain if self._modal_only else
+            spectral_domain=(existing.spectral_domain if self._modal_only or self._physical_footprint_law else
                              "experimental virgin supported finite descriptor pairs; heterogeneous Q4 director and native S3 lumped translation inertia; S3 rotary inertia omitted; completeness unqualified; prestress unsupported"
                              if self._reference_inertia_policy is not None else
                              "native S3 V2D physical mass and modes deferred" if self._has_s3
                              else existing.spectral_domain),
             shell_formulations=self._shell_formulations,
             point_laws=self._point_laws,
-            footprint_law_id=FOOTPRINT_LAW_ID if self.footprints else None,
+            footprint_law_id=existing.footprint_law_id if self._physical_footprint_law else FOOTPRINT_LAW_ID if self.footprints else None,
             footprints=self.footprints, **extra)
 
 

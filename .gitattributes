@@ -1,5 +1,30 @@
 docs/reference_cases/s4_nullspace_semantics_cases.json text eol=lf
 .gitattributes text eol=lf
+docs/agent_plans/B3_GE_E4_PL_ACTIVE_STATE_HISTORY_20261008_V12.md -text
+scripts/r8_bl5_v11_cut_warping_response_dev.py -text
+scripts/r8_bl5_v12_retained_load_response_dev.py -text
+.development/bl5-mz-common-beam-20261008/run-v11-cut-warping.py -text
+.development/bl5-mz-common-beam-20261008/run-v12-retained-load.py -text
+.development/bl5-mz-common-beam-20261008/v11-cut-warping-* -text
+.development/bl5-mz-common-beam-20261008/v12-retained-load-* -text
+.development/bl5-mz-common-beam-20261008/receipt-v11-cut-warping-* -text
+.development/bl5-mz-common-beam-20261008/receipt-v12-retained-load-* -text
+.development/bl5-mz-common-beam-20261008/stdout-v11-cut-warping-* -text
+.development/bl5-mz-common-beam-20261008/stdout-v12-retained-load-* -text
+.development/bl5-mz-common-beam-20261008/stderr-v11-cut-warping-* -text
+.development/bl5-mz-common-beam-20261008/stderr-v12-retained-load-* -text
+.development/bl5-mz-common-beam-20261008/case-v11-cut-warping-attempt-*/** -text
+.development/bl5-mz-common-beam-20261008/case-v12-retained-load-attempt-*/** -text
+.development/bl5-ccx-weak-p0-20261008-* -text -whitespace
+.development/bl5-ccx-weak-p0-20261008-*/** -text -whitespace
+.development/bl5-ccx-native-fy-mx-20261008-*/** -text -whitespace
+.development/bl5-mx-beam-only-20261008-*/** -text -whitespace
+.development/bl5-off-common-20261008-*/** -text -whitespace
+.development/bl5-ccx-matched-mx-8x4x2-20261008-*/** -text -whitespace
+.development/bl5-mx-shell-*-20261008-*/** -text -whitespace
+.development/bl5-mx-beam-interface-20261008-*/** -text -whitespace
+.development/bl5-mx-interface-aggregation-20261008-*/** -text -whitespace
+.development/bl5-mx-local-transfer-20261008-*/** -text -whitespace
 docs/agent_plans/s4_drill_constraint_tor_agent.md text eol=lf
 docs/reference_cases/s4_drill_constraint_cases.json text eol=lf
 docs/reference_cases/s4_drill_constraint_oracle.py text eol=lf
@@ -652,3 +677,341 @@ tests/data/b3_e4_f03_primal_ritz_e7908c1a.py.txt -text
 
 # Preserve the audit-bound corrected reader source bytes across platforms.
 scripts/b3_e4_f03_primal_ritz.py text eol=lf
+
+tests/test_stiffened_shell_physical_fibre_j2_history.py text eol=lf
+
+# Preserve exact development receipts and output bytes, including failed attempts.
+.development/b2-member-envelope-20261008-*/** -text -whitespace
+.development/bl5-saved-work-guard-20261008-*/** -text -whitespace
+.development/bl5-saved-local-transfer-20261008-*/** -text -whitespace
+.development/bl5-p1-native-screen-20261008-*/** -text -whitespace
+.development/bl5-mx-*-20261008-*/** -text -whitespace
+.development/bl5-strong-hinge-pair-20261008-v1/** -text -whitespace
+.development/bl5-ccx-strong-hinge-20261008-v1/** -text -whitespace
+.development/bl5-ccx-strong-hinge-interior-gap-20261008-v1/** -text -whitespace
+.development/bl5-quadratic-trace-design-20261008-v1/** -text -whitespace
+.development/bl5-ccx-quadratic-trace-20261008-v1/** -text -whitespace
+.development/bl5-ccx-quadratic-interior-gap-20261008-v1/** -text -whitespace
+.development/bl5-quadratic-row-identity-20261008-v1/** -text -whitespace
+.development/bl5-c1-detached-feasibility-20261008-v1/** -text -whitespace
+.development/bl5-c1-line-reference-20261008-v1/** -text -whitespace
+.development/bl5-c1-line-reference-20261008-v2/** -text -whitespace
+.development/bl5-c1-line-reference-20261008-v3/** -text -whitespace
+.development/bl5-c1-line-reference-20261008-v4/** -text -whitespace
+.development/bl5-c1-line-reference-20261008-v5/** -text -whitespace
+.development/bl5-c1-kkt-20261008-v1/** -text -whitespace
+.development/bl5-c1-line-reference-20261008-v6/** -text -whitespace
+.development/bl5-c1-line-reference-20261008-v7/** -text -whitespace
+.development/bl5-c1-kkt-20261008-v2/** -text -whitespace
+.development/bl5-c1-kkt-20261008-v3/** -text -whitespace
+.development/bl5-c1-ccx-20261008-v1/** -text -whitespace
+.development/bl5-c1-ccx-20261008-v2/** -text -whitespace
+.development/bl5-c1-ccx-20261008-v3/** -text -whitespace
+.development/bl5-c1-ccx-20261008-v4/** -text -whitespace
+.development/bl5-c1-native-fivechannel-20261008-v1/** -text -whitespace
+.development/bl5-c1-common-work-20261008-v1/** -text -whitespace
+docs/agent_plans/development/r8-f03-actual-family-20261009/raw-v*/** -text -whitespace
+docs/agent_plans/development/r8-f03-registered-q4-bound-20261009/raw-v11/** -text -whitespace
+docs/agent_plans/development/r8-f03-c2-signed-kkt-20261009/raw-v1/** -text -whitespace
+docs/agent_plans/development/r8-e02-rigid-thickness-run-20261009/attempt-v4-source.py -text -whitespace
+docs/agent_plans/development/r8-e02-rigid-thickness-run-20261009/raw-v2-v4.zip -text -whitespace
+docs/agent_plans/development/r8-b2-work-consistency-20261009/** -text -whitespace
+docs/agent_plans/development/r8-b2-work-guard-installed-20261009/** -text -whitespace
+docs/agent_plans/development/r8-b2-large-work-allocation-20261009/** -text -whitespace
+
+# Exact source snapshots and grouped evidence for the delivery reset.
+scripts/r8_e02_rigid_precision.py -text
+tests/test_r8_e02_rigid_precision.py -text
+docs/agent_plans/history/r8-before-delivery-reset-20261009/** -text -whitespace
+docs/agent_plans/development/r8-engineering-workflows-20261009/** -text -whitespace
+docs/agent_plans/development/r8-e02-rigid-precision-20261009/** -text -whitespace
+scripts/r8_e02_rigid_torque_fields.py -text
+tests/test_r8_e02_rigid_torque_fields.py -text
+docs/agent_plans/development/r8-e02-rigid-torque-fields-20261009/** -text -whitespace
+
+scripts/r8_e02_rigid_torque_refinement.py -text
+tests/test_r8_e02_rigid_torque_refinement.py -text
+docs/agent_plans/development/r8-e02-rigid-torque-refinement-20261009/** -text -whitespace
+scripts/r8_e02_rigid_acceptance.py -text
+tests/test_r8_e02_rigid_acceptance.py -text
+docs/agent_plans/development/r8-e02-rigid-acceptance-20261009/** -text -whitespace
+scripts/r8_e02_rigid_principal_current.py -text
+tests/test_r8_e02_rigid_principal_current.py -text
+docs/agent_plans/development/r8-e02-rigid-principal-current-20261009/** -text -whitespace
+
+# Prospective F13 registration and exact runner snapshots.
+scripts/r8_f13_static_feasibility.py -text
+tests/test_r8_f13_static_feasibility.py -text
+docs/agent_plans/development/r8-f13-static-feasibility-20261009/** -text -whitespace
+.development/r8-f13-static-feasibility-20261009/*.py -text
+.development/r8-f13-static-feasibility-20261009/*.ps1 -text
+.development/r8-b2-definition-ownership-20261009/** -text -whitespace
+docs/agent_plans/development/r8-b2-definition-ownership-20261009/** -text -whitespace
+
+.development/r8-b2-affine-resolution-20261009/** -text -whitespace
+docs/agent_plans/development/r8-b2-affine-resolution-20261009/** -text -whitespace
+docs/agent_plans/archives/B3_GE_E4_PL_ACTIVE_STATE_20261009_BEFORE_AFFINE.md -text -whitespace
+
+.development/r8-f13-static-feasibility-v5-20261009/** -text -whitespace
+docs/agent_plans/development/r8-f13-static-feasibility-v5-20261009/** -text -whitespace
+
+.development/r8-ge-selective-rebase-20261009/** -text -whitespace
+docs/agent_plans/development/r8-ge-selective-rebase-20261009/** -text -whitespace
+
+.development/r8-ge-coordinate-support-20261009/** -text -whitespace
+docs/agent_plans/development/r8-ge-coordinate-support-20261009/** -text -whitespace
+src/anysolver/_stiffened_shell_coordinate_support.py -text
+src/anysolver/_stiffened_shell_ge_experimental.py -text
+src/anysolver/_stiffened_shell_ge_finite_experimental.py -text
+src/anysolver/stiffened_shell.py -text
+tests/test_stiffened_shell_ge_coordinate_support.py -text
+tests/test_stiffened_shell_coordinate_support_work_oracle.py -text
+
+.development/r8-f03-sparse-signed-20261009/** -text -whitespace
+docs/agent_plans/development/r8-f03-sparse-signed-20261009/** -text -whitespace
+scripts/r8_f03_sparse_signed_family_dev.py -text
+tests/test_r8_f03_sparse_signed_family_dev.py -text
+scripts/r8_f03_saved_coarse_work_oracle_dev.py -text
+tests/test_r8_f03_saved_coarse_work_oracle_dev.py -text
+docs/agent_plans/archives/B3_GE_E4_PL_ACTIVE_STATE_20261009_BEFORE_SPARSE_SIGNED.md -text -whitespace
+scripts/r8_f03_sparse_work_bound_dev.py -text
+tests/test_r8_f03_sparse_work_bound_dev.py -text
+scripts/r8_f07_block_descriptor_dev.py -text
+tests/test_r8_f07_block_descriptor_dev.py -text
+docs/agent_plans/archives/B3_GE_E4_PL_ACTIVE_STATE_20261009_BEFORE_SPARSE_WORK_DECISION.md -text -whitespace
+scripts/r8_f03_current_family_physical_bridge_dev.py -text
+tests/test_r8_f03_current_family_physical_bridge_dev.py -text
+
+# Preserve bounded static-verifier and reference-admission bytes.
+tests/test_r8_b2_physical_footprint_static_foundation_dev.py -text
+.development/r8-f03-reference-operator-admission-20261009/** -text
+
+# Preserve the public independent planning report and prior checkpoint bytes.
+docs/agent_plans/reviews/astra-opus-independent-20261009/OPUS_PLANNING_REPORT.md -text
+docs/agent_plans/reviews/astra-opus-independent-20261009/PUBLIC_REVIEW_METADATA.json -text
+docs/agent_plans/reviews/astra-opus-independent-20261009/ASTRA_ADJUDICATION.md -text
+docs/agent_plans/history/r8-before-opus-review-20261010/B3_GE_E4_PL_ACTIVE_STATE.md -text
+
+# Preserve exact development receipts, snapshots and installed-caller controls.
+docs/agent_plans/development/r8-b2-s3-physical-footprint-20261010/** -text
+docs/agent_plans/development/r8-f03-supported-work-20261010/** -text
+scripts/r8_b2_s3_physical_footprint_dev.py -text
+scripts/r8_f03_supported_work_dev.py -text
+scripts/r8_f03_supported_work_supervise_dev.py -text
+tests/test_r8_b2_s3_physical_footprint_dev.py -text
+tests/test_r8_f03_supported_work_20261010.py -text
+docs/agent_plans/development/r8-f03-physical-contract-20261010/** -text
+docs/agent_plans/development/r8-f06-cell-moment-20261010/** -text
+scripts/r8_f03_physical_contract_dev.py -text
+scripts/r8_f03_physical_contract_controls_dev.py -text
+scripts/r8_f06_cell_moment_oracle_dev.py -text
+scripts/r8_f06_cell_moment_check_dev.py -text
+tests/test_r8_f03_physical_contract_20261010.py -text
+tests/test_r8_f06_cell_moment_oracle_dev.py -text
+docs/agent_plans/development/r8-f06-compensated-state-20261010/** -text
+docs/agent_plans/development/r8-f03-common-density-20261010/** -text
+src/anysolver/_ge_beam3_generalized_cell.py -text
+src/anysolver/_ge_beam3_native_definition.py -text
+src/anysolver/_ge_beam3_pose_joint.py -text
+src/anysolver/_ge_beam3_retained_generalized.py -text
+src/anysolver/_stiffened_shell_f06_increment_arithmetic.py -text
+scripts/r8_f06_compensated_state_route_dev.py -text
+scripts/r8_f06_compensated_state_check_dev.py -text
+scripts/r8_f06_compensated_state_checkpoint_repair_check_dev.py -text
+scripts/r8_f03_common_density_dev.py -text
+scripts/r8_f03_common_density_runner_dev.py -text
+tests/test_r8_f06_compensated_state_dev.py -text
+tests/test_r8_f06_compensated_state_checkpoint_repair_dev.py -text
+tests/test_r8_f03_common_density_20261010.py -text
+docs/agent_plans/development/r8-f06-log-domain-20261010/** -text
+docs/agent_plans/development/r8-b2-original-operator-20261010/** -text
+scripts/r8_f06_log_domain_route_dev.py -text
+scripts/r8_f06_log_domain_check_dev.py -text
+scripts/r8_b2_original_operator_dev.py -text
+tests/test_r8_f06_log_domain_dev.py -text
+tests/test_r8_b2_original_operator_20261010.py -text
+src/anysolver/_b2_attachment_elimination_dev.py -text
+scripts/r8_b2_attachment_elimination_dev.py -text
+scripts/r8_b2_original_operator_prediction_dev.py -text
+scripts/r8_f03_common_density_response_dev.py -text
+tests/test_r8_b2_attachment_elimination_dev.py -text
+tests/test_r8_b2_original_operator_prediction_dev.py -text
+tests/test_r8_f03_common_density_response_dev.py -text
+.development/r8-active-state-before-saved-feedback-20261010.md -text
+.development/r8-f07-structural-note-original-bytes/REPORT.md -text
+.development/r8-f07-structural-note-original-bytes/CHECKPOINT.md -text
+src/anysolver/_ge_beam3_native_fibre_static_element.py -text
+scripts/r8_f06_fibre_log_domain_dev.py -text
+tests/test_r8_f06_fibre_log_domain_dev.py -text
+docs/agent_plans/development/r8-f06-log-domain-20261010/fibre-v1/** -text
+docs/agent_plans/development/r8-f07-block-descriptor-20261009/finite-supplement-v1/** -text
+src/anysolver/_stiffened_shell_beam_history.py -text
+scripts/r8_f06_native_material_breadth_dev.py -text
+tests/test_r8_f06_native_material_breadth_dev.py -text
+docs/agent_plans/development/r8-f06-log-domain-20261010/material-breadth-v1/** -text
+scripts/r8_f06_cyclic_material_dev.py -text
+tests/test_r8_f06_cyclic_material_dev.py -text
+docs/agent_plans/development/r8-f06-log-domain-20261010/cyclic-material-v1/** -text -whitespace
+.development/r8-cyclic-root-artifact-proof.py -text
+.development/r8-cyclic-matrix-byte-proof.json -text
+.development/r8-active-before-cyclic-delivery-20261010.md -text
+tests/test_r8_f06_reversal_dev.py -text
+docs/agent_plans/development/r8-f06-log-domain-20261010/reversal-v1/** -text -whitespace
+
+scripts/r8_f06_adaptive_material_dev.py -text
+tests/test_r8_f06_adaptive_material_dev.py -text
+docs/agent_plans/development/r8-f06-log-domain-20261010/adaptive-material-v1/** -text -whitespace
+
+.development/r8-rebased-root-proof.py -text
+docs/agent_plans/development/r8-f06-log-domain-20261010/rebased-continuation-v1/** -text -whitespace
+scripts/r8_f03_finite_local_dev.py -text
+scripts/r8_f03_finite_inventory_dev.py -text
+scripts/r8_f03_finite_sparse_dev.py -text
+scripts/r8_f03_finite_runner_dev.py -text
+tests/test_r8_f03_finite_certificate_dev.py -text
+docs/agent_plans/development/r8-f03-common-density-20261010/finite-certificate-v1/** -text -whitespace
+# Preserve exact tested sources and immutable failure receipts for these slices.
+scripts/r8_f03_physical_interval*_dev.py -text
+scripts/r8_f06_pending_resume*_dev.py -text
+tests/test_r8_f03_physical_interval*_dev.py -text
+tests/test_r8_f06_pending_resume*_dev.py -text
+docs/agent_plans/development/r8-f03-common-density-20261010/physical-interval-v1/** -text -whitespace
+docs/agent_plans/development/r8-f06-log-domain-20261010/pending-resume-v1/** -text -whitespace
+scripts/r8_f03_halfpoint*_dev.py -text
+scripts/r8_f03_growing*_dev.py -text
+tests/test_r8_f03_growing*_dev.py -text
+docs/agent_plans/development/r8-f03-common-density-20261010/growing-v1/** -text -whitespace
+scripts/r8_f06_coupled_resume*_dev.py -text
+tests/test_r8_f06_coupled_resume*_dev.py -text
+scripts/r8_f06_coupled_direction*_dev.py -text
+tests/test_r8_f06_coupled_direction*_dev.py -text
+scripts/r8_f06_coupled_staged*_dev.py -text
+tests/test_r8_f06_coupled_staged*_dev.py -text
+scripts/r8_f06_mixed_adaptive*_dev.py -text
+tests/test_r8_f06_mixed_adaptive*_dev.py -text
+scripts/r8_f03_block_comparison*_dev.py -text
+tests/test_r8_f03_block_comparison*_dev.py -text
+docs/agent_plans/development/r8-f03-common-density-20261010/block-comparison-v1/** -text -whitespace
+docs/agent_plans/development/r8-f03-common-density-20261010/block-assessment-v1/** -text -whitespace
+docs/agent_plans/development/r8-f06-log-domain-20261010/coupled-staged-v1/** -text -whitespace
+docs/agent_plans/development/r8-f06-log-domain-20261010/mixed-adaptive-v1/** -text -whitespace
+docs/agent_plans/development/r8-f06-log-domain-20261010/coupled-resume-v1/** -text -whitespace
+docs/agent_plans/development/r8-f06-log-domain-20261010/coupled-direction-v1/** -text -whitespace
+tests/test_r8_f03_halfpoint*_dev.py -text
+scripts/r8_f06_pending_direction*_dev.py -text
+tests/test_r8_f06_pending_direction*_dev.py -text
+scripts/r8_f06_direction_fallback*_dev.py -text
+tests/test_r8_f06_direction_fallback*_dev.py -text
+docs/agent_plans/development/r8-f03-common-density-20261010/halfpoint-v1/** -text -whitespace
+docs/agent_plans/development/r8-f06-log-domain-20261010/pending-direction-v1/** -text -whitespace
+docs/agent_plans/development/r8-f06-log-domain-20261010/direction-fallback-v1/** -text -whitespace
+scripts/r8_f06_coupled_history_unblock_dev.py -text
+tests/test_r8_f06_coupled_history_unblock_dev.py -text
+docs/agent_plans/development/r8-f06-log-domain-20261010/coupled-history-unblock-v1/** -text -whitespace
+scripts/r8_f06_paired_displacement_dev.py -text
+tests/test_r8_f06_paired_displacement_dev.py -text
+docs/agent_plans/development/r8-f06-log-domain-20261010/paired-displacement-v1/** -text -whitespace
+scripts/r8_b2_physical_work_unblock_dev.py -text
+docs/agent_plans/development/r8-b2-physical-work-unblock-20261010/** -text -whitespace
+scripts/r8_b2_installed_original_target_dev.py -text
+docs/agent_plans/development/r8-b2-installed-original-target-20261010/** -text -whitespace
+scripts/r8_f06_paired_loaded_x_dev.py -text
+tests/test_r8_f06_paired_loaded_x_dev.py -text
+scripts/r8_b2_installed_batch_persistence*_dev.py -text
+tests/test_r8_b2_installed_batch_persistence*_dev.py -text
+docs/agent_plans/development/r8-b2-installed-batch-persistence-20261010/** -text -whitespace
+scripts/r8_f06_paired_active_tangent_dev.py -text
+tests/test_r8_f06_paired_active_tangent_dev.py -text
+scripts/r8_f06_paired_branch_domain_dev.py -text
+tests/test_r8_f06_paired_branch_domain_dev.py -text
+scripts/r8_f06_paired_branch_assessment_dev.py -text
+tests/test_r8_f06_paired_branch_assessment_dev.py -text
+scripts/r8_f06_paired_branch_assessment_v2_dev.py -text
+tests/test_r8_f06_paired_branch_assessment_v2_dev.py -text
+scripts/r8_b2_g5_readiness_dev.py -text
+tests/test_r8_b2_g5_readiness_dev.py -text
+docs/agent_plans/development/r8-b2-g5-readiness-20261010/** -text -whitespace
+scripts/r8_b2_assembly_metrics_dev.py -text
+tests/test_r8_b2_assembly_metrics_dev.py -text
+scripts/r8_b2_assembly_series_dev.py -text
+tests/test_r8_b2_assembly_series_dev.py -text
+scripts/r8_f06_paired_role_assessment_dev.py -text
+tests/test_r8_f06_paired_role_assessment_dev.py -text
+src/anysolver/_stiffened_shell_b2_assembly_diagnostics.py -text
+docs/agent_plans/development/r8-b2-assembly-metrics-20261010/** -text -whitespace
+docs/agent_plans/development/r8-b2-assembly-series-20261010/** -text -whitespace
+docs/agent_plans/development/r8-b2-coo-scratch-cleanup-20261010/** -text -whitespace
+scripts/r8_b2_coo_scratch_cleanup_dev.py -text
+tests/test_r8_b2_coo_scratch_cleanup_dev.py -text
+
+docs/agent_plans/development/r8-ge-coupled-cycle-20261010/** -text -whitespace
+
+scripts/r8_ge_coupled_cycle_dev.py -text
+
+tests/test_r8_ge_coupled_cycle_dev.py -text
+
+examples/r8_ge_coupled_cycle_public_example.py -text
+
+scripts/r8_b2_assembly_series_v2_dev.py -text
+
+tests/test_r8_b2_assembly_series_v2_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+scripts/r8_b2_assembly_series_v3_dev.py -text
+scripts/r8_b2_assembly_series_v4_dev.py -text
+scripts/r8_b2_assembly_series_v5_dev.py -text
+scripts/r8_b2_assembly_series_v5_preflight_dev.py -text
+tests/test_r8_b2_assembly_series_v3_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+tests/test_r8_b2_assembly_series_v4_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+tests/test_r8_b2_assembly_series_v5_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+scripts/r8_b2_assembly_series_v6_dev.py -text
+scripts/r8_b2_assembly_series_v6_preflight_dev.py -text
+tests/test_r8_b2_assembly_series_v6_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+scripts/r8_b2_assembly_series_v7_dev.py -text
+scripts/r8_b2_assembly_series_v7_preflight_dev.py -text
+tests/test_r8_b2_assembly_series_v7_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+scripts/r8_b2_assembly_series_v8_dev.py -text
+scripts/r8_b2_assembly_series_v8_preflight_dev.py -text
+tests/test_r8_b2_assembly_series_v8_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+scripts/r8_b2_assembly_series_v9_dev.py -text
+scripts/r8_b2_assembly_series_v9_preflight_dev.py -text
+tests/test_r8_b2_assembly_series_v9_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+scripts/r8_ge_saved_compliance_dev.py -text
+tests/test_r8_ge_saved_compliance_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+scripts/r8_ge_saved_merit_remainder_dev.py -text
+tests/test_r8_ge_saved_merit_remainder_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+docs/agent_plans/development/r8-ge-paired-adaptive-20261010/** -text -whitespace
+scripts/r8_ge_paired_adaptive_dev.py -text
+scripts/r8_ge_paired_adaptive_bootstrap_dev.py -text
+scripts/r8_ge_paired_adaptive_installed_bootstrap_dev.py -text
+tests/test_r8_ge_paired_adaptive_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+examples/r8_ge_paired_adaptive_public_example.py -text
+
+scripts/r8_ge_paired_fixed_diagnostic_dev.py -text
+tests/test_r8_ge_paired_fixed_diagnostic_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+
+docs/agent_plans/development/r8-b2-q4-lifetime-20261010/** -text -whitespace
+
+src/anysolver/e4_pl_element.py -text
+scripts/r8_b2_q4_lifetime_dev.py -text
+tests/test_r8_b2_q4_lifetime_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+
+scripts/r8_ge_paired_trial_derivative_dev.py -text
+tests/test_r8_ge_paired_trial_derivative_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+
+# Preserve frozen Mistral candidate source bytes across checkout.
+src/anysolver/_stiffened_shell_displacement_corrector.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+src/anysolver/_stiffened_shell_displacement_control.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+src/anysolver/_stiffened_shell_displacement_adaptive.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+src/anysolver/_stiffened_shell_ge_experimental.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+src/anysolver/stiffened_shell.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+scripts/r8_ge_merit_interpolation_candidate_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+scripts/r8_ge_merit_interpolation_execution_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+tests/test_r8_ge_merit_interpolation_candidate_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+scripts/r8_b2_remaining_scale_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+tests/test_r8_b2_remaining_scale_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+
+# Preserve exact tested Mistral history/supervisor source bytes.
+scripts/r8_f06_fibre_log_domain_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+scripts/r8_ge_merit_interpolation_execution_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+scripts/r8_ge_paired_adaptive_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+tests/test_r8_f06_fibre_launch_seam_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+tests/test_r8_ge_merit_history_entrypoint_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol

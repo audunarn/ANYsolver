@@ -2,6 +2,7 @@
 import json
 import math
 import numpy as np
+from scipy.spatial.transform import Rotation
 from anysolver import b3_ge, stiffened_shell as ss
 from anysolver.control import CancellationToken, SolveCancelled
 from anysolver import _stiffened_shell_ge_finite_experimental as finite
@@ -221,6 +222,27 @@ def test_two_stiffener_simultaneous_history_restart_rebase_and_atomicity(request
     chart_restored=ss.create_analysis(definition=model);request.addfinalizer(chart_restored.close)
     chart_restored.restore(after['checkpoint']);assert chart_restored.checkpoint()==after['checkpoint']
     owner.solve(loads,(4.,),increment_control=CONTROL,on_accepted=accepted,**OPTIONS)
+    # Compare consecutive physical left-increment rotations at the same
+    # shell nodes, using accepted poses rather than additive chart vectors.
+    # Both updates must end in increments with simultaneous shell/fibre yield.
+    noncommuting=[]
+    for i in range(1,len(states)-1):
+        if not (history[i]['simultaneous'] and history[i+1]['simultaneous']):
+            continue
+        before,mid,following=(states[j]['shell_frames'] for j in (i-1,i,i+1))
+        first=Rotation.from_matrix(mid@np.swapaxes(before,1,2)).as_rotvec()
+        second=Rotation.from_matrix(following@np.swapaxes(mid,1,2)).as_rotvec()
+        norms=np.linalg.norm(first,axis=1)*np.linalg.norm(second,axis=1)
+        bracket=np.linalg.norm(np.cross(first,second),axis=1)
+        sine=np.divide(bracket,norms,out=np.zeros_like(bracket),where=norms>1e-10)
+        noncommuting.extend(zip(bracket.tolist(),sine.tolist()))
+    assert noncommuting, 'no adjacent simultaneous-yield physical rotation updates'
+    qualifying=[row for row in noncommuting if row[0]>1e-12 and row[1]>1e-4]
+    assert qualifying, 'no single node has a resolved noncommuting physical path'
+    (tmp_path/'noncommuting-chart.json').write_text(json.dumps(dict(
+        max_bracket_rad2=max(row[0] for row in noncommuting),
+        max_axis_sine=max(row[1] for row in noncommuting),
+        qualifying_nodes=len(qualifying)),indent=2)+'\n',encoding='utf-8')
     for target in (2.,3.,4.):
         start=len(resumed_states)
         resumed.solve(loads,(target,),increment_control=CONTROL,on_accepted=observer(resumed,'resumed',resumed_states),**OPTIONS)

@@ -172,11 +172,27 @@ Multipliers are components in these material bases, not spatial dead moments.
             raise ValueError('joint definition policy or identity mismatch')
         return made
 
-    def evaluate(self, positions, frames, multipliers, *, position_low=None, cancellation_token=None):
+    def evaluate(self, positions, frames, multipliers, *, position_low=None, frames_low=None, cancellation_token=None):
         cancellation_safe_point(cancellation_token, 'pose-joint.start')
         self.guard()
         x = _array(positions, (2, 3)); q = _frames(frames); force = _array(multipliers, (6,))
         low = np.zeros((2, 3)) if position_low is None else _array(position_low, (2, 3))
+        if frames_low is not None:
+            from ._stiffened_shell_f06_increment_arithmetic import validate_frames, pose_evaluation
+            qlow = _array(frames_low, (2, 3, 3))
+            validate_frames(q, qlow, 'point frames')
+            value, constraints, jacobian, residual, chart = pose_evaluation(
+                x, low, q, qlow, force, self._offset, self._relative)
+            spatial = chart.copy()
+            for start in (3, 9):
+                spatial[start:start+3, start:start+3] -= .5*skew(residual[start:start+3])
+            fingerprint = sha256(canonical(dict(positions=x, position_low=low,
+                frames=q, frames_low=qlow, multipliers=force))).hexdigest()
+            result = PoseJointEvaluation(self.identity, fingerprint, value, _owned(constraints),
+                _owned(jacobian), _owned(residual), _owned(chart), _owned(spatial))
+            self.guard()
+            cancellation_safe_point(cancellation_token, 'pose-joint.complete')
+            return result
         gap = _difference(x, low)
         fingerprint = sha256(canonical(dict(positions=x, position_low=low, frames=q, multipliers=force))).hexdigest()
         variables = [Jet2.variable(0., i, 18) for i in range(12)]
@@ -203,7 +219,7 @@ Multipliers are components in these material bases, not spatial dead moments.
         return result
 
     def evaluate_ports(self, positions, anchors, multipliers, *, rotation_coordinates,
-                       charted_ports, position_low=None, cancellation_token=None):
+                       charted_ports, position_low=None, anchors_low=None, cancellation_token=None):
         """Exact mixed-chart interface, not an accepted shell-state adapter.
 
 For a charted port Q=Exp(theta) anchor and theta varies additively. For a
@@ -215,6 +231,9 @@ its next variation is multiplicative. State owners must supply these anchors.
         if type(charted_ports) is not tuple or len(charted_ports) != 2 or any(type(v) is not bool for v in charted_ports):
             raise ValueError('two explicit joint port chart flags required')
         anchors = _frames(anchors)
+        anchor_low = None if anchors_low is None else _array(anchors_low, (2, 3, 3))
+        if anchor_low is not None and any(charted and np.any(anchor_low[i]) for i, charted in enumerate(charted_ports)):
+            raise ValueError('compensated charted point anchor is not implemented')
         coordinates = _array(rotation_coordinates, (2, 3))
         frames = []; terms = []
         for i, charted in enumerate(charted_ports):
@@ -229,7 +248,7 @@ its next variation is multiplicative. State owners must supply these anchors.
                 raise ValueError('singular additive rotation chart; state owner must rebase')
             frames.append(q@anchors[i]); terms.append((a, da))
         frames = _frames(np.array(frames))
-        pose = self.evaluate(positions, frames, multipliers, position_low=position_low,
+        pose = self.evaluate(positions, frames, multipliers, position_low=position_low, frames_low=anchor_low,
             cancellation_token=cancellation_token)
         coordinate_map = np.eye(18); extra = np.zeros((18, 18))
         for i, term in enumerate(terms):

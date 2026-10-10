@@ -70,7 +70,16 @@ def face_row(model,point,body):
     for eid in model[body+'_elements']:
         ids,low,high,center,span=original._brick(model['elements'][eid],model['physical_nodes'])
         if all(low[j]-1e-14<=point[j]<=high[j]+1e-14 for j in range(3)):
-            shape,_=original._shape(2*(np.asarray(point)-center)/span)
+            reference=2*(np.asarray(point)-center)/span
+            # A material face has an exact reference coordinate even when the
+            # physical center/span arithmetic rounds just inside that face.
+            # Preserve its C3D20 trace zeros before assembling weak rows.
+            for j in range(3):
+                if abs(point[j]-low[j])<=1e-14:
+                    reference[j]=-1.
+                elif abs(point[j]-high[j])<=1e-14:
+                    reference[j]=1.
+            shape,_=original._shape(reference)
             row=np.zeros((3,3*len(index)))
             for n,weight in zip(ids,shape):
                 for j in range(3):row[j,index[n]+j]+=weight

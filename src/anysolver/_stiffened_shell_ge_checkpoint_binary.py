@@ -34,6 +34,13 @@ MAX_HEADER_BYTES = 8192
 MAX_CHECKPOINT_BYTES = 128 * 1024 * 1024
 MAX_S3_STATE_BYTES = 128 * 1024
 SCHEMAS = {
+    "finite_displacement_paired_mixed_q4_coupled": "GE_PAIRED_MIXED_Q4_J2_POINT_DISPLACEMENT_MECHANICS_V1_DEV",
+    "finite_compensated_generalized_material": "GE_COMPENSATED_GENERALIZED_POINT_MATERIAL_STATE_V1_DEV",
+    "finite_chart_compensated_generalized_material": "GE_ANCHORED_COMPENSATED_GENERALIZED_POINT_MATERIAL_STATE_V1_DEV",
+    "finite_compensated_fibre_material": "GE_COMPENSATED_PHYSICAL_FIBRE_POINT_MATERIAL_STATE_V1_DEV",
+    "finite_chart_compensated_fibre_material": "GE_ANCHORED_COMPENSATED_PHYSICAL_FIBRE_POINT_MATERIAL_STATE_V1_DEV",
+    "finite_compensated_mixed_material": "GE_COMPENSATED_MIXED_NATIVE_POINT_MATERIAL_STATE_V1_DEV",
+    "finite_chart_compensated_mixed_material": "GE_ANCHORED_COMPENSATED_MIXED_NATIVE_POINT_MATERIAL_STATE_V1_DEV",
     "finite_distributing_displacement": "B3_GE_E4_PL_FINITE_DISTRIBUTING_DISPLACEMENT_MECHANICS_V1_DEV",
     "finite_displacement_native_fibre_bl5": "B3_GE_E4_PL_NATIVE_FIBRE_BL5_DISPLACEMENT_MECHANICS_V1_DEV",
     "finite_distributing": "B3_GE_E4_PL_FINITE_DISTRIBUTING_DIRECTOR_POLAR_V1_DEV",
@@ -78,6 +85,13 @@ SCHEMAS = {
     "finite_native_material_stable": STABLE_NATIVE_SCHEMA,
     "finite_chart_native_material_stable": "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_ANCHORED_STABLE_S3_NATIVE_MATERIAL_V9",
 }
+
+# Distinct shell-J2 domain: historical material kinds remain elastic-shell only.
+COMPENSATED_COUPLED_KINDS = tuple('finite_compensated_'+family+'_coupled'
+    for family in ('generalized', 'fibre', 'mixed'))
+for _family, _kind in zip(('GENERALIZED', 'PHYSICAL_FIBRE', 'MIXED_NATIVE'), COMPENSATED_COUPLED_KINDS):
+    SCHEMAS[_kind] = 'GE_COMPENSATED_'+_family+'_POINT_COUPLED_J2_STATE_V1_DEV'
+    SCHEMAS[_kind.replace('finite', 'finite_chart', 1)] = 'GE_ANCHORED_COMPENSATED_'+_family+'_POINT_COUPLED_J2_STATE_V1_DEV'
 
 CURVED_POINT_MATERIAL_KINDS = ("finite_curved_points_material", "finite_curved_points_coupled")
 FINITE_DISTRIBUTING_NATIVE_KINDS = ("finite_distributing_cyclic_native_material",
@@ -407,3 +421,52 @@ def decode_chart(raw, model, nodes):
     if not inner.startswith((MAGIC, S3_MAGIC, NATIVE_SHELL_MAGIC)):
         raise ValueError("distinct numeric chart snapshot required")
     return metadata["generation"], anchors, witness, inner
+
+
+COMPENSATED_MAGIC = b"ANYF06DD1\0"
+COMPENSATED_SCHEMA = "GE_BEAM3_DURABLE_COMPENSATED_NATIVE_STATE_V1_DEV"
+
+def encode_compensated(inner, model, corrections):
+    """Additive envelope: exact normalized correction bytes plus original state."""
+    if type(inner) is not bytes or not inner or type(model) is not str:
+        raise ValueError('bounded compensated state required')
+    names = ('q_low','frames_low','cells_low','resultants_low')
+    if set(corrections) != set(names): raise ValueError('complete compensated corrections required')
+    arrays=[]; fields=[]
+    for name in names:
+        a=np.asarray(corrections[name])
+        if a.dtype != np.float64 or not np.isfinite(a).all(): raise ValueError('finite binary64 corrections required')
+        b=np.asarray(a,dtype='<f8').tobytes(order='C');arrays.append(b);fields.append([name,list(a.shape),len(b)])
+    header=json.dumps(dict(schema=COMPENSATED_SCHEMA,model=model,inner_bytes=len(inner),fields=fields),
+        sort_keys=True,separators=(',',':')).encode('ascii')
+    if len(header)>MAX_HEADER_BYTES: raise ValueError('compensated header too large')
+    body=COMPENSATED_MAGIC+len(header).to_bytes(4,'little')+header+inner+b''.join(arrays)
+    if len(body)+32>MAX_CHECKPOINT_BYTES: raise ValueError('compensated checkpoint too large')
+    return body+sha256(body).digest()
+
+def decode_compensated(raw,model,shapes):
+    if type(raw) is not bytes or not raw.startswith(COMPENSATED_MAGIC) or len(raw)>MAX_CHECKPOINT_BYTES:
+        raise ValueError('bounded compensated checkpoint required')
+    n=len(COMPENSATED_MAGIC)
+    if len(raw)<n+4+32 or sha256(raw[:-32]).digest()!=raw[-32:]: raise ValueError('compensated checkpoint integrity mismatch')
+    size=int.from_bytes(raw[n:n+4],'little');n+=4
+    if not 0<size<=MAX_HEADER_BYTES or n+size>len(raw)-32:
+        raise ValueError('bounded compensated metadata required')
+    try: header=json.loads(raw[n:n+size].decode('ascii'))
+    except (UnicodeDecodeError,json.JSONDecodeError) as exc:
+        raise ValueError('invalid compensated metadata') from exc
+    if type(header) is not dict or set(header)!= {'schema','model','inner_bytes','fields'} or header['schema']!=COMPENSATED_SCHEMA or header['model']!=model:
+        raise ValueError('compensated model identity mismatch')
+    if type(header['inner_bytes']) is not int or header['inner_bytes']<1: raise ValueError('bounded inner checkpoint required')
+    n+=size;end=n+header['inner_bytes']
+    if end>len(raw)-32: raise ValueError('bounded inner checkpoint required')
+    inner=raw[n:end];n=end;corrections={}
+    if header['fields']!=[[name,list(shape),prod(shape)*8] for name,shape in shapes]: raise ValueError('compensated shapes mismatch')
+    for name,shape in shapes:
+        end=n+prod(shape)*8
+        if end>len(raw)-32: raise ValueError('truncated compensated corrections')
+        a=np.frombuffer(raw[n:end],dtype='<f8').reshape(shape).copy();n=end
+        if not np.isfinite(a).all(): raise ValueError('nonfinite compensated correction')
+        corrections[name]=a
+    if n!=len(raw)-32 or not inner: raise ValueError('compensated checkpoint trailing or missing bytes')
+    return inner,corrections

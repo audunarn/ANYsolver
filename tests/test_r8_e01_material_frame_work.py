@@ -148,11 +148,70 @@ def test_saved_field_identity_and_hash_guards(tmp_path):
     result = work.read_bound_capture(path, sha256(raw).hexdigest())
     assert len(result['diagnostic']['samples']) == 9
     assert result['diagnostic']['samples'][1]['nodal_yaw_minus_material_spin'] == .01
+    assert result['diagnostic']['maximum_abs_incident_spin_jump_rad'] == 0.
+    assert (result['diagnostic']['samples'][-1]['material_rotation'][2] ==
+            result['diagnostic']['samples'][-1]['material_spin_left_rad'])
     with pytest.raises(ValueError, match='hash mismatch'):
         work.read_bound_capture(path, '0'*64)
     value['shell_intervals'] = 4
     with pytest.raises(ValueError, match='identity'):
         work.diagnose_e01_capture(value)
+    external = capture()
+    field = external.pop('native_coupled_shell_displacements')
+    external['external_coupled_shell_displacements'] = field
+    assert (work.diagnose_e01_capture(external)['originating_field'] ==
+            'external_coupled_shell_displacements')
+    field['1'][0] = .01
+    with pytest.raises(ValueError, match='root-field guard'):
+        work.diagnose_e01_capture(external)
+
+
+def test_incident_material_spin_reports_both_host_sides_and_affine_control():
+    value = capture()
+    field = value['native_coupled_shell_displacements']
+    field['2'][1] = .1
+    diagnostic = work.diagnose_e01_capture(value)
+    station = diagnostic['samples'][1]
+    assert station['material_spin_left_rad'] == pytest.approx(.2)
+    assert station['material_spin_right_rad'] == pytest.approx(-.2)
+    assert station['incident_spin_jump_rad'] == pytest.approx(-.4)
+    assert station['material_rotation'][2] == station['material_spin_right_rad']
+    assert diagnostic['maximum_abs_incident_spin_jump_rad'] == pytest.approx(.4)
+    assert diagnostic['samples'][0]['material_spin_left_rad'] is None
+    assert diagnostic['samples'][-1]['material_spin_right_rad'] is None
+
+    for row in range(5):
+        for column in range(9):
+            field[str(1+9*row+column)] = [0., .02*column/4, 0., 0., 0., 0.]
+    affine = work.diagnose_e01_capture(value)
+    assert affine['maximum_abs_incident_spin_jump_rad'] < 1e-16
+    assert all(sample['material_rotation'][2] == pytest.approx(.01)
+               for sample in affine['samples'])
+
+
+def test_pure_x_torque_work_at_shared_vertex_is_independent_of_incident_yaw_host():
+    left_xy = np.array(((0., -.5), (1., -.5), (1., 0.), (0., 0.)))
+    right_xy = left_xy + np.array((1., 0.))
+    station = np.array((1., -.5))
+    left_q = np.zeros((4, 6))
+    right_q = np.zeros((4, 6))
+    # The same physical corner has one director rotation in both incident hosts.
+    left_q[1, 3] = right_q[0, 3] = 2.e-5
+    # Continuous shared displacement with different one-sided polar gradients.
+    left_q[1, 1] = right_q[0, 1] = .1
+    left_map = work.shell_material_frame_map(left_xy, station)
+    right_map = work.shell_material_frame_map(right_xy, station)
+    left_pose = left_map @ left_q.ravel()
+    right_pose = right_map @ right_q.ravel()
+    assert left_pose[5] == pytest.approx(.05)
+    assert right_pose[5] == pytest.approx(-.05)
+    assert left_pose[3] == right_pose[3] == 2.e-5
+    wrench = np.array((0., 0., 0., 100., 0., 0.))
+    for mapping, field in ((left_map, left_q), (right_map, right_q)):
+        nodal = work.adjoint_wrench(mapping, wrench)
+        assert nodal @ field.ravel() == pytest.approx(.002)
+        # A pure x-torque has no force work or polar-yaw work in this map.
+        np.testing.assert_array_equal(nodal.reshape(4, 6)[:, :3], 0.)
 
 
 def test_cli_never_overwrites_and_requires_hash_per_input(tmp_path):

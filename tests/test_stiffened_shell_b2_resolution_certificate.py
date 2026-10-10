@@ -286,8 +286,14 @@ def test_historical_point_load_guard_does_not_enter_the_new_certificate(request,
     assert owner._resolution_kkt is None
 
 
-def test_certified_tiny_load_does_not_accept_a_real_footprint_gap(request, monkeypatch):
+@pytest.mark.parametrize('affine', (False, True))
+def test_certified_tiny_load_does_not_accept_a_real_footprint_gap(request, monkeypatch, affine):
     definition, _ = _rigid_tip_definition()
+    if affine:
+        transform=definition.transformation.tolil()
+        slot=6*(definition.footprints[0].shell_nodes[0]-1)
+        transform[slot,transform.getrow(slot).nonzero()[1][0]]=.25
+        definition=replace(definition,transformation=transform.tocsr())
     owner = _owner(request, definition)
     original = owner._handle
     shell_count = 6*len(definition.shell_nodes_m)
@@ -311,8 +317,8 @@ def test_certified_tiny_load_does_not_accept_a_real_footprint_gap(request, monke
     certificates, incompatible = [], []
     certify = owner._explicit_load_resolved
     tolerance = owner._footprint_gap_tolerance
-    def record_certificate(*args):
-        accepted = certify(*args)
+    def record_certificate(*args, **kwargs):
+        accepted = certify(*args, **kwargs)
         certificates.append(accepted)
         return accepted
     def record_gap(u, scale, fraction):
@@ -371,7 +377,7 @@ def test_large_load_with_tiny_component_remains_non_success(request, omit_compon
 
 
 @pytest.mark.parametrize("change", ("scaled", "negative", "mixed", "offset"))
-def test_certificate_is_ineligible_for_unproved_affine_coordinates(
+def test_historical_point_only_affine_coordinates_remain_ineligible(
         request, monkeypatch, change):
     definition, _ = _small_definition()
     transform = definition.transformation.tolil()

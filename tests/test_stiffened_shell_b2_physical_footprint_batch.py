@@ -49,6 +49,14 @@ def test_public_batch_counts_selected_outputs_and_envelopes(owner,count):
         values=[case.selected_displacements[j] for case in result.cases]
         assert envelope.minimum==min(values) and envelope.maximum==max(values)
         assert envelope.minimum_case_id==result.cases[values.index(min(values))].case_id
+    assert len(result.member_resultant_envelopes)==18
+    for envelope in result.member_resultant_envelopes:
+        channel=("N","Qy","Qz","Mx","My","Mz").index(envelope.component)
+        values=[dict(case.beam_resultants_local)[envelope.member_id]
+                [envelope.station_index][channel] for case in result.cases]
+        assert envelope.minimum==min(values) and envelope.maximum==max(values)
+        assert envelope.minimum_case_id==result.cases[values.index(min(values))].case_id
+        assert envelope.maximum_case_id==result.cases[values.index(max(values))].case_id
     with pytest.raises(FrozenInstanceError):result.cases[0].case_id="changed"
 
 
@@ -59,6 +67,7 @@ def test_no_unselected_recovery_and_first_case_tie(owner,monkeypatch):
     for _,(member,_) in owner._members:monkeypatch.setattr(type(member.operator),"recover_sections",forbidden)
     result=owner.solve_linear_many((("first",load()),("second",load())),selected_dofs=DOFS)
     assert result.status=="completed" and result.constraint_rows==()
+    assert result.member_resultant_envelopes==()
     for case in result.cases:assert case.footprint_wrenches==case.beam_resultants_local==case.constraint_multipliers==case.constraint_gaps==()
     for envelope in result.displacement_envelopes+result.affine_reaction_envelopes:
         assert envelope.minimum_case_id==envelope.maximum_case_id=="first"

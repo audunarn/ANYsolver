@@ -1,6 +1,7 @@
 # E01 linear material-frame work feasibility
 
-Identity: `R8_E01_LINEAR_POLAR_SPIN_INDEPENDENT_DIRECTOR_WORK_V1_DEV`.
+Current identity: `R8_E01_LINEAR_POLAR_SPIN_INDEPENDENT_DIRECTOR_WORK_V2_DEV`.
+The V1 identity and its executed evidence remain historical.
 Source development only. This diagnostic changes no connection, product dispatch,
 checkpoint, historical fixture, tolerance or acceptance criterion. Candidate
 physical interpretations require root adoption. No external solver is launched.
@@ -103,7 +104,14 @@ summary. Lower-edge stations use the host to their right, except the last uses
 the host to its left. This explicit one-sided recovery is a diagnostic choice;
 incident-cell averaging would define a different discrete map.
 
-## Executed source development evidence
+V2 also reports the material spin from **both** incident hosts at each interior
+station and their signed right-minus-left jump. The original one-sided value is
+retained for comparison. These sided derivatives share the nodal translation
+field but need not agree: the Q4 displacement gradient is discontinuous at an
+element boundary. The jump is a sampling diagnostic, not a weak-constraint gap,
+zero-energy mode or material error. No average is selected by this report.
+
+## Historical V1 executed source development evidence
 
 One fresh supervised job ran the 15 focused analytic checks and both original
 hash-bound saved captures: **15 PASS in 0.30 s**; whole job 0.846 s, sampled
@@ -134,7 +142,8 @@ Raw [execution/logs](../../.qualification/b3-ge-e4-pl/r8-e01-material-frame-work
 [effective runtime](../../.qualification/b3-ge-e4-pl/r8-e01-material-frame-work-dev-20261005-v1/runtime-v2.json)
 and [saved diagnostics](../../.qualification/b3-ge-e4-pl/r8-e01-material-frame-work-dev-20261005-v1/saved-fields-v2.json)
 remain together. The source/input binding predates this results prose; the
-tested script and test bytes are unchanged. No different-family scientific
+tested V1 script and test bytes are unchanged in that record. Its source hash
+does not bind the newer V2 sided-spin output. No different-family scientific
 acceptance or mandatory E01 closure follows.
 
 Outputs report nodal-yaw minus recovered spin and independent-director minus
@@ -149,6 +158,28 @@ treatment. After that decision, a matched small executable/output/work check can
 be scoped. E01's complete observable/floor set, both offset signs, three systematic
 two-direction refinements, independent scientific review and full platform gates
 remain mandatory. No external execution or new refinement authority follows.
+
+## V2 incident-host result
+
+The [V2 saved-field check](../../.development/e01-spin-sides-20261008-v1/results.md)
+passed 16 focused source controls and preserved both original capture hashes.
+At the interior edge stations, the largest right-minus-left recovered spin
+jumps are `8.728590078236072e-8 rad` (native) and
+`8.500972271783122e-8 rad` (OpenSees), both at x=1.75 m. The largest
+cross-model one-sided spin differences over those stations are smaller:
+`1.5331654353297095e-8 rad` on left hosts and
+`1.3055476288767587e-8 rad` on right hosts. The previously selected
+right-host values are exactly unchanged. This supports specifying host,
+averaging or finite support as part of any *new* physical material-frame
+comparison. It neither changes the existing nodal-pose point law nor proves
+that either shell or connection is wrong. V1 executed evidence remains bound
+to V1 source; V2 has its own receipt and raw saved-field output. The quoted
+cross-model maxima cover interior stations only; the tip's selected-host
+difference is about `2.94448e-8 rad`. An [affected test-only delta](../../.development/e01-spin-sides-20261008-v2/results.md)
+also passed terminal-host, external capture and root refusal checks without
+regenerating the saved fields. A [supporting source review](../../.development/e01-spin-sides-20261008-v1/review.md)
+confirmed the indexing and interpretation; different-family acceptance
+remains open.
 
 ## Finite projected-polar trace proposal
 

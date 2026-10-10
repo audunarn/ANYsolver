@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from math import fsum
 import numpy as np
 from scipy.spatial.transform import Rotation
-from ._stiffened_shell_b2_nodal_footprint import B2NodalRigidFootprint,compile_footprints as _old_compile, _difference
+from ._stiffened_shell_b2_nodal_footprint import _compile_audited_footprints, _difference, _identifier, _nodes
 
 LAW_ID="B2_PHYSICAL_RIGID_FOOTPRINT_DIRECTOR_REFERENCE_V1_EXPERIMENTAL"
 BUCKLING_POLICY="B2_PHYSICAL_RIGID_FOOTPRINT_GREEN_BUCKLING_V1_DEV"
@@ -26,8 +26,17 @@ class B2PhysicalRigidFootprint:
     patch_cells: tuple = ()
 
     def __post_init__(self):
-        proxy=B2NodalRigidFootprint(self.footprint_id,self.shell_nodes,self.beam_node,self.patch_cells)
-        object.__setattr__(self,"shell_nodes",proxy.shell_nodes);object.__setattr__(self,"patch_cells",proxy.patch_cells)
+        _identifier(self.footprint_id)
+        object.__setattr__(self,"shell_nodes",_nodes(self.shell_nodes,3))
+        if type(self.beam_node) is not int or self.beam_node<=0:
+            raise ValueError("one existing physical B2 endpoint node required")
+        try:
+            cells=tuple(_nodes(cell,3) for cell in self.patch_cells)
+        except TypeError as exc:
+            raise ValueError("explicit physical footprint three/four-node patch cells required") from exc
+        if any(len(cell) not in (3,4) for cell in cells) or len({frozenset(cell) for cell in cells})!=len(cells):
+            raise ValueError("distinct physical footprint three/four-node patch cells required")
+        object.__setattr__(self,"patch_cells",cells)
         if not self.patch_cells: raise ValueError("physical rigid footprint requires complete patch_cells")
         n=_owned(self.reference_director,(3,));e=_owned(self.tangent_basis,(3,2))
         eps=128*np.finfo(float).eps
@@ -74,7 +83,7 @@ class PhysicalFootprintNode:
 
     def functional(self,shell_pose,beam_pose):
         shell=_owned(shell_pose,(6,));beam=_owned(beam_pose,(6,))
-        qb=Rotation.from_rotvec(beam[3:]).as_matrix();qs=Rotation.from_rotvec(shell[3:]).as_matrix()
+        qb=Rotation.from_rotvec(beam[3:].copy()).as_matrix();qs=Rotation.from_rotvec(shell[3:].copy()).as_matrix()
         relative=qb.T@qs@self.director
         if self.director@relative<=0.: raise ValueError("physical footprint director left positive hemisphere")
         arm=np.array([fsum(_difference(float(a),float(b))) for a,b in zip(self.shell_position,self.beam_position)])
@@ -89,31 +98,44 @@ def _node(group,item,row_start):
     arm=np.array([fsum(_difference(float(a),float(b))) for a,b in zip(item.shell_position,item.beam_position)])
     c=np.zeros((5,12));c[:3,:3]=np.eye(3);c[:3,6:9]=-np.eye(3);c[:3,9:]=_skew(arm)
     c[3:,3:6]=-e.T@_skew(n);c[3:,9:]=e.T@_skew(n)
-    h=np.zeros((5,12,12));eye=np.eye(12)
-    for a in range(12):
-        for b in range(12):
-            sa=eye[3:6,a];sb=eye[3:6,b];ba=eye[9:,a];bb=eye[9:,b]
-            da=eye[:3,a]-eye[6:9,a];db=eye[:3,b]-eye[6:9,b]
-            h[:3,a,b]=-np.cross(ba,db)-np.cross(bb,da)+.5*(np.cross(ba,np.cross(bb,arm))+np.cross(bb,np.cross(ba,arm)))
-            h[3:,a,b]=e.T@(.5*(np.cross(ba,np.cross(bb,n))+np.cross(bb,np.cross(ba,n))+np.cross(sa,np.cross(sb,n))+np.cross(sb,np.cross(sa,n)))-np.cross(ba,np.cross(sb,n))-np.cross(bb,np.cross(sa,n)))
+    h=np.zeros((5,12,12));basis=np.eye(3)
+    arm_cross=np.cross(basis,arm);director_cross=np.cross(basis,n)
+    for i in range(3):
+        for j in range(3):
+            # The position rows couple translation only to beam rotation.
+            h[:3,i,9+j]=-np.cross(basis[j],basis[i])
+            h[:3,9+j,i]=h[:3,i,9+j]
+            h[:3,6+i,9+j]=-np.cross(basis[j],-basis[i])
+            h[:3,9+j,6+i]=h[:3,6+i,9+j]
+            h[:3,9+i,9+j]=.5*(np.cross(basis[i],arm_cross[j])+np.cross(basis[j],arm_cross[i]))
+            # The two director rows involve shell and beam rotations only.
+            h[3:,3+i,3+j]=e.T@(.5*(np.cross(basis[i],director_cross[j])+np.cross(basis[j],director_cross[i])))
+            h[3:,3+i,9+j]=e.T@(-np.cross(basis[j],director_cross[i]))
+            h[3:,9+j,3+i]=h[3:,3+i,9+j]
+            h[3:,9+i,9+j]=e.T@(.5*(np.cross(basis[i],director_cross[j])+np.cross(basis[j],director_cross[i])))
     return PhysicalFootprintNode(group.footprint_id,item.shell_node,item.beam_node,row_start,item.shell_slots,item.beam_slots,
         item.shell_position,item.beam_position,n,e,_owned(c,(5,12)),_owned(h,(5,12,12)))
 
 def compile_physical_footprints(groups,positions,shells,beam_positions,shell_index,beam_index,points):
     groups=tuple(groups)
     if any(type(g)is not B2PhysicalRigidFootprint for g in groups):raise ValueError("typed physical rigid footprints required")
-    # Reuse existing geometry/topology/overlap audit, not its six-row law.
-    proxies=tuple(B2NodalRigidFootprint(g.footprint_id,g.shell_nodes,g.beam_node,g.patch_cells) for g in groups)
-    _,old=_old_compile(proxies,positions,shells,beam_positions,shell_index,beam_index,points)
+    # Reconstruct owned records, independently of the legacy six-row/Q4 policy.
+    groups=tuple(B2PhysicalRigidFootprint(g.footprint_id,g.shell_nodes,g.beam_node,
+        g.reference_director,g.tangent_basis,g.patch_cells) for g in groups)
+    if any(len(shell.node_ids) not in (3,4) for shell in shells):
+        raise ValueError("physical footprint requires native three/four-node shells")
+    _,old=_compile_audited_footprints(groups,positions,shells,beam_positions,shell_index,beam_index,points,cell_label="S3/Q4")
     by_id={g.footprint_id:g for g in groups};eps=128*np.finfo(float).eps
+    shells_by_node={}
+    for shell in shells:
+        for node in dict.fromkeys(shell.node_ids):
+            shells_by_node.setdefault(node,[]).append(shell)
     for group in groups:
         n=group.reference_director;base=np.asarray(positions[group.shell_nodes[0]])
         for node in group.shell_nodes:
             d=np.asarray(positions[node])-base
             if abs(d@n)>eps*(abs(d)@abs(n)):raise ValueError("physical footprint selected nodes must be coplanar with owned director")
-            for shell in shells:
-                if node not in shell.node_ids:continue
-                if len(shell.node_ids)!=4:raise ValueError("physical rigid footprint currently requires Q4")
+            for shell in shells_by_node.get(node,()):
                 if np.max(abs(np.asarray(shell.reference_normal)-n))>eps:
                     raise ValueError("physical footprint ambiguous director seam")
     made=tuple(_node(by_id[item.footprint_id],item,6*len(points)+5*i) for i,item in enumerate(old))

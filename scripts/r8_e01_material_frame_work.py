@@ -14,7 +14,7 @@ from pathlib import Path
 import numpy as np
 
 
-IDENTITY = "R8_E01_LINEAR_POLAR_SPIN_INDEPENDENT_DIRECTOR_WORK_V1_DEV"
+IDENTITY = "R8_E01_LINEAR_POLAR_SPIN_INDEPENDENT_DIRECTOR_WORK_V2_DEV"
 
 
 def _finite(value, shape, label):
@@ -167,18 +167,33 @@ def diagnose_e01_capture(capture):
     # it is not a new support/equilibrium acceptance threshold.
     if root_max >= 1e-12:
         raise ValueError("saved E01 root-field guard failed")
-    samples = []
-    for station in range(9):
-        host = min(station, 7)
+    def host_channels(host, station):
         ids = (host+1, host+2, host+11, host+10)
         xy = ((host/4, -.5), ((host+1)/4, -.5),
               ((host+1)/4, -.25), (host/4, -.25))
+        return ids, shell_channels(xy, (station/4, -.5),
+                                   np.array([q[i] for i in ids]))
+
+    samples = []
+    for station in range(9):
+        host = min(station, 7)
+        ids, selected = host_channels(host, station)
+        left_spin = (host_channels(station-1, station)[1]["material_rotation"][2]
+                     if station > 0 else None)
+        right_spin = (host_channels(station, station)[1]["material_rotation"][2]
+                      if station < 8 else None)
         samples.append(dict(shell_node=station+1, host_nodes=list(ids),
-            **shell_channels(xy, (station/4, -.5), np.array([q[i] for i in ids]))))
+            **selected, material_spin_left_rad=left_spin,
+            material_spin_right_rad=right_spin,
+            incident_spin_jump_rad=(right_spin-left_spin
+                                    if left_spin is not None and right_spin is not None
+                                    else None)))
     return dict(originating_field=label, samples=samples,
                 root_nodes=list(roots), root_coordinate_max=root_max,
+                maximum_abs_incident_spin_jump_rad=max(
+                    abs(sample["incident_spin_jump_rad"]) for sample in samples[1:-1]),
                 classification="KINEMATIC_MISMATCH_DIAGNOSTIC_ONLY",
-                limitation="Saved nodal coordinates do not identify physical CCX director/spin or sided forces.")
+                limitation="One-sided polar spin is host-dependent; saved nodal coordinates do not identify physical CCX director/spin or sided forces.")
 
 
 def read_bound_capture(path, expected_sha256):

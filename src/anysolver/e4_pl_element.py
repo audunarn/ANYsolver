@@ -1190,7 +1190,7 @@ def _q4_fast_input_snapshot_matches(
     return True
 
 
-def _make_q4_component_cache_provenance() -> tuple[Any, Any, Any, Any, Any, Any]:
+def _make_q4_component_cache_provenance() -> tuple[Any, Any, Any, Any, Any, Any, Any]:
     """Keep warm component provenance outside caller-reachable instances."""
 
     records: Dict[int, _Q4FastCacheRecord] = {}
@@ -1253,6 +1253,17 @@ def _make_q4_component_cache_provenance() -> tuple[Any, Any, Any, Any, Any, Any]
 
     def clear(element: Any) -> None:
         records.pop(id(element), None)
+
+    def retire_private(element: Any, mesh: Any) -> None:
+        # Only the explicitly owned mesh may retire its record.  Check closure
+        # provenance, not a caller-mutable instance guard, before any removal.
+        record = records.get(id(element))
+        if record is not None and (
+            record.reference() is not element or record.guard[0] is not mesh
+        ):
+            raise ValueError("Q4 private retirement mesh does not own provenance")
+        if record is not None:
+            records.pop(id(element))
 
     def require_identity(element: Any, components: Any, cache_key: Any, guard: Any) -> None:
         record = records.get(id(element))
@@ -1490,6 +1501,7 @@ def _make_q4_component_cache_provenance() -> tuple[Any, Any, Any, Any, Any, Any]
         try_cached,
         public_view,
         try_assembly_cached,
+        retire_private,
     )
 
 
@@ -1500,6 +1512,7 @@ def _make_q4_component_cache_provenance() -> tuple[Any, Any, Any, Any, Any, Any]
     _try_q4_fast_cached_stiffness,
     _q4_public_stiffness_view,
     _try_q4_fast_assembly_cached_stiffness,
+    _retire_q4_private_component_provenance,
 ) = _make_q4_component_cache_provenance()
 _Q4_GENERALIZED_SECTION_NAMESPACE_AUTHORITY = MappingProxyType(
     dict(type.__getattribute__(GeneralizedShellSection, "__dict__"))
@@ -7024,6 +7037,18 @@ def _invalidate_q4_guarded_call_caches(element: Any) -> None:
             object.__setattr__(element, name, None)
     _clear_q4_component_cache_provenance(element)
     _clear_q4_nonlinear_cache_provenance(element)
+
+
+def _retire_q4_private_mesh_caches(element: Any, mesh: Any) -> None:
+    """Retire an exclusively owned Q4 after its private compiler is finished.
+
+    This is a lifecycle boundary, not a live authority lease or global purge.
+    The closure check runs before cache mutation, including for a rebound
+    external element.  Removing the record releases both its strong guard and
+    input snapshot; removing derived instance guards breaks the private cycle.
+    """
+    _retire_q4_private_component_provenance(element, mesh)
+    _invalidate_q4_guarded_call_caches(element)
 
 
 def _bind_q4_exact_quadrature_boundary(method: Any) -> Any:

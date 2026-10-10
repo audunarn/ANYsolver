@@ -11,7 +11,26 @@ import numpy as np
 from ._ge_beam3_fibre_cell import CellHistory
 from ._ge_beam3_fibre_section import FibreHistory, PhysicalFibreSection
 from ._ge_beam3_generalized_cell import GeneralizedCellHistory
-from ._ge_beam3_generalized_ellipsoid_section import GeneralizedHistory
+from ._ge_beam3_generalized_ellipsoid_section import GeneralizedHistory, EllipsoidalGeneralizedSection
+
+
+def compensated_kind(parts, *, coupled=False):
+    """Exact compiled member families; the owner identity binds their order/laws."""
+    from ._stiffened_shell_f06_increment_arithmetic import POLICY
+    families = []
+    for element, _, _ in parts:
+        if getattr(element.operator, 'arithmetic_policy', None) != POLICY:
+            raise ValueError('uniform compensated native material policy required')
+        if type(element.section) is PhysicalFibreSection:
+            families.append('fibre')
+        elif type(element.section) is EllipsoidalGeneralizedSection:
+            families.append('generalized')
+        else:
+            raise ValueError('explicit physical-fibre or generalized material family required')
+    if not families:
+        raise ValueError('complete compensated native member inventory required')
+    family = families[0] if len(set(families)) == 1 else 'mixed'
+    return 'finite_compensated_'+family+('_coupled' if coupled else '_material')
 
 
 def shapes(parts, prefix):

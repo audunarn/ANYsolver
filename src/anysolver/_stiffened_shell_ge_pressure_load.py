@@ -25,6 +25,7 @@ from ._stiffened_shell_native_gravity import _owned, _sum, _product, _finite_arr
 POLICY = 'STIFFENED_SHELL_GE_NATIVE_SHELL_PRESSURE_LOAD_V1_DEV'
 DIRECTOR_CONFIGURATION = 'reference_dead_director_v2'
 DIRECTOR_LOAD_POLICY = 'STIFFENED_SHELL_GE_DIRECTOR_PRESSURE_LOAD_V2_DEV'
+VECTOR_EQUILIBRIUM_POLICY = 'STIFFENED_SHELL_PRESSURE_VECTOR_EQUILIBRIUM_V1_DEV'
 MAGIC = b'ANYSGE_PRESS1\0'
 MAX_METADATA_BYTES = 1024*1024
 MAX_ACTIONS = 16384
@@ -51,14 +52,25 @@ class GEShellPressureAction:
 
 @dataclass(frozen=True)
 class GEShellPressureLoad:
+    """Owned pressure request with optional, checkpoint-bound finite assessment.
+
+    ``equilibrium_policy=None`` preserves component-relative checks. The
+    vector policy checks each shell node's free force and moment vector, plus
+    global work; a small component at a node may be masked by a larger one.
+    """
     model_identity: str
     actions: tuple[GEShellPressureAction,...]
+    equilibrium_policy: str | None = None
     identity: str=field(init=False)
 
     def __post_init__(self):
         object.__setattr__(self,'model_identity',_identity(self.model_identity))
         if type(self.actions) is not tuple or not 0<len(self.actions)<=MAX_ACTIONS or any(type(a) is not GEShellPressureAction for a in self.actions):
             raise ValueError('bounded tuple of shell pressure actions required')
+        if (self.equilibrium_policy is not None and
+                (type(self.equilibrium_policy) is not str or
+                 self.equilibrium_policy != VECTOR_EQUILIBRIUM_POLICY)):
+            raise ValueError('explicit admitted pressure equilibrium policy required')
         ids=[a.element_id for a in self.actions]
         if len(set(ids))!=len(ids):raise ValueError('duplicate shell pressure action element')
         object.__setattr__(self,'actions',tuple(sorted(self.actions,key=lambda a:a.element_id)))
@@ -71,14 +83,20 @@ class GEShellPressureLoad:
                 else POLICY)
 
     def _core(self):
-        return dict(policy=self.policy,model_identity=self.model_identity,actions=[a.payload() for a in self.actions])
+        core = dict(policy=self.policy,model_identity=self.model_identity,actions=[a.payload() for a in self.actions])
+        if self.equilibrium_policy is not None:
+            core['equilibrium_policy'] = self.equilibrium_policy
+        return core
 
     def to_payload(self):return dict(self._core(),identity=self.identity)
     def serialize(self):return _canonical(self.to_payload())
 
     @classmethod
     def from_payload(cls,value):
-        if type(value) is not dict or set(value)!={'policy','model_identity','actions','identity'} or value['policy'] not in (POLICY, DIRECTOR_LOAD_POLICY) or type(value['actions']) is not list:
+        if (type(value) is not dict or
+                set(value) not in ({'policy','model_identity','actions','identity'},
+                                   {'policy','model_identity','actions','identity','equilibrium_policy'}) or
+                value['policy'] not in (POLICY, DIRECTOR_LOAD_POLICY) or type(value['actions']) is not list):
             raise ValueError('strict pressure load descriptor required')
         if not 0<len(value['actions'])<=MAX_ACTIONS:raise ValueError('bounded action inventory required')
         rows=[]
@@ -86,7 +104,7 @@ class GEShellPressureLoad:
             if type(row) is not dict or set(row)!={'element_id','pressure_pa','configuration'}:
                 raise ValueError('strict shell pressure action required')
             rows.append(GEShellPressureAction(**row))
-        result=cls(value['model_identity'],tuple(rows))
+        result=cls(value['model_identity'],tuple(rows), value.get('equilibrium_policy'))
         if result.identity!=value['identity'] or result.serialize()!=_canonical(value):
             raise ValueError('pressure descriptor identity/canonical mismatch')
         return result
@@ -254,6 +272,10 @@ class GEPressureContext:
     @property
     def result_field(self):
         return 'pressure_load'
+
+    @property
+    def pressure_vector_equilibrium(self):
+        return self.request.equilibrium_policy == VECTOR_EQUILIBRIUM_POLICY
 
     @property
     def freeze_trial_load_norm(self):

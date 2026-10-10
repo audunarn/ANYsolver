@@ -56,6 +56,114 @@ def _v2d(**kwargs: object) -> NativeParityE4PLS3V2DShellElement:
     )
 
 
+def test_v2d_elastic_surface_stress_is_available_through_default_public_recovery() -> None:
+    from anysolver import FEModel, recover_stress_result
+
+    model = FEModel("mixed-q4-s3-surface-stress")
+    model.add_material("steel", E, NU, density=7850.0)
+    coordinates = {
+        1: (0.0, 0.0, 0.0),
+        2: (1.0, 0.0, 0.0),
+        3: (1.0, 1.0, 0.0),
+        4: (0.0, 1.0, 0.0),
+        5: (2.0, 0.0, 0.0),
+        6: (2.0, 1.0, 0.0),
+    }
+    for node_id, coordinate in coordinates.items():
+        model.add_node(node_id, *coordinate)
+    model.add_element(
+        1,
+        create_shell_element(1, [1, 2, 3, 4], "steel", thickness=THICKNESS),
+    )
+    model.add_element(
+        2,
+        create_shell_element(
+            2,
+            [2, 5, 6],
+            "steel",
+            formulation="e4-pl-s3-v2d",
+            thickness=THICKNESS,
+            reference_normal=NORMAL,
+        ),
+    )
+    displacement = np.zeros(model.mesh.dof_manager.total_dofs)
+    axial_strain = 1.0e-4
+    for node_id, (x, _y, _z) in coordinates.items():
+        dofs = model.mesh.dof_manager.get_node_dofs(node_id)
+        displacement[dofs[0]] = axial_strain * x
+
+    recovered = recover_stress_result(model, displacement).element_stresses
+    expected_xx = E * axial_strain / (1.0 - NU**2)
+    for element_id, expected_stations in ((1, 4), (2, 3)):
+        values = recovered[element_id]
+        assert values["physical_stress_available"] is True
+        assert values["equivalent_stress_measure"] == "von_mises"
+        assert values["membrane_xx"].shape == (expected_stations,)
+        np.testing.assert_allclose(values["membrane_xx"], expected_xx, rtol=1.0e-11)
+        np.testing.assert_allclose(values["membrane_yy"], NU * expected_xx, rtol=1.0e-11)
+        np.testing.assert_allclose(values["von_mises"], values["equivalent_stress"])
+        np.testing.assert_allclose(
+            values["von_mises"],
+            expected_xx * np.sqrt(1.0 - NU + NU**2),
+            rtol=1.0e-11,
+        )
+
+
+def test_v2d_surface_recovery_reuses_local_stress_and_refuses_section_stress() -> None:
+    mesh = _mesh()
+    material = _material()
+    displacement = np.arange(18, dtype=np.float64) / 4096.0
+    element = _v2d()
+    local = element.compute_stresses(mesh, displacement, material)
+    global_values = element.compute_stresses(
+        mesh, displacement, material, return_global=True
+    )
+    for component in (
+        "membrane_xx",
+        "membrane_yy",
+        "membrane_xy",
+        "bending_xx",
+        "bending_yy",
+        "bending_xy",
+        "shear_xz",
+        "shear_yz",
+        "von_mises",
+        "equivalent_stress",
+    ):
+        np.testing.assert_array_equal(local[component], global_values[component])
+    np.testing.assert_allclose(
+        global_values["local_xx_top"],
+        local["membrane_xx"] + local["bending_xx"],
+    )
+    assert np.max(np.abs(local["bending_xx"])) > 0.0
+    assert np.max(np.abs(local["shear_xz"])) > 0.0
+    assert np.max(np.abs(global_values["global_xx_top"] - global_values["local_xx_top"])) > 0.0
+    surface_mises = []
+    for surface in ("top", "bot"):
+        xx = global_values[f"local_xx_{surface}"]
+        yy = global_values[f"local_yy_{surface}"]
+        xy = global_values[f"local_xy_{surface}"]
+        xz = global_values[f"local_xz_{surface}"]
+        yz = global_values[f"local_yz_{surface}"]
+        surface_mises.append(
+            np.sqrt(xx**2 - xx * yy + yy**2 + 3.0 * (xy**2 + xz**2 + yz**2))
+        )
+    np.testing.assert_allclose(local["von_mises"], np.maximum(*surface_mises))
+    local["membrane_xx"][0] = -1.0
+    assert global_values["membrane_xx"][0] != -1.0
+    assert local["membrane_resultants"][0, 0] != -THICKNESS
+
+    generalized = _v2d(shell_section=_homogeneous_section())
+    for return_global in (False, True):
+        result = generalized.compute_stresses(
+            mesh, displacement, material, return_global=return_global
+        )
+        assert result["physical_stress_available"] is False
+        assert result["physical_layer_recovery_available"] is False
+        assert "von_mises" not in result
+        assert "membrane_xx" not in result
+
+
 def _homogeneous_section(*, coupling: np.ndarray | None = None) -> GeneralizedShellSection:
     scale = E / (1.0 - NU**2)
     plane = scale * np.asarray(

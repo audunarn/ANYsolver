@@ -34,6 +34,7 @@ def batch_workflow(count=10):
             selected_dofs=(12,13,36,41),selected_footprints=selection,recover_members={"beam-right":(0.,.5,1.)})
         return dict(status=result.status,case_count=len(result.cases),factorization_count=result.factorization_count,
             solve_count=result.solve_count,maximum_rhs_chunk=result.maximum_rhs_chunk,
+            member_resultant_envelope_count=len(result.member_resultant_envelopes),
             footprint_law_id=result.footprint_law_id,production_qualified=False)
     finally:owner.close()
 

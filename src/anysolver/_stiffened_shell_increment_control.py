@@ -147,9 +147,15 @@ def decode_control(raw, model):
     return state, raw[start+size:-32]
 
 
-def validate_control(state, factors):
-    """Replay bounded controller decisions, never element/material history."""
-    if (type(state) is not _AdaptiveState or not state.targets or
+def validate_control(state, factors, *, _allow_fibre_predictor=False):
+    """Replay bounded controller decisions, never element/material history.
+
+    Only the admitted compensated fibre reader may allow one extra predictor
+    solve per iteration and rejected full trial. No extra trial evaluations.
+    Default validation preserves the historical one-solve-per-iteration rule.
+    """
+    if (type(_allow_fibre_predictor) is not bool or
+            type(state) is not _AdaptiveState or not state.targets or
             any(type(v) is not float or not isfinite(v) or v <= 0. for v in state.targets) or
             any(a == b for a, b in zip(state.targets, state.targets[1:])) or
             type(state.max_iterations) is not int or not 1 <= state.max_iterations <= 24 or
@@ -174,10 +180,13 @@ def validate_control(state, factors):
                 min(row.equilibrium_ratio, row.constraint_max) < 0. or
                 any(type(v) is not int or v < 0 for v in (
                     row.iterations, row.evaluations, row.linear_solves, row.rejected_trials)) or
-                row.iterations != row.linear_solves or row.iterations > state.max_iterations or
-                not row.linear_solves + 1 <= row.evaluations <=
+                (not row.iterations <= row.linear_solves <= row.iterations + min(
+                    row.iterations, row.rejected_trials) if _allow_fibre_predictor else
+                 row.iterations != row.linear_solves) or row.iterations > state.max_iterations or
+                not (row.iterations if _allow_fibre_predictor else row.linear_solves) + 1 <= row.evaluations <=
                     1 + (state.max_backtracks + 2) * state.max_iterations or
-                row.rejected_trials > (state.max_backtracks + 1) * row.linear_solves):
+                row.rejected_trials > (state.max_backtracks + 1) * (
+                    row.iterations if _allow_fibre_predictor else row.linear_solves)):
             raise ValueError("invalid adaptive attempt or interval")
         if row.status == "accepted":
             if row.failure is not None or row.equilibrium_ratio > 1e-8 or row.constraint_max > 1e-9:

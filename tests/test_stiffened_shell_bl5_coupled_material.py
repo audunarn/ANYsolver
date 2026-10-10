@@ -1,9 +1,12 @@
 """Simultaneous shell J2/generalized beam history on experimental Q4 BL5."""
 from dataclasses import replace
+from math import fsum
+import json
 import numpy as np
 import pytest
 from anymaterial import DNVC208MaterialCurve
 from anysolver import stiffened_shell as ss
+from anysolver._stiffened_shell_beam_history import arrays as native_history_arrays
 from test_stiffened_shell_bl5_material import model, make
 from test_stiffened_shell_bl5_finite import _action
 
@@ -14,6 +17,87 @@ def coupled(basis="p0"):
     curve=DNVC208MaterialCurve(p,1.05*p,1.1*p,.005,.01,4*p,.2)
     return replace(base,shell=replace(base.shell,j2_curve=curve),
                    bl5_material_policy=ss.BL5_COUPLED_J2_MATERIAL_V1)
+
+
+def test_yielded_bl5_actual_update_tangent_in_all_row_families(request, record_property):
+    """Distinguish an untested coupled derivative from continuation control."""
+    definition = coupled("p0")
+    owner = make(request, definition)
+    programme = ss.StagedDeadLoadProgramme(
+        owner.preflight()["identity"], (_action(500.), _action(-500.)))
+    result = owner.solve(programme, (.5, 1.), max_iterations=20,
+                         max_backtracks=12,
+                         increment_control=ss.AdaptiveIncrementControl(4, 64))
+    assert result.load_position == 1.
+    assert np.max(result.beam_station_accumulated) > 0.
+    assert np.max(result.shell_layer_alpha) > 0.
+    saved = owner.checkpoint()
+    driver = owner._finite_driver
+
+    def evaluate(state):
+        return driver._assemble(state, 1., driver._shell_predecessors,
+                                driver._beam_predecessors,
+                                applied_load=result.applied_dead_load)
+
+    def active(response):
+        beam_trial = dict(native_history_arrays(owner._beam_parts, response[5], "trial"))
+        beam_origin = dict(native_history_arrays(
+            owner._beam_parts, driver._beam_predecessors, "origin"))
+        generalized = np.array([fsum((*a, *-b)) > 0. for a, b in zip(
+            beam_trial["trial_accumulated"], beam_origin["origin_accumulated"])])
+        shell = np.concatenate([
+            candidate["alpha"] - origin["alpha"] > 0.
+            for candidate, origin in zip(response[4], driver._shell_predecessors)])
+        return generalized, shell
+
+    residual, tangent, *_ = evaluate(driver._state)
+    reference_mask = active(evaluate(driver._state))
+    count = owner._K.shape[0]
+    beam_end = owner._shell_count + 6 * len(owner._beam_ids)
+    direction = np.zeros(len(residual))
+    rng = np.random.default_rng(818)
+    direction[:beam_end] = rng.normal(size=beam_end) * 1e-4
+    for i in range(len(owner._beam_parts)):
+        base = beam_end + 24 * i
+        direction[base:base+6] = rng.normal(size=6) * 1e-4
+        resultants = direction[base+6:base+24].reshape(3, 6)
+        resultants[:, :3] = rng.normal(size=(3, 3)) * 1000.
+        resultants[:, 3:] = rng.normal(size=(3, 3)) * 30.
+    multipliers = direction[count:].reshape(-1, 5)
+    multipliers[:, :3] = rng.normal(size=multipliers[:, :3].shape) * 1000.
+    multipliers[:, 3:] = rng.normal(size=multipliers[:, 3:].shape) * 30.
+    direction[owner._fixed] = 0.
+    weights = np.r_[owner._coordinate_scale, np.ones(owner._C.shape[0])]
+    predicted = (tangent @ direction) * weights
+    groups = {
+        "shell": owner._free[owner._free < owner._shell_count],
+        "beam": owner._free[(owner._free >= owner._shell_count) &
+                            (owner._free < beam_end)],
+        "retained": np.arange(beam_end, count),
+        "constraints": np.arange(count, len(residual)),
+    }
+    norms = {name: float(np.linalg.norm(predicted[rows])) for name, rows in groups.items()}
+    assert all(value > 0. for value in norms.values()), norms
+    steps = (1e-4, 1e-5, 1e-6)
+    errors = {name: [] for name in groups}
+    for h in steps:
+        plus = evaluate(driver._advance(driver._state, direction, h))
+        minus = evaluate(driver._advance(driver._state, direction, -h))
+        for response in (plus, minus):
+            for expected, actual in zip(reference_mask, active(response)):
+                np.testing.assert_array_equal(actual, expected)
+        difference = ((plus[0] - minus[0]) / (2*h)) * weights - predicted
+        for name, rows in groups.items():
+            errors[name].append(float(np.linalg.norm(difference[rows]) / norms[name]))
+    record_property("bl5_yielded_tangent", json.dumps(dict(
+        steps=steps, relative_errors=errors, predicted_norms=norms,
+        active_generalized=int(np.count_nonzero(reference_mask[0])),
+        active_shell=int(np.count_nonzero(reference_mask[1])),
+        physical_rows=beam_end, retained_rows=count-beam_end,
+        multiplier_rows=len(residual)-count), sort_keys=True))
+    assert any(all(errors[name][i] <= 1e-5 and errors[name][i+1] <= 1e-5
+                   for name in groups) for i in range(len(steps)-1)), errors
+    assert owner.checkpoint() == saved
 
 
 def _coupled_history_roundtrip(request,monkeypatch,tmp_path,basis,*,reversal):

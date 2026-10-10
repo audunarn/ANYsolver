@@ -97,7 +97,7 @@ class GeneralizedCellConjugate:
         saddle += [list(row)+[D(0)]*6 for row in self.constraint]
         return value,gradient,h,residual,saddle,fields
 
-    def response(self,resultants,origin=None,*,check=None,branch_direction=None):
+    def response(self,resultants,origin=None,*,check=None,branch_direction=None,resultants_low=None):
         started=monotonic()
         def guard():
             if check is not None:check()
@@ -106,6 +106,11 @@ class GeneralizedCellConjugate:
         guard();origin=self.virgin() if origin is None else origin;captured=canonical(origin)
         with localcontext() as ctx:
             ctx.prec=80;p=[dec(v) for v in resultants]
+            if len(p)!=18:raise ValueError("18 retained resultants required")
+            if resultants_low is not None:
+                low=[dec(v) for v in resultants_low]
+                if len(low)!=18 or any(not v.is_finite() for v in low):raise ValueError('finite retained resultant corrections required')
+                p=[h+l for h,l in zip(p,low)]
             if len(p)!=18:raise ValueError('18 retained resultants required')
             direction=None if branch_direction is None else tuple(dec(v) for v in branch_direction)
             if direction is not None and (len(direction)!=18 or any(not v.is_finite() for v in direction)):

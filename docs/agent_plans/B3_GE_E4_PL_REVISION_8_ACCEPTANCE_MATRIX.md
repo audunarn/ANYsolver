@@ -1,3 +1,275 @@
+<!-- Current rebased-continuation development disposition; supersedes live status below only -->
+**F06/G3: IMPLEMENTED_NOT_QUALIFIED / scoped development verification.**
+Copied pp-only adaptive predictor accepts saved reversed2.5→2.51 in source and
+first wheel: equilibrium1.111598e-11/gap2.671563e-17, original gates/budget intact.
+First wheel's counted-solve cold-reader defect remains FAILED. Narrow reader
+repair passes source/replacement installed accepted/anchored restore, six atomic
+counter refusals, rebase/cancellation/history/reaction/stale controls. Finite/native
+operators match across artifacts; no equilibrium replay. Full cyclic/coupled and
+installed material-pending resume remain open. Ledger CLOSED103.5717753/360;
+256.4282247 discarded. [Root disposition](development/r8-f06-log-domain-20261010/rebased-continuation-v1/ROOT_DISPOSITION.md).
+F03 finite source-material/geometric + sparse-LU certificate implementation route
+is adopted for development only; exact units/maps/margin and bounded controls
+precede assessment. Formal F03 UNCONSUMED; all physical/ratio requirements remain.
+No aggregate gate, different-family acceptance or release. Historical bytes follow.
+
+<!-- Current adaptive-material development disposition, 10 October2026 -->
+**F06/G3 adaptive integration: IMPLEMENTED_NOT_QUALIFIED / PARTIAL VERIFICATION.**
+Source primary2 accepted2.25/+0.5N and2.5/−1N with28 reversing fibre points and
+unchanged physical gates. Installed restore/rebase/tamper/cancellation and forced
+rejection assertions passed where reached; further restored/rebased2.51 FAILED
+at max4 cutbacks; fixed2.5101 unreached. Pending yielded installed resume remains
+open. Ledger CLOSED268.4700735/360, unused91.5299265 discarded. No aggregate gate
+passes. [Root disposition](development/r8-f06-log-domain-20261010/adaptive-material-v1/ROOT_DISPOSITION.md).
+F03 geometric-extension/work-lift design is source-reviewed; physical scale,
+required coercivity margin and finite certified assessment remain unresolved.
+Formal F03 UNCONSUMED. All historical bytes/failures and other mandatory rows follow.
+
+<!-- R8 reversal-v1 terminal, 2026-10-10 -->
+Current F06/G3 development: paired-event owned-state source control PASS1; direct2.0→2.5 candidate FAILED at20 iterations, no new acceptance. Five receipts total139.8554359s;240s ledger CLOSED,100.1445641s discarded. No installed claim. ROOT_DISPOSITION and retained failures are in development/r8-f06-log-domain-20261010/reversal-v1. Next: narrowly selected durable compensated adaptive controller, separate accepted-substep history; original failed jump and aggregate gates unchanged.
+
+## Current bending/coupled material disposition — 10 October 2026
+
+IMPLEMENTED_NOT_QUALIFIED: selected transverse bending load/unload and positive continuation, and simultaneous mixed-native/Q4-J2 yielding with both histories, recovery, cold/chart restore, rebase and actual .401 increment. Initial wheel62ce71d has three installed lifecycle PASS1 cases; guard-only replacement wheelbdd25cc4 passes framing/cold restore. Independent development review closes the envelope-order defect; root verifies22 bindings,633 files/artifact and15 receipts. Seven completed pytest cases pass; six failed/timed attempts are preserved. Genuine negative reversal FAILED twice; complete coupled unload/reload timed out. No F06/G3 or different-family acceptance. Ledger CLOSED353.1092151/360s; unused6.8907849s discarded. Same-owner failure diagnosis selects one causal check before refinement. See development/r8-f06-log-domain-20261010/cyclic-material-v1/ROOT_DISPOSITION.md.
+
+F03 reference-local18 positivity/kernel derivation is resolved for the stated elastic class; full physical multiplier/norm/signed-system conditions remain open. No new metric/threshold or formal assessment is adopted.
+
+Historical records follow, preserved byte-for-byte:
+
+## Current material-breadth disposition — 10 October 2026
+
+Selected ordinary-Log mixed generalized/biaxial Q4/S3, biaxial Q4 and affected axial Q4 public lifecycles: IMPLEMENTED_NOT_QUALIFIED, four installed PASS1 cases on wheel841c1b23ceab18ee78ac45ac670645aa7c5feac2c25e52db34c9b496b78bbd2d. Independent complete-slice review and root byte/receipt inspection find no consequential defect. Both histories/corrections, recovery, cold/anchored restore, rebase and actual .41 continuation are preserved; exact mixed checkpoint identities are separate from historical homogeneous domains. Two timeout failures remain. Biaxial independent law control is axial-active, so distinct plastic bending/cyclic histories remain open; installed-S3 cancellation is not claimed. Shell J2, full F06/G3, other permutations, final different-family review and release remain open. Ledger CLOSED228.7523211/300s, unused71.2476789s discarded. See [root disposition](development/r8-f06-log-domain-20261010/material-breadth-v1/ROOT_DISPOSITION.md).
+
+Historical matrix bytes below are unchanged.
+
+## 10 October 2026 - axial-fibre public lifecycle and terminal finite supplement
+
+IMPLEMENTED_NOT_QUALIFIED: selected ordinary-Log axial/Q4 physical-fibre point route passes4 installed and12 affected legacy controls. Active derivative2.7854850453292563e-11 <1e-6; .4 yielding and actual .41 continuation, recovery, both-history restore/rebase/tamper refusal and cancellation/rejection preserve accepted state. Independent complete-slice source/evidence review finds no consequential defect. Root verifies633 source/snapshot/wheel/site files and256 actual imports; wheel70b71c4c2b9516f10026eb71731e757a92289b01d5741fde4eebcb9d1829b2aa. See development/r8-f06-log-domain-20261010/fibre-v1/REPORT.md and INDEPENDENT_CODE_REVIEW.md. Biaxial/mixed, S3, broader F06/G3 and different-family acceptance remain open. Ledger CLOSED77.482348/300s, failed attempts retained and unused discarded.
+
+F07 supplementary represented-pencil certificate:16 analytic controls PASS, one saved assessment FAIL at first mode's finite contraction; modes2/4/5 not reached. No certified pair or replacement of the old perturbation-robustness guarantee. Source-only persistence delta is unexecuted. Ledger CLOSED4.4782001/180s, unused discarded; no tuned bound, new roots or automatic retry selected. See development/r8-f07-block-descriptor-20261009/finite-supplement-v1/ROOT_DISPOSITION.md. Aggregate foundations, all55/physical gates, large-B2 work readiness and complete programme remain open. Historical matrix suffix below is unchanged.
+
+## 10 October 2026 - saved coupled feedback and next structural candidate
+
+IMPLEMENTED_NOT_QUALIFIED: nine controls/three saved native coupled witnesses PASS. Exact original operators, supports/scales, actions and reaction signs match; supported work ratios 1.9810e-13/3.2502e-13/1.0452e-13. Same-density regional wrench maps agree. Coupled regional differences are density redistribution, without law/discretization attribution, continuum accuracy or full F03 acceptance. First mixed-density refusal preserved; inferred and historical external densities remain distinct. Full-row residual includes physical fixed reactions; current output label corrected with AST equivalence, frozen execution unchanged. F03 remains OPEN/UNCONSUMED. See development/r8-f03-common-density-20261010/REPORT.md and evidence/feedback-observer-v2/root-inspection.json. Fresh120 ledgers CLOSED: failed v1 0.8318387999970582s; passed v2 1.3537515999996685s; unused authority discarded. Invalid first root byte inspection is explicitly preserved and superseded, not accepted.
+
+F07 exact-POINT structural candidate:14 controls PASS/one saved assessment FAIL at unchanged finite separation. Both-sided selectors, active mass/complement and coupling screen pass (sigma0.2260682589863084 versus required7.434921443750626e-7). Four positive finite candidates fail the existing1000-times pair-uncertainty requirement; physical finite/first-flexible gates NOT reached. Conditional nearby77/61 inventory is not exact stored multiplicity. Source/terminal independent review has no scoped code blocker; no different-family or F07 acceptance. Fresh180 ledger CLOSED3.8876833s, unused discarded. See r8-f07-block-descriptor-20261009/structural-v1/REPORT.md and root inspections. Old failures/all programme gates remain. Large-B2 quantitative repair readiness unmet; no scale replay. Historical matrix bytes below are preserved exactly.
+
+## 10 October 2026 - sparse attachment elimination and saved-response decision
+
+IMPLEMENTED_NOT_QUALIFIED: eligible physical B2 attachment elimination passes32 source and32 cold installed controls, including Q4/S3/mixed callers, raw nonsymmetric/affine KKT parity, full reactions/multipliers, original-target correction, factor reuse, cancellation and failure status. Scoped independent code findings closed. Quiet-y affine failure and all failed source/build attempts preserved; no arbitrary-affine success, speedup or large-case improvement claim. Wheel fa4da5b7525f61bb8337872abede3156a5febd17e2b7750fb7e1ad6b372ae340; root proof checks633 current/frozen/wheel/site files and5 actual imports. See development/r8-b2-original-operator-20261010/ATTACHMENT_ELIMINATION_REVIEW.md and evidence/attachment-elimination-v1/root-artifact-proof.json. Fresh300 ledger CLOSED55.768579399999s; unused authority discarded.
+
+F03 development: four controls plus three saved original-equation observers PASS0.7949834999963059s. Gauge-invariant beam endpoints agree; integrated dual-trace work differences remain unallocated. Existing coupled q/multiplier records can test the missing feedback equation without a new solve, but source/header provenance alone is not numerical verification. See development/r8-f03-common-density-20261010/REPORT.md. FormalF03 remains UNCONSUMED; G0-G6/programme/release gates remain OPEN. Historical matrix bytes below are unchanged.
+
+## 10 October 2026 - ordinary Log/material lifecycle and original B2 target
+
+IMPLEMENTED_NOT_QUALIFIED: selected compensated generalized point elastic-shell route passes19 installed controls, including current actual .81 continuation, exact predecessor/accepted histories, restore/rebase/recovery, tamper/binary refusal, cancellation and typed rejection. B2 physical-footprint original-operator correction passes12 repaired source and12 cold installed controls. Shared wheel49f7de9a82f0b3395fb377de13ef3149ebc885498bd32efe68cb2a0aa55cf9ab;632 source/snapshot/wheel/site byte matches and255 native actual imports. See development/r8-f06-log-domain-20261010/REPORT.md and development/r8-b2-original-operator-20261010/REPORT.md. Route7 chronology corrected; historical failures retained. Native and B2 ordinary ledgers CLOSED. Independent code-review findings are closed in the linked reports; aggregate F06/G3, F03, large-model work and complete-programme qualification remain open. No timing gain or large-case repair claim.
+
+## 10 October 2026 - actual durable-state and physical-action delivery
+
+Experimental native generalized point near-identity route passes actual original full48 derivative check (4.0892841e-10 against unchanged1e-6/h=.002), accepted-state, cold restore, rebase, cancellation and installed public/legacy controls. Original0.0360245 failed evidence remains unchanged. Independent Astra HIGH code review found one checkpoint refusal defect; same-owner repair passes19 source and19 installed controls and reviewer closes the finding. Current wheel8d21ac86406fb7fecf5ed2b596e141992c4197f69a35badee39cb896a05fee30; root verifies632 files and253 actual imports. Broader Log, consumers/material histories and aggregateF06/G3 remain OPEN. See development/r8-f06-compensated-state-20261010/REPORT.md and INDEPENDENT_CODE_REVIEW.md.
+
+F03 development:12 controls and saved40 physical-action/local18 resultant checks PASS. All804 physical/nodal/cell coordinates retained;288 resultants have local stationarity. Common yaw work agrees exactly. No global stability, reference accuracy or formalF03 qualification; F03 remains UNCONSUMED. See development/r8-f03-common-density-20261010/root-disposition.md.
+
+Ledgers CLOSED:420 used138.693845s; repair120 used17.9171464s; saved-map90 used1.1956361000047764s. Each retained60s reserve; unused time discarded. G0-G6/programme/release remains incomplete. Historical matrix suffix below is preserved byte-for-byte.
+
+<!-- Prospective status update 2026-10-10: complete48 oracle and role/work decision -->
+## 10 October - complete derivative evidence, unchanged acceptance failures
+
+- F06 saved full48 independent derivative error4.5211e-10 and intended-path error3.9355e-10; four controls +one saved check PASS. Original raw0.0360245 >1e-6 remains FAILED. Actual durable compensated update/lifecycle/installed gate OPEN; root selected durable state with separately versioned checkpoint, not a tangent/tolerance repair. See development/r8-f06-cell-moment-20261010/root-disposition.md.
+- F03 thirteen exact rational decision controls PASS, not production stability or reference qualification. Full mechanical nodal/cell roles and physical body wrench balance required; trace-only norm/full-SPD/spin-quotient shortcuts rejected. Existing40 common-density actions supply a next engineering-comparison route. Formal F03 UNCONSUMED; full norms/ratios/growing-space/signed stability OPEN. See development/r8-f03-physical-contract-20261010/root-disposition.md.
+- Fresh ordinary ledgers CLOSED:7.5263443/180s F06;0.21493890000419924/90s F03, reserves retained/unused time discarded. No main merge, release, new physical solve or scientific tolerance change.
+
+**10 October S3/mixed physical B2 and native supported-work - IMPLEMENTED_NOT_QUALIFIED:**
+The public S3/mixed physical B2 static/batch route passed 15 source and 15
+installed cases plus four enhanced selected-wrench cases on each route. Root
+verified all 631 frozen source/wheel/site files and 252 actual imports.
+[Scoped root disposition](development/r8-b2-s3-physical-footprint-20261010/root-disposition.md).
+Native shell-only supported-work maps passed 13 controls and one saved comparison;
+trace/support work is structurally zero. Interior shell response differs, but no
+original coupled cause, stiffness defect or F03 acceptance follows.
+[Native disposition](development/r8-f03-supported-work-20261010/root-disposition.md).
+Both ordinary ledgers are CLOSED. Formal F03 remains UNCONSUMED, G0-G6 and all
+broader foundation, spectral, consumer, scale, external and release obligations OPEN.
+
+**9 October F03 c2 signed-system and saved-transfer development - IMPLEMENTED_NOT_QUALIFIED:**
+The current 32x8 Q4/64-halfcell owner passed one reference-linear signed
+development check after a main-checkout import was detected and excluded.
+The Cholesky positivity margin is a binary64 estimate, not a certified exact
+inertia bound. Nine saved matched cases with two P0 density probes each pass
+the complete physical port-work map; an exact external stiffness/DOF map is
+missing, so fixed-density response was not compared. Same-family reviews found
+no sign/transpose defect and identified the now-repaired station-admission and
+receipt guards plus the remaining spectral proof limit. No multiplier policy,
+physical-transfer convergence, growing-family signed stability or F03
+acceptance follows. Formal F03 UNCONSUMED; G0B/M2 and release OPEN. Evidence:
+[combined report](development/r8-f03-signed-transfer-20261009/results.md).
+
+**8 October BL5 coupled Q4-J2/generalized global tangent - IMPLEMENTED_NOT_QUALIFIED:**
+One seeded actual-update direction at a yielded accepted position 1.0 passed
+1/1 focused source check. Shell, beam, all 48 retained and all 20 constraint
+rows have nonzero predicted group norms; two adjacent central-difference
+steps meet 1e-5 in each group with accumulation/alpha activity signs fixed.
+Individual rows and DNVC208 segment identity are not proven. The distinct
+failed physical-fibre continuation is unchanged, and G3/F03/G0B remain OPEN.
+Same-family supporting review found no concrete false pass and documented the
+limits. Evidence: ../../.development/bl5-yielded-global-tangent-20261008-v1/results.md.
+**8 October E01 B31/S4 shared-knot expanded-RF output - IMPLEMENTED_NOT_QUALIFIED:**
+One output-only positive-offset CalculiX 2.23 run completed one accepted step;
+24 expanded U/RF nodes expose the nominal grounded root force and moment
+to FRD print precision. For the one Fx=1000 N / My=100 N m action,
+expanded force/displacement work differs from printed Fx ux plus fitted
+beam-section My theta_y by 2.46703e-8 J. The fitted angle is not a printed
+knot DOF; independent six-channel and separated shell/beam side work,
+section/support matching, both signs and three-level convergence remain OPEN.
+The earlier erroneous omitted-moment interpretation is retained and superseded.
+The one-use run is consumed; E01, F03, G0B and release remain OPEN.
+Evidence: ../../.development/e01-shared-knot-rf-20261008-v1/results.md.
+**8 October F03 native graph-norm feasibility - IMPLEMENTED_NOT_QUALIFIED:**
+The corrected supported 4-Q4/4-B3 fixture has 150 free beam coordinates.
+The six-component physical trace feature has rank 51; adding the native
+compatibility rows spans all 78 kinematic directions; 72 independent
+resultant rows complete rank 150. The first attempt used a wrong beam-local
+slot offset and is preserved as INVALID. Four complementary blocks are
+positive, the supported 48-coordinate shell reference block is positive,
+and all four virgin native local tangents have exact reported cross-block
+work duality. These finite-fixture source checks do not supply a physically
+weighted/jump-controlled trace norm, unit/basis proof, mesh-uniform inf-sup,
+signed KKT acceptance or a BL5 law/multiplier decision. Formal F03 remains
+UNCONSUMED; G0B/M2 and full release remain OPEN. Evidence:
+.development/bl5-graph-norm-feasibility-20261008-v2/results.md,
+.development/bl5-shell-positive-part-20261008-v1/results.md,
+.development/bl5-native-mixed-dual-20261008-v1/results.md.
+The subsequent dimensionally consistent broken-trace/DG candidate passed
+finite-fixture rank, jump and algebraic unit/basis controls. Its
+owner-scaled eigenvalue ratio is about 1.04e-13; the 1 J work scale
+and inverse action are not accepted, and no quotient was computed.
+Evidence: .development/bl5-broken-graph-candidate-20261008-v1/results.md.
+The same candidate factored as 1134x150 rows has smallest singular value
+0.119 versus 9.30e-8 numerical floor. Bounded dense QR gives backward
+residual 5.11e-18 and sample forward error 2.31e-6; no production sparse
+inverse or physical work scale has been accepted. Evidence:
+.development/bl5-broken-graph-factor-20261008-v1/results.md.
+Centerline work-map bridge: the y=0 six-pose beam derivative projects
+exactly to the actual five-channel BL5 beam-side Jacobian at 22 compiled
+stations, and its graph rank remains 150. The earlier 0.1 m finite-width
+trace is not BL5 constraint work; it may be a separately justified auxiliary
+norm. Same-family supporting review found no finite-fixture positivity defect,
+but the five-channel dual norm, released-spin annihilator, inverse accuracy,
+signed KKT and growing-space stability remain OPEN. The single-support
+free-yaw refusal is a counterexample to rank-only acceptance.
+Evidence: .development/bl5-centerline-work-bridge-20261008-v1/results.md.
+The independently declared M2 dual reference remains the comparator. A
+supporting review showed the provisional DG director-jump penalty is not
+uniformly comparable to its L2 cell-director norm. The no-jump centerline
+fixture retains ranks 51/78/150 with compatibility/resultants, using 864
+continuous rows and excluding 126 jumps. This is finite rank only, not norm
+equivalence, signed-KKT stability or multiplier acceptance. The 2.7627265 s
+run brings graph-development use to 21.3972514/105 s with 60 s reserved;
+formal F03 remains UNCONSUMED. Evidence:
+.development/bl5-centerline-no-jump-20261008-v1/results.md.
+The 4/8/16-half-cell weak-director check matches the old auxiliary h_B
+with the no-jump trace alone (ratio 1.000 at each level), while adding native
+compatibility energy raises graph/h_B to 3.878/6.832/18.647. Do not use that
+full-native graph as F03 primal H. Restrict interface inf-sup to verified
+trace-active kinematics and the existing independent M2 h_B+h_S/M_ref; keep
+full native signed-KKT assessment separate. This is a development-contract
+choice, not inf-sup, physical accuracy or gate acceptance. Combined graph
+allowance 24.8789402/105 s, with 60 s reserved; formal F03 UNCONSUMED. Evidence:
+.development/bl5-cell-director-norm-20261008-v1/results.md.
+The isolated Q4/BL5 P0 and discontinuous-P1 assembled-column controls passed
+2/2 with zero inactive native beam columns after coordinate-selection
+supports. This verifies only the current row/column mapping, not a positive
+norm, S3, mixed attachments or signed-KKT stability. Graph use is
+29.0652932/105 s, retaining 60 s; formal F03 UNCONSUMED. Evidence:
+.development/bl5-active-slots-20261008-v1/results.md.
+Independent flat Q4 physical-work rows pass 2/2 P0/discontinuous-P1
+all-column controls, including shell-top director and eccentric beam arm.
+Product quadrature and density basis are reused, so their qualification,
+S3/finite mapping, positive norm and signed KKT stay OPEN. Graph use
+32.8680743/105 s with 60 s reserved; formal F03 UNCONSUMED. Evidence:
+.development/bl5-physical-work-20261008-v1/results.md.
+The 8 October mixed Q4/S3 and all-S3 extension passes 4/4 new all-column
+P0/discontinuous-P1 controls using the same independent flat station variation.
+It establishes the tested S3 edge-host scatter only. Product quadrature,
+density basis, finite charts, general topology, positive norm, signed KKT,
+physical accuracy and independent acceptance remain OPEN. Graph use is now
+36.8595847/105 s, retaining the 60 s reserve; formal F03 remains UNCONSUMED.
+Evidence: .development/bl5-physical-work-s3-20261008-v1/results.md.
+
+**8 October simultaneous S3-J2/fibre chart installed update - IMPLEMENTED_NOT_QUALIFIED:**
+The same saved small-angle test passed 1/1 through an isolated installed wheel at
+source bad4c84d. All 627 packaged Python modules match source and installed
+site byte-for-byte. The first packaging attempt timed out before testing and
+remains failed evidence; the corrected build/install/test consumed a combined
+65.0774029/180 seconds with the 60-second reserve intact. This updates only
+the installed status of the earlier source-level row. Finite-angle sensitivity,
+broader F06/V18/G3, independent acceptance and aggregate gates remain OPEN.
+Evidence: .development/f06-s3-fibre-chart-20261008-installed-v2/results.md.
+
+**8 October C1 local-transfer discriminator - IMPLEMENTED_NOT_QUALIFIED:**
+The unchanged native and detached-solid five-channel P0 source systems passed
+bounded interval work/wrench checks. Total shell-side Fy differs by 2.228 N
+under Fy and 1.128 N under Mx, while summed absolute interval differences
+are 68.953 N and 252.278 N. A review-found solid node-coordinate identity
+guard was repaired and rerun with identical numerical values. This one-grid
+contrast does not allocate body/root/warping/trace causes or select the
+continuous law or multiplier space. F03 authority remains unconsumed; G0B/M2
+and external/scale/release acceptance remain OPEN. Evidence:
+.development/bl5-c1-interval-transfer-20261008-v3/results.md.
+**8 October simultaneous S3-J2/fibre chart - IMPLEMENTED_NOT_QUALIFIED:**
+The saved all-S3-J2/native-fibre unload prefix passed a focused source check
+of rebase, byte-exact same-chart restore and signed continuation through three
+remaining targets. Direct/rebased/restored owners each completed four accepted
+steps; maximum free-equilibrium ratio was 2.053938263472783e-12. Physical
+poses, resultants, reactions and material states passed the established 1e-9
+scaled Q4-J2/fibre comparator. The first four test-comparison attempts failed
+and remain preserved. The passing V5 used 18.407047 s process wall with CPU0,
+one numerical thread, JIT off and 165183488 bytes sampled peak tree RSS.
+Installed verification, finite-angle sensitivity, broader F06/V18/G3,
+independent acceptance and release remain OPEN. Evidence:
+.development/f06-s3-fibre-chart-20261008-v5/results.md.
+**8 October BL5 V12 native retained-load sensitivity - IMPLEMENTED_NOT_QUALIFIED:**
+The original V5 retained-spin interface covector is separately balanced. Two
+fixed-operator/gauge native responses reconstruct the frozen state; removing
+that component lowers paired work by 1.15586949156334e-7 J. The complement
+still pairs to 1.62979809184172e-6 J, 6.76319 times the saved resolved-beam
+work. Independent review found no blocking defect. This excludes direct
+retained-spin loading as the sole V5 explanation, not retained-kinematic or
+connection effects. No matched changed-load C3D20 reference, F03, law/space
+selection or acceptance. Evidence: .development/bl5-mz-common-beam-20261008/
+v12-retained-load-adjudication.md.
+
+**8 October simultaneous J2/fibre chart - IMPLEMENTED_NOT_QUALIFIED:**
+The two-stiffener Q4-J2/native-fibre point-owner history passed 1/1 from
+source (86.1881032 s) and the byte-identical 627-file installed wheel site
+(90.4082661 s, wheel SHA-256 07f20642...6ed4d2). Both runs verified effective
+CPU0, one Numba/native thread and JIT off. Three accepted increments advanced
+shell and fibre plasticity together. Adjacent 2->3 and 3->4 physical rotations
+straddle the rebase; maximum bracket 1.131495384e-10 rad^2 and axis sine
+0.003159956. Material/reaction rebase-restore parity, continued history,
+rejection and cancellation passed. Independent read-only review found no
+blocking small-rotation defect. A same-node assertion refinement was verified
+on both saved state sets (4/6 node rows qualify); the full test was not rerun
+after that pure test edit. Raw receipts and replay are in
+.development/f06-j2-fibre-chart-20261008/evidence-v1.zip, with original
+byte hashes in evidence-index-v1.json. Finite-angle sensitivity, S3,
+broader F06/V18/G3, different-family acceptance and release remain OPEN.
+
+**8 October common-main distributing-displacement consumer - IMPLEMENTED_NOT_QUALIFIED:**
+The existing ANYfem consumer wheel and common-main solver site pass 54/54
+affected installed development tests, including the public checkpoint example,
+with imports from the pinned installed sites (14.644 s wall, 210 MB sampled
+peak tree RSS). The runner requested CPU0, one thread and JIT off; effective
+numerical settings were not independently audited in this smoke. The registered packet's V2 and V3
+supervisors timed out before pytest during identity preparation; 78.0437588 s
+and 40.0053873 s remain charged to one 240 s allowance. The untouched V1,
+failed V2/V3 receipts and direct smoke logs are preserved at
+C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/.development/
+distributing-displacement-consumer-common-main-20261008-v1/. This demonstrates
+installed behavior only. The registered installed gate, affected legacy checks,
+complete dependency/artifact audit, consumer review and aggregate G6 remain
+OPEN; no release claim follows.
+
 **4 October area common-action external feasibility — IMPLEMENTED_NOT_QUALIFIED:**
 Independent Cartesian C3D20 midsurface/director/curl work map, strict deck/parser
 and installed free-stub controls execute.57 focused map/deck checks plus12 final
@@ -675,8 +947,8 @@ B2 consumer mass/modal persistence development: ANYfem `a615c4b` adds explicitly
 | Milestone | Status | Main remaining obligation |
 |---|---|---|
 | M1 matching-station GE | IMPLEMENTED_NOT_QUALIFIED | Accepted spatial point-action recovery and ordinary native ANYfem input roundtrip now verified. Latest consolidated installed slice covers171 distinct predicates (V1 170pass/1 fixturefail; V2 corrected1/1). Matched E01, physical torque/drilling, complete V01â€“V06/V17/V18/V28 evidence and independent acceptance open. |
-| M2 bonded line | IN_PROGRESS | BL5 physical law, multiplier resolution, F03 and ratios/refinement/transfer open. |
-| M3 physical B2 | IMPLEMENTED_NOT_QUALIFIED | Multi-Q4/native-S3/B2 point-panel and installed ANYfem native Project save/reopen/selected 1/10/100 batches tested with one eligible factorization; historical Q4 route retained. Scoped F09 and F10/F11 point/static accepted; fixed E01 B2 reference executed with retained discrepancies. S3 mass/spectral/footprint routes, general F10/F11/F13, complete consumer workflow and converged E01 accuracy remain open. |
+| M2 bonded line | IN_PROGRESS | Current guarded-solver/consumer pair completes Q4/mixed native GE input round-trip, accepted restore/continuation and recovery (D1, 9 October). [Combined installed result](development/r8-engineering-workflows-20261009/README.md). BL5 physical law, multiplier resolution, F03 and ratios/refinement/transfer open. |
+| M3 physical B2 | IMPLEMENTED_NOT_QUALIFIED | Multi-Q4/native-S3/B2 point-panel and installed ANYfem native Project save/reopen/selected 1/10/100 batches tested with one eligible factorization; the newer guarded wheel pair additionally completed 1/10/100 ordered cases with factor/solve inventories 1/1, 1/10 and 1/100 in [D1](development/r8-engineering-workflows-20261009/README.md). Historical Q4 route retained. Scoped F09 and F10/F11 point/static accepted; fixed E01 B2 reference executed with retained discrepancies. S3 mass/spectral/footprint routes, broader F10/F11 and later lifecycle combinations, complete consumer workflow and converged E01 accuracy remain open. |
 | M4 remaining mechanics | IN_PROGRESS | Selected-node rigid footprints have installed unrebased solver/consumer evidence; footprint chart transport and broader material/attachment/topology/load/spectral/imperfection/capacity requirements remain mandatory. |
 | M5 scale/release | IN_PROGRESS | Installed point-bond 10,000-Q4/1,000-B3 linear/persistence/restart development routes complete; full nonmatching/nonlinear scale, measured scaling, platforms, external programme and authorized release remain mandatory. |
 
@@ -722,7 +994,7 @@ This is implemented/tested development, not M2/F03/G0B/G2 acceptance.
 |---|---|---|
 | G0A | IN_PROGRESS | Reconcile prior registration before a pass claim. |
 | G0B | IN_PROGRESS | Scoped F05/F08/F09 passed; other foundations, including F03, open. |
-| G1 | IMPLEMENTED_NOT_QUALIFIED | Experimental sparse owner exists; foundation and full G1 acceptance open. |
+| G1 | IMPLEMENTED_NOT_QUALIFIED | Experimental sparse owner and immutable public B2 definitions exist; paired installed90 checks and independent source review pass. Foundation and full G1 acceptance open. |
 | G2 | IN_PROGRESS | Candidate line/footprint and topology incomplete. |
 | G3 | IN_PROGRESS | F05 fixed-predecessor foundation passed; full material domain open. |
 | G4Aâ€“G4D | IN_PROGRESS | Development controls/reference imperfections exist; no aggregate load, stability, imperfection or capacity acceptance. |
@@ -736,17 +1008,26 @@ foundations remain open; the earlier bounded F04 distinction does not close F04:
 |---|---|
 | F01 | IN_PROGRESS |
 | F02 | IN_PROGRESS |
-| F03 | IN_PROGRESS |
+| F03 | IN_PROGRESS - current16/32/64 native/stationary parity PASS, max1.85e-12; saved physical wrench/work guards PASS. Regional observer repaired with14 changed controls and one saved batch PASS; root-quarter Fy change shrinks, changing away-root cancellation explains whole-interface growth; interior transfer unsettled. Physical comparison requires common reference operator, complete DOF identity and supported work maps. No fourth mesh/new quotient/loaded reference selected. Historical metadata FAIL preserved. Signed6945, physical norms/seven ratios/growing spaces/locking/shear/drilling and aggregate acceptance OPEN; formal authority UNCONSUMED. See development/r8-f03-sparse-signed-20261009/root-regional-disposition.md. |
 | F04 | IN_PROGRESS |
 | F05 | PASSED â€” selected Q4/existing S3 fixed-predecessor foundation |
-| F06 | IN_PROGRESS |
-| F07 | IN_PROGRESS |
+| F06 | IN_PROGRESS - prior selective/original-Log elastic support and owned Q4/S3 material-history/restart evidence retained. New active-chart installed2PASS: Q4original shell/native active2/8; S3resolved shell9/nativeelastic0. Same physical trial work/gaps/directional mapping through actualrebase verified, accepted predecessor and cancellation preserved; artifact5d59c7c7,254imports each, separate-author scoped review clear. Quiet S3 Newton retained FD FAILED before rebase0.0360>1e-6; UNRESOLVED, resolved signal cannot exclude kinematic defect. Full candidate constitutive-array equality not separately checked; no continuum energy/full-history/aggregate claim. LedgerCLOSED63.7316872s/240, failures unchanged. See development/r8-f06-active-chart-20261009/root-disposition.md. |
+| F07 | IN_PROGRESS - v1 H3 unresolved89.37/1000 and CLOSED8.17097s preserved. Block alternative11 controls PASS/physicalfixture UNRESOLVED at fixed coupling screen: sigma_min0.2260683 versus required54.5251806; uncertainty includes nullspace orientation. Installed0; no current finite/rigid/firstpair classification, exact stored-root, physical singularity or foundation acceptance inference. Fresh180 ledger CLOSED4.5899814s, unused discarded. Root verified172 archive members and actualCPU0/pools1/JIToff/runtime; no source package imports by saved-pencil design. No third oracle/tuning/retry; advance F06 originalcaller and F03 reference admission. See development/r8-f07-block-descriptor-20261009/root-disposition.md. |
 | F08 | PASSED â€” native generalized/physical-fibre local extraction |
 | F09 | PASSED â€” physical B2 section/local operator and station trace |
-| F10 | IN_PROGRESS â€” finite-support Q4/S3 point/static portion PASSED; other attachments open |
-| F11 | IN_PROGRESS â€” finite-support Q4/S3 point affine/KKT portion PASSED; broader scope open |
+| F10 | IN_PROGRESS - point/static portion PASSED; physical Q4 footprint static assembly VERIFIED; other attachments/formulations open |
+| F11 | IN_PROGRESS - point affine/KKT portion PASSED; Q4 footprint affine/static assembly VERIFIED; broader scope open |
 | F12 | IN_PROGRESS |
-| F13 | IN_PROGRESS |
+| F13 | PASSED - registered private elastic reference-static ownership/cache/invalidation/batch/selected-recovery/cancellation/refusal/closure feasibility. V6 installed27formal+2scratch PASS, independent root physical/lifecycle/caller and archive inspection PASS; wheel5d59c7c7/product ac20ce57,630source+site/252imports. Maximum parity2.17e-14/work6.88e-15, unchanged limits. ParsedCPU0/thread1/JIToff/opt0, peak174MB; ledgerCLOSED14.0837336s/120, unuseddiscarded. Separate-author review clear; no different-family claim. Original v1-v5 failures/incomplete inventory unchanged. Future attachment/material/scale and aggregateG0/G1 qualification remain OPEN. See development/r8-f13-static-feasibility-v6-20261009/root-disposition.md. |
+
+F03 mixed-shell auxiliary restriction, 8 October: a flat Q4/S3 five-field H1
+shell-side implementation passes 5/5 focused source controls, including
+existing-Q4 norm parity, mixed affine energy, equivalent units, support
+refusals and actual BL5 work with off-line H1 coupling. This is necessary
+development evidence only. Complete beam/dual norm, affine/curved supports,
+growing-space criteria, signed KKT, physical transfer and independent review
+remain OPEN; formal F03 authority UNCONSUMED. Evidence:
+.development/f03-mixed-shell-h1-20261008-v3/results.md.
 
 The preserved30 September F06 closure review found loaded noncommuting coverage
 missing at its original identities. The separate1 October staged Q4/S3 path now
@@ -852,6 +1133,16 @@ sealed48 files including seal SHA-256
 `da8a8d07da0c18b54e958840999d70b9f0d70cbe2815dbb3d9276fb04ccf890a`.
 General F13/M3 remain open; no member-resultant envelope, scaling/material
 qualification, speedup or larger-domain acceptance follows.
+
+**Prospective B07/F13 addition, 8 October:** selected local B2 member-resultant
+envelopes now retain signed component extrema, requested station identity,
+first-case ties and complete-case prefixes across point, physical-footprint,
+loaded-point and body-load batch routes. Exact-source controls passed 21/21;
+an isolated wheel public physical-footprint 10-case probe passed with one
+factorization. [Raw receipts, initial temp failure and wheel identity](../../.development/b2-member-envelope-20261008-artifact/receipt-v2.json).
+The earlier statement above remains the historical 30 September disposition.
+General F13/M3 and untested material, scale and physical-accuracy claims
+remain open.
 
 **F13 lifecycle development,30 September:** completion-callback closure now
 returns the complete selected prefix and scalar numerical counts. Incomplete
@@ -1072,8 +1363,8 @@ independent mechanics review and complete V06 adjudication remain open. See
 
 | External comparison | Status | Current boundary |
 |---|---|---|
-| E01 eccentric elastic panel | IN_PROGRESS | CalculiX six-row deck remains inert after an expansion-map defect. OpenSees signed point screens, including 2Ã—1/4Ã—2/8Ã—4 grids, pass link/work/wrench checks, but physical roll disagreement increases on two-direction refinement. At 8Ã—4 the external axial-load shell action replays its coupled field to 1.93e-17; the changed coupled action explains 93.6% of the roll gap at fixed native shell stiffness. Direct +100 N m torque gives a 19.0% native/external torsional-compliance difference, stable under sparse-solve correction. Four same-action torque replays show the changed coupled action explains 109.1% of that gap while the isolated external shell is slightly stiffer; physical Mx distribution dominates and Mz contributes zero on this fixture. Beam-only section compliance agrees to roundoff. Shell/point torsional-transfer cause and matched idealization remain unresolved; stop diagnostic refinement pending focused mechanics review. Formal observables/floors, accepted physical reference and independent review remain open. |
-| E02 torque/footprint | IN_PROGRESS | Executed matched rigid-tip GE/CalculiX out-of-plane comparison at three in-plane levels. Finest Fz/Mx/My work differences+.148%/-.620%/+.120%; native torque convergence, solid thickness resolution and tighter balance precision open. Normal-spin/full-law equivalence not claimed. B2 public resolution guard fails; B2 accuracy untested. See development/r8-e02-rigid-tip-reference-20261001/results.md. |
+| E01 eccentric elastic panel | IN_PROGRESS | The 2026-10-08 positive-offset six-row B31/S4 CalculiX canary completed one increment without warnings; its output-only variant exposed 32 expanded nodes but an apparent physical trace gap makes it an unmatched accuracy proxy. A distinct C3D8 explicit-port canary passes six eccentric rows, rigid-node fields, force/moment balance and virtual work at +0.1 m/+1000 N, isolating algebraic work from B31/S4 expansion. Matched beam/shell sections, both signs, convergence and E01 accuracy remain open (.development/e01-point-output-20261008-v1/results.md; .development/e01-explicit-port-20261008-v1/results.md). A new registered shared-knot offset run at e34f47ad generated knots 1-3, recovered +0.1 m beam geometry and near-matched beam/director pitch, but saved reactions omit the root moment; this is kinematic feasibility only, not a six-channel work or E01 accuracy oracle (.development/e01-shared-knot-20261008-v2/results.md). The V1 SECTION FORCES/3D card probe failed input parsing and is preserved. Corrected 2D section output matched the original nodal result byte-for-byte, but shared-node fields do not isolate beam/shell actions and RF omits root moment; E01 work/accuracy remains open (.development/e01-shared-knot-section-output-20261008-v2/results.md). The earlier expansion-map defect remains historical. OpenSees signed point screens, including 2Ã—1/4Ã—2/8Ã—4 grids, pass link/work/wrench checks, but physical roll disagreement increases on two-direction refinement. At 8Ã—4 the external axial-load shell action replays its coupled field to 1.93e-17; the changed coupled action explains 93.6% of the roll gap at fixed native shell stiffness. Direct +100 N m torque gives a 19.0% native/external torsional-compliance difference, stable under sparse-solve correction. Four same-action torque replays show the changed coupled action explains 109.1% of that gap while the isolated external shell is slightly stiffer; physical Mx distribution dominates and Mz contributes zero on this fixture. Beam-only section compliance agrees to roundoff. Shell/point torsional-transfer cause and matched idealization remain unresolved; stop diagnostic refinement pending focused mechanics review. Formal observables/floors, accepted physical reference and independent review remain open. |
+| E02 torque/footprint | IN_PROGRESS | Restricted current +offset/+Mx and +Fz principal rigid-port responses ACCEPTED; work differences -0.01037945% and +0.147767683%, reviewed convergence/applicability and actual normalized balance/work/constraints pass. D6 current native40 matches archived40 exactly; four physical attempts, no reruns. My physical acceptance BLOCKED by external whole-vector force balance1.48958e-8>1e-8; +0.119645829% work agreement is diagnostic. Failed supporting thetaX print check and erroneous v1 serialization PASS claim preserved/corrected in v2; strict/default checks and criteria unchanged. Signed/general/local/director/distributing/B2/BL5, fullF04/E02 and aggregate qualification remainOPEN. See development/r8-e02-rigid-principal-current-20261009/scientific-disposition.md and retained Mx assessment. |
 | E03 curved stiffener | NOT_STARTED | No executed matched comparison. |
 | E04 nonlinear GE/capacity | NOT_STARTED | No executed matched comparison. |
 
@@ -1083,6 +1374,27 @@ Independent mechanics review accepts this allocation, not either engineering
 idealization. Retain six-row points; require explicitly matched material-spin
 work before further reference scoring. No new solve/refinement or threshold
 change. [Grouped decision and raw hashes](../../.qualification/b3-ge-e4-pl/r8-e01-cross-work-dev-20260930-v1/results.md).
+
+E01 source/output update, 8 October: the separately resolved C3D20R
+finite-port deck passed 5/5 source and 17/17 weak-work controls, then one
+positive-offset `Fy` output smoke completed with eight parsed cut surfaces and
+weak global balance. It is **finite-port feasibility evidence**, not a native
+point-law accuracy comparator: its 25 mm shell patch, solid beam section, root
+restraint and `Fy`/`-Mx` action differ from the native nodal `Fx`/`+My` fixture.
+Its interior stress-cut pairs do not independently identify port work.
+Preserve the existing OpenSees point-law cross-work decision above; material-spin
+equivalence and converged accuracy remain open. The smoke and its limitations are
+recorded in [the immutable receipt](../../.development/e01-resolved-port-smoke-20261008-v1/results.md).
+
+E01 sided-spin update, 8 October: a source-only V2 diagnostic on the two
+unchanged, hash-bound 8x4 torque shell fields reports both incident Q4 polar
+spins. Sixteen focused controls pass; a test-only delta passes 1/1 and the former
+selected-host values are exactly unchanged. Maximum native/OpenSees side jumps are 8.728590078e-8/
+8.500972272e-8 rad, larger than the maximum 1.533165435e-8 rad cross-model
+interior-station same-side difference. A new material-frame reference needs a declared host,
+averaging or finite-footprint sampling/work law. This does not diagnose a
+failed shell/connection or score point-law accuracy. Raw results:
+[incident-spin diagnostic](../../.development/e01-spin-sides-20261008-v1/results.md).
 
 Known adverse evidence remains visible: F03's off-ratio mode and historical
 timeouts do not select a multiplier; F05's 45 N and 42.5 N cases failed
@@ -4425,3 +4737,799 @@ authority and ledger PENDING, 0s used/360s remaining, no attempts/in-flight job.
 Root frozen-record review and activation require explicit resumption. Existing
 human programme approval is preserved; consumed campaigns and all failed evidence
 remain unchanged. No source/runtime work follows this pause; checkpoint only.
+
+### 2026-10-08: resumed displacement consumer verification
+
+User resumption and PR #63 establish common-main baseline `cff55d95`.
+ANYfem isolated commit `345db0cb` repairs v2 Project decoding so a tuple of
+seed factors cannot be silently canonicalized to a valid JSON list. Exact
+candidate/dependency-bound source controls 53/53 PASS; the preceding source
+failure and six pretest dependency-catalog refusals remain in the carried ledger.
+The isolated wheel and all 117 installed files match their saved hashes, and
+build/install subprocesses exited zero. The 30-second build-install phase then
+TIMED OUT in post-install auditing: installed controls, public example and
+19 legacy controls remain UNRUN, not accepted. Packet v9 charged
+269.4988338/360 seconds and retains a 60-second reserve. A distinct
+artifact-only installed packet is statically prepared but PENDING fresh
+bounded authority, with zero attempts. Its frozen older solver wheel differs
+from common main in 22/431 Python files, so current-main installed impact
+verification remains a separate requirement. No E01/E02/F03 or aggregate gate
+disposition changes; no release claim follows. Exact paths and hashes are in
+`B3_GE_E4_PL_ACTIVE_STATE.md` and the two packet registrations.
+### 2026-10-08: current-main consumer artifact route prepared
+
+The older-wheel artifact-only packet remains PENDING/UNRUN. A higher-value
+current-main variant is prepared with the same ANYfem consumer wheel and prior
+53/53 source pass. It binds the existing ANYsolver common-main wheel SHA256
+866509295b400c71c398d569e95077d2a38798c8dcdb3e36d4d62b0b9e01412b:
+634 wheel files, 627 Python members and 1264 installed site files. Git source at
+cff55d95 and the wheel differ only by CRLF/LF in four recorded Python members;
+no exact Git-byte-parity claim is made. Static source, wheel/site, manifest and
+runner bindings pass; no numerical attempt or fresh authority is consumed.
+Current-main installed behavior remains UNRUN pending the changed-scope reply.
+The old timeout, scientific gates and release status are unchanged.
+### 2026-10-08: BL5 C1 saved-state face fields (development only)
+
+C1 Fy/Mx V2 captured native and C3D20 primal/dual states with a 37.0846124 s
+bounded PASS. V4 physical-field postprocessing passed in 3.7788552 s, using the
+native axis-to-face lever arm and sampled solid face nodes. Mx native one-sided
+bottom-face jumps at bonded x=.9-.975 m are 78.8-91.7 nm; individual side-to-solid
+differences are 43.8-48.7 nm. Fy bonded side differences are 13.8-18.8 nm.
+Native-side means are not selected physical traces. Distinct body/root/end-load
+and trace behavior remain confounded. V1 timeout, V2 postprocessor failure with
+missing precise wall accounting, and superseded V3 axis/face interpretation are
+preserved. V4 bindings, receipts and limits: .development/bl5-c1-supported-fields-20261008-v4/results.md.
+No F03 authority or G0B/G1/M2 acceptance is consumed or established. A common
+physical bond and side-sensitive work observable must be specified before the
+next causal comparison; no line law or multiplier space is selected.
+
+### 2026-10-08: F06 native-fibre chart rebase history guard (development)
+
+The finite force-control rebase now compares every packed native generalized and
+physical-fibre accepted-history component with its same-state reevaluation
+before commit. Q4 and all-S3 mixed-section refusal tests cover a distinct valid
+predecessor and a valid compensated low-half-only change, with unchanged accepted
+checkpoint/recovery after refusal. An existing successful all-S3 rebase/restart
+path also passed: 3/3 focused source checks (8 deselected), process wall
+19.5918447 s with CPU affinity mask 1 and one-thread/JIT-off environment.
+The initial array-global tolerance defect and failed command quoting are
+preserved; the same-family read-only reviewer found the corrected exact guard
+closed that specific issue. See
+`.development/f06-native-rebase-guard-20261008-v4/results.md` and retained
+v1-v3 records. An isolated wheel from a3f45301 (SHA256
+a00e90e1de22f4525cfdb10032780bd717fd31403c132d89e193ee4044df18d4)
+also passed the same 3/3 affected tests with exact installed driver bytes; see
+`.development/f06-native-rebase-installed-20261008-v2/results.md`.
+This is not full installed or different-family acceptance. F06/V18/G0B
+and G1 remain open; E01/F03 and release unchanged.
+
+**9 October pressure-vector option (G4A remains OPEN):** The user approved a
+prospective, opt-in pressure-only nodal vector assessment with a distinct
+request/checkpoint identity. The default component criterion and historical
+failures remain unchanged. The implemented candidate passed 9 focused new
+source controls, 13 selected legacy controls and 22 selected bounded
+installed-wheel controls. Its shared-node masking limitation is explicit.
+Supporting review caught a trial-merit inconsistency, repaired before the
+final wheel. This is IMPLEMENTED_NOT_QUALIFIED for that G4A subset;
+independent mechanics review, complete G4A and G6 remain open. See
+[development evidence](development/r8-ge-pressure-vector-20261009/results.md).
+
+**9 October F03 scalar method control (F03 remains OPEN):** The supported
+H1_0/P1/P0 checkerboard has nonzero continuous dual a^2/12 but exact
+zero discrete work; a constant density has calibrated quotient
+sqrt(1-a^2). Six bounded source controls passed at N=4,8,16 with
+exact budget accounting. This is a method counterexample only, not the
+actual BL5 norm/floor, different-family mechanics review, signed KKT,
+formal F03 or G0B acceptance. See [evidence](development/r8-f03-scalar-checkerboard-20261009/results.md).
+
+**9 October E01 torque host discriminator (E01 remains OPEN):** A 17/17
+source-only port-map check shows opposite one-sided polar-yaw hosts give
+identical direct pure x-torque work at a shared director vertex. Saved
+hash-bound native/OpenSees +100 N m fields have an 18.9985% relative
+tip director-x difference, while their distinct coupled shell actions retain
+nonzero nodal Mz/theta_z coordinate work (0.000157794 versus
+0.000020527 J), distinct from the unadopted material-spin map. Host choice
+cannot change director extraction from fixed saved fields, but a changed
+yaw connection could affect a re-solved response. Distinguish existing
+nodal Mz work from prospective material-spin work and match physical
+idealization before another external solve; full six-channel yaw sampling,
+convergence and independent acceptance remain open. See
+[evidence](development/r8-e01-torque-host-20261009/results.md).
+
+**9 October registered F03 Q4/P0 bound attempt (F03 remains OPEN):**
+The 16x4 Q4, 16-half-cell, eight-support actual-owner test wrote JUnit with
+one passing assertion set and a 40-column relative Loewner bound
+2.2123959869e-4 against the unchanged 1e-3 criterion. Its supervised
+process timed out at 4.531124/4.5 s, so this is failed execution with
+diagnostic output, not a completed check. The graph-development allowance used
+44.6444159/105 s, leaving only 0.3555841 s above the required 60 s reserve.
+The complete registered bound, family applicability, physical transfer, signed
+KKT and different-family review remain open; no scalar 0.43 floor transfers.
+Evidence: development/r8-f03-registered-q4-bound-20261009/results.md.
+
+**9 October experimental B2 buckling consumer extension
+(B10/B14/B17/G6 remain OPEN):** ANYfem separately persists typed POINT and
+five-row physical rigid-footprint reference-buckling requests through standalone
+and native Project save/reopen, including preload and section-traction inputs.
+The physical-footprint installed example's explicit buckling route and affected
+controls passed 8/8 with source/wheel/site module parity; earlier POINT
+installed controls passed 97/97. These verify the specified consumer behavior,
+not F12/G4B mechanics, external references, scale, platform coverage or final
+independent acceptance. Evidence:
+C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-b2-point-buckling-persist-20261009/results.md
+C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-b2-physical-footprint-buckling-persist-20261009/results.md
+
+**9 October GE accepted-state buckling Project consumer (G4B/G6 remain OPEN):**
+A self-contained ANYfem mixed Q4/S3, two-native-member example reopens its
+Project input, accepts a loaded state, restores a separate solver checkpoint,
+refuses a stale-generation request, and obtains identical two-factor
+conservative buckling output on direct and restored owners. The final isolated
+installed ANYfem/ANYsolver run completed in 4.3256739 s under CPU0, one
+numerical thread, JIT off and a 2 GiB cap. The initial two passing revisions
+and a self-contained v3 NumPy-block failure remain preserved. This advances
+consumer workflow only; physical accuracy, convergence, mandatory external
+references, installed platform matrix and independent mechanics acceptance
+remain open. Evidence:
+C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-ge-accepted-buckling-consumer-20261009/results.md.
+
+**9 October native BL5 line-buckling ANYfem consumer (G4B/G6 remain OPEN):**
+The existing physical-fibre line Project consumer now has an explicit
+--buckling route. Its historical Q4 static default and mixed Q4/S3 CLI route
+both completed against isolated installed ANYfem/ANYsolver wheels. The line
+route reopens Project input, restores and continues a loaded checkpoint,
+refuses a stale-generation request, compares direct/restored conservative
+factors, and leaves both accepted checkpoints unchanged. The final bounded
+installed run took 12.1701289 s on CPU0 with one numerical thread, JIT off
+and a 2 GiB cap. This is consumer integration only: BL5 law and space,
+F03, physical spectral accuracy, mandatory external comparisons, platform
+matrix and aggregate acceptance remain OPEN. Evidence:
+C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-ge-native-line-buckling-consumer-20261009/results.md.
+
+**9 October E02 rigid-tip thickness source preparation (E02/F04 remain OPEN):**
+The exact CalculiX deck generator now admits only fixed 20x8/nz=4,8
+development thickness variants. Its historical 20x8/+Mx/nz=2 ASCII deck SHA
+remains identical. A bounded source-only self-check passed 18 original and
+two new geometry/metadata cases with refusal controls in 2.1080541 s,
+CPU0/one thread/JIT off/2 GiB. No external solve occurred. The proposed
+fixed-in-plane nz=2/4/8 Mx comparison distinguishes solid thickness
+sensitivity from unresolved native torque convergence; it requires its own
+execution authority and does not qualify E02, F04 or physical transfer.
+Evidence: docs/agent_plans/development/r8-e02-rigid-thickness-prep-20261009/results.md.
+
+**9 October E02 fixed-in-plane external thickness execution (E02/F04 remain OPEN):**
+The archived and new CalculiX 20x8 +Mx work for nz=2/4/8 is
+1.742097e-5/1.745454e-5/1.746433e-5 J (+0.192699% then +0.056089%).
+Both new complete calculations passed bounded development checks; two
+earlier CreateProcess failures are preserved. Printed seven-digit DAT values
+do not certify 1e-8 balance. Native torque in-plane convergence, physical
+connection equivalence, complete external references and independent mechanics
+acceptance remain open. Evidence:
+docs/agent_plans/development/r8-e02-rigid-thickness-run-20261009/results.md.
+
+**9 October G4C no-change material reference provenance (IMPLEMENTED_NOT_QUALIFIED):**
+Commit c0e8942c retains the material transport policy for a no-change curved
+material point reference. Focused source 3/3 and installed-wheel 3/3 pass; 627
+package Python modules match source/wheel/site bytes. Earlier stalled and aborted
+build preparations are retained. This is point-reference provenance only; full
+imperfection mechanics, G4C, G6A, independent review and release remain OPEN.
+Evidence: docs/agent_plans/development/r8-g4c-material-policy-20261009/results.md.
+
+**9 October curved Q4/S3 point-reference development (IMPLEMENTED_NOT_QUALIFIED):**
+Candidate 731d941589a6f6d4f63466ec208d28d5a85fc3cf adds an explicit elastic
+curved Q4/S3 point policy with orientation admission and stable S3 arithmetic
+bound to restart. Final focused source checks 6/6; exact-commit isolated wheel
+SHA-256 e0ba8ccd31b2eb30d31198f4a7cd21f92767ab269b4c0987ac10fa2d1fd7c928
+passed 22/22 affected installed checks, with 627 source/wheel/site Python modules
+byte-identical. Initial rejected finite candidates and superseded attempts remain
+failed evidence. Same-model read review found no concrete defect, but curved
+multi-facet/point-interface physical work, topology, external agreement and
+independent-family mechanics acceptance are open. See
+[development result](development/r8-curved-s3-point-20261009/results.md).
+G2/G4C and aggregate programme acceptance remain IN_PROGRESS; no qualification
+or release claim follows.
+
+**9 October curved Q4/S3 accepted point-work check (IMPLEMENTED_NOT_QUALIFIED):**
+Test-only commits 080b1261 and dbb8f2a7 independently reconstruct accepted
+objective gaps and multiplier work, checking all 12 shell/beam port variations
+and global point force/moment balance under vertical and mixed Fx/Fy/Fz loads.
+Final source 8/8 and unchanged exact-wheel installed 8/8 passed with recorded
+effective CPU/thread/JIT settings and 2 GiB cap. This is accepted-state work
+evidence, not a physically matched six-channel reference or G2/G4C/F01/F02
+acceptance. Test-only 4b0ee5a7 also passes changed stress-free-reference
+linear/finite solve, point work, checkpoint and identical continuation on
+all-S3 and mixed Q4/S3 panels: source 9/9 and unchanged wheel 9/9. This
+is scoped imperfection/restart development evidence, not G4C acceptance.
+Test-only d7d556c4 adds common rigid-reference covariance of all-S3 and
+mixed Q4/S3 beam poses, linear translations, point gaps and spatial point
+actions: source 11/11 and unchanged wheel 11/11. The V5 test-oracle
+read-only-array failure remains preserved. Broader local/finite mechanics,
+external matching and independent acceptance remain open.
+See development/r8-curved-s3-point-20261009/results.md.
+
+**9 October actual-owner BL5 P0 seven-ratio reference development (IMPLEMENTED_NOT_QUALIFIED):**
+A fresh exact-entry V11 completed 1/1 with 40-column Loewner bound
+2.2123959869e-4 against the unchanged 1e-3; the prior V10 timeout
+remains failed execution. A one-shell-resolution 16x4 Q4/P0 screen
+passed all seven half-cell ratios 2-128 for complete physical row
+work, supported positive trace norm and independent continuous-dual
+bound (largest 3.3535701819e-4). The 128/32 inverse failed 1e-10; a
+registered 128/16 auxiliary reference then passed the same inverse
+and Loewner criteria, with no native model or threshold change. Raw
+failures V1-V3 and diagnostics V4-V5 remain preserved. Three-level
+refinement, signed KKT, physical transfer, different-family review and
+formal F03 are still OPEN. No historical 0.43 floor is transferred.
+Evidence: development/r8-f03-actual-family-20261009/results.md.
+
+**9 October external BL5 operator feasibility (F03 remains OPEN):** The archived
+16x4 Fy/Mx/Mz cases pass source, helper, binary, command and physical-response
+inventory checks, but contain no full external tangent or equation map. Their
+three saved responses cannot identify fixed/free stiffness coupling. A source-only
+capture validator and seven mutation controls passed after repair of three
+false-pass paths; the initial failed synthetic control is retained. No external
+numerical run or formal F03 authority was consumed. This is a bounded
+development feasibility result, not operator capture, physical transfer,
+multiplier selection or F03 acceptance. See
+development/r8-bl5-external-operator-20261009/report.md.
+
+**9 October external BL5 FullGeneral Fy capture (F03 remains OPEN):**
+A distinct bounded OpenSees 3.8 run returned a 783x783 KKT with 708 mapped
+physical rows, 35 SP rows, 40 MP rows and 230 nonzero fixed/free couplings.
+The first postprocess validation refused the source MP-row normalization; a
+source-only repair passed against the same retained matrix, with no child rerun.
+All saved BandGeneral Fy poses, element forces and recovered actions match
+exactly; 11 source controls pass. This one-case development capture does not
+establish common-density response, physical accuracy, growing-space stability,
+different-family mechanics review or F03 acceptance. Formal F03 authority
+remains unconsumed. See development/r8-bl5-external-operator-20261009/report.md.
+
+**9 October BL5 saved-state cross-load operator check (F03 remains OPEN):**
+The captured Fy physical K reproduces archived Fy/Mx/Mz element covectors on
+all 708 rows, including fixed roots; source-inferred rank-75 multipliers
+satisfy the frozen KKT load and map to archived densities. External/native
+beam-yaw fields and compatible fixed-density loads pass one known-mode work
+check, including native retained rotations. One offline bounded process passed
+with preserved raw arrays and 12 source controls. Complete support-only
+nullspace, arbitrary-density response, accuracy, growing-space stability and
+F03 acceptance remain open. The original FullGeneral validation failure and
+formal F03 one-use authority remain preserved/unconsumed. See
+development/r8-bl5-external-operator-20261009/report.md.
+
+**9 October BL5 native-load provenance repair (F03 remains OPEN):**
+The cross-case checker now validates each native Fy/Mx/Mz completed case and
+archived raw-state SHA-256 before use; a source-only byte adjudication found
+the saved three loads identical to their hash-bound archives. Fourteen focused
+source controls pass, including refusal of wrong case/status/hash. No numerical
+child reran; original cross-case receipts remain unchanged. See
+development/r8-bl5-external-operator-20261009/report.md.
+
+**9 October BL5 support-only gauge decision (F03 remains OPEN):**
+One bounded child retained a failed invalid coupled-state comparator; a distinct
+source-repaired child, with exact original-support and helper-byte binding,
+passed a one-yaw numerical nullity screen and Fy/Mx/Mz fixed-density gauged
+free-equilibrium, reaction and yaw-shift checks for both saved 16x4 operators.
+Native mixed inertia remained 768 positive, 288 negative and one near-zero.
+Six source tests and focused independent Read review found no false pass at this
+saved three-case development scope. Neither arbitrary-density behavior nor
+physical transfer accuracy, growing-space stability or formal F03 is accepted.
+Both receipts and limitations: development/r8-bl5-support-only-gauge-20261009/report.md.
+
+**9 October BL5 common-density response (F03 remains OPEN):**
+A source-bound n16 Fy/Mx/Mz fixed-density comparison used the same external
+P0 source-row density and physical loads in native/external support-only
+operators. Run-v1 failed on an invalid zero-native-retained-load diagnostic
+assumption; distinct run-v2 passed full signed native retained work, original
+free equilibrium, gauge checks and an exact external-resolvent response identity.
+The shell-body term dominates that identity for these three saved states; beam
+body terms are negligible and action-map terms smaller signed corrections.
+Independent Read review found free-yaw support labeling, loose small-work
+closure and overbroad causal language; source-only hash-bound adjudication
+repaired all three without changing run-v2 raw evidence. Ten focused source
+checks and follow-up Read review pass. This does not allocate the original
+coupled discrepancy, prove drilling causation, establish converged accuracy
+or close F03. Receipts and limits: development/r8-bl5-common-density-response-20261009/report.md.
+
+**9 October c2/P0 current-owner parity (F03 remains OPEN):**
+The archived positive-family construction was checked against the current GE
+owner at 32x8 and 64x16 without rerunning a quotient. A first 32x8 checker
+failed by requiring an unsigned basis permutation; its immutable receipt is
+retained. A separately bounded v2 campaign used the verified signed basis
+map and passed exact supported embedding, full sparse H, all C E row work and
+independent physical action checks at both levels. H maximum entry errors
+were 9.33e-15 and 3.46e-14; action errors were zero. The two children used
+19.997064/240 s process wall under CPU0, effective one-thread BLAS, JIT off,
+2 GiB and 90 s per-child limits. Seven focused source tests and an independent
+Read review found no evidence defect. This establishes development parity of
+the checked current-owner objects with the frozen mathematical construction,
+not original unarchived matrix-byte identity, the historical quotient claims
+on a new artifact, physical transfer, multiplier selection or F03 acceptance.
+Formal F03 authority is unconsumed. Full results and receipts:
+development/r8-f03-current-owner-parity-20261009/report.md.
+**9 October detached BL5 five-channel Mz transfer (F03 remains OPEN):**
+The archived OpenSees n16 detached shell/beam source has 40 integrated
+five-channel rows. Source-bound external/native rigid fields, per-row actions,
+signed work, wrenches and the same eight integrated shell-side interval measures
+pass. All 40 signed basis actions agree on 510 shell coordinates to 2.17e-19.
+The first saved-data comparator passed; stationwise-v2 failed before profiles
+from CRLF/LF preflight hashing and remains failed; a separately bounded
+stationwise-v3 passed. Mz local support-action difference is 0.1131% of the
+external Mz L1 action, with about 10.1x cancellation; maximum interval Mz
+difference is 0.03407 Nm. Six reference and seven stationwise focused tests
+pass; independent Read review reproduced the normalization and found no
+concrete evidence issue. Each successful saved-data child used under 1.4 s,
+CPU0, effective one-thread BLAS, JIT off and under 98 MB; no new external or
+native solve ran. This excludes a gross signed P0 support-order/lever-arm
+mismatch on one grid, but does not select the continuous law or qualify local
+slip, sided work, physical accuracy, refinement, interface stability or F03.
+Full immutable evidence: development/r8-bl5-five-channel-mz-reference-20261009/report.md.
+**9 October E01 resolved-port source admission (E01 remains OPEN):**
+The detached CalculiX C3D20R source passes both +/-0.1 m offset maps,
+three six-row stations, rigid/affine fields, signed side virtual work,
+root/load/source identity and eight oriented cuts. It is NOT admitted as a
+native-point accuracy oracle: solid square Saint-Venant J is 0.843462 of
+native polar J, effective shear compliance is unmeasured, 25 mm rigid patches
+are not the native point law, independent sided actions are unavailable,
+and native Fx is absent from the current deck. Four source cases, ten new
+refusal tests and 27 affected focused tests pass. Independent Read review
+found no false admission; no external/native numerical child ran. Preserve
+prior executed solid and shared-knot results as their original diagnostics.
+Repair six-resultant section idealization and sided-action/output map before
+another loaded comparison. Evidence:
+development/r8-e01-resolved-port-admission-20261009/results.md.
+
+B2 G5/B16 development update, 9 October 2026: a source-package physical-section
+screen completed 2,500 Q4 / 250 B2 / 25 rigid pads with 100 compatible cases,
+one factorization and selected recovery. The 10,000 / 1,000 route, installed
+artifact, persistence, beam-rich control and qualification scaling remain open.
+Seven numerical receipts and a preserved low-stiffness failure are recorded in
+[the B2 scale evidence](development/r8-b2-large-scale-20261009/report.md).
+
+B2 G5/B16 follow-up, 9 October 2026: indexed physical-footprint compilation
+and exact sparse-in-block Hessians passed 24 focused/existing source checks.
+One matched 2,500/250/25, 100-case source pair reduced process wall by 13.56%
+with common recorded outputs identical and sampled peak memory 2.67% higher.
+Single-pair development evidence only; installed repeated timing and 10,000/1,000
+acceptance remain open. [Raw receipts](development/r8-b2-large-scale-20261009/report.md).
+
+B2 installed integration follow-up, 9 October 2026: optimized physical-footprint
+source at 7f877a52 passed 46/46 affected tests from a byte-bound isolated wheel.
+This verifies the affected installed route only; 10,000/1,000 execution, repeated
+installed timing, save/reopen, beam-rich control and G5/B16 acceptance stay open.
+[Installed evidence](development/r8-b2-footprint-installed-20261009/results.md).
+
+B2 installed full-size development update, 9 October 2026: the byte-bound
+10,000-Q4/1,000-B2/100-pad input compiled with 2,000 exact footprint rows and
+one factorization. Two attempts preserved six accepted cases then failed at
+case 7. The accurate unscaled stored-KKT residual bound at the failed row
+exceeds the unchanged physical equilibrium tolerance, so neither run passes
+the 100-case route; both remain failed evidence. The 300-second ledger has
+used 197.6114507 seconds and cannot support another full-size build while
+retaining its reserve. Solve-accuracy repair and all other G5/B16 requirements
+remain open. Exact receipts:
+development/r8-b2-installed-large-20261009/results.md.
+
+B2 G5/B16 refined installed development update, 9 October 2026: candidate
+bfb2cc36 completed one byte-bound installed 10,000-Q4/1,000-physical-B2,
+100-pad, 2,000-row model through all 100 ordered compatible cases with
+selected recovery. One factorization, 100 primary solves and 18 counted
+corrective solves completed in 97.041326 s process wall, with sampled peak
+process-tree RSS 1,561,047,040 B. The first six selected outputs exactly
+matched the earlier failed candidate; its case-7 residual failure remains
+failed evidence. This is a single development feasibility pass, not repeated
+performance or complete G5/B16 qualification. Persistence, beam-rich control,
+scaling, external references and other aggregate obligations stay open.
+[Registered installed evidence](development/r8-b2-refinement-large-20261009/results.md).
+B2 G5/B16 beam-rich development update, 9 October 2026: the byte-bound
+same-wheel installed 400-Q4/1,000-B2/100-pad control completed 100 ordered
+cases with selected recovery, one factorization and 100 primary solves, no
+correction, in 6.7790743 s process wall and 262,995,968 B sampled peak
+tree RSS. Independent read review found no current false pass; a prospective
+source-commit field guard omission is recorded without changing the executed
+runner. No repeatable performance, physical accuracy, persistence or aggregate
+G5/B16 acceptance follows. [Evidence](development/r8-b2-beam-rich-20261009/results.md).
+
+B2 G5/B17 large-input persistence update, 9 October 2026: ANYfem consumer
+commit 914b2df adds an explicit sparse-v2 physical-footprint input while
+preserving v1 default meaning. The byte-bound installed v3 no-solve route
+saved/reopened the exact solved 10,000-Q4/1,000-B2/100-pad, 100-case
+load/selection history through standalone and Project inputs, with exit0,
+14.3178329 s process wall and 459,251,712 B sampled peak tree RSS.
+Sixteen focused codec controls passed independently. V1 failed exit and v2
+assurance-insufficient execution remain preserved. Independent read review found
+no remaining v3 false pass. Large assembly/solve, physical accuracy and
+aggregate G5/B17 acceptance remain open. [Consumer evidence]
+(C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-b2-large-persistence-20261009/README.md).
+
+B2 G5/B16/B17 installed Project-to-solve follow-up, 9 October 2026:
+ANYfem commit 658723b preserves a **FAILED** separately registered run of
+the exact reopened 10,000-Q4/1,000-B2/100-pad, 100-case input. All cases
+completed with one factorization and 118 solves, direct-oracle selected
+displacements matched bit for bit, and maximum selected gap was 5.97e-16.
+The frozen aggregate work predicate failed at 1.65338e-5 relative versus
+1e-8. Independent read review confirmed the exact-equilibrium identity for
+this zero-prescribed model and identified missing full-state residual and
+multiplier data as the obstruction to allocating the discrepancy. Preserve
+the original failure; a smaller instrumented fixture precedes any numerical
+repair or large rerun. No G5/B16/B17 row closes. Evidence:
+C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-b2-large-project-solve-20261009/README.md.
+
+B2 physical-footprint work guard, 9 October 2026: solver commit 842c89bc
+adds a fail-closed aggregate work check for zero-offset physical-footprint
+static solves using the frozen 1e-12 + 1e-8|f·u| allowance. It permits at most
+one same-factorization correction and otherwise returns typed failure. A
+full-state 400-Q4/40-B2 fixture allocates its small work defect primarily to
+projected equilibrium residual and proves that prior per-row tolerance can
+admit a larger coherent work error. Thirty-nine focused source tests passed;
+independent read review found no concrete false-pass. Final verification
+spent 10.414297 s of its reserved 60 s; cumulative charged time was
+130.414297/180 s. No installed check on this new source or 10k rerun occurred.
+The historical failed Project work attempt remains failed, and G5/B16/B17
+remain OPEN. Evidence:
+docs/agent_plans/development/r8-b2-work-consistency-20261009/README.md.
+
+B2 work-guard installed follow-up, 9 October 2026: exact committed source
+0137e742 was archived and built to isolated wheel SHA-256
+89cfba60de1d967507636eb46e711af52d825a51ce0c1286f22133bac357ded4.
+All 627 committed package files matched wheel/site bytes; all 249 imported
+ANYsolver modules came from the isolated site. Six affected suites passed
+95/95 under CPU0, one numerical thread, JIT off and a sampled 2 GiB limit;
+final process wall was 32.782872 s and sampled peak RSS 290,619,392 B.
+A first checker failure due unrelated checkout CRLF differences remains
+preserved. Independent read review found no concrete false-pass for this
+narrow installed result. The historical 10k Project work failure remains
+FAILED, and G5/B16/B17 remain OPEN. Evidence:
+docs/agent_plans/development/r8-b2-work-guard-installed-20261009/README.md.
+
+B2 old-wheel case-1 work allocation, 9 October 2026: one separately
+bound full-state rerun at solver commit a40f1d07 reproduced the failed
+10k-Q4/1k-B2 Project case-1 work defect. The exact identity allocated
+99.9999856% of the two signed term magnitudes to projected equilibrium
+work; the multiplier-gap contribution was 1.54179e-15. The saved-state
+explicit verifier closed the identity near 1e-17. This diagnoses the
+source of the observed work error at that one case, but does not separate
+factorization from other residual contributors or demonstrate that the
+later work guard passes the large model. The 100-case Project result remains
+FAILED; G5/B16/B17 remain OPEN. The numerical child consumed 91.407865 s
+with 1.566 GB sampled peak RSS; preflight wall is unknown and is reported
+as such. Independent review accepted the narrow allocation. Evidence:
+docs/agent_plans/development/r8-b2-large-work-allocation-20261009/README.md.
+
+B2 saved-factor correction decision, 9 October 2026: exact old-wheel
+case-1 KKT replay matched the saved initial physical and multiplier state
+bitwise. One, two and three same-factorization corrections all missed the
+unchanged work tolerance; best signed defect was 6.311e-11 versus
+approximately 7.499e-12 allowed. Projected equilibrium work remains the
+observed contribution. Independent review found no false pass but did not
+assign the residual to factorization rather than matvec roundoff. Diagnostic
+gap-row ratios are not production gap decisions; recorded 4.222748 s charged
+wall excludes successful outer-launcher overhead. This is a negative
+numerical diagnostic, not a current-wheel large-model execution. The prior
+100-case Project result remains FAILED, and G5/B16/B17 stay OPEN. Evidence:
+docs/agent_plans/development/r8-b2-saved-factor-correction-20261009/README.md.
+
+B2 saved-state work-precision diagnostic, 9 October 2026: the same
+old-wheel corrected stage-2 binary64 K/displacement/load yielded a Decimal
+80-digit work defect of 6.4074e-11 against the unchanged 7.4988e-12
+allowance. Product float evaluation differed by 9.63e-13; evaluation
+rounding alone does not explain that state, but factorization cause remains
+unassigned. Initial vector replay was bitwise; subsequent parity was
+scalar work only. The child wrote completed metrics, but a supervisor
+process-exit race left exact child wall, exit and peak RSS unrecorded.
+Outer command wall 6.177107 s was charged conservatively; resource-cap
+certification is unavailable. Independent read review supports only this
+narrow numeric conclusion. The earlier Project failure remains FAILED;
+G5/B16/B17 remain OPEN. Evidence:
+docs/agent_plans/development/r8-b2-work-precision-20261009/README.md.
+
+B2 saved-KKT GENERAL factorization diagnostic, 9 October 2026:
+PyPardiso mtype 11 was confirmed on the exact old-wheel case-1 scaled
+matrix. Its initial and one-correction product work defects exceeded the
+unchanged tolerance by 193x and 2223x, respectively, with much larger
+projected equilibrium residuals than the symmetric replay. Independent
+review found no sign, scaling, RHS or backend-selection error in the
+bounded script, but numerical cause remains unresolved. One supervised
+child completed in 3.379 s, sampled peak process-tree RSS 462901248 B;
+PARDISO native thread count was not independently measured. The two saved
+states have a post-run hash inventory. This candidate is rejected for the
+saved case; the 100-case Project result remains FAILED and G5/B16/B17
+remain OPEN. Evidence:
+docs/agent_plans/development/r8-b2-general-factor-20261009/README.md.
+
+B2 saved-state backward residual location, 9 October 2026: at commit
+ce886d04, direct scaled-KKT residual and the mapped physical K/C/T residual
+agreed to normalized mismatch about 2.5e-16 for both saved GENERAL states.
+The GENERAL large force residual therefore exists in the scaled equations,
+not only in physical pullback evaluation. The symmetric saved state has
+similarly consistent mapping and a much smaller residual. The registered
+row-action global infinity ratio is not a canonical matrix-norm backward
+error. No factorization or new solve ran; numerical cause and repair remain
+open. One read-only child completed in 2.71845 s, sampled peak RSS
+250277888 B. G5/B16/B17 remain OPEN. Evidence:
+docs/agent_plans/development/r8-b2-general-factor-20261009/backward-README-v1.md.
+
+B2 forced-SuperLU saved-KKT comparison, 9 October 2026: the exact
+old-wheel case-1 scaled matrix and RHS were solved by scipy_superlu with
+COLAMD, one factorization and two solves. Initial and one-correction
+physical-work defects exceeded the unchanged criterion by 6.70x and 8.74x.
+The correction lowered scaled KKT residual but worsened physical work.
+Independent review found no input/scaling/backend-selection flaw in this
+bounded comparison. One child completed in 4.717559 s with sampled peak
+process-tree RSS 1137651712 B; native thread count was not independently
+measured. No tested backend switch meets the frozen saved-case work test;
+conditioning and work cancellation remain to be assessed. The historical
+100-case Project remains FAILED; G5/B16/B17 remain OPEN. Evidence:
+docs/agent_plans/development/r8-b2-superlu-factor-20261009/README.md.
+
+B2 saved-KKT compensated-refinement disposition, 9 October 2026: exact
+old-wheel SuperLU state-0 was reproduced bitwise. Two Decimal80 sparse
+residual corrections with one factorization reduced the scaled componentwise
+residual to about 1e-16 but left product work defects 7.888e-11 and
+7.929e-11 against an unchanged approximately 7.499e-12 allowance;
+initial defect was 5.024e-11. Independent review found the bounded
+negative result sound. This closes the tested same-factor correction and
+backend-switch path for this saved system, without identifying the broader
+conditioning cause. One child completed in 10.071528 s with sampled peak
+process-tree RSS 1166286848 B. The historical 100-case Project stays FAILED;
+G5/B16/B17 remain OPEN. Evidence:
+docs/agent_plans/development/r8-b2-compensated-refinement-20261009/README.md.
+
+B2 physical-versus-reduced saved-work comparison, 9 October 2026:
+three saved SuperLU states miss the unchanged work criterion in both
+physical u.T K u-u.T f and assembled reduced q.T Kr q-q.T fr forms.
+Product-float form differences are at most 5.75e-18 versus defects
+5.02e-11 through 7.93e-11. Decimal80 evaluations of two registered
+states give equal physical/reduced defects, still failing. Absolute-action
+sums near 2.4e6 are descriptive cancellation, not a condition number.
+Independent review found no concrete flaw; it does not show Kr assembly
+is physically wrong. One child completed in 11.462961 s, sampled peak
+RSS 240435200 B; an earlier hash-preflight failure launched no child and
+was charged. The historical Project remains FAILED; G5/B16/B17 stay OPEN.
+Evidence:
+docs/agent_plans/development/r8-b2-superlu-factor-20261009/reduced-work-README-v2.md.
+
+**9 October native16/32/64 P0 regional observer - IMPLEMENTED_NOT_QUALIFIED:**
+14 changed admission controls PASS;4 prior unchanged map controls reused. Sole
+saved-only batch PASS1.8452772s/107438080B, zero model/solve. Latest shell Fy
+changes: root quarter -8.809512N, interior +.911602N, whole -8.072686N. Root
+increment shrinks; away-root cancellation explains larger whole change. Interior
+transfer is sign-changing, not physical accuracy or a causal allocation. Root
+verified131 members,25 current bindings and consumed import snapshots. Original
+metadata FAIL/archive retained;60/20 allowance CLOSED, unused discarded. Native
+span2 candidate retained; exact common external stiffness/DOF/work/reference
+admission remains missing. No fourth mesh, new quotient/reference solve or
+formal F03; growing-space, transfer/shear/drilling/locking and full gates OPEN.
+Evidence: [regional disposition](development/r8-f03-sparse-signed-20261009/root-regional-disposition.md).
+**9 October F13 exact dependency failure repair - IMPLEMENTED_NOT_QUALIFIED:**
+Frozen producer reproduction identified affine-offset gap row9; before-refusal
+arrays/predicate/public failure preserved. Conservative single-product,
+individually homogeneous C/T provenance prevents rounded-cancellation cleanup.
+Existing physical/work/pose guards and certificate exclusions remain unchanged.
+Final source4PASS; installed exact ownership all5variants/base PASS; affected
+installed58PASS. Separate-author review finding resolved; final review clear.
+Root verified106 archive members,630 source/site bindings and252 installed
+imports; final wheel5d59c7c7. Effective NumBa/thread/CPU settings inspected in a
+separate no-solve runtime probe.240/60 ledger CLOSED, unknown pre-child launcher
+accounting explicit, unused discarded. Original v5 FAIL/incomplete27 and scratch2
+remain; full F13/G0/G1 acceptance OPEN. Next fresh current-artifact full inventory.
+Evidence: [repair disposition](development/r8-f13-static-feasibility-v5-20261009/dependency-repair-root-disposition-20261009.md).
+F13 current-artifact disposition,9 October: registered v6 private elastic-static
+feasibility PASSED after all27formal+2scratch and independent root inspection.
+This prospectively accepts the repaired artifact, preserves v5 FAIL/incompleteness
+and all closed authority, and does not close aggregateG0/G1 or later combinations.
+Evidence: development/r8-f13-static-feasibility-v6-20261009/root-disposition.md.
+
+
+## 9 October - physical B2 footprint independent static assembly delivered
+
+Four new source and four installed callers verify the complete-Q4 five-row
+geometry/work map, coordinate and nonzero affine-MPC KKT solution, multipliers,
+full reactions, prescribed support work and two-case public batch. Separate-author
+review repaired mixed force/moment normalization and oracle-only dual work; v1
+evidence is preserved. No product change or new wheel. Root verified 78 archive
+members, 630 source/site bindings and 252 installed imports; final ordinary ledger
+CLOSED at 9.9073809 s/150 s, unused discarded. This is exact-fixture independent
+attachment/affine assembly evidence, not independent element equations, new wrench
+signs, S3/mixed footprints, broad F10/F11 or scientific qualification. Full gates
+remain open. [Disposition](development/r8-b2-footprint-static-foundation-20261009/v2/root-disposition.md).
+
+## 10 October 2026 — finite constructive prerequisites, scoped development
+
+Finite-certificate-v1: final17/17 bounded source/synthetic controls pass; initial
+Hessian-decoder test failure retained. Exact rectangle/native work, units,
+literal supported P0 five-row minor and physical G_X binding are implemented.
+Sparse outward/permutation/triangular certificates refuse unsafe inputs.
+Independent source/evidence review has no remaining code finding; stale docstring
+is resolved by a bound, comment-only delta. This is IMPLEMENTED_NOT_QUALIFIED:
+no production/growing-family inertia or coercivity, engineering floor, formal
+F03 pass or aggregate gate acceptance. Actual assembly/skew uncertainty and all
+physical/refinement obligations remain. F03 UNCONSUMED.
+[Handoff](development/r8-f03-common-density-20261010/finite-certificate-v1/HANDOFF.md).
+Ledger CLOSED6.724441300000763/120s;113.27555869999924s discarded.
+
+## Actual physical pencil and installed pending exit - 10 October2026
+
+Physical-interval-v1:27 final controls PASS; actual66-role compiler mapping, negative18D, fiveP0 rows and skew-inclusive intervals verified. Independent cross-axis-bound/effective-Numba findings repaired. Historical finite Cgeom/kappa is superseded; original evidence unchanged. Whole interval UNRESOLVED97.08886; midpoint source-error box passes8.5373e-5. Prospective half-point target-box design adopted with signed/local-D/enclosure obligations; no run authority or F03 acceptance. Ledger CLOSED6.255593099995167/180s.
+
+Pending-resume-v1:installed physical attempt TIMEOUT after accepted2.3125; target2.5 remains unmet. Exact installed cold histories/controller/refusals PASS; changed source/current journal path has unknown cause. Product unchanged. Next actual-parent/direction comparison precedes a history retry. Ledger CLOSED47.050460400000006/150s. Both remainders discarded.
+
+See development/r8-f03-common-density-20261010/physical-interval-v1/ROOT_DISPOSITION.md and development/r8-f06-log-domain-20261010/pending-resume-v1/ROOT_DISPOSITION.md. G0/G1/F03/F06/G3 aggregate, full programme and different-family final acceptance remain open. Formal F03 UNCONSUMED; no main merge, push or release.
+
+
+## 10 October2026 — reviewed halfpoint and material-direction delivery
+
+| Obligation | Implementation/test disposition | Qualification boundary |
+|---|---|---|
+| F03 literal halfpoint numerical preservation | IMPLEMENTED_NOT_QUALIFIED; actual66-role mapping, four target enclosures, signed zeros/local D;12 controls PASS, contraction8.86113e-5. [Evidence](development/r8-f03-common-density-20261010/halfpoint-v1/ROOT_DISPOSITION.md). | Raw nonsymmetric targets get nonsingularity only. Whole interval failure retained. Growing809/2385/7841 inventories, original floor, seven ratios and physical/stability acceptance remain open; formal F03 UNCONSUMED. |
+| F06 material direction fallback | IMPLEMENTED_NOT_QUALIFIED; source9/installed9 PASS including pending2.25→2.5 and reversed2.5→2.51; byte-identical endpoint checkpoints and exact cold histories/controller. Nonauthor source/evidence review has no blocker. [Evidence](development/r8-f06-log-domain-20261010/direction-fallback-v1/ROOT_DISPOSITION.md). | Original60-second timeout preserved. Complete cyclic/coupled histories, remaining admitted combinations and final different-family acceptance still required; aggregate F06/G3 open. |
+| Forward paired outcomes | Growing supported grid/chain work/rank reconstruction and numerical preservation, then complete cyclic/coupled material histories. All three scoped ledgers CLOSED, unused remainders discarded. | No active numerical job, implicit remaining authority, main merge or release. Other mandatory failures/queues unchanged. |
+
+
+## 10 October2026 — growing source adapter and actual coupled history
+
+| Obligation | Evidence disposition | Remaining boundary |
+|---|---|---|
+| F03 growing physical adapter | IMPLEMENTED_NOT_QUALIFIED: eight controls PASS; exact809/2385/7841 work/norm/reconstruction/rank proofs and actual809 source block/40-row parity. [Outcome](development/r8-f03-common-density-20261010/growing-v1/ROOT_DISPOSITION.md). | Numerical target preservation UNRESOLVED1.44e139 from absolute triangular comparison. Raw target inertia/coercivity/nonsingularity not proved. Higher source, original floor, full ratios and physical acceptance remain mandatory; formalF03 UNCONSUMED. |
+| F06/G3 coupled unload/reload | Installed .4→.2 PASS with saved genuine history; .2→.41 FAILED unchanged backtrack limit, accepted anchored .2 intact. [Outcome](development/r8-f06-log-domain-20261010/coupled-resume-v1/ROOT_DISPOSITION.md). | Full coupled history unmet. Later controls not executed. One fixed-parent action/derivative discriminator, then compatible repair or separately admitted mixed-adaptive lifecycle as evidence warrants. No pp/physics/gate change or inferred tangent defect. |
+| Authority | Growing CLOSED49.60459830000764/360s; coupled-resume CLOSED54.361269/300s; all unused remainder discarded. Fresh coupled-direction180s/60reserve/90cap assigned separately. | No ledger transfer or qualification/release authority. Other mandatory failures and scope remain unchanged. |
+
+## 10 October 2026 -- coupled failed-parent discriminator
+
+- DIAGNOSTIC_COMPLETE: one installed control reproduced the original direct reload failure;27 production and4 diagnostic assemblies, zero accepted trials. Linear backward error1.52236e-10 and zero-step R/K reproduction are verified. Sampled derivatives do not meet1e-5; no tangent acceptance.
+- Anchored .2 prefix and all accepted/predecessor objects remain unchanged.633 installed-file matches,23 source bindings and effective runtime independently reconciled. Ledger CLOSED40.370505/180s;139.629495s discarded.
+- Prospectively selected separate fixed SUBSTEPPED history(.4,.41) from actual unloaded .2, returning to prior peak then exceeding it. Not executed here; fresh stage authority required. Original direct failure and full F06/G3 remain open. No product/adaptive/schema/tolerance change.
+
+## 10 October 2026 -- staged reload terminal decision
+
+- PARTIAL: installed .2 to .4 PASS with durable prefix/cold histories; rebase/cold restore PASS, then .4 to .41 FAIL with typed backtrack exhaustion and exact anchored .4 prefix. Conditional controls unexecuted; no renewed three-family reload acceptance or1e-5 tangent certificate.
+- Root reconciled49 frozen source bindings, both runtime/artifact/JUnit records and closed54.885107399999995/300s ledger.245.11489260000002s discarded. Historical failures retained.
+- Stop manual targets. Next product candidate is explicit mixed POINT adaptive lifecycle using existing services; concrete admission/load/controller/restart seams require root adoption before checks. Fresh600s development allowance is separate; no physical/criteria/default change or complete F06/G3 acceptance follows.
+
+
+## 10 October: mixed nodal adaptive lifecycle disposition
+
+| F06/G3 scoped mixed POINT nodal-adaptive lifecycle | IMPLEMENTED_NOT_QUALIFIED | Final source3/installed3 controls PASS; both checkpoint cache defects repaired; actual accepted prefix .396875 restores exactly. Target .41 FAILED cutback exhaustion, zero renewed plastic accumulation;1e-5 tangent/full history open. [Root disposition](development/r8-f06-log-domain-20261010/mixed-adaptive-v1/ROOT_DISPOSITION.md). CLOSED320.8343681/600s; unused discarded. |
+
+
+| F03 finite saved809 preservation | IN_PROGRESS | Signed block smallcontrols12PASS; one actual assessment UNRESOLVED rational4096-bit cap, no newq. Original pencil/caps/failure preserved; no physical floor or aggregate acceptance. [Disposition](development/r8-f03-common-density-20261010/block-assessment-v1/ROOT_DISPOSITION.md). Both fresh ledgers CLOSED, unused discarded. |
+
+
+## 10 October 2026 - coupled failed-parent decision and paired-controller successor
+
+Coupled-history-unblock-v1: two same-artifact diagnostic PASS results and one preserved observer FAIL; exact force failure reproduced, supported centered shell action2.10e-7, no product repair or accepted .41. Ledger CLOSED53.7872632/360s. Root metadata reconciliation and disposition bind actual snapshots/imports/checkpoint. Full tangent plateau/F06/G3 remain open. Existing paired displacement/persistence with explicit seed transfer selected prospectively; not a force PASS or acceptance. B2 correction already tested; one bounded missing-response diagnostic preparation/authority addresses absent original-unit work witness, no primary/fullscale/100load retry or numerical tolerance change. All failed evidence and mandatory G0-G6 remain unchanged.
+
+
+## 2026-10-10 paired displacement and B2 prospective public discriminator
+Paired mixed Q4-J2 POINT controller IMPLEMENTED_NOT_QUALIFIED:4source/2installed PASS, accepted generation9 eq3.31e-10/gap1.28e-17. Renewed all-family history FAILED:6shell layers advance, bothnative families unchanged; netload-0.0014457377639166. No .41force/limitpoint/G3claim. Evidence paired-displacement-v1/ROOT_DISPOSITION.md and ROOT_RECONCILIATION.json; closed59.8793949/360s.
+B2 fullfactor saved-direction stored-work/scorer bound2.09095e-12<original6.49881e-12J, CLOSED11.1035649/180s: scoped quantitative entry only. CurrentPUBLIC elimination/GENERAL/default differs. Prospectively permit ONE installed frozen10kQ4/1kB2 case1 caller discriminator after readiness, fresh360s/reserve60/process120s/CPU0/thread1/JIT-off/2GiB; unchanged originalwork and physicalguards, no retry/100campaign/performance/G5acceptance. Historicalfailure remains. Evidence r8-b2-physical-work-unblock-20261010/ROOT_DISPOSITION.md. Full G0-G6/F03/material/scale/release gates OPEN.
+
+
+## 2026-10-10 installed public B2 case1 and paired atomic-coverage correction
+Current frozen10kQ4/1kB2 installedPUBLIC case1 PASSED assigned originalwork/equilibrium/gap/certification/recovery: actual67460GENERAL/Pardiso, onefactor/twosolves; scorer6.74653e-13J, sufficientstored/scorer3.35535e-12<original6.49881e-12. Wall100.5191366s/RSS1698168832B/CLOSED; no100/performance/G5acceptance. Evidence r8-b2-installed-original-target-20261010/ROOT_DISPOSITION.md and ROOT_RECONCILIATION.json. Historicalfullbatchfailure preserved.
+Paired oldtests nonempty-dict atomic assertions are coveragegap:4PASS/2PASS preserve actualexecution, not object/generation proof. Savedsourcecancel bytes independently equaloriginal970e0360; no retroclaim. Coldrebase/sharedcache checks remain. Affected meaningfulflag controls now required. Loaded shellnode2-x samepredecessor/yieldwitness before anytargetadoption; fresh300s/reserve60/source30/witness45/trajectory90/controls60, noautomaticnewtarget. F06/G3/full G0-G6 acceptance remains OPEN.
+
+
+## 2026-10-10 actual renewed mixed displacement history
+Loaded shellnode2-x installed actualhistory PASSED scoped32fibre/8generalized/12shell renewals/no negativeaccum; gen9cbd6cdde eq4.20824e-12/gap2.02692e-18, netload.40017539433291214 not .41. Sevencontrols including meaningful10atomicflags and negativecalibration/coldrebase/refusal pass. Product/wheel unchanged; CLOSED53.7370682/300s, unuseddiscarded. Evidence paired-displacement-v1/loaded-x-v1/ROOT_DISPOSITION.md and ROOT_RECONCILIATION.json. Oldy/forcefailures/oldassertiongap and postexecutionauthoritycollisionrecovery remainexplicit. No secondaccepted displacement/full1e-5/F06/G3/independentqualification claim.
+
+
+## ROOT_FUNCTIONAL_BATCH_TANGENT_20261010
+
+| Row | Implementation / scoped verification | Aggregate qualification |
+| B16/B17 functional large batch/persistence | Installed10000Q4/1000B2 save/reopen +1/10/100 (111cases) PASS; registered beam-rich100 PASS. Onefactor/owner; every originalwork/row/certification/recovery predicate passes. See development/r8-b2-installed-batch-persistence-20261010/ROOT_DISPOSITION.md and ROOT_FINAL_RECONCILIATION.json. | G5 warm/scaling/resources/platform/comparisons and independent review remain OPEN. Experimental definition persistence, not accepted-state checkpoint. |
+| F05/F06/G3 saved loaded-x tangent | UNRESOLVED_BRANCH: frozen1e-4/1e-5 cross actual native return branches; only1e-6 stable, no adjacent plateau. Pointwork/curvature, mappedchart and21atomic flags pass. See active-tangent-v1/HANDOFF.md. | No smooth tangent or aggregate material acceptance. No product defect inferred or criteria weakened. |
+| Independent review | Mistral PENDING (cached unavailable). Astra/OpenAI implementation and reconciliation are not independent acceptance. | No substitution or waiver. |
+
+Failed/partial runs preserved. Fresh B2v1/v2/v3 and tangent authorities CLOSED;
+unused allowances discarded. No performance gain, aggregate gate, merge or release
+claimed. Full programme objective remains ACTIVE.
+
+
+## ROOT_BRANCH_WARM_20261010 - completed development slices
+
+| Obligation | Implementation/evidence disposition | Remaining acceptance |
+|---|---|---|
+| F05/F06/G3 saved active tangent | Explicit16 source controls PASS; all3 installed steps branch-stable; full/global/F05 work, point/chart/replay and105 atomic flags PASS. Local shell0 middle raw/work errors2.60618e-5/2.89488e-5 exceed unchanged1e-5; no adjacent local plateau. UNRESOLVED_DISCREPANCY. V1 coverage refusal and original branch failures preserved. | Local tangent discrepancy and complete cyclic/material/attachment breadth remain open. No defect inferred or criterion waived. |
+| B15/G5 cached current-artifact baseline | Eight controls PASS; five installed serial1/10/100 warm sums median17.591188s (range17.502448-17.686450). One factor/666primaries+666corrections,666 original work checks PASS. Definition10k-Q4/1k-B2 unchanged. | This is a current-artifact baseline only. Assembly doubling, matched5%time/10%memory regression, broader resource/platform/GEscale and full G5 remain open. |
+| Resource accounting | Branchv1 CLOSED4.6859354/180; branchv2 CLOSED30.6204488/180. Warm CLOSED220.44640669997898/600; unused discarded; observed owned PIDs absent. | No unused authority transferred or new run authorized. |
+| Independent acceptance | Mistral review PENDING. OpenAI implementation/root reconciliation are supporting evidence, not independent review. | Full G0-G6 and coordinated release remain incomplete/unqualified. |
+
+Evidence: [branch disposition](development/r8-f06-log-domain-20261010/paired-displacement-v1/loaded-x-v1/active-tangent-v1/branch-domain-v1/assessment-v2/ROOT_DISPOSITION.md), [warm disposition](development/r8-b2-g5-readiness-20261010/ROOT_DISPOSITION.md).
+
+
+<!-- ROOT_METRICS_ROLE_20261010 -->
+| B2 private assembly diagnostics | IMPLEMENTED_NOT_QUALIFIED | Current17d0274d wheel:30 installed controls/255imports PASS. ActualQ4 capture only; selectedprefactor roots383915B/fiveassemblyphases0.0107823s. S3/mixed/large series/peakmemory/G5/Mistral acceptance open. LedgerCLOSED78.0765729/180s; failures retained. |
+| GE loaded-x role tangent | IMPLEMENTED_NOT_QUALIFIED | Frozen633artifact/255imports:17source+1installed PASS,8criteria/7locals/5groups/126atomicflags. Originalh/thresholds/all132components retained. Scoped endpoint only; prior branch/local failures retained. LedgerCLOSED28.3080647/180s; Mistralreview/fullF05/F06/G3 breadth pending. |
+| B2 connected assembly series | IN_PROGRESS | Prepared2500/5000/10000 and8unexecuted controls. Currentcapture would exceedfrozen object/edgecaps. Release realunusedCOOscratch before newartifact/checks/series; no caprelaxation/omission. Resourceproposal ungranted, no samples/G5claim. |
+| Independent review | NOT_STARTED | RequiredMistral cachedunavailable; Astra/OpenAI supporting implementation/evidence inspection is not independentreview. No substitution or release acceptance. |
+
+
+## ROOT_COO_CLEANUP_20261010 - scoped development delivery
+
+B2 actual K/C scratch release: source42PASS, installed42PASS, 255 imports, wheel981e9a71. Root verified124 selected paths/full wheel/site/RECORD/accounting/runtime; selected pre-factor195875B, real COO remaining0. No peak, large scaling, speedup, G5 or independent acceptance claim. Mistral PENDING. Cleanup ledger CLOSED33.6567487/180; remainder discarded. Fresh connected-series authority3200/120, default2GiB; no old-ledger reuse.
+
+
+## ROOT_FAILED_CYCLE_AND_SERIES_20261010
+
+- B2 series v1: source8 PASS, installer metadata FAIL before any model; closed2.3567099s. All734 product files exact; strict v2 preparation is not execution.
+- GE coupled fixed cycle: source8 PASS, installed1 FAIL/backtrack exhaustion at first half-target;0 accepted steps. Saved checkpoints/recovery exact,31 scratch updates preserved. Missing live21 atomic flags and exception detail disclosed; no reversal or fullF06/G3 acceptance. Closed73.6982754s.
+- Root supporting reconciliation binds119 cycle and469 historical files/633 installed sources/255 imports. Mistral independent review PENDING, not supplied by Astra.
+- Forward: existing opt-in paired adaptive service candidate plus serial B2 connected screen, fresh authority/artifacts as required. Full gates and thresholds unchanged.
+
+
+## ROOT_B2_SERIES_V2_INSTALLER_ROLE_20261010
+
+-20source controls PASS, reused installed-site validation FAIL before any model: GUI declared role uses pythonw.exe, consumed guard expected python.exe. Precise ledger CLOSED1.2546109999966575/3200; unused discarded. All historical37preparation/71v1/88execution hashes preserved; root supporting reconciliation, Mistral independent review pending.
+-Prospective v3 corrects declared-role provenance only and retains original product/RECORD/PE/physical/resource criteria. No large timing/scaling/G5 claim.
+
+
+## 10 October terminal adaptive GE and B2 public-smoke reconciliation
+
+| Capability/evidence | Implementation/testing status | Acceptance boundary |
+|---|---|---|
+| Experimental GE paired adaptive displacement/checkpoint | 12 focused source controls PASS; fresh efc977a1 wheel binds 634 sources and 256 actual imports. Installed cycle FAIL at depth4 cutback limit, 2 intermediate states / 5 controller rejections, zero completed requested intervals. | No complete unloading/reloading or aggregate G3/F06 acceptance. |
+| GE rejected fixed trials/cancellation | Seven actual failures preserve all 147 captured atomic flags; accepted-prefix cold parity exact, chart support discrepancy 3.24e-17. Terminal evidence selection170 reconciled. | Public controller/history legitimately records accepted prefix; do not claim whole public failure is unchanged. |
+| GE physical load interpretation | Saved coefficient0.400175 is dimensionless against 500N pattern: starting resultant200.0877N; accepted40.7232N then-12.9993N. | Corrects mistaken 0.400175N inference. Load unloading is not completed native fibre reversal; material histories require direct evidence. |
+| B2 V5 clean installed public smoke | 20 controls, fresh install and strict761-file validation PASS; one actual owner/factor then harness nonexistent-method FAIL; zero primary/correction solves, zero large samples. Correct method solve_linear_many. | No physical criterion or assembly-scale qualification assessed. V6 compatible caller repair in preparation. |
+| Execution/evidence | GE CLOSED357.1048141/900s, unused542.8951859 discarded. B2 V5 CLOSED10.7603201/3200s, unused3189.2396799 discarded, all10 PIDs terminal. Root checks saved170/148 byte selections and receipts without repeat solves. | Supporting reconciliation only. Mistral independent review PENDING; no Astra independent-review substitution, main integration or release. |
+
+Evidence: [GE terminal](development/r8-ge-paired-adaptive-20261010/execution-v4/ROOT_TERMINAL_RECONCILIATION.json), [B2 terminal](development/r8-b2-assembly-series-20261010/execution-v5/ROOT_TERMINAL_RECONCILIATION.json).
+
+
+## 10 October V6 scale failure and fixed-correction diagnostic
+
+| Capability/evidence | Actual result | Acceptance boundary |
+|---|---|---|
+| B2 V6 installed public assembly series | Smoke and cold+5 warm at2500/5000 PASS;10000 cold PASS; warm1 RSS_LIMIT2192572416bytes.14 completed physical owners/21solves.295 frozen selected files reconciled. | No full warm series/G5 or speedup; forced-kill omissions remain unknown.671.8186705/3200 CLOSED;2528.1813295 discarded. |
+| B2 Q4 lifetime obstruction | Source proves module record->guard/input snapshot->private mesh->element retention. Narrow close/constructor-unwind retirement adopted with fresh240/60 controls. | Candidate repair pending; RSS attribution/savings unmeasured; no cap/backend/workload change. |
+| GE fixed observer diagnostic |8 source+1 installed PASS captures actual refusal:23eval/5solves/42atomic flags.102 selected files/634sources/256 actual imports reconciled. | Physical target not accepted; tangent correctness unresolved.65.7788473/180 CLOSED;114.2211527 discarded. |
+| Independent review | Mistral PENDING, cached unavailable. | Astra checks/fallback implementation do not supply independent review. All programme gates unchanged. |
+
+
+## 10 October private Q4 lifetime repair and actual-direction evidence
+
+| Capability | Actual evidence | Boundary |
+|---|---|---|
+| Private B2 Q4 retirement | Close+constructor-unwind repair;48source+48installed, mixed/collectability/live/mutation/tamper/cancel/failure/recovery; final00385aa8 wheel,634sources/255imports,249files root reconciled. | Only assigned small lifecycle behavior verified; no quantified RSS/speedup or G5 pass.107.7101508/240 CLOSED;132.2898492 discarded. |
+| Native actual-update tangent discriminator | Exact current14 replay,3stable branch pairs,7whole-local plateaus; assembled role criterion FAIL, component POINT precision unresolved.168atomic flags,256imports/634sources,150files reconciled. | UNRESOLVED, not tangent-defect proof or equilibrium/material-cycle acceptance.24.9423034/180 CLOSED;155.0576966 discarded. No finer FD/controller change. |
+| Forward development | Prepare unchanged B2 repaired-artifact series and GE saved-general-tangent two-RHS sensitivity. | Source-only; fresh authority required before runs. Scientific criteria and full programme unchanged. Mistral review PENDING; no Astra independent reviewer. |
+
+
+## 10 October completed B2 assembly slice and GE work accounting
+
+| Capability | Actual evidence | Boundary |
+|---|---|---|
+| B2 repaired installed connected series | 21controls; cold+5warm at2500/5000/10000 PASS,21owners/21factors/35solves. Assembly doubling1.98814/2.00796, selected-storage2.00345/1.99837; treeRSS1786621952B<2GiB.492files/root reconciliationPASS. | Registered slice verified; no G5 aggregate, speedup or independent review.1336.989780900025/3200 CLOSED;1863.010219099975 discarded. V6/V7/V8 failures preserved. |
+| Native saved general-system sensitivity | 8source+1installed diagnosticPASS; exact120-row two-RHS solve reconstructs saved border, amplitude difference4.74e-10.110files root reconciled. | No sign/mapping or machine-zero-compliance repair supported; tangent criterion/cycle unresolved.10.1829783/180 CLOSED;169.8170217 discarded. |
+| Native fixed-work remainder | Four direct source controls+stdlib saved-pair accountingPASS; complete132rows reconcile, finite remainder reverses predicted merit decrease.0physical evaluations/solves/FD. | Existing-loop opt-in interpolation development adopted; defaults/physical/20-8+4-96 unchanged. Candidate verification pending, no physical acceptance. Separate30s ordinary check CLOSED0.5773268; unused discarded. |
+| Independent review | Mistral PENDING, cached unavailable. | Root reconciliation and OpenAI authors are not independent reviewers. Complete G0-G6 scope remains ACTIVE/unqualified. |
+
+
+## 10 October direct Mistral handoff reconciliation
+
+| Capability | Actual evidence | Boundary |
+|---|---|---|
+| Independent B2 lifetime review | Mistral NO_FINDINGS_IN_INSPECTED_SCOPE; original transcripts and final report retained. | Two product files and bounded installed-source correspondence only; no aggregate G5/G0-G6 or new GE acceptance. |
+| Remaining installed B2 batching | Mistral prepared full111 plus conditional beam-rich runner; root reconciled15 source hashes and parsed2AST files. | SOURCE_PREPARED_NOT_TESTED; no tests, physical checks, fresh execution authority or qualification follows. |
+| GE opt-in interpolation |12sourcePASS/wheel/install; separate diagnostic launches12PASS each;3supervised installed launches TIMEOUT. | Required supervised campaign unresolved; physical history held. Diagnostic wall must be included before using any remaining600s allowance. |
+
+## 10 October native GE partial-source preservation
+
+| Capability | Actual evidence | Boundary |
+|---|---|---|
+| GE interpolation candidate | Root reconciled634 current/snapshot/wheel/installed source files, actual12 source cases and two12-case installed diagnostic records; preserved author logs/source and failures. | PARTIAL_IMPLEMENTATION; required supervisor campaign and original physical history unresolved. No independent acceptance/G3/G0-G6 claim. |
+| Exact check accounting | Two existing diagnostic receipts added once to OPEN ledger;209.0662616/600s used,390.9337384 includes60s reserve; original ledger retained. | No renewed allowance, rerun or physical authority. New Mistral source/evidence transmission remains pending specific approval. |
+
+
+## 10 October direct Mistral GE installed/history slice
+
+| Capability | Actual evidence | Boundary |
+|---|---|---|
+| Current supervisor/entrypoint | Required12 installed +4mocked seam +4source history controls PASS;634 source/wheel/site files reconciled. | Experimental slice, defaults unchanged; no general OS or savings claim. |
+| Original material history | One attempt FAIL/None, wall194.0564196s; accepted0; preserved original limits, inputs and failures. | Full cycle remains open; no G3/G0-G6 acceptance. |
+| Independent GE assessment | Prepared Mistral Read review blocked by automatic approval for the specific API payload; approval requested. | No Astra substitution or independent acceptance. |
+
+
+## 10 October independent Mistral GE source review
+
+| Capability | Evidence | Boundary |
+|---|---|---|
+| GE interpolation Read review | Actual Mistral Read report and raw transcript; five source files match reviewedc5090785. Root adopted completed-policy refusal and constrained-slope coverage repairs. | Findings open; no new tests/numerical execution, G3 or aggregate acceptance. Expanded Edit payload approval pending. |

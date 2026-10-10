@@ -23,6 +23,7 @@ from ._native_reference_modal import _owned
 from ._ge_beam3_reference_identity import CapturedReferenceIdentity
 from ._ge_beam3_p5_seeded.core import canonical, sha
 from ._ge_beam3_precise_geometric_work import POLICY as PRECISE_WORK_POLICY, potential as precise_work
+from ._stiffened_shell_f06_increment_arithmetic import POLICY as COMPENSATED_STATE_POLICY
 
 
 POLICY = 'CANDIDATE_GE_BEAM3_RETAINED_GENERALIZED_ELLIPSOID_V1'
@@ -48,7 +49,7 @@ class RetainedGeneralizedOperator:
         object.__setattr__(self, name, value)
 
     def __init__(self, reference, section, *, order, arithmetic_policy=None):
-        if arithmetic_policy is not None and (type(arithmetic_policy) is not str or arithmetic_policy not in (PRECISE_WORK_POLICY, STABLE_SO3_POLICY)):
+        if arithmetic_policy is not None and (type(arithmetic_policy) is not str or arithmetic_policy not in (PRECISE_WORK_POLICY, STABLE_SO3_POLICY, COMPENSATED_STATE_POLICY)):
             raise ValueError('explicit registered geometric arithmetic policy required')
         if type(reference) is not Reference or type(section) is not EllipsoidalGeneralizedSection:
             raise ValueError('explicit centered reference and native generalized ellipsoid section required')
@@ -88,13 +89,27 @@ class RetainedGeneralizedOperator:
             raise ValueError('captured retained generalized reference changed')
         return self._reference_identity
 
-    def evaluate(self, positions, position_low, vertices, rotations, resultants, *, origin=None, increment=None, check=None):
+    def evaluate(self, positions, position_low, vertices, rotations, resultants, *, origin=None, increment=None, check=None, vertices_low=None, rotations_low=None, resultants_low=None):
         self.guard()
         if check is not None: check()
         x = _array(positions, (3, 3), 'generalized positions'); low = _array(position_low, (3, 3), 'generalized low positions')
         for h, l in zip(x.flat, low.flat): validate_pair(float(h), float(l))
         q = _frames(vertices, 3, 'generalized nodal frames'); u = _frames(rotations, 2, 'generalized cell rotations')
         p = _array(resultants, (18,), 'generalized retained resultants')
+        if self.arithmetic_policy == COMPENSATED_STATE_POLICY:
+            if increment is not None:raise ValueError('durable compensated state requires re-centered spatial evaluation')
+            ql=np.zeros_like(q) if vertices_low is None else _array(vertices_low,q.shape,'native frame corrections')
+            ul=np.zeros_like(u) if rotations_low is None else _array(rotations_low,u.shape,'cell frame corrections')
+            pl=np.zeros_like(p) if resultants_low is None else _array(resultants_low,p.shape,'resultant corrections')
+            from ._stiffened_shell_f06_increment_arithmetic import validate_frames,validate_pairs
+            validate_frames(q,ql,'nodal frames');validate_frames(u,ul,'cell frames');validate_pairs(p,pl,'resultants')
+            response=self.cell.response(p.tolist(),origin,check=check,resultants_low=pl.tolist())
+            from ._stiffened_shell_f06_increment_arithmetic import retained_evaluation
+            fields=retained_evaluation(self.reference,x,low,q,ql,u,ul,p,pl,response)
+            return Evaluation(*(float(v) if i==0 else _owned(v) for i,v in enumerate(fields)),
+                response['history'],canonical(response))
+        if any(v is not None for v in (vertices_low,rotations_low,resultants_low)):
+            raise ValueError('native corrections require selected durable compensated policy')
         delta = np.zeros(42) if increment is None else _array(increment, (42,), 'generalized chart increment')
         angular = [delta[6*n+3:6*n+6] for n in range(3)]+[delta[18+3*c:21+3*c] for c in (0, 1)]
         if max(np.linalg.norm(v) for v in angular) >= .9*np.pi:
@@ -146,17 +161,25 @@ class RetainedGeneralizedOperator:
         return Evaluation(potential, _owned(residual), _owned(hessian), _owned(hessian_low), _owned(k),
                           response['history'], canonical(response))
 
-    def recover(self, rotations, resultants, *, origin=None, check=None):
+    def recover(self, rotations, resultants, *, origin=None, check=None, rotations_low=None, resultants_low=None):
         self.guard(); u = _frames(rotations, 2, 'retained generalized recovery rotations')
         p = _array(resultants, (18,), 'retained generalized recovery resultants')
-        response = self.cell.response(p.tolist(), origin, check=check)
+        low = None if resultants_low is None else _array(resultants_low, (18,), 'recovery resultant corrections')
+        ulow = None if rotations_low is None else _array(rotations_low, (2,3,3), 'recovery frame corrections')
+        if (low is not None or ulow is not None) and self.arithmetic_policy != COMPENSATED_STATE_POLICY:
+            raise ValueError('compensated recovery requires durable state policy')
+        if self.arithmetic_policy==COMPENSATED_STATE_POLICY:
+            from ._stiffened_shell_f06_increment_arithmetic import validate_frames,validate_pairs
+            validate_frames(u,np.zeros_like(u) if ulow is None else ulow,'recovery frames')
+            validate_pairs(p,np.zeros_like(p) if low is None else low,'recovery resultants')
+        response = self.cell.response(p.tolist(), origin, check=check, resultants_low=None if low is None else low.tolist())
         rows = []
         for (cell, index, xi, weight, ref), fields, history in zip(self.stations, response['stations'], response['history'].stations):
             rows.append(dict(cell=cell, station=index, xi=xi, measure=weight,
                 strain=_owned(fields['strain'][0]), strain_low=_owned(fields['strain'][1]),
                 resultants=_owned(fields['resultants'][0]), resultants_low=_owned(fields['resultants'][1]),
                 history=history, reference_frame=ref,
-                current_frame=_owned(u[cell]@ref), formulation_id=POLICY,
+                current_frame=_owned((u[cell] if ulow is None else u[cell]+ulow[cell])@ref), formulation_id=POLICY,
                 recovery_policy='PAIRED_GENERALIZED_RESULTANT_RETAINED_FIELDS_V1'))
         self.guard()
         if check is not None: check()

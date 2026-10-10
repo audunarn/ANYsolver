@@ -66,6 +66,17 @@ def test_zero_change_and_owned_pose_data():
     assert row.translation_m==(.01,.02,.03) and row.rotation_vector_rad==(.1,.2,.3)
 
 
+def test_zero_change_material_reference_retains_material_policy():
+    from anysolver._stiffened_shell_stress_free_reference import MATERIAL_POLICY
+    from test_stiffened_shell_curved_material import curved_material_panel
+
+    source = curved_material_panel()
+    result = ss.create_stress_free_point_reference(source, ())
+    assert result.policy == MATERIAL_POLICY
+    assert result.definition.shell_reference_policy == source.shell_reference_policy
+    assert result.source_identity == result.target_identity
+
+
 @pytest.mark.parametrize('values', ((True,0.,0.), (float('nan'),0.,0.),
                                   (float('inf'),0.,0.), (0.,0.), ('1',0.,0.)))
 def test_invalid_reference_components(values):

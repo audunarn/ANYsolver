@@ -24,6 +24,30 @@ SPACE_B = "P0_translation_twist_pair_P0_pitch_normal"
 SPACES = (SPACE_A, SPACE_B)
 
 
+def compile_supported_shell_work(*, shell_ids, shell_xyz, shell_cells,
+                                 trace_nodes, full_count, fixed_slots,
+                                 node_slots=None):
+    """Compile a declared shell-only work family using actual trace topology.
+
+    This is a development comparison map, not a change to line assembly or its
+    physical law. Explicit full slots admit different physical node orderings;
+    omitted beam/retained roles remain present and identically zero.
+    """
+    from ._stiffened_shell_l1_supported_work_experimental import flat_q4_supported_shell_map
+
+    index = {node: i for i, node in enumerate(shell_ids)}
+    if (len(index) != len(shell_ids) or len(shell_xyz) != len(shell_ids) or
+            any(node not in index for cell in shell_cells for node in cell) or
+            any(node not in index for node in trace_nodes)):
+        raise ValueError("supported work requires the actual shell and trace node identities")
+    if node_slots is None:
+        node_slots = np.arange(6*len(shell_ids)).reshape((-1, 6))
+    return flat_q4_supported_shell_map(
+        coordinates=shell_xyz, node_slots=node_slots, full_count=full_count,
+        fixed_slots=fixed_slots, trace_nodes=tuple(index[node] for node in trace_nodes),
+        cells=tuple(tuple(index[node] for node in cell) for cell in shell_cells))
+
+
 @dataclass(frozen=True)
 class ExperimentalL1Line:
     """One explicitly mapped material line for reference-linear experiments."""

@@ -1,0 +1,2 @@
+# Keep the archived restart records byte-identical across checkouts.
+*.md -text

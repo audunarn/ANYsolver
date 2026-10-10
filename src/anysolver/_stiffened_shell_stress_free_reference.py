@@ -13,7 +13,7 @@ from scipy.spatial.transform import Rotation
 from .control import cancellation_safe_point
 from ._stiffened_shell_ge_experimental import (
     LinearDefinition, ShellPanel, CURVED_Q4_POINT_REFERENCE_V1,
-    CURVED_Q4_POINT_MATERIAL_REFERENCE_V1,
+    CURVED_Q4_POINT_MATERIAL_REFERENCE_V1, CURVED_Q4_S3_POINT_REFERENCE_V1,
     PROFILE as B3_GE_E4_PL_STIFFENED_SHELL_V1, Q4_ALGORITHMIC_PULLBACK_V1,
 )
 
@@ -68,7 +68,7 @@ class StressFreePointReference:
 
 def create_stress_free_point_reference(definition, perturbations, *,
                                       resources=None, cancellation_token=None):
-    """Transport an explicitly selected virgin Q4/GE point reference.
+    """Transport an explicitly selected virgin Q4/S3/GE point reference.
 
     At a point, delta_b = u_s + (Q_s-I)(r_b0-r_s0) and R_bnew = Q_s R_b0.
     This transports the physical eccentricity and orientation once. The shell
@@ -81,7 +81,7 @@ def create_stress_free_point_reference(definition, perturbations, *,
     it is not deformation against the old fixture location.
 
     Existing compilation checks admit both models and reject unsupported new
-    facet/beam geometry, including warped Q4 or triads inconsistent with the
+    facet/beam geometry, including warped Q4, degenerate S3 or triads inconsistent with the
     new native centerline tangent. Frames are never silently realigned. This
     preparation occurs once, outside any solve/trial.
     """
@@ -90,15 +90,20 @@ def create_stress_free_point_reference(definition, perturbations, *,
             type(definition.shell) is not ShellPanel or
             definition.profile != B3_GE_E4_PL_STIFFENED_SHELL_V1 or
             definition.shell_reference_policy not in (CURVED_Q4_POINT_REFERENCE_V1,
-                                                      CURVED_Q4_POINT_MATERIAL_REFERENCE_V1) or
+                                                      CURVED_Q4_POINT_MATERIAL_REFERENCE_V1,
+                                                      CURVED_Q4_S3_POINT_REFERENCE_V1) or
             definition.q4_pullback_policy != Q4_ALGORITHMIC_PULLBACK_V1 or
             definition.lines or definition.footprints or
-            definition.shell.s3_elements or (definition.shell.j2_curve is not None and
+            (definition.shell.s3_elements and definition.shell_reference_policy !=
+                CURVED_Q4_S3_POINT_REFERENCE_V1) or
+            (definition.shell.j2_curve is not None and
                 definition.shell_reference_policy != CURVED_Q4_POINT_MATERIAL_REFERENCE_V1)):
-        raise ValueError('explicit admitted curved-Q4 point reference definition required')
+        raise ValueError('explicit admitted curved-Q4/S3 point reference definition required')
     if type(perturbations) is not tuple or any(type(v) is not ReferencePosePerturbation
                                               for v in perturbations):
         raise ValueError('typed immutable reference perturbation tuple required')
+    policy = (MATERIAL_POLICY if definition.shell_reference_policy ==
+              CURVED_Q4_POINT_MATERIAL_REFERENCE_V1 else POLICY)
     cancellation_safe_point(cancellation_token, 'stiffened-shell.reference.start')
     source = create_analysis(definition=definition, resources=resources)
     target = None
@@ -124,7 +129,7 @@ def create_stress_free_point_reference(definition, perturbations, *,
             cancellation_safe_point(cancellation_token, 'stiffened-shell.reference.complete')
             info=source.preflight()
             return StressFreePointReference(original,info['identity'],info['identity'],
-                                             info['stress_free_scaled_max'],0.)
+                                             info['stress_free_scaled_max'],0.,policy=policy)
         zero = (np.zeros(3), np.eye(3))
         shell_delta = {node: updates.get(('shell', node), zero)
                        for node in source._shell_ids}
@@ -192,8 +197,7 @@ def create_stress_free_point_reference(definition, perturbations, *,
         return StressFreePointReference(target._definition,
             source.preflight()['identity'], target.preflight()['identity'],
             target.preflight()['stress_free_scaled_max'], disagreement,
-            policy=(MATERIAL_POLICY if definition.shell_reference_policy ==
-                    CURVED_Q4_POINT_MATERIAL_REFERENCE_V1 else POLICY))
+            policy=policy)
     finally:
         if target is not None:
             target.close()

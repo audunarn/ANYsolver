@@ -37,6 +37,13 @@ class FibreTrialState:
     strain_compliances: tuple
 
 
+@dataclass(frozen=True)
+class PairedFibreTrialState(FibreTrialState):
+    """Actual paired input and smooth current branch; not a global affine law."""
+    resultants_low: tuple
+    smooth: bool
+
+
 def _section_response(section, strain, origins, check, *, include_energy=False):
     """Decimal first/second variations and recovery of the declared potential."""
     stress = mv(section._background, strain)
@@ -233,8 +240,69 @@ class FibreCellConjugate:
             proposed = nextafter(float(amount+strain_rounding/abs(de)), float('inf'))
             return proposed if isfinite(proposed) and 0 < proposed < 1 else None
 
+    def paired_boundary_amount(self, trial, direction, *, origin, resultants,
+                               resultants_low, check=None):
+        """Heuristic first affine-branch event for the represented paired update.
+
+        Fixed-origin FlowCurve laws are piecewise affine in strain. The cell
+        inverse is locally affine only while all station branches stay fixed
+        and its tangent is invertible. No global e(p) or acceptance claim follows.
+        """
+        if (type(trial) is not PairedFibreTrialState or
+                trial.cell_identity != self.identity or trial.origin is not origin or
+                trial.resultants != tuple(resultants) or
+                trial.resultants_low != tuple(resultants_low)):
+            raise ValueError('current paired cell/origin/resultant trial required')
+        if not trial.smooth: return None
+        from ._stiffened_shell_f06_increment_arithmetic import add_state
+        import numpy as np
+        guard = (lambda: None) if check is None else check
+        with localcontext() as context:
+            context.prec = 80
+            dp = tuple(dec(float(v)) for v in direction)
+            if len(dp) != 18: raise ValueError('18 retained resultant corrections required')
+            first = None
+            for strain, compliance, history in zip(trial.strains, trial.strain_compliances,
+                                                    self._origins(origin)):
+                guard(); change = mv(compliance, dp)
+                for fibre, (z0, p0) in zip(self.section.fibres, history):
+                    guard(); b = self.section._map(fibre)
+                    ef = dot(b, strain); de = dot(b, change)
+                    if de == 0: continue
+                    sensitivity = mv(tr(compliance), b)
+                    levels = (p0,)+tuple(D.from_float(k) for k in fibre.curve.plastic_strain if D.from_float(k)>p0)
+                    for accumulated in levels:
+                        for sign in (-1, 1):
+                            boundary = z0+sign*(accumulated-p0+fibre.curve._at(accumulated)[0]/dec(fibre.young))
+                            amount = (boundary-ef)/de
+                            if 0 < amount < 1 and (first is None or amount < first[0]):
+                                first = amount, de, sensitivity, boundary-ef
+            if first is None: return None
+            amount, de, sensitivity, distance = first
+            # Product roundoff plus the low-word addition in Pair.__add__.
+            # two_sum/renormalization retain their sum; nonfinite paths refuse.
+            rounding = D(0)
+            for h, l, d, coefficient in zip(trial.resultants, trial.resultants_low, direction, sensitivity):
+                upper = nextafter(abs(h)+abs(d), float('inf'))
+                if not isfinite(upper): return None
+                low_upper = nextafter(ulp(upper)/2+abs(l), float('inf'))
+                if not isfinite(low_upper): return None
+                rounding += abs(coefficient)*(D.from_float(ulp(d))+D.from_float(ulp(low_upper)))/2
+            proposed = nextafter(float(amount+rounding/abs(de)), float('inf'))
+            if not isfinite(proposed) or not 0 < proposed < 1: return None
+            guard()
+            high, low = add_state(np.asarray(trial.resultants), np.asarray(trial.resultants_low),
+                                  proposed*np.asarray(direction, dtype=float))
+            change = [dec(float(h))+dec(float(l))-dec(a)-dec(b) for h,l,a,b in
+                      zip(high,low,trial.resultants,trial.resultants_low)]
+            represented = dot(sensitivity, change)
+            # Verify the selected *linearized* event against the actual updater;
+            # nonlinear constitutive evaluation and global merit remain decisive.
+            if (represented-distance)*de < 0: return None
+            return proposed
+
     def response(self, resultants, origin=None, *, check=None, include_energy=False,
-                 capture_trial=False):
+                 capture_trial=False, resultants_low=None):
         if type(include_energy) is not bool:
             raise ValueError('explicit native energy recovery policy required')
         if type(capture_trial) is not bool:
@@ -249,6 +317,14 @@ class FibreCellConjugate:
             context.prec = 80
             p = [dec(x) for x in resultants]
             if len(p) != 18: raise ValueError('18 retained resultants required')
+            if resultants_low is not None:
+                low = [dec(x) for x in resultants_low]
+                if len(low) != 18:
+                    raise ValueError('18 finite retained resultant corrections required')
+                from ._ge_beam3_p5.compensated_coordinates import validate_pair
+                for high, correction in zip(resultants, resultants_low):
+                    validate_pair(high, correction)
+                p = [high+correction for high, correction in zip(p, low)]
             origins = self._origins(origin); load = mv(self.load_map, p)
             # Virgin tangent is only a predictor. Origin plastic strains enter
             # its linear term; all actual trial states use the nonlinear law.
@@ -302,6 +378,11 @@ class FibreCellConjugate:
                     tuple(tuple(row[0]) for row in fields),
                     tuple(frozen(mul(mapping, [strain_compliance[i] for i in indices]))
                           for _, _, mapping, indices in self.stations))
+            if capture_trial and resultants_low is not None:
+                old = response['_trial_state']
+                response['_trial_state'] = PairedFibreTrialState(self.identity, origin,
+                    tuple(float(v) for v in resultants), old.strains, old.strain_compliances,
+                    tuple(float(v) for v in resultants_low), not boundary)
             if include_energy:
                 stored = D(0); previous_hardening = D(0); dissipation = D(0)
                 for (_, weight, _, _), predecessor, fields_row, station in zip(

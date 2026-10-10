@@ -1,0 +1,11 @@
+{
+  "attempts": [
+    {
+      "exit_code": 0,
+      "out": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-rev8-20261008\\docs\\agent_plans\\development\\r8-b2-refinement-large-20261009\\attempt-v1",
+      "status": "exited",
+      "wall_s": 97.04132600000594
+    }
+  ],
+  "used_s": 97.04132600000594
+}

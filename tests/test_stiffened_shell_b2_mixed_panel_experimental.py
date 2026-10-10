@@ -187,14 +187,24 @@ def test_selected_batch_and_cancellation_reuse_one_factor(kind, count, monkeypat
 
 def test_mixed_owner_snapshots_inputs_and_rejects_changed_submitted_load():
     definition, free = _definition()
+    caller_nodes = {n: np.array(x) for n, x in definition.shell_nodes_m.items()}
+    caller_transform = definition.transformation
+    caller_offset = np.array(definition.prescribed_offset)
+    definition = replace(definition, shell_nodes_m=caller_nodes,
+                         transformation=caller_transform, prescribed_offset=caller_offset)
     K, C = _dense_operators(definition)
     load = _load()
     u, _, reactions = _oracle(K, C, free, load)
     owner = api.create_analysis(definition=definition)
     try:
-        definition.shell_nodes_m[2] = (100., 200., 300.)
+        caller_nodes[2][:] = (100., 200., 300.)
+        caller_transform.data[:] = 7.
+        caller_offset[:] = 8.
         definition.transformation.data[:] = 7.
-        definition.prescribed_offset[:] = 8.
+        with pytest.raises(TypeError):
+            definition.shell_nodes_m[2] = (100., 200., 300.)
+        with pytest.raises(ValueError):
+            definition.prescribed_offset[:] = 8.
         result = owner.solve_linear(load)
         assert result.status == "completed", result.failure_reason
         np.testing.assert_allclose(result.displacements, u, rtol=1e-8, atol=1e-12)

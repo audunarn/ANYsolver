@@ -1,11 +1,11 @@
 """Experimental coupled-Q4 displacement controller, separate from load cursors."""
-from dataclasses import dataclass,replace
+from dataclasses import dataclass,replace,field
 from copy import deepcopy
 from hashlib import sha256
 import numpy as np
 from .control import cancellation_safe_point
 from ._stiffened_shell_branch_event_trial import POLICY as GENERALIZED_BRANCH_EVENT_TRIAL
-from ._stiffened_shell_displacement_corrector import correct
+from ._stiffened_shell_displacement_corrector import correct,PAIRED_FIXED_WORK_QUADRATIC_V1
 from ._stiffened_shell_displacement_checkpoint import encode_snapshot,validate_endpoint
 
 
@@ -15,8 +15,17 @@ class DisplacementControl:
     node: int
     component: int
     trial_policy: str | None = None
+    force_seed_sha256: str | None = field(default=None,kw_only=True)
+    merit_globalization: str | None = field(default=None,kw_only=True)
 
     def __post_init__(self):
+        if self.merit_globalization is not None and (
+                self.merit_globalization!=PAIRED_FIXED_WORK_QUADRATIC_V1 or
+                self.force_seed_sha256 is None or self.trial_policy is not None):
+            raise ValueError("explicit paired fixed-work interpolation policy and seed required")
+        if self.force_seed_sha256 is not None and (type(self.force_seed_sha256) is not str or
+                len(self.force_seed_sha256)!=64 or any(c not in "0123456789abcdef" for c in self.force_seed_sha256)):
+            raise ValueError("canonical force seed digest required")
         if self.trial_policy not in (None,GENERALIZED_BRANCH_EVENT_TRIAL):
             raise ValueError("supported displacement trial policy required")
 
@@ -134,8 +143,9 @@ def publish(owner,raw,*,expected_driver,expected_generation,cancellation_token=N
     adaptive_raw=None
     if adaptive is not None:
         from ._stiffened_shell_displacement_adaptive import encode
-        from ._stiffened_shell_affine_endpoint import uses_native_material_history
-        adaptive_raw=encode(owner._identity,adaptive,raw,native=uses_native_material_history(owner))
+        from ._stiffened_shell_affine_endpoint import uses_native_material_history,is_paired_displacement
+        adaptive_raw=encode(owner._identity,adaptive,raw,native=uses_native_material_history(owner),
+                            paired=is_paired_displacement(owner))
         result=replace(result,status="completed" if adaptive.state.completed else "accepted_prefix",
                        increment_attempts=adaptive.state.attempts)
         driver._accepted=result
@@ -156,6 +166,17 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
     from ._stiffened_shell_rotation_charts import physical_frames
     from ._stiffened_shell_affine_endpoint import uses_native_material_history
     native=uses_native_material_history(owner)
+    from ._stiffened_shell_affine_endpoint import is_paired_displacement
+    paired=is_paired_displacement(owner)
+    if getattr(control,'merit_globalization',None) is not None and (
+            not paired or _adaptive is None or
+            _adaptive.merit_globalization!=control.merit_globalization):
+        raise ValueError("fixed-work interpolation requires matching paired adaptive context")
+    if paired and (type(control) is not DisplacementControl or control.domain!="shell" or
+            control.force_seed_sha256 is None or control.trial_policy is not None):
+        raise ValueError("paired mixed displacement admits explicit force-seed shell translations only")
+    if not paired and getattr(control,"force_seed_sha256",None) is not None:
+        raise ValueError("force seed transfer requires paired mixed owner")
     distributing=getattr(owner,"_finite_distributing",False)
     if distributing and (type(control) is not DisplacementControl or control.trial_policy is not None or _adaptive is not None):
         raise ValueError("finite distributing displacement admits fixed targets without event/adaptive policies only")
@@ -179,7 +200,7 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
     require_native_displacement_policy(owner,driver)
     if native:
         from ._stiffened_shell_displacement_adaptive import require_native_seed
-        require_native_seed(owner,driver)
+        require_native_seed(owner,driver,force_seed_sha256=control.force_seed_sha256)
     if type(targets) is not tuple or not targets or any(not isinstance(v,(float,int,np.floating,np.integer)) or isinstance(v,(bool,np.bool_)) or not np.isfinite(v) for v in targets):
         raise ValueError("finite displacement targets required")
     dof=control.dof(owner);direction=driver._load(actions)
@@ -187,8 +208,12 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
             direction,owner._cyclic_reference_pattern):
         raise ValueError("cyclic distributing displacement requires the model-bound reference load direction")
     existing=getattr(owner,"_displacement_snapshot",None)
+    if paired and existing is None and not np.array_equal(direction,driver._pattern):
+        raise ValueError("paired displacement must retain original force pattern")
+    from ._stiffened_shell_displacement_adaptive import inner_checkpoint
+    force_seed=(inner_checkpoint(owner) if existing is None else existing[2].get("force_seed")) if paired else None
     if existing is None:
-        raw=owner.checkpoint();generation=owner._generation
+        raw=force_seed if paired else owner.checkpoint();generation=owner._generation
         base=(driver._applied_load if driver._programme is not None else driver._load_factor*driver._pattern)
         metadata=dict(seed_generation=generation,seed_sha256=sha256(raw).hexdigest(),control_dof=dof,
                       trial_policy=control.trial_policy,event_cell_evaluations=0)
@@ -213,10 +238,14 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
         trial=correct(driver,base_load=base,load_direction=direction,amplitude=amplitude,
             control_dof=dof,target=float(target),max_iterations=max_iterations,
             max_backtracks=max_backtracks,cancellation_token=cancellation_token,
-            trial_policy=control.trial_policy)
+            trial_policy=control.trial_policy,force_seed_sha256=control.force_seed_sha256,
+            **({} if control.merit_globalization is None else {"merit_globalization":control.merit_globalization}))
         state=trial.state
         anchors=(np.tile(np.eye(3),(len(owner._shell_ids),1,1)) if state.shell_anchors is None else state.shell_anchors)
         arrays={k:getattr(state,k) for k in ("q","frames","cells","resultants","multipliers")}
+        if paired:
+            arrays.update((k,getattr(state,k)) for k in ("q_low","frames_low","cells_low","resultants_low"))
+            arrays["force_seed"]=force_seed
         next_history=history+((float(target),trial.amplitude),)
         arrays.update(shell_anchors=anchors,shell_frames=physical_frames(state.q[:owner._shell_count],anchors),
             base_load=base,load_direction=direction,applied_load=base+trial.amplitude*direction,

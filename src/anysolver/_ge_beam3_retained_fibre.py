@@ -54,13 +54,16 @@ class MaterialRecovery:
 
 
 class RetainedFibreOperator:
-    __slots__ = ('reference', 'section', 'order', 'cell', 'stations', 'identity', '_reference_identity', '_sealed')
+    __slots__ = ('reference', 'section', 'order', 'cell', 'stations', 'identity', '_reference_identity', '_sealed', 'arithmetic_policy', '_arithmetic_capture')
 
     def __setattr__(self, name, value):
         if getattr(self, '_sealed', False): raise AttributeError('retained fibre operator is immutable')
         object.__setattr__(self, name, value)
 
-    def __init__(self, reference, section, *, order):
+    def __init__(self, reference, section, *, order, arithmetic_policy=None):
+        from ._stiffened_shell_f06_increment_arithmetic import POLICY as compensated
+        if arithmetic_policy is not None and (type(arithmetic_policy) is not str or arithmetic_policy != compensated):
+            raise ValueError('explicit physical fibre arithmetic policy required')
         if type(reference) is not Reference or type(section) is not PhysicalFibreSection:
             raise ValueError('explicit centered reference and native physical fibre section required')
         if type(order) is not int or order not in (4, 8):
@@ -81,14 +84,20 @@ class RetainedFibreOperator:
         self._reference_identity = self.reference.fingerprint()
         self.identity = sha(dict(formulation_id=POLICY, section=section.identity,
             reference=self._reference_identity, quadrature=order, cell=self.cell.identity))
+        self.arithmetic_policy = arithmetic_policy
+        if arithmetic_policy is not None:
+            self.identity = sha(dict(source_operator=self.identity, arithmetic_policy=arithmetic_policy))
+        self._arithmetic_capture = (self.arithmetic_policy, self.identity)
         self._sealed = True
 
     def guard(self):
+        if (self.arithmetic_policy, self.identity) != self._arithmetic_capture:
+            raise ValueError('captured fibre arithmetic policy changed')
         if self.reference.fingerprint() != self._reference_identity:
             raise ValueError('captured retained fibre reference changed')
 
     def evaluate(self, positions, position_low, vertices, rotations, resultants, *, origin=None, increment=None, check=None,
-                 capture_trial=False):
+                 capture_trial=False, vertices_low=None, rotations_low=None, resultants_low=None):
         if type(capture_trial) is not bool:
             raise ValueError('explicit fibre trial capture policy required')
         self.guard()
@@ -97,6 +106,22 @@ class RetainedFibreOperator:
         for h, l in zip(x.flat, low.flat): validate_pair(float(h), float(l))
         q = _frames(vertices, 3, 'fibre nodal frames'); u = _frames(rotations, 2, 'fibre cell rotations')
         p = _array(resultants, (18,), 'fibre retained resultants')
+        if self.arithmetic_policy is not None:
+            if increment is not None:
+                raise ValueError('durable compensated state requires re-centered spatial evaluation')
+            ql = np.zeros_like(q) if vertices_low is None else _array(vertices_low, q.shape, 'native frame corrections')
+            ul = np.zeros_like(u) if rotations_low is None else _array(rotations_low, u.shape, 'cell frame corrections')
+            pl = np.zeros_like(p) if resultants_low is None else _array(resultants_low, p.shape, 'resultant corrections')
+            from ._stiffened_shell_f06_increment_arithmetic import validate_frames, validate_pairs, retained_evaluation
+            validate_frames(q, ql, 'nodal frames'); validate_frames(u, ul, 'cell frames'); validate_pairs(p, pl, 'resultants')
+            response = self.cell.response(p.tolist(), origin, check=check, resultants_low=pl.tolist(),
+                                          **({'capture_trial': True} if capture_trial else {}))
+            trial_material = response.pop('_trial_state', None)
+            fields = retained_evaluation(self.reference, x, low, q, ql, u, ul, p, pl, response)
+            fields = tuple(float(v) if i == 0 else _owned(v) for i, v in enumerate(fields)) + (response['history'], canonical(response))
+            return BoundaryEvaluation(*fields, trial_material=trial_material) if capture_trial else Evaluation(*fields)
+        if any(v is not None for v in (vertices_low, rotations_low, resultants_low)):
+            raise ValueError('native corrections require selected durable compensated policy')
         delta = np.zeros(42) if increment is None else _array(increment, (42,), 'fibre chart increment')
         angular = [delta[6*n+3:6*n+6] for n in range(3)]+[delta[18+3*c:21+3*c] for c in (0, 1)]
         if max(np.linalg.norm(v) for v in angular) >= .9*np.pi:
@@ -131,10 +156,25 @@ class RetainedFibreOperator:
                   response['history'], canonical(response))
         return BoundaryEvaluation(*fields, trial_material=trial_material) if capture_trial else Evaluation(*fields)
 
-    def recover(self, rotations, resultants, *, origin=None, check=None):
-        self.guard(); u = _frames(rotations, 2, 'retained fibre recovery rotations')
+    def _recovery_input(self, rotations, resultants, rotations_low, resultants_low):
+        u = _frames(rotations, 2, 'retained fibre recovery rotations')
         p = _array(resultants, (18,), 'retained fibre recovery resultants')
-        response = self.cell.response(p.tolist(), origin, check=check)
+        extra = {}
+        if rotations_low is not None or resultants_low is not None:
+            if self.arithmetic_policy is None:
+                raise ValueError('native corrections require selected durable compensated policy')
+            ul = np.zeros_like(u) if rotations_low is None else _array(rotations_low, u.shape, 'recovery frame corrections')
+            pl = np.zeros_like(p) if resultants_low is None else _array(resultants_low, p.shape, 'recovery resultant corrections')
+            from ._stiffened_shell_f06_increment_arithmetic import validate_pairs, validate_frames
+            validate_frames(u, ul, 'recovery cell frames'); validate_pairs(p, pl, 'recovery resultants')
+            u = u+ul
+            extra['resultants_low'] = pl.tolist()
+        return u, p, extra
+
+    def recover(self, rotations, resultants, *, origin=None, check=None, rotations_low=None, resultants_low=None):
+        self.guard()
+        u, p, extra = self._recovery_input(rotations, resultants, rotations_low, resultants_low)
+        response = self.cell.response(p.tolist(), origin, check=check, **extra)
         rows = self._recovery_rows(u, response)
         self.guard()
         if check is not None: check()
@@ -151,15 +191,15 @@ class RetainedFibreOperator:
                 recovery_policy='PAIRED_PHYSICAL_FIBRE_RETAINED_FIELDS_V1'))
         return tuple(rows)
 
-    def recover_material(self, rotations, resultants, *, origin=None, check=None):
+    def recover_material(self, rotations, resultants, *, origin=None, check=None, rotations_low=None, resultants_low=None):
         """One local solve plus final accepted return-map energy capture.
 
         Default evaluate/recover payloads and their identities remain unchanged.
         The supplied origin is the last accepted material predecessor.
         """
-        self.guard(); u = _frames(rotations, 2, 'retained fibre recovery rotations')
-        p = _array(resultants, (18,), 'retained fibre recovery resultants')
-        response = self.cell.response(p.tolist(), origin, check=check, include_energy=True)
+        self.guard()
+        u, p, extra = self._recovery_input(rotations, resultants, rotations_low, resultants_low)
+        response = self.cell.response(p.tolist(), origin, check=check, include_energy=True, **extra)
         rows = self._recovery_rows(u, response)
         self.guard()
         if check is not None: check()

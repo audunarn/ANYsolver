@@ -157,6 +157,17 @@ def compile_footprints(footprints, positions, shells, beam_positions,
         raise ValueError("typed experimental B2 nodal footprints required")
     groups = tuple(B2NodalRigidFootprint(g.footprint_id, g.shell_nodes,
                                        g.beam_node, g.patch_cells) for g in supplied)
+    return _compile_audited_footprints(groups, positions, shells, beam_positions,
+                                       shell_index, beam_index, points, cell_label="Q4")
+
+
+def _compile_audited_footprints(groups, positions, shells, beam_positions,
+                                shell_index, beam_index, points, *, cell_label):
+    """Shared membership audit; callers own record and cell-family admission.
+
+    The returned six-slot incidences are geometric records, not adoption of a
+    constraint law. Physical footprints replace both matrices and row offsets.
+    """
     known_cells = {frozenset(s.node_ids): s.node_ids for s in shells}
     shell_hosts = {s.shell_id: s.node_ids for s in shells}
     seen_nodes = {n: f"finite-vertex point={p.point_id}"
@@ -181,10 +192,10 @@ def compile_footprints(footprints, positions, shells, beam_positions,
         if group.patch_cells:
             cells = tuple(frozenset(c) for c in group.patch_cells)
             if any(c not in known_cells for c in cells):
-                raise ValueError(f"known complete Q4 footprint cells required: {label}")
+                raise ValueError(f"known complete {cell_label} footprint cells required: {label}")
             if set(group.shell_nodes) != set().union(*cells):
                 raise ValueError(f"every cell vertex and only patch vertices required: {label}")
-            edges = [{frozenset((c[i], c[(i+1) % 4])) for i in range(4)}
+            edges = [{frozenset((c[i], c[(i+1) % len(c)])) for i in range(len(c))}
                      for c in (known_cells[key] for key in cells)]
             reached = {0}; pending = [0]
             while pending:
@@ -193,7 +204,7 @@ def compile_footprints(footprints, positions, shells, beam_positions,
                     if other not in reached and edges[current] & edges[other]:
                         reached.add(other); pending.append(other)
             if len(reached) != len(cells):
-                raise ValueError(f"edge-connected complete Q4 footprint patch required: {label}")
+                raise ValueError(f"edge-connected complete {cell_label} footprint patch required: {label}")
         for node in group.shell_nodes:
             if node in seen_nodes:
                 raise ValueError(f"overlapping B2 footprint shell={node}: {label}; {seen_nodes[node]}")

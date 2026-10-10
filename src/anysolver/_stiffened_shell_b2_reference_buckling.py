@@ -244,7 +244,7 @@ def physical_footprint_capabilities(owner):
     if owner._closed: reasons.append("owner closed")
     if owner.point_ids: reasons.append("mixed POINT / physical footprint spectral operation unavailable")
     if np.any(owner._u0 != 0.): reasons.append("prescribed prestress split unavailable")
-    if any(len(shell.node_ids)!=4 for shell,*_ in owner._buckling_shells): reasons.append("physical footprint buckling requires Q4")
+    if any(len(shell.node_ids)!=4 for shell,*_ in owner._buckling_shells): reasons.append("S3/mixed physical footprint buckling unsupported; Q4 director chart required")
     return B2ReferenceBucklingCapabilities(not reasons,tuple(reasons),policy=BUCKLING_POLICY,
         scope="zero-prescription Cartesian dead-force Q4 endpoint complete physical rigid footprints",shell_kernel_policies=(Q4_KERNEL_POLICY+":NATIVE_PHYSICAL_EXP_DIRECTOR_FIRST_WORK_PULLBACK",))
 

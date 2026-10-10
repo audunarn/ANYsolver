@@ -76,20 +76,22 @@ def _geometry_payload(metadata):
     }
 
 
-def build_deck(nx, ny, sign, load_name):
+def build_deck(nx, ny, sign, load_name, *, nz=2):
     """Return (ASCII deck text, JSON-serializable exact-geometry metadata).
 
-    Only the explicit paired levels (10,4), (20,8), (40,16), nz=2 are supported.
+    Original paired levels retain nz=2. A separate fixed (20,8) thickness
+    discriminator admits nz=4 or 8 without changing the old deck bytes.
     sign is +1 or -1 and load_name is Fz, Mx or My (case sensitive).
     """
     if (type(nx) is not int or type(ny) is not int or (nx, ny) not in LEVELS):
         raise ValueError("mesh must be one of (10,4), (20,8), (40,16)")
+    if type(nz) is not int or nz not in (2, 4, 8) or (nz != 2 and (nx, ny) != (20, 8)):
+        raise ValueError("thickness discriminator requires (20,8) and nz=4 or 8")
     if isinstance(sign, bool) or sign not in (-1, 1):
         raise ValueError("sign must be -1 or +1")
     if not isinstance(load_name, str) or load_name not in LOADS:
         raise ValueError("load_name must be Fz, Mx or My")
     sign = int(sign)
-    nz = 2
     lattice_cells = []
     used = set()
     for ix in range(nx):
@@ -125,7 +127,8 @@ def build_deck(nx, ny, sign, load_name):
     expected_force = tuple(-v for v in force)
     expected_moment = tuple(-a - b for a, b in zip(arm_moment, moment))
     metadata = {
-        "schema": "R8_E02_RIGID_TIP_REFERENCE_V1",
+        "schema": ("R8_E02_RIGID_TIP_REFERENCE_V1" if nz == 2 else
+                   "R8_E02_RIGID_TIP_THICKNESS_V2_DEV"),
         "scope": "matched E02 development discriminator only; no qualification claim",
         "ccx_version": CCX_VERSION, "ccx_executable_sha256": CCX_SHA256,
         "nx": nx, "ny": ny, "nz": nz, "sign": sign, "load_name": load_name,
@@ -211,7 +214,8 @@ def _int_map(values, name):
 
 def _validate_metadata(metadata):
     try:
-        _, rebuilt = build_deck(metadata["nx"], metadata["ny"], metadata["sign"], metadata["load_name"])
+        _, rebuilt = build_deck(metadata["nx"], metadata["ny"], metadata["sign"],
+                               metadata["load_name"], nz=metadata["nz"])
         # Exact metadata checking detects replaced geometry, loads and ID lists.
         # JSON normalizes tuple/list and integer/string dictionary keys.
         if _hash(metadata) != _hash(json.loads(json.dumps(rebuilt))):
@@ -392,6 +396,35 @@ def self_check():
                 _validate_metadata(json.loads(json.dumps(metadata)))
         counts.append({"nx": nx, "ny": ny, "nodes": len(physical), "elements": len(metadata["elements"]),
                        "patch_nodes": len(metadata["patch_nodes"]), "root_nodes": len(metadata["root_nodes"])})
+    thickness = []
+    for nz in (4, 8):
+        deck, metadata = build_deck(20, 8, 1, "Mx", nz=nz)
+        physical = metadata["physical_nodes"]
+        expected_nodes = ((21*9+20*9+21*8)*(nz+1)+21*9*nz)
+        assert metadata["schema"] == "R8_E02_RIGID_TIP_THICKNESS_V2_DEV"
+        assert len(physical) == expected_nodes
+        assert len(metadata["elements"]) == 20*8*nz
+        assert min(xyz[2] for xyz in physical.values()) == -0.01
+        assert max(xyz[2] for xyz in physical.values()) == 0.01
+        assert set().union(*(set(conn) for conn in metadata["elements"].values())) == set(physical)
+        assert all(len(conn) == len(set(conn)) == 20 for conn in metadata["elements"].values())
+        assert deck.encode("ascii") and _validate_metadata(json.loads(json.dumps(metadata)))
+        thickness.append({"nz": nz, "nodes": len(physical),
+                          "elements": len(metadata["elements"]),
+                          "deck_sha256": metadata["deck_sha256"]})
+    for invalid in (0, 1, 3, 16, True):
+        try:
+            build_deck(20, 8, 1, "Mx", nz=invalid)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("unsupported thickness was admitted")
+    try:
+        build_deck(40, 16, 1, "Mx", nz=4)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("unregistered in-plane thickness extension was admitted")
     _, metadata = build_deck(10, 4, 1, "Fz")
     controls = metadata["controls"]
     # Deliberately arbitrary poses test coordinate mapping, not material response.
@@ -448,8 +481,31 @@ def self_check():
     changed = json.loads(json.dumps(metadata))
     changed["patch_nodes"] = changed["patch_nodes"][:-1]
     reject(bad_metadata=changed)
-    return {"status": "SELF_CHECK_PASSED_NO_SOLVER_RUN", "deck_cases": 18,
-            "mesh_counts": counts, "parser_rejections": rejection_count}
+    for nz in (4, 8):
+        _, variant = build_deck(20, 8, 1, "Mx", nz=nz)
+        controls = variant["controls"]
+        sections = []
+        for label, name in (("displacements", "CONTROLS"), ("forces", "CONTROLS"),
+                            ("displacements", "PATCH"), ("displacements", "ROOT")):
+            sections.append(f" {label} (x,y,z) for set {name} and time 0.1000000E+01\n")
+            for node in variant["output_sets"][name]:
+                values = (variant["expected_root_force_N"] if node == controls["root_ref"] else
+                          variant["expected_root_moment_Nm"] if node == controls["root_rot"] else
+                          variant["applied_force_N"] if node == controls["patch_ref"] else
+                          variant["applied_moment_Nm"] if node == controls["patch_rot"] else
+                          (0., 0., 0.)) if label == "forces" else (0., 0., 0.)
+                sections.append(str(node) + " " + " ".join(f"{v:.6E}" for v in values) + "\n")
+            sections.append("\n")
+        parsed = parse_result("".join(sections), stdout, json.loads(json.dumps(variant)))
+        assert parsed["status"] == "PARSED_DEVELOPMENT_ONLY"
+        assert parsed["mesh"]["nz"] == nz
+        assert parsed["rigid_mapping"]["patch"]["max_gap_beyond_printed_rounding_m"] == 0.
+        changed = json.loads(json.dumps(variant))
+        changed["nz"] = 2
+        reject(bad_dat="".join(sections), bad_metadata=changed)
+    return {"status": "SELF_CHECK_PASSED_NO_SOLVER_RUN", "deck_cases": 20,
+            "mesh_counts": counts, "thickness_cases": thickness,
+            "parser_rejections": rejection_count}
 
 
 if __name__ == "__main__":

@@ -18,10 +18,14 @@ from ._stiffened_shell_b2_physical_rigid_footprint import (
 )
 
 from dataclasses import dataclass
+from ._stiffened_shell_b2_definition_ownership import OwnedB2Definition as _OwnedB2Definition
 from ._stiffened_shell_selected_recovery import GERecoverySelection, SelectedGERecovery
 from ._stiffened_shell_ge_distributed_load import GEBeamLineAction, GEBeamDistributedLoad, GEDistributedRecovery
 from ._stiffened_shell_ge_distributed_programme import GEBeamDistributedProgramme
-from ._stiffened_shell_ge_pressure_load import GEShellPressureAction, GEShellPressureLoad, GEPressureRecovery
+from ._stiffened_shell_ge_pressure_load import (
+    GEShellPressureAction, GEShellPressureLoad, GEPressureRecovery,
+    VECTOR_EQUILIBRIUM_POLICY as GE_PRESSURE_VECTOR_EQUILIBRIUM_V1_DEV,
+)
 from ._stiffened_shell_ge_body_load import GEBodyLoad, GEBodyRecovery
 from ._stiffened_shell_staged_load_experimental import StagedDeadLoadProgramme
 from ._stiffened_shell_ge_reference_modal import (
@@ -74,6 +78,7 @@ from ._stiffened_shell_b2_q4_panel_experimental import (
     ExperimentalB2MixedReferenceModalCapabilities,
     S3_V2D_TRANSLATIONAL_LUMPED_SECTION_AREAL_MASS_V1,
     ExperimentalB2Q4PanelResponseEnvelope,
+    ExperimentalB2Q4PanelMemberResultantEnvelope,
     B2ReferenceModesRequest, B2ReferenceModesResult,
     B2FreeReferenceModesResult, B2_FREE_FREE_MODAL_ONLY_V1,
     B2ReferenceBodyLoad,
@@ -97,6 +102,7 @@ from ._stiffened_shell_ge_experimental import (
     ExperimentalGEAnalysis, ExperimentalL1Line, ExperimentalBL5Line,
     FixedCoordinate,
     LinearDefinition, LinearResult,
+    NATIVE_SHELL_COORDINATE_SUPPORT_V1, HISTORICAL_SHELL_SUPPORT_POLICY,
     NodalAction, PointConnection, ShellPanel,
     NodalRigidFootprint, NodalRigidFootprintSelection, NodalRigidFootprintWrench,
     Q4_ALGORITHMIC_PULLBACK_V1, BL5_GENERALIZED_MATERIAL_V1, BL5_COUPLED_J2_MATERIAL_V1, BL5_ELASTIC_NATIVE_FIBRE_V1, BL5_ELASTIC_NATIVE_FIBRE_MIXED_SHELL_V1, BL5_NATIVE_FIBRE_MATERIAL_V1,
@@ -107,7 +113,7 @@ from ._stiffened_shell_ge_experimental import (
 
 
 @dataclass(frozen=True)
-class B2LinearDefinition:
+class B2LinearDefinition(_OwnedB2Definition):
     """Experimental physical B2 graph with an explicit audited affine plan.
 
     Shell attachment is not yet implemented by this definition.  The separate
@@ -124,7 +130,7 @@ class B2LinearDefinition:
 
 
 @dataclass(frozen=True)
-class B2Q4PointDefinition:
+class B2Q4PointDefinition(_OwnedB2Definition):
     """One elastic Q4 and one physical B2 member with a reference point tie."""
 
     profile: str
@@ -141,7 +147,7 @@ class B2Q4PointDefinition:
 
 
 @dataclass(frozen=True)
-class B2Q4PanelDefinition:
+class B2Q4PanelDefinition(_OwnedB2Definition):
     """Experimental reference-linear Q4/B2 points or explicit nodal footprints.
 
     Empty footprints preserve the historical finite-vertex point route.
@@ -162,8 +168,8 @@ class B2Q4PanelDefinition:
 
 
 @dataclass(frozen=True)
-class B2PhysicalRigidFootprintDefinition:
-    """Separate five-row physical director footprint reference-linear Q4 owner."""
+class B2PhysicalRigidFootprintDefinition(_OwnedB2Definition):
+    """Five-row physical director footprint reference-static Q4/S3 owner."""
     profile: str
     shell_nodes_m: object
     shells: tuple
@@ -174,7 +180,7 @@ class B2PhysicalRigidFootprintDefinition:
 
 
 @dataclass(frozen=True)
-class B2MixedPanelDefinition:
+class B2MixedPanelDefinition(_OwnedB2Definition):
     """Opt-in elastic Q4/native S3 V2D/B2 finite-vertex point panel.
 
     Any S3 facet restricts this definition to static solves. S3 inertia,
@@ -192,7 +198,7 @@ class B2MixedPanelDefinition:
 
 
 @dataclass(frozen=True)
-class B2MixedReferenceModalDefinition:
+class B2MixedReferenceModalDefinition(_OwnedB2Definition):
     """Virgin reference modes with explicitly declared discrete inertia.
 
     Q4 facets retain director mass; native S3 facets use translational lumped
@@ -257,8 +263,10 @@ def create_analysis(*, definition, resources=None):
             footprints=definition.footprints)
     if type(definition) is B2PhysicalRigidFootprintDefinition:
         if definition.profile != B2_E4_PL_FAST_LINEAR_V1 or resources is not None or not definition.physical_footprints:
-            raise ValueError("explicit physical rigid footprint Q4 definition required")
-        return ExperimentalB2Q4PanelAnalysis(definition.shell_nodes_m, definition.shells,
+            raise ValueError("explicit physical rigid footprint definition required")
+        owner_type = (ExperimentalB2MixedPanelAnalysis if any(type(shell) is S3V2DPanelShell
+                      for shell in definition.shells) else ExperimentalB2Q4PanelAnalysis)
+        return owner_type(definition.shell_nodes_m, definition.shells,
             definition.members, (), transformation=definition.transformation,
             prescribed_offset=definition.prescribed_offset, physical_footprints=definition.physical_footprints)
     if type(definition) is B2MixedReferenceModalDefinition:
@@ -338,8 +346,8 @@ __all__ += ["DisplacementCorrectorFailure", "DisplacementFailureDetail"]
 from ._stiffened_shell_displacement_increment import DisplacementAttempt, DisplacementIncrementLimit
 __all__ += ["DisplacementAttempt", "DisplacementIncrementLimit"]
 
-from ._stiffened_shell_displacement_control import GENERALIZED_BRANCH_EVENT_TRIAL
-__all__ += ["GENERALIZED_BRANCH_EVENT_TRIAL"]
+from ._stiffened_shell_displacement_control import GENERALIZED_BRANCH_EVENT_TRIAL,PAIRED_FIXED_WORK_QUADRATIC_V1
+__all__ += ["GENERALIZED_BRANCH_EVENT_TRIAL","PAIRED_FIXED_WORK_QUADRATIC_V1"]
 
 from ._stiffened_shell_generalized_recovery import GeneralizedBeamElementRecovery, GeneralizedBeamStationRecovery
 __all__ += ["GeneralizedBeamElementRecovery", "GeneralizedBeamStationRecovery"]
@@ -350,8 +358,8 @@ from ._stiffened_shell_arc_publication import ArcResult
 from ._stiffened_shell_arc_trial import ArcSelectionFailure, ArcAttempt
 __all__ += ["ArcLengthControl", "PhysicalChordMetric", "NativeDirectorChordMetric", "ArcResult", "ArcSelectionFailure", "ArcAttempt"]
 
-from ._stiffened_shell_ge_experimental import CURVED_Q4_POINT_REFERENCE_V1, CURVED_Q4_POINT_MATERIAL_REFERENCE_V1
-__all__ += ["CURVED_Q4_POINT_REFERENCE_V1", "CURVED_Q4_POINT_MATERIAL_REFERENCE_V1"]
+from ._stiffened_shell_ge_experimental import CURVED_Q4_POINT_REFERENCE_V1, CURVED_Q4_POINT_MATERIAL_REFERENCE_V1, CURVED_Q4_S3_POINT_REFERENCE_V1
+__all__ += ["CURVED_Q4_POINT_REFERENCE_V1", "CURVED_Q4_POINT_MATERIAL_REFERENCE_V1", "CURVED_Q4_S3_POINT_REFERENCE_V1"]
 
 from ._stiffened_shell_stress_free_reference import (
     ReferencePosePerturbation, StressFreePointReference, create_stress_free_point_reference,

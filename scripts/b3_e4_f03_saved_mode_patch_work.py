@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 from hashlib import sha256
 import json
+from math import fsum
 from pathlib import Path
 
 import anysolver
@@ -74,6 +75,7 @@ def evaluate(saved: dict, source_path: Path) -> dict:
     split = {name: np.zeros(2) for name in ("l1", "finite_patch")}
     segment_work = []
     station_gap = []
+    station_beam_errors = []
     for item in patch.stations:
         station = item.patch.station
         lam = density[item.segment]
@@ -103,6 +105,13 @@ def evaluate(saved: dict, source_path: Path) -> dict:
         spatial = item.port.tangent(state) @ qb
         beam_step = spatial[:3] + np.cross(spatial[3:], arm)
         patch_beam = jac[:, 6:] @ np.r_[beam_step, spatial[3:]]
+        l1_beam_work = float(item.measure * lam @ l1_beam)
+        patch_beam_work = float(item.measure * lam @ patch_beam)
+        station_error = abs(l1_beam_work-patch_beam_work)
+        station_scale = max(abs(l1_beam_work), abs(patch_beam_work), 1e-12)
+        if station_error > 1e-10*station_scale:
+            raise AssertionError("same-action native beam work changed at a station")
+        station_beam_errors.append(station_error)
         for name, shell_gap, beam_gap in (
                 ("l1", l1_shell, l1_beam),
                 ("finite_patch", patch_shell, patch_beam)):
@@ -113,7 +122,9 @@ def evaluate(saved: dict, source_path: Path) -> dict:
             "segment": item.segment,
             "l1_shell_work": float(item.measure * lam @ l1_shell),
             "patch_shell_work": float(item.measure * lam @ patch_shell),
-            "common_beam_work": float(item.measure * lam @ l1_beam),
+            "common_beam_work": l1_beam_work,
+            "patch_beam_work": patch_beam_work,
+            "station_beam_work_error": station_error,
         })
         station_gap.append({
             "station_x_m": station,
@@ -123,15 +134,19 @@ def evaluate(saved: dict, source_path: Path) -> dict:
         })
     beam_error = abs(split["l1"][1]-split["finite_patch"][1])
     patch_error = abs(checked_work-float(sum(split["finite_patch"])))
+    historical_work = float(fsum((saved["shell_work_sq"], saved["beam_work_sq"])))
+    l1_total = float(fsum(split["l1"]))
+    historical_error = abs(l1_total-historical_work)
     scale = max(abs(checked_work), abs(float(sum(split["l1"]))), 1.)
     if max(beam_error, patch_error) > 1e-10*scale:
         raise AssertionError("same-action beam or patch work did not match")
+    if historical_error > 1e-10*max(abs(l1_total), abs(historical_work), 1e-12):
+        raise AssertionError("L1 total work differs from frozen mean-row action")
     return {
         "classification": "development same-action trace screen; no F03 acceptance",
         "saved_mode_sha256": sha256(source_path.read_bytes()).hexdigest(),
         "saved_mode_source_git": saved["source_git"],
-        "historical_mean_row_action_work": float(
-            saved["shell_work_sq"]+saved["beam_work_sq"]),
+        "historical_mean_row_action_work": historical_work,
         "imported_anysolver": str(actual),
         "shell_grid_nodes": len(xs)*len(ys),
         "native_beam_halfcells": len(beam.context.elements)*2,
@@ -143,6 +158,8 @@ def evaluate(saved: dict, source_path: Path) -> dict:
         "finite_patch_shell_beam_work": split["finite_patch"].tolist(),
         "shell_work_difference": float(split["finite_patch"][0]-split["l1"][0]),
         "same_beam_work_error": float(beam_error),
+        "max_station_beam_work_error": max(station_beam_errors),
+        "l1_historical_total_work_error": historical_error,
         "patch_work_internal_error": float(patch_error),
         "station_work": segment_work,
         "station_directional_gaps": station_gap,

@@ -21,6 +21,7 @@ from ._ge_beam3_p5_seeded.core import canonical
 SCHEMA = 'GE_BEAM3_NATIVE_RECONSTRUCTIBLE_DEFINITION_V1'
 PRECISE_SCHEMA = 'GE_BEAM3_NATIVE_RECONSTRUCTIBLE_DEFINITION_PRECISE_V2'
 STABLE_SO3_SCHEMA = 'GE_BEAM3_NATIVE_RECONSTRUCTIBLE_DEFINITION_STABLE_SO3_V3'
+COMPENSATED_SCHEMA = 'GE_BEAM3_NATIVE_RECONSTRUCTIBLE_DEFINITION_COMPENSATED_STATE_V4_DEV'
 STATIC_POLICY = 'EIGHTEEN_EXTERNAL_TWENTY_FOUR_INTERNAL_STATIC_STATIONARITY'
 DYNAMIC_POLICY = 'RETAIN_PHYSICAL_CELL_INERTIA_NO_STATIC_MASS_SUBSTITUTION'
 MAX_BYTES = 2 * 1024 * 1024
@@ -47,7 +48,12 @@ def _keys(value, keys):
 
 def _definition_keys(value):
     _require(type(value) is dict, 'exact native definition object required')
-    if value.get('schema') == STABLE_SO3_SCHEMA:
+    if value.get('schema') == COMPENSATED_SCHEMA:
+        from ._stiffened_shell_f06_increment_arithmetic import POLICY
+        _keys(value, KEYS | {'arithmetic_policy'})
+        _require(value['family'] in ('RESULTANT_ELLIPSOID', 'PHYSICAL_AXIAL_BIAXIAL_FIBRE') and value['arithmetic_policy'] == POLICY,
+                 'exact native compensated state arithmetic policy required')
+    elif value.get('schema') == STABLE_SO3_SCHEMA:
         from ._ge_beam3_centered_so3_strain import POLICY
         _keys(value, KEYS | {'arithmetic_policy'})
         _require(value['family'] == 'RESULTANT_ELLIPSOID' and value['arithmetic_policy'] == POLICY,
@@ -143,9 +149,11 @@ def _describe(element, inertia):
                 element_identity=element.identity, operator_identity=core.identity,
                 section_identity=core.section.identity, static_policy=STATIC_POLICY,
                 dynamic_policy=DYNAMIC_POLICY, production_qualified=False)
-    if type(element) is NativeGeneralizedStaticElement and core.arithmetic_policy is not None:
+    if core.arithmetic_policy is not None:
         from ._ge_beam3_centered_so3_strain import POLICY as STABLE_SO3_POLICY
-        result.update(schema=STABLE_SO3_SCHEMA if core.arithmetic_policy == STABLE_SO3_POLICY else PRECISE_SCHEMA,
+        from ._stiffened_shell_f06_increment_arithmetic import POLICY as COMPENSATED_POLICY
+        result.update(schema=COMPENSATED_SCHEMA if core.arithmetic_policy == COMPENSATED_POLICY else
+                      STABLE_SO3_SCHEMA if core.arithmetic_policy == STABLE_SO3_POLICY else PRECISE_SCHEMA,
                       arithmetic_policy=core.arithmetic_policy)
     return result
 
@@ -193,7 +201,7 @@ def _build(data):
     else:
         raise DefinitionError('unknown native beam section family; no legacy fallback')
     inertia = _inertia(data['section_inertia'])
-    extra = {'arithmetic_policy': data['arithmetic_policy']} if data['schema'] in (PRECISE_SCHEMA, STABLE_SO3_SCHEMA) else {}
+    extra = {'arithmetic_policy': data['arithmetic_policy']} if data['schema'] in (PRECISE_SCHEMA, STABLE_SO3_SCHEMA, COMPENSATED_SCHEMA) else {}
     element = cls(data['element_id'], tuple(ids), ref, law, order=data['quadrature'], **extra)
     # Reconstruct all derived identities. Hashes alone never substitute for data.
     _require(canonical(_describe(element, inertia)) == canonical(data),

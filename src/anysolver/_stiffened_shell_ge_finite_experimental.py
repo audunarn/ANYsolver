@@ -22,6 +22,7 @@ from scipy.spatial.transform import Rotation
 
 from ._ge_beam3_generalized_static_boundary import spatial_jacobian
 from ._ge_beam3_pose_joint import _exp_terms
+from . import _stiffened_shell_coordinate_support as coordinate_support
 from ._stiffened_shell_point_recovery import PointTransferWrench, point_record
 from ._stiffened_shell_nodal_footprint import require_rotation_triples
 from ._ge_beam3_p5.algebra import skew
@@ -34,6 +35,7 @@ from ._ge_beam3_fibre_section import PhysicalFibreSection
 from ._stiffened_shell_beam_history import (
     arrays as native_history_arrays, histories as native_histories,
     shapes as native_history_shapes, observables as native_observables,
+    compensated_kind as native_compensated_kind,
 )
 from ._ge_beam3_p5.algebra import rotation
 from ._ge_beam3_p5.compensated_coordinates import split_sum
@@ -77,7 +79,7 @@ def _trial_work_ratio(residual, applied, coordinate_scale):
 
     Coordinate scales and the parent's load define one work norm for the
     entire backtracking comparison. Small physical components remain in the
-    norm and in the separate, unchanged component-wise acceptance check.
+    norm and in the separately selected physical acceptance check.
     """
     residual, applied, coordinate_scale = (np.asarray(v, dtype=float)
         for v in (residual, applied, coordinate_scale))
@@ -95,6 +97,39 @@ def _trial_work_ratio(residual, applied, coordinate_scale):
         return 0.
     denominator = float(np.linalg.norm(f/scale))
     return float(np.linalg.norm(r/scale))/denominator if denominator else float("inf")
+
+
+def _pressure_vector_equilibrium(residual, applied, free, shell_count, coordinate_scale):
+    """Pressure-only work and active nodal force/moment vector assessment.
+
+    The local vectors contain only free shell coordinates. Zero-applied groups
+    are covered by the global work check, not divided by an artificial floor.
+    Retained and beam rows participate in that global check only.
+    """
+    residual, applied, coordinate_scale = (np.asarray(value, dtype=float)
+        for value in (residual, applied, coordinate_scale))
+    free = np.asarray(free, dtype=int)
+    if (residual.ndim != 1 or residual.shape != applied.shape or
+            residual.shape != coordinate_scale.shape or shell_count < 0 or
+            shell_count % 6 or shell_count > residual.size or free.ndim != 1 or
+            np.any(free < 0) or np.any(free >= residual.size) or
+            len(np.unique(free)) != len(free) or
+            not np.isfinite(residual).all() or not np.isfinite(applied).all()):
+        raise ValueError("valid pressure equilibrium rows and free coordinates required")
+    global_ratio = _trial_work_ratio(residual[free], applied[free], coordinate_scale[free])
+    is_free = np.zeros(residual.size, dtype=bool)
+    is_free[free] = True
+    local_ratio = 0.
+    for start in range(0, shell_count, 3):
+        slots = np.arange(start, start+3)
+        slots = slots[is_free[slots]]
+        if not slots.size or not np.any(applied[slots] != 0.):
+            continue
+        r, f = residual[slots], applied[slots]
+        scale = max(float(np.max(np.abs(r))), float(np.max(np.abs(f))))
+        local_ratio = max(local_ratio, float(np.linalg.norm(r/scale) /
+                                             np.linalg.norm(f/scale)))
+    return max(global_ratio, local_ratio)
 
 
 def _require_elastic_footprint_histories(histories, context, *, scope="nodal rigid footprints"):
@@ -210,7 +245,9 @@ def _fibre_recovery(owner, state, predecessors, accepted_histories):
             continue
         response = element.operator.recover_material(state.cells[i], state.resultants[i],
                                         origin=predecessor,
-                                        check=element.operator.guard)
+                                        check=element.operator.guard,
+                                        **({'resultants_low': state.resultants_low[i], 'rotations_low': state.cells_low[i]}
+                                           if state.resultants_low is not None else {}))
         rows = response.stations
         if response.history != accepted or tuple(row["history"] for row in rows) != accepted.stations:
             raise ValueError("native accepted fibre recovery history mismatch")
@@ -450,6 +487,10 @@ class _State:
     resultants: np.ndarray
     multipliers: np.ndarray
     shell_anchors: np.ndarray | None = None
+    q_low: np.ndarray | None = None
+    frames_low: np.ndarray | None = None
+    cells_low: np.ndarray | None = None
+    resultants_low: np.ndarray | None = None
 
 
 def _with_shell_chart(result, state, shell_count):
@@ -486,11 +527,81 @@ def _nodal_translation_pattern(owner, actions):
     return _owned(load)
 
 
+def supports_paired_fibre_adaptive(owner):
+    """The adopted elastic flat-Q4 physical-fibre point controller domain."""
+    from ._ge_beam3_retained_fibre import RetainedFibreOperator
+    from ._stiffened_shell_f06_increment_arithmetic import POLICY
+    from ._stiffened_shell_affine_endpoint import is_native_point_material
+    d = owner._definition
+    return bool(owner._beam_parts and is_native_point_material(owner) and d.points
+        and d.shell.q4_elements and not d.shell.s3_elements and d.shell.j2_curve is None
+        and d.shell_reference_policy == 'flat' and not d.lines and not d.footprints
+        and not owner._finite_distributing and not owner._curved_reference
+        and not owner._coordinate_support and getattr(owner, '_external_context', None) is None
+        and all(type(e.operator) is RetainedFibreOperator and e.operator.arithmetic_policy == POLICY
+                for e, _, _ in owner._beam_parts))
+
+
+def supports_mixed_material_adaptive(owner):
+    """Experimental nodal-dead mixed-native/Q4-J2 POINT controller domain.
+
+    This does not extend the homogeneous fibre predictor or its count policy.
+    """
+    from ._ge_beam3_retained_fibre import RetainedFibreOperator
+    from ._ge_beam3_retained_generalized import RetainedGeneralizedOperator
+    from ._ge_beam3_generalized_ellipsoid_section import EllipsoidalGeneralizedSection
+    from ._stiffened_shell_f06_increment_arithmetic import POLICY
+    from ._stiffened_shell_affine_endpoint import is_native_point_material
+    d = owner._definition
+    parts = owner._beam_parts
+    return bool(parts and is_native_point_material(owner) and d.points
+        and d.shell.q4_elements and not d.shell.s3_elements and d.shell.j2_curve is not None
+        and d.shell_reference_policy == 'flat' and not d.lines and not d.footprints
+        and not owner._finite_distributing and not owner._curved_reference
+        and not owner._coordinate_support and getattr(owner, '_external_context', None) is None
+        and getattr(owner, '_staged_context', None) is None
+        and all(getattr(e.operator, 'arithmetic_policy', None) == POLICY and
+            ((type(e.operator) is RetainedFibreOperator and type(e.section) is PhysicalFibreSection) or
+             (type(e.operator) is RetainedGeneralizedOperator and type(e.section) is EllipsoidalGeneralizedSection))
+            for e, _, _ in parts)
+        and any(type(e.section) is PhysicalFibreSection for e, _, _ in parts)
+        and any(type(e.section) is EllipsoidalGeneralizedSection for e, _, _ in parts))
+
+
+def compensated_adaptive_load_admitted(owner, actions):
+    """Keep the two adopted load contexts distinct at every public dispatch."""
+    from ._stiffened_shell_staged_load_experimental import StagedDeadLoadProgramme
+    return ((supports_paired_fibre_adaptive(owner) and type(actions) is StagedDeadLoadProgramme)
+        or (supports_mixed_material_adaptive(owner) and type(actions) is tuple
+            and all(type(a) is NodalAction and a.domain in ('shell', 'beam')
+                    and len(a.wrench) == 6 and not any(a.wrench[3:]) for a in actions)))
+
+
 class FinitePointDriver:
     """Finite updates with globally retained native B3 coordinates."""
 
     def __init__(self, owner):
         self.owner = owner
+        from ._stiffened_shell_f06_increment_arithmetic import POLICY as compensated_policy
+        selected=[getattr(element.operator,'arithmetic_policy',None)==compensated_policy for element,_,_ in owner._beam_parts]
+        self._compensated=any(selected)
+        if self._compensated and (not all(selected) or owner._definition.lines or owner._definition.footprints
+                or owner._finite_distributing or owner._curved_reference
+                or getattr(owner,'_external_context',None) is not None):
+            raise ValueError('durable compensated native state currently requires native point owner')
+        self._compensated_coupled = self._compensated and owner._definition.shell.j2_curve is not None
+        if self._compensated:
+            from ._stiffened_shell_affine_endpoint import is_native_point_material
+            if (not is_native_point_material(owner) or (self._compensated_coupled and
+                    (owner._definition.shell.s3_elements or not owner._definition.shell.q4_elements))):
+                raise ValueError('compensated native material requires admitted elastic or Q4 algorithmic J2 point policy')
+            native_compensated_kind(owner._beam_parts, coupled=self._compensated_coupled)
+        from ._ge_beam3_retained_fibre import RetainedFibreOperator
+        self._paired_fibre_event = bool(self._compensated and not self._compensated_coupled
+            and owner._definition.points and owner._definition.shell.q4_elements
+            and not owner._definition.shell.s3_elements
+            and owner._definition.shell_reference_policy == 'flat'
+            and all(type(element.operator) is RetainedFibreOperator for element,_,_ in owner._beam_parts))
         self._stable_q4 = bool(owner._definition.points and owner._definition.shell.q4_elements and
             not owner._definition.shell.s3_elements and
             owner._definition.shell_reference_policy == "flat" and
@@ -500,7 +611,8 @@ class FinitePointDriver:
             not owner._definition.footprints)
         # Numerical policy is checkpoint-bound. Legacy restored histories keep
         # their original arithmetic rather than changing endpoint validation.
-        self._stable_s3 = bool((owner._has_physical_fibre or owner._footprint_stable_s3) and
+        self._stable_s3 = bool((owner._coordinate_support or owner._has_physical_fibre or owner._footprint_stable_s3
+                                 or owner._curved_s3) and
             owner._definition.shell.s3_elements and
             owner._definition.shell.j2_curve is None)
         beam_ids = owner._beam_ids
@@ -514,6 +626,7 @@ class FinitePointDriver:
             np.tile(np.eye(3), (len(owner._beam_parts), 2, 1, 1)),
             np.zeros((len(owner._beam_parts), 18)),
             np.zeros(owner._C.shape[0]))
+        if self._compensated:self._state=self._zero_compensation(self._state)
         self._shell_origins = tuple(part[3] for part in owner._shell_parts)
         # Immutable preparation is owner-local, not accepted/checkpoint state.
         # Unsupported or material Q4 inputs keep the complete evaluation route.
@@ -540,6 +653,8 @@ class FinitePointDriver:
         self._curved_material_predecessors = bool(owner._curved_material)
         self._pattern = None
         self._external = getattr(owner, "_external_context", None)
+        if owner._coordinate_support and (self._external is not None or getattr(owner,'_staged_context',None) is not None):
+            raise ValueError('coordinate shell supports exclude external and staged contexts')
         if self._external is not None and not getattr(self._external, "finite_supported", True):
             raise ValueError(self._external.finite_error)
         self._external_stable_s3 = bool(self._external is not None and
@@ -570,6 +685,26 @@ class FinitePointDriver:
             return self._external.augmented_model_identity
         return (self.owner._identity if self._programme is None else
                 self._programme.augmented_model_identity)
+
+    def _equilibrium_ratio(self, residual, applied):
+        owner = self.owner
+        if getattr(self._external, "pressure_vector_equilibrium", False):
+            return _pressure_vector_equilibrium(
+                residual[:len(applied)], applied, owner._free, owner._shell_count,
+                owner._coordinate_scale)
+        return _linear_equilibrium(
+            residual[owner._free], applied[owner._free],
+            owner._coordinate_scale[owner._free])
+
+    def _frozen_trial_ratio(self, residual, parent_applied, default_ratio):
+        """Compare a candidate against the parent's unchanged pressure action."""
+        owner = self.owner
+        if getattr(self._external, "pressure_vector_equilibrium", False):
+            return _pressure_vector_equilibrium(
+                residual[:len(parent_applied)], parent_applied, owner._free,
+                owner._shell_count, owner._coordinate_scale)
+        return default_ratio(residual[owner._free], parent_applied[owner._free],
+                             owner._coordinate_scale[owner._free])
 
     def _prepare_load(self, actions, targets):
         if self.owner._finite_distributing:
@@ -644,6 +779,8 @@ class FinitePointDriver:
                   applied_load=None, load_programme=None):
         owner = self.owner
         from ._stiffened_shell_affine_endpoint import is_native_point_material
+        if owner._coordinate_support and (self._external is not None or self._programme is not None or applied_load is not None or load_programme is not None):
+            raise ValueError('coordinate shell supports exclude alternate load contexts')
         native_point_material=is_native_point_material(owner)
         programme = self._programme if load_programme is None else load_programme
         load_pattern = self._pattern if pattern is None else pattern
@@ -665,14 +802,13 @@ class FinitePointDriver:
         generalized_material = []
         native_boundary_material = []
         q4_boundary_material = []
-        if owner._bl5_native_material:
+        if owner._bl5_native_material or self._paired_fibre_event:
             self._native_boundary_trial = None
             self._q4_boundary_trial = None
         beam_displacement = state.q[
             owner._shell_count:owner._shell_count+self._beam_nodal
         ].reshape(-1, 6)[:, :3]
-        beam_positions, beam_low = _position_pair(
-            self._reference_positions, beam_displacement)
+        beam_positions, beam_low = self._beam_position_pair(state)
 
         def scatter(slots, force, tangent):
             slots = np.asarray(slots, dtype=int)
@@ -737,13 +873,18 @@ class FinitePointDriver:
         for i, ((element, slots, _), origin) in enumerate(
                 zip(owner._beam_parts, beam_origins)):
             from ._ge_beam3_retained_fibre import RetainedFibreOperator
-            capture_boundary = owner._bl5_native_material and type(element.operator) is RetainedFibreOperator
+            capture_boundary = (owner._bl5_native_material or self._paired_fibre_event) and type(element.operator) is RetainedFibreOperator
             nodes = np.array([owner._beam_index[node] for node in element.node_ids])
             response = element.operator.evaluate(
                 beam_positions[nodes], beam_low[nodes], state.frames[nodes],
                 state.cells[i], state.resultants[i], origin=origin,
                 check=element.operator.guard,
-                **({'capture_trial': True} if capture_boundary else {}))
+                **({'capture_trial': True} if capture_boundary else {}),
+                **(dict(vertices_low=state.frames_low[nodes],rotations_low=state.cells_low[i],
+                        resultants_low=state.resultants_low[i]) if self._compensated else {}))
+            if owner._coordinate_support:
+                from ._stiffened_shell_bl5_native_elastic import require_elastic
+                require_elastic(element,response,origin)
             if capture_boundary:
                 native_boundary_material.append((i, response.trial_material))
             tangent = spatial_jacobian(
@@ -782,7 +923,9 @@ class FinitePointDriver:
             trial = joint.evaluate_ports(
                 positions, anchors, state.multipliers[6*i:6*i+6],
                 rotation_coordinates=coordinates,
-                charted_ports=(True, False), position_low=position_low)
+                charted_ports=(True, False), position_low=position_low,
+                **({'anchors_low': np.array((np.zeros((3,3)),state.frames_low[beam_node]))}
+                   if self._compensated else {}))
             point_records.append(point_record(
                 owner, i, positions, position_low, trial.pose.residual[:12],
                 trial.pose.constraints, "current"))
@@ -856,29 +999,72 @@ class FinitePointDriver:
             norm_load = owner._cyclic_reference_pattern
         elif programme is not None:
             norm_load = programme.equilibrium_load(applied_load)
-        relative = _linear_equilibrium(
-            residual[owner._free], norm_load[owner._free],
-            owner._coordinate_scale[owner._free])
+        support_gap=0.
+        if owner._coordinate_support:
+            residual,matrix,norm_load,support_gap,physical_residual,physical_applied=coordinate_support.pullback(
+                state.q,state.shell_anchors,owner._shell_count,owner._fixed,residual,matrix,norm_load)
+        relative = self._equilibrium_ratio(residual, norm_load)
+        if owner._coordinate_support:
+            relative=max(relative,self._equilibrium_ratio(physical_residual,physical_applied))
         constraint = _scaled_constraint_gap(
             residual[count:], owner._constraint_scale)
+        constraint=max(constraint,support_gap)
         self._line_trial_recovery = (state, tuple(line_records))
         self._point_trial_recovery = (state, tuple(point_records))
         self._distributing_trial_recovery = (state, tuple(distributing_records))
         self._generalized_trial_recovery = (state,beam_origins,tuple(generalized_material))
-        if owner._bl5_native_material:
+        if owner._bl5_native_material or self._paired_fibre_event:
             self._native_boundary_trial = (state, beam_origins, owner._generation,
                                            tuple(native_boundary_material))
             self._q4_boundary_trial = (state, shell_origins, owner._generation, tuple(q4_boundary_material))
         return residual, matrix, relative, constraint, tuple(shell_candidates), tuple(beam_candidates)
 
+    def _fibre_material_predictor(self, parent, rejected, residual, free, counts):
+        """Approximate parent direction; only the rejected trial's material pp block.
+
+        Retained p coefficients use the immutable reference load map in both
+        states. Spatial/chart rotation maps do not act on these coordinates.
+        Borrow no trial history and copy its compliance before another trial.
+        This is not the consistent Jacobian at the parent or an acceptance test.
+        """
+        if parent.shape != rejected.shape or parent.shape[0] != len(residual):
+            raise ValueError('matching owned predictor operators required')
+        predictor = parent.tolil(copy=True)
+        for i in range(len(self.owner._beam_parts)):
+            start = self.owner._shell_count+self._beam_nodal+24*i+6
+            slots = np.arange(start, start+18)
+            predictor[np.ix_(slots, slots)] = rejected[slots, :][:, slots].toarray().copy()
+        predictor = predictor.tocsr()
+        counts['linear_solves'] += 1
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter('error', spla.MatrixRankWarning)
+                step = spla.spsolve(predictor[free, :][:, free], -residual[free])
+        except spla.MatrixRankWarning as error:
+            return None, {'status': 'singular', 'backend': type(error).__name__, 'detail': str(error)}
+        if not np.isfinite(step).all():
+            return None, {'status': 'nonfinite', 'backend': 'scipy.sparse.linalg.spsolve'}
+        full = np.zeros(parent.shape[0]); full[free] = step
+        return full, {'status': 'finite', 'backend': 'scipy.sparse.linalg.spsolve'}
+
     def _native_boundary_amount(self, state, increment):
         """Copy the proposal before any candidate invalidates parent recovery."""
-        if not self.owner._bl5_native_material: return None
+        if not (self.owner._bl5_native_material or self._paired_fibre_event): return None
         cached = self._native_boundary_trial
         if (cached is None or cached[0] is not state or cached[1] is not self._beam_origins or
                 cached[2] != self.owner._generation):
             raise ValueError('stale native material boundary trial')
         amounts = []
+        if self._paired_fibre_event:
+            retained = self.owner._shell_count+self._beam_nodal
+            for i, material in cached[3]:
+                operator = self.owner._beam_parts[i][0].operator
+                dp = increment[retained+24*i+6:retained+24*i+24].tolist()
+                amount = operator.cell.paired_boundary_amount(material, dp,
+                    origin=self._beam_origins[i], resultants=state.resultants[i],
+                    resultants_low=state.resultants_low[i], check=operator.guard)
+                if amount is not None: amounts.append(amount)
+            return min(amounts) if amounts else None
         shell_cached = self._q4_boundary_trial
         if (shell_cached is None or shell_cached[0] is not state or
                 shell_cached[1] is not self._shell_origins or shell_cached[2] != self.owner._generation):
@@ -903,13 +1089,15 @@ class FinitePointDriver:
         return min(amounts) if amounts else None
 
     def _generalized_records(self,state,origins,accepted,*,include_native=False):
+        from ._stiffened_shell_affine_endpoint import is_native_point_material
+        include_native = include_native or (self._compensated and is_native_point_material(self.owner))
         if not (self.owner._bl5_material or self.owner._bl5_native_material or self.owner._curved_material or self.owner._distributing_material or
                 include_native):return ()
         cached=self._generalized_trial_recovery
         if cached is None or cached[0] is not state or cached[1] is not origins:
             raise ValueError("stale generalized material recovery")
         from ._stiffened_shell_generalized_recovery import build
-        return tuple(build(self.owner._beam_parts[i][0],state.cells[i],raw,accepted[i])
+        return tuple(build(self.owner._beam_parts[i][0],state.cells[i]+state.cells_low[i] if self._compensated else state.cells[i],raw,accepted[i])
                      for i,raw in cached[2])
 
     def _point_records(self, state):
@@ -943,6 +1131,19 @@ class FinitePointDriver:
         q[:owner._shell_count].reshape(-1, 6)[:, 3:] = 0.
         return replace(state, q=_owned(q), shell_anchors=anchors)
 
+    @staticmethod
+    def _zero_compensation(state):
+        return replace(state,q_low=_owned(np.zeros_like(state.q)),frames_low=_owned(np.zeros_like(state.frames)),
+            cells_low=_owned(np.zeros_like(state.cells)),resultants_low=_owned(np.zeros_like(state.resultants)))
+
+    def _beam_position_pair(self,state):
+        dis=state.q[self.owner._shell_count:self.owner._shell_count+self._beam_nodal].reshape(-1,6)[:,:3]
+        if not self._compensated:return _position_pair(self._reference_positions,dis)
+        from ._stiffened_shell_f06_increment_arithmetic import Pair
+        lo=state.q_low[self.owner._shell_count:self.owner._shell_count+self._beam_nodal].reshape(-1,6)[:,:3]
+        p=Pair(self._reference_positions)+Pair(dis,lo)
+        return p.high.copy(),p.low.copy()
+
     def _advance(self, state, increment, amount):
         owner = self.owner
         delta = amount*increment
@@ -951,6 +1152,11 @@ class FinitePointDriver:
         cells = state.cells.copy()
         resultants = state.resultants.copy()
         q[:owner._shell_count] += delta[:owner._shell_count]
+        if owner._coordinate_support:
+            try:
+                coordinate_support.advance(state.q,q,state.shell_anchors,owner._shell_count,owner._fixed,delta)
+            except coordinate_support.CoordinateSupportChartDomainError as exc:
+                raise _RotationStepTooLarge(str(exc)) from exc
         for node in range(len(owner._beam_ids)):
             slot = owner._shell_count+6*node
             q[slot:slot+3] += delta[slot:slot+3]
@@ -968,11 +1174,27 @@ class FinitePointDriver:
                 cells[i, cell] = rotation(angle)@cells[i, cell]
             resultants[i] += delta[base+6:base+24]
         multipliers = state.multipliers+delta[len(q):]
+        if self._compensated:
+            from ._stiffened_shell_f06_increment_arithmetic import add_state,updated_rotation
+            ql=state.q_low.copy();fl=state.frames_low.copy();cl=state.cells_low.copy();pl=state.resultants_low.copy()
+            for node in range(len(owner._beam_ids)):
+                slot=owner._shell_count+6*node
+                q[slot:slot+3],ql[slot:slot+3]=add_state(state.q[slot:slot+3],ql[slot:slot+3],delta[slot:slot+3])
+                frames[node],fl[node]=updated_rotation(state.frames[node],fl[node],delta[slot+3:slot+6])
+            for i in range(len(owner._beam_parts)):
+                base=retained+24*i
+                for cell in range(2):
+                    cells[i,cell],cl[i,cell]=updated_rotation(state.cells[i,cell],cl[i,cell],delta[base+3*cell:base+3*cell+3])
+                resultants[i],pl[i]=add_state(state.resultants[i],pl[i],delta[base+6:base+24])
+            return _State(q,frames,cells,resultants,multipliers,state.shell_anchors,
+                _owned(ql),_owned(fl),_owned(cl),_owned(pl))
         return _State(q, frames, cells, resultants, multipliers, state.shell_anchors)
 
     def solve(self, actions, targets, *, cancellation_token=None,
               max_iterations=12, max_backtracks=8, increment_control=None,
               on_accepted=None):
+        if self.owner._coordinate_support and (increment_control is not None or self._external is not None or self._programme is not None):
+            raise ValueError('coordinate shell supports require fixed-force native point solve')
         if self.owner._distributing_cyclic and increment_control is not None:
             raise ValueError("cyclic distributing material histories admit fixed increments only")
         if self.owner._footprint_increment_chart:
@@ -986,6 +1208,10 @@ class FinitePointDriver:
                                      on_accepted=on_accepted)
         if type(increment_control) is not AdaptiveIncrementControl:
             raise ValueError("typed adaptive increment control required")
+        if self._compensated:
+            from ._stiffened_shell_staged_load_experimental import StagedDeadLoadProgramme
+            if not compensated_adaptive_load_admitted(self.owner, actions):
+                raise ValueError('compensated adaptive control requires an admitted staged-fibre or nodal-mixed point owner')
         if (type(targets) is not tuple or not targets or
                 any(not isinstance(v, (int, float, np.integer, np.floating)) or
                     isinstance(v, (bool, np.bool_)) or not np.isfinite(v) or v <= 0.
@@ -1047,6 +1273,12 @@ class FinitePointDriver:
               _prepared_pattern=None, _prepared_programme=None, _accepted_hook=None,
               max_iterations=12, max_backtracks=8, on_accepted=None):
         owner = self.owner
+        if owner._coordinate_support:
+            from ._stiffened_shell_ge_experimental import NodalAction
+            if (type(actions) is not tuple or any(type(a) is not NodalAction or any(a.wrench[3:]) for a in actions) or
+                    self._external is not None or self._programme is not None or _prepared_pattern is not None or
+                    _prepared_programme is not None or _accepted_hook is not None):
+                raise ValueError('coordinate shell supports require direct fixed nodal translation forces')
         if (type(targets) is not tuple or not targets or
                 any(not isinstance(v, (int, float, np.integer, np.floating))
                     or isinstance(v, (bool, np.bool_)) or
@@ -1069,6 +1301,9 @@ class FinitePointDriver:
                      np.arange(owner._K.shape[0],
                                owner._K.shape[0]+len(self._state.multipliers))]
         from ._stiffened_shell_same_parent_trial import FixedTrialHandoff
+        allow_material_predictor = (_accepted_hook is not None and
+                                    supports_paired_fibre_adaptive(owner))
+        self._material_predictor_diagnostics = []
         allow_handoff = (not owner._finite_distributing and programme is None and _accepted_hook is None and
                          self._adaptive_state is None)
         for factor in targets:
@@ -1118,6 +1353,7 @@ class FinitePointDriver:
                     raise RuntimeError("finite mixed Newton correction required")
                 full = np.zeros(matrix.shape[0])
                 full[free] = step
+                original_full = full  # retained parent Newton direction
                 old_merit = max(relative, gap)
                 # A follower load can activate an initially zero component. Comparing
                 # candidates in different active-row norms can reject a Newton step
@@ -1126,6 +1362,7 @@ class FinitePointDriver:
                 # unchanged current-state equilibrium and compatibility checks.
                 merit_applied = None
                 trial_ratio = _linear_equilibrium
+                vector_merit = getattr(self._external, "pressure_vector_equilibrium", False)
                 if getattr(self._external, "freeze_trial_load_norm", False):
                     # _prepare_load excludes combined nodal/programme loads;
                     # this is the complete applied load for this profile.
@@ -1136,11 +1373,14 @@ class FinitePointDriver:
                     # acceptance limits, polish the remaining component checks.
                     # Polishing permits global-ratio increases; the next
                     # current-state acceptance check still requires all limits.
-                    if global_ratio > 1e-8 or gap > 1e-9:
+                    if not vector_merit and (global_ratio > 1e-8 or gap > 1e-9):
                         trial_ratio = _trial_work_ratio
-                    old_merit = max(trial_ratio(residual[owner._free],
-                        merit_applied[owner._free], owner._coordinate_scale[owner._free]), gap)
-                boundary_amount = self._native_boundary_amount(trial, full) if owner._bl5_native_material else None
+                    old_merit = max(self._frozen_trial_ratio(
+                        residual, merit_applied, trial_ratio), gap)
+                # The paired first-event heuristic remains a fixed-route experiment.
+                # Adaptive point increments use the established geometric cuts.
+                boundary_amount = self._native_boundary_amount(trial, full) if (owner._bl5_native_material or
+                    (self._paired_fibre_event and _accepted_hook is None)) else None
                 first_cutback = .5 if boundary_amount is None else min(.5, boundary_amount)
                 for backtrack in range(max_backtracks+1):
                     cancellation_safe_point(
@@ -1149,6 +1389,8 @@ class FinitePointDriver:
                         amount = 1. if backtrack == 0 else first_cutback*.5**(backtrack-1)
                         candidate = self._advance(trial, full, amount)
                     except _RotationStepTooLarge:
+                        if backtrack == 1 and allow_material_predictor:
+                            full = original_full
                         counts["rejected_trials"] += 1
                         continue
                     try:
@@ -1156,11 +1398,15 @@ class FinitePointDriver:
                                   if allow_handoff else None)
                         changed = evaluated(candidate)
                     except (BL5TrialDomainError, DistributingPoseDomainError):
+                        if backtrack == 1 and allow_material_predictor:
+                            full = original_full
                         counts["rejected_trials"] += 1
                         continue
-                    candidate_relative = (changed[2] if merit_applied is None else
-                        trial_ratio(changed[0][owner._free],
-                            merit_applied[owner._free], owner._coordinate_scale[owner._free]))
+                    if merit_applied is None:
+                        candidate_relative = changed[2]
+                    else:
+                        candidate_relative = self._frozen_trial_ratio(
+                            changed[0], merit_applied, trial_ratio)
                     # Current-state equilibrium is sufficient to advance to
                     # the next mandatory acceptance check. A frozen comparison
                     # norm must not reject an already equilibrated candidate.
@@ -1170,6 +1416,19 @@ class FinitePointDriver:
                         if allow_handoff:
                             handoff = FixedTrialHandoff.capture(self, trial, factor, pattern, changed, before=before)
                         break
+                    if backtrack == 0 and allow_material_predictor:
+                        cancellation_safe_point(cancellation_token, "stiffened-shell.finite.predictor")
+                        predicted, diagnostic = self._fibre_material_predictor(
+                            matrix, changed[1], residual, free, counts)
+                        self._material_predictor_diagnostics.append(dict(
+                            factor=float(factor), iteration=iteration, **diagnostic))
+                        cancellation_safe_point(cancellation_token, "stiffened-shell.finite.predictor")
+                        if predicted is not None:
+                            full = predicted
+                    # The copied pp direction gets only the existing half trial.
+                    # Rejection restores the parent direction for remaining fractions.
+                    if backtrack == 1 and allow_material_predictor:
+                        full = original_full
                     counts["rejected_trials"] += 1
                 else:
                     raise FiniteIncrementFailure(attempt("rejected", iteration+1,
@@ -1190,6 +1449,8 @@ class FinitePointDriver:
         residual, _, relative, gap, shell_next, beam_next = evaluation
         support = np.zeros(owner._K.shape[0])
         support[owner._fixed] = residual[owner._fixed]
+        if owner._coordinate_support:
+            support=coordinate_support.reactions(trial.q,trial.shell_anchors,owner._shell_count,owner._fixed,residual,owner._K.shape[0])
         next_factors = self._accepted_factors+(float(factor),)
         if owner._definition.shell.j2_curve is not None:
             next_shell_origins = _accepted_shell_material_origins(
@@ -1285,6 +1546,9 @@ class FinitePointDriver:
         return next_result
 
     def _beam_positions(self, state):
+        if self._compensated:
+            high,low=self._beam_position_pair(state)
+            return high+low
         positions = self._reference_positions.copy()
         for node in range(len(self.owner._beam_ids)):
             slot = self.owner._shell_count+6*node
@@ -1324,9 +1588,16 @@ class FinitePointDriver:
         prepared._adaptive_checkpoint = None
         return prepared.checkpoint()
 
-    def rebase_rotations(self, expected_generation, *, cancellation_token=None):
+    def rebase_rotations(self, expected_generation, *, cancellation_token=None,
+                         preserve_supported_charts=False):
         """Atomic same-load chart event; constitutive histories are untouched."""
         owner = self.owner
+        from ._stiffened_shell_affine_endpoint import is_native_point_material
+        if type(preserve_supported_charts) is not bool:
+            raise ValueError("preserve_supported_charts must be a strict boolean")
+        if (preserve_supported_charts and owner._definition.shell.q4_elements and
+                owner._definition.q4_pullback_policy != Q4_ALGORITHMIC_PULLBACK_POLICY):
+            raise ValueError("selective chart rebase requires explicit algorithmic Q4 pullback policy")
         if type(expected_generation) is not int:
             raise ValueError("integer accepted predecessor generation required")
         with owner._commit_lock:
@@ -1334,24 +1605,46 @@ class FinitePointDriver:
                 raise ValueError("stale or missing accepted rebase predecessor")
             previous = self._state
         fixed = set(owner._fixed)
+        eligible=[]
         for node in range(len(owner._shell_ids)):
             restrained = [6*node+j in fixed for j in (3, 4, 5)]
-            if any(restrained) and not all(restrained):
+            eligible.append(not any(restrained))
+            if not owner._coordinate_support and not preserve_supported_charts and any(restrained) and not all(restrained):
                 raise ValueError("shell anchor reset requires full rotational triples; partial supports need transformed equations")
         cancellation_safe_point(cancellation_token, "stiffened-shell.rebase.prepare")
         local = previous.q[:owner._shell_count]
-        if not np.any(local.reshape(-1, 6)[:, 3:] != 0.):
+        reset=np.asarray(eligible) if preserve_supported_charts else np.ones(len(eligible),dtype=bool)
+        if not np.any(local.reshape(-1, 6)[reset, 3:] != 0.):
             raise ValueError("no nonzero shell chart coordinates to rebase")
         frames = physical_frames(local, previous.shell_anchors)
-        anchors = owned_anchors(frames, len(owner._shell_ids))
+        anchor_values=(np.tile(np.eye(3),(len(eligible),1,1)) if previous.shell_anchors is None else
+                       previous.shell_anchors.copy())
+        anchor_values[reset]=frames[reset]
+        anchors = owned_anchors(anchor_values, len(owner._shell_ids))
         q = previous.q.copy()
-        q[:owner._shell_count].reshape(-1, 6)[:, 3:] = 0.
+        q[:owner._shell_count].reshape(-1, 6)[reset, 3:] = 0.
         trial = replace(previous, q=_owned(q), shell_anchors=anchors)
         if not np.allclose(physical_frames(q[:owner._shell_count], anchors), frames,
                            rtol=0., atol=1e-12):
             raise ValueError("rebase changed physical shell orientations")
+        # Rebase is the same accepted constitutive generation, not an unloading update.
+        rebase_beam_origins = (self._beam_predecessors if self._compensated and
+            is_native_point_material(owner) else self._beam_origins)
         residual, _, relative, gap, shell_repeated, beam_repeated = self._assemble(
-            trial, self._load_factor, self._shell_origins, self._beam_origins)
+            trial, self._load_factor,
+            self._shell_predecessors if self._compensated_coupled else self._shell_origins,
+            rebase_beam_origins)
+        if owner._has_physical_fibre or (self._compensated and is_native_point_material(owner)):
+            if beam_repeated != self._beam_origins:
+                raise ValueError("shell chart rebase changed exact native beam material history")
+            saved_arrays = native_history_arrays(
+                owner._beam_parts, self._beam_origins, "saved")
+            repeated_arrays = native_history_arrays(
+                owner._beam_parts, beam_repeated, "repeated")
+            for (_saved_name, saved), (_repeated_name, repeated) in zip(
+                    saved_arrays, repeated_arrays, strict=True):
+                if not np.array_equal(saved, repeated):
+                    raise ValueError("shell chart rebase changed native beam material history")
         if owner._bl5_material or getattr(owner,'_curved_material',False):
             for saved, repeated in zip(_material_arrays(self._beam_origins),
                                        _material_arrays(beam_repeated)):
@@ -1359,7 +1652,7 @@ class FinitePointDriver:
                             float(np.max(np.abs(repeated), initial=0.)), np.finfo(float).tiny)
                 if np.max(np.abs(saved-repeated), initial=0.) > 64.*np.finfo(float).eps*scale:
                     raise ValueError("BL5 chart rebase changed generalized material history")
-        if owner._bl5_shell_material or (getattr(owner,'_curved_material',False) and
+        if self._compensated_coupled or owner._bl5_shell_material or (getattr(owner,'_curved_material',False) and
                                        owner._definition.shell.j2_curve is not None):
             for saved, repeated in zip(_shell_material_arrays(self._shell_origins),
                                        _shell_material_arrays(shell_repeated)):
@@ -1370,6 +1663,8 @@ class FinitePointDriver:
         if not np.isfinite(relative) or not np.isfinite(gap) or relative > 1e-8 or gap > 1e-9:
             raise ValueError("mechanically inconsistent shell anchor reset")
         support = np.zeros(owner._K.shape[0]); support[owner._fixed] = residual[owner._fixed]
+        if owner._coordinate_support:
+            support=coordinate_support.reactions(trial.q,trial.shell_anchors,owner._shell_count,owner._fixed,residual,owner._K.shape[0])
         result = _with_shell_chart(replace(self._accepted,
             support_reactions=_owned(support), free_equilibrium_ratio=relative,
             constraint_max=gap, generation=expected_generation+1,
@@ -1388,14 +1683,32 @@ class FinitePointDriver:
         return result
 
     def checkpoint(self, *, _encode_anchors=True, _encode_control=True,
-                   _encode_programme=True, _encode_external=True):
+                   _encode_programme=True, _encode_external=True, _encode_compensated=True):
         if self._accepted is None:
             raise RuntimeError("no accepted finite mixed increment")
+        if self._compensated and self._programme is not None and _encode_programme:
+            from ._stiffened_shell_staged_load_experimental import encode_checkpoint
+            return encode_checkpoint(self._programme, self._load_factor,
+                self.checkpoint(_encode_programme=False))
+        if self._compensated and _encode_compensated and _encode_anchors and _encode_control and _encode_external:
+            if (self._external is not None or (self._adaptive_state is not None and
+                    not ((supports_paired_fibre_adaptive(self.owner) and self._programme is not None) or
+                         (supports_mixed_material_adaptive(self.owner) and self._programme is None)))):
+                raise ValueError('durable compensated controller checkpoint is not implemented')
+            # A full nodal controller cache already contains its correction envelope.
+            if self._adaptive_checkpoint is not None and _encode_programme:
+                return self._adaptive_checkpoint
+            from ._stiffened_shell_ge_checkpoint_binary import encode_compensated
+            state=self._state
+            return encode_compensated(self.checkpoint(_encode_compensated=False,
+                _encode_programme=_encode_programme),self._checkpoint_identity(),
+                {name:getattr(state,name) for name in ('q_low','frames_low','cells_low','resultants_low')})
         if self.owner._finite_distributing and (self._state.shell_anchors is not None or
                 self._programme is not None or self._external is not None):
             raise ValueError("finite distributing checkpoint requires nodal force state without chart/programme/external wrappers")
         if (self._adaptive_checkpoint is not None and _encode_anchors and
-                _encode_control and _encode_programme and _encode_external):
+                _encode_control and _encode_programme and _encode_external and
+                (not self._compensated or _encode_compensated)):
             return self._adaptive_checkpoint
         if self._external is not None and _encode_external:
             return self._external.checkpoint(self.checkpoint(
@@ -1429,6 +1742,20 @@ class FinitePointDriver:
                   ("pattern" if self._programme is None else "applied_dead_load",
                    self._pattern if self._programme is None else self._applied_load),
                   ("accepted_factors", np.asarray(self._accepted_factors)))
+        from ._stiffened_shell_affine_endpoint import is_native_point_material
+        if (self._compensated and
+                is_native_point_material(self.owner)):
+            material = ()
+            if self._compensated_coupled:
+                plastic, alpha = _shell_material_arrays(self._shell_origins)
+                origin_plastic, origin_alpha = _shell_material_arrays(self._shell_predecessors)
+                material = (("shell_plastic", plastic), ("shell_alpha", alpha),
+                    ("shell_origin_plastic", origin_plastic), ("shell_origin_alpha", origin_alpha))
+            return _encode_binary_checkpoint(kind(native_compensated_kind(self.owner._beam_parts,
+                    coupled=self._compensated_coupled)),
+                self._checkpoint_identity(),generation,arrays+
+                native_history_arrays(self.owner._beam_parts,self._beam_predecessors,'origin')+
+                native_history_arrays(self.owner._beam_parts,self._beam_origins,'accepted')+material)
         if self.owner._finite_distributing and not self.owner._distributing_material:
             return _encode_binary_checkpoint("finite_distributing", self._checkpoint_identity(), generation, arrays)
         if self.owner._distributing_native:
@@ -1559,7 +1886,7 @@ class FinitePointDriver:
         return raw
 
     def restore(self, value, *, rotation_anchors=None, pose_witness=None,
-                accepted_generation=None, adaptive_state=None, stable_q4=False):
+                accepted_generation=None, adaptive_state=None, stable_q4=False, corrections=None):
         """Restore an accepted endpoint after mechanical consistency checks.
 
         V3 checks material admissibility and re-evaluation from the saved
@@ -1568,6 +1895,8 @@ class FinitePointDriver:
         an independent replay of the accepted history.
         """
         owner = self.owner
+        if owner._coordinate_support and (adaptive_state is not None or self._external is not None or self._programme is not None):
+            raise ValueError('coordinate shell supports exclude controller checkpoint contexts')
         if self._accepted is not None:
             raise ValueError("cannot replace a live finite driver numerical policy")
         if bool(owner._finite_distributing) != (value.get("schema") in tuple(
@@ -1609,18 +1938,32 @@ class FinitePointDriver:
                 curved_shell != (owner._definition.shell.j2_curve is not None)):
             raise ValueError("curved material predecessor checkpoint requires its matching policy")
         native_shell = value.get("schema") == NATIVE_SHELL_SCHEMA
-        stable_s3 = value.get("schema") == STABLE_NATIVE_SCHEMA
+        # The curved-S3 arithmetic is selected by its distinct model identity;
+        # ordinary finite checkpoints must not switch it off on restore.
+        stable_s3 = (value.get("schema") == STABLE_NATIVE_SCHEMA or
+            (self._compensated and self._stable_s3 and value.get('schema') in tuple(_BINARY_SCHEMAS[k] for k in
+                ('finite_compensated_generalized_material', 'finite_compensated_fibre_material', 'finite_compensated_mixed_material', 'finite_compensated_generalized_coupled', 'finite_compensated_fibre_coupled', 'finite_compensated_mixed_coupled'))) or owner._curved_s3 or
+            (owner._coordinate_support and bool(owner._definition.shell.s3_elements)))
         if (owner._footprint_stable_s3 or self._external_stable_s3) and not stable_s3:
             raise ValueError("nodal footprint S3 checkpoint requires its stable numerical policy")
         if stable_s3 and not self._stable_s3:
-            raise ValueError("stable S3 native checkpoint requires elastic S3 fibre model")
+            raise ValueError("stable S3 checkpoint requires its admitted elastic policy")
         # This driver is still private to restore until all validation passes.
         self._stable_s3 = stable_s3
+        compensated_material=value.get('schema') in tuple(_BINARY_SCHEMAS[k] for k in
+            ('finite_compensated_generalized_material', 'finite_compensated_fibre_material', 'finite_compensated_mixed_material', 'finite_compensated_generalized_coupled', 'finite_compensated_fibre_coupled', 'finite_compensated_mixed_coupled'))
+        if self._compensated and not compensated_material:
+            raise ValueError('compensated native state requires its exact material schema')
+        if compensated_material:
+            from ._stiffened_shell_affine_endpoint import is_native_point_material
+            if (not self._compensated or not is_native_point_material(owner) or value.get('schema') !=
+                    _BINARY_SCHEMAS[native_compensated_kind(owner._beam_parts, coupled=self._compensated_coupled)]):
+                raise ValueError('exact compensated native point material domain required')
         native_material = (value.get("schema") in (NATIVE_MATERIAL_CHECKPOINT, STABLE_NATIVE_SCHEMA) or
-            native_shell or distributing_native)
+            native_shell or distributing_native or compensated_material)
         s3_material = (value.get("schema") == FINITE_S3_MATERIAL_CHECKPOINT or
                        (native_shell and bool(owner._definition.shell.s3_elements)))
-        shell_material = value.get("schema") in (
+        shell_material = self._compensated_coupled or value.get("schema") in (
             FINITE_SHELL_MATERIAL_CHECKPOINT, FINITE_S3_MATERIAL_CHECKPOINT, NATIVE_SHELL_SCHEMA, _BINARY_SCHEMAS["finite_bl5_coupled"], _BINARY_SCHEMAS["finite_curved_points_coupled"], _BINARY_SCHEMAS["finite_distributing_coupled"], _BINARY_SCHEMAS["finite_distributing_cyclic_coupled"], _BINARY_SCHEMAS["finite_distributing_cyclic_native_coupled"])
         material = value.get("schema") in (
             _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"],
@@ -1630,7 +1973,7 @@ class FinitePointDriver:
                          if material else base_keys)
         if owner._bl5_material or curved_material or distributing_material:
             expected_keys |= {"beam_origin_plastic", "beam_origin_accumulated"}
-        if owner._bl5_shell_material or curved_shell or distributing_shell:
+        if self._compensated_coupled or owner._bl5_shell_material or curved_shell or distributing_shell:
             expected_keys |= {"shell_origin_plastic", "shell_origin_alpha"}
         if native_material:
             expected_keys |= {name for prefix in ("origin", "accepted")
@@ -1644,7 +1987,7 @@ class FinitePointDriver:
                               "shell_origin_q", "shell_origin_anchors", "s3_states"}
         if (set(value) != expected_keys or
                 value["schema"] not in
-                (*tuple(_BINARY_SCHEMAS[k] for k in CURVED_POINT_MATERIAL_KINDS + FINITE_DISTRIBUTING_MATERIAL_KINDS), _BINARY_SCHEMAS["finite_distributing"], FINITE_CHECKPOINT, _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"], NATIVE_MATERIAL_CHECKPOINT, STABLE_NATIVE_SCHEMA, NATIVE_SHELL_SCHEMA, FINITE_MATERIAL_CHECKPOINT,
+                (_BINARY_SCHEMAS["finite_compensated_generalized_material"], _BINARY_SCHEMAS["finite_compensated_fibre_material"], _BINARY_SCHEMAS["finite_compensated_mixed_material"], _BINARY_SCHEMAS["finite_compensated_generalized_coupled"], _BINARY_SCHEMAS["finite_compensated_fibre_coupled"], _BINARY_SCHEMAS["finite_compensated_mixed_coupled"], *tuple(_BINARY_SCHEMAS[k] for k in CURVED_POINT_MATERIAL_KINDS + FINITE_DISTRIBUTING_MATERIAL_KINDS), _BINARY_SCHEMAS["finite_distributing"], FINITE_CHECKPOINT, _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"], NATIVE_MATERIAL_CHECKPOINT, STABLE_NATIVE_SCHEMA, NATIVE_SHELL_SCHEMA, FINITE_MATERIAL_CHECKPOINT,
                  FINITE_SHELL_MATERIAL_CHECKPOINT,
                  FINITE_S3_MATERIAL_CHECKPOINT) or
                 value["model"] != owner._identity or
@@ -1683,7 +2026,7 @@ class FinitePointDriver:
                 raise ValueError("shell chart anchor disagrees with physical pose witness")
             fixed = set(owner._fixed)
             for i, anchor in enumerate(rotation_anchors):
-                if (any(6*i+j in fixed for j in (3, 4, 5)) and
+                if (not owner._coordinate_support and any(6*i+j in fixed for j in (3, 4, 5)) and
                         np.linalg.norm(anchor-np.eye(3)) > 1e-12):
                     raise ValueError("anchored partial or fixed shell support is unsupported")
         elif pose_witness is not None or accepted_generation is not None:
@@ -1704,7 +2047,7 @@ class FinitePointDriver:
             if not np.array_equal(pattern, self._programme.load_at(factors[-1])):
                 raise ValueError("staged checkpoint applied force disagrees with programme")
         if native_material:
-            if not owner._has_physical_fibre and not owner._footprint_stable_s3 and not self._external_stable_s3:
+            if not compensated_material and not owner._has_physical_fibre and not owner._footprint_stable_s3 and not self._external_stable_s3:
                 raise ValueError("native material checkpoint requires fibre model")
             beam_origins = native_histories(owner._beam_parts, value, "origin")
             beam_accepted = native_histories(owner._beam_parts, value, "accepted")
@@ -1757,7 +2100,7 @@ class FinitePointDriver:
         else:
             shell_origins = self._shell_origins
         shell_accepted = shell_origins
-        if owner._bl5_shell_material or curved_shell or distributing_shell:
+        if self._compensated_coupled or owner._bl5_shell_material or curved_shell or distributing_shell:
             origin_plastic = _owned(value["shell_origin_plastic"], (q4_count, 12, 3))
             origin_alpha = _owned(value["shell_origin_alpha"], (q4_count, 12))
             if np.any(origin_alpha < 0.):
@@ -1774,7 +2117,12 @@ class FinitePointDriver:
             shell_origins = _shell_material_states(origin_plastic, origin_alpha) + predecessor_s3
         beam_nodal = q[owner._shell_count:
                        owner._shell_count+self._beam_nodal].reshape(-1, 6)
-        if (np.any(q[owner._fixed] != 0.) or
+        fixed_layout=owner._fixed
+        if owner._coordinate_support:
+            fixed_layout=np.array([s for s in owner._fixed if s>=owner._shell_count or s%6<3],dtype=int)
+            if coordinate_support.support_gap(q,rotation_anchors,owner._shell_count,owner._fixed)>1e-9:
+                raise ValueError('checkpoint violates original shell Log support equations')
+        if (np.any(q[fixed_layout] != 0.) or
                 np.any(beam_nodal[:, 3:] != 0.) or
                 np.any(q[owner._shell_count+self._beam_nodal:] != 0.) or
                 np.any(pattern[owner._shell_count+self._beam_nodal:] != 0.) or
@@ -1786,6 +2134,23 @@ class FinitePointDriver:
                    abs(np.linalg.det(frame)-1.) > 1e-9 for frame in family):
                 raise ValueError("nonphysical finite checkpoint rotation")
         trial = _State(q, frames, cells, resultants, multipliers, rotation_anchors)
+        if self._compensated:
+            if corrections is None: raise ValueError('durable compensated checkpoint corrections required')
+            from ._stiffened_shell_f06_increment_arithmetic import validate_pairs,validate_frames
+            if set(corrections)!= {'q_low','frames_low','cells_low','resultants_low'}:
+                raise ValueError('complete compensated state required')
+            owned={}
+            for name,high in (('q_low',q),('frames_low',frames),('cells_low',cells),('resultants_low',resultants)):
+                low=np.array(corrections[name],dtype=float,copy=True)
+                if low.shape!=high.shape: raise ValueError('compensated state shape mismatch')
+                (validate_frames if name in ('frames_low','cells_low') else validate_pairs)(high,low,name)
+                owned[name]=low
+            beam_start=owner._shell_count
+            translated=set(beam_start+6*n+i for n in range(len(owner._beam_ids)) for i in range(3))
+            if any(v!=0. for i,v in enumerate(owned['q_low']) if i not in translated):
+                raise ValueError('only native translation coordinate corrections are supported')
+            trial=replace(trial,**owned)
+        elif corrections is not None: raise ValueError('compensated checkpoint requires selected arithmetic policy')
         residual, _, relative, gap, shell_next, beam_next = self._assemble(
             trial, factors[-1], shell_origins, beam_origins,
             pattern=pattern if self._programme is None else None,
@@ -1836,6 +2201,8 @@ class FinitePointDriver:
                                 "mechanically inconsistent S3 J2 checkpoint")
         support = np.zeros(owner._K.shape[0])
         support[owner._fixed] = residual[owner._fixed]
+        if owner._coordinate_support:
+            support=coordinate_support.reactions(trial.q,trial.shell_anchors,owner._shell_count,owner._fixed,residual,owner._K.shape[0])
         result = FinitePointResult(
             "completed", factors[-1], _owned(q[:owner._shell_count]),
             _owned(self._beam_positions(trial)), frames, cells, resultants,

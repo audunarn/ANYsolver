@@ -85,9 +85,30 @@ def bordered_path_correction(matrix,residual,direction,gradient,gap,free):
     return full,float(step[-1])
 
 
+
+PAIRED_FIXED_WORK_QUADRATIC_V1="PAIRED_FIXED_WORK_QUADRATIC_V1"
+
+
+def _quadratic_merit_amount(old,trial,gradient,amount):
+    """Proposal only: gradient is d(||W R||^2)/dt divided by old^2.
+
+    Normalize both merits by their maximum. Invalid/non-descent quadratics
+    retain geometric reduction; no norm floor or predicted acceptance.
+    """
+    from math import isfinite
+    fallback=.5*amount
+    if not all(isfinite(v) for v in (old,trial,gradient,amount)) or old<=0. or trial<0. or gradient>=0. or amount<=0.:
+        return fallback
+    scale=max(old,trial);r=old/scale;s=trial/scale
+    slope=(gradient*r)*r
+    denominator=s*s-r*r-slope*amount
+    if not isfinite(denominator) or denominator<=0.:return fallback
+    proposal=amount*((-slope*amount)/(2.*denominator))
+    return proposal if isfinite(proposal) and 0.<proposal<amount else fallback
+
 def correct(driver, *, base_load, load_direction, amplitude, control_dof,
             target, max_iterations=20, max_backtracks=12, cancellation_token=None,
-            trial_policy=None, event_records=None):
+            trial_policy=None, event_records=None, force_seed_sha256=None, merit_globalization=None):
     """Return an uncommitted equilibrium at a translational displacement.
 
     Current scope is nodal dead translations only. No load-programme cursor is
@@ -100,6 +121,11 @@ def correct(driver, *, base_load, load_direction, amplitude, control_dof,
     from ._stiffened_shell_bl5_local_experimental import BL5TrialDomainError
     from ._stiffened_shell_distributing_pose import DistributingPoseDomainError
     owner=driver.owner
+    if merit_globalization is not None:
+        from ._stiffened_shell_affine_endpoint import is_paired_displacement
+        if (merit_globalization!=PAIRED_FIXED_WORK_QUADRATIC_V1 or
+                not is_paired_displacement(owner) or trial_policy is not None):
+            raise ValueError("paired fixed-work interpolation policy required")
     from ._stiffened_shell_branch_event_trial import POLICY as EVENT_POLICY
     if trial_policy not in (None,EVENT_POLICY):
         raise ValueError("explicit supported private displacement trial policy required")
@@ -114,7 +140,7 @@ def correct(driver, *, base_load, load_direction, amplitude, control_dof,
         raise ValueError("native material displacement excludes branch event policy")
     if native:
         from ._stiffened_shell_displacement_adaptive import require_native_seed
-        require_native_seed(owner,driver)
+        require_native_seed(owner,driver,force_seed_sha256=force_seed_sha256)
     if driver._accepted is None or not (
             owner._bl5_shell_material or getattr(owner,"_curved_material",False) or native or distributing):
         raise ValueError("accepted coupled-J2 BL5 predecessor required")
@@ -212,6 +238,15 @@ def correct(driver, *, base_load, load_direction, amplitude, control_dof,
             raise failure("displacement Newton iteration limit",iteration)
         step,delta=correction(control_gap,iteration)
         old=merit(state,evaluation)
+        interpolating=merit_globalization is not None
+        next_amount=1.
+        gradient=float('nan')
+        if interpolating and np.isfinite(old) and old>0.:
+            # Complete fixed free-row work metric and actual bordered action.
+            action=evaluation[1]@step-direction*delta
+            with np.errstate(over='ignore',invalid='ignore',divide='ignore'):
+                gradient=float(2.*np.dot(evaluation[0][free]*weights[free]/old,
+                                        action[free]*weights[free]/old))
         initial_amount=1.
         if trial_policy==EVENT_POLICY:
             from ._stiffened_shell_branch_event_trial import trial_fraction
@@ -232,22 +267,27 @@ def correct(driver, *, base_load, load_direction, amplitude, control_dof,
             # assembly replaces recovery scratch. Full Newton remains first.
             native_cutback=driver._native_boundary_amount(state,step)
         for backtrack in range(max_backtracks+1):
-            amount=initial_amount*.5**backtrack
-            if native_cutback is not None and native_cutback<.5 and backtrack:
+            amount=next_amount if interpolating else initial_amount*.5**backtrack
+            if not interpolating and native_cutback is not None and native_cutback<.5 and backtrack:
                 # A local affine material switch is only a proposal. Give it
                 # one bounded trial, then retain geometric merit cutbacks if
                 # finite-pose remainder makes that proposal ineffective.
                 amount=native_cutback if backtrack==1 else .5**(backtrack-1)
+            if interpolating and (not np.isfinite(amount) or amount<=0.):
+                raise failure("nonrepresentable interpolated trial amount",iteration)
             try:
                 candidate=driver._advance(state,step,amount)
                 value=amplitude+amount*delta
                 changed=evaluate(candidate,value)
             except (_RotationStepTooLarge,BL5TrialDomainError,DistributingPoseDomainError):
-                rejected+=1;continue
+                rejected+=1
+                if interpolating:next_amount=.5*amount
+                continue
             if merit(candidate,changed)<old:
                 state,amplitude,evaluation=candidate,value,changed
                 break
             rejected+=1
+            if interpolating:next_amount=_quadratic_merit_amount(old,merit(candidate,changed),gradient,amount)
         else:
             raise failure("displacement backtrack budget exhausted",iteration)
     raise AssertionError("unreachable displacement corrector state")

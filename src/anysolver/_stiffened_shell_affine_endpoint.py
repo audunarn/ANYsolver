@@ -29,6 +29,12 @@ def is_native_point_material(owner):
         not definition.distributing_footprints and not definition.finite_distributing_footprints)
 
 
+def is_paired_displacement(owner):
+    """Exact opted-in flat Q4-J2 mixed native POINT inventory; fixed shell control."""
+    from ._stiffened_shell_ge_finite_experimental import supports_mixed_material_adaptive
+    return supports_mixed_material_adaptive(owner)
+
+
 def uses_native_material_history(owner):
     """Native station histories, without broadening POINT profile admission."""
     return is_native_point_material(owner) or bool(getattr(owner,"_bl5_native_material",False)) or bool(getattr(owner,"_distributing_native",False))
@@ -154,6 +160,18 @@ def validate_arrays(owner,a,*,native_chart=False):
             _require_elastic_footprint_histories(beam_accepted,"displacement accepted",scope="finite distributing footprints")
     state=_State(q,_owned(a["frames"]),_owned(a["cells"]),
                  _owned(a["resultants"]),_owned(a["multipliers"]),anchors)
+    if is_paired_displacement(owner):
+        from dataclasses import replace
+        from ._stiffened_shell_f06_increment_arithmetic import validate_pairs,validate_frames
+        words={}
+        for name in ("q_low","frames_low","cells_low","resultants_low"):
+            high=getattr(state,name.removesuffix("_low"));low=_owned(a[name],high.shape)
+            (validate_frames if name in ("frames_low","cells_low") else validate_pairs)(high,low,name)
+            words[name]=low
+        translated={owner._shell_count+6*i+j for i in range(len(owner._beam_ids)) for j in range(3)}
+        if any(v!=0. for i,v in enumerate(words["q_low"]) if i not in translated or i in owner._fixed):
+            raise ValueError("paired displacement only admits free native translation corrections")
+        state=replace(state,**words)
     evaluation=driver._assemble(state,0.,shell_parent,beam_parent,applied_load=a["applied_load"])
     if not np.isfinite(evaluation[2]) or evaluation[2]>1e-8 or evaluation[3]>1e-9:
         raise ValueError("mechanically inconsistent displacement equilibrium")

@@ -152,11 +152,16 @@ def test_v6e_local_recovery_and_public_recovery_preserve_provenance() -> None:
     )
     assert local["formulation_id"] == FORMULATION_ID
     assert local["implementation_id"] == IMPLEMENTATION_ID
-    assert local["recovery_scope"] == "PHYSICAL_LOCAL_RESULTANTS_ONLY"
+    assert local["recovery_scope"] == "PHYSICAL_LOCAL_SURFACE_STRESSES"
+    assert local["physical_stress_available"] is True
+    assert np.asarray(local["von_mises"]).shape == (3,)
     assert local["numerical_fields_excluded"] is True
     public = recover_stress_result(model, displacements, return_global=False)
     assert public.element_stresses[1]["formulation_id"] == FORMULATION_ID
-    assert public.element_stresses[1]["recovery_scope"] == "PHYSICAL_LOCAL_RESULTANTS_ONLY"
+    assert public.element_stresses[1]["recovery_scope"] == "PHYSICAL_LOCAL_SURFACE_STRESSES"
+    np.testing.assert_array_equal(
+        public.element_stresses[1]["von_mises"], local["von_mises"]
+    )
 
 
 def test_v6e_serialization_round_trip_is_exact_and_pickle_stays_blocked() -> None:

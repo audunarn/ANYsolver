@@ -23,6 +23,80 @@ def candidate(shell_edges, halfcells):
     return replace(base, lines=(line,), fixed=fixed)
 
 
+@pytest.mark.parametrize("basis", ("p0", "discontinuous_p1"))
+def test_bl5_supported_line_rows_ignore_inactive_native_coordinates(basis):
+    definition = candidate(4, 4)
+    if basis == "p0":
+        definition = replace(definition, lines=(
+            replace(definition.lines[0], basis="p0"),))
+    owner = api.create_analysis(definition=definition)
+    active = np.unique(np.concatenate(tuple(
+        sample[0].port.active_beam_slots() for sample in owner._line_samples)))
+    inactive = np.setdiff1d(np.arange(owner._beam_count), active)
+    assert len(inactive) > 0
+    assert owner._C[:, owner._shell_count+inactive].nnz == 0
+    # Current fixed supports are coordinate selections, so restriction to
+    # free coordinates cannot mix inactive native columns back into BL5 work.
+    free_inactive = np.intersect1d(owner._free,
+                                   owner._shell_count+inactive)
+    assert owner._C[:, free_inactive].nnz == 0
+
+
+@pytest.mark.parametrize("basis", ("p0", "discontinuous_p1"))
+@pytest.mark.parametrize("shell_kind", ("q4", "mixed", "s3"))
+def test_bl5_supported_rows_match_independent_flat_physical_work(basis,
+                                                                   shell_kind):
+    """Check all work columns across Q4/S3 trace hosts, including the arm."""
+    definition = candidate(4, 4)
+    if shell_kind != "q4":
+        quads = definition.shell.q4_elements
+        cut = 2 if shell_kind == "mixed" else 0
+        triangles = tuple(triangle for a, b, c, d in quads[cut:]
+                          for triangle in ((a, b, c), (a, c, d)))
+        definition = replace(definition, shell=replace(
+            definition.shell, q4_elements=quads[:cut], s3_elements=triangles))
+    if basis == "p0":
+        definition = replace(definition, lines=(
+            replace(definition.lines[0], basis="p0"),))
+    owner = api.create_analysis(definition=definition)
+    expected = np.zeros(owner._C.shape)
+    eye = np.eye(3)
+    normal = eye[:, 2]
+    # Columns are the physical variation omega cross normal, not a solver AD
+    # or element-tangent result.
+    director_variation = np.column_stack(tuple(
+        np.cross(eye[:, k], normal) for k in range(3)))
+    for sample, (row_ids, density_basis) in zip(
+            owner._line_samples, owner._line_terms):
+        port, slots, measure, _edge, _alpha = sample
+        np.testing.assert_allclose(port.reference_director, normal, atol=1e-14)
+        np.testing.assert_allclose(port.port.frame, eye, atol=1e-14)
+        np.testing.assert_allclose(port.port.lift, 0., atol=1e-14)
+        jacobian = np.zeros((5, 21))
+        for node, fraction in enumerate((1.-port.station, port.station)):
+            start = 6*node
+            jacobian[:3, start:start+3] = fraction*eye
+            jacobian[:3, start+3:start+6] = (
+                fraction*.5*port.thickness*director_variation)
+            jacobian[3:, start+3:start+6] = (
+                fraction*port.director_basis@director_variation)
+        for node, fraction in enumerate((1.-port.port.weight,
+                                         port.port.weight)):
+            jacobian[:3, 12+3*node:15+3*node] = -fraction*eye
+        # R_b^T (r_shell-r_beam) varies by arm cross omega at this
+        # identity-frame reference. R_b^T d_shell varies by -omega cross d.
+        jacobian[:3, 18:21] = np.column_stack(tuple(
+            np.cross(port.reference_arm, eye[:, k]) for k in range(3)))
+        jacobian[3:, 18:21] = -port.director_basis@director_variation
+        for row, contribution in zip(
+                row_ids, measure*density_basis.T@jacobian):
+            expected[row, slots] += contribution
+    np.testing.assert_allclose(owner._C.toarray(), expected,
+                               rtol=0., atol=5e-13)
+    np.testing.assert_allclose(owner._C[:, owner._free].toarray(),
+                               expected[:, owner._free], rtol=0., atol=5e-13)
+
+
 @pytest.mark.parametrize("shell_edges,halfcells", ((8, 8), (8, 16), (8, 32),
     (8, 64), (16, 8), (32, 8), (64, 8)))
 def test_complete_development_rule_covers_ratio_inventory(shell_edges, halfcells):
