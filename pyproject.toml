@@ -24,8 +24,8 @@ classifiers = [
   "Topic :: Scientific/Engineering",
 ]
 dependencies = [
-  "numpy>=1.26",
-  "scipy>=1.11",
+  "numpy>=2.0",
+  "scipy>=1.13",
   "threadpoolctl>=3.5",
   "ANYmaterial>=0.2,<0.3",
   "ANYmesher>=0.4,<0.6",

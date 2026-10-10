@@ -423,6 +423,13 @@ from .analysis_session import (
     StructuralMatrixPlan,
 )
 from .static_batch import StaticCase, StaticBatch, StaticBatchError, iter_linear_batches
+from .prepared_static import (
+    PreparedStaticBatch,
+    PreparedStaticCapabilityError,
+    PreparedStaticError,
+    PreparedStaticEvaluator,
+    prepare_static_evaluator,
+)
 from .static_envelopes import EnvelopeReducer, EnvelopeExtrema, GoverningValue
 from .linalg import (
     AutoSparseSolverBackend,
@@ -871,6 +878,14 @@ __all__ = [
     "StaticBatch",
     "StaticBatchError",
     "iter_linear_batches",
+    "PreparedStaticBatch",
+    "PreparedEnvelopeResult",
+    "PreparedEnvelopeExtrema",
+    "PreparedGoverningValues",
+    "PreparedStaticCapabilityError",
+    "PreparedStaticError",
+    "PreparedStaticEvaluator",
+    "prepare_static_evaluator",
     "EnvelopeReducer",
     "EnvelopeExtrema",
     "GoverningValue",
@@ -1042,3 +1057,8 @@ __all__ += [
     "OrphanDofReport",
     "RestartStateError",
 ]
+
+from .prepared_static_envelopes import PreparedEnvelopeResult, PreparedEnvelopeExtrema, PreparedGoverningValues
+
+from .prepared_static_response import PatternCase, PreparedStaticResponseEvaluator, prepare_static_response_evaluator
+__all__ += ['PatternCase', 'PreparedStaticResponseEvaluator', 'prepare_static_response_evaluator']
