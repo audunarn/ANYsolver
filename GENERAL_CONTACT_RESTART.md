@@ -1,3 +1,13 @@
+Latest verified delta: Linux official parent m1/8 completed1415.63s, contact455pass49skip4fail (three test-harness/schema issues fixed b477ad4c; pressurefixture now2pass on both hosts). Windows m0/s2 completed599.24s, contact78pass11skip2deadline failures; m0/s3 active exec16105 on audited5e35 snapshot. Full inventory not yet covered.
+
+Pressure response: exact clip-topology marginal fixture shifted0.5->0.45 with unchanged partial supports/independent reequilibration tolerances; original0.5 retained as genuine refusal regression. Mistral handoff and guard-nonvacuity evidence inspected. Windows2pass142.03s;Linux2pass83.57s. No production source change.
+
+Native pair: coefficient-only optimization + exact prepared-record reuse remain uncommitted. Root review fixed shorter-first subtraction defect via Mistral; helper/curve parity and new gap-only/cancellation tests pass. Old fullroute still120s deadline (39endpoint/34swept calls). Root uses existing complete geometry certificate at swept midpoints without constructing forces/tangents; unchanged endpoint acceptance. First cold100N/m2 line-penalty case now fails explicit gap limit iteration7 at-50.0703um, not a success. Existing4000N/m2 refined check active55984; no physics/tolerance change or claimed fullroute speedup. Surface replay zero-rate support candidate still fails128cap; all partial edits preserved/uncommitted.
+
+Active Mistral: cold-front-tightening-v1 exec85586 owns native_curved_plane_work.py/localfronttest; two-fibre-s3-repair-v1 exec69290 owns native_multi_s3_static.py/two-fibre test. No overlapping edits or sharedcore scope. Pivot owner complete. Definition of done remains unmet; no programme qualification/release claim.
+
+Continuation note: both Mistral finish jobs exhausted their tool/turn limits without HANDOFF or complete route checks. Useful edits retained. Root takes integration verification and targeted repair after repeated missing final checks/CRLF edit failures (concrete execution reliability reason); no scientific gates, budgets or ownership boundaries relaxed. Native pair source currently requires actual coupled verification. Surface support/event edits remain partial and failed under the unchanged128 support cap. Logs native-pair-final-delta-worker.log/native-surface-final-delta-worker.log retained.
+
 ## Current continuation delta — 11 October, source 5e35d8df
 
 Done condition still unmet. Official Windows m0/s2 and Linux m1/8 are running without fail-fast; no full inventory claim. Native two-fibre/S3 one-patch hits the preserved cooperative deadline; two-patch also fails, exact trace retained. Out-of-scope rev8 failures remain visible and untouched.
