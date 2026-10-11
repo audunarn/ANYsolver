@@ -30,6 +30,8 @@ asserted anywhere. Nearest-rounded floats are descriptive only; the exact
 rational strings are the retained bounds.
 """
 import importlib.util
+
+import pytest
 from fractions import Fraction
 from pathlib import Path
 
@@ -69,7 +71,13 @@ def test_original_six_reference_obligations_still_hold():
         getattr(original, name)()
 
 
+def _require_local_capture():
+    if not Path(ref.CAPTURE_SOURCE).is_file():
+        pytest.skip("Original ten-record seed capture is local evidence and is not present on this host")
+
+
 def test_capture_loader_exports():
+    _require_local_capture()
     records = ref.load_capture_records()
     assert len(records) == 10
     assert [record["kind"] for record in records] == (
@@ -92,6 +100,7 @@ def test_capture_loader_exports():
 
 
 def _path6_record():
+    _require_local_capture()
     return ref.load_capture_records()[8]  # two endpoint records first
 
 
