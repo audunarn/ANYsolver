@@ -229,6 +229,12 @@ def _instrumented_v2_replay(h, g, iteration_cap, tolerance):
     return z, terminal, trace
 
 
+@pytest.mark.skipif(not (FIXTURE_DIR / "candidate_fixture.py").is_file()
+                    or not DESCRIPTOR_PATH.is_file(),
+                    reason='historical reproducer inputs absent: original-workflow '
+                           'QP mechanism capture requires candidate_fixture.py and '
+                           'force-full.json under C:/ANYworkspaceWork/'
+                           'contact_joint_dual_full8_20261010')
 def test_qp_iteration_cap_mechanism_is_recorded():
     model, definition, seeded, program = _original_case()
     captured = {}
