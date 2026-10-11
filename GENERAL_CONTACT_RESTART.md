@@ -1,3 +1,16 @@
+## Current continuation delta — 11 October, source 5e35d8df
+
+Done condition still unmet. Official Windows m0/s2 and Linux m1/8 are running without fail-fast; no full inventory claim. Native two-fibre/S3 one-patch hits the preserved cooperative deadline; two-patch also fails, exact trace retained. Out-of-scope rev8 failures remain visible and untouched.
+
+- Linux changed small-patch caller coverage: 18 nodes passed across probe/current importer receipts. One stale prose assertion failed first, then was updated to the verified half-load prefix claim while retaining installed-package/D1 non-acceptance. Windows eligibility4 pass (4.46s); Linux remaining6 pass (36.20s), earlier importer11 pass and probe1 pass. Full raw receipts retained.
+- Mistral pair owner continues central coefficient optimization and actual coupled route. Root review found shorter-first subtraction sign error; ROOT_REVIEW_DELTA.md requires helper parity and repair. Existing 1120 bound matches/8 tests do not close that edge case or full route. Current exec78210, log native-pair-final-delta-worker.log.
+- Mistral surface owner continues certified two-event history/support/integration, not sampled admission or zeroing pulse work; current exec72275, log native-surface-final-delta-worker.log. No budget/tolerance/profile changes.
+- Cold 8e7 native enforcement remains failed despite seeded pass; provisional fixture/tests uncommitted. Exact 34 refused poses and failed componentwise discriminator retained; no third-selector sweep authorized by this note.
+
+Evidence: .development/contact-restart-20261011 (never stage). No push, Actions, sibling/shared/prepared/submodel/rev8 changes. Old records below remain historical authority/evidence.
+
+---
+
 # Active restart â€” contact on consolidated main, 11 October 2026
 
 Authority: PROGRAMME_RESTART_BRIEF_20261011.md. Own worktree `.worktrees/contact-resume`, branch `codex/contact-on-main`, base1b45319f, current committed06064df6 before the following handoff commit. No pushes/PRs/Actions, sibling/main/shared/rev8 edits or other-chat messages. Evidence unstaged. Historical authorities/failures/scientific criteria stay intact.
