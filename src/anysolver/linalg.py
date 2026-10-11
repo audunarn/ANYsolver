@@ -749,7 +749,11 @@ class AutoSparseSolverBackend:
         return fallback
 
 
-DEFAULT_BACKEND = AutoSparseSolverBackend() if _HAS_PYPARDISO else SparseSolverBackend()
+# One size-aware policy in every environment (it falls back to SuperLU without
+# PyPardiso). Choosing it here, not later on import of the nonlinear bootstrap,
+# keeps the default fixed for the whole process, which the prepared static
+# evaluator's binding checks rely on.
+DEFAULT_BACKEND = AutoSparseSolverBackend()
 
 
 def _options_signature(options: Optional[Mapping[str, Any]]) -> str:
