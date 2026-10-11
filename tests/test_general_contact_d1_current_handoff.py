@@ -1,5 +1,5 @@
 """Focused current D1 helper refusals; no acceptance/reference campaign."""
-import copy,json
+import copy,json,os
 from pathlib import Path
 import pytest
 from scripts.general_contact_d1_displacement_cycle_dev import build_displacement_cycle,load_restart,validate_saved_displacement
@@ -39,6 +39,8 @@ def test_force_restart_refusal_preserves_global_sweep_method(kind,tmp_path,monke
     assert calls==[]
 
 @pytest.mark.parametrize('kind',['weighted_row','load','endpoint','ncp','target','pose','terminal','history','step_norm','nan_pose','inf_target','nan_norm','pose_shape'])
+@pytest.mark.skipif(not os.environ.get('D1_CURRENT_DISPLACEMENT_RESULT'),
+    reason='archived displacement result D1_CURRENT_DISPLACEMENT_RESULT absent: mutated-contract refusal replay requires the original saved result')
 def test_saved_displacement_refuses_mutated_contract(kind):
     import os
     original=json.loads(Path(os.environ['D1_CURRENT_DISPLACEMENT_RESULT']).read_text());saved=copy.deepcopy(original)

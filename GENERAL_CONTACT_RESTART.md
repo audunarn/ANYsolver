@@ -1,3 +1,15 @@
+# Active restart — consolidated main, 11 October 2026
+
+User resumed under C:/ANYworkspaceWork/consolidation-backup-20261010/PROGRAMME_RESTART_BRIEF_20261011.md.
+Worktree: C:/Github/ANYsolver/.worktrees/contact-resume; branch codex/contact-on-main; starting main 1b45319fcd82e69d6914600e946ea1e0cbf002aa.
+Immediate outcome: repair the 42-node contact queue and subsequently exposed contact failures; full portable CI on Windows and Linux without -x. Evidence-dependent tests skip clearly only when their real prerequisite is absent; no deselections or weakened mechanics gates.
+This is development/portability repair, not engineering acceptance or full C0–C9 completion. Prior scientific decisions, failures and consumed authorities remain preserved. New brief authorizes local CI; old frozen campaigns are not reopened.
+Only this worktree and contact-owned files may change. Shared files, prepared-static/submodelling/rev8 files, main, old worktrees and other chats are excluded. No push, PR or Actions. Historical evidence restored unstaged; never commit docs/agent_plans/development or .development.
+Mistral owns the connected queue diagnosis/repair/focused-check slice; root owns integration, verification and disposition. Early decision: prioritize the native access violation and stale mocks, then evidence portability and shared-process contamination. Keep numerical laws and tolerance contracts intact.
+Current status: first portability/refusal slice modifies19 contact test files; product source and shared files unchanged. Pinned Python3.13 driver checks passed, small-patch active completion still diverges. Root split archive binding from always-enabled literal math and verified7 seed-reference checks. Full portable Windows/Linux CI is next; no engineering acceptance or release established. Worker/check receipts go in .development/contact-restart-20261011. Final done requires both-host programme tests green, exact commit SHA and results report; full programme remains incomplete.
+
+---
+## Preserved prior pause record (historical paths and authorities)
 # General contact restart — PAUSED, 10 October 2026
 
 ## Controlling state
@@ -88,3 +100,4 @@ Briefs, adopted deltas V2–V6, worker logs and independent-review-v1.log remain
 preserves original source/artifact identities, historical failures, frozen/consumed
 restrictions and broader programme gaps. Existing b9 installed results stay bound
 to their original source/artifact. No engineering acceptance transfers to new code.
+

@@ -23,6 +23,7 @@ internal Newton or partial-substep state is never exported.
 """
 import json
 import os
+import tempfile
 from dataclasses import asdict
 
 from test_general_contact_admission_globalization_driver_small_patch import (
@@ -79,7 +80,7 @@ def test_prefix_half_joint_overlap_certificate_physical_gates():
     # Every public result/report/physics gate passed: export the actual
     # complete restart checkpoint and the source/program/settings
     # identifiers under the attempt TEMP for later connected checks.
-    temp = os.environ["TEMP"]
+    temp = (os.environ.get("TEMP") or tempfile.gettempdir())
     with open(os.path.join(temp, "prefix-half-restart-checkpoint-v1.json"),
               "wb") as handle:
         handle.write(result.restart_checkpoint_bytes())

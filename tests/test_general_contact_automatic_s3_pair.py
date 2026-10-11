@@ -342,8 +342,8 @@ def test_s3_smooth_full_work_tangent_and_unsafe_path():
     unsafe=u.copy()
     for n in range(1,7):unsafe[model.mesh.dof_manager.get_node_dofs(n)[2]]=-.02
     assert not manager._swept_admissible(np.zeros_like(u),unsafe)
-    output=Path(os.environ['AUTOMATIC_DOMAIN_RESULT'])
-    output.write_text(json.dumps(dict(tangent_errors=errors,independent_gap=oracle,unsafe_endpoint_path_refused=True,kernel_scalar_integral_errors=kernel_errors),indent=2))
+    output=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if output:Path(output).write_text(json.dumps(dict(tangent_errors=errors,independent_gap=oracle,unsafe_endpoint_path_refused=True,kernel_scalar_integral_errors=kernel_errors),indent=2))
     assert max(errors)<=1e-5,errors
 
 

@@ -11,7 +11,9 @@ from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
 from anysolver.general_contact.s3_friction_static import create_s3_friction_manager
 
 def save(value):
-    Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(value,indent=2,default=lambda x:x.tolist() if hasattr(x,'tolist') else x.item()))
+    root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if not root:return
+    Path(root).write_text(json.dumps(value,indent=2,default=lambda x:x.tolist() if hasattr(x,'tolist') else x.item()))
 def evidence():return Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])
 
 def test_prepare():

@@ -249,6 +249,8 @@ def independent_physical_gap_lower(model,q):
     return get_oracle().gap_bound(model,q)
 
 
+@pytest.mark.skipif(not os.environ.get('FINITE_V2D_WORKFLOW'),
+    reason='archived workflow input FINITE_V2D_WORKFLOW absent: saved-fixture replay requires the original delivery root')
 def test_saved_complete_workflow_independent_skin_gap():
     root=Path(os.environ['FINITE_V2D_WORKFLOW']);saved=workflow_fresh(root)
     model,definition,settings,program=build()

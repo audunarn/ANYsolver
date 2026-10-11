@@ -155,6 +155,8 @@ def test_explicit_precedence_keeps_properties_and_fixed_orientation():
 
 
 
+@pytest.mark.skipif(not os.environ.get('FINITE_AUTOMATIC_WORKFLOW'),
+    reason='archived workflow input FINITE_AUTOMATIC_WORKFLOW absent: saved-fixture replay requires the original delivery root')
 def test_saved_complete_workflow_independent_skin_gap():
     root=Path(os.environ['FINITE_AUTOMATIC_WORKFLOW']);saved=workflow_fresh(root)
     model,domain,settings,resolution,program=build();definition=resolution.definition

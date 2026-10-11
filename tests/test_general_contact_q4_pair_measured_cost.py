@@ -2,7 +2,10 @@
 import cProfile,json,os,pstats
 from pathlib import Path
 import numpy as np
+import pytest
 
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE') or not (Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/'full-baseline-1.json').is_file(),
+    reason='archived baseline input AUTOMATIC_WORKFLOW_EVIDENCE/full-baseline-1.json absent: saved-candidate replay requires the original evidence root')
 def test_saved_candidate_profile():
     from examples.general_contact_automatic_q4_pair import build
     from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
@@ -18,9 +21,12 @@ def test_saved_candidate_profile():
     result=q4_q4_overlap_derivatives(reference,source[si],target[ti],**CONTROLS)
     profiler.disable();profiler.dump_stats(str(root/'saved-candidate.prof'))
     with (root/'saved-candidate-profile.txt').open('w') as stream:pstats.Stats(profiler,stream=stream).strip_dirs().sort_stats('cumtime').print_stats(35)
-    Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(dict(integration_triangles=result.integration_triangles,branch=repr(result.branch_signature)),indent=2),encoding='utf-8')
+    result_root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if result_root:Path(result_root).write_text(json.dumps(dict(integration_triangles=result.integration_triangles,branch=repr(result.branch_signature)),indent=2),encoding='utf-8')
 
 
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE') or not (Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/'install.json').is_file() or not (Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/'outputs/full-baseline-1.json').is_file(),
+    reason='archived baseline inputs AUTOMATIC_WORKFLOW_EVIDENCE install.json/outputs/full-baseline-1.json absent: baseline-peer parity replay requires the original evidence root')
 def test_smooth_parity_and_real_both_body_work(monkeypatch):
     import importlib.util,sys
     from anysolver.general_contact import q4_q4_overlap_derivatives as current
@@ -65,7 +71,8 @@ def test_smooth_parity_and_real_both_body_work(monkeypatch):
     a,b=old[1].toarray(),new[1].toarray();tangent_error=float(np.max(np.abs(a-b))/max(1.,np.max(np.abs(a))))
     assert force_error<=1e-13 and tangent_error<=1e-13
     assert np.count_nonzero(new[0][[model.mesh.dof_manager.get_node_dofs(n)[2] for n in range(1,16)]])>1
-    Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(dict(local_cases=report,actual_force_error=force_error,actual_tangent_error=tangent_error,process_cache=False,baseline_peer_source=str(spec.origin),baseline_peer_sha256=__import__('hashlib').sha256(Path(spec.origin).read_bytes()).hexdigest(),baseline_wheel_sha256=install['wheel_sha256']),indent=2),encoding='utf-8')
+    result_root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if result_root:Path(result_root).write_text(json.dumps(dict(local_cases=report,actual_force_error=force_error,actual_tangent_error=tangent_error,process_cache=False,baseline_peer_source=str(spec.origin),baseline_peer_sha256=__import__('hashlib').sha256(Path(spec.origin).read_bytes()).hexdigest(),baseline_wheel_sha256=install['wheel_sha256']),indent=2),encoding='utf-8')
 
 
 def test_actual_q4_backend_scope_and_legacy_dispatch(monkeypatch):
@@ -96,4 +103,5 @@ def test_actual_q4_backend_scope_and_legacy_dispatch(monkeypatch):
     maximum=0.
     for field in ('reference_support','reference_weighted_gap','support_gradient','support_hessian','weighted_gap_gradient','weighted_gap_hessian'):
         a,b=getattr(old_numpy,field),getattr(old_dispatch,field);error=float(np.max(np.abs(a-b))/max(1.,np.max(np.abs(a))));maximum=max(maximum,error);assert error<=1e-13
-    Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(dict(actual_24_coordinate_compiled_trap_pass=True,flag_enabled_disabled_q4_exact=True,actual_legacy_21_dispatch_calls=len(calls),legacy_scaled_parity=maximum,jit_campaign=False),indent=2),encoding='utf-8')
+    result_root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if result_root:Path(result_root).write_text(json.dumps(dict(actual_24_coordinate_compiled_trap_pass=True,flag_enabled_disabled_q4_exact=True,actual_legacy_21_dispatch_calls=len(calls),legacy_scaled_parity=maximum,jit_campaign=False),indent=2),encoding='utf-8')

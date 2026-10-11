@@ -32,6 +32,7 @@ no trajectory claim is made.
 import importlib.util
 import json
 import os
+import tempfile
 import platform
 from pathlib import Path
 
@@ -246,7 +247,7 @@ def test_first_actual_v1_seed_decision_is_captured_before_newton():
     capture = _decision_capture(payload)
     capture["provenance"] = _provenance(seeded, program)
     capture["rollback_check"] = "identical rerun pending"
-    with open(os.path.join(os.environ["TEMP"], V1_CAPTURE_NAME), "w",
+    with open(os.path.join((os.environ.get("TEMP") or tempfile.gettempdir()), V1_CAPTURE_NAME), "w",
               encoding="utf-8") as handle:
         json.dump(_plain(capture), handle, indent=2, sort_keys=True,
                   allow_nan=False)
@@ -256,7 +257,7 @@ def test_first_actual_v1_seed_decision_is_captured_before_newton():
     # timing), proving no partial state survived the cancellation.
     _assert_identical_rerun(model, definition, seeded, program, payload)
     capture["rollback_check"] = "identical_rerun_confirmed"
-    with open(os.path.join(os.environ["TEMP"], V1_CAPTURE_NAME), "w",
+    with open(os.path.join((os.environ.get("TEMP") or tempfile.gettempdir()), V1_CAPTURE_NAME), "w",
               encoding="utf-8") as handle:
         json.dump(_plain(capture), handle, indent=2, sort_keys=True,
                   allow_nan=False)
@@ -311,14 +312,14 @@ def test_first_actual_v2_seed_decision_changes_the_obstruction():
     capture = _decision_capture(payload)
     capture["provenance"] = _provenance(seeded, program)
     capture["rollback_check"] = "identical rerun pending"
-    with open(os.path.join(os.environ["TEMP"], V2_CAPTURE_NAME), "w",
+    with open(os.path.join((os.environ.get("TEMP") or tempfile.gettempdir()), V2_CAPTURE_NAME), "w",
               encoding="utf-8") as handle:
         json.dump(_plain(capture), handle, indent=2, sort_keys=True,
                   allow_nan=False)
         handle.write("\n")
     _assert_identical_rerun(model, definition, seeded, program, payload)
     capture["rollback_check"] = "identical_rerun_confirmed"
-    with open(os.path.join(os.environ["TEMP"], V2_CAPTURE_NAME), "w",
+    with open(os.path.join((os.environ.get("TEMP") or tempfile.gettempdir()), V2_CAPTURE_NAME), "w",
               encoding="utf-8") as handle:
         json.dump(_plain(capture), handle, indent=2, sort_keys=True,
                   allow_nan=False)

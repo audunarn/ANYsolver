@@ -46,15 +46,16 @@ results are restore/equality witnesses, not production-kernel scientific
 oracles. The twenty-seven v5-verified math/public/caller checks are not
 repeated; only the fixture-changed driver checks run here. An autouse
 call-through phase logger records per-call certificate/report/increment
-evidence and repeated faulthandler stack dumps into the attempt temp
-directory; it changes no production behavior.
+evidence into the attempt temp directory; it changes no production
+behavior and starts no watchdog thread (a repeating faulthandler
+dump thread killed this process with a Windows access violation
+inside NumPy C reductions).
 """
 import copy
-import faulthandler
 import os
+import tempfile
 import time
 from dataclasses import replace
-from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -69,6 +70,7 @@ from anysolver.control import SolveCancelled
 from anysolver.fe_core import FEModel
 from anysolver.general_contact import s3_patch_static, static_path
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+from anysolver.general_contact.semismooth_path import SemismoothStep
 from anysolver.nonlinear_restart import (
     _CHECKPOINT_HASH_KEY,
     _checkpoint_without_hash,
@@ -330,9 +332,18 @@ def _force_first_macro_refusal(monkeypatch, calls):
             "iterations": None,
         })
         if len(calls) == 1:
-            return SimpleNamespace(
+            # Typed conformance: the production refusal path reads
+            # step_result.initial_seed unconditionally, so the
+            # injected refusal is a real SemismoothStep, not a loose
+            # namespace mock.
+            return SemismoothStep(
                 completed=False, reason="contact_semismooth_stagnation",
-                diagnostics=None, iterations=3, candidate_evaluations=2,
+                q=np.asarray(kwargs["q"], dtype=float).copy(),
+                reactions=np.asarray(kwargs["reactions"], dtype=float).copy(),
+                nodal_forces=np.asarray(kwargs["nodal_forces"], dtype=float).copy(),
+                candidate_states=None, contact=None, iterations=3,
+                residual_norm=float("inf"), constraint_norm=float("inf"),
+                complementarity_norm=float("inf"), candidate_evaluations=2,
                 backtracks=1)
         result = original(*args, **kwargs)
         calls[-1]["iterations"] = int(result.iterations)
@@ -347,7 +358,8 @@ _PHASE_LOG = None
 def _phase_log():
     global _PHASE_LOG
     if _PHASE_LOG is None:
-        _PHASE_LOG = open(os.path.join(os.environ["TEMP"],
+        _PHASE_LOG = open(os.path.join((os.environ.get("TEMP")
+                                       or tempfile.gettempdir()),
                                        "small_patch_phase.log"),
                           "a", buffering=1)
     return _PHASE_LOG
@@ -389,9 +401,14 @@ def _phase_evidence(monkeypatch):
 
     monkeypatch.setattr(static_path, "solve_semismooth_increment",
                         increment_wrapper)
-    faulthandler.dump_traceback_later(15.0, repeat=True, file=log)
+    # No repeating faulthandler watchdog here: with the watchdog
+    # active, this process crashed with a Windows access violation
+    # inside NumPy C reductions (observed in
+    # q4_overlap_local_bound._mul/np.min on this exact fixture); the
+    # crash was watchdog-correlated and the underlying race mechanism
+    # is not independently established. The per-call phase log above
+    # keeps the same timing evidence without a second thread.
     yield
-    faulthandler.cancel_dump_traceback_later()
     log.write(f"{time.perf_counter():9.3f} phase fixture teardown\n")
 
 

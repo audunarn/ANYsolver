@@ -13,7 +13,9 @@ TARGET=((7,8,11,10),(8,9,12,11),(10,11,14,13),(11,12,15,14))
 
 
 def save(data):
-    Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(data,indent=2,default=lambda x:x.tolist() if isinstance(x,np.ndarray) else float(x) if isinstance(x,np.generic) else x),encoding='utf-8')
+    root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if not root:return
+    Path(root).write_text(json.dumps(data,indent=2,default=lambda x:x.tolist() if isinstance(x,np.ndarray) else float(x) if isinstance(x,np.generic) else x),encoding='utf-8')
 
 
 def free_dofs(model):

@@ -28,6 +28,7 @@ terminal with its computed residual.
 import importlib.util
 import json
 import os
+import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -373,7 +374,7 @@ def test_qp_iteration_cap_mechanism_is_recorded():
     }
     # Diagnostics are written BEFORE the KKT assertions so any failure
     # keeps the full computed evidence for the classification.
-    with open(os.path.join(os.environ["TEMP"], CAPTURE_NAME), "w",
+    with open(os.path.join((os.environ.get("TEMP") or tempfile.gettempdir()), CAPTURE_NAME), "w",
               encoding="utf-8") as handle:
         json.dump(record, handle, indent=2, sort_keys=True, allow_nan=False)
         handle.write("\n")

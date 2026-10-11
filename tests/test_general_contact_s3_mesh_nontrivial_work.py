@@ -10,7 +10,10 @@ from anysolver.general_contact.s3_friction_static import create_s3_friction_mana
 
 CUTS={2:(2,4,6,8,10,12),4:(4,8,10,12,16,20,24)}
 def case(ratio=2):return build_case(ratio,'sliding')
-def save(v):Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(v,indent=2,default=lambda x:x.tolist() if hasattr(x,'tolist') else x.item()))
+def save(v):
+    root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if not root:return
+    Path(root).write_text(json.dumps(v,indent=2,default=lambda x:x.tolist() if hasattr(x,'tolist') else x.item()))
 def evidence():return Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])
 
 def test_prepare():
