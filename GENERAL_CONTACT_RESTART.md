@@ -1,3 +1,11 @@
+# Verified multi-S3 cache checkpoint
+
+Exact full-state/origin assembly reuse and angular kernel caller pass unchanged one-patch coupled/history/restart: Windows119.520s, Linux75.528s (Linux also9kernel regressions); Linux4cache mutation/restart/cancellation boundary checks9.442s, earlier Windows4checks16s. Two-patch actual91s retained. No120-second deadline reset or tolerance change. Windows margin remains narrow; no robust whole-route speed forecast. Candidate caches contain disposable material trials, never physical commits.
+
+Surface v3 exhausted without HANDOFF after preserving8passing saved cases; v4 same-owner continuation92232 must address root whole-panel certificate finding, not declare possible tangency resolved from sampled replay. Official inventories continue58466/20876. DoD unmet. Local evidence unstaged; no main merge or publication.
+
+---
+
 # Current contact CI repair checkpoint
 
 Branch contact-on-main remains based on1b45319f; no merge/rebase of moving main. Claude owns serial integration and publication. Latest committed f486e1c6 (22 commits). Local evidence remains unstaged.

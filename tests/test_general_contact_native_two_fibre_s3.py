@@ -122,7 +122,8 @@ def test_two_fibre_beams_actual_coupled_history_and_restart(two_facets):
     run=owner.solve();output=os.environ.get('CONTACT_APP_RESULT_RECORD')
     report=dict(status=run.status,failure=run.failure,completed=run.accepted.completed_targets,two_facets=two_facets,
         candidates=owner.candidate_evaluations,pair_evaluations=owner.pair_evaluations,
-        reuse_hits=owner.contact_reuse_hits,trial_failures=owner.curved_trial_failures)
+        reuse_hits=owner.contact_reuse_hits,assembly_reuse_hits=owner.assembly_reuse_hits,
+        trial_failures=owner.curved_trial_failures)
     if output:
         Path(output+'-two-beam.json').write_text(json.dumps(report,indent=2))
 
@@ -137,22 +138,32 @@ def test_two_fibre_beams_actual_coupled_history_and_restart(two_facets):
     for i in range(2):
         assert any(result.contact.potential_j>0. and result.contact.beam_force_n[2]>0.
             for index,(_,result) in zip(owner.beam_indices,state.contact.pairs) if index==i)
-    material,proposed=_independent_material_history(owner,state.mechanical,origins)
+    # The original context's construction-to-expiry allowance is never renewed,
+    # so every original-owner guarded operation runs immediately after solve
+    # inside explicit operation boundaries. Independent restart verification
+    # then proceeds on the restart owner's own fresh context.
+    with owner.context.operation(None):
+        residual,_,metrics=owner._assemble_structural(state.mechanical,state.shell_displacement,1.,origins)
+        residual+=state.contact.residual
+        material,proposed=_independent_material_history(owner,state.mechanical,origins)
+    n=owner.context.count
+    scaled=residual[:n]/owner.context.scale
+    equilibrium=(np.linalg.norm(scaled[owner.context.equilibrium]),np.linalg.norm(scaled[owner.context.compatibility]),
+        np.linalg.norm(residual[n+owner.shell_free]))
+    assert max(equilibrium)<=owner.equilibrium_tolerance
     assert material['yielded']>0 and material['dissipation_j']>0.
     assert proposed==tuple(station for cell in state.native_histories for station in cell.stations)
     for cell in state.native_histories:
         assert any(row[2]+row[3]>0. for station in cell.stations for row in station.rows)
     assert canonical(origins)==before
-    restored,records=_owner(two_facets)._restore(run.checkpoint,run.checkpoint_sha256)
-    assert restored.native_histories==state.native_histories and owner._checkpoint(records)==run.checkpoint
-    residual,_,metrics=owner._assemble_structural(state.mechanical,state.shell_displacement,1.,origins)
-    residual+=state.contact.residual;n=owner.context.count
-    scaled=residual[:n]/owner.context.scale
-    equilibrium=(np.linalg.norm(scaled[owner.context.equilibrium]),np.linalg.norm(scaled[owner.context.compatibility]),
-        np.linalg.norm(residual[n+owner.shell_free]))
-    assert max(equilibrium)<=owner.equilibrium_tolerance
+    restart=_owner(two_facets)
+    restored,records=restart._restore(run.checkpoint,run.checkpoint_sha256)
+    assert restored.native_histories==state.native_histories
+    with owner.context.operation(None):
+        assert owner._checkpoint(records)==run.checkpoint
     assert owner.context._token is None and not owner.context._lock.locked()
     assert owner._contact_reuse_entry is None and not owner._contact_reuse_enabled
+    assert owner._assembly_reuse_entry is None and not owner._assembly_reuse_enabled
     if output:
         report.update(material=material,equilibrium=list(map(float,equilibrium)),checkpoint_sha256=sha256(run.checkpoint).hexdigest(),
             pair_force_z=[float(result.contact.beam_force_n[2]) for _,result in state.contact.pairs])
@@ -225,3 +236,80 @@ def test_two_fibre_saved_example_cli_recovery(tmp_path,monkeypatch,two_facets):
         single=Path(__file__).parent/'data/general_contact_native_fibre_s3_plastic_two_beams_v1.checkpoint'
         raw=single.read_bytes()
         with pytest.raises(ValueError,match='binding'):owner._restore(raw,sha256(raw).hexdigest())
+
+
+def _fixture_owner(two_facets):
+    name='general_contact_native_fibre_s3_plastic_two_beams'+('_two_patches' if two_facets else '')+'_v1.checkpoint'
+    raw=(Path(__file__).parent/'data'/name).read_bytes()
+    owner=_owner(two_facets)
+    state,_=owner._restore(raw,sha256(raw).hexdigest())
+    return owner,state,raw
+
+
+@pytest.mark.parametrize('two_facets',(False,True),ids=('one-patch','two-patches'))
+def test_two_fibre_assembly_reuse_parity_origins_identity_and_refusal(two_facets):
+    owner,state,raw=_fixture_owner(two_facets)
+    m=state.mechanical;u=state.shell_displacement
+    structural=[]
+    assemble=owner._assemble_structural
+    def capture(*args):
+        structural.append(args[3]);return assemble(*args)
+    owner._assemble_structural=capture
+    with owner.context.operation(None):
+        owner._begin_candidate_context(None)
+        try:
+            first=owner._assemble(m,u,1.,owner.initial.native_histories)
+            assert owner.assembly_reuse_hits==0 and owner._assembly_reuse_entry is not None
+            again=owner._assemble(m,u.copy(),1.,owner.initial.native_histories)
+            assert again is first and owner.assembly_reuse_hits==1
+            # Exact pose/origins/parameter identity only: different constitutive
+            # origins must rerun the structural assembly and never reuse it.
+            del structural[:]
+            contact_hits=owner.contact_reuse_hits
+            second=owner._assemble(m,u,1.,state.native_histories)
+            assert structural==[state.native_histories] and owner.assembly_reuse_hits==1
+            assert owner.contact_reuse_hits==contact_hits+1
+            # Cached assembly buffers are read-only.
+            with pytest.raises(ValueError,match='read-only'):first[0][0]=0.
+            with pytest.raises(ValueError,match='read-only'):first[1][0,0]=0.
+            # A mutated cached assembly is refused and the entry is dropped.
+            cached=owner._assemble(m,u,1.,owner.initial.native_histories)
+            cached[4].tangent.data=cached[4].tangent.data.copy()
+            cached[4].tangent.data[0]+=1.
+            with pytest.raises(ValueError,match='mutated'):
+                owner._assemble(m,u,1.,owner.initial.native_histories)
+            assert owner._assembly_reuse_entry is None
+        finally:owner._end_candidate_context()
+    assert owner._assembly_reuse_entry is None and not owner._assembly_reuse_enabled
+    assert owner._contact_reuse_entry is None and not owner._contact_reuse_enabled
+    # Outside the candidate context every assembly is authoritative and the
+    # cached candidate is exactly reproducible.
+    owner._assemble_structural=assemble
+    plain=owner._assemble(m,u,1.,owner.initial.native_histories)
+    np.testing.assert_array_equal(plain[0],first[0])
+    np.testing.assert_array_equal(plain[1],first[1])
+    assert plain[2]==first[2] and canonical(plain[4].contact.to_dict())==canonical(first[4].contact.to_dict())
+    assert [canonical(r.history) for r in plain[3]]==[canonical(r.history) for r in first[3]]
+
+
+@pytest.mark.parametrize('two_facets',(False,True),ids=('one-patch','two-patches'))
+def test_two_fibre_restart_restore_reevaluates_and_operation_boundary_refusal(two_facets):
+    owner,state,raw=_fixture_owner(two_facets)
+    # Restored records are independently reevaluated by a fresh owner.
+    fresh=_owner(two_facets)
+    pairs,candidates=fresh.pair_evaluations,fresh.candidate_evaluations
+    restored,records=fresh._restore(raw,sha256(raw).hexdigest())
+    assert fresh.pair_evaluations>pairs and fresh.candidate_evaluations>candidates
+    assert restored.native_histories==state.native_histories
+    assert fresh._checkpoint(records)==raw
+    assert not fresh._contact_reuse_enabled and fresh._contact_reuse_entry is None
+    assert not fresh._assembly_reuse_enabled and fresh._assembly_reuse_entry is None
+    # Cancellation requires its bound operation; operations do not nest.
+    with pytest.raises(ValueError,match='bound operation'):
+        owner.context.activate_cancellation(None)
+    with owner.context.operation(None):
+        with pytest.raises(RuntimeError,match='already in operation'):
+            with owner.context.operation(None):pass
+    assert owner.context._token is None and not owner.context._lock.locked()
+    assert not owner._contact_reuse_enabled and owner._contact_reuse_entry is None
+    assert not owner._assembly_reuse_enabled and owner._assembly_reuse_entry is None
