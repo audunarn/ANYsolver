@@ -52,11 +52,24 @@ def test_integral_enforces_aggregate_query_and_memory_caps():
 
 def test_integral_rejects_hidden_temporal_pulse_before_quadrature():
     from anysolver.general_contact.native_surface_history import NativeSurfaceMotionSegment
+    from anysolver.general_contact.native_surface_friction_integral import NativeFrictionIntegrationLimit
+    from anysolver._ge_beam3_p5_seeded.core import sha
     from test_general_contact_native_surface_support import _field as support_field
     segment=NativeSurfaceMotionSegment(np.zeros((3,3)),np.array(((1.6,0.,0.),(0.,0.,0.))),np.zeros(18))
     field=support_field(height=.025,rotation=-.8,segments=(segment,))
-    with pytest.raises(ValueError,match='historical contact envelope'):
-        integrate_material_friction(field,_settings())
+    # The declared arc opens at both endpoints and closes at midtime.
+    # Unresolved support must fail explicitly before any quadrature query.
+    assert .025-.03*np.cos(.8-.02)>0.
+    assert .025-.03<0.
+    initial_definition=sha(field._definition())
+    settings=_settings()
+    with pytest.raises(NativeFrictionIntegrationLimit,match='aggregate support interval cap') as caught:
+        integrate_material_friction(field,settings)
+    diagnostics=caught.value.integration_diagnostics
+    assert diagnostics['queries']==0
+    assert diagnostics['support_intervals']==settings.maximum_support_intervals
+    assert diagnostics['last_unresolved'] is not None
+    assert sha(field._definition())==initial_definition
 
 
 def test_integral_support_budget_is_shared_across_panels():
