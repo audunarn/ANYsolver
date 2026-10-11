@@ -6,6 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 import numpy as np
 
 
@@ -63,11 +64,12 @@ def test_saved_slide_matches_independent_current_contact_kkt():
         assert result[name] <= 1e-6, (name, result[name])
 
 
-def test_oracle_source_identity_does_not_attribute_an_enclosing_checkout(monkeypatch,tmp_path):
+@pytest.mark.parametrize("script", ["d1_two_body_nonlinear_kkt_compare.py", "d1_two_body_displacement_compare.py"])
+def test_oracle_source_identity_does_not_attribute_an_enclosing_checkout(monkeypatch,tmp_path,script):
     # Extract this metadata-only helper without running the nonlinear fixture.
     # Its negative cases protect exported/installed-source provenance.
     import ast
-    source=Path(__file__).resolve().parents[1]/'docs/d1_review_support/d1_two_body_nonlinear_kkt_compare.py'
+    source=Path(__file__).resolve().parents[1]/'docs/d1_review_support'/script
     tree=ast.parse(source.read_text(encoding='utf-8'))
     node=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='_checkout_commit')
     namespace=dict(Path=Path,subprocess=subprocess)
