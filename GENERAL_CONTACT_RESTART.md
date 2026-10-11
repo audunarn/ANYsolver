@@ -1,3 +1,25 @@
+# Active restart — contact on consolidated main, 11 October 2026
+
+Authority: PROGRAMME_RESTART_BRIEF_20261011.md. Own worktree `.worktrees/contact-resume`, branch `codex/contact-on-main`, base1b45319f, current committed06064df6 before the following handoff commit. No pushes/PRs/Actions, sibling/main/shared/rev8 edits or other-chat messages. Evidence unstaged. Historical authorities/failures/scientific criteria stay intact.
+
+**Done condition unmet:** full official portable inventory without fail-fast; current contact tests green Windows/Linux; exact commits, queue disposition and remaining issues; then stop. D1 and C0–C9 engineering acceptance remain incomplete.
+
+## Current result and pending work
+
+- Twelve local repair commits through06064df6; details/evidence below. Current Linux probe cleanup2pass; predictor+currentinput-freeworkflow8pass/5exact-inputskips. Windows current identity/archive changes19nodes passed across bounded split runs (one module timed out after5passed nodes, sixth passed independently); complete fullinventory still open.
+- One official Windows subshard m0/s0 completed onf385:198passes,8failures (5contact),5skips; no timeout. Four stale currentprofile identities now repaired. Remaining publicentry failure came from old2x2fixture.
+- Public seed example now uses verified4x4same-physics fixture with load13/anchors1,11. Windows contract2pass wall2.55s and publicentry1pass wall12.32s; admittedseed, requestedhalf-prefixcompleted. Docs-only finalization byRoot after Mistral's narrow finish tool failed onCRLF. No installedverification/same-discretization speedup/D1acceptance claim. Linuxpending.
+- One-record curved-pair lifecycle: Linux foreign capsule differs only three recomputed diagnostic bounds, all physical/history fields exact. Unchanged production codec must refuse before fresh locally signed producer. Actual rollback/cancel/exception node passes Windows42.91s andLinux46.93s; multi-record archive replay untouched. Root smalltest-only reserved contract disposition.
+- Native front kernel/newanalytic5checks +existing20workchecks +unchanged8e7fullrefinementgate pass. Source uncommitted pending corrected independent review. Firstreview erroneously inspected wrongtest; preserved andcorrecting. Representationpad/fullunion/shared64cap/oldpassingpaths retained; no tolerance change.
+- Windows m0/s1 nextofficialsubshard prepared from immutable committed06064snapshot. Sourceaudit required before launch; exact handle in current rootcheckpoint. Do not confuse completedpartialshards with fullcoverage.
+- Mistral native-pair-deadline-repair-v1 owns only contact retained-pair driver +two namedtestmodules; address genuine120s sharedfibre deadline by cost/compatibleintegration repair, not changingdeadline/sharedcore/physics. Earlycheckpoint due10turns; Max65reserve20check+handoff.
+- Other open currentnativefriction replay integration/event failures from frozenLinuxfullCI remain to diagnose. FullCI previous4800stimeouts andwatchdog-correlatedcrash remain evidence, not passes.
+
+All exact receipts/sourcepatches/workerlogs/snapshots under `.development/contact-restart-20261011` (never stage). Continue useful currenttechnicalstate, no historicalqualification replay.
+
+---
+## Preserved preceding restart states and history
+
 # Active restart — consolidated main, 11 October 2026
 
 Authority: C:/ANYworkspaceWork/consolidation-backup-20261010/PROGRAMME_RESTART_BRIEF_20261011.md.
