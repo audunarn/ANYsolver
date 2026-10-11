@@ -1,3 +1,31 @@
+# Pair repair checkpoint - prospective resolved enforcement
+
+Current pair driver exact prepared-record reuse and geometry-only swept query are now verified through refined4000 coupled/strict restart on both hosts, new identity/mutation/cancellation checks, and staged4000 workflow Windows91.543s/Linux60.030s. Original100 non-success/rollback regression passes Windows100.400s: no first-target commit or history corruption, exact original checkpoint retained. Gap/equilibrium/material criteria unchanged. No converged100 equilibrium or whole-route speedup is claimed. Current success fixtures prospectively use explicit4000; old100 failures remain in evidence.
+
+Independent geometry review recovered the actual rotation term in the legacy swept bound; internal rotation was not omitted as previously suspected. Complete midpoint bounds and endpoint/commit checks remain. This is development verification, not engineering acceptance.
+
+Mistral exact Decimal angular-kernel memo identified37% candidate cost, matched complete contact assemblies exactly at two poses, and passed14kernel/caller/one-patch checks under unchanged120s guard. Root caught missing Decimal flag side effects; same author is repairing them before promotion. Kernel/multi-S3 candidate remains uncommitted. Surface owner found a genuine stationary space/time tangency; pure transverse refinement cannot certify it, so no cap increase or further blind refinement is allowed. Its connected repair remains pending.
+
+Continue official inventory and scoped repairs. Main stays unmerged/unrebased here; Claude owns integration/push/CI. Evidence stays local/unstaged. Definition of done still unmet.
+
+---
+
+# Latest checkpoint update - contact CI restart
+
+Main may advance to550c927a and beyond. User expressly prohibits rebasing/merging it here; Claude owns final serial integration, push and CI. Continue contact-on-main unchanged. New local repair29b62b4e: current cold native front and4e7-to8e7 refinement; oracle provenance repair follows. All old failures remain evidence, not repaired qualification.
+
+Windows official parent1 on immutable205a COMPLETED1179.681s:1985pass/55out-of-scopefail/42skip; CONTACT480pass/29skip/0fail. Windows parent2 now runs immutable29b6. Linux parent0 still running205a; old pair cost/weak-penalty and Gitless-oracle failures mapped to pending/current fixes. Full extent still incomplete.
+
+Root resolved staged4000 pair workflow passes91.543s; weak100 remains explicit non-success regression, same original physical fixture/gap and no measured converged100 solution. Pending test updates replace invalid success expectations prospectively, not old failures. Both-body/strictrestart gates unchanged. Mistral pair-v3 exact receipts confirm .02 is first failed weak staged target; refined4000 control checkpoint remains bit-identical. Production cache/midpoint changes uncommitted pending final checks.
+
+Surface transverse finite-cover supports opposite crossing orientations separated by strictly signed slabs; independent closed-open-closed scalar and double-root refusal checks pass. Linux support/oracle28pass16.469s. Windows savedfront first8pass; second-load bothpolicies still128-panel failure67.530s. Timed-out combined run has partialpasses and missing exactwall receipt: recovery.json preserves uncertainty. Supervisor cleanup fixed and controlled timeout verified. No friction promotion.
+
+Mistral native-pair-kernel-cost-v3 owns normal-angle/curved-work kernel cost plus multi-S3 driver/tests, preserving29b6 bound. Mistral surface-replay-delivery-v3 owns material surface support/history/front/integration/transaction/retained-S3 route. Distinct files, max2 workers, no workers Git/delegation/sibling/shared edits. Prior two-fibre worker stalled on literal scratch/ path: owned process stopped, edits/logs retained, explicit-path continuation verified4cache guards+CLI and two-patch actual91s; one-patch remains120sdeadline. No reliable whole-route speedup claim.
+
+All exact logs, patches and receipts under .development/contact-restart-20261011, neverstage. Definition of done and engineering acceptance remain unmet. No push/PR/Actions/other-chat messages.
+
+---
+
 # Active restart - consolidated contact CI repair, 11 October 2026
 
 Own contact-resume / codex/contact-on-main, base1b45319f. Follow PROGRAMME_RESTART_BRIEF_20261011.md. No push/Actions/other-chat/sibling/shared-file changes. Evidence stays unstaged. Done requires complete official inventory and green contact tests on Windows/Linux; engineering D1/C0-C9 remains unaccepted.
