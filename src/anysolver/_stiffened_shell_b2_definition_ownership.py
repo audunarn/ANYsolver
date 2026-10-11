@@ -44,12 +44,23 @@ class _Coordinates(Mapping):
     def __deepcopy__(self, memo):
         return self
 
+    def __copy__(self):
+        return self
+
 
 class _Array:
     """Exact numeric snapshot; each public view has detached array metadata."""
     __slots__ = ("_bytes", "_dtype", "_shape")
 
     def __init__(self, value):
+        if isinstance(value, _Array):
+            # Accept an already-owned payload defensively;
+            # adopt the immutable snapshot instead of nesting it in an
+            # object array, which would corrupt every numeric consumer.
+            object.__setattr__(self, "_bytes", value._bytes)
+            object.__setattr__(self, "_dtype", value._dtype)
+            object.__setattr__(self, "_shape", value._shape)
+            return
         array = np.array(value, copy=True)
         object.__setattr__(self, "_bytes", tuple(copy.deepcopy(x) for x in array.flat) if array.dtype.hasobject else array.tobytes())
         object.__setattr__(self, "_dtype", array.dtype)
@@ -57,6 +68,25 @@ class _Array:
 
     def __setattr__(self, name, value):
         raise AttributeError("owned B2 array payload is immutable")
+
+    def __copy__(self):
+        # Byte snapshots are immutable; a shallow copy shares them, including
+        # object payloads, exactly like the caller-supplied source array would.
+        clone = _Array.__new__(_Array)
+        object.__setattr__(clone, "_bytes", self._bytes)
+        object.__setattr__(clone, "_dtype", self._dtype)
+        object.__setattr__(clone, "_shape", self._shape)
+        return clone
+
+    def __deepcopy__(self, memo):
+        # Object payloads are deep-copied so a copy's materialized views can
+        # never mutate the original's object data; immutable byte snapshots
+        # and dtype/shape metadata are shared.
+        clone = _Array.__new__(_Array)
+        object.__setattr__(clone, "_bytes", copy.deepcopy(self._bytes, memo))
+        object.__setattr__(clone, "_dtype", self._dtype)
+        object.__setattr__(clone, "_shape", self._shape)
+        return clone
 
     def materialize(self):
         if self._dtype.hasobject:
@@ -81,6 +111,22 @@ class _CSR:
 
     def __setattr__(self, name, value):
         raise AttributeError("owned B2 sparse payload is immutable")
+
+    def __copy__(self):
+        clone = _CSR.__new__(_CSR)
+        for name in ("data", "indices", "indptr"):
+            object.__setattr__(clone, "_" + name, getattr(self, "_" + name))
+        object.__setattr__(clone, "_shape", self._shape)
+        object.__setattr__(clone, "_type", self._type)
+        return clone
+
+    def __deepcopy__(self, memo):
+        clone = _CSR.__new__(_CSR)
+        for name in ("data", "indices", "indptr"):
+            object.__setattr__(clone, "_" + name, copy.deepcopy(getattr(self, "_" + name), memo))
+        object.__setattr__(clone, "_shape", self._shape)
+        object.__setattr__(clone, "_type", self._type)
+        return clone
 
     def materialize(self):
         # Deliberately writable detached buffers: even attribute replacement on
