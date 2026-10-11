@@ -1,28 +1,37 @@
 # Active restart — consolidated main, 11 October 2026
 
-User authority: C:/ANYworkspaceWork/consolidation-backup-20261010/PROGRAMME_RESTART_BRIEF_20261011.md.
-Worktree C:/Github/ANYsolver/.worktrees/contact-resume; branch codex/contact-on-main; base1b45319f. Contact files only; no main/old/sibling/shared/prepared/submodel/rev8 edits, other-chat messages, push, PR or Actions. Restored evidence remains unstaged and uncommitted.
+Authority: C:/ANYworkspaceWork/consolidation-backup-20261010/PROGRAMME_RESTART_BRIEF_20261011.md.
+Worktree C:/Github/ANYsolver/.worktrees/contact-resume; branch codex/contact-on-main; base1b45319f; latest committed repair de8df26e. Contact files only. No main/old/sibling/shared/prepared/submodel/rev8 edits, other-chat messages, push/PR/Actions. All evidence stays unstaged.
 
-**Done condition remains unmet:** repair42 queued and subsequently exposed contact failures; complete portable inventory on Windows and Linux without fail-fast, then report exact commits/results and stop. Ordinary CI repair is not engineering acceptance; D1 and full C0–C9 remain incomplete. Historical scientific criteria, failures and consumed authorities are binding.
+**Done condition unmet:** complete portable inventory without fail-fast and get contact tests green on Windows and Linux, report exact commits/results/queue dispositions and stop. Ordinary CI repair does not establish engineering acceptance; D1/full C0–C9 remain incomplete. Historical scientific criteria, failures and consumed execution authorities remain binding.
 
-## Actual completed slices
+## Completed repairs and evidence
 
-- 2eee224c:19 contact-test portability/refusal repairs, current typed fixtures and removal of watchdog-correlated crash timer. Active small-patch fixture still diverges; timer removal is not a mechanics repair. Root separated archived seed bindings from always-active literal math; seven seed-reference checks passed.
-- 327708b: strict native/S3 checkpoint field diagnostics and real-owner tamper/restore regressions, plus current typed automatic-S3 refusal check. Seven focused checks passed. Complete curved module exceeded180s; no full-module pass claimed. Underlying shared-process binding mismatch remains unproved; two fresh and frozen-source portable-environment probes passed.
-- Pending patch:20 shell-test output/evidence portability repairs, mixed archive/current safety splits;24 current checks passed. Invalid configured report paths remain explicit errors. Final semantic audit split tilted and nontrivial-work current safety from archive replay; two new current checks and one configured-output check passed, two exact missing-input skips were verified. See io-portability-v3/HANDOFF.md.
-- Pending force-only source patch: empty control matrices have rank zero; dependent or fully constrained nonempty controls still refuse. Seven real-caller/restart/cancellation/refusal checks passed. See force-path-repair-v1/HANDOFF.md and receipts. No physics, solver selection or tolerance change.
+- 2eee224c:19 portability/refusal tests; watchdog-correlated crash timer removed, not a mechanics fix.
+- 327708b: strict native/S3 field-binding diagnostics and real-owner refusal/restore regressions; seven focused passes. No hash/identity/schema relaxation.
+- 0f8b360e:20 output/archive tests retain current safety; empty control matrices rank0, dependent/full-constrained controls still refuse; seven source-caller/restart/safety passes.
+- b2995629: complete real-manager state in search fixtures;11 focused passes.
+- b95f4aca: restricted sliding manager compatibility and canonical native fixture LF ingestion;22 focused passes. Mixed projected full trajectory exceeded180s, preserved nonpass.
+- a2a4535f: explicit native temporal-pulse integration-limit refusal,3 focused passes, no new friction admission.
+- de8df26e: six native/archive test readers;60 passes/30 exact-input skips/two native penalty-response nonpasses. Current pressure-scale/nonfinite refusals always active; production checkpoint codecs unchanged.
 
-## Full CI and remaining work
+Linux focused a2a:16 search/pulse/force passes,18 restricted sliding passes,4 native/S3 passes. de8 five-module focused check running. Windows3.13.9/NumPy2.4.3/SciPy1.16.3; supplied Linux3.12.3/SciPy1.18.1 with private optional overlay. Receipts record precise source/patch/environment, process wall, memory and failures.
 
-Frozen2eee Windows windows-full-ci-02 and Linux linux-full-ci-03 both reached4800s limits. They are incomplete runs, not final passes. Each had two partitions aborted by a ROOT reporting-hook fault: tests replacing json.dumps also replaced the observer serializer. Observer now captures its original callable;13 isolated affected tests passed in2.9441158s. Existing interrupted/timeout outputs remain preserved. Other partitions exposed additional contact failures beyond the original queue. Completed call-phase counts are observations, not complete JUnit or inventory coverage.
+## Full portable CI and next work
 
-Linux uses a disposable native source clone and native temporary storage after independently reproducing a mounted-filesystem tempfile defect; persistent logs remain in owned scratch. No quantified speedup claimed. Final candidate still needs both-host full inventory with the fixed private observer; shared CI runner and official deselections are unchanged.
+Frozen2eee runs exceeded4800s and had two partitions aborted by ROOT observer json.dumps aliasing. Observer fixed;13 regression checks passed. Frozen0f8 windows-full-ci-03/linux-full-ci-04 currently running; partial phase counts are NOT complete coverage. Preserve all failed/incomplete runs. New portability failures beyond original42 remain assigned by actual failure evidence, not masked by broad skips.
 
-Small-patch stagnation remains the principal mechanics question. Five bounded captures and failed initializer-only trial are retained; that trial's test change was withdrawn. Mistral is assessing existing traces/source without another full solve. Do not repeat open-ended diagnostics, weaken the50um physical-gap gate or reinterpret budget exhaustion as formulation failure.
+Mistral rigid-portability-v1 owns finite_v2d_rigid_patch test/archive split and always-active null/refusal checks. Mistral smallpatch-resolution-v2 owns scratch-only completion of ONE4x4 linear preflight from useful v1 artifacts. No other worker source ownership. Root owns integration, contracts and Git. Worker exit0 without actual checks/handoff is incomplete.
 
-Root focused new-failure capture found incomplete __new__ manager fixtures (missing profile/finite_skin) in preparation/swept-search tests and a native friction integration-limit refusal differing from the old expected ValueError. These are not yet repaired or adjudicated. Further archived-native/pressure replay failures require exact input guards; real-current failures must remain visible. Known rev8 missing saved-compliance import is reported, not repaired here.
+## Principal numerical questions
 
-All logs, receipts, source snapshots and reconstructed worker handoffs: .development/contact-restart-20261011 (never stage). Mistral owns bounded connected repair outcomes; root integrates and verifies. Worker turn exhaustion is incomplete until artifacts/checks are inspected; no pass inferred from exit0. No new frozen qualification execution authorized.
+Corrected independent coarse-shell origin-linear oracle matches production ~1e-12, finds loaded-point physical gap -122.672um against -50um budget. This diagnoses weak/physical-gap conflict on that coarse fixture; it does NOT prove nonlinear equilibrium nonexistent. ONE4x4 same physical supports, (.6,.6) pointload-.02N, fineQ1pressure, material/target/gap preflight pending. No automatic mesh/load/tolerance sweep or frozen qualification replay.
+
+Native fibre 1e7->2e7 penalty refinement misses retained2% response gate (tip3.011%; other responses pass). Both seeded/unseeded failures preserved; no criterion or physics change adopted. Further enforcement refinement requires explicit current candidate disposition and independent checks, not an archive skip.
+
+Additional observed failures to classify: prefix_half fixture depends on coarse smallpatch; automatic swept lifecycle stale refusal regex; automatic selection variants missing real archive; original workflow external fixture absent; native fibre-pair cooperative120s context deadline under fullCI. Do not loosen deadlines/physics or infer contamination without evidence. Shared/out-of-scope rev8/B2/B3 failures remain visible and unedited.
+
+All receipts, workers, failed attempts and source snapshots: .development/contact-restart-20261011 (never stage). No pass from partial call counts; no acceptance/release or measured speedup claim.
 ---
 ## Preserved prior pause record (historical paths and authorities)
 # General contact restart — PAUSED, 10 October 2026
