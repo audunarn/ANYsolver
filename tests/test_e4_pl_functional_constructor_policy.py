@@ -144,6 +144,15 @@ def test_functional_lane_direct_shell_calls_are_non_q4_or_explicit_refusal() -> 
                 "tests/test_recovery_qualification.py",
                 "test_patch_rejects_reduced_q8_and_warped_q4_outside_qualified_scope",
             ): 1,
+            # Submodelling S1: three-node shells the transfer must refuse.
+            (
+                "tests/test_submodel_transfer.py",
+                "test_interpolation_refuses_convention_mismatch_and_unadmitted_elements",
+            ): 1,
+            (
+                "tests/test_submodel_transfer.py",
+                "test_unadmitted_target_shell_and_invalid_controls_refuse",
+            ): 1,
         }
     )
     # This explicit negative constructs legacy Q4 only to verify rejection by
@@ -336,6 +345,8 @@ def test_functional_lane_direct_shell_calls_are_non_q4_or_explicit_refusal() -> 
         ("tests/test_stiffened_shell_b2_nodal_rigid_footprint.py", "_independent"): 1,
         ("tests/test_stiffened_shell_b2_physical_rigid_footprint.py", "test_distorted_skew_frozen_shell_tensor_frame_and_scalar_work"): 1,
         ("tests/test_stiffened_shell_b2_q4_panel_experimental.py", "_independent_dense"): 1,
+        # Prepared static evaluator: staged qualified Q4 fixture.
+        ("tests/test_prepared_static_q4.py", "_q4_model"): 1,
     })
     assert calls["QualifiedE4PLShellElement"] == expected_qualified_q4
     assert sum(calls["QualifiedE4PLShellElement"].values()) == sum(
