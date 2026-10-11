@@ -12,7 +12,9 @@ from anysolver.general_contact.semismooth import linearize,complementarity,refer
 
 FREF=1e-4;MREF=1e-4
 def save(data):
-    Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(data,indent=2,
+    root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if not root:return
+    Path(root).write_text(json.dumps(data,indent=2,
         default=lambda x:x.tolist() if isinstance(x,np.ndarray) else x.item() if isinstance(x,np.generic) else x),encoding='utf-8')
 def read(stage):return json.loads((Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/(stage+'.json')).read_text())
 def sha(stage):return hashlib.sha256((Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/(stage+'.json')).read_bytes()).hexdigest()
@@ -128,6 +130,8 @@ def test_nonaffine_path_curvature_and_unsafe_chord():
     save(dict(verified=True,safe_registered_five_degree_path=True,safe_tilted_five_degree_path=True,unsafe_sixty_degree_path_refused=True,independent_binary_midpoint_numerator=str(numerator),independent_binary_normal_squared=str(dot(n,n)),analytic_radius_max_m=float(max(radius)),tilted_negative_plane=dict(old_axis_lower_m=old,finite_euclidean_lower_m=new,exact_numerator=str(num),exact_normal_squared=str(dot(nn,nn))),endpoint_only_chord_not_certificate=True))
 
 
+@pytest.mark.skipif(not os.environ.get('FINITE_STAGE'),
+    reason='installed finite stage input FINITE_STAGE absent: staged finite-path solve requires the original workflow stage selection')
 def test_installed_finite_path(monkeypatch):
     stage=os.environ['FINITE_STAGE'];step=int(stage.split('-')[1]);model,domain,settings,res,program=build()
     kwargs=dict(max_load_factor=step/15.)
@@ -189,6 +193,8 @@ def test_installed_finite_path(monkeypatch):
     assert [p['step'] for p in poses]==list(range((previous or 0)+1,step+1))
 
 
+@pytest.mark.skipif(not os.environ.get('FINITE_STAGE'),
+    reason='installed finite stage input FINITE_STAGE absent: saved finite-pose proof requires the original staged report and stage selection')
 def test_saved_finite_poses_independent_physical_gates():
     from importlib.util import spec_from_file_location,module_from_spec
     from anysolver.nonlinear_static import _assemble_nonlinear_system,_discard_nonlinear_state_candidate
@@ -302,16 +308,7 @@ def test_finite_state_and_translation_seed():
 
 def test_admission_and_restart_safety(monkeypatch):
     from anysolver import CancellationToken,SolveCancelled
-    from anysolver.nonlinear_restart import _sha256,_checkpoint_without_hash
-    model,domain,settings,res,program=build();stored=read('run-1');checkpoint=stored['checkpoint'];before=repr(model)
-    changed=replace(program,waypoints=tuple([program.waypoints[0]]+[tuple(v+1e-8 if i==0 else v for i,v in enumerate(w)) for w in program.waypoints[1:]]))
-    with pytest.raises(ValueError,match='incompatible'):solve(model,settings,res,changed,restart_checkpoint=checkpoint,max_load_factor=1/15.)
-    damaged=copy.deepcopy(checkpoint);damaged['displacements'][0]+=1e-4
-    with pytest.raises(ValueError,match='SHA-256'):solve(model,settings,res,program,restart_checkpoint=damaged,max_load_factor=1/15.)
-    # Re-sealed outer bytes do not convert a stale local record into a current one.
-    coherent=copy.deepcopy(checkpoint);free=model.mesh.dof_manager.get_node_dofs(3)[2];coherent['displacements'][free]+=1e-4
-    coherent['checkpoint_sha256']=_sha256(_checkpoint_without_hash(coherent))
-    with pytest.raises(ValueError,match='incompatible'):solve(model,settings,res,program,restart_checkpoint=coherent,max_load_factor=1/15.)
+    model,domain,settings,res,program=build();before=repr(model)
     token=CancellationToken();token.cancel('finite precancel')
     with pytest.raises(SolveCancelled):solve(model,settings,res,program,cancellation_token=token)
     assert repr(model)==before
@@ -343,9 +340,27 @@ def test_admission_and_restart_safety(monkeypatch):
     with pytest.raises(ValueError,match='shell_skin_kinematics'):
         solve_transient_contact(dm,dd,TransientConfig(dt=1e-5,t_end=1e-5,initial_velocity=velocity),contact_settings=replace(ds,shell_skin_kinematics='corotational_nodal_director_dev'),solver_controls=controls)
     assert not calls
-    save(dict(verified=True,checkpoint_sha256=sha('run-1'),program_incompatible=True,contents_refused=True,coherent_global_pose_local_record_mismatch_refused=True,public_precancel=True,declared_model_repr_unchanged=True,state_coordinate_named_profile_guard=True,legacy_valid_transient_before_allocation=True,partial_rotation_refused_before_material_activation=True,mutation_scope='declared model fields and no material/accepted-state mutation; BC preparation may occur'))
+    save(dict(verified=True,public_precancel=True,declared_model_repr_unchanged=True,state_coordinate_named_profile_guard=True,legacy_valid_transient_before_allocation=True,partial_rotation_refused_before_material_activation=True,mutation_scope='declared model fields and no material/accepted-state mutation; BC preparation may occur'))
 
 
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE') or not (Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/'run-1.json').is_file(),
+    reason='archived finite input AUTOMATIC_WORKFLOW_EVIDENCE/run-1.json absent: restart-safety replay requires the original staged checkpoint')
+def test_archive_checkpoint_restart_safety():
+    from anysolver.nonlinear_restart import _sha256,_checkpoint_without_hash
+    model,domain,settings,res,program=build();stored=read('run-1');checkpoint=stored['checkpoint'];before=repr(model)
+    changed=replace(program,waypoints=tuple([program.waypoints[0]]+[tuple(v+1e-8 if i==0 else v for i,v in enumerate(w)) for w in program.waypoints[1:]]))
+    with pytest.raises(ValueError,match='incompatible'):solve(model,settings,res,changed,restart_checkpoint=checkpoint,max_load_factor=1/15.)
+    damaged=copy.deepcopy(checkpoint);damaged['displacements'][0]+=1e-4
+    with pytest.raises(ValueError,match='SHA-256'):solve(model,settings,res,program,restart_checkpoint=damaged,max_load_factor=1/15.)
+    # Re-sealed outer bytes do not convert a stale local record into a current one.
+    coherent=copy.deepcopy(checkpoint);free=model.mesh.dof_manager.get_node_dofs(3)[2];coherent['displacements'][free]+=1e-4
+    coherent['checkpoint_sha256']=_sha256(_checkpoint_without_hash(coherent))
+    with pytest.raises(ValueError,match='incompatible'):solve(model,settings,res,program,restart_checkpoint=coherent,max_load_factor=1/15.)
+    save(dict(verified=True,checkpoint_sha256=sha('run-1'),program_incompatible=True,contents_refused=True,coherent_global_pose_local_record_mismatch_refused=True))
+
+
+@pytest.mark.skipif(not Path('C:/ANYworkspaceWork/contact_q4_pair_monolithic_cycle_20261008/outputs/full.json').is_file(),
+    reason='archived legacy cycle output contact_q4_pair_monolithic_cycle_20261008/outputs/full.json absent: legacy identity checkpoint replay requires the original saved run')
 def test_legacy_default_identity_checkpoint():
     from examples.general_contact_q4_pair_monolithic_cycle import build as legacy,solve as legacy_solve
     from anysolver.general_contact.core import _contact_settings_contract
@@ -358,6 +373,8 @@ def test_legacy_default_identity_checkpoint():
     save(dict(verified=True,legacy_identity_unchanged=True,legacy_global_state_checkpoint_continues=True,legacy_full_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),source_evidence=str(path)))
 
 
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE') or not (Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/'run-1.json').is_file(),
+    reason='archived finite input AUTOMATIC_WORKFLOW_EVIDENCE/run-1.json absent: local-state binding replay requires the original staged checkpoint')
 def test_local_state_checkpoint_binding_discriminator(monkeypatch):
     model,domain,settings,res,program=build();checkpoint=copy.deepcopy(read('run-1')['checkpoint'])
     from anysolver.nonlinear_restart import _sha256,_checkpoint_without_hash

@@ -172,6 +172,8 @@ def test_saved_complete_workflow_independent_skin_gap():
                             lower_m=lower,gate_m=-5e-5))
     assert all(v['gate_pass'] for v in lower)
 
+@pytest.mark.skipif(not os.environ.get('FINITE_AUTOMATIC_WORKFLOW'),
+    reason='archived workflow input FINITE_AUTOMATIC_WORKFLOW absent: saved-fixture replay requires the original delivery root')
 def test_saved_actual_scaled_equilibrium_wrench_ncp_and_integration():
     from anysolver.nonlinear_static import _assemble_nonlinear_system,_discard_nonlinear_state_candidate
     oracle=get_oracle()
@@ -265,6 +267,8 @@ def test_saved_actual_scaled_equilibrium_wrench_ncp_and_integration():
     assert len(reports)==16
     emit('scaled_workflow',dict(complete=True,poses=reports))
 
+@pytest.mark.skipif(not os.environ.get('FINITE_AUTOMATIC_WORKFLOW'),
+    reason='archived workflow input FINITE_AUTOMATIC_WORKFLOW prefix.json absent: cancellation replay requires the original delivery root')
 def test_automatic_actual_cancellation_after_material_contact_trial(monkeypatch):
     # This test's output dependency is prospectively bound in its own job;
     # it never invents a prefix from a terminal snapshot.
@@ -304,6 +308,8 @@ def test_automatic_actual_cancellation_after_material_contact_trial(monkeypatch)
     assert increment._assemble_nonlinear_system is assemble and increment.linearize is contact_call
     emit('cancellation',dict(stage=stopped.value.stage,actual_material_contact_trial_before_cancel=True,committed_state_rollback=True,checkpoint_input_unchanged=True,context_and_hook_restored=True))
 
+@pytest.mark.skipif(not os.environ.get('FINITE_AUTOMATIC_WORKFLOW') or not os.environ.get('FINITE_AUTOMATIC_DIAGNOSTICS'),
+    reason='archived workflow inputs FINITE_AUTOMATIC_WORKFLOW prefix.json/fresh.json and FINITE_AUTOMATIC_DIAGNOSTICS absent: restart-suffix replay requires the original delivery root')
 def test_public_actual_restart_suffix_and_terminal_restore(monkeypatch):
     root=Path(os.environ['FINITE_AUTOMATIC_WORKFLOW']);prefix=json.loads((root/'prefix.json').read_text());fresh=workflow_fresh(root)
     model,domain,settings,resolution,program=build(saved_domain=prefix['automatic_domain'],saved_resolution=prefix['automatic_resolution'])
@@ -377,6 +383,8 @@ def test_public_actual_restart_suffix_and_terminal_restore(monkeypatch):
         elastic_constitutive_history_equal=True,prefix_input_unchanged=True))
 
 
+@pytest.mark.skipif(not os.environ.get('FINITE_AUTOMATIC_WORKFLOW'),
+    reason='archived workflow input FINITE_AUTOMATIC_WORKFLOW fresh.json absent: saved-release replay requires the original delivery root')
 def test_saved_release_strict_positive_physical_opening():
     root=Path(os.environ['FINITE_AUTOMATIC_WORKFLOW']);saved=workflow_fresh(root)
     model,domain,settings,resolution,program=build()
@@ -395,6 +403,8 @@ def test_saved_release_strict_positive_physical_opening():
     emit('strict_release_opening_source_plane',dict(step=15,**witness))
     assert witness['gate_pass'] and witness['all_pairs']==4 and witness['minimum_distance_lower_m']>0
 
+@pytest.mark.skipif(not os.environ.get('FINITE_AUTOMATIC_PAIRED_PREFIX') or not Path(os.environ['FINITE_AUTOMATIC_PAIRED_PREFIX']).is_file(),
+    reason='archived paired prefix input FINITE_AUTOMATIC_PAIRED_PREFIX absent: paired-checkpoint refusal replay requires the original saved prefix')
 def test_paired_checkpoint_refuses_different_fixed_automatic_selection(tmp_path):
     # Same physical builder, but a different pressure side and interaction ID.
     # This is a refusal query, never a replay/migration of the paired trajectory.

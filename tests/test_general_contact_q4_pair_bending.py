@@ -141,6 +141,8 @@ def test_reference_skin_signed_response_and_linearized_operator():
     save(dict(reference_operator_scaled_error=error,reference_equilibrium_error=ref['reference_equilibrium_error'],pressure=ref['pressure'],support=ref['support'],displacements=ref['displacements'],compliance_eigenvalues=ref['compliance_eigenvalues'],signed_weakest_mode=ref['signed_weakest_mode'],signed_mode_work=ref['signed_mode_work'],six_mode_response_detected=True,scope='independent contact linearization; same qualified structuralK reused; not nonlinearcodecomparison'))
 
 
+@pytest.mark.skipif(not os.environ.get('BENDING_STAGE'),
+    reason='installed bending stage input BENDING_STAGE absent: staged bending solve requires the original workflow stage selection')
 def test_installed_bending_stage():
     from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
     from anysolver.nonlinear_static import _assemble_nonlinear_system,_discard_nonlinear_state_candidate
@@ -189,6 +191,8 @@ def test_installed_bending_stage():
     report['verified']=True;save(report)
 
 
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE') or not (Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/'full-accuracy.json').is_file(),
+    reason='archived bending input AUTOMATIC_WORKFLOW_EVIDENCE/full-accuracy.json absent: saved-pose replay requires the original evidence root')
 def test_exact_saved_pose_and_inventory():
     from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
     evidence=Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE']);path=evidence/'full-accuracy.json';report=json.loads(path.read_text());assert report['verified']
@@ -201,8 +205,18 @@ def test_exact_saved_pose_and_inventory():
 
 
 def test_actual_restart_refusal_and_precancel():
-    from dataclasses import replace
     from anysolver import CancellationToken,SolveCancelled
+    model,domain,settings,resolution,load=build();before=repr(model)
+    token=CancellationToken();token.cancel('bending public precancel')
+    with pytest.raises(SolveCancelled):solve(model,settings,resolution,load,cancellation_token=token)
+    assert repr(model)==before
+    save(dict(verified=True,actual_public_precancel=True,declared_FEModel_repr_unchanged=True))
+
+
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE') or not (Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/'prefix.json').is_file(),
+    reason='archived bending input AUTOMATIC_WORKFLOW_EVIDENCE/prefix.json absent: restart-refusal replay requires the original staged checkpoint')
+def test_actual_archive_checkpoint_restart_refusals():
+    from dataclasses import replace
     from anysolver.general_contact.automatic_domain import resolve_automatic_contact_domain
     evidence=Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE']);path=evidence/'prefix.json';prefix=json.loads(path.read_text());assert prefix['verified']
     model,domain,settings,resolution,load=build();before=repr(model)
@@ -219,7 +233,4 @@ def test_actual_restart_refusal_and_precancel():
     old_default=json.loads((evidence/'full.json').read_text())
     with pytest.raises(ValueError,match='incompatible'):solve(model,settings,resolution,load,restart_checkpoint=old_default['checkpoint'])
     assert repr(model)==before
-    token=CancellationToken();token.cancel('bending public precancel')
-    with pytest.raises(SolveCancelled):solve(model,settings,resolution,load,cancellation_token=token)
-    assert repr(model)==before
-    save(dict(verified=True,provenance_refusal=True,settings_refusal=True,tamper_refusal=True,old_default_tolerance_restart_refusal=True,actual_public_precancel=True,declared_FEModel_repr_unchanged=True,prefix_path=str(path),prefix_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),old_default_report_sha256=hashlib.sha256((evidence/'full.json').read_bytes()).hexdigest(),transaction_claim='declared FEModel fields only'))
+    save(dict(verified=True,provenance_refusal=True,settings_refusal=True,tamper_refusal=True,old_default_tolerance_restart_refusal=True,prefix_path=str(path),prefix_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),old_default_report_sha256=hashlib.sha256((evidence/'full.json').read_bytes()).hexdigest(),transaction_claim='declared FEModel fields only'))

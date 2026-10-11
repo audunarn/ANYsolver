@@ -16,7 +16,9 @@ FREF=1e-4;MREF=1e-4
 @pytest.fixture(scope='module')
 def public_record():
     """Only the new bound installed producer, never fabricated mechanics."""
-    return json.loads(Path(os.environ['TILTED_PUBLIC_RECORD']).read_text())
+    record_path=os.environ.get('TILTED_PUBLIC_RECORD')
+    if not record_path:pytest.skip('archived public record TILTED_PUBLIC_RECORD absent: saved-assessment replay requires the original public record witness')
+    return json.loads(Path(record_path).read_text())
 
 @pytest.fixture(scope='module')
 def public_fixture():
@@ -65,6 +67,8 @@ def test_public_rich_prefix_refusal_before_advancement(tmp_path,monkeypatch,publ
     assert entry.main(['--through-step','16','--restart',str(path)])==1
     assert not calls
 
+@pytest.mark.skipif(not all(os.environ.get(name) for name in ('TILTED_CURRENT_OPEN_CHECKPOINT','TILTED_PUBLIC_SUFFIX','TILTED_LEGACY_REFUSAL')),
+    reason='archived tilted inputs TILTED_CURRENT_OPEN_CHECKPOINT/TILTED_PUBLIC_SUFFIX/TILTED_LEGACY_REFUSAL absent: bare-checkpoint and suffix replay requires the original public records')
 def test_public_bare_checkpoint_schema_and_suffix_truth(public_record):
     from examples.general_contact_tilted_relative_output import load_restart,assess
     cp,prefix,source=load_restart(os.environ['TILTED_CURRENT_OPEN_CHECKPOINT'],16)
@@ -81,6 +85,8 @@ def test_public_bare_checkpoint_schema_and_suffix_truth(public_record):
     legacy=json.loads(Path(os.environ['TILTED_LEGACY_REFUSAL']).read_text())
     assert legacy['status']=='NONPASS' and 'analysis contract is incompatible' in legacy['failure_reason']
 
+@pytest.mark.skipif(not os.environ.get('TILTED_CURRENT_PREFIX'),
+    reason='archived tilted input TILTED_CURRENT_PREFIX absent: rich terminal-restore replay requires the original prefix record')
 def test_public_rich_terminal_restore(tmp_path,public_record):
     from examples.general_contact_tilted_relative_sliding import main
     path=tmp_path/'fresh.json';path.write_text(json.dumps(public_record));out=tmp_path/'terminal.json'
@@ -152,11 +158,15 @@ def test_independent_partition_seed_and_current_work_tangent(monkeypatch):
     with monkeypatch.context() as context:
         context.setattr(proof,'build',build);context.setattr(proof,'rigid_pose',posed)
         proof.test_director_work_and_coupled_chart_jacobian()
-    result=json.loads(Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).read_text())
-    result.update(seed=record,partitions=list(desc),target_physical_skin_unchanged=True,source_only_skin_translation_m=.02,owner_local_coordinate_preservation_errors=errors,actual_seed_path_certified=True)
-    save(result)
+    result_root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if result_root:
+        result=json.loads(Path(result_root).read_text())
+        result.update(seed=record,partitions=list(desc),target_physical_skin_unchanged=True,source_only_skin_translation_m=.02,owner_local_coordinate_preservation_errors=errors,actual_seed_path_certified=True)
+        save(result)
 
 
+@pytest.mark.skipif(not os.environ.get('FINITE_STAGE'),
+    reason='installed tilted stage input FINITE_STAGE absent: staged tilted solve requires the original workflow stage selection')
 def test_installed_relative_path():
     stage=os.environ['FINITE_STAGE'];step=int(stage.split('-')[1]);previous={4:None,8:4,12:8,13:12,14:13,15:14,16:15}[step]
     model,domain,settings,res,program=build();kwargs=dict(max_load_factor=step/16.)
@@ -171,6 +181,8 @@ def test_installed_relative_path():
     assert [p['step'] for p in poses]==list(range((previous or 0)+1,step+1))
 
 
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE'),
+    reason='archived tilted inputs AUTOMATIC_WORKFLOW_EVIDENCE run-4..run-16.json absent: saved-pose physical-gate replay requires the original staged evidence root')
 def test_saved_relative_poses_independent_physical_gates():
     from anysolver.nonlinear_static import _assemble_nonlinear_system,_discard_nonlinear_state_candidate
     spec=importlib.util.spec_from_file_location('_tilted_pose_oracle',Path(__file__).parents[1]/'docs/d1_review_support/contact_tilted_relative_sliding_20261008/oracle.py')
@@ -238,12 +250,7 @@ def test_relative_admission_and_restart_safety(monkeypatch):
     from anysolver import CancellationToken,SolveCancelled,solve_static_nonlinear,validate_general_contact
     from anysolver.general_contact.finite_rotation_predictor import finite_surface_partitions,per_surface_seed_descriptor,per_surface_rigid_seed
     from scipy.sparse import eye
-    model,domain,settings,res,program=build();open_report=read('run-15');assert read('proof-chain')['strict_opening_verified'];checkpoint=open_report['checkpoint'];before=repr(model)
-    with pytest.raises(ValueError,match='incompatible'):solve(model,replace(settings,finite_frame_seed='common_reference_frame_dev'),res,program,restart_checkpoint=checkpoint,max_load_factor=1.)
-    changed=replace(program,waypoints=program.waypoints[:-1]+(tuple(v+1e-8 if i==1 else v for i,v in enumerate(program.waypoints[-1])),))
-    with pytest.raises(ValueError,match='incompatible'):solve(model,settings,res,changed,restart_checkpoint=checkpoint)
-    damaged=copy.deepcopy(checkpoint);damaged['path_state']['normal_forces'][0]+=1e-5
-    with pytest.raises(ValueError,match='SHA-256'):solve(model,settings,res,program,restart_checkpoint=damaged)
+    model,domain,settings,res,program=build();before=repr(model)
     token=CancellationToken();token.cancel('tilted relative precancel')
     with pytest.raises(SolveCancelled):solve(model,settings,res,program,cancellation_token=token)
     with pytest.raises(ValueError,match='finite_frame_seed requires contact_path_program'):
@@ -293,9 +300,28 @@ def test_relative_admission_and_restart_safety(monkeypatch):
         with pytest.raises(ValueError,match='finite_frame_seed'):
             solve_static_arc_length(am,load,control=ArcLengthControl(initial_load_increment=1e-5,minimum_load_increment=1e-6,maximum_load_increment=1e-5,max_steps=1),contact=ad,contact_settings=replace(aset,finite_frame_seed='per_surface_reference_frames_dev'))
     assert not arc_calls and repr(am)==arc_before
-    save(dict(verified=True,open_checkpoint_sha256=sha('run-15'),seed_selector_restart_refusal=True,program_identity_refusal=True,contents_refused=True,public_precancel=True,declared_model_repr_unchanged=True,implicit_force_refused=True,unused_old_skin_refused=True,orphan_refused=True,partial_partition_refused=True,overlapping_elements_refused=True,shared_nodes_refused=True,disconnected_refused=True,missing_anchor_refused=True,inconsistent_frame_refused=True,legacy_valid_transient_before_allocation=True,legacy_valid_arc_before_allocation=True,wrong_type_preserved=True,transaction_scope='elastic declared model fields/material and accepted states; generic hidden rollback not qualified'))
+    save(dict(verified=True,public_precancel=True,declared_model_repr_unchanged=True,implicit_force_refused=True,
+        unused_old_skin_refused=True,orphan_refused=True,partial_partition_refused=True,overlapping_elements_refused=True,
+        shared_nodes_refused=True,disconnected_refused=True,missing_anchor_refused=True,inconsistent_frame_refused=True,
+        legacy_valid_transient_before_allocation=True,legacy_valid_arc_before_allocation=True,wrong_type_preserved=True,
+        transaction_scope='elastic declared model fields/material and accepted states; generic hidden rollback not qualified'))
 
 
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE') or not all((Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/(name+'.json')).is_file() for name in ('run-15','proof-chain')),
+    reason='archived tilted inputs AUTOMATIC_WORKFLOW_EVIDENCE run-15.json/proof-chain.json absent: checkpoint restart-refusal replay requires the original staged evidence root')
+def test_relative_archive_checkpoint_restart_refusals():
+    model,domain,settings,res,program=build();open_report=read('run-15');assert read('proof-chain')['strict_opening_verified'];checkpoint=open_report['checkpoint'];before=repr(model)
+    with pytest.raises(ValueError,match='incompatible'):solve(model,replace(settings,finite_frame_seed='common_reference_frame_dev'),res,program,restart_checkpoint=checkpoint,max_load_factor=1.)
+    changed=replace(program,waypoints=program.waypoints[:-1]+(tuple(v+1e-8 if i==1 else v for i,v in enumerate(program.waypoints[-1])),))
+    with pytest.raises(ValueError,match='incompatible'):solve(model,settings,res,changed,restart_checkpoint=checkpoint)
+    damaged=copy.deepcopy(checkpoint);damaged['path_state']['normal_forces'][0]+=1e-5
+    with pytest.raises(ValueError,match='SHA-256'):solve(model,settings,res,program,restart_checkpoint=damaged)
+    assert repr(model)==before
+    save(dict(verified=True,open_checkpoint_sha256=sha('run-15'),seed_selector_restart_refusal=True,program_identity_refusal=True,contents_refused=True))
+
+
+@pytest.mark.skipif(not Path('C:/ANYworkspaceWork/contact_finite_rotation_shell_work_20261008/outputs/run-15.json').is_file(),
+    reason='archived legacy checkpoint contact_finite_rotation_shell_work_20261008/outputs/run-15.json absent: legacy default continuation replay requires the original saved run')
 def test_legacy_default_finite_checkpoint_continuation():
     from examples.general_contact_finite_rotation_shell_work import build as prior,solve as prior_solve
     from anysolver.general_contact.core import _contact_settings_contract
@@ -308,6 +334,8 @@ def test_legacy_default_finite_checkpoint_continuation():
     save(dict(verified=True,legacy_default_automatic_identity_unchanged=True,legacy_v6_owner_local_checkpoint_continues=True,zero_new_increments=True,old_output_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),request_identity_cross_package_not_claimed=True))
 
 
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE'),
+    reason='archived tilted inputs AUTOMATIC_WORKFLOW_EVIDENCE run-4..run-16.json absent: equilibrium discriminator replay requires the original staged evidence root')
 def test_saved_equilibrium_discriminator():
     from anysolver.nonlinear_static import _assemble_nonlinear_system,_discard_nonlinear_state_candidate
     model,domain,settings,res,program=build();manager=GeneralS3PatchManager(model,res.definition,settings);C=rows_for(model,program)

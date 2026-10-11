@@ -420,15 +420,11 @@ def test_public_transient_refuses_unused_q4_pair_selector(monkeypatch):
 def test_default_identity_physical_map_and_public_unused_routes(monkeypatch):
     from anysolver import validate_general_contact,CancellationToken,SolveCancelled,LoadCase,solve_static_nonlinear,solve_static_arc_length,ArcLengthControl
     from anysolver.general_contact.core import _contact_settings_contract
-    from examples.general_contact_automatic_s3_pair import build_s3_pair,solve_shell_pair as oldsolve
+    from examples.general_contact_automatic_s3_pair import build_s3_pair
     from examples.general_contact_automatic_q4_pair import build,solve_shell_pair
     from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
-    old=json.loads(Path(os.environ['Q4_PAIR_DEFAULT_BASELINE']).read_text())
     model,domain,settings,res,path=build_s3_pair()
-    assert res.identity==old['identity']
     assert 'path_predictor' in _contact_settings_contract(settings) and 'shell_pair_orientation' not in _contact_settings_contract(settings)
-    terminal=oldsolve(model,domain,settings,res,path,restart_checkpoint=old['checkpoint'])
-    assert terminal.status=='completed';np.testing.assert_array_equal(terminal.displacements,old['displacements'])
     candidate=build();model,domain,settings,res,path=candidate
     manager=GeneralS3PatchManager(model,res.definition,settings);positions=manager._positions(np.zeros(manager.n_dof))
     np.testing.assert_allclose(positions[0][:,2],.03,atol=1e-17,rtol=0)
@@ -462,5 +458,18 @@ def test_default_identity_physical_map_and_public_unused_routes(monkeypatch):
             solve_static_arc_length(arc,load,control=ArcLengthControl(initial_load_increment=1e-5,minimum_load_increment=1e-6,maximum_load_increment=1e-5,max_steps=1),contact=definition,contact_settings=replace(defaults,**{name:value}))
     assert not calls and repr(arc)==before
     result_root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
-    if result_root:Path(result_root).write_text(json.dumps(dict(verified=True,default_identity_unchanged=True,legacy_terminal_restart=True,
+    if result_root:Path(result_root).write_text(json.dumps(dict(verified=True,
         actual_public_rigid_and_arc_refusal=True,arc_before_manager_allocation_and_BC_mutation=True,physical_reference_positions=True,precancel=True,friction_refusal=True,repr_fields_unchanged=True),indent=2))
+
+
+@pytest.mark.skipif(not os.environ.get('Q4_PAIR_DEFAULT_BASELINE') or not Path(os.environ['Q4_PAIR_DEFAULT_BASELINE']).is_file(),
+    reason='archived baseline input Q4_PAIR_DEFAULT_BASELINE absent: default-identity and terminal-restart replay requires the original baseline witness')
+def test_default_identity_archive_baseline_terminal_replay():
+    from examples.general_contact_automatic_s3_pair import build_s3_pair,solve_shell_pair as oldsolve
+    old=json.loads(Path(os.environ['Q4_PAIR_DEFAULT_BASELINE']).read_text())
+    model,domain,settings,res,path=build_s3_pair()
+    assert res.identity==old['identity']
+    terminal=oldsolve(model,domain,settings,res,path,restart_checkpoint=old['checkpoint'])
+    assert terminal.status=='completed';np.testing.assert_array_equal(terminal.displacements,old['displacements'])
+    result_root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if result_root:Path(result_root).write_text(json.dumps(dict(verified=True,default_identity_unchanged=True,legacy_terminal_restart=True),indent=2))

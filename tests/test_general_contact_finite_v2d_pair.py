@@ -267,6 +267,8 @@ def test_saved_complete_workflow_independent_skin_gap():
     assert all(v['gate_pass'] for v in lower)
 
 
+@pytest.mark.skipif(not os.environ.get('FINITE_V2D_WORKFLOW'),
+    reason='archived workflow input FINITE_V2D_WORKFLOW absent: saved-fixture replay requires the original delivery root')
 def test_saved_actual_scaled_equilibrium_wrench_ncp_and_integration():
     from anysolver.nonlinear_static import _assemble_nonlinear_system,_discard_nonlinear_state_candidate
     oracle=get_oracle()
@@ -361,6 +363,8 @@ def test_saved_actual_scaled_equilibrium_wrench_ncp_and_integration():
     emit('scaled_workflow',dict(complete=True,poses=reports))
 
 
+@pytest.mark.skipif(not os.environ.get('FINITE_V2D_WORKFLOW'),
+    reason='archived workflow input FINITE_V2D_WORKFLOW prefix.json absent: cancellation replay requires the original delivery root')
 def test_mixed_actual_cancellation_after_material_contact_trial(monkeypatch):
     # This test's output dependency is prospectively bound in its own job;
     # it never invents a prefix from a terminal snapshot.
@@ -401,6 +405,8 @@ def test_mixed_actual_cancellation_after_material_contact_trial(monkeypatch):
     emit('cancellation',dict(stage=stopped.value.stage,actual_material_contact_trial_before_cancel=True,committed_state_rollback=True,checkpoint_input_unchanged=True,context_and_hook_restored=True))
 
 
+@pytest.mark.skipif(not os.environ.get('FINITE_V2D_WORKFLOW'),
+    reason='archived workflow input FINITE_V2D_WORKFLOW prefix.json/fresh.json absent: restart-suffix replay requires the original delivery root')
 def test_public_actual_restart_suffix_and_terminal_restore():
     root=Path(os.environ['FINITE_V2D_WORKFLOW'])
     prefix=json.loads((root/'prefix.json').read_text());fresh=workflow_fresh(root)
@@ -467,6 +473,8 @@ def test_public_actual_restart_suffix_and_terminal_restore():
                        owner_model_validation=True,elastic_constitutive_history_equal=True))
 
 
+@pytest.mark.skipif(not os.environ.get('FINITE_V2D_WORKFLOW'),
+    reason='archived workflow input FINITE_V2D_WORKFLOW fresh.json absent: saved-release replay requires the original delivery root')
 def test_saved_release_strict_positive_physical_opening():
     root=Path(os.environ['FINITE_V2D_WORKFLOW']);saved=workflow_fresh(root)
     model,definition,settings,program=build();require_saved_fixture(saved,model,definition,settings,program)
@@ -505,6 +513,8 @@ def test_affected_mixed_profile_admission_unchanged():
     assert manager.profile==old_profile
 
 
+@pytest.mark.skipif(not os.environ.get('FINITE_V2D_LEGACY_EVIDENCE'),
+    reason='archived legacy evidence input FINITE_V2D_LEGACY_EVIDENCE absent: installed legacy suffix replay requires the original evidence root')
 def test_affected_q4_v2d_actual_installed_suffix():
     from examples.general_contact_finite_q4_v2d import build as old_build,solve as old_solve,report_result
     from anysolver.general_contact.finite_mixed_state import COORDINATES as old_coordinates,prepare_mixed_states,owner_contract as old_owners

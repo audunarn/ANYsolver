@@ -14,7 +14,10 @@ _oracle=load_module('_cycle_oracle',Path(__file__).parents[1]/'docs/d1_review_su
 skin,free_dofs,exact_pose_gap,hard_reference=_old.skin,_old.free_dofs,_old.exact_pose_gap,_old.hard_reference
 FREF=1e-4
 MREF=1e-4
-def save(data):Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(data,indent=2,default=lambda x:x.tolist() if isinstance(x,np.ndarray) else x.item() if isinstance(x,np.generic) else x),encoding='utf-8')
+def save(data):
+    root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if not root:return
+    Path(root).write_text(json.dumps(data,indent=2,default=lambda x:x.tolist() if isinstance(x,np.ndarray) else x.item() if isinstance(x,np.generic) else x),encoding='utf-8')
 def read_report(stage):return json.loads((Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/f'{stage}.json').read_text())
 def report_sha(stage):return hashlib.sha256((Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/f'{stage}.json').read_bytes()).hexdigest()
 
@@ -38,6 +41,8 @@ def test_simple_exact_oracle_and_initial_clearance_reference():
     save(dict(verified=True,initial_clearance=certificate,represented_delta_fraction=str(delta),independent_initial_weighted_gap=g0,hard_contact_reference=reference,tilted_control=tilted,zero_control=zero,adverse_control=negative,expensive_cell_proof_not_implemented=True))
 
 
+@pytest.mark.skipif(not os.environ.get('CYCLE_STAGE'),
+    reason='installed cycle stage input CYCLE_STAGE absent: staged cycle solve requires the original workflow stage selection')
 def test_installed_cycle_solver_saved_inventory():
     stage=os.environ['CYCLE_STAGE'];model,domain,settings,res,program=build();kwargs={}
     if stage=='prefix':kwargs['max_load_factor']=2/3
@@ -61,6 +66,8 @@ def test_installed_cycle_solver_saved_inventory():
     report['inventory_verified']=True;save(report)
 
 
+@pytest.mark.skipif(not os.environ.get('CYCLE_STAGE'),
+    reason='installed cycle stage input CYCLE_STAGE absent: saved mechanical proof requires the original staged report and stage selection')
 def test_saved_cycle_mechanical_proof():
     from anysolver import LoadCase
     from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
@@ -106,6 +113,46 @@ def test_saved_cycle_mechanical_proof():
 
 def test_actual_cycle_definition_content_and_precancel_refusal():
     from anysolver import CancellationToken,SolveCancelled
+    model,domain,settings,res,program=build();before=repr(model)
+    token=CancellationToken();token.cancel('cycle public precancel')
+    with pytest.raises(SolveCancelled):solve(model,settings,res,program,cancellation_token=token)
+    assert repr(model)==before
+    save(dict(verified=True,public_precancel=True,declared_FEModel_repr_unchanged=True))
+
+
+def test_actual_empty_control_admission_and_dependent_control_refusal():
+    from anysolver import CancellationToken,SolveCancelled
+    from anysolver.general_contact.static_path import ContactPathProgram,ContactPathControl
+    model,domain,settings,res,program=build();before=repr(model)
+    # The legitimate pure-force programme has zero controls: the preflight
+    # rank of its empty control matrix is zero, so the actual driver must
+    # reach the declared cancellation point instead of a zero-size rank
+    # reduction, without mutating the declared model.
+    token=CancellationToken();token.cancel('empty-control preflight precancel')
+    with pytest.raises(SolveCancelled):solve(model,settings,res,program,cancellation_token=token)
+    assert repr(model)==before
+    # Nonempty dependent controls (one free DOF declared twice with
+    # different weights) and fully constrained controls (clamped nodes)
+    # still refuse through the same rank check, before any model mutation.
+    dependent=ContactPathProgram(
+        controls=(ContactPathControl.node(3,'uz'),ContactPathControl(((3,'uz',2.0),))),
+        waypoints=((0.,0.),(1.,2.)),steps_per_segment=1)
+    with pytest.raises(ValueError,match='constrained or dependent'):
+        solve(model,settings,res,dependent)
+    clamped=ContactPathProgram(
+        controls=(ContactPathControl.node(1,'ux'),ContactPathControl.node(1,'uy')),
+        waypoints=((0.,0.),(1.,1.)),steps_per_segment=1)
+    with pytest.raises(ValueError,match='constrained or dependent'):
+        solve(model,settings,res,clamped)
+    assert repr(model)==before
+    save(dict(verified=True,empty_control_rank_zero_admission=True,
+        dependent_control_refusal=True,fully_constrained_control_refusal=True,
+        refusals_before_model_mutation=True,declared_FEModel_repr_unchanged=True))
+
+
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE') or not all((Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/(name+'.json')).is_file() for name in ('prefix','proof-prefix')),
+    reason='archived cycle inputs AUTOMATIC_WORKFLOW_EVIDENCE prefix.json/proof-prefix.json absent: restart-binding replay requires the original evidence root')
+def test_actual_archive_cycle_checkpoint_restart_refusals():
     from anysolver.general_contact import resolve_automatic_contact_domain
     model,domain,settings,res,program=build();prefix=read_report('prefix');proof=read_report('proof-prefix');assert proof['verified'] and proof['opening_verified'] and proof['source_sha256']==report_sha('prefix');before=repr(model)
     changed_forces=list(program.nodal_forces);changed_forces[0]=replace(changed_forces[0],values_n=(0.,-5e-5,+5e-5,-4e-5));changed=replace(program,nodal_forces=tuple(changed_forces))
@@ -114,7 +161,4 @@ def test_actual_cycle_definition_content_and_precancel_refusal():
     with pytest.raises(ValueError,match='incompatible'):solve(model,settings,altered_res,program,restart_checkpoint=prefix['checkpoint'])
     damaged=copy.deepcopy(prefix['checkpoint']);damaged['path_state']['normal_forces'][0]+=1e-6
     with pytest.raises(ValueError,match='SHA-256 does not match its contents'):solve(model,settings,res,program,restart_checkpoint=damaged)
-    token=CancellationToken();token.cancel('cycle public precancel')
-    with pytest.raises(SolveCancelled):solve(model,settings,res,program,cancellation_token=token)
-    assert repr(model)==before
-    save(dict(verified=True,cycle_definition_refusal=True,provenance_refusal=True,content_hash_refusal=True,public_precancel=True,declared_FEModel_repr_unchanged=True,prefix_sha256=report_sha('prefix'),proof_prefix_sha256=report_sha('proof-prefix'),hidden_rollback_not_qualified=True))
+    save(dict(verified=True,cycle_definition_refusal=True,provenance_refusal=True,content_hash_refusal=True,prefix_sha256=report_sha('prefix'),proof_prefix_sha256=report_sha('proof-prefix'),hidden_rollback_not_qualified=True))

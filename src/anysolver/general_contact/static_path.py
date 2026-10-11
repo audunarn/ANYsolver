@@ -960,7 +960,10 @@ def solve_static_contact_path(
                         ]
                         controls[index, dof] += weight
                 rows = np.asarray(controls @ T, dtype=float)
-                if np.linalg.matrix_rank(rows) != len(program.controls):
+                # Empty controls and controls projected into an empty reduced
+                # space have rank zero. Nonempty dependent controls still fail.
+                rank = np.linalg.matrix_rank(rows) if rows.size else 0
+                if rank != len(program.controls):
                     raise ValueError("contact path controls are constrained or dependent")
                 if finite:
                     from scipy.linalg import null_space

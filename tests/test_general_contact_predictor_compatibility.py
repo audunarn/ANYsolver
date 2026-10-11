@@ -80,7 +80,8 @@ def test_public_optin_request_identity_then_actual_first_press():
     assert contact['active_pressure_dofs']>0 and contact['minimum_gap']>=-5e-5
     target=model.mesh.dof_manager.get_node_dofs(9)[2]
     assert abs(result.displacements[target])>1e-10
-    Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(dict(verified=True,
+    result_root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if result_root:Path(result_root).write_text(json.dumps(dict(verified=True,
         identity=record,status=result.status,contact=contact,target_uz=float(result.displacements[target]),
         executed_selector=result.info['contact_path']['path_predictor']),indent=2,
         default=lambda x:x.item() if isinstance(x,np.generic) else x.tolist()))

@@ -21,8 +21,9 @@ def _p(x,y,z):return (_v(*x),_v(*y),_v(*z))
 def test_squared_chord_proof(monkeypatch):
     import time
     started=time.perf_counter()
-    progress=Path(os.environ['AUTOMATIC_RUNTIME_RESULT']).parent/'proof-progress.json'
-    mark=lambda label:progress.write_text(json.dumps(dict(label=label,elapsed_s=time.perf_counter()-started)))
+    progress_root=os.environ.get('AUTOMATIC_RUNTIME_RESULT')
+    progress=Path(progress_root).parent/'proof-progress.json' if progress_root else None
+    mark=lambda label:progress.write_text(json.dumps(dict(label=label,elapsed_s=time.perf_counter()-started))) if progress else None
     # Target z=t*x; material point x=t,z=t. Endpoints touch, midpoint opens.
     target=(_p((0,0),(0,0),(0,0)),_p((1,0),(0,0),(0,1)),_p((0,0),(1,0),(0,0)))
     point=_p((0,1),(F(1,4),0),(0,1));budget=F(float(5e-5))
@@ -97,11 +98,14 @@ def test_squared_chord_proof(monkeypatch):
     calls.clear();fake.friction_settings.maximum_material_gap_evaluations=1
     with pytest.raises(ValueError,match='cap exhausted'):gap.certify_material_gap(fake,np.zeros(1),np.zeros(1))
     assert len(calls)==1
-    Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(dict(safe_endpoints=True,
+    result_root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if result_root:Path(result_root).write_text(json.dumps(dict(safe_endpoints=True,
         unsafe_interior_exact_numerator=str(numerator),exact_normal_square=str(norm2),
         strict_patch_drift_opening_contribution_m=str(F(1,2**14)),actual_midpoint_exact_predicates=midpoint,strict_patch_union_prerequisite=True,
         partial_failure_refused=True,point_facet_evaluations=len(calls))))
 
+@pytest.mark.skipif(not os.environ.get('FRICTION_STAGE') or not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE'),
+    reason='installed swept stage inputs FRICTION_STAGE/AUTOMATIC_WORKFLOW_EVIDENCE absent: staged whole-chord solve requires the original workflow stage selection')
 def test_swept_public(monkeypatch):
     _bind(monkeypatch);weak.test_weak_public(monkeypatch)
     evidence=Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE']);stage=os.environ['FRICTION_STAGE']
@@ -112,11 +116,12 @@ def test_swept_public(monkeypatch):
         assert cert['method']==gap.METHOD and cert['history_event_scope']=='not_certified'
         assert cert['certified_segments']<=cert['maximum_segments']
 
+@pytest.mark.skipif(not os.environ.get('FRICTION_STAGE') or not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE'),
+    reason='saved swept inputs FRICTION_STAGE/AUTOMATIC_WORKFLOW_EVIDENCE absent: saved-pose proof requires the original staged evidence root')
 def test_swept_saved_proof(monkeypatch):
     _bind(monkeypatch);weak.test_weak_saved_proof()
 
 def test_swept_safety(monkeypatch):
-    _bind(monkeypatch);weak.test_weak_safety(monkeypatch)
     from dataclasses import asdict,replace
     m,d,s,f,p,r=build_case();owner=weak.create_s3_friction_manager(m,weak.GeneralS3PatchManager(m,d,s),f)
     with pytest.raises(TypeError,match='finite_material_gap_error_m'):
@@ -134,6 +139,12 @@ def test_swept_safety(monkeypatch):
     for node in (2,3,4,5):u[m.mesh.dof_manager.get_node_dofs(node)[2]]+=1e-3
     with pytest.raises(ValueError,match='material-gap'):owner.require_friction_path(np.zeros(owner.n_dof),u)
     assert owner.checkpoint_state()==before
+
+
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE') or not os.environ.get('ENDPOINT_PROFILE_CHECKPOINT') or not Path(os.environ['ENDPOINT_PROFILE_CHECKPOINT']).is_file(),
+    reason='archived swept inputs AUTOMATIC_WORKFLOW_EVIDENCE and ENDPOINT_PROFILE_CHECKPOINT absent: safety replay requires the original staged checkpoint')
+def test_swept_archive_safety_replay(monkeypatch):
+    _bind(monkeypatch);weak.test_weak_safety(monkeypatch)
     # No endpoint-profile checkpoint transplant or reseal.
     old=Path(os.environ['ENDPOINT_PROFILE_CHECKPOINT'])
     incoming=json.loads(old.read_text())['checkpoint']
