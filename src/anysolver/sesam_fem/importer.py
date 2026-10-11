@@ -165,7 +165,8 @@ def build_fe_model_from_sesam_document(
                     material_name=material_name,
                     cross_section=dict(semantics.section_of_element.get(element_id, {})),
                 )
-                offsets=semantics.offsets_of_element.get(element_id)
+                # Beam offsets come from newer ANYfileio semantics (absent before).
+                offsets=(getattr(semantics, "offsets_of_element", None) or {}).get(element_id)
                 if offsets is not None:
                     solver_element.set_linear_nodal_offsets(offsets)
             else:
@@ -197,13 +198,17 @@ def build_fe_model_from_sesam_document(
             )
         )
 
-    if semantics.nodal_loads_by_case:
-        cases=set(semantics.nodal_loads_by_case)|set(semantics.pressure_by_case)
+    # Per-case nodal loads and pressures come from newer ANYfileio semantics;
+    # with ANYfileio releases that lack them, nodal loads are simply absent.
+    nodal_loads_by_case = getattr(semantics, "nodal_loads_by_case", None) or {}
+    pressure_by_case = getattr(semantics, "pressure_by_case", None) or {}
+    if nodal_loads_by_case:
+        cases=set(nodal_loads_by_case)|set(pressure_by_case)
         cases|={int(r.raw_values[0]) for r in document.load_records if r.record_name=='BGRAV'}
         if len(cases)!=1:raise ValueError('nodal SESAM import requires exactly one shared source load case')
-    if semantics.pressure_of_element or semantics.gravity is not None or semantics.nodal_loads_by_case:
+    if semantics.pressure_of_element or semantics.gravity is not None or nodal_loads_by_case:
         load_case = LoadCase("sesam_imported_load")
-        for loads in semantics.nodal_loads_by_case.values():
+        for loads in nodal_loads_by_case.values():
             for node,force in loads.items():load_case.add_nodal_load(node,force)
         for element_id, pressure in semantics.pressure_of_element.items():
             load_case.add_pressure_load(int(element_id), float(pressure))
