@@ -89,7 +89,10 @@ def test_free_body_and_contact_variant_record_inventory():
     # Each known contact class is represented by all exact dataclass fields;
     # no arbitrary import or result-object reconstruction is permitted.
     _,registry=_types()
-    assert len(registry)==8
+    assert {name.rsplit('.',1)[-1] for name in registry}=={
+        'RotationalBeamS3Results','DeformableBeamS3Results','ContactResults',
+        '_PairResults','_PatchResults','_BeamPlaneResults','MultipleBeamRigidResults',
+        'MultipleShellPlaneResults','_RadialResults','FreeRigidBodyState'}
     assert set(data)=={f.name for f in fields(TransientContactResults)}
     with pytest.raises(Error):serialize(replace(sample(),contact=(state,state)))
     malformed=replace(state,rotation=(('x','y','z'),)*3)

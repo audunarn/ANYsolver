@@ -1,3 +1,19 @@
+# Portable test repair checkpoint
+
+Archive inventory now explicitly covers ten registered classes (two added result variants), with unchanged codec/security behavior. Windows13checks4.057s pass; Linux14checks3.545s pass and1missing-local-capture skip, including new independent front geometry test. Literal seed diagnosis skips only absent local SHA-bound capture; present-capture checks unchanged. Evidence windows-transient-archive-inventory-01/02 and receipts/linux-archive-front-current-01. Private front candidate remains uncommitted/unpromoted. Additional Mistral delta Read reached12turns without final report; logs preserved, no acceptance inferred. Official inventories still active.
+
+---
+
+# Current restart checkpoint - branch ownership update
+
+User confirms main advances beyond1b45319f (550c927a and subsequent fixes). Do NOT merge or rebase main; continue codex/contact-on-main. Claude owns serial integration/push/CI. No pushes, PRs or Actions here.
+
+HEADfe0ac420,25commits; uncommitted private front candidate in3 source files and1 focused test. Full programme/portable DoD NOT met. Mistral front-polynomial Read review completed: no equation/partition counterexample; meaningful tests required, inherited angular-range assumption flagged. Result front-polynomial-review-result.md in local scratch. Independent rotating round-surface coefficients/tight-bound regression passes Windows3.949s. Private variable-front helper fails unchanged panel cap after62.620s (windows-variable-helper-quadrature-05); no owner/restart admission. Previous support and query cap failures retained. Do not increase caps or claim this route works.
+
+Official immutable29b6 inventories continue Windows58466/Linux20876 parents4-7; Linux supplement12188 waits final parent. Windows supplement complete2193.047s:2160pass28out-of-scopefail86skip,727contactpass17skip0fail. Windows parent3 contact367pass18skip0fail; Linux parent3 contact365pass19skip1old Git-export oracle failure (current repair separately verified). Evidence remains unstaged. Do not repeat completed source-unaffected checks. Next: finish missing private refinement tests/assessment or retain candidate experimental; resolve actual second-load integration, inspect remaining inventory, map42queue byhost/source and report only when DoDmet.
+
+---
+
 # Verified transverse replay slice
 
 Current transverse support (q=g_t-k*g), complete finite covers permitting both crossing directions, no endpoint-open shortcut on event panels, and bounded point event replay pass33focused current caller/state/support checks on Windows10.069s/Linux7.283s. Eight saved first/envelope/rebase cases retain passes. Tangency admission remains unresolved; second-load workflow NOT passed or qualified. Checkpoint test CRLF conversion now removes both CR/LF, strict production decoder unchanged; actual continuation still needs its complete integration route.
