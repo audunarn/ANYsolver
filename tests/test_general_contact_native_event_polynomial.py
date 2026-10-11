@@ -83,7 +83,8 @@ def test_precise_sine_range_is_explicitly_bounded():
             MaterialTimeNumerator(zeros,zeros,zeros,w)
 
 
-def test_literal_target_material_weights_are_not_replaced_by_a_plane_corner():
+@pytest.mark.parametrize("perturb_skin", [False, True])
+def test_literal_target_material_weights_are_not_replaced_by_a_plane_corner(perturb_skin):
     from decimal import localcontext
     from types import SimpleNamespace
     from dataclasses import replace
@@ -92,6 +93,8 @@ def test_literal_target_material_weights_are_not_replaced_by_a_plane_corner():
     offset=.2
     work=pair.target.adapter.work_map.toarray()
     shell=np.linalg.lstsq(work,np.tile((0.,0.,offset),(3,1)).ravel(),rcond=None)[0]
+    if perturb_skin:
+        shell[2]=np.nextafter(shell[2],np.inf)
     start=replace(field.initial,shell_displacement=field.initial.shell_displacement+shell)
     baseline=(.25,.25,.5);biased=(.25,.25,.4999999999995)
     def numerator(weights):
@@ -100,13 +103,20 @@ def test_literal_target_material_weights_are_not_replaced_by_a_plane_corner():
             start,segment.translations,segment.angular,segment.shell_increment)
     a,b=numerator(baseline),numerator(biased)
     corners=pair.target.adapter.current_positions(start.shell_displacement)
+    if perturb_skin:
+        assert np.ptp(corners[:,2])>0.
     with localcontext() as context:
         context.prec=50
         vertices=[[Decimal(float(x)) for x in row] for row in corners]
         e1=[x-y for x,y in zip(vertices[1],vertices[0])]
         e2=[x-y for x,y in zip(vertices[2],vertices[0])]
-        area=e1[0]*e2[1]-e1[1]*e2[0]
-        expected=area*vertices[0][2]*(1-sum(Decimal(x) for x in biased))
+        cross=(e1[1]*e2[2]-e1[2]*e2[1],
+               e1[2]*e2[0]-e1[0]*e2[2],
+               e1[0]*e2[1]-e1[1]*e2[0])
+        # Only the third literal coefficient changes. Use its full triple
+        # product, including a deliberately nonhorizontal one-ulp skin.
+        expected=(Decimal(baseline[2])-Decimal(biased[2]))*sum(
+            c*x for c,x in zip(cross,vertices[2]))
         assert expected>Decimal('1e-14')
         for time in (0.,.4,1.):
             assert abs((b.value(time)-a.value(time))-expected)<Decimal('1e-40')
