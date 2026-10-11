@@ -52,7 +52,14 @@ def gap_fixture():
     manager = object.__new__(owner.GeneralS3PatchManager)
     manager.law = law
     manager.augmented = False
-    manager.settings = SimpleNamespace(q4_source_gap_certificate='overlap_local_dev')
+    # Explicit current-manager state for this primal-mortar Q4-source/S3-target
+    # branch: the profile a validated manager assigns this scene, no projected
+    # wrapper around the primal law, and the reference-linear skin selection.
+    manager.projected_work = False
+    manager.profile = owner.SOURCE_Q4_PROFILE
+    manager.finite_skin = None
+    manager.settings = SimpleNamespace(q4_source_gap_certificate='overlap_local_dev',
+                                       d1_interior_profile=False)
     return manager, law.reference_source.copy(), law.reference_target.copy()
 
 

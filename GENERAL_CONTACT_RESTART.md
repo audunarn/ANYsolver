@@ -115,3 +115,6 @@ Briefs, adopted deltas V2–V6, worker logs and independent-review-v1.log remain
 preserves original source/artifact identities, historical failures, frozen/consumed
 restrictions and broader programme gaps. Existing b9 installed results stay bound
 to their original source/artifact. No engineering acceptance transfers to new code.
+
+## Current repair delta
+Search-fixture repair verified: preparation-reuse and swept-search-owner modules11passed,16.374947s,181936128B peak sampled tree RSS. The __new__ fixtures explicitly supply their admitted Q4-source profile, reference-linear skin and exact literal-position error map; production search/bounds and malformed-target refusal remain real and unchanged. See search-refusal-repair-v2/HANDOFF.md and focused-search-01 receipt. Native friction pulse remains unrepaired. Full candidate0f8 CI runs windows-full-ci-03/linux-full-ci-04 use fixed observer and are ongoing; their source does not include this later test-fixture delta. Neither full-inventory coverage nor final green results established yet.
