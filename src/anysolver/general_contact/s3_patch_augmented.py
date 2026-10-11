@@ -1888,6 +1888,18 @@ class MovingS3PatchProjectedNormal:
                 gap_variation.T @ dp_geometry
                 + weighted_hessian - cross - support_hessian
             )
+            if len(active_coordinates) < count:
+                # The exact full Hessian is symmetric, and its active block
+                # equals the unrestricted assembly. Complete the work mapping
+                # of the uncomputed prescribed-coordinate columns from the
+                # already differentiated inactive rows instead of leaving a
+                # zero transpose block; reduced variations never reach them.
+                inactive_coordinates = np.setdiff1d(
+                    np.arange(count, dtype=np.intp), active_coordinates)
+                tangent_matrix[np.ix_(active_coordinates, inactive_coordinates)] = (
+                    tangent_matrix[np.ix_(inactive_coordinates,
+                                          active_coordinates)].T
+                )
             return NodalForceLinearization(base, residual, tangent_matrix, dg,
                                            evaluations, gradient_only_pairs)
         if not tangent:

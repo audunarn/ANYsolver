@@ -316,3 +316,64 @@ def test_raw_seam_rejects_consistent_near_null_tangent_bias(monkeypatch):
     with pytest.raises(UnsupportedQ4S3Branch,
                        match="raw shared-edge tie tangent direction or symmetry disagrees"):
         owner.law.nodal_force_linearization(source, target, z, tangent=True)
+
+
+def test_raw_nodal_force_tangent_completion_matches_unrestricted_hessian():
+    """The restricted-column raw tangent maps the same symmetric work."""
+    owner, source, target, base, z = _case()
+    supported = np.flatnonzero(base.reference_support > 0.0)
+    z[supported[0]] = 0.0
+    law = owner.law
+    active = np.asarray(law.tangent_active_coordinates, dtype=np.intp)
+    assert len(active) < law.n_coordinates
+    shifted = np.asarray(source, dtype=float).copy()
+    shifted[1, 0] += 1.0e-7
+    restricted = law._nodal_force_unresolved(shifted, target, z, tangent=True)
+    saved = law.tangent_active_coordinates
+    law.tangent_active_coordinates = None
+    try:
+        unrestricted = law._nodal_force_unresolved(shifted, target, z, tangent=True)
+    finally:
+        law.tangent_active_coordinates = saved
+    np.testing.assert_allclose(restricted.residual, unrestricted.residual,
+                               rtol=1.0e-12, atol=1.0e-15)
+    np.testing.assert_allclose(restricted.gap_gradient, unrestricted.gap_gradient,
+                               rtol=1.0e-12, atol=1.0e-15)
+    np.testing.assert_allclose(restricted.tangent, restricted.tangent.T,
+                               rtol=1.0e-10, atol=1.0e-14)
+    np.testing.assert_allclose(
+        restricted.tangent[np.ix_(active, active)],
+        unrestricted.tangent[np.ix_(active, active)], rtol=1.0e-12, atol=1.0e-15)
+    inactive = np.setdiff1d(np.arange(law.n_coordinates, dtype=np.intp), active)
+    np.testing.assert_allclose(
+        restricted.tangent[np.ix_(active, inactive)],
+        unrestricted.tangent[np.ix_(active, inactive)], rtol=1.0e-12, atol=1.0e-15)
+    np.testing.assert_allclose(
+        restricted.tangent[np.ix_(inactive, active)],
+        unrestricted.tangent[np.ix_(inactive, active)], rtol=1.0e-12, atol=1.0e-15)
+
+
+def test_raw_seam_rejects_asymmetric_tangent_bias(monkeypatch):
+    """A skew tangent perturbation must still fail the seam symmetry gate."""
+    owner, _source, _target, _base, _z = _case()
+    saved = json.loads((Path(__file__).parent / "fixtures" /
+                        "general_contact_q4_s3_sloped_neighbor_seam_pose.json").read_text())
+    source = np.asarray(saved["source"])
+    target = np.asarray(saved["target"])
+    z = np.asarray(saved["nodal_force_n"])
+    original = owner.law._nodal_force_unresolved
+
+    def biased(*args, **kwargs):
+        work = original(*args, **kwargs)
+        if work.tangent is None:
+            return work
+        pattern = np.triu(np.ones_like(work.tangent), 1)
+        skew = pattern-pattern.T
+        return replace(work, tangent=work.tangent
+                       + 1.0e-4*np.linalg.norm(work.tangent)*skew
+                       / np.linalg.norm(skew))
+
+    monkeypatch.setattr(owner.law, "_nodal_force_unresolved", biased)
+    with pytest.raises(UnsupportedQ4S3Branch,
+                       match="raw shared-edge tie tangent direction or symmetry disagrees"):
+        owner.law.nodal_force_linearization(source, target, z, tangent=True)
