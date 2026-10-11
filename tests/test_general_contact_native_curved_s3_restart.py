@@ -6,13 +6,14 @@ import runpy,sys
 import numpy as np
 import pytest
 from test_general_contact_native_curved_s3_static import _analysis
+from test_general_contact_native_curved_static import _canonical_fixture_payload
 
 ACTIVE=Path(__file__).parent/'data/general_contact_native_curved_s3_v2_active.checkpoint'
 OPEN=Path(__file__).parent/'data/general_contact_native_curved_s3_v2_open.checkpoint'
 
 
 def test_curved_s3_active_restart_opens_and_preserves_prefix():
-    raw=ACTIVE.read_bytes();owner=_analysis()
+    raw=_canonical_fixture_payload(ACTIVE);owner=_analysis()
     run=owner.solve(checkpoint=raw,expected_sha256=sha256(raw).hexdigest(),stop_after=2)
     path=os.environ.get('CONTACT_APP_RESULT_RECORD')
     if path:
@@ -32,7 +33,7 @@ def test_curved_s3_active_restart_opens_and_preserves_prefix():
 @pytest.mark.parametrize('cancelled',(False,True))
 def test_curved_s3_active_prefix_survives_precommit_failure(cancelled):
     from anysolver.control import CancellationToken
-    raw=ACTIVE.read_bytes();owner=_analysis();record=owner._record;token=CancellationToken()
+    raw=_canonical_fixture_payload(ACTIVE);owner=_analysis();record=owner._record;token=CancellationToken()
     def injected(target,*args):
         staged=record(target,*args)
         if target==2:
@@ -50,7 +51,7 @@ def test_curved_s3_active_prefix_survives_precommit_failure(cancelled):
 
 
 def test_curved_s3_checkpoint_rejects_changed_normal_law():
-    raw=ACTIVE.read_bytes();owner=_analysis(normal_stiffness_Pa_per_m=2e7)
+    raw=_canonical_fixture_payload(ACTIVE);owner=_analysis(normal_stiffness_Pa_per_m=2e7)
     with pytest.raises(ValueError,match='binding'):
         owner.solve(checkpoint=raw,expected_sha256=sha256(raw).hexdigest(),stop_after=1)
 
@@ -58,7 +59,9 @@ def test_curved_s3_checkpoint_rejects_changed_normal_law():
 def test_curved_s3_installed_example_recontacts_from_open_checkpoint(monkeypatch,tmp_path,capsys):
     example=Path(__file__).parents[1]/'examples/general_contact_native_curved_material_s3.py'
     output=tmp_path/'recontact.checkpoint'
-    monkeypatch.setattr(sys,'argv',[str(example),'--through-target','3','--restart',str(OPEN),'--checkpoint-out',str(output)])
+    restart=tmp_path/'curved-s3-open-canonical.checkpoint'
+    restart.write_bytes(_canonical_fixture_payload(OPEN))
+    monkeypatch.setattr(sys,'argv',[str(example),'--through-target','3','--restart',str(restart),'--checkpoint-out',str(output)])
     runpy.run_path(str(example),run_name='__main__')
     report=json.loads(capsys.readouterr().out);raw=output.read_bytes()
     path=os.environ.get('CONTACT_APP_RESULT_RECORD')
@@ -67,7 +70,7 @@ def test_curved_s3_installed_example_recontacts_from_open_checkpoint(monkeypatch
         Path(path+'-curved-s3-cycle.json').write_text(json.dumps(report,indent=2))
     assert report['status']=='completed' and report['completed_targets']==3
     assert report['checkpoint_sha256']==sha256(raw).hexdigest()
-    rows=json.loads(raw)['records'];prefix=json.loads(OPEN.read_bytes())['records']
+    rows=json.loads(raw)['records'];prefix=json.loads(_canonical_fixture_payload(OPEN))['records']
     assert rows[:2]==prefix
     assert rows[2]['contact']['beam_force_n'][2]>0 and rows[2]['contact']['minimum_gap_m']>=-3e-5
     np.testing.assert_allclose(rows[2]['contact']['beam_force_n'],rows[0]['contact']['beam_force_n'],rtol=1e-7,atol=1e-10)

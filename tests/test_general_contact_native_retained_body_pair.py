@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 from examples.general_contact_native_retained_body_pair import analysis
 from anysolver.general_contact.native_retained_body_pair import omitted_cell_dominated
+from test_general_contact_native_curved_static import _canonical_fixture_payload
 
 
 def test_complete_line_potential_work_crossblocks_and_refusals():
@@ -45,20 +46,22 @@ def test_default_saved_curved_energy_and_identity():
     from test_general_contact_native_curved_fibre_pair_static import _curved_owner
     from anysolver._ge_beam3_p5_seeded.codec import _load
     owner=_curved_owner()
-    capsule=_load((Path(__file__).parent/'data/general_contact_native_curved_fibre_pair_v14.checkpoint').read_text())
+    fixture=Path(__file__).parent/'data/general_contact_native_curved_fibre_pair_v14.checkpoint'
+    capsule=_load(_canonical_fixture_payload(fixture).decode('ascii'))
     assert owner.identity==capsule['identity']
     record=capsule['records'][-1]
-    raw=(Path(__file__).parent/'data/general_contact_native_curved_fibre_pair_v14.checkpoint').read_bytes()
+    raw=_canonical_fixture_payload(fixture)
     state,records=owner._restore(raw,sha256(raw).hexdigest())
     assert state.contact.potential_j>0
-    assert owner._checkpoint(records)==(Path(__file__).parent/'data/general_contact_native_curved_fibre_pair_v14.checkpoint').read_bytes()
+    assert owner._checkpoint(records)==raw
 
 
 def test_active_connected_static_restart_and_rollback():
     if os.environ.get('CONTACT_NATIVE_BODY_SOLVE')!='1':pytest.skip('explicit bounded active solve')
     owner=analysis();initial=owner._checkpoint(())
     result=owner.solve()
-    Path(os.environ['CONTACT_APP_RESULT_RECORD']).write_text(json.dumps({'result':str(result)},indent=2))
+    record=os.environ.get('CONTACT_APP_RESULT_RECORD')
+    if record:Path(record).write_text(json.dumps({'result':str(result)},indent=2))
     assert result.status=='completed', result.failure
     assert result.accepted.contact.potential_j>0
     restored,records=analysis()._restore(result.checkpoint,result.checkpoint_sha256)

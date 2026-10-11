@@ -142,6 +142,8 @@ def test_manufactured_paired_and_rectangular_nullspace():
     save(dict(verified=True,independent_nonsymmetric_fraction_solution=True,rectangular_pressure_nullspace_retained=True,no_support_dropped=True))
 
 
+@pytest.mark.skipif(not BASE.is_file(),
+    reason='archived BASE pose run-14.json absent (C:/ANYworkspaceWork/contact_tilted_relative_sliding_20261008/outputs/v3/run-14.json): authenticated sixty-degree paired response requires the saved sha-pinned BASE pose')
 def test_authenticated_base_sixty_degree_paired_response():
     from anysolver.nonlinear_static import _assemble_nonlinear_system,_discard_nonlinear_state_candidate
     assert hashlib.sha256(BASE.read_bytes()).hexdigest()==BASE_SHA
@@ -178,6 +180,8 @@ def test_authenticated_base_sixty_degree_paired_response():
     save(dict(verified=True,saved_pose_sha256=BASE_SHA,saved_pose_is_fixture_not_restart=True,diagnostic=report,sixty_degree_directional_errors=errors,independent_physical_spin_work_relative_error=workerror,physical=gates,identity=res.identity))
 
 
+@pytest.mark.skipif(not os.environ.get('PRESSURE_STAGE'),
+    reason='explicit PRESSURE_STAGE producer stage absent: refined public path requires the staged refinement input')
 def test_refined_public_path():
     step=int(os.environ['PRESSURE_STAGE'].split('-')[1]);previous={4:None,8:4,12:8,13:12,14:13}[step]
     model,domain,settings,res,program,meta=fixture(True);kwargs=dict(max_load_factor=step/16.)
@@ -192,6 +196,10 @@ def test_refined_public_path():
     assert [p['step'] for p in poses]==list(range((previous or 0)+1,step+1))
 
 
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE') or not all(
+    (Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/(stage+'.json')).is_file()
+    for stage in ('run-4','run-8','run-12','run-13','run-14','base')),
+    reason='archived staged runs run-4/8/12/13/14.json and base.json under AUTOMATIC_WORKFLOW_EVIDENCE absent: saved refinement physical response requires the staged matrices')
 def test_saved_refinement_physical_response_and_modes():
     stages=['run-'+str(i) for i in (4,8,12,13,14)];chunks=[read(s) for s in stages]
     assert all(c['status']=='completed' for c in chunks) and all(c['previous_sha256']==sha(stages[i-1]) for i,c in enumerate(chunks) if i)
@@ -210,6 +218,11 @@ def test_saved_refinement_physical_response_and_modes():
     save(dict(verified=True,source_sha256={s:sha(s) for s in stages},base_diagnostic_sha256=sha('base'),snapshot_inventory=list(range(1,15)),refined_diagnostic=report,refined_physical=gates,common_material_node_response_differences=differences,bin_pressure_trace_differences_pa=[r['mean_numerical_pressure_pa']-b['mean_numerical_pressure_pa'] for r,b in zip(gates[-1]['full_reference_bins'],base['physical']['full_reference_bins'])],source_resultant_difference_n=np.array(gates[-1]['source_force_n'])-base['physical']['source_force_n'],source_moment_difference_nm=np.array(gates[-1]['source_moment_nm'])-base['physical']['source_moment_nm'],space_change='source structural and pressure X spaces both refine; target fixed',spatial_convergence_gate=False,bin_physical_traction_gate_unresolved=True,mesh_uniform_stability_not_claimed=True))
 
 
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE')
+    or not (Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/'base.json').is_file()
+    or not BASE.is_file()
+    or not Path('C:/ANYworkspaceWork/contact_tilted_relative_sliding_20261008/current-install.json').is_file(),
+    reason='archived base.json diagnostic under AUTOMATIC_WORKFLOW_EVIDENCE, BASE run-14.json, or current-install.json absent: installed saved-matrix consumer requires the saved matrices and install manifest')
 def test_installed_saved_matrix_consumer_and_refusals(monkeypatch):
     import anysolver
     import anysolver.nonlinear_static as structural_owner
@@ -234,3 +247,10 @@ def test_installed_saved_matrix_consumer_and_refusals(monkeypatch):
     with pytest.raises(ValueError):PressureResponseScales(0.,1.,1.,1.)
     with pytest.raises(ValueError):paired_pressure_response([[1.]],[[1.]],[[float('nan')]],[1.],[False],scales=SCALES)
     save(dict(verified=True,current_installed_saved_matrix_consumer=True,common_mechanical_payloads_identical=len(old['payload_sha256']),wrong_profile_before_material=True,inexact_selector_before_material=True,MPC_before_material=True,invalid_scale_and_nonfinite_refusal=True,saved_base_sha256=sha('base'),no_mechanical_solver_replay=True))
+
+
+def test_pressure_response_invalid_scale_and_nonfinite_refusals():
+    # Input-free refusals mirrored from the guarded installed-consumer node
+    # so they stay active without the saved matrices and install manifest.
+    with pytest.raises(ValueError):PressureResponseScales(0.,1.,1.,1.)
+    with pytest.raises(ValueError):paired_pressure_response([[1.]],[[1.]],[[float('nan')]],[1.],[False],scales=SCALES)

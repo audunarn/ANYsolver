@@ -60,6 +60,8 @@ def test_saved_displacement_refuses_mutated_contract(kind):
     with pytest.raises(ValueError):validate_saved_displacement(saved)
 
 @pytest.mark.parametrize('kind',['endpoint','count','nan','shape'])
+@pytest.mark.skipif(not os.environ.get('D1_CURRENT_DISPLACEMENT_RESULT'),
+    reason='archived displacement result D1_CURRENT_DISPLACEMENT_RESULT absent: prefix-pose refusal replay requires the original saved result')
 def test_prefix_poses_refused_before_advance(kind):
     import os
     saved=json.loads(Path(os.environ['D1_CURRENT_DISPLACEMENT_RESULT']).read_text());cp=saved['restart_checkpoint']

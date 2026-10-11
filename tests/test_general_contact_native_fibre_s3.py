@@ -7,6 +7,7 @@ import pytest
 from anysolver._ge_beam3_p5_seeded.core import canonical
 from anysolver.general_contact.native_multi_s3_static import FIBRE_CURVED_MATERIAL_PROFILE
 from test_general_contact_native_curved_s3_static import _analysis
+from test_general_contact_native_curved_static import _canonical_fixture_payload
 
 
 def _independent_material_history(owner,mechanical,origins):
@@ -36,7 +37,7 @@ def _independent_material_history(owner,mechanical,origins):
 
 def test_plastic_fibre_candidates_use_committed_origin_and_independent_return():
     owner=_analysis(physical_fibres=True,plastic_fibres=True)
-    fields=json.loads((Path(__file__).parent/'data/general_contact_native_curved_s3_v2_active.checkpoint').read_bytes())['records'][0]
+    fields=json.loads(_canonical_fixture_payload(Path(__file__).parent/'data/general_contact_native_curved_s3_v2_active.checkpoint'))['records'][0]
     context=owner.context;mechanical=context.make(fields['mechanical'])
     origins=owner.initial.native_histories;before=canonical(origins)
     residual,tangent,_,responses,_=context.assemble(mechanical,1.,origins)
@@ -206,7 +207,7 @@ def test_curved_fibre_coupled_elastic_first_contact_and_bound_restart():
     np.testing.assert_allclose(run.accepted.contact.contact.beam_moment_nm+
         run.accepted.contact.contact.shell_moment_nm,0.,atol=1e-10)
     reference=Path(__file__).parent/'data/general_contact_native_curved_s3_v2_active.checkpoint'
-    fields=json.loads(reference.read_bytes())['records'][0]
+    fields=json.loads(_canonical_fixture_payload(reference))['records'][0]
     for key,value in fields['mechanical'].items():
         np.testing.assert_allclose(getattr(run.accepted.mechanical,key),value,rtol=1e-7,atol=1e-10)
     np.testing.assert_allclose(run.accepted.shell_displacement,fields['shell_displacement'],rtol=1e-7,atol=1e-10)
