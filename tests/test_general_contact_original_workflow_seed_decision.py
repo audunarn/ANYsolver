@@ -51,6 +51,13 @@ V1_CAPTURE_NAME = "original-workflow-seed-decision-v1.json"
 V2_CAPTURE_NAME = "original-workflow-seed-decision-v2.json"
 
 
+def _missing_original_inputs():
+    """Exact real external inputs the original fixture nodes require."""
+    return [str(path) for path in (FIXTURE_DIR / "candidate_fixture.py",
+                                   DESCRIPTOR_PATH)
+            if not path.is_file()]
+
+
 def _original_case():
     spec = importlib.util.spec_from_file_location(
         "candidate_fixture", FIXTURE_DIR / "candidate_fixture.py")
@@ -150,7 +157,8 @@ def _decision_capture(payload):
     return capture
 
 
-def _cancelled_seed_decision(model, definition, seeded, program):
+def _cancelled_seed_decision(model, definition, seeded, program,
+                               *, max_load_factor=1.0/8.0):
     """One cancelled solve; returns the captured decision payload."""
     captured = {}
 
@@ -169,15 +177,17 @@ def _cancelled_seed_decision(model, definition, seeded, program):
             solve_static_nonlinear(
                 model, contact=definition, contact_settings=seeded,
                 contact_path_program=program, max_iterations=18,
-                max_load_factor=1.0/8.0)
+                max_load_factor=max_load_factor)
     finally:
         semismooth_path._INITIAL_SEED_DECISION_HOOK = None
     assert semismooth_path._INITIAL_SEED_DECISION_HOOK is None
     return captured["payload"]
 
 
-def _assert_identical_rerun(model, definition, seeded, program, first):
-    second = _cancelled_seed_decision(model, definition, seeded, program)
+def _assert_identical_rerun(model, definition, seeded, program, first,
+                              *, max_load_factor=1.0/8.0):
+    second = _cancelled_seed_decision(model, definition, seeded, program,
+                                      max_load_factor=max_load_factor)
     for key in ("origin_q", "origin_reactions", "origin_nodal_forces",
                 "origin_normalized_gap", "origin_residual_n",
                 "origin_constraint", "proposed_q", "proposed_reactions",
@@ -203,6 +213,9 @@ def _assert_identical_rerun(model, definition, seeded, program, first):
     return second
 
 
+@pytest.mark.skipif(bool(_missing_original_inputs()),
+                    reason='exact original fixture inputs absent: '
+                           + ', '.join(_missing_original_inputs()))
 def test_first_actual_v1_seed_decision_is_captured_before_newton():
     model, definition, settings, program = _original_case()
     seeded = _seeded(settings, "linearized_kkt_dev")
@@ -264,6 +277,9 @@ def test_first_actual_v1_seed_decision_is_captured_before_newton():
         handle.write("\n")
 
 
+@pytest.mark.skipif(bool(_missing_original_inputs()),
+                    reason='exact original fixture inputs absent: '
+                           + ', '.join(_missing_original_inputs()))
 def test_first_actual_v2_seed_decision_changes_the_obstruction():
     model, definition, settings, program = _original_case()
     seeded = _seeded(settings, "linearized_kkt_merit_globalization_dev")
@@ -326,7 +342,8 @@ def test_first_actual_v2_seed_decision_changes_the_obstruction():
         handle.write("\n")
 
 
-def _refusal_regression(model, definition, seeded, program, *, patch):
+def _refusal_regression(model, definition, seeded, program, *, patch,
+                         max_load_factor=1.0/8.0):
     """One cancelled v2 solve with a patched refusal entry; returns the
     captured decision payload. Both refusal entries must keep an explicit
     refusal record, never reach the bounded-globalization trials, and
@@ -349,13 +366,16 @@ def _refusal_regression(model, definition, seeded, program, *, patch):
                 solve_static_nonlinear(
                     model, contact=definition, contact_settings=seeded,
                     contact_path_program=program, max_iterations=18,
-                    max_load_factor=1.0/8.0)
+                    max_load_factor=max_load_factor)
         finally:
             semismooth_path._INITIAL_SEED_DECISION_HOOK = None
     assert semismooth_path._INITIAL_SEED_DECISION_HOOK is None
     return captured["payload"]
 
 
+@pytest.mark.skipif(bool(_missing_original_inputs()),
+                    reason='exact original fixture inputs absent: '
+                           + ', '.join(_missing_original_inputs()))
 def test_first_actual_v2_origin_evaluation_failure_refusal_is_explicit():
     # R1 regression: an origin-evaluation failure under v2 must keep its
     # explicit refusal record; the bounded-globalization block must not
@@ -397,6 +417,9 @@ def test_first_actual_v2_origin_evaluation_failure_refusal_is_explicit():
     assert repr(model.constraint_equations) == constraints_before
 
 
+@pytest.mark.skipif(bool(_missing_original_inputs()),
+                    reason='exact original fixture inputs absent: '
+                           + ', '.join(_missing_original_inputs()))
 def test_first_actual_v2_proposal_refusal_is_explicit():
     # R1 regression: a refused proposal under v2 must keep its explicit
     # refusal record; the bounded-globalization block must not run (no
@@ -429,6 +452,137 @@ def test_first_actual_v2_proposal_refusal_is_explicit():
     assert decision["selection"] == "linearized_kkt_merit_globalization_dev"
     assert decision["outcome"] == "refused"
     assert decision["reason"] == "synthetic_proposal_refusal"
+    assert "bounded_globalization" not in decision
+    assert "origin_merit" not in decision
+    assert np.all(np.asarray(payload["origin_q"]) == 0.0)
+    assert np.all(np.asarray(payload["origin_nodal_forces"]) == 0.0)
+    assert program.contract() == program_contract_before
+    assert repr(model.boundary_conditions) == boundary_before
+    assert repr(model.constraint_equations) == constraints_before
+
+
+# ----------------------------------------------------------------------
+# Input-free current math/refusal checks on mixed active/split nodes.
+#
+# The exact original fixture inputs above are external host artifacts;
+# where they are absent the guarded nodes skip with the exact missing
+# paths. The checks below are always active and need no external input:
+# they exercise the same production seed-decision math and the same
+# explicit refusal records on the committed small-patch case, whose seed
+# proposal is genuinely mixed (one active pressure mode against
+# twenty-four split modes). No consumed registered authority script is
+# run and no original-fixture identity claim is made here.
+
+
+def _input_free_case():
+    from test_general_contact_admission_globalization_driver_small_patch import (
+        _case as small_patch_case, _enabled as small_patch_enabled)
+    model, definition, settings, program = small_patch_case()
+    return model, definition, small_patch_enabled(settings), program
+
+
+def test_input_free_seed_decision_current_math_on_mixed_active_split_nodes():
+    model, definition, settings, program = _input_free_case()
+    program_contract_before = program.contract()
+    boundary_before = repr(model.boundary_conditions)
+    constraints_before = repr(model.constraint_equations)
+    for selection in ("linearized_kkt_dev",
+                      "linearized_kkt_merit_globalization_dev"):
+        seeded = _seeded(settings, selection)
+        payload = _cancelled_seed_decision(
+            model, definition, seeded, program, max_load_factor=0.5)
+        decision = payload["record"]
+        assert decision["selection"] == selection
+        assert decision["outcome"] in {"admitted", "refused"}
+        origin_z = np.asarray(payload["origin_nodal_forces"], dtype=float)
+        assert np.all(np.isfinite(origin_z)) and np.all(origin_z >= 0.0)
+        if selection == "linearized_kkt_merit_globalization_dev":
+            assert decision["revision"] == (
+                "origin_linearized_kkt_seed_merit_globalization_v2")
+            assert decision["qp_release_alternatives"] is True
+            if "qp_terminal" in decision:
+                assert decision["qp_terminal"] == "optimal"
+                assert decision.get("reason") != "qp_iteration_cap"
+        if decision["outcome"] == "admitted":
+            # Current math on the mixed active/split nodes: the proposal
+            # carries both active and split pressure modes and passes the
+            # unchanged production admission predicates locally.
+            assert float(decision["admissible_fraction"]) == 1.0
+            proposed_z = np.asarray(payload["proposed_nodal_forces"],
+                                    dtype=float)
+            assert np.all(np.isfinite(proposed_z))
+            assert np.all(proposed_z >= 0.0)
+            assert np.any(proposed_z > 0.0) and np.any(proposed_z == 0.0)
+            assert float(decision["seed_merit"]) < float(
+                decision["origin_merit"])*(1.0-1.0e-4)
+        else:
+            assert isinstance(decision.get("reason"), str) and decision["reason"]
+        # Coherent rollback: an immediate rerun on the same unchanged
+        # model reproduces the same decision bitwise (modulo timing).
+        _assert_identical_rerun(model, definition, seeded, program, payload,
+                                max_load_factor=0.5)
+    assert program.contract() == program_contract_before
+    assert repr(model.boundary_conditions) == boundary_before
+    assert repr(model.constraint_equations) == constraints_before
+
+
+def test_input_free_seed_refusals_remain_explicit_on_mixed_active_split_nodes():
+    model, definition, settings, program = _input_free_case()
+    seeded = _seeded(settings, "linearized_kkt_merit_globalization_dev")
+    program_contract_before = program.contract()
+    boundary_before = repr(model.boundary_conditions)
+    constraints_before = repr(model.constraint_equations)
+    original_assemble = semismooth_path._assemble_nonlinear_system
+    calls = {"n": 0}
+
+    def failing_assemble(*args, **kwargs):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            # The seed origin evaluate is the first assembly of a fresh
+            # step-1 solve; fail exactly that one.
+            raise ValueError("synthetic input-free origin evaluation failure")
+        return original_assemble(*args, **kwargs)
+
+    class assemble_patch:
+        def __enter__(self):
+            semismooth_path._assemble_nonlinear_system = failing_assemble
+        def __exit__(self, *exc):
+            semismooth_path._assemble_nonlinear_system = original_assemble
+
+    payload = _refusal_regression(model, definition, seeded, program,
+                                  patch=assemble_patch(),
+                                  max_load_factor=0.5)
+    decision = payload["record"]
+    assert decision["outcome"] == "refused"
+    assert decision["reason"].startswith("origin_evaluation_failed")
+    assert "bounded_globalization" not in decision
+    assert "origin_merit" not in decision
+    assert np.all(np.asarray(payload["origin_q"]) == 0.0)
+    assert np.all(np.asarray(payload["origin_nodal_forces"]) == 0.0)
+
+    from anysolver.general_contact.initial_contact_seed import (
+        InitialContactSeedRefusal)
+    original_propose = semismooth_path.propose_linearized_kkt_seed
+
+    def refusing_propose(**kwargs):
+        return InitialContactSeedRefusal(
+            "synthetic_input_free_proposal_refusal",
+            {"revision": ("origin_linearized_kkt_seed_merit_"
+                          "globalization_v2"),
+             "selection": "linearized_kkt_merit_globalization_dev"})
+
+    class propose_patch:
+        def __enter__(self):
+            semismooth_path.propose_linearized_kkt_seed = refusing_propose
+        def __exit__(self, *exc):
+            semismooth_path.propose_linearized_kkt_seed = original_propose
+
+    payload = _refusal_regression(model, definition, seeded, program,
+                                  patch=propose_patch(),
+                                  max_load_factor=0.5)
+    decision = payload["record"]
+    assert decision["outcome"] == "refused"
+    assert decision["reason"] == "synthetic_input_free_proposal_refusal"
     assert "bounded_globalization" not in decision
     assert "origin_merit" not in decision
     assert np.all(np.asarray(payload["origin_q"]) == 0.0)
