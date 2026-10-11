@@ -34,6 +34,32 @@ class MaterialEventSequence:
     numerator_endpoint_signs: tuple=(0,0)
 
 
+def _sequence_endpoint_padding(pair,start,endpoint):
+    scale=max(1.,float(np.max(np.abs(start.positions))),
+        float(np.max(np.abs(endpoint.positions))),
+        float(np.max(np.abs(pair.target.adapter.reference_positions))))
+    return 512*np.finfo(float).eps*scale
+
+
+def _resolve_endpoint_state(gap,sign,padding):
+    """Certified endpoint contact state: +1 open, -1 closed.
+
+    A binary64 gap beyond the conservative coordinate-scale padding resolves
+    on its own. Inside that padding the literal binary64 evaluation cannot
+    resolve the sign; the exact coefficient schedule built from the same
+    literal inputs (including the literal barycentric weights) is then
+    authoritative. Exact touches and contradictions still refuse.
+    """
+    if gap==0.:raise ValueError('event sequence endpoint exact touch unresolved')
+    binary=1 if gap>0. else -1
+    if abs(gap)>padding:
+        if sign and sign!=binary:
+            raise ValueError('event sequence endpoint sign contradiction')
+        return binary
+    if not sign:raise ValueError('event sequence endpoint contact state unresolved')
+    return sign
+
+
 def locate_material_event_sequence(pair,start,translations,angular,shell_increment,*,maximum_intervals=256):
     """Cover the complete actual path before admitting any event schedule."""
     if type(maximum_intervals) is not int or maximum_intervals<1:
@@ -118,20 +144,29 @@ class NativeS3OpenSequenceResult:
     def normal_residual(self):return self.residual
 
 
-def evaluate_open_event_sequence(pair,start,history,translations,angular,shell_increment,*,maximum_intervals=256):
+def evaluate_open_event_sequence(pair,start,history,translations,angular,shell_increment,*,maximum_intervals=256,sequence=None):
     """Disposable replay of complete closed windows ending strictly open."""
     from .native_surface_activation import _release_history
     if type(history) is not FrictionPointState:
         raise ValueError('open event sequence requires physical friction history')
-    sequence=locate_material_event_sequence(pair,start,translations,angular,shell_increment,
-        maximum_intervals=maximum_intervals)
+    if sequence is None:
+        sequence=locate_material_event_sequence(pair,start,translations,angular,shell_increment,
+            maximum_intervals=maximum_intervals)
     endpoint=material_path_pose(start,translations,angular,shell_increment,1.)
     source=pair.source.evaluate(start.positions,start.position_low,start.cell_rotations).surface_position
     target=pair.target.physical_pose(start.shell_displacement)
     initial_gap=float((source-np.asarray(target.position))@np.asarray(target.material_frame)[:,2])
-    if initial_gap==0. or not sequence.endpoint_gap>0.:
-        raise ValueError('open event sequence requires nonzero initial and strictly open final gap')
-    initially_closed=initial_gap<0.
+    padding=_sequence_endpoint_padding(pair,start,endpoint)
+    initial_state=_resolve_endpoint_state(initial_gap,sequence.numerator_endpoint_signs[0],padding)
+    final_state=_resolve_endpoint_state(sequence.endpoint_gap,sequence.numerator_endpoint_signs[1],padding)
+    if final_state<0:
+        # The binary64 endpoint evaluation can flip the sign of a gap far
+        # below the coordinate-scale padding. The certified schedule ends
+        # closed; replay through the closed endpoint law with the same
+        # located sequence, without a second certification pass.
+        return _closed_sequence_from_schedule(pair,start,history,translations,angular,
+            shell_increment,sequence)
+    initially_closed=initial_state<0
     if history.partner_key!=(pair.partner_key if initially_closed else None):
         raise ValueError('open event sequence history disagrees with initial contact')
     events=sequence.events
@@ -198,11 +233,15 @@ def evaluate_closed_or_persistent_sequence(pair,start,history,translations,angul
     """Explicit sequence policy: certify once, then replay or retain persistence."""
     sequence=locate_material_event_sequence(pair,start,translations,angular,shell_increment,
         maximum_intervals=maximum_intervals)
+    endpoint=material_path_pose(start,translations,angular,shell_increment,1.)
+    padding=_sequence_endpoint_padding(pair,start,endpoint)
+    final_state=_resolve_endpoint_state(sequence.endpoint_gap,sequence.numerator_endpoint_signs[1],padding)
+    if final_state>0:
+        contribution=evaluate_open_event_sequence(pair,start,history,translations,angular,
+            shell_increment,sequence=sequence)
+        return contribution,sequence
     if sequence.events:
         return _closed_sequence_from_schedule(pair,start,history,translations,angular,shell_increment,sequence),sequence
-    endpoint=material_path_pose(start,translations,angular,shell_increment,1.)
-    if sequence.endpoint_gap>=0.:
-        raise ValueError('closed sequence persistence requires a closed endpoint')
     if type(history) is not FrictionPointState or history.partner_key!=pair.partner_key:
         raise ValueError('closed sequence persistence requires matching active physical history')
     return pair.evaluate(start,endpoint,history),sequence
@@ -216,21 +255,19 @@ def _closed_sequence_from_schedule(pair,start,history,translations,angular,shell
     source=pair.source.evaluate(start.positions,start.position_low,start.cell_rotations).surface_position
     target=pair.target.physical_pose(start.shell_displacement)
     initial_gap=float((source-np.asarray(target.position))@np.asarray(target.material_frame)[:,2])
-    scale=max(1.,float(np.max(np.abs(start.positions))),
-        float(np.max(np.abs(endpoint.positions))),
-        float(np.max(np.abs(pair.target.adapter.reference_positions))))
-    padding=512*np.finfo(float).eps*scale
-    # A precise numerator may certify strict signs below the conservative
-    # binary64 coordinate padding. Require agreement with the actual work map;
-    # exact touch and contradictory endpoint geometry still refuse.
-    initial_sign,final_sign=sequence.numerator_endpoint_signs
-    initial_resolved=(abs(initial_gap)>padding or
-        (initial_gap!=0. and initial_sign==(1 if initial_gap>0. else -1)))
-    final_resolved=(sequence.endpoint_gap < -padding or
-        (sequence.endpoint_gap<0. and final_sign==-1))
-    if not initial_resolved or not final_resolved:
-        raise ValueError('closed event sequence needs resolved initial and closed final gaps')
-    initially_closed=initial_gap<0.
+    padding=_sequence_endpoint_padding(pair,start,endpoint)
+    # A precise numerator certifies strict signs below the conservative
+    # binary64 coordinate padding, where the literal endpoint evaluation
+    # cannot resolve the sign at all. Exact touch and contradictory endpoint
+    # geometry still refuse.
+    initial_state=_resolve_endpoint_state(initial_gap,sequence.numerator_endpoint_signs[0],padding)
+    final_state=_resolve_endpoint_state(sequence.endpoint_gap,sequence.numerator_endpoint_signs[1],padding)
+    if final_state>0:
+        # Certified strictly open final gap: binary64 endpoint rounding
+        # misrouted this path; replay through the open schedule law.
+        return evaluate_open_event_sequence(pair,start,history,translations,angular,
+            shell_increment,sequence=sequence)
+    initially_closed=initial_state<0
     if history.partner_key!=(pair.partner_key if initially_closed else None):
         raise ValueError('closed event sequence history disagrees with initial contact')
     events=sequence.events
@@ -264,8 +301,15 @@ def _closed_sequence_from_schedule(pair,start,history,translations,angular,shell
         frame=np.asarray(pair.target.physical_pose(last.shell_displacement).material_frame)
         plastic+=frame.T@np.asarray(value.trial.plastic_slip_increment)
         a=None
+    certified_gap=None
+    if sequence.numerator_endpoint_signs[1] and abs(sequence.endpoint_gap)<=padding:
+        # The precise schedule certified this sub-padding endpoint that the
+        # literal binary64 evaluation cannot resolve; return its exact
+        # magnitude so the endpoint law corrects only the Jet2 primal.
+        from .native_event_polynomial import certified_material_gap
+        certified_gap=certified_material_gap(pair,start,translations,angular,shell_increment)
     value=_closing_event_endpoint(pair,start,endpoint,state,events[-1].fraction,
-        sequence.endpoint_gap,padding,sequence)
+        sequence.endpoint_gap,padding,sequence,certified_gap=certified_gap)
     frame=np.asarray(pair.target.physical_pose(endpoint.shell_displacement).material_frame)
     trial=replace(value.trial,
         dissipated_increment_density=fsum((*dissipations,value.trial.dissipated_increment_density)),

@@ -186,11 +186,42 @@ def _evaluate_transverse_event(pair, start, history, translations, angular, shel
     return _closing_event_endpoint(pair,start,end,history,alpha,g1,padding,ownership)
 
 
-def _closing_event_endpoint(pair,start,end,history,alpha,g1,padding,ownership):
+def _certified_endpoint_primal(g,padding,certified_gap):
+    """Validate a private certified endpoint gap; correct only the Jet2 primal.
+
+    The certified exact gap is admitted only when finite, strictly closed, and
+    in agreement with the endpoint law's own binary64 evaluation within the
+    existing work-map mismatch padding. Inside the coordinate padding that
+    evaluation cannot resolve the contact sign; the certified magnitude then
+    replaces only the primal, preserving the declared chart's gradient/Hessian.
+    Exact touches, out-of-profile open gaps, nonfinite values, and
+    above-padding contradictions refuse.
+    """
+    if not np.isfinite(certified_gap):
+        raise ValueError('certified endpoint gap must be finite')
+    if certified_gap==0.:
+        raise ValueError('certified endpoint gap exact touch unresolved')
+    if certified_gap>0.:
+        raise ValueError('certified endpoint gap contradicts closed endpoint profile')
+    if abs(g.value-certified_gap)>padding:
+        raise ValueError('certified endpoint gap contradicts endpoint work geometry')
+    if abs(g.value)>padding:
+        # Agreement with a strictly closed certified gap beyond the padding
+        # means the binary64 evaluation resolved a clearly closed endpoint.
+        return g
+    return Jet2(certified_gap,g.gradient,g.hessian)
+
+
+def _closing_event_endpoint(pair,start,end,history,alpha,g1,padding,ownership,*,certified_gap=None):
     """Closing-root force map differentiated from the original physical path.
 
     Caller certifies the root and event schedule. Earlier released windows may
     contribute cumulative history, but must leave zero elastic traction.
+    The optional certified_gap is the exact signed endpoint gap from the
+    precise coefficient schedule (native_event_polynomial), admitted only for
+    endpoints whose binary64 evaluation lies inside the coordinate padding;
+    it corrects only the primal above, leaving the declared derivative chart
+    and both-body work maps untouched.
     """
     if type(history) is not FrictionPointState or history.partner_key is not None:
         raise ValueError('closing event requires released physical history')
@@ -239,8 +270,11 @@ def _closing_event_endpoint(pair,start,end,history,alpha,g1,padding,ownership):
     slip=[relative[i]-transported[i] for i in range(3)]
     normal_slip=dot(normal,slip)
     elastic=[slip[i]-normal[i]*normal_slip for i in range(3)]
-    g=dot(normal,relative);pressure=-pair.normal_stiffness_Pa_per_m*g.value
+    g=dot(normal,relative)
     if abs(g.value-g1)>padding:raise ValueError('first-touch endpoint work geometry mismatch')
+    if certified_gap is not None:
+        g=_certified_endpoint_primal(g,padding,certified_gap)
+    pressure=-pair.normal_stiffness_Pa_per_m*g.value
     trial=trial_coulomb_point(history,material_frame=np.array([[j.value for j in row] for row in frame]),
         relative_increment=np.array([j.value for j in elastic]),normal_pressure=pressure,
         friction_coefficient=pair.friction_coefficient,tangential_stiffness=pair.tangential_stiffness_Pa_per_m,

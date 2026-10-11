@@ -95,6 +95,29 @@ class MaterialTimeNumerator:
             return 1 if value>error else -1 if value < -error else 0
 
 
+def certified_material_gap(pair,start,translations,angular,shell_increment,*,fraction=1.):
+    """Exact signed material gap from the existing precise coefficients.
+
+    The unnormalised precise numerator is divided by the positive current
+    oriented face-area norm at the queried fraction, so the returned magnitude
+    is the physical normal gap in metres with the certified sign. A certified
+    sign of zero (including exact touches) refuses; the precise kernel keeps
+    its own angular admission refusal. This is a scalar certificate only.
+    """
+    numerator=material_time_numerator(pair,start,translations,angular,shell_increment)
+    if not numerator.sign(fraction):
+        raise ValueError('certified material gap requires a resolved precise sign')
+    from .native_surface_path import material_path_pose
+    pose=material_path_pose(start,translations,angular,shell_increment,float(fraction))
+    corners=pair.target.adapter.current_positions(pose.shell_displacement)
+    first=np.asarray(corners[1])-np.asarray(corners[0])
+    second=np.asarray(corners[2])-np.asarray(corners[0])
+    area=float(np.linalg.norm(np.cross(first,second)))
+    if not area>0.:
+        raise ValueError('certified material gap requires a positive oriented face-area norm')
+    return float(numerator.value(fraction))/area
+
+
 def material_time_numerator(pair,start,translations,angular,shell_increment):
     """Construct coefficients from authoritative binary inputs, without fits."""
     with localcontext() as context:
