@@ -4,6 +4,7 @@ import json
 import platform
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -26,7 +27,11 @@ def fake_parent(tmp_path,monkeypatch):
         if relative=='scripts/b3_e4_f03_primal_ritz.py':return source_blob
         assert relative=='scripts/_b3_e4_f03_primal_ritz.py'
         return (audit.ROOT/relative).read_bytes()
-    monkeypatch.setattr(audit.subprocess,'check_output',source_at_head)
+    # Replace only the audit's Git provider, not the shared stdlib module.
+    # Windows platform.platform() still needs its real subprocess.check_output.
+    monkeypatch.setattr(audit,'subprocess',SimpleNamespace(
+        check_output=source_at_head, DEVNULL=audit.subprocess.DEVNULL,
+        CalledProcessError=audit.subprocess.CalledProcessError))
     parent=tmp_path/'parent';parent.mkdir()
     registration={'identity':{'head':audit.PARENT_HEAD,
         'dependencies':audit.supervisor._versions(),

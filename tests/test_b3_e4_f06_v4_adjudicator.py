@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import subprocess
 import sys
 import tempfile
 
@@ -22,6 +23,12 @@ def _digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _git_history_available():
+    probe = subprocess.run(("git", "rev-parse", "HEAD"), cwd=ROOT,
+                           capture_output=True)
+    return probe.returncode == 0
+
+
 @pytest.fixture(scope="module")
 def pilot_measurement(tmp_path_factory):
     for name in ("f06-v4-candidate-92e-10", "f06-v4-candidate-92e-09", "f06-v4-candidate-92e-08", "f06-v4-candidate-92e-07", "f06-v4-candidate-92e-06", "f06-v4-candidate-92e-05", "f06-v4-candidate-92e-04",
@@ -34,6 +41,11 @@ def pilot_measurement(tmp_path_factory):
                 return existing
     # Fallback remains disposable; it creates no registration or receipt.
     from scripts.probe_b3_ge_e4_pl_g0_f06_owned_rebase_v4 import measure_pilot
+    if not _git_history_available():
+        pytest.skip("no saved f06-v4 candidate measurement bytes are present "
+            "and the actual immutable git history is absent from this source "
+            "export; a disposable pilot measurement cannot record honest "
+            "source provenance, and archived raw arrays are not new acceptance")
     directory = tmp_path_factory.mktemp("f06_v4_disposable_measurement")
     (directory / "metrics.json").write_bytes(canonical(
         measure_pilot(checkpoint_dir=directory)))

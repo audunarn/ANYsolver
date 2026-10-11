@@ -56,7 +56,15 @@ def test_matched_yaw_work_balance_and_physical_stability():
             assert spectrum["rank"] == spectrum["rows"]
             assert spectrum["normalized_beta_min"] > 0.
             lower, upper = spectrum["h_minus_half_eigen_min_bracket"]
-            assert 0. < lower <= upper
+            assert 0. < lower and 0. < upper
+            # These are separate binary64 generalized eigensolves, not
+            # outward-rounded intervals. When the finite-tail bounds nearly
+            # coincide, a last-bit reversal does not contradict their exact
+            # ordering. Reserve a dimension-scaled backward-error allowance;
+            # leave the reported endpoints and the physical tail test intact.
+            rounding = (64 * np.finfo(float).eps * spectrum['rows']
+                        * max(abs(lower), abs(upper)))
+            assert lower <= upper + rounding
             assert spectrum["h_minus_half_tail_relative"] < 1e-6
     assert not np.isclose(solve(8, 4, 8, 4, kind="p1")["tip_rz_rad"],
                           solve(8, 4, 8, 4, kind="dual")["tip_rz_rad"],

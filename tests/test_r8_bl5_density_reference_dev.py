@@ -1,15 +1,142 @@
-"""Pure preparation controls for the fixed supplementary density reference."""
-import copy
+"""Pure preparation controls for the fixed supplementary density reference.
+
+The reference script refuses to run in any process that already imported
+product modules, so every operation that executes script code runs in a fresh
+short-lived interpreter. The fresh driver enforces the no-product-import
+invariant; the mathematical assertions below are unchanged.
+"""
 from fractions import Fraction as F
-import importlib.abc
 import json
-from pathlib import Path
+import pickle
+import subprocess
 import sys
-from types import SimpleNamespace
+import tempfile
+from pathlib import Path
 
 import pytest
 
 from scripts import r8_bl5_density_reference_dev as reference
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+FRESH_DRIVER = r'''
+import copy
+import importlib.abc
+import pickle
+import sys
+from pathlib import Path
+from types import SimpleNamespace
+
+sys.path.insert(0, sys.argv[1])
+from scripts import r8_bl5_density_reference_dev as reference
+
+FORBIDDEN_ROOTS = ('anysolver', 'openseespy', 'openseespywin')
+
+
+class ForbiddenImport(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname.split('.')[0] in FORBIDDEN_ROOTS:
+            raise AssertionError(
+                'pure preparation attempted native/product import: ' + fullname)
+
+
+def product_modules():
+    return [name for name in sys.modules
+            if name.split('.')[0] in FORBIDDEN_ROOTS]
+
+
+op = sys.argv[2]
+with open(sys.argv[3], 'rb') as stream:
+    payload = pickle.load(stream)
+
+if op == 'prepare_pair':
+    sys.meta_path.insert(0, ForbiddenImport())
+    fine, coarse = reference.prepare(4), reference.prepare(2)
+    assert not product_modules(), 'pure preparation imported product modules'
+    result = (fine, coarse)
+elif op == 'aggregate_refusal':
+    model, key, value, with_affine = payload
+    if with_affine:
+        affine, _, _, _, _, ref = reference.services()
+        model = copy.deepcopy(model)
+        model[key] = value
+        try:
+            reference.aggregate_rows(model, ref, affine)
+            result = ('no-refusal', None)
+        except ValueError as error:
+            result = (str(error), type(error).__name__)
+    else:
+        _, _, _, _, _, ref = reference.services()
+        model = copy.deepcopy(model)
+        model[key] = value
+        try:
+            reference.aggregate_rows(model, ref)
+            result = ('no-refusal', None)
+        except ValueError as error:
+            result = (str(error), type(error).__name__)
+elif op == 'geometry_refusal':
+    key, value = payload
+    _, refinement, _, _, _, ref = reference.services()
+    changed = SimpleNamespace(**{name: getattr(ref, name) for name in
+        (*reference.SECTIONS, 'WIDTH_M', 'BEAM_AXIS_Z_M', 'BEAM_BOTTOM_ARM_M')})
+    setattr(changed, key, value)
+    try:
+        reference.geometry(changed, 4, refinement)
+        result = ('no-refusal', None)
+    except ValueError as error:
+        result = (str(error), type(error).__name__)
+elif op == 'changed_source_refusal':
+    original = reference.sha
+
+    def changed(path):
+        return '0'*64 if Path(path).name == reference.AFFINE_SOURCE else original(path)
+
+    loaded = []
+
+    def forbidden(*args, **kwargs):
+        loaded.append(True)
+        raise AssertionError('changed source must be refused before loading services')
+
+    reference.sha = changed
+    reference.importlib.util.spec_from_file_location = forbidden
+    try:
+        try:
+            reference.services()
+            message, kind = 'no-refusal', None
+        except ValueError as error:
+            message, kind = str(error), type(error).__name__
+    finally:
+        reference.sha = original
+    result = (message, kind, loaded)
+elif op == 'prepare_owns':
+    original = reference.prepare(4)
+    prepared = reference.prepare(4)
+    prepared['model']['nodes'][100001] = (9., 9., 9.)
+    prepared['physical_rows'][0][2] = 17.
+    prepared['supports'][0]['beam_shape_integrals_m'][0][100001] = 99.
+    prepared['sections']['E_PA'] = 1.
+    result = (original, prepared)
+else:
+    raise AssertionError('unknown fresh-process operation: ' + op)
+
+with open(sys.argv[4], 'wb') as stream:
+    pickle.dump(result, stream)
+'''
+
+
+def fresh_result(op, payload=None):
+    """Run one reference operation in a fresh interpreter and unpickle its result."""
+    with tempfile.TemporaryDirectory() as folder:
+        inp, out = Path(folder)/'payload.pickle', Path(folder)/'result.pickle'
+        inp.write_bytes(pickle.dumps(payload))
+        run = subprocess.run(
+            [sys.executable, '-c', FRESH_DRIVER, str(ROOT), op, str(inp), str(out)],
+            capture_output=True, text=True, timeout=120)
+        if run.returncode != 0:
+            raise AssertionError(
+                f'fresh-process {op} failed:\n{run.stdout}\n{run.stderr}')
+        return pickle.loads(out.read_bytes())
 
 
 def rational_maps(prepared):
@@ -19,19 +146,16 @@ def rational_maps(prepared):
 
 @pytest.fixture(scope='module')
 def prepared_pair():
-    return reference.prepare(4), reference.prepare(2)
+    return fresh_result('prepare_pair')
 
 
-def test_preparation_never_imports_product_or_opensees(monkeypatch):
-    class ForbiddenImport(importlib.abc.MetaPathFinder):
-        def find_spec(self, fullname, path=None, target=None):
-            if fullname.split('.')[0] in ('anysolver', 'openseespy', 'openseespywin'):
-                pytest.fail('pure preparation attempted native/product import: '+fullname)
-    monkeypatch.setattr(sys, 'meta_path', [ForbiddenImport(), *sys.meta_path])
-    prepared = reference.prepare(4)
+def test_preparation_never_imports_product_or_opensees(prepared_pair):
+    # The fresh driver installs a meta-path finder before prepare() and
+    # asserts no product/native module is ever imported; it fails the whole
+    # run otherwise. Here the returned preparation is verified as produced by
+    # that guarded pure process.
+    prepared = prepared_pair[0]
     assert prepared['model']['nx'] == 64
-    assert not any(name.split('.')[0] in ('anysolver', 'openseespy', 'openseespywin')
-                   for name in sys.modules)
 
 
 def test_all_channel_exact_density_nesting_including_endpoint_actions(prepared_pair):
@@ -136,61 +260,55 @@ def test_fixed_tuple_admission_requires_plain_support_count(value):
 @pytest.mark.parametrize('key,value', (('nx', 32), ('ny', 8), ('beam_intervals', 128),
                                       ('support_count', 8), ('nx', True)))
 def test_model_tuple_cannot_expand_historical_admissions(prepared_pair, key, value):
-    _, refinement, _, _, _, ref = reference.services()
-    model = copy.deepcopy(prepared_pair[0]['model'])
-    model[key] = value
-    with pytest.raises(ValueError, match='physical tuple'):
-        reference.aggregate_rows(model, ref)
+    message, kind = fresh_result('aggregate_refusal',
+                                 (prepared_pair[0]['model'], key, value, False))
+    assert kind == 'ValueError'
+    assert 'physical tuple' in message
 
 
-@pytest.mark.parametrize('mutation', ('coordinate', 'beam_ground', 'tip', 'shell_cell', 'element_tags'))
-def test_actual_physical_inventory_mutations_are_rejected(prepared_pair, mutation):
-    affine, _, _, _, _, ref = reference.services()
-    model = copy.deepcopy(prepared_pair[0]['model'])
-    if mutation == 'coordinate':
-        model['nodes'][100003] = (.125, .001, .0675)
-    elif mutation == 'beam_ground':
-        model['fixes'][100001] = (1, 1, 1, 1, 1, 1)
-    elif mutation == 'tip':
-        model['beam_tip'] = 100016
-    elif mutation == 'shell_cell':
-        model['shell_cells'] = (*model['shell_cells'][:-1], (1, 2, 3, 4))
+@pytest.mark.parametrize('key,value', (
+    ('nodes[100003]', (.125, .001, .0675)),
+    ('fixes[100001]', (1, 1, 1, 1, 1, 1)),
+    ('beam_tip', 100016),
+    ('shell_cells', None),
+    ('beam_element_tags', tuple(range(16))),
+))
+def test_actual_physical_inventory_mutations_are_rejected(prepared_pair, key, value):
+    model = prepared_pair[0]['model']
+    if key == 'nodes[100003]':
+        mutation = ('nodes', {**model['nodes'], 100003: value})
+    elif key == 'fixes[100001]':
+        mutation = ('fixes', {**model['fixes'], 100001: value})
+    elif key == 'shell_cells':
+        mutation = (key, (*model['shell_cells'][:-1], (1, 2, 3, 4)))
     else:
-        model['beam_element_tags'] = tuple(range(16))
-    with pytest.raises(ValueError, match='physical|inventory'):
-        reference.aggregate_rows(model, ref, affine)
+        mutation = (key, value)
+    message, kind = fresh_result('aggregate_refusal', (model, *mutation, True))
+    assert kind == 'ValueError'
+    assert 'physical' in message or 'inventory' in message
 
 
 @pytest.mark.parametrize('key,value', (('E_PA', 200e9), ('WIDTH_M', .3),
                                       ('BEAM_AXIS_Z_M', .05), ('BEAM_BOTTOM_ARM_M', .05)))
 def test_reference_section_or_offset_mismatch_is_not_admitted(key, value):
-    _, refinement, _, _, _, ref = reference.services()
-    changed = SimpleNamespace(**{name: getattr(ref, name) for name in
-        (*reference.SECTIONS, 'WIDTH_M', 'BEAM_AXIS_Z_M', 'BEAM_BOTTOM_ARM_M')})
-    setattr(changed, key, value)
-    with pytest.raises(ValueError, match='physical sections'):
-        reference.geometry(changed, 4, refinement)
+    message, kind = fresh_result('geometry_refusal', (key, value))
+    assert kind == 'ValueError'
+    assert 'physical sections' in message
 
 
-def test_changed_source_is_refused_before_any_service_load(monkeypatch):
-    original = reference.sha
-    def changed(path):
-        return '0'*64 if Path(path).name == reference.AFFINE_SOURCE else original(path)
-    def forbidden(*args, **kwargs):
-        pytest.fail('changed source must be refused before loading services')
-    monkeypatch.setattr(reference, 'sha', changed)
-    monkeypatch.setattr(reference.importlib.util, 'spec_from_file_location', forbidden)
-    with pytest.raises(ValueError, match='source identity'):
-        reference.services()
+def test_changed_source_is_refused_before_any_service_load():
+    message, kind, loaded = fresh_result('changed_source_refusal')
+    assert kind == 'ValueError'
+    assert 'source identity' in message
+    assert not loaded
 
 
 def test_preparation_owns_its_nested_outputs(prepared_pair):
-    prepared = reference.prepare(4)
-    prepared['model']['nodes'][100001] = (9., 9., 9.)
-    prepared['physical_rows'][0][2] = 17.
-    prepared['supports'][0]['beam_shape_integrals_m'][0][100001] = 99.
-    prepared['sections']['E_PA'] = 1.
-    original = prepared_pair[0]
+    original, prepared = fresh_result('prepare_owns')
+    assert prepared['model']['nodes'][100001] == (9., 9., 9.)
+    assert prepared['physical_rows'][0][2] == 17.
+    assert prepared['supports'][0]['beam_shape_integrals_m'][0][100001] == 99.
+    assert prepared['sections']['E_PA'] == 1.
     assert original['model']['nodes'][100001] == (0., 0., .0675)
     assert original['physical_rows'][0][2] != 17.
     assert original['supports'][0]['beam_shape_integrals_m'][0][100001] == 1/32

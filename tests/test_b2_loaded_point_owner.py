@@ -344,8 +344,8 @@ def test_physical_steel_body_work_requires_bounded_resolution_certificate(monkey
     old=api.create_analysis(definition=replace(d,point_trace_policy=None))
     try:
         calls=[];certificate=a._explicit_load_resolved
-        def checked(*args):
-            value=certificate(*args);calls.append(value);return value
+        def checked(*args,**kwargs):
+            value=certificate(*args,**kwargs);calls.append(value);return value
         monkeypatch.setattr(a,"_explicit_load_resolved",checked)
         body=a.body_acceleration_load((0.,0.,-9.81))
         result=a.solve_linear(body)
@@ -355,7 +355,7 @@ def test_physical_steel_body_work_requires_bounded_resolution_certificate(monkey
         legacy=old.solve_linear(old.body_acceleration_load((0.,0.,-9.81)))
         assert legacy.status=="completed",legacy.failure_reason
         assert not hasattr(legacy,"loaded_member_poses")
-        monkeypatch.setattr(a,"_explicit_load_resolved",lambda *args:False)
+        monkeypatch.setattr(a,"_explicit_load_resolved",lambda *args,**kwargs:False)
         unresolved=a.solve_linear(body)
         assert unresolved.status=="failed" and unresolved.displacements==()
         assert unresolved.failure_reason=="panel mixed-load resolution insufficient"

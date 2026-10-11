@@ -13,6 +13,9 @@ class Controls(unittest.TestCase):
     def test_deterministic_load_support(self):
         self.assertEqual(s.inventory(5000)['loaded_dof'],15752);self.assertEqual(s.inventory(5000)['fixed_dofs'],306)
         self.assertEqual(s.CONFIGS[10000]['line_rows'],list(range(4,100,10)))
+    @unittest.skipUnless(s.FULL.exists(),
+        'local assembly-series full fixture evidence '
+        '(docs/agent_plans/development/r8-b2-installed-batch-persistence-20261010) is absent')
     def test_frozen_full_identity(self):self.assertEqual(s.sha(s.FULL),s.FULL_SHA)
     def test_source_scatter_proof(self):
         import ast
@@ -31,6 +34,11 @@ class Controls(unittest.TestCase):
         self.assertEqual(s.cap_obstruction(2500)['scalar_objects_lower_bound'],0)
         for size in s.CONFIGS:self.assertFalse(s.cap_obstruction(size)['executable'])
         with self.assertRaises(RuntimeError):s.installed_samples(None,{},2500,[1])
+        if not ((s.OUT/'PREPARED.json').exists() and (s.OUT/'ROOT_DEVELOPMENT_AUTHORITY.json').exists()):
+            self.skipTest('local assembly-series authority evidence '
+                '(docs/agent_plans/development/r8-b2-assembly-series-20261010) is absent; '
+                'tampered-authority refusals require the exact '
+                'frozen grant bytes')
         import json,copy
         a=json.loads((s.OUT/'ROOT_DEVELOPMENT_AUTHORITY.json').read_text());p=json.loads((s.OUT/'PREPARED.json').read_text())
         p['predecessor_prepared_sha256']=s.sha(s.OUT/'PREPARED.json');s.authority_gate(a,p,'low')

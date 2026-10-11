@@ -21,6 +21,13 @@ from scripts.probe_b3_ge_e4_pl_g0_f06_loaded_rebase_v3 import numeric_state, she
 from anysolver._ge_beam3_shell_joint_state import decode
 
 
+def _git_history_available():
+    import subprocess
+    probe = subprocess.run(("git", "rev-parse", "HEAD"),
+        cwd=Path(__file__).resolve().parents[1], capture_output=True)
+    return probe.returncode == 0
+
+
 def _physical_shell(owner, state, anchor):
     return deformation(np.asarray(owner.assembly.coordinates), state.shell_u, anchor)
 
@@ -305,6 +312,10 @@ def test_rejected_and_cancelled_rebase_leave_v1_prefix_replayable(base):
 
 
 def test_unregistered_pilot_reports_raw_scaled_metrics_and_identity(tmp_path):
+    if not _git_history_available():
+        pytest.skip("actual immutable git history is absent from this source "
+            "export; the unregistered pilot measurement records its source "
+            "commit from git and must not fake or rebind provenance")
     value = measure_pilot(checkpoint_dir=tmp_path)
     metric = value["metrics"]
     assert metric["checkpoint_sidecars_written"] is True

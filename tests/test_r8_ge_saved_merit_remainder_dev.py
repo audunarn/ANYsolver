@@ -23,6 +23,7 @@ def test_source_nonlinear_remainder_identity():
     value=lambda s:1-s+9000*s*s
     assert all(value(2.**(-k))>1. for k in range(13)) and value(1e-4)<1.
     with pytest.raises(ValueError,match='complete merit'):d.merit_identity([1.,2.],[1.],[0.],.5)
+@pytest.mark.skipif(not d.INPUT.exists(), reason='local saved MERIT_INPUT.json evidence is unavailable')
 def test_source_complete_roles_and_refusal():
     v=d.input_data();assert len(v['roles'])==10 and sorted(i for rows in v['roles'].values() for i in rows)==list(range(132))
     assert v['roles']['fixed_shell_support_rows']==[0,1,2,3,4,5,18,19,20,21,22,23]
