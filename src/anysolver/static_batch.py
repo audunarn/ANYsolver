@@ -127,6 +127,10 @@ def _class_state(cls: type) -> Any:
     result = []
     for base in cls.__mro__:
         for name, value in vars(base).items():
+            if name == "__slotnames__":
+                # copy/pickle cache this on a class at its first use
+                # (copyreg._slotnames); a deep copy is not a class change.
+                continue
             if type(value) is types.FunctionType:
                 state = _callable_state(value)
             elif type(value) is property:
