@@ -6,11 +6,13 @@ Accepted structural stiffness is input; small-motion structural differences are
 bounded by the response check, not independently qualified by this fixture.
 """
 from pathlib import Path
+from dataclasses import replace
 import json,os,runpy
 import numpy as np
 import pytest
 from scipy.optimize import root
 from anysolver import TransientConfig,solve_transient_contact
+from anysolver.general_contact.s3_pressure_hermite_bounds import s3_pressure_hermite_bounds
 from anysolver.matrix_assembly import assemble_stiffness_matrix
 from anysolver.assembly import assemble_mass_matrix
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
@@ -208,7 +210,8 @@ def test_explicit_stiffer_penalty_clipped_reference_preflight():
     assert minimum>=-2.e-5
 
 
-def test_moving_clipped_overlap_with_explicit_enforcement_matches_coupled_reference(*,solver_controls=demo['CONTROLS']):
+def test_moving_clipped_overlap_with_explicit_enforcement_matches_coupled_reference(*,solver_controls=demo['CONTROLS'],
+        record_name='clipped_s3_coupled.json'):
     columns=8;stiffness=2.e10;_,_,mass,initial=layout(columns)
     model,definition,modes=demo['build_model'](target_xy=TARGET_XY,source_columns=columns,
         normal_stiffness=stiffness)
@@ -243,7 +246,7 @@ def test_moving_clipped_overlap_with_explicit_enforcement_matches_coupled_refere
         active_states=sum(row.active_pressure_dofs>0 for row in result.contact),
         localized_events_s=result.localized_contact_event_times,cutbacks=result.cutbacks,
         endpoint_queries=result.event_endpoint_evaluations,stage_evaluations=result.plane_event_stage_evaluations)
-    Path(os.environ['RUNNER_TEMP'],'clipped_s3_coupled.json').write_text(json.dumps(record,indent=2))
+    Path(os.environ['RUNNER_TEMP'],record_name).write_text(json.dumps(record,indent=2))
     assert record['max_displacement_error_m']<=2.e-10
     assert record['max_velocity_error_m_s']<=2.e-6
     assert record['max_acceleration_error_m_s2']<=.02
@@ -254,6 +257,115 @@ def test_moving_clipped_overlap_with_explicit_enforcement_matches_coupled_refere
     assert record['swept_minimum_gap_m']>=-2.e-5
     assert record['maximum_momentum_error_kg_m_s']<=1.e-9
     assert active_contact_manager() is None and model_configuration_fingerprint(model)==fingerprint
+
+
+CAPTURED_DT_S=7.8125e-07
+CAPTURED_GAP_TOLERANCE_M=1.e-10
+CAPTURED_ACTIVE=(True,)+(False,)*16+(True,)
+# Exact archived production pose: pressure call 60 of the clipped enforcement
+# transient (clipped-s3-repair/capture-pressure-01). Pure normal motion on the
+# fixture layout, so the pose is fully described by normal coordinates.
+CAPTURED_SOURCE_START_Z_M=(-0.00021263716243864923,-0.00018937997374926172,
+    -0.00016451771861950536,-0.00013951771865844918,-0.00011451771865844847,
+    -8.951771865844949e-05,-6.451771865899868e-05,-3.9517728106612526e-05,
+    -1.4582874475388766e-05,-1.4550303874269824e-05,-3.9517723382969175e-05,
+    -6.451771865872286e-05,-8.951771865844949e-05,-0.00011451771865844847,
+    -0.00013951771865844918,-0.0001645177181679551,-0.00018856120496908886,
+    -0.00020995320776391602)
+CAPTURED_SOURCE_END_Z_M=(-0.00021265456490079243,-0.0001894523223029878,
+    -0.00016459584361726114,-0.0001395958436584497,-0.00011459584365844898,
+    -8.959584365844826e-05,-6.459584365900092e-05,-3.95958531323997e-05,
+    -1.4661088366479946e-05,-1.4628473339758918e-05,-3.9595848395863886e-05,
+    -6.45958436587251e-05,-8.959584365844826e-05,-0.00011459584365844898,
+    -0.0001395958436584497,-0.00016459584314677117,-0.00018861043059401061,
+    -0.00020990983600456363)
+CAPTURED_SOURCE_START_RATE_Z_M_S=(-0.023090235792556674,-0.0927026955305942,
+    -0.09999999720086822,-0.09999999999999935,-0.1,-0.10000000000000003,
+    -0.10000000000287218,-0.10000003297398008,-0.10011374186667225,
+    -0.10005689643553609,-0.10000001648927874,-0.10000000000143623,-0.1,-0.1,
+    -0.09999999999998899,-0.09999997338798476,-0.06335908691079403,0.05428301813253365)
+CAPTURED_SOURCE_END_RATE_Z_M_S=(-0.02146006729587482,-0.09250960200993852,
+    -0.09999999705524037,-0.09999999999999931,-0.1,-0.10000000000000003,
+    -0.10000000000288196,-0.10000003304147627,-0.10011381932629736,
+    -0.10005693521754892,-0.10000001652303465,-0.10000000000144113,-0.1,-0.1,
+    -0.09999999999998847,-0.09999997238253737,-0.06265851288746369,0.05674868580971345)
+CAPTURED_TARGET_START_Z_M=(-2.395147338987019e-07,-2.8097039022657866e-07,
+    -5.831717940461834e-07)
+CAPTURED_TARGET_END_Z_M=(-2.4672891574956113e-07,-2.8976136817043807e-07,
+    -6.005119641827594e-07)
+CAPTURED_TARGET_START_RATE_Z_M_S=(-0.009147078257009198,-0.011140937327034951,
+    -0.021989830984829477)
+CAPTURED_TARGET_END_RATE_Z_M_S=(-0.009321227280827547,-0.011363966206629127,
+    -0.022401004564905205)
+
+
+def _captured_pressure_pose():
+    """Rebuild the archived call-60 Hermite pose from its normal coordinates."""
+    xy,faces,_,_=layout(8)
+    source_z=np.array((CAPTURED_SOURCE_START_Z_M,CAPTURED_SOURCE_END_Z_M,
+        CAPTURED_SOURCE_START_RATE_Z_M_S,CAPTURED_SOURCE_END_RATE_Z_M_S))
+    target_z=np.array((CAPTURED_TARGET_START_Z_M,CAPTURED_TARGET_END_Z_M,
+        CAPTURED_TARGET_START_RATE_Z_M_S,CAPTURED_TARGET_END_RATE_Z_M_S))
+    reference_source=np.c_[xy,np.full(len(xy),0.0102)]
+    reference_target=np.c_[TARGET_XY,np.full(3,0.01)]
+    start=np.c_[xy,np.full(len(xy),0.0102)+source_z[0]]
+    end=np.c_[xy,np.full(len(xy),0.0102)+source_z[1]]
+    source_rates=(np.c_[np.zeros((len(xy),2)),source_z[2]],np.c_[np.zeros((len(xy),2)),source_z[3]])
+    target_start,target_end=(np.c_[TARGET_XY,np.full(3,0.01)+target_z[i]] for i in (0,1))
+    target_rates=(np.c_[np.zeros((3,2)),target_z[2]],np.c_[np.zeros((3,2)),target_z[3]])
+    return (reference_source,reference_target,faces,start,end,target_start,target_end,
+        *source_rates,*target_rates)
+
+
+def _hermite_normal(p0,p1,v0,v1,fraction,duration):
+    return ((2*fraction**3-3*fraction*fraction+1)*p0
+        +(-2*fraction**3+3*fraction*fraction)*p1
+        +(fraction**3-2*fraction*fraction+fraction)*duration*v0
+        +(fraction**3-fraction*fraction)*duration*v1)
+
+
+def test_captured_clipped_pressure_pose_certifies_both_routes_against_independent_oracle():
+    """Old vs polygon route on the exact captured pose; no false positives.
+
+    The archived receipt resolved this pose with one time panel and 48 spatial
+    cells; both routes must reproduce those counters, and every certified bound
+    must contain the independent polygon oracle sampled inside the panel.
+    """
+    pose=_captured_pressure_pose()
+    proofs={}
+    for polygon in (False,True):
+        proof=s3_pressure_hermite_bounds(*pose,CAPTURED_DT_S,
+            active=np.array(CAPTURED_ACTIVE),gap_tolerance_m=CAPTURED_GAP_TOLERANCE_M,
+            maximum_time_panels=10000,maximum_spatial_cells=10000,maximum_depth=14,
+            _polygon_bounds=polygon)
+        assert proof.success and proof.status=='resolved'
+        assert proof.visited_time_panels==1 and proof.visited_spatial_cells==48
+        proofs[polygon]=proof
+    source_z=(np.array(CAPTURED_SOURCE_START_Z_M),np.array(CAPTURED_SOURCE_END_Z_M),
+        np.array(CAPTURED_SOURCE_START_RATE_Z_M_S),np.array(CAPTURED_SOURCE_END_RATE_Z_M_S))
+    target_z=(np.array(CAPTURED_TARGET_START_Z_M),np.array(CAPTURED_TARGET_END_Z_M),
+        np.array(CAPTURED_TARGET_START_RATE_Z_M_S),np.array(CAPTURED_TARGET_END_RATE_Z_M_S))
+    for fraction in np.linspace(0.,1.,21):
+        q=np.r_[_hermite_normal(*source_z[:2],*source_z[2:],fraction,CAPTURED_DT_S),
+            _hermite_normal(*target_z[:2],*target_z[2:],fraction,CAPTURED_DT_S)]
+        normalized,S,_=moments(q,8)
+        weighted=normalized*S
+        for proof in proofs.values():
+            for i in range(len(S)):
+                assert proof.support_lower[i]-1.e-15<=S[i]<=proof.support_upper[i]+1.e-15
+                assert proof.open_joint_lower[i]-1.e-15<=weighted[i]+CAPTURED_GAP_TOLERANCE_M*S[i]
+                assert proof.closed_joint_upper[i]+1.e-15>=weighted[i]-CAPTURED_GAP_TOLERANCE_M*S[i]
+    record=dict(capture='clipped-s3-repair/capture-pressure-01 call 60',
+        dt_s=CAPTURED_DT_S,gap_tolerance_m=CAPTURED_GAP_TOLERANCE_M,
+        routes={('polygon' if polygon else 'hermite'):dict(status=proof.status,
+            visited_time_panels=proof.visited_time_panels,
+            visited_spatial_cells=proof.visited_spatial_cells,
+            open_joint_lower_m3=[float(v) for v in proof.open_joint_lower],
+            closed_joint_upper_m3=[float(v) for v in proof.closed_joint_upper],
+            support_lower_m2=[float(v) for v in proof.support_lower],
+            support_upper_m2=[float(v) for v in proof.support_upper])
+            for polygon,proof in proofs.items()})
+    Path(os.environ['RUNNER_TEMP'],'captured_clipped_pressure_pose_routes.json').write_text(json.dumps(record,indent=2))
 
 
 def test_refined_clipped_production_work_matches_reference_measure():
@@ -277,3 +389,9 @@ def test_fresh_matched_penetration_is_rejected_even_within_step_gap_budget():
             initial_velocity=np.zeros(modes.shape[0])),
             contact_settings=demo['_fixture']['SETTINGS'],solver_controls=demo['CONTROLS'])
     assert active_contact_manager() is None
+
+def test_moving_clipped_overlap_polygon_pressure_route_matches_coupled_reference():
+    """Same mechanical checks on the separately selected existing polygon route."""
+    test_moving_clipped_overlap_with_explicit_enforcement_matches_coupled_reference(
+        solver_controls=replace(demo['CONTROLS'],normal_s3_polygon_pressure_bounds_dev=True),
+        record_name='clipped_s3_coupled_polygon.json')
