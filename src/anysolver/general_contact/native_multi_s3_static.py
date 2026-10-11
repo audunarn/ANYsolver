@@ -565,8 +565,21 @@ class NativeRetainedMultiS3Analysis:
         if type(value) is not dict or set(value) != {'schema', 'profile', 'identity', 'completed_targets', 'records', 'checkpoint_sha256'}:
             raise ValueError('multiple native/S3 checkpoint schema')
         body = {k: v for k, v in value.items() if k != 'checkpoint_sha256'}
-        if value['schema'] != self.schema or value['profile'] != self.profile or value['identity'] != self.identity or sha(body) != value['checkpoint_sha256']:
-            raise ValueError('multiple native/S3 checkpoint definition/settings binding')
+        def _binding_token(value):
+            text = repr(value)
+            return text if len(text) <= 96 else text[:93] + '...'
+        body_sha256 = sha(body)
+        disagreements = []
+        if value['schema'] != self.schema:
+            disagreements.append('schema checkpoint=%s owner=%s' % (_binding_token(value['schema']), _binding_token(self.schema)))
+        if value['profile'] != self.profile:
+            disagreements.append('profile checkpoint=%s owner=%s' % (_binding_token(value['profile']), _binding_token(self.profile)))
+        if value['identity'] != self.identity:
+            disagreements.append('identity checkpoint=%s owner=%s' % (_binding_token(value['identity']), _binding_token(self.identity)))
+        if body_sha256 != value['checkpoint_sha256']:
+            disagreements.append('checkpoint_sha256 body=%s recorded=%s' % (_binding_token(body_sha256), _binding_token(value['checkpoint_sha256'])))
+        if disagreements:
+            raise ValueError('multiple native/S3 checkpoint definition/settings binding: ' + '; '.join(disagreements))
         count = value['completed_targets']
         if type(count) is not int or not 0 <= count <= len(self.program.targets) or type(value['records']) is not list or len(value['records']) != count:
             raise ValueError('multiple native/S3 checkpoint target extent')
