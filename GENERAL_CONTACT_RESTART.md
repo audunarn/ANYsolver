@@ -1,3 +1,25 @@
+# Verified transverse replay slice
+
+Current transverse support (q=g_t-k*g), complete finite covers permitting both crossing directions, no endpoint-open shortcut on event panels, and bounded point event replay pass33focused current caller/state/support checks on Windows10.069s/Linux7.283s. Eight saved first/envelope/rebase cases retain passes. Tangency admission remains unresolved; second-load workflow NOT passed or qualified. Checkpoint test CRLF conversion now removes both CR/LF, strict production decoder unchanged; actual continuation still needs its complete integration route.
+
+Mistral surface-v5 stopped after missed checkpoint/repeated inspection (owned pwsh49408 only); logs preserved. Narrow same-owner helper assignment completed HANDOFF: existing variable-front saved-path candidate fails2.006s at first support panel,128budget,0queries. No repeat unchanged. Next owner should implement bounded angular proof refinement before whole aggregate budget death, with complete coverage and unchanged laws/caps/gates. Source-only review interior-fold hypothesis remains rejected. Official inventories58466/20876 plus214Windows supplement14794 and174Linux queued12188 continue; DoD incomplete.
+
+---
+
+# Current restart checkpoint - contact CI continuation
+
+HEAD0cc42172,24commits on codex/contact-on-main; base1b45319f unchanged. No rebase/merge/push/PR/Actions. Claude owns eventual serial integration. Current dirty files only surface support/history/integration/tests; evidence unstaged.
+
+Live official Windows parents3-7 exec58466, Linux parents2-7 exec20876. Immutable29b6 source; source provenance repair3d and angular/multi cache1d86/0cc verified separately. Windows214 missing official modules exec14794 supplemental, Linux174 exec12188 queued after m7; weights changed across checkpoint shard assignments. Exact gap map official-extent-gap-check.json; no added deselection. Full inventory/DoD still incomplete.
+
+Surface author v4 exhausted40turns without HANDOFF. Root reconstructs state in surface-replay-delivery-v4/ROOT_RECONSTRUCTED_HANDOFF.md:26support passes,8saved cases pass, original second-load still cap failure; checkpoint loader had :-1 vs :-2 CRLF bug now corrected in test only. Unsafe existential tangency promotion removed. v5 same owner exec38502 owns connected support/front/history/transaction route; first target existing variable-front helper, no changed caps/laws/gates. Early checkpoint overdue, actual inspection artifacts monitored.
+
+Independent Read review25446 completed, preserved surface-certificate-route-review.md, but its interior-fold claim N_prime=0 disproved by existing analytical front: t=.725 N3.734e-7,N_prime-1.349e-6; t=1 N2.811e-10,N_prime-1.365e-6. See SURFACE_ROUTE_REVIEW_DISPOSITION.md and two30-second-bounded receipts(1.765s/1.889s). These point values do not certify full root topology. Existing endpoint-transition machinery is next candidate, NOT yet owner/restart admission.
+
+Current one-patch coupled/history/restart verified Windows119.520s/Linux75.528s; narrow Windows120s guard margin remains. Linux4cache safetychecks9.442s, weak100 refusal55.708s, provenance-only test0.718s. Original33queue nodes have pass evidence and9skip evidence(overlap),3yet unobserved; final per-host/source disposition pending. No programme qualification or whole-route speedup claim.
+
+---
+
 # Verified multi-S3 cache checkpoint
 
 Exact full-state/origin assembly reuse and angular kernel caller pass unchanged one-patch coupled/history/restart: Windows119.520s, Linux75.528s (Linux also9kernel regressions); Linux4cache mutation/restart/cancellation boundary checks9.442s, earlier Windows4checks16s. Two-patch actual91s retained. No120-second deadline reset or tolerance change. Windows margin remains narrow; no robust whole-route speed forecast. Candidate caches contain disposable material trials, never physical commits.

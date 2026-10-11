@@ -525,7 +525,11 @@ def test_saved_native_active_checkpoint_continues_second_load(tmp_path):
     import json,os
     from pathlib import Path
     path=Path(__file__).parents[1]/'docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_owner_first_accepted_checkpoint.json'
-    capsule=path.read_bytes();owner,bridge=_replay_patch()
+    capsule=path.read_bytes()
+    # The saved container ends with CRLF while the producer checkpoint() emits
+    # LF; correct only that container newline to the producer contract at load.
+    if capsule.endswith(b'\r\n'):capsule=capsule[:-2]+b'\n'
+    owner,bridge=_replay_patch()
     transaction=NativeS3MaterialTransaction.restore(bridge,capsule,sha256(capsule).hexdigest())
     assert transaction.accepted.sequence==1
     folder=Path(os.environ.get('RUNNER_TEMP',str(tmp_path)))

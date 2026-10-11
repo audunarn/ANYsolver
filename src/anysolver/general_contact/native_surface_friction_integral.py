@@ -202,8 +202,10 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
         # predicate proves the queried point has never contacted.
         if support.status!='resolved':
             raise RuntimeError('native friction query requires resolved local support')
-        if field.patch.pairs[0].activation_policy!='transverse_event_sequence' and all(fsum((offset,slope*xi,a*cos(angle),b*sin(angle)))>gap_padding
-               for offset,slope,a,b in coefficients[cell]):
+        if (field.patch.pairs[0].activation_policy!='transverse_event_sequence'
+                and not support.event_covered
+                and all(fsum((offset,slope*xi,a*cos(angle),b*sin(angle)))>gap_padding
+               for offset,slope,a,b in coefficients[cell])):
             open_queries+=1
             return empty
         key=(float(xi),float(angle))
@@ -463,7 +465,7 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
             # all crossings. Stationary branches require explicit moving cuts.
             return HistoryPanelSupport('open' if not branch_count and all_endpoints_open else 'resolved',parent,
                 'whole-angle stationary branches; explicit moving cuts')
-        pending=[parent];all_open=True;last_unresolved=None
+        pending=[parent];all_open=True;last_unresolved=None;event_covered=False
         while pending:
             if support_panels_visited>=settings.maximum_panels:
                 raise MemoryError('native friction support panel cap exhausted')
@@ -481,7 +483,9 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
                 pending.extend(subdivide_support(result.region))
             else:
                 all_open=all_open and result.status=='open'
-        return HistoryPanelSupport('open' if all_open else 'resolved',parent,'complete union of local proofs')
+                event_covered=event_covered or result.event_covered
+        return HistoryPanelSupport('open' if all_open else 'resolved',parent,
+            'complete union of local proofs',event_covered)
     total=np.zeros(size);errors=np.zeros(size)
     leaves=[]
     while panels or leaves:
