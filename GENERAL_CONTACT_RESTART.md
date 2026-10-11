@@ -1,3 +1,17 @@
+# Current contact CI repair checkpoint
+
+Branch contact-on-main remains based on1b45319f; no merge/rebase of moving main. Claude owns serial integration and publication. Latest committed f486e1c6 (22 commits). Local evidence remains unstaged.
+
+Windows/Linux official parent2 completed: Windows1777passed/106failed/55skipped/38errors, contact357passed/42skipped/7failed; Linux1771passed/107failed/60skipped/38errors, contact352passed/47skipped/7failed. All seven contact failures belong to saved native surface replay. Windows parents3-7 exec58466; Linux remaining parents exec20876 continue immutable29b6, without -x or extra deselection.
+
+Mistral angular kernel exact memo repaired twice after root review: complete Decimal flag side effects, including dirty-cache warm state and trapped exceptions. Nine focused regressions pass; unchanged values and caller evidence retained. Current coupled one-patch caller checks Windows24992/Linux21433 pending under unchanged120-second model guard; multi-S3 assembly candidate remains uncommitted. Linux original weak100 non-success/atomic rollback regression passes55.708s, matching Windows failure disposition.
+
+Surface owner exec63736 has provisional possible-tangency support admission. Root LEAD_REVIEW_DELTA.md rejects promotion without whole-panel missed force/tangent/history coverage; sampled replay alone is insufficient. Preserve original caps/tolerances and failed saved workflows. Worker handoff pending; no friction acceptance. Queue inventory has33 nodes with pass evidence,9 with skips (overlap),3 not yet observed; final host/source disposition remains pending.
+
+Evidence .development/contact-restart-20261011: flags-repair-v2/HANDOFF, receipts/linux-pair-weak-refusal-current-03, queue-evidence-inventory-current.json, immutable official runs. Current definition of done unmet; no engineering programme completion claim.
+
+---
+
 # Pair repair checkpoint - prospective resolved enforcement
 
 Current pair driver exact prepared-record reuse and geometry-only swept query are now verified through refined4000 coupled/strict restart on both hosts, new identity/mutation/cancellation checks, and staged4000 workflow Windows91.543s/Linux60.030s. Original100 non-success/rollback regression passes Windows100.400s: no first-target commit or history corruption, exact original checkpoint retained. Gap/equilibrium/material criteria unchanged. No converged100 equilibrium or whole-route speedup is claimed. Current success fixtures prospectively use explicit4000; old100 failures remain in evidence.
