@@ -61,3 +61,29 @@ def test_saved_slide_matches_independent_current_contact_kkt():
         "control_reaction_relative_l2_difference",
     ):
         assert result[name] <= 1e-6, (name, result[name])
+
+
+def test_oracle_source_identity_does_not_attribute_an_enclosing_checkout(monkeypatch,tmp_path):
+    # Extract this metadata-only helper without running the nonlinear fixture.
+    # Its negative cases protect exported/installed-source provenance.
+    import ast
+    source=Path(__file__).resolve().parents[1]/'docs/d1_review_support/d1_two_body_nonlinear_kkt_compare.py'
+    tree=ast.parse(source.read_text(encoding='utf-8'))
+    node=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='_checkout_commit')
+    namespace=dict(Path=Path,subprocess=subprocess)
+    exec(compile(ast.Module(body=[node],type_ignores=[]),str(source),'exec'),namespace)
+    project=tmp_path/'source-export';project.mkdir()
+    calls=[]
+    def git_output(args,**kwargs):
+        calls.append(args)
+        assert kwargs['cwd']==project
+        return str(tmp_path) if '--show-toplevel' in args else 'must-not-be-used'
+    monkeypatch.setattr(subprocess,'check_output',git_output)
+    assert namespace['_checkout_commit'](project) is None
+    assert len(calls)==1
+    monkeypatch.setattr(subprocess,'check_output',lambda args,**kw:
+        str(project) if '--show-toplevel' in args else 'own-checkout-sha')
+    assert namespace['_checkout_commit'](project)=='own-checkout-sha'
+    def unavailable(*args,**kw):raise subprocess.CalledProcessError(128,args[0])
+    monkeypatch.setattr(subprocess,'check_output',unavailable)
+    assert namespace['_checkout_commit'](project) is None
