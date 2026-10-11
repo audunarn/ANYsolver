@@ -132,7 +132,7 @@ def _material_close(a,b,definition):
     walk(a,b)
 
 
-def _same(a,b,definition,force_scale,exact=False):
+def _same(a,b,definition,force_scale,exact=False,fibre_material=None):
     x,y=a['result'],b['result']
     assert x.accepted_factors==y.accepted_factors and x.load_position==y.load_position
     assert x.load_programme_identity==y.load_programme_identity
@@ -169,7 +169,12 @@ def _same(a,b,definition,force_scale,exact=False):
         assert len(x.beam_fibre_material)==len(y.beam_fibre_material)
         for xx,yy in zip(x.beam_fibre_material,y.beam_fibre_material):
             assert (xx.element_id,xx.cell,xx.station)==(yy.element_id,yy.cell,yy.station)
-            _material_close(xx,yy,definition)
+            # Default callers keep the uniform 1e-9 comparator. The explicit
+            # opt-in hook is the only cyclic cross-chart route; it re-verifies
+            # each fibre selection against the unchanged law and the branch's
+            # own accepted predecessor before comparing the paired records.
+            if fibre_material is None:_material_close(xx,yy,definition)
+            else:fibre_material(xx,yy,definition)
         for field in ('shell_q4_material','shell_s3_material','beam_fibre_energy'):
             assert len(getattr(x,field))==len(getattr(y,field))
             for xx,yy in zip(getattr(x,field),getattr(y,field)):_material_close(xx,yy,definition)
