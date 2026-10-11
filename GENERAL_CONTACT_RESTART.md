@@ -1,3 +1,19 @@
+# Active restart - consolidated contact CI repair, 11 October 2026
+
+Own contact-resume / codex/contact-on-main, base1b45319f. Follow PROGRAMME_RESTART_BRIEF_20261011.md. No push/Actions/other-chat/sibling/shared-file changes. Evidence stays unstaged. Done requires complete official inventory and green contact tests on Windows/Linux; engineering D1/C0-C9 remains unaccepted.
+
+- Native/S3 empty-station root-band bound: complete mapped component work and old fallback/minimum, unchanged tolerances/pad/measures/caps. Windows10pass/3exact-inputskips49.975s; Linux10pass/3skips38.798s. New geometry/arc check reuses production derivatives, not an independent derivative oracle.
+- Prospective certified4e7-to8e7 enforcement refinement passes the unchanged2% gate. Earlier1e7-to2e7 and2e7-to4e7 nonpasses remain failures. New4e7 checkpoint is a test input, not acceptance evidence.
+- Supervisor now always pins actual source imports, including standalone scripts. Source-path check passed. Older worker profiles lacking source proof are not whole-route cost evidence.
+- Pair cache and geometry-only midpoint remain uncommitted. Refined4000 coupled/restart checks pass both hosts; weak100 physical-gap/line-search refusal remains open. Independent review attempts exhausted without an assessment. No same-mechanics speedup claim.
+- Surface two-event candidate remains uncommitted and fails128-panel admission. No friction promotion. Mistral owns two-fibre-S3 cost/operation repair, no deadline increase.
+- Official extent: Windows parent0 covered by4subshards at recorded source identities; Linux parent1 complete,4contact failures repaired in focused checks. Full extent remains incomplete. Windows parent1 runs immutable205a without fail-fast;3691tracked route files audited with archive EOL normalization. Initial strict byte audit failure retained.
+
+All receipts/logs/source patches: .development/contact-restart-20261011, never stage. Continue from artefacts without repeating completed checks merely to recreate evidence.
+
+---
+## Preserved preceding restart history
+
 Latest verified delta: Linux official parent m1/8 completed1415.63s, contact455pass49skip4fail (three test-harness/schema issues fixed b477ad4c; pressurefixture now2pass on both hosts). Windows m0/s2 completed599.24s, contact78pass11skip2deadline failures; m0/s3 active exec16105 on audited5e35 snapshot. Full inventory not yet covered.
 
 Pressure response: exact clip-topology marginal fixture shifted0.5->0.45 with unchanged partial supports/independent reequilibration tolerances; original0.5 retained as genuine refusal regression. Mistral handoff and guard-nonvacuity evidence inspected. Windows2pass142.03s;Linux2pass83.57s. No production source change.

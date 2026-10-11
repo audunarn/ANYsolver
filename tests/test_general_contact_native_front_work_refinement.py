@@ -10,7 +10,9 @@ quadrature. It never calls the production bound kernel or any production
 root/width/station helper; production is exercised only through evaluate()
 and the public result. Focused checks: conditional partition entry, full
 root union tiling, representation pad retention, finite cap refusal, and
-unchanged passing evaluations.
+unchanged passing evaluations. The captured cold 8e7 axial front checks
+the one-sided station-empty enclosure: independent analytic arcs and
+pad-depressed worst-case tangent integrals stay under the certified bound.
 """
 from math import pi
 import json,os
@@ -26,6 +28,9 @@ from anysolver.general_contact.native_surface_quadrature import NativeRoundSurfa
 from anysolver.general_contact.native_surface_normal import StraightNormalIntegrationSettings
 from test_general_contact_native_retained_station import _reference
 from test_general_contact_native_surface_bounds import _independent_point
+from anysolver.general_contact.native_curved_s3_work import _S3CandidateIntegration
+from anysolver.general_contact.native_surface_quadrature import _prepare_reference_area
+from test_general_contact_native_curved_s3_static import _analysis
 
 RADIUS=.03
 SLOPE=1e-4
@@ -272,3 +277,115 @@ def test_certified_root_subbands_direct_contract_guards(monkeypatch):
         assert left['hi']==right['lo']
     assert {node['pad'] for node in nodes}=={rows[0]['representation_gap_m']}
     assert {tuple(node['features']) for node in nodes}=={tuple(rows[0]['features'])}
+
+COLD_HIGH=[[0.0,0.0,0.0],[0.9999999996523736,0.20000000000254345,-3.343695155835758e-05],
+    [1.9999999979799468,2.4212776619950985e-10,-0.000107819173844755]]
+COLD_LOW=[[0.0,0.0,0.0],[1.2323312853913734e-17,2.950698536392097e-18,9.396771758602394e-22],
+    [-5.5357198746523576e-17,-1.6862690710004348e-26,-2.6734477397713854e-21]]
+COLD_ROT=[[[0.9999999994187693,1.0289376067095029e-10,3.40948906514366e-05],
+    [2.8635384935192563e-11,0.9999999999925588,-3.857737110528041e-06],
+    [-3.4094890651579834e-05,3.857737109262124e-06,0.9999999994113281]],
+    [[0.9999999975074936,8.31290179711732e-10,7.060462578644909e-05],
+    [4.621822578131054e-10,0.99999999983219,-1.831994061869211e-05],
+    [-7.06046257898301e-05,1.831994060566174e-05,0.9999999973396836]]]
+COLD_CORNERS=[[-5.0,-5.0,-0.030100000000000002],[5.0,-5.0,-0.030100000000000002],
+    [0.0,10.0,-0.030100000000000002]]
+COLD_CELL=1;COLD_LOWER=0.8993388519106321;COLD_UPPER=0.8993388641284482
+COLD_STATION=0.8993388549650861;COLD_PAD=4.722709568835759e-13
+COLD_STATION_MINIMUM=2.361354813637968e-13
+COLD_ONE_SIDED_TE=9.411214837583546e-07
+COLD_WORST_TANGENT=5.957266511270955e-07
+
+
+def _cold_candidate():
+    owner=_analysis(physical_fibres=True,plastic_fibres=True,normal_stiffness_Pa_per_m=8e7,
+        integration_budget_policy='certified_active')
+    return _S3CandidateIntegration(owner.pairs[0].work,np.array(COLD_CORNERS,float))
+
+
+def _cold_fit(candidate,x,high,low,U):
+    """Independent analytic sinusoid; helper angle = production angle + pi/2."""
+    radius=candidate.radius;normal=candidate.normal;origin=candidate.origin
+    point=lambda angle:_independent_point(x,angle+pi/2,radius,high,low,U,False)
+    p0,pp,ph=point(0.),point(pi),point(pi/2)
+    centre=(p0+pp)/2
+    return (float(normal@(centre-origin)),float(normal@((p0-pp)/2)),float(normal@(ph-centre)))
+
+
+def _cold_arcs(A,B,C,threshold,al,ar):
+    """Analytic arcs of A+B*cos a+C*sin a<threshold inside [al,ar]."""
+    amplitude=float(np.hypot(B,C))
+    if amplitude==0.:return [(al,ar)] if A<threshold else []
+    m=(threshold-A)/amplitude
+    if m>=1.:return [(al,ar)]
+    if m<=-1.:return []
+    phase=float(np.arctan2(C,B))+pi;half=pi-float(np.arccos(m))
+    return [(max(phase-half+2*pi*turn,al),min(phase+half+2*pi*turn,ar))
+            for turn in range(-2,3)
+            if phase+half+2*pi*turn>al and phase-half+2*pi*turn<ar]
+
+
+def test_captured_cold_front_evaluates_with_one_sided_station_enclosure():
+    # The captured cold 8e7 front: the retained station's projected scalar
+    # normal gap is positive on the whole declared arc, so the station
+    # quadrature contributes exactly zero and the refined declared-arc
+    # enclosure is one-sided; the previously refused pose now evaluates.
+    candidate=_cold_candidate()
+    result=candidate.evaluate(np.array(COLD_HIGH,float),np.array(COLD_LOW,float),
+        np.array(COLD_ROT,float))
+    rows=[row for row in result.axial_root_brackets
+        if row['cell']==COLD_CELL and abs(row['lower']-COLD_LOWER)<1e-12]
+    assert len(rows)==1
+    row=rows[0]
+    assert abs(row['upper']-COLD_UPPER)<1e-12
+    assert row['enclosure_refinement']=='declared_material_arc'
+    assert row['error_bounds'][2]==pytest.approx(COLD_ONE_SIDED_TE,rel=1e-9)
+    assert row['error_bounds'][2]<LIMITS[2]
+    assert result.estimated_errors[2]<LIMITS[2]
+
+
+def test_captured_cold_front_one_sided_enclosure_dominates_independent_worst_case():
+    candidate=_cold_candidate()
+    high=np.array(COLD_HIGH,float);low=np.array(COLD_LOW,float);U=np.array(COLD_ROT,float)
+    al,ar=candidate.rule.definition['angle_range']
+    radius=candidate.radius;cell=COLD_CELL;ref=candidate.reference
+    count=candidate._coordinate_count();mapping=candidate._local_mapping(cell,count)
+    scale=candidate._coordinate_scale(count)
+    # Independent zero-depth certification: the station's analytic angular
+    # minimum is positive, so the exact station active set is empty and the
+    # production station integral is exactly zero (the one-sided premise).
+    A,B,C=_cold_fit(candidate,COLD_STATION,high,low,U)
+    minimum=A-float(np.hypot(B,C))
+    assert 0.<minimum<1e-12
+    assert minimum==pytest.approx(COLD_STATION_MINIMUM,abs=1e-15)
+    # Independent scalar geometry/arc integration with production derivative maps over the
+    # band: analytic arcs and gaps from independent points. This is not an independent
+    # force/tangent derivative oracle; existing directional checks cover those maps. The retained
+    # moving-normal jets carry the geometry/normal/circular correlations.
+    nodes,weights=leggauss(24)
+    integral=np.zeros((2,count,count));xs=np.linspace(COLD_LOWER,COLD_UPPER,161)
+    for i,x in enumerate(xs):
+        A,B,C=_cold_fit(candidate,x,high,low,U)
+        share=(.5 if i in (0,len(xs)-1) else 1.)*(COLD_UPPER-COLD_LOWER)/(len(xs)-1)
+        t=x+1 if cell==0 else x
+        tangent=np.array((1.,-.4*x,0.));tangent/=np.linalg.norm(tangent)
+        frame=np.column_stack((tangent,(-tangent[1],tangent[0],0.),(0.,0.,1.)))
+        lift=np.array((0.,.2*t*(1-t),0.))
+        for region,threshold in enumerate((0.,COLD_PAD)):
+            for left,right in _cold_arcs(A,B,C,threshold,al,ar):
+                if right<=left:continue
+                for qa,wa in zip(nodes,weights):
+                    angle=(left+right)/2+(right-left)*qa/2
+                    helper=angle+pi/2
+                    arm=U[cell]@(lift+radius*(np.cos(helper)*frame[:,1]
+                        +np.sin(helper)*frame[:,2]))
+                    gap=A+B*np.cos(angle)+C*np.sin(angle)-threshold
+                    jet=candidate._gap_work_jet(float(gap),high,low,cell,t,arm)
+                    S=scale*(mapping.T@jet.gradient)
+                    Hs=scale[:,None]*(mapping.T@jet.hessian@mapping)*scale[None,:]
+                    J=_prepare_reference_area(ref,x,radius).area_jacobian(angle)
+                    integral[region]+=candidate.stiffness*J*(np.outer(S,S)+gap*Hs)*wa*(right-left)/2*share
+    worst=float(np.linalg.norm(integral[1],np.inf))
+    true=float(np.linalg.norm(integral[0],np.inf))
+    assert worst==pytest.approx(COLD_WORST_TANGENT,rel=5e-2)
+    assert true<worst<=COLD_ONE_SIDED_TE<LIMITS[2]
