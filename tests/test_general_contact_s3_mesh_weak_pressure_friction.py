@@ -112,6 +112,8 @@ def test_weak_local_work_and_front(monkeypatch):
         scope='independent finite-gap bothbody work; not pointwise complementarity'))
 
 
+@pytest.mark.skipif(not os.environ.get('FRICTION_STAGE') or not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE'),
+    reason='Archived staged inputs FRICTION_STAGE, AUTOMATIC_WORKFLOW_EVIDENCE absent; this replay requires its original workflow evidence.')
 def test_weak_public(monkeypatch):
     monkeypatch.setattr(old_example,'build_case',build_case)
     monkeypatch.setattr(reuse,'_pose_gate',_weak_pose_gate)
@@ -152,6 +154,8 @@ def _weak_pose_gate(model,definition,settings,friction,u,z):
     return dict(all_facets=report,target_raw_normal=np.sum(normals,axis=0).tolist())
 
 
+@pytest.mark.skipif(not os.environ.get('FRICTION_STAGE') or not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE'),
+    reason='Archived staged inputs FRICTION_STAGE, AUTOMATIC_WORKFLOW_EVIDENCE absent; this replay requires its original workflow evidence.')
 def test_weak_saved_proof():
     """Recompute gates from saved poses without another coupled solve."""
     from examples.general_contact_s3_mesh_weak_pressure_friction import build_case
@@ -247,11 +251,15 @@ def test_weak_saved_proof():
     reuse._save(dict(phases=proof,target_normal_delta=normalized[2]-normalized[0],material_facet_transfer=True,scope='accepted_endpoint_work_bound_not_path_integral'))
 
 
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE'),
+    reason='Archived staged inputs AUTOMATIC_WORKFLOW_EVIDENCE absent; this replay requires its original workflow evidence.')
 def test_weak_rollback(monkeypatch):
     monkeypatch.setattr(old_example,'build_case',build_case)
     reuse.test_mesh_rollback(monkeypatch)
 
 
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE'),
+    reason='Archived staged inputs AUTOMATIC_WORKFLOW_EVIDENCE absent; this replay requires its original workflow evidence.')
 def test_weak_safety(monkeypatch):
     from dataclasses import asdict
     from anysolver import solve_static_nonlinear
@@ -295,6 +303,8 @@ def test_weak_safety(monkeypatch):
         incompatible_weak_gap_old_owner_checkpoint=True,precancel=True,normal_only_before_material=True,legacy_identity=legacy))
 
 
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE'),
+    reason='Archived staged inputs AUTOMATIC_WORKFLOW_EVIDENCE absent; this replay requires its original workflow evidence.')
 def test_weak_terminal_scope():
     from examples.general_contact_s3_mesh_moving_friction import solve_case
     evidence=Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE']);saved=json.loads((evidence/'A6.json').read_text())

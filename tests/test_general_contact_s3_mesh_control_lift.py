@@ -13,6 +13,8 @@ def _patch_fixture(monkeypatch):
     monkeypatch.setattr(old_example,'build_case',build_case)
 
 
+@pytest.mark.skipif(not os.environ.get('FRICTION_STAGE') or not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE') or not os.environ.get('CONTROL_LIFT_BASELINE'),
+    reason='Archived staged inputs FRICTION_STAGE, AUTOMATIC_WORKFLOW_EVIDENCE, CONTROL_LIFT_BASELINE absent; this replay requires its original workflow evidence.')
 def test_lift_public(monkeypatch):
     _patch_fixture(monkeypatch)
     if os.environ.get('MESH_CAPTURE')=='1':
@@ -43,16 +45,22 @@ def test_lift_public(monkeypatch):
         np.testing.assert_allclose(data['checkpoint']['path_state']['normal_forces'],baseline['checkpoint']['path_state']['normal_forces'],rtol=1e-8,atol=1e-12)
 
 
+@pytest.mark.skipif(not os.environ.get('FRICTION_STAGE') or not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE'),
+    reason='Archived staged inputs FRICTION_STAGE, AUTOMATIC_WORKFLOW_EVIDENCE absent; this replay requires its original workflow evidence.')
 def test_lift_proof(monkeypatch):
     _patch_fixture(monkeypatch)
     reuse.test_mesh_saved_proof()
 
 
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE'),
+    reason='Archived staged inputs AUTOMATIC_WORKFLOW_EVIDENCE absent; this replay requires its original workflow evidence.')
 def test_lift_rollback(monkeypatch):
     _patch_fixture(monkeypatch)
     reuse.test_mesh_rollback(monkeypatch)
 
 
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE') or not os.environ.get('CONTROL_LIFT_BASELINE'),
+    reason='Archived staged inputs AUTOMATIC_WORKFLOW_EVIDENCE, CONTROL_LIFT_BASELINE absent; this replay requires its original workflow evidence.')
 def test_lift_safety(monkeypatch):
     _patch_fixture(monkeypatch)
     reuse.test_mesh_refusal(monkeypatch)

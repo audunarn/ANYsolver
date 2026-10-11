@@ -151,5 +151,7 @@ def test_swept_archive_safety_replay(monkeypatch):
     from examples.general_contact_s3_mesh_moving_friction import solve_case
     with pytest.raises(ValueError,match='contract|restart|definition|incompat'):solve_case(build_case(),2,incoming)
 
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE'),
+    reason='Archived staged inputs AUTOMATIC_WORKFLOW_EVIDENCE absent; this replay requires its original workflow evidence.')
 def test_swept_rollback(monkeypatch):
     _bind(monkeypatch);weak.test_weak_rollback(monkeypatch)
