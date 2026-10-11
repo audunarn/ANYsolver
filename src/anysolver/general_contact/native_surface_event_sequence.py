@@ -31,6 +31,7 @@ class MaterialEventSequence:
     intervals: int
     path_sha256: str
     endpoint_gap: float
+    numerator_endpoint_signs: tuple=(0,0)
 
 
 def locate_material_event_sequence(pair,start,translations,angular,shell_increment,*,maximum_intervals=256):
@@ -47,7 +48,17 @@ def locate_material_event_sequence(pair,start,translations,angular,shell_increme
     from .native_surface_quadrature import certify_station_orientation_path
     orientation=certify_station_orientation_path(pair.source,start,translations,angular,
         shell_increment,maximum_intervals=remaining)
+    # Retain the exact profile validation. Root isolation then uses the same
+    # path's unnormalised numerator, preserving cancellation at tiny pulses.
     enclose=point_gap_slab_enclosure(pair,start,translations,angular,shell_increment)
+    from .native_event_polynomial import material_time_numerator
+    # The existing precise sine kernel has a declared [0,2*pi] argument
+    # range. Larger paths retain their original conservative time enclosure;
+    # choose this before isolation, never after a failed candidate.
+    numerator=None
+    if np.linalg.norm(np.asarray(angular)[pair.source.cell])<2*np.pi-32*np.finfo(float).eps:
+        numerator=material_time_numerator(pair,start,translations,angular,shell_increment)
+        enclose=numerator.enclosure
     cache={}
     def gap(fraction):
         if fraction not in cache:
@@ -64,9 +75,10 @@ def locate_material_event_sequence(pair,start,translations,angular,shell_increme
         if bounds.gap_lower>0. or bounds.gap_upper<0.:continue
         direction=1 if bounds.derivative_lower>0. else -1 if bounds.derivative_upper<0. else 0
         if direction:
-            gl,gr=gap(left),gap(right)
+            evaluate=(lambda t:float(numerator.value(t))) if numerator is not None else gap
+            gl,gr=evaluate(left),evaluate(right)
             if gl*gr>0.:continue
-            root=left if gl==0. else right if gr==0. else brentq(gap,left,right,
+            root=left if gl==0. else right if gr==0. else brentq(evaluate,left,right,
                 xtol=4*np.finfo(float).eps,rtol=4*np.finfo(float).eps,maxiter=64)
             residual=gap(root)
             scale=max(1.,float(np.max(np.abs(start.positions))),
@@ -82,7 +94,8 @@ def locate_material_event_sequence(pair,start,translations,angular,shell_increme
         if not left<middle<right:raise ValueError('event sequence temporal resolution exhausted')
         pending.extend(((middle,right),(left,middle)))
     ordered=tuple(events[t] for t in sorted(events))
-    return MaterialEventSequence(ordered,count,ownership.path_sha256,gap(1.))
+    return MaterialEventSequence(ordered,count,ownership.path_sha256,gap(1.),
+        (numerator.sign(0.),numerator.sign(1.)) if numerator is not None else (0,0))
 
 
 @dataclass(frozen=True)
@@ -207,7 +220,15 @@ def _closed_sequence_from_schedule(pair,start,history,translations,angular,shell
         float(np.max(np.abs(endpoint.positions))),
         float(np.max(np.abs(pair.target.adapter.reference_positions))))
     padding=512*np.finfo(float).eps*scale
-    if abs(initial_gap)<=padding or sequence.endpoint_gap>=-padding:
+    # A precise numerator may certify strict signs below the conservative
+    # binary64 coordinate padding. Require agreement with the actual work map;
+    # exact touch and contradictory endpoint geometry still refuse.
+    initial_sign,final_sign=sequence.numerator_endpoint_signs
+    initial_resolved=(abs(initial_gap)>padding or
+        (initial_gap!=0. and initial_sign==(1 if initial_gap>0. else -1)))
+    final_resolved=(sequence.endpoint_gap < -padding or
+        (sequence.endpoint_gap<0. and final_sign==-1))
+    if not initial_resolved or not final_resolved:
         raise ValueError('closed event sequence needs resolved initial and closed final gaps')
     initially_closed=initial_gap<0.
     if history.partner_key!=(pair.partner_key if initially_closed else None):
