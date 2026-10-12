@@ -156,7 +156,8 @@ from .prepared_static_loads import (
 
 from .boundary import (_numpy_error_routes_are_builtin as _capture_numpy_routes_are_builtin,
                        _load_routing_classes_are_untouched as _capture_routing_classes_are_untouched,
-                       _exact_load_case_instance_namespace as _capture_exact_load_case_namespace)
+                       _exact_load_case_instance_namespace as _capture_exact_load_case_namespace,
+                       _builtin_instance_dict_descriptor as _capture_builtin_instance_dict)
 from .prepared_static_loads import (_plain_numeric_state as _capture_plain_state,
                                     _instance_authority as _capture_instance_authority,
                                     _NATIVE_CLASS_FACTS as _capture_native_class_facts)
@@ -1593,8 +1594,9 @@ def _make_capture_module_check():
                     return None
             member = members.get('__dict__')
             if member is not None and not (
-                    (type(member) is types.MemberDescriptorType or type(member) is types.GetSetDescriptorType)
-                    and member.__objclass__ is cls):
+                    ((type(member) is types.MemberDescriptorType or type(member) is types.GetSetDescriptorType)
+                     and member.__objclass__ is cls)
+                    or _capture_builtin_instance_dict(member, cls)):  # CPython 3.15: one shared descriptor
                 return None
             member = members.get('__getattribute__')
             if member is not None and not (type(member) is types.WrapperDescriptorType and member.__objclass__ is cls):
