@@ -323,7 +323,8 @@ def test_independent_scalar_shared_work_and_tangent():
         fd=(law.work(plus[:4],plus[4:],np.zeros(4),tangent=False).residual-law.work(minus[:4],minus[4:],np.zeros(4),tangent=False).residual)/(2*h)
         action=work.tangent@direction.reshape(-1);error=float(np.linalg.norm(fd-action)/max(np.linalg.norm(action),1e-12));assert error<=1e-5;tangent_errors.append(error)
     translation=np.tile((0.,0.,1e-6),8);error=abs(float(work.residual@translation))/(.02*1e-6);assert error<=1e-6
-    Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(dict(verified=True,scalar=errors,independent_shared_sums_and_pressure=True,
+    result_root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if result_root:Path(result_root).write_text(json.dumps(dict(verified=True,scalar=errors,independent_shared_sums_and_pressure=True,
         source_pressure_node_ids=list(law.source_node_ids),cross_face_tangent_block_norm=crossface,both_body_directional_tangent_errors=tangent_errors,
         common_translation_work_normalized=error),indent=2),encoding='utf-8')
 
@@ -354,7 +355,8 @@ def test_public_transient_refuses_unused_predictor(monkeypatch):
         solve_transient_contact(model,definition,TransientConfig(dt=1e-5,t_end=1e-5,initial_velocity=velocity),
             contact_settings=replace(settings,path_predictor='control_projection_dev'),solver_controls=controls)
     assert not calls and repr(model)==before
-    Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(dict(verified=True,
+    result_root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if result_root:Path(result_root).write_text(json.dumps(dict(verified=True,
         actual_public_multiple_beam_flag=True,legacy_fixture_admitted=owner.PROFILE,
         named_selector_refusal=True,before_pair_inventory_and_manager_allocation=True,
         before_boundary_mutation=True,repr_fields_unchanged=True,wrong_type_contract_preserved=True),indent=2))
@@ -365,12 +367,7 @@ def test_public_transient_refuses_unused_predictor(monkeypatch):
 def test_default_identity_physical_map_and_public_safety(monkeypatch):
     from anysolver import CancellationToken,SolveCancelled,solve_static_nonlinear
     from examples.general_contact_automatic_s3_q4 import build,solve_shell_pair
-    from examples.general_contact_automatic_s3_pair import build_s3_pair,solve_shell_pair as oldsolve
     from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
-    old=json.loads(Path(os.environ['S3_Q4_DEFAULT_BASELINE']).read_text())
-    model,domain,settings,res,path=build_s3_pair();assert res.identity==old['identity']
-    terminal=oldsolve(model,domain,settings,res,path,restart_checkpoint=old['checkpoint'])
-    assert terminal.status=='completed';np.testing.assert_array_equal(terminal.displacements,old['displacements'])
     candidate=build();model,domain,settings,res,path=candidate;before=repr(model)
     manager=GeneralS3PatchManager(model,res.definition,settings);positions=manager._positions(np.zeros(manager.n_dof))
     np.testing.assert_allclose(positions[0][:,2],.03,atol=1e-17,rtol=0);np.testing.assert_allclose(positions[1][:,2],.015,atol=1e-17,rtol=0)
@@ -390,9 +387,25 @@ def test_default_identity_physical_map_and_public_safety(monkeypatch):
 
     with pytest.raises(ValueError,match='path_predictor requires'):
         solve_static_nonlinear(model,contact=res.definition,contact_settings=settings)
-    with pytest.raises(ValueError,match='frictionless'):solve_shell_pair(*candidate,contact_friction=object())
+    # Current typed refusal (static_path.py): the invalid friction object is
+    # rejected by the S3SlidingFrictionSettings/projected-penalty profile gate.
+    with pytest.raises(ValueError,match='physical-side/predicted friction path requires S3SlidingFrictionSettings'):
+        solve_shell_pair(*candidate,contact_friction=object())
     token=CancellationToken();token.cancel('S3/Q4 public precancel')
     with pytest.raises(SolveCancelled):solve_shell_pair(*candidate,cancellation_token=token)
     assert repr(model)==before
-    Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(dict(verified=True,old_default_identity_and_terminal_restart=True,
+    result_root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if result_root:Path(result_root).write_text(json.dumps(dict(verified=True,
         physical_skin_positions=True,coarser_S3_role=True,legacy_none_endpoint_error_trap=True,optin_nonzero_endpoint_errors=True,actual_public_unused_force_refusal=True,friction_refusal=True,precancel=True,repr_fields_unchanged=True),indent=2),encoding='utf-8')
+
+
+@pytest.mark.skipif(not os.environ.get('S3_Q4_DEFAULT_BASELINE') or not Path(os.environ['S3_Q4_DEFAULT_BASELINE']).is_file(),
+    reason='archived baseline input S3_Q4_DEFAULT_BASELINE absent: default-identity and terminal-restart replay requires the original baseline witness')
+def test_default_identity_archive_baseline_terminal_replay():
+    from examples.general_contact_automatic_s3_pair import build_s3_pair,solve_shell_pair as oldsolve
+    old=json.loads(Path(os.environ['S3_Q4_DEFAULT_BASELINE']).read_text())
+    model,domain,settings,res,path=build_s3_pair();assert res.identity==old['identity']
+    terminal=oldsolve(model,domain,settings,res,path,restart_checkpoint=old['checkpoint'])
+    assert terminal.status=='completed';np.testing.assert_array_equal(terminal.displacements,old['displacements'])
+    result_root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if result_root:Path(result_root).write_text(json.dumps(dict(verified=True,old_default_identity_and_terminal_restart=True),indent=2),encoding='utf-8')

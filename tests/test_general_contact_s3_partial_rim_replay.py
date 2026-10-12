@@ -10,7 +10,10 @@ from anysolver.general_contact.s3_friction_replay import S3RimReplayFrictionMana
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
 
 def root():return Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])
-def save(v):Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(v,indent=2,default=lambda x:x.tolist() if hasattr(x,'tolist') else x.item()))
+def save(v):
+    root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if not root:return
+    Path(root).write_text(json.dumps(v,indent=2,default=lambda x:x.tolist() if hasattr(x,'tolist') else x.item()))
 def mode(m,ns,axis):
     u=np.zeros(42)
     for n in ns:u[m.mesh.dof_manager.get_node_dofs(n)[axis]]=1.
@@ -70,6 +73,8 @@ def test_unit():
     assert np.array_equal(full,normal_only) and np.array_equal(Kempty.toarray(),Konly.toarray())
     save(dict(expected_force_n=expected,actual_force_n=float(x@force),expected_shape_derivative_n_per_m=derivative,actual_derivative=actual,pressure_coupling_n_per_m=float(x@((K-Knormal)@z)),independent_full_nodal_force_and_skin_work_relative_error=work_error,net_force_n=net,moment_nm=moment,common_partition_exact=True,pressure_pa=pressure,scope='matched fixednormal partial triangle; no independent nonlinear solution'))
 
+@pytest.mark.skipif(not os.environ.get('FINITE_STAGE'),
+    reason='installed rim stage input FINITE_STAGE absent: staged rim replay solve requires the original workflow stage selection')
 def test_public(monkeypatch):
     stage=os.environ['FINITE_STAGE'];step=int(stage.removeprefix('A'));case=build_case();m,d,s,f,p=case
     incoming=json.loads((root()/f'A{step-1}.json').read_text())['checkpoint'] if step>1 else None
@@ -143,6 +148,8 @@ def test_front():
     assert force_error<2e-9 and storage_error<1e-12
     save(dict(cap_pa=cap,front_width_m=width,distances_m=distances,actual_traction_pa=traction[:,0],independent_traction_pa=expected,missing_strip_force_upper_n=force_error,missing_strip_storage_upper_j=storage_error,strip_shape_derivative_upper_n_per_m=derivative_error,scope='independent constant-pressure rebirth front, literal undeformed target; loaded variable-pressure front remains controlled numerically'))
 
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE') or not (Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/'A6.json').is_file(),
+    reason='archived rim input AUTOMATIC_WORKFLOW_EVIDENCE/A6.json absent: birth-front replay requires the original authenticated diagnostic input')
 def test_birth():
     case=build_case();m=case[0];a=owner(case);cp=json.loads((root()/'A6.json').read_text())['checkpoint'];a.restore(cp['path_state']['friction_state'],np.array(cp['displacements']))
     u=.55*mode(m,(1,2,3),0)-5.2e-6*mode(m,(1,2,3),2)
@@ -195,6 +202,8 @@ def test_prepared_uniform(monkeypatch):
     save(dict(comparisons=comparisons,nonuniform_fallback=True,force_difference_n=float(np.linalg.norm(force-ordinary)),
               accelerated=summary,ordinary=control,history_unchanged=True))
 
+@pytest.mark.skipif(os.environ.get('ATOMIC_KIND')=='trial' and (not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE') or not (Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/'A2.json').is_file()),
+    reason='archived rim input AUTOMATIC_WORKFLOW_EVIDENCE/A2.json absent: trial-branch atomic replay requires the original staged checkpoint')
 def test_atomic(monkeypatch):
     from anysolver.control import CancellationToken
     import anysolver.general_contact.s3_friction_static as factory
@@ -239,6 +248,13 @@ def test_refusal(monkeypatch):
     with pytest.raises(ValueError,match='legacy parallel'):solve_case(case,1)
     case[2]=s
     with pytest.raises(ValueError):solve_case(case,0)
+    save(dict(old_replay_predictor_refused=True,nonlegacy_orientation_refused=True,zero_target_refused=True))
+
+
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE') or not (Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/'A2.json').is_file(),
+    reason='archived rim inputs AUTOMATIC_WORKFLOW_EVIDENCE/A2.json absent: refusal replay requires the original staged checkpoint')
+def test_archive_checkpoint_refusals():
+    case=list(build_case());m,d,s,f,p=case
     cp=json.loads((root()/'A2.json').read_text())['checkpoint'];original=json.dumps(cp,sort_keys=True)
     case[2]=replace(s,path_predictor='none')
     with pytest.raises(ValueError,match='incompatible|match|contract|fingerprint'):solve_case(case,2,cp)
@@ -246,8 +262,10 @@ def test_refusal(monkeypatch):
     old_cp=json.loads((root().parent/'A2.json').read_text())['checkpoint'];old_bytes=json.dumps(old_cp,sort_keys=True);case[2]=s
     with pytest.raises(ValueError,match='incompatible|match|contract|fingerprint'):solve_case(case,2,old_cp)
     assert json.dumps(old_cp,sort_keys=True)==old_bytes
-    save(dict(old_replay_predictor_refused=True,nonlegacy_orientation_refused=True,zero_target_refused=True,predictor_checkpoint_incompatible=True,supplied_checkpoint_unchanged=True))
+    save(dict(predictor_checkpoint_incompatible=True,supplied_checkpoint_unchanged=True))
 
+@pytest.mark.skipif(not os.environ.get('FINITE_STAGE'),
+    reason='installed rim stage input FINITE_STAGE absent: staged rim proof requires the original workflow stage selection')
 def test_proof():
     from fractions import Fraction as Q
     case=build_case();m=case[0];a=owner(case);inventory=[];geometry=[]
@@ -282,6 +300,8 @@ def test_proof():
     assert force_bound<2e-9 and storage_bound<1e-12
     save(dict(inventory=inventory,independent_geometry=geometry,loaded_pressure_pa=pressure,loaded_front_actual_pa=actual,loaded_front_independent_pa=expected,loaded_front_width_m=width,loaded_strip_force_upper_n=force_bound,loaded_strip_storage_upper_j=storage_bound,scope='accepted binary nodal skins and scalar1D rimfront; not global nonlinear/workintegral acceptance'))
 
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE') or not all((Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/(name+'.json')).is_file() for name in ('A2','A3')),
+    reason='archived rim inputs AUTOMATIC_WORKFLOW_EVIDENCE A2.json/A3.json absent: facet replay requires the original staged checkpoints')
 def test_facet(monkeypatch):
     import anysolver.general_contact.s3_friction_static as factory
     original=factory.create_s3_friction_manager;captured=[]

@@ -8,11 +8,14 @@ from scipy.sparse import csr_matrix
 from anysolver.general_contact.s3_sliding_friction import S3SlidingFrictionManager
 
 import json,os
+import pytest
 from pathlib import Path
 
 
 def _save(data):
-    Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(data,indent=2,
+    root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if not root:return
+    Path(root).write_text(json.dumps(data,indent=2,
         default=lambda x:x.tolist() if hasattr(x,'tolist') else x.item()),encoding='utf-8')
 
 
@@ -96,6 +99,8 @@ def _pose_gate(model,definition,settings,friction,u,z):
     return dict(all_facets=report,target_raw_normal=summed.tolist())
 
 
+@pytest.mark.skipif(not os.environ.get('FRICTION_STAGE'),
+    reason='installed friction stage input FRICTION_STAGE absent: staged mesh moving-friction solve requires the original workflow stage selection')
 def test_mesh_public():
     from examples.general_contact_s3_mesh_moving_friction import build_case,solve_case
     # Instrument only the decisive repair capture, retaining incremental
@@ -182,6 +187,8 @@ def test_mesh_public():
     _save(data)
 
 
+@pytest.mark.skipif(not os.environ.get('FRICTION_STAGE') or not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE'),
+    reason='saved mesh friction inputs FRICTION_STAGE/AUTOMATIC_WORKFLOW_EVIDENCE absent: saved-pose proof requires the original staged evidence root')
 def test_mesh_saved_proof():
     """Recompute gates from saved poses without another coupled solve."""
     from examples.general_contact_s3_mesh_moving_friction import build_case
@@ -273,6 +280,8 @@ def test_mesh_saved_proof():
     _save(dict(phases=proof,target_normal_delta=normalized[2]-normalized[0],material_facet_transfer=True,scope='accepted_endpoint_work_bound_not_path_integral'))
 
 
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE') or not (Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/'A2.json').is_file(),
+    reason='archived mesh friction input AUTOMATIC_WORKFLOW_EVIDENCE/A2.json absent: rollback replay requires the original staged checkpoint')
 def test_mesh_rollback(monkeypatch):
     import copy,pytest
     from examples.general_contact_s3_mesh_moving_friction import build_case
@@ -315,21 +324,13 @@ def test_mesh_rollback(monkeypatch):
 
 
 def test_mesh_refusal(monkeypatch):
-    import copy,pytest,hashlib
-    from dataclasses import replace
+    import copy,pytest
     from examples.general_contact_s3_mesh_moving_friction import build_case
     from anysolver import solve_static_nonlinear
     from anysolver.control import CancellationToken,SolveCancelled
     from anysolver.general_contact.s3_sliding_friction import S3SlidingFrictionSettings
     from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
     from anysolver.general_contact.s3_friction_static import create_s3_friction_manager
-    evidence=Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])
-    from test_general_contact_s3_sliding_friction import _manager
-    old=_manager()[-1]
-    legacy_digest=hashlib.sha256(json.dumps(old.restart_contract(),sort_keys=True,separators=(',',':')).encode()).hexdigest()
-    baseline=json.loads((evidence.parent/'default_contract_baseline.json').read_text())
-    assert legacy_digest==baseline['legacy_contract_sha256']
-    checkpoint=json.loads((evidence/'A2.json').read_text())['checkpoint']
     case=build_case();model,definition,settings,friction,program,_=case;before=repr(model)
     token=CancellationToken();token.cancel('moving friction precancel')
     with pytest.raises(SolveCancelled):
@@ -357,6 +358,24 @@ def test_mesh_refusal(monkeypatch):
     with pytest.raises(ValueError,match='partial pressure'):
         owner.validate_successor(case[5]['manufactured_pose'],np.array([.001,0.,.001,.001]))
     assert owner.checkpoint_state()==origin
+    _save(dict(precancel=True,wrong_subtype=True,partial_pressure_successor_no_mutation=True,
+               scientific_force_scale_n=.02,scientific_moment_scale_nm=.02,solver_force_scale_n=.01))
+
+
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE') or not (Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/'A2.json').is_file(),
+    reason='archived mesh friction inputs AUTOMATIC_WORKFLOW_EVIDENCE/A2.json and default_contract_baseline.json absent: refusal replay requires the original staged checkpoint')
+def test_mesh_archive_checkpoint_refusals():
+    import copy,pytest,hashlib
+    from dataclasses import replace
+    from examples.general_contact_s3_mesh_moving_friction import build_case
+    from anysolver import solve_static_nonlinear
+    evidence=Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])
+    from test_general_contact_s3_sliding_friction import _manager
+    old=_manager()[-1]
+    legacy_digest=hashlib.sha256(json.dumps(old.restart_contract(),sort_keys=True,separators=(',',':')).encode()).hexdigest()
+    baseline=json.loads((evidence.parent/'default_contract_baseline.json').read_text())
+    assert legacy_digest==baseline['legacy_contract_sha256']
+    checkpoint=json.loads((evidence/'A2.json').read_text())['checkpoint']
     for candidate in ('friction-setting','tamper'):
         m,d,s,f,p,_=build_case();before=repr(m);incoming=copy.deepcopy(checkpoint)
         if candidate=='friction-setting':f=replace(f,pressure_step_n=2e-8)
@@ -365,10 +384,7 @@ def test_mesh_refusal(monkeypatch):
             solve_static_nonlinear(m,contact=d,contact_settings=s,contact_friction=f,
                 contact_path_program=p,restart_checkpoint=incoming,tolerance=1e-12,max_iterations=18)
         assert repr(m)==before
-    _save(dict(precancel=True,wrong_subtype=True,partial_pressure_successor_no_mutation=True,
-               incompatible_friction_restart=True,tampered_checkpoint=True,
-               legacy_contract_sha256=legacy_digest,
-               scientific_force_scale_n=.02,scientific_moment_scale_nm=.02,solver_force_scale_n=.01))
+    _save(dict(incompatible_friction_restart=True,tampered_checkpoint=True,legacy_contract_sha256=legacy_digest))
 
 
 def test_mesh_certificate_controls(monkeypatch):

@@ -1,16 +1,73 @@
 """Legacy settings byte contracts and real opt-in public request routing."""
 import copy
-from dataclasses import fields,replace
+from dataclasses import replace
 import hashlib,json,os
 from pathlib import Path
 import numpy as np
 import pytest
 
 
+# Independent pre-selector schema reference, transcribed from the local
+# historical source (the pre-selector parent of the consolidation commit):
+# ContactSolverSettings ended at beam_end_cap_work and no settings
+# contract filter existed yet. path_predictor and the nine later opt-in
+# fields below did not exist; they are admitted only when explicitly
+# opted in, so the historical identity/default compat claims keep
+# holding: default-disabled fields stay absent (prior serialized
+# settings shapes are preserved byte-for-byte) and opted-in fields are
+# retained. This reference is independent of the production filter; the
+# tests cross-check the production contracts against it.
+LEGACY_FIELDS=(
+    'maximum_candidate_pairs','pair_motion','sliding_difference_step',
+    'maximum_gap_triangles','maximum_patch_normal_dofs','maximum_augmentations',
+    'pressure_tolerance','maximum_shell_tilt','line_integration_relative_tolerance',
+    'maximum_line_subdivisions','maximum_swept_subdivisions','normal_discretization',
+    'pointwise_integration_subdivisions','maximum_pointwise_triangles',
+    'beam_shell_rim_clearance','beam_shell_difference_step','warped_q4_plane',
+    'warped_q4_quadrature_order','warped_q4_control_order',
+    'warped_q4_integration_tolerance','warped_q4_gap_accuracy',
+    'warped_q4_maximum_gap_cells','warped_q4_maximum_gap_depth',
+    'beam_pair_gap_accuracy','maximum_beam_pair_gap_cells','maximum_beam_pair_gap_depth',
+    'general_s3_difference_step','general_s3_differentiation',
+    'q4_s3_shared_edge_tie_step_m','q4_s3_shared_edge_tie_direction',
+    'q4_s3_shared_edge_tie_relative_tolerance','maximum_general_s3_energy_evaluations',
+    'q4_target_weighted_gap_tolerance','maximum_q4_target_integration_triangles',
+    'q4_source_area_tolerance','q4_source_weighted_gap_tolerance',
+    'maximum_q4_source_integration_triangles','q4_source_gap_certificate',
+    'q4_source_pressure_basis','q4_source_pressure_knot_columns',
+    'augmentation_acceleration','augmentation_pivot_max_pressure_pa',
+    'augmentation_pivot_difference_step_m','augmentation_equilibrated_pressure_step_pa',
+    'augmentation_schur_maximum_modes','augmentation_schur_maximum_pressure_pa',
+    'augmentation_schur_maximum_step_pa','augmentation_schur_difference_step_m',
+    'augmentation_schur_maximum_attempts','augmentation_schur_maximum_relinearizations',
+    'augmentation_schur_nonlinear_backtrack_dev','augmentation_support_resolution',
+    'augmentation_support_force_budget_n','enforcement_solver',
+    'complementarity_force_scale_n','monolithic_maximum_pivots',
+    'monolithic_linear_solver','q4_source_support_gradient_tolerance',
+    'q4_source_support_hessian_tolerance','q4_source_weighted_gap_gradient_tolerance',
+    'q4_source_weighted_gap_hessian_tolerance','d1_interior_profile',
+    'd1_interior_coverage_tolerance_m2','d1_interior_boundary_force_tolerance_n',
+    'beam_shell_geometry','beam_shell_maximum_swept_intervals','beam_chain_tangent',
+    'beam_end_cap_work')
+LATER_DEFAULTS={'shell_pair_orientation':'legacy',
+                'shell_skin_kinematics':'reference_linear',
+                'finite_frame_seed':'common_reference_frame_dev',
+                'q4_source_overlap_dual_dev':False,
+                'initial_contact_seed':'none'}
+CONTINUATION_BLOCK=('path_continuation_maximum_halvings','path_stagnation_patience',
+                    'path_stagnation_fraction','path_stagnation_merit_rate')
+
+
 def legacy_settings(settings):
     # Independent pre-selector dataclass schema, preserving all prior fields.
-    return {f.name:copy.deepcopy(getattr(settings,f.name)) for f in fields(settings)
-            if f.name!='path_predictor'}
+    value={name:copy.deepcopy(getattr(settings,name)) for name in LEGACY_FIELDS}
+    for name,default in LATER_DEFAULTS.items():
+        if getattr(settings,name)!=default:
+            value[name]=copy.deepcopy(getattr(settings,name))
+    if getattr(settings,'path_continuation_maximum_halvings')!=0:
+        for name in CONTINUATION_BLOCK:
+            value[name]=copy.deepcopy(getattr(settings,name))
+    return value
 
 
 @pytest.mark.parametrize('kind',('caps','transient','rigid'))
@@ -80,7 +137,8 @@ def test_public_optin_request_identity_then_actual_first_press():
     assert contact['active_pressure_dofs']>0 and contact['minimum_gap']>=-5e-5
     target=model.mesh.dof_manager.get_node_dofs(9)[2]
     assert abs(result.displacements[target])>1e-10
-    Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(dict(verified=True,
+    result_root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if result_root:Path(result_root).write_text(json.dumps(dict(verified=True,
         identity=record,status=result.status,contact=contact,target_uz=float(result.displacements[target]),
         executed_selector=result.info['contact_path']['path_predictor']),indent=2,
         default=lambda x:x.item() if isinstance(x,np.generic) else x.tolist()))

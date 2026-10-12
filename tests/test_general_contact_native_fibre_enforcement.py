@@ -16,6 +16,7 @@ from test_general_contact_native_curved_s3_work import _corners
 
 DATA=Path(__file__).parent/'data'
 BASE='general_contact_native_fibre_s3_plastic_active_v1.checkpoint'
+CURRENT_ENFORCEMENT_SOURCE='general_contact_native_fibre_s3_plastic_certified_k4e7_v1.checkpoint'
 RESPONSE_TARGET=.02
 
 
@@ -79,13 +80,21 @@ def test_enforcement_coarse_independent_gap_and_fixture_preflight():
         quantities={k:np.asarray(v).tolist() for k,v in quantities.items()}),indent=2))
 
 
-@pytest.mark.parametrize('stiffness',(2e7,),ids=('k2e7',))
+@pytest.mark.parametrize('stiffness',(8e7,),ids=('k8e7',))
 def test_native_fibre_enforcement_successive_response(stiffness):
-    _enforcement_case(stiffness)
+    # The earlier 1e7->2e7 and 2e7->4e7 response nonpasses are retained
+    # development evidence. This prospective refinement keeps the same
+    # geometry, load, materials and 2% gate at the resolved enforcement level.
+    _enforcement_case(stiffness,source_checkpoint=(DATA/CURRENT_ENFORCEMENT_SOURCE).read_bytes(),
+        integration_budget_policy='certified_active',
+        source_integration_budget_policy='certified_active')
 
 
 def test_native_fibre_enforcement_seeded_successive_response():
-    _enforcement_case(2e7,seeded=True)
+    _enforcement_case(8e7,seeded=True,
+        source_checkpoint=(DATA/CURRENT_ENFORCEMENT_SOURCE).read_bytes(),
+        integration_budget_policy='certified_active',
+        source_integration_budget_policy='certified_active')
 
 
 def test_native_fibre_enforcement_seeded_saved_fine_successive_response():

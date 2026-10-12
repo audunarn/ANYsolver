@@ -126,6 +126,26 @@ def test_curved_owner_rejects_reassigned_program_before_prefix_replay():
 
 def test_nonvirgin_rejected_trial_cancellation_and_exception_roll_back(monkeypatch):
     owner=_owner();raw=_press_fixture().read_bytes()
+    archived=_load(raw.decode('ascii'))
+    # This is a one-increment material-origin safety fixture, not a promise
+    # of cross-library byte replay for recomputed numerical error bounds.
+    assert archived['completed_targets']==1 and len(archived['records'])==1
+    record=archived['records'][0]
+    mechanical=owner.context.make(record['mechanical'],decoded=True)
+    _,replayed=owner._record(record['target'],mechanical,owner.initial.histories,
+                            record['previous_sha256'])
+    diagnostic_keys={'energy_error_j','force_error_n','tangent_error_n_per_m'}
+    physical=lambda row:{**row,'contact':{key:value for key,value in row['contact'].items()
+                                        if key not in diagnostic_keys}}
+    # Exact histories, mechanical state, force/work/gap fields and chain
+    # binding remain mandatory. A physical difference is never rebased.
+    assert canonical(physical(record))==canonical(physical(replayed))
+    if canonical(record)!=canonical(replayed):
+        # Authenticate the foreign capsule with the unchanged production
+        # codec and require its strict refusal before creating a local one.
+        with pytest.raises(ValueError,match='physical replay mismatch'):
+            owner._restore(raw,sha256(raw).hexdigest())
+        raw=owner._checkpoint((replayed,))
     expected_records=_load(raw.decode('ascii'))['records']
     actual_record=owner._record
     def traced_record(target,*args,**kwargs):

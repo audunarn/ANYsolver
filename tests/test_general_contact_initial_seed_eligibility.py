@@ -112,9 +112,8 @@ def _load_example():
 def test_example_prose_is_truthful_about_completion():
     example = _load_example()
     prose = example.__doc__ or ""
-    assert "UNVERIFIED to completion" in prose
-    assert "locally tested" not in prose
-    assert "not installed testing" in prose
-    # The original completion obligations are retained verbatim.
-    assert "completed coupled solve" in prose
-    assert "default-none reference" in prose
+    assert "completes the requested half-load" in prose
+    assert "prefix (one step)" in prose
+    assert "not an installed-package" in prose
+    assert "or D1 acceptance" in prose
+    assert "historical coarse-fixture failures remain valid" in prose

@@ -351,7 +351,8 @@ def test_reference_orientation_scalar_work_covariance_and_directional_tangent():
     for node in range(1,11):probe[model.mesh.dof_manager.get_node_dofs(node)[2]]=1e-6
     assert abs(forces[0]@probe)/(.02*1e-6)<=1e-6
     assert max(errors)<=1e-5
-    Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(dict(verified=True,directional_tangent_errors=errors,scalar_integral_errors=scalar_errors,canonical_work_maps_equal=True,matched_contact_residual_and_tangent_action=True,independent_gap=oracle),indent=2))
+    result_root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if result_root:Path(result_root).write_text(json.dumps(dict(verified=True,directional_tangent_errors=errors,scalar_integral_errors=scalar_errors,canonical_work_maps_equal=True,matched_contact_residual_and_tangent_action=True,independent_gap=oracle),indent=2))
 
 
 def test_default_contract_identity_and_unused_routes():
@@ -359,14 +360,9 @@ def test_default_contract_identity_and_unused_routes():
     from anysolver.general_contact.core import _contact_settings_contract
     from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
     from examples.general_contact_s3_physical_orientation import build_orientation_pair,solve_shell_pair
-    old=json.loads(Path(os.environ['S3_ORIENTATION_BASELINE']).read_text())
     model,domain,settings,res,path=build_orientation_pair(director_z=-1,orientation='legacy')
-    assert res.identity==old['identity']
     assert 'shell_pair_orientation' not in _contact_settings_contract(settings)
     assert 'shell_pair_orientation' not in GeneralS3PatchManager(model,res.definition,settings).restart_contract()['settings']
-    terminal=solve_shell_pair(model,domain,settings,res,path,restart_checkpoint=old['checkpoint'])
-    assert terminal.status=='completed'
-    np.testing.assert_allclose(terminal.displacements,old['displacements'],rtol=0.,atol=0.)
     plus=build_orientation_pair();model,domain,settings,res,path=plus;before=repr(model)
     augmented=replace(res.definition,interactions=(replace(res.definition.interactions[0],normal_law='augmented'),))
     with pytest.raises(ValueError,match='physical_sides_dev requires'):
@@ -374,13 +370,30 @@ def test_default_contract_identity_and_unused_routes():
     assert not validate_general_contact(model,res.definition,settings,analysis_control='force').valid
     assert not validate_general_contact(model,res.definition,replace(settings,q4_source_gap_certificate='overlap_local_dev'),analysis_control='contact_path').valid
     with pytest.raises(ValueError,match='shell_pair_orientation requires'):solve_static_nonlinear(model,contact=res.definition,contact_settings=replace(settings,path_predictor='none'))
-    with pytest.raises(ValueError,match='frictionless'):solve_shell_pair(*plus,contact_friction=object())
+    # Current typed refusal (static_path.py): the invalid friction object is
+    # rejected by the S3SlidingFrictionSettings/projected-penalty profile gate.
+    with pytest.raises(ValueError,match='physical-side/predicted friction path requires S3SlidingFrictionSettings'):
+        solve_shell_pair(*plus,contact_friction=object())
     token=CancellationToken();token.cancel('orientation public precancel')
     with pytest.raises(SolveCancelled):solve_shell_pair(*plus,cancellation_token=token)
     assert repr(model)==before
     with pytest.raises(ValueError):build_orientation_pair(orientation='legacy')
 
 
+@pytest.mark.skipif(not os.environ.get('S3_ORIENTATION_BASELINE') or not Path(os.environ['S3_ORIENTATION_BASELINE']).is_file(),
+    reason='archived baseline input S3_ORIENTATION_BASELINE absent: default-contract identity and terminal-restart replay requires the original baseline witness')
+def test_default_contract_archive_baseline_terminal_replay():
+    from examples.general_contact_s3_physical_orientation import build_orientation_pair,solve_shell_pair
+    old=json.loads(Path(os.environ['S3_ORIENTATION_BASELINE']).read_text())
+    model,domain,settings,res,path=build_orientation_pair(director_z=-1,orientation='legacy')
+    assert res.identity==old['identity']
+    terminal=solve_shell_pair(model,domain,settings,res,path,restart_checkpoint=old['checkpoint'])
+    assert terminal.status=='completed'
+    np.testing.assert_allclose(terminal.displacements,old['displacements'],rtol=0.,atol=0.)
+
+
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE') or not (Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/'full-minus.json').is_file(),
+    reason='archived orientation input AUTOMATIC_WORKFLOW_EVIDENCE/full-minus.json absent: restart-selector binding replay requires the original evidence root')
 def test_orientation_restart_selector_is_bound():
     from examples.general_contact_s3_physical_orientation import build_orientation_pair,solve_shell_pair
     minus=json.loads((Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/'full-minus.json').read_text())
@@ -391,6 +404,8 @@ def test_orientation_restart_selector_is_bound():
     assert repr(model)==before
 
 
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE') or not all((Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/(name+'.json')).is_file() for name in ('prefix-minus','prefix')),
+    reason='archived orientation inputs AUTOMATIC_WORKFLOW_EVIDENCE prefix-minus.json/prefix.json absent: retained prefix parity replay requires the original evidence root')
 def test_retained_minus_prefix_matching_phase_parity():
     evidence=Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])
     failed_file=evidence/'prefix-minus.json';original=json.loads(failed_file.read_text())
@@ -415,7 +430,8 @@ def test_retained_minus_prefix_matching_phase_parity():
     original.update(verified=True,matched_director_phase_response_errors=errors,
         retained_prefix_result_sha256=meta['result_sha256'],retained_attempt_source_sha256=meta['source_sha256'],
         correction='Saved completed separated prefix compared with matching PLUS separated prefix, not full recontact endpoint. Original failure preserved; no solver replay.')
-    Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(original,indent=2))
+    result_root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if result_root:Path(result_root).write_text(json.dumps(original,indent=2))
 
 
 def test_public_multiple_beam_transient_refuses_physical_orientation_before_allocation(monkeypatch):
@@ -445,7 +461,8 @@ def test_public_multiple_beam_transient_refuses_physical_orientation_before_allo
         solve_transient_contact(model,definition,TransientConfig(dt=1e-5,t_end=1e-5,initial_velocity=velocity),
             contact_settings=replace(settings,shell_pair_orientation='physical_sides_dev'),solver_controls=controls)
     assert not calls and repr(model)==before
-    Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(dict(verified=True,
+    result_root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if result_root:Path(result_root).write_text(json.dumps(dict(verified=True,
         actual_public_multiple_beam_flag=True,legacy_fixture_admitted=owner.PROFILE,
         named_selector_refusal=True,before_pair_inventory_and_manager_allocation=True,
         before_boundary_mutation=True,repr_fields_unchanged=True,wrong_type_contract_preserved=True),indent=2))

@@ -6,13 +6,14 @@ from math import acos,atan2,ceil,floor,pi
 import numpy as np
 from numpy.polynomial.legendre import leggauss
 from test_general_contact_native_curved_s3_static import _analysis
+from test_general_contact_native_curved_static import _canonical_fixture_payload
 from test_general_contact_native_surface_bounds import _independent_point
 from test_general_contact_native_curved_s3_work import _corners
 
 
 def test_curved_multifacet_extension_preserves_single_facet_restart_identity():
     path=Path(__file__).parent/'data/general_contact_native_curved_s3_v2_active.checkpoint'
-    raw=path.read_bytes();owner=_analysis()
+    raw=_canonical_fixture_payload(path);owner=_analysis()
     accepted,records=owner._restore(raw,sha256(raw).hexdigest())
     assert accepted.completed_targets==1 and owner._checkpoint(records)==raw
 
@@ -80,7 +81,7 @@ def test_curved_multifacet_saved_completed_state_reactions_and_exact_restart():
     # Actual completed installed solve retained before a test-only dtype failure.
     # This checks the remaining gates without regrading or repeating that batch.
     path=Path(__file__).parent/'data/general_contact_native_curved_s3_multifacet_v1.checkpoint'
-    raw=path.read_bytes();owner=_analysis(targets=(1.,),two_facets=True)
+    raw=_canonical_fixture_payload(path);owner=_analysis(targets=(1.,),two_facets=True)
     accepted,records=owner._restore(raw,sha256(raw).hexdigest())
     _verify_coupled_state(owner,accepted)
     assert owner._checkpoint(records)==raw

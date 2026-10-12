@@ -37,6 +37,7 @@ import os
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from anysolver import solve_static_nonlinear
 from anysolver.general_contact import semismooth_path
@@ -48,7 +49,14 @@ INDEPENDENT_GAP_MODULE = (REPOSITORY_ROOT
                           / "examples"
                           / "general_contact_d1_interior_controls_dev.py")
 CAPTURE_NAME = "original-workflow-first-increment-v1.json"
+INPUT_FREE_CAPTURE_NAME = "original-workflow-first-increment-input-free-v1.json"
 V2_SELECTION = "linearized_kkt_merit_globalization_dev"
+
+
+def _missing_original_inputs():
+    owned = _load_module("original_workflow_seed_decision_owned_helpers",
+                         SEED_DECISION_MODULE)
+    return owned._missing_original_inputs()
 
 
 def _load_module(name, path):
@@ -66,6 +74,9 @@ def _finite_array(summary, key):
     return array if np.all(np.isfinite(array)) else None
 
 
+@pytest.mark.skipif(bool(_missing_original_inputs()),
+                    reason='exact original fixture inputs absent: '
+                           + ', '.join(_missing_original_inputs()))
 def test_actual_first_original_increment_completes_under_production_gates():
     owned = _load_module("original_workflow_seed_decision_owned_helpers",
                          SEED_DECISION_MODULE)
@@ -207,6 +218,77 @@ def test_actual_first_original_increment_completes_under_production_gates():
     assert result.steps[0].load_factor == 0.125
     assert result.load_factor == 0.125
     assert len(history) == 1 and history[0]["step_index"] == 1
+    assert result.restart_checkpoint is not None, "no producer checkpoint"
+    assert identity_unchanged
+    failed = {name: value for name, value in gates.items() if not value}
+    assert not failed, f"production gates failed: {failed}"
+
+
+def test_input_free_first_increment_completes_under_production_gates():
+    """Input-free first increment on the committed small-patch mixed
+    active/split case: no external fixture input, no consumed registered
+    authority script, and no original-fixture identity claim. The
+    production gates that apply to this case are checked unchanged; the
+    fixture-specific 300-coordinate/25-row/0.018 N gates remain
+    exclusively in the guarded original node above."""
+    owned = _load_module("original_workflow_seed_decision_owned_helpers",
+                         SEED_DECISION_MODULE)
+    from test_general_contact_admission_globalization_driver_small_patch import (
+        _case as small_patch_case, _enabled as small_patch_enabled, _solve)
+    model, definition, settings, program = small_patch_case()
+    seeded = owned._seeded(small_patch_enabled(settings), V2_SELECTION)
+    program_contract_before = program.contract()
+    boundary_before = repr(model.boundary_conditions)
+    constraints_before = repr(model.constraint_equations)
+    assert semismooth_path._INITIAL_SEED_DECISION_HOOK is None
+    result = _solve(model, definition, seeded, program,
+                    max_load_factor=0.5, emit_restart_checkpoint=True)
+    assert semismooth_path._INITIAL_SEED_DECISION_HOOK is None
+    u = np.asarray(result.displacements, dtype=float)
+    contact_summary = dict(result.info.get("general_contact") or {})
+    seed_record = dict(result.info.get("contact_initial_seed") or {})
+    identity_unchanged = (program.contract() == program_contract_before
+                          and repr(model.boundary_conditions) == boundary_before
+                          and repr(model.constraint_equations)
+                          == constraints_before)
+    gates = {
+        "requested_first_increment_completed": bool(
+            result.status == "completed" and len(result.steps) == 1),
+        "finite_accepted_state": bool(np.all(np.isfinite(u))),
+        "production_gap_tolerance_met": bool(
+            contact_summary.get("gap_tolerance_met")),
+        "seed_selection_recorded": bool(
+            seed_record.get("selection") == V2_SELECTION
+            and seed_record.get("outcome") in {"admitted", "refused"}),
+        "restart_checkpoint_produced": bool(
+            result.restart_checkpoint is not None),
+        "programme_identity_unchanged": bool(identity_unchanged),
+    }
+    capture = {
+        "schema": "ORIGINAL_WORKFLOW_FIRST_INCREMENT_INPUT_FREE_V1",
+        "selection": V2_SELECTION,
+        "status": result.status,
+        "status_category": result.status_category,
+        "failure_reason": result.failure_reason,
+        "steps": [step.to_dict() for step in result.steps],
+        "displacement_norm_m": float(np.linalg.norm(u)),
+        "contact_summary": contact_summary,
+        "seed_record": seed_record,
+        "gates": gates,
+        "all_gates_predicate": bool(all(gates.values())),
+        "provenance": owned._provenance(seeded, program),
+        "scope": ("input-free first increment on the committed small-patch "
+                  "mixed active/split case; not the original fixture, "
+                  "not a complete trajectory claim"),
+    }
+    # Capture the actual returned evidence BEFORE any assertion.
+    with open(os.path.join(os.environ["TEMP"], INPUT_FREE_CAPTURE_NAME), "w",
+              encoding="utf-8") as handle:
+        json.dump(owned._plain(capture), handle, indent=2, sort_keys=True,
+                  allow_nan=False)
+        handle.write("\n")
+    assert result.status == "completed", result.failure_reason
+    assert len(result.steps) == 1
     assert result.restart_checkpoint is not None, "no producer checkpoint"
     assert identity_unchanged
     failed = {name: value for name, value in gates.items() if not value}

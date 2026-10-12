@@ -13,7 +13,10 @@ reference-full or all-six driver work: it runs ONLY the existing
 small-patch fixture's physical HALF check (one macro,
 max_load_factor=0.5) with the explicit effective-settings assertion.
 No fixture tuning: material, load, gap, tolerances and program are the
-existing fixture's own. Only after the complete public
+existing fixture's own. The fixture is the root-adopted 4x4 Q4
+resolution candidate with the explicitly remapped load node 13 at
+(.6,.6) and ux anchor nodes 1 and 11 at (.1,.1)/(.1,.6), i.e. the
+unchanged physical load/anchor positions. Only after the complete public
 result/report/physics gates pass does it export the actual restart
 checkpoint JSON and source/program/settings identifiers under the
 attempt TEMP directory, enabling later connected
@@ -23,11 +26,13 @@ internal Newton or partial-substep state is never exported.
 """
 import json
 import os
+import tempfile
 from dataclasses import asdict
 
 from test_general_contact_admission_globalization_driver_small_patch import (
+    _ANCHOR_NODES,
     _CHECKPOINT_HASH_KEY,
-    _SOURCE_COLUMNS,
+    _LOAD_NODE,
     _assert_active_contact,
     _case,
     _enabled,
@@ -69,8 +74,13 @@ def test_prefix_half_joint_overlap_certificate_physical_gates():
     record = history[0]
     # Physics gates: real active contact inside the family gap tolerance.
     _assert_active_contact(record)
-    interior_load_node = 1 + (_SOURCE_COLUMNS + 1) + 1
+    interior_load_node = _LOAD_NODE
     assert program.nodal_forces[0].node_id == interior_load_node
+    # Bind the actual physical load/anchor positions, not old indices.
+    loaded = model.mesh.get_node(interior_load_node)
+    assert abs(loaded.x - 0.6) < 1e-12 and abs(loaded.y - 0.6) < 1e-12
+    assert [term[0] for control in program.controls
+            for term in control.terms] == list(_ANCHOR_NODES)
     center_uz = model.mesh.dof_manager.get_node_dofs(interior_load_node)[2]
     assert result.displacements[center_uz] < 0.0
     # Report gate: the committed record carries the program's own
@@ -79,7 +89,7 @@ def test_prefix_half_joint_overlap_certificate_physical_gates():
     # Every public result/report/physics gate passed: export the actual
     # complete restart checkpoint and the source/program/settings
     # identifiers under the attempt TEMP for later connected checks.
-    temp = os.environ["TEMP"]
+    temp = (os.environ.get("TEMP") or tempfile.gettempdir())
     with open(os.path.join(temp, "prefix-half-restart-checkpoint-v1.json"),
               "wb") as handle:
         handle.write(result.restart_checkpoint_bytes())

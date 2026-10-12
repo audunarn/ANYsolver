@@ -20,6 +20,7 @@ import time
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REFERENCE_PATH = REPO_ROOT / "scripts" / "general_contact_seed_gap_reference.py"
@@ -137,6 +138,8 @@ def _production_stages(record):
 
 
 def test_literal_record_diagnosis_locates_the_refusing_stage():
+    if not Path(ref.CAPTURE_SOURCE).is_file():
+        pytest.skip('literal seed-path diagnosis needs local sha256-bound capture: '+ref.CAPTURE_SOURCE)
     records = ref.load_capture_records()
     assert len(records) == 10
     assert all(record["input_sha256"] == CAPTURE_SHA256

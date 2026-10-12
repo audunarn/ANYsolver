@@ -1,18 +1,47 @@
-"""Bounded 2x2 Q4/S3 driver checks for the declared macro physical substeps.
+"""Bounded 4x4 Q4/S3 driver checks for the declared macro physical substeps.
 
 Fresh driver-checks-v2 scope. The v5 driver module authored six real
 caller/state/restart checks on the 16Q4 interior-press fixture but no
 numerical allowance ever executed them. This module delivers those six
-checks on the smallest physically meaningful caller fixture: a 2x2 Q4
-source patch (source_columns=2, source_rows=2, one interior load node)
-against the family's two-S3 nonmatching target, with the family's own
-perimeter support, interior distributed load shape, materials, contact
-definition, settings and two-macro force-ramp program. The family's
-build_case column gate does not admit two columns, so the fixture is
-replicated here mechanic-for-mechanic instead of edited in scripts/.
+checks on the smallest physically meaningful caller fixture: a Q4
+source patch against the family's two-S3 nonmatching target, with the
+family's own perimeter support, interior distributed load shape,
+materials, contact definition, settings and two-macro force-ramp
+program. The family's build_case column gate does not admit two
+columns, so the fixture is replicated here mechanic-for-mechanic
+instead of edited in scripts/.
+
+Discretization record (prior failure preserved, not claimed passed):
+this fixture originally used a 2x2 Q4 source patch
+(source_columns=2, source_rows=2, one interior load node). The
+verified independent origin-linear discriminator
+(smallpatch-linear-discriminator-v2) showed that the 2x2 fixture's
+equilibrated half-load state violates the unchanged 50um gap budget
+at the loaded point (loaded physical gap -122.672um); that failed
+record stands, and no claim is made that the original 2x2 fixture
+passed or that its exact nonlinear problem is infeasible. Root
+adoption (2026-10-11), based on the verified independent
+origin-linear results in
+.development/contact-restart-20261011/smallpatch-resolution-v1
+(corrected v2): the fixture discretization is now the prospective
+4x4 Q4 resolution candidate - 25 source nodes, 16 Q4 elements, 25
+explicit fine Q1 nodal pressure modes - with an explicit node remap
+that keeps the physical load/anchor positions unchanged: load node
+13 at the patch center (.6,.6) (NOT the grid-helper interior node
+7), and ux anchors fine nodes 1 and 11 at (.1,.1) and (.1,.6) (NOT
+the grid-helper node 6). At the half load -0.02N that candidate's
+origin-linear equilibrated state satisfies exact KKT/wrench checks
+to ~1e-16 with loaded physical gap -31.7757um inside the unchanged
+50um budget (sampled field evidence, not a global certificate).
+Only the spatial discretization and this remap change: g0=20um,
+material E=1e5 nu=0.3 thickness 0.05, the two target S3 positions,
+materials, clamps and offsets, source square (.1,1.1), point force
+(.6,.6) with the full -0.04N two-step ramp, 50um gap budget,
+tolerances, physics, control, solver choice and certificate are all
+unchanged.
 
 The fixture's actual load, pressure and solved active response are
-explicit: the single interior node carries the full bounded press load
+explicit: the loaded interior node carries the full bounded press load
 (0 N -> -0.02 N -> -0.04 N over the two macro steps), and every solved
 reference asserted here must reach real active contact (active pressure
 DOFs, positive numerical pressure, gap within the family tolerance).
@@ -29,14 +58,17 @@ fixture setting; no report/equilibrium/gap/NCP/raw-certificate gate is
 disabled.
 
 v7 near-contact declaration (parent instruction, not an accepted
-engineering response): the caller fixture's source reference height is
-0.04002 (initial normal gap g0 = 20um) instead of the family's 0.04004
-(g0 = 40um). The v7 exact-rational discriminator showed that at g0=40um
-the interior node's weak nodal-pressure onset (bilinear tent weighting
-ratio 4/9) lands exactly at the -50um strong gap limit, so weak pressure
-cannot activate inside the certificate's admissible domain; at g0=20um
-the onset sits at -25um, safely inside the unchanged 50um budget. Only
-this caller fixture changes; material, load, physical work/state/gates,
+engineering response; original 2x2 fixture rationale, geometry
+retained unchanged for the 4x4 candidate): the caller fixture's
+source reference height is 0.04002 (initial normal gap g0 = 20um)
+instead of the family's 0.04004 (g0 = 40um). The v7 exact-rational
+discriminator showed that on the original 2x2 fixture at g0=40um
+the interior node's weak nodal-pressure onset (bilinear tent
+weighting ratio 4/9) lands exactly at the -50um strong gap limit,
+so weak pressure cannot activate inside the certificate's
+admissible domain; at g0=20um the onset sits at -25um, safely
+inside the unchanged 50um budget. Only this caller fixture's
+discretization changes; material, load, physical work/state/gates,
 active-contact assertions and all required checks are unchanged.
 
 One declared injected first-refusal (contact_semismooth_stagnation on
@@ -46,15 +78,16 @@ results are restore/equality witnesses, not production-kernel scientific
 oracles. The twenty-seven v5-verified math/public/caller checks are not
 repeated; only the fixture-changed driver checks run here. An autouse
 call-through phase logger records per-call certificate/report/increment
-evidence and repeated faulthandler stack dumps into the attempt temp
-directory; it changes no production behavior.
+evidence into the attempt temp directory; it changes no production
+behavior and starts no watchdog thread (a repeating faulthandler
+dump thread killed this process with a Windows access violation
+inside NumPy C reductions).
 """
 import copy
-import faulthandler
 import os
+import tempfile
 import time
 from dataclasses import replace
-from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -69,6 +102,7 @@ from anysolver.control import SolveCancelled
 from anysolver.fe_core import FEModel
 from anysolver.general_contact import s3_patch_static, static_path
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+from anysolver.general_contact.semismooth_path import SemismoothStep
 from anysolver.nonlinear_restart import (
     _CHECKPOINT_HASH_KEY,
     _checkpoint_without_hash,
@@ -80,33 +114,46 @@ _FORCE_N = 0.04
 _GAP_TOLERANCE_M = 5.0e-5
 _REFERENCE_SLOPE = 1.0e-4
 _TARGET_RIGHT_X_M = 1.3
-_SOURCE_COLUMNS = 2
-_SOURCE_ROWS = 2
+_SOURCE_COLUMNS = 4
+_SOURCE_ROWS = 4
+_LOAD_NODE = 13
+_ANCHOR_NODES = (1, 11)
 
 
 def _case():
-    """Smallest physical 2x2 Q4 press patch of the interior-press family.
+    """Physical 4x4 Q4 press patch of the interior-press family.
 
     Replicates build_interior_press(source_support="perimeter",
     load_shape="interior_distributed", force_n=0.04) at
-    source_columns=source_rows=2: same material (E=1e5, nu=0.3), shell
-    thickness 0.05, the family's flat 1e-4 common reference slope,
-    full-width two-S3 target at z=0 with reference surface
-    offset 0.01, perimeter uz support with lateral uy guide, target
-    left-edge control support, monolithic active-set enforcement with
-    the D1 interior profile, and the family's two-step interior nodal
-    force ramp on the single interior node.
+    source_columns=source_rows=4 (root-adopted resolution candidate):
+    same material (E=1e5, nu=0.3), shell thickness 0.05, the family's
+    flat 1e-4 common reference slope, full-width two-S3 target at z=0
+    with reference surface offset 0.01, perimeter uz support with
+    lateral uy guide, target left-edge control support, monolithic
+    active-set enforcement with the D1 interior profile, and the
+    family's two-step nodal force ramp on the loaded interior node.
+
+    Explicit 4x4 node remap (root adoption; the grid-helper formulas
+    1 + stride + 1 and columns + 2 would tie the load and the second
+    anchor to the first interior fine nodes 7 and 6, which are NOT the
+    original physical positions): the load is fine node 13 at the
+    patch center (.6,.6) and the ux controls are fine nodes 1 and 11
+    at (.1,.1) and (.1,.6) - the same physical positions as the
+    original 2x2 fixture's load node 5 and control nodes 1 and 4. The
+    remapped positions are asserted below against the actual mesh
+    coordinates, not against grid indices.
 
     Declared near-contact caller fixture (v7 discriminator, parent
-    instruction; not an accepted engineering response): source reference
-    height 0.04002 instead of the family's 0.04004, same skins/target.
+    instruction; not an accepted engineering response; original 2x2
+    rationale, geometry retained unchanged): source reference height
+    0.04002 instead of the family's 0.04004, same skins/target.
     Exact geometry: initial normal gap g0 = 0.04002 - 0.025 - 0.015
-    = 20um, so the interior node's weak nodal-pressure onset
-    (tent weighting ratio integral(phi^2)/integral(phi) = 4/9) sits at
-    w = -45um with center physical gap -25um, safely inside the
-    unchanged 50um gap budget; at the family's 40um the onset sits
-    exactly at the -50um strong limit and cannot activate inside the
-    admissible domain.
+    = 20um. On the original 2x2 fixture the interior node's weak
+    nodal-pressure onset (tent weighting ratio
+    integral(phi^2)/integral(phi) = 4/9) sits at w = -45um with
+    center physical gap -25um, safely inside the unchanged 50um gap
+    budget; at the family's 40um the onset sits exactly at the -50um
+    strong limit and cannot activate inside the admissible domain.
     """
     columns, rows = _SOURCE_COLUMNS, _SOURCE_ROWS
     stride = columns + 1
@@ -215,13 +262,30 @@ def _case():
         d1_interior_coverage_tolerance_m2=1.0e-10,
         d1_interior_boundary_force_tolerance_n=1.0e-10,
     )
-    interior_load_node = 1 + stride + 1
+    # Explicit 4x4 remap (root adoption): the grid-helper formulas
+    # 1 + stride + 1 and columns + 2 would tie the load and the
+    # second anchor to the first interior fine nodes 7 and 6, which
+    # are NOT the original physical positions. Keep the actual
+    # physical positions: load node 13 at the patch center (.6,.6),
+    # ux anchors nodes 1 and 11 at (.1,.1) and (.1,.6), asserted
+    # against the mesh coordinates below.
+    load_node = _LOAD_NODE
+    anchors = _ANCHOR_NODES
+    for node, expected_xy in ((load_node, (0.6, 0.6)),
+                              (anchors[0], (0.1, 0.1)),
+                              (anchors[1], (0.1, 0.6))):
+        position = model.mesh.get_node(node)
+        assert position is not None, f"remap node {node} missing"
+        assert (abs(position.x - expected_xy[0]) < 1e-12
+                and abs(position.y - expected_xy[1]) < 1e-12), (
+            f"remap node {node} at ({position.x}, {position.y}), "
+            f"expected physical position {expected_xy}")
     program = ContactPathProgram(
-        controls=(ContactPathControl.node(1, "ux"),
-                  ContactPathControl.node(columns + 2, "ux")),
+        controls=(ContactPathControl.node(anchors[0], "ux"),
+                  ContactPathControl.node(anchors[1], "ux")),
         waypoints=((0.0, 0.0), (0.0, 0.0)), steps_per_segment=2,
         nodal_forces=(ContactPathNodalForce(
-            interior_load_node, "uz", (0.0, -_FORCE_N)),),
+            load_node, "uz", (0.0, -_FORCE_N)),),
     )
     return model, definition, settings, program
 
@@ -330,9 +394,18 @@ def _force_first_macro_refusal(monkeypatch, calls):
             "iterations": None,
         })
         if len(calls) == 1:
-            return SimpleNamespace(
+            # Typed conformance: the production refusal path reads
+            # step_result.initial_seed unconditionally, so the
+            # injected refusal is a real SemismoothStep, not a loose
+            # namespace mock.
+            return SemismoothStep(
                 completed=False, reason="contact_semismooth_stagnation",
-                diagnostics=None, iterations=3, candidate_evaluations=2,
+                q=np.asarray(kwargs["q"], dtype=float).copy(),
+                reactions=np.asarray(kwargs["reactions"], dtype=float).copy(),
+                nodal_forces=np.asarray(kwargs["nodal_forces"], dtype=float).copy(),
+                candidate_states=None, contact=None, iterations=3,
+                residual_norm=float("inf"), constraint_norm=float("inf"),
+                complementarity_norm=float("inf"), candidate_evaluations=2,
                 backtracks=1)
         result = original(*args, **kwargs)
         calls[-1]["iterations"] = int(result.iterations)
@@ -347,7 +420,8 @@ _PHASE_LOG = None
 def _phase_log():
     global _PHASE_LOG
     if _PHASE_LOG is None:
-        _PHASE_LOG = open(os.path.join(os.environ["TEMP"],
+        _PHASE_LOG = open(os.path.join((os.environ.get("TEMP")
+                                       or tempfile.gettempdir()),
                                        "small_patch_phase.log"),
                           "a", buffering=1)
     return _PHASE_LOG
@@ -389,17 +463,32 @@ def _phase_evidence(monkeypatch):
 
     monkeypatch.setattr(static_path, "solve_semismooth_increment",
                         increment_wrapper)
-    faulthandler.dump_traceback_later(15.0, repeat=True, file=log)
+    # No repeating faulthandler watchdog here: with the watchdog
+    # active, this process crashed with a Windows access violation
+    # inside NumPy C reductions (observed in
+    # q4_overlap_local_bound._mul/np.min on this exact fixture); the
+    # crash was watchdog-correlated and the underlying race mechanism
+    # is not independently established. The per-call phase log above
+    # keeps the same timing evidence without a second thread.
     yield
-    faulthandler.cancel_dump_traceback_later()
     log.write(f"{time.perf_counter():9.3f} phase fixture teardown\n")
 
 
 def test_small_patch_fixture_explicit_load_pressure_and_active_response():
     model, definition, settings, program = _case()
-    # Explicit declared load: the single interior node carries the full
+    # Explicit declared load: the loaded interior node carries the full
     # bounded press load, ramped by the program over two macro steps.
-    assert program.nodal_forces[0].node_id == 1 + (_SOURCE_COLUMNS + 1) + 1
+    # The assertions bind the actual physical load/anchor positions,
+    # not the old 2x2 grid indices.
+    assert program.nodal_forces[0].node_id == _LOAD_NODE
+    loaded = model.mesh.get_node(_LOAD_NODE)
+    assert abs(loaded.x - 0.6) < 1e-12 and abs(loaded.y - 0.6) < 1e-12
+    assert [term[0] for control in program.controls
+            for term in control.terms] == list(_ANCHOR_NODES)
+    for node, expected_xy in zip(_ANCHOR_NODES, ((0.1, 0.1), (0.1, 0.6))):
+        anchor = model.mesh.get_node(node)
+        assert (abs(anchor.x - expected_xy[0]) < 1e-12
+                and abs(anchor.y - expected_xy[1]) < 1e-12)
     assert program.nodal_forces[0].dof == "uz"
     np.testing.assert_allclose(program.force_values_at(0), [0.0],
                                rtol=0., atol=0.)

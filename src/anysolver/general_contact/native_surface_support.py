@@ -376,6 +376,7 @@ class HistoryPanelSupport:
     status: str
     region: tuple
     reason: str
+    event_covered: bool=False
 
 
 def segment_gap_slab_enclosure(field,cell,xi_bounds,angle_bounds,segment_index):
@@ -499,42 +500,43 @@ def _material_gap_slab_enclosure(start,segment,target,frame0,radius,cell,xi_boun
 def panel_transverse_event_cover(field,cell,xi_bounds,angle_bounds,segment_index,*,budget):
     """Complete time cover with transverse roots, allowing either orientation.
 
-    Strict signed slabs contain no root; strict derivative slabs contain at most
-    one root per material point. Unlike a single-crossing certificate, different
-    slabs may have opposite orientations only when both endpoint rectangles are
-    strictly open. Otherwise all potential roots must have one orientation, hence
-    each point has at most one root. Tangencies remain unresolved.
-    This proves admissible support, never zero physical history or quadrature accuracy.
+    Strict signed slabs contain no root; strict zero-rate slabs contain only
+    transverse roots. A complete finite time cover may contain opposite crossing
+    directions regardless of endpoint signs. Point replay must still resolve the
+    ordered events and physical history; this support certificate cannot replace
+    that admission. Tangencies remain unresolved and are never admitted: a
+    possible-touch enclosure proves only that a touch cannot be excluded, never
+    a complete force/tangent/history certificate, so a stalled cover yields
+    unresolved for spatial subdivision or refusal exactly as before.
+    This proves support, never zero history or quadrature accuracy.
     """
-    start,segments=_support_path(field,segment_index)
-    segment=segments[0]
-    end=material_path_pose(start,segment.translations,segment.angular,segment.shell_increment,1.)
-    open_endpoints=True
-    for pose in (start,end):
-        value,padding=_minimum(pose,field.patch.target,field.patch.source.reference.nodal_triads[0],
-            field.patch.rule.definition['radius'],cell,xi_bounds,angle_bounds)
-        open_endpoints=open_endpoints and value>padding
     enclose=segment_gap_slab_enclosure(field,cell,xi_bounds,angle_bounds,segment_index)
-    pending=[(0.,1.)];visited=0;orientation=0
+    pending=[(0.,1.)];visited=0;roots=False;closed=False
     while pending:
-        if visited>=field.maximum_intervals:return False
+        if visited>=field.maximum_intervals:return None
         if not budget.consume():raise MemoryError('native friction aggregate support interval cap exhausted')
         left,right=pending.pop();visited+=1;bounds=enclose(left,right)
-        if bounds.gap_lower>0. or bounds.gap_upper<0.:continue
-        direction=1 if bounds.derivative_lower>0. else -1 if bounds.derivative_upper<0. else 0
+        if bounds.gap_lower>0. or bounds.gap_upper<0.:
+            closed=closed or bounds.gap_upper<0.
+            continue
+        # q = g_t - k*g equals g_t at a root. Its strict enclosure
+        # therefore proves transverse orientation even where the ordinary
+        # rate enclosure loses the correlation between gap and rate.
+        direction=(1 if bounds.zero_derivative_lower>0. else
+                   -1 if bounds.zero_derivative_upper<0. else 0)
         if direction:
-            if not open_endpoints and orientation and direction!=orientation:return False
-            orientation=direction
+            roots=True
             continue
         # Temporal refinement cannot reduce this spatial contribution. Yield
         # unresolved to the existing spatial refiner; this is never admission.
         if (bounds.spatial_derivative_width>0.
                 and bounds.spatial_derivative_width>=bounds.temporal_derivative_width):
-            return False
+            return None
         middle=(left+right)/2
-        if not left<middle<right:return False
+        if not left<middle<right:return None
         pending.extend(((middle,right),(left,middle)))
-    return True
+    if roots:return 'events'
+    return 'closed' if closed else 'open'
 
 
 def classify_history_panel(field,cell,xi_bounds,angle_bounds,*,budget):
@@ -559,7 +561,7 @@ def classify_history_panel(field,cell,xi_bounds,angle_bounds,*,budget):
     if not budget.consume():
         raise MemoryError('native friction aggregate support interval cap exhausted')
     region=(cell,*map(float,xi_bounds),*map(float,angle_bounds))
-    pose=field.initial;all_open=True
+    pose=field.initial;all_open=True;event_covered=False
     for index,segment in enumerate(field.segments):
         end=material_path_pose(pose,segment.translations,segment.angular,segment.shell_increment,1.)
         monotone=history_endpoint_support_certified(field,xi_bounds=xi_bounds,angle_bounds=angle_bounds,
@@ -577,11 +579,17 @@ def classify_history_panel(field,cell,xi_bounds,angle_bounds,*,budget):
         elif panel_closed_over_history(field,cell,xi_bounds,angle_bounds,maximum_intervals=1,
                 budget=budget,segment_index=index):
             all_open=False
-        elif (field.patch.pairs[0].activation_policy=='transverse_event_sequence'
-                and panel_transverse_event_cover(field,cell,xi_bounds,angle_bounds,index,budget=budget)):
-            all_open=False
         else:
-            return HistoryPanelSupport('unresolved',region,f'unresolved history segment {index}')
+            cover=None
+            if field.patch.pairs[0].activation_policy in ('transverse_events',
+                    'transverse_event_sequence'):
+                cover=panel_transverse_event_cover(field,cell,xi_bounds,angle_bounds,index,budget=budget)
+            if cover is None:
+                return HistoryPanelSupport('unresolved',region,f'unresolved history segment {index}')
+            if cover=='events':
+                all_open=False;event_covered=True
+            elif cover=='closed':
+                all_open=False
         pose=end
     if not field.segments:
         # Validate the geometry contract even for an empty physical history.
@@ -589,7 +597,8 @@ def classify_history_panel(field,cell,xi_bounds,angle_bounds,*,budget):
         value,padding=_minimum(pose,field.patch.target,field.patch.source.reference.nodal_triads[0],
             field.patch.rule.definition['radius'],cell,xi_bounds,angle_bounds)
         all_open=value>padding
-    return HistoryPanelSupport('open' if all_open else 'resolved',region,'complete segmentwise support')
+    return HistoryPanelSupport('open' if all_open else 'resolved',region,
+        'complete segmentwise support',event_covered)
 
 
 def history_endpoint_support_cover_certified(field, *, budget):

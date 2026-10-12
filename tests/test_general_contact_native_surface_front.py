@@ -138,3 +138,33 @@ def test_saved_stationary_front_geometry_and_derivatives(tmp_path):
     output.write_text(json.dumps(dict(time=root,xi=xi,angle=angle,stationary_numerator=front.stationary_numerator,
         axial_gap_derivative=front.b/front.plane_area,partition=partition,intervals=intervals,
         isolated=[asdict(v) for v in isolated]),indent=2)+'\n')
+
+
+def test_rotating_round_surface_angular_coefficients_and_tight_bounds():
+    # Independent cross-products at a directly integrated rigid rotation.
+    from scipy.spatial.transform import Rotation
+    from test_general_contact_native_surface_support import _field
+    from anysolver.general_contact.native_surface_front_boundary import stationary_angular_coefficients
+    from anysolver.general_contact.native_surface_front import stationary_front_slab
+    segment=NativeSurfaceMotionSegment(np.zeros((3,3)),np.array(((1.6,0.,0.),(0.,0.,0.))),np.zeros(18))
+    field=_field(height=.035,rotation=-.8,segments=(segment,))
+    corners=field.patch.target.adapter.current_positions(field.initial.shell_displacement)
+    normal=np.cross(corners[1]-corners[0],corners[2]-corners[0])
+    reference=field.patch.source.reference.nodal_triads[0]
+    for time in (0.,.31,1.):
+        a,ap,app,_=stationary_angular_coefficients(field,0,0,time,4.7)
+        frame=Rotation.from_rotvec((- .8+1.6*time,0.,0.)).as_matrix()@reference
+        for angle in (4.69,4.71,4.73):
+            arm=.03*(np.cos(angle)*frame[:,1]+np.sin(angle)*frame[:,2])
+            omega=np.array((1.6,0.,0.))
+            basis=np.array((1.,np.cos(angle),np.sin(angle)))
+            assert np.dot(ap,basis)==pytest.approx(normal@np.cross(omega,arm),abs=1e-15)
+            assert np.dot(app,basis)==pytest.approx(normal@np.cross(omega,np.cross(omega,arm)),abs=1e-15)
+    band=field.patch.rule.definition['angle_range']
+    bounds,_=stationary_front_slab(field,0,0,sum(band)/2,.2,.8,angle_bounds=band,include_a=True,_return_error_controls=True)
+    for time in np.linspace(.2,.8,9):
+        for angle in np.linspace(*band,9):
+            value=axial_contact_front(field,0,0,float(time),float(angle))
+            assert bounds[2]<=value.stationary_numerator<=bounds[3]
+            assert bounds[4]<=value.stationary_rate<=bounds[5]
+            assert bounds[6]<=value.a<=bounds[7]

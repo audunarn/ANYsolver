@@ -49,6 +49,15 @@ def _candidate_work_signature(result):
             physical=vars(r.contact)) for p,r in result.pairs]))
 
 
+def _candidate_assembly_signature(assembled):
+    """Integrity token for one complete cached candidate assembly."""
+    residual, tangent, metrics, responses, contact = assembled
+    return sha(dict(work=_candidate_work_signature(contact), residual=residual,
+        tangent=tangent, metrics=metrics,
+        responses=[dict(residual=r.residual, history=sha(r.history))
+            for r in responses]))
+
+
 @dataclass(frozen=True)
 class NativeS3ContactPair:
     name: str
@@ -267,8 +276,11 @@ class NativeRetainedMultiS3Analysis:
         self.identity = self._identity()
         self.candidate_evaluations = self.pair_evaluations = 0
         self.contact_reuse_hits = 0
+        self.assembly_reuse_hits = 0
         self._contact_reuse_enabled = False
         self._contact_reuse_entry = None
+        self._assembly_reuse_enabled = False
+        self._assembly_reuse_entry = None
         self.curved_trial_failures=[]
         initial = self.context.initial
         u = np.zeros(n_shell)
@@ -430,6 +442,33 @@ class NativeRetainedMultiS3Analysis:
         return True
 
     def _assemble(self, mechanical, displacement, parameter, origins):
+        key = None
+        if self._assembly_reuse_enabled:
+            # Recheck the complete binding even on an identical hit. The exact
+            # candidate assembly and material trials are disposable: no physical
+            # state is committed, and a failed assembly replaces nothing.
+            self._guard()
+            for p, i in zip(self.pairs, self.beam_indices):
+                nodes = self.context.nodes[i]
+                p.work._configuration(mechanical.positions[nodes], mechanical.position_low[nodes],
+                    mechanical.cell_rotations[i], displacement)
+            key = sha(dict(positions=mechanical.positions, low=mechanical.position_low,
+                frames=mechanical.nodal_frames, rotations=mechanical.cell_rotations,
+                resultants=mechanical.resultants, shell=displacement, parameter=parameter,
+                origins=sha(origins)))
+            entry = self._assembly_reuse_entry
+            if entry is not None and key == entry[0]:
+                try:
+                    intact = _candidate_assembly_signature(entry[1]) == entry[2]
+                except Exception:
+                    self._assembly_reuse_entry = None
+                    raise
+                if not intact:
+                    self._assembly_reuse_entry = None
+                    raise ValueError('cached native/S3 candidate assembly mutated')
+                self.assembly_reuse_hits += 1
+                return entry[1]
+            self._assembly_reuse_entry = None
         residual, tangent, responses = self._assemble_structural(mechanical, displacement, parameter, origins)
         contact = self._contact(mechanical, displacement)
         residual += contact.residual
@@ -444,6 +483,11 @@ class NativeRetainedMultiS3Analysis:
         metrics = (float(np.linalg.norm(scaled[self.context.equilibrium])),
             float(np.linalg.norm(scaled[self.context.compatibility])),
             float(np.linalg.norm(residual[n+self.shell_free])))
+        if key is not None:
+            residual.setflags(write=False); tangent.setflags(write=False)
+            assembled = (residual, tangent, metrics, responses, contact)
+            self._assembly_reuse_entry = key, assembled, _candidate_assembly_signature(assembled)
+            return assembled
         return residual, tangent, metrics, responses, contact
 
     def _activation_fraction(self, start, u_start, step, fraction, contact, cancellation_token):
@@ -565,8 +609,21 @@ class NativeRetainedMultiS3Analysis:
         if type(value) is not dict or set(value) != {'schema', 'profile', 'identity', 'completed_targets', 'records', 'checkpoint_sha256'}:
             raise ValueError('multiple native/S3 checkpoint schema')
         body = {k: v for k, v in value.items() if k != 'checkpoint_sha256'}
-        if value['schema'] != self.schema or value['profile'] != self.profile or value['identity'] != self.identity or sha(body) != value['checkpoint_sha256']:
-            raise ValueError('multiple native/S3 checkpoint definition/settings binding')
+        def _binding_token(value):
+            text = repr(value)
+            return text if len(text) <= 96 else text[:93] + '...'
+        body_sha256 = sha(body)
+        disagreements = []
+        if value['schema'] != self.schema:
+            disagreements.append('schema checkpoint=%s owner=%s' % (_binding_token(value['schema']), _binding_token(self.schema)))
+        if value['profile'] != self.profile:
+            disagreements.append('profile checkpoint=%s owner=%s' % (_binding_token(value['profile']), _binding_token(self.profile)))
+        if value['identity'] != self.identity:
+            disagreements.append('identity checkpoint=%s owner=%s' % (_binding_token(value['identity']), _binding_token(self.identity)))
+        if body_sha256 != value['checkpoint_sha256']:
+            disagreements.append('checkpoint_sha256 body=%s recorded=%s' % (_binding_token(body_sha256), _binding_token(value['checkpoint_sha256'])))
+        if disagreements:
+            raise ValueError('multiple native/S3 checkpoint definition/settings binding: ' + '; '.join(disagreements))
         count = value['completed_targets']
         if type(count) is not int or not 0 <= count <= len(self.program.targets) or type(value['records']) is not list or len(value['records']) != count:
             raise ValueError('multiple native/S3 checkpoint target extent')
@@ -605,11 +662,15 @@ class NativeRetainedMultiS3Analysis:
     def _begin_candidate_context(self,cancellation_token):
         if self._fibre_mode:self.context.activate_cancellation(cancellation_token)
         self._contact_reuse_enabled = self._fibre_mode and self._curved_mode
+        self._assembly_reuse_enabled = self._contact_reuse_enabled
         self._contact_reuse_entry = None
+        self._assembly_reuse_entry = None
 
     def _end_candidate_context(self):
         self._contact_reuse_enabled = False
         self._contact_reuse_entry = None
+        self._assembly_reuse_enabled = False
+        self._assembly_reuse_entry = None
 
     def recover_material(self,checkpoint,expected_sha256,*,include_stations=False,cancellation_token=None):
         """Return bound committed fibre fields and separate energy summaries."""

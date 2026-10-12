@@ -251,24 +251,105 @@ def _endpoint_projection_cuts(source: np.ndarray,
     return tuple(sorted(set(cuts)))
 
 
-def _real_polynomial_roots_unit(polynomial: np.polynomial.Polynomial,
+def _coef_trim(coefficients) -> tuple[float, ...]:
+    # numpy.polynomial.polyutils.trimseq, exact: trailing zeros removed,
+    # an all-zero series keeps its first element.
+    values = tuple(coefficients)
+    while len(values) > 1 and values[-1] == 0.0:
+        values = values[:-1]
+    return values
+
+
+def _coef_add(first, second) -> tuple[float, ...]:
+    # numpy.polynomial.polyutils._add, exact: trimmed elementwise addition
+    # into the longer series, then trimmed again.
+    first = _coef_trim(first)
+    second = _coef_trim(second)
+    if len(first) > len(second):
+        return _coef_trim((*(
+            x + y for x, y in zip(first, second)), *first[len(second):]))
+    return _coef_trim((*(
+        x + y for x, y in zip(first, second)), *second[len(first):]))
+
+
+def _coef_sub(first, second) -> tuple[float, ...]:
+    # numpy.polynomial.polyutils._sub, exact: when the second series
+    # is not shorter, numpy negates it wholesale before adding the
+    # first on the shared prefix, so its trailing coefficients carry
+    # the negated sign (a mid-series zero becomes -0.0 and survives
+    # the final trim); a longer first series keeps its trailing
+    # coefficients unchanged.
+    first = _coef_trim(first)
+    second = _coef_trim(second)
+    if len(first) > len(second):
+        return _coef_trim((*(
+            x - y for x, y in zip(first, second)), *first[len(second):]))
+    return _coef_trim((*(
+        x - y for x, y in zip(first, second)),
+        *(-value for value in second[len(first):])))
+
+
+def _coef_mul(first, second) -> tuple[float, ...]:
+    # numpy.polynomial.polynomial.polymul, exact: trimmed convolution.
+    return _coef_trim(np.convolve(
+        np.asarray(_coef_trim(first), dtype=float),
+        np.asarray(_coef_trim(second), dtype=float),
+    ).tolist())
+
+
+def _coef_pow2(coefficients) -> tuple[float, ...]:
+    # numpy.polynomial.polynomial.polypow(c, 2), exact: the squared series
+    # keeps untrimmed convolution length.
+    coefficients = _coef_trim(coefficients)
+    array = np.asarray(coefficients, dtype=float)
+    return tuple(np.convolve(array, array).tolist())
+
+
+def _coef_scalar_div(coefficients, value: float) -> tuple[float, ...]:
+    # numpy.polynomial.polynomial.polydiv(c, [value]) quotient, exact.
+    coefficients = _coef_trim(coefficients)
+    if value == 0:
+        raise ZeroDivisionError
+    return tuple(x / value for x in coefficients)
+
+
+def _coef_der(coefficients) -> tuple[float, ...]:
+    # numpy.polynomial.polynomial.polyder(c, 1), exact.
+    values = tuple(coefficients)
+    count = len(values)
+    if 1 >= count:
+        return (values[0] * 0,) if count else ()
+    return tuple(index * values[index] for index in range(1, count))
+
+
+def _coef_val(station: float, coefficients):
+    # Polynomial.__call__ for a scalar station on the default [0, 1]
+    # domain/window, exact: mapdomain then polyval Horner evaluation.
+    station = 0.0 + 1.0 * station
+    value = coefficients[-1] + station * 0
+    for index in range(2, len(coefficients) + 1):
+        value = coefficients[-index] + value * station
+    return value
+
+
+def _real_polynomial_roots_unit(coefficients: np.ndarray | tuple[float, ...],
                                 *, reject_ambiguous_minimum: bool = False
                                 ) -> tuple[float, ...]:
     """Isolate every real root on [0, 1] between derivative extrema."""
 
-    coefficients = np.asarray(polynomial.coef, dtype=float)
-    while len(coefficients) > 1 and coefficients[-1] == 0.0:
-        coefficients = coefficients[:-1]
-    if len(coefficients) <= 1:
+    values = tuple(float(value) for value in coefficients)
+    while len(values) > 1 and values[-1] == 0.0:
+        values = values[:-1]
+    if len(values) <= 1:
         return ()
-    normalized = np.polynomial.Polynomial(
-        coefficients / float(np.max(np.abs(coefficients))),
-    )
-    critical = _real_polynomial_roots_unit(normalized.deriv())
+    scale = max(abs(value) for value in values)
+    normalized = tuple(value / scale for value in values)
+    critical = _real_polynomial_roots_unit(_coef_der(normalized))
     stations = (0.0, *critical, 1.0)
-    values = tuple(float(normalized(station)) for station in stations)
+    values = tuple(float(_coef_val(station, normalized))
+                   for station in stations)
     evaluation_guard = 128.0 * np.finfo(float).eps * float(
-        np.sum(np.abs(normalized.coef)),
+        np.sum(np.abs(np.asarray(normalized, dtype=float))),
     )
     if reject_ambiguous_minimum:
         for index in range(1, len(stations) - 1):
@@ -286,9 +367,10 @@ def _real_polynomial_roots_unit(polynomial: np.polynomial.Polynomial,
     ):
         if value_left * value_right < 0.0:
             roots.append(float(brentq(
-                normalized, left, right, xtol=1e-14, rtol=1e-14,
+                lambda station: _coef_val(station, normalized),
+                left, right, xtol=1e-14, rtol=1e-14,
             )))
-    return tuple(sorted(set(float(np.clip(root, 0.0, 1.0))
+    return tuple(sorted(set(min(1.0, max(0.0, root))
                             for root in roots)))
 
 
@@ -311,43 +393,55 @@ def _source_interval_target_gap_lower(
     if squared_length <= 0.0:
         raise MemoryError("B3 pair source interval chord is degenerate")
 
-    polynomial = np.polynomial.Polynomial
-    target_curve = tuple(polynomial((
-        target[0, axis],
-        -3.0*target[0, axis] + 4.0*target[1, axis] - target[2, axis],
-        2.0*target[0, axis] - 4.0*target[1, axis] + 2.0*target[2, axis],
-    )) for axis in range(3))
-    offset = tuple(component - float(start[axis])
+    # Local exact-coefficient arithmetic: each helper replicates the
+    # numpy.polynomial.Polynomial operation previously used here (same
+    # trimming, convolution, derivative and Horner evaluation order)
+    # without the repeated general-purpose series validation.
+    target_curve = tuple((
+        float(target[0, axis]),
+        -3.0*float(target[0, axis]) + 4.0*float(target[1, axis])
+        - float(target[2, axis]),
+        2.0*float(target[0, axis]) - 4.0*float(target[1, axis])
+        + 2.0*float(target[2, axis]),
+    ) for axis in range(3))
+    offset = tuple(_coef_sub(component, (float(start[axis]),))
                    for axis, component in enumerate(target_curve))
-    along = sum((component*float(vector[axis])
-                 for axis, component in enumerate(offset)), polynomial((0.0,)))
-    projection = along / squared_length
-    start_distance = sum((component*component for component in offset),
-                         polynomial((0.0,)))
-    end_distance = sum(((component - float(end[axis]))**2
-                        for axis, component in enumerate(target_curve)),
-                       polynomial((0.0,)))
-    interior_distance = start_distance - along*along/squared_length
+    along = (0.0,)
+    for axis, component in enumerate(offset):
+        along = _coef_add(along, _coef_mul(
+            component, (float(vector[axis]),)))
+    projection = _coef_scalar_div(along, squared_length)
+    start_distance = (0.0,)
+    for component in offset:
+        start_distance = _coef_add(start_distance,
+                                   _coef_mul(component, component))
+    end_distance = (0.0,)
+    for axis, component in enumerate(target_curve):
+        end_distance = _coef_add(end_distance, _coef_pow2(
+            _coef_sub(component, (float(end[axis]),))))
+    interior_distance = _coef_sub(
+        start_distance,
+        _coef_scalar_div(_coef_mul(along, along), squared_length))
 
     cuts = (0.0, *sorted(set((
         *_real_polynomial_roots_unit(projection),
-        *_real_polynomial_roots_unit(projection - 1.0),
+        *_real_polynomial_roots_unit(_coef_sub(projection, (1.0,))),
     ))), 1.0)
     minimum_squared = np.inf
     coefficient_scale = 0.0
     for first, last in zip(cuts[:-1], cuts[1:]):
         if last - first <= 1.0e-14:
             continue
-        projected = float(projection(0.5*(first + last)))
+        projected = float(_coef_val(0.5*(first + last), projection))
         branch = (start_distance if projected <= 0.0 else
                   end_distance if projected >= 1.0 else interior_distance)
         coefficient_scale = max(
-            coefficient_scale, float(np.sum(np.abs(branch.coef))),
+            coefficient_scale, float(np.sum(np.abs(branch))),
         )
-        stations = (first, *_real_polynomial_roots_unit(branch.deriv()), last)
+        stations = (first, *_real_polynomial_roots_unit(_coef_der(branch)), last)
         minimum_squared = min(
             minimum_squared,
-            *(float(branch(station)) for station in stations
+            *(float(_coef_val(station, branch)) for station in stations
               if first <= station <= last),
         )
     if not np.isfinite(minimum_squared):
@@ -420,7 +514,7 @@ def _straight_target_contact_roots(source: np.ndarray,
         ])
         distance_squared -= radius * radius
         for local in _real_polynomial_roots_unit(
-            distance_squared, reject_ambiguous_minimum=True,
+            distance_squared.coef, reject_ambiguous_minimum=True,
         ):
             station = float(left + (right - left) * local)
             if 0.0 < station < 1.0:

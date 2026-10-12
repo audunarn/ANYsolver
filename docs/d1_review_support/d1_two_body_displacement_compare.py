@@ -70,10 +70,20 @@ source_inplane = np.asarray([
     for node in source_ids for axis in (0, 1)])
 control_reaction = float(production.info[
     "force_displacement_history"][-1]["reaction_generalized"][0])
+def _checkout_commit(project_root):
+    try:
+        top = subprocess.check_output(("git", "rev-parse", "--show-toplevel"),
+            cwd=project_root, text=True, stderr=subprocess.DEVNULL).strip()
+        if Path(top).resolve() != project_root.resolve():
+            return None
+        return subprocess.check_output(("git", "rev-parse", "HEAD"),
+            cwd=project_root, text=True, stderr=subprocess.DEVNULL).strip()
+    except (OSError, subprocess.CalledProcessError):
+        return None
+
 record = {
     "status": "development_free_target_ordinary_displacement_oracle",
-    "source_commit": subprocess.check_output(
-        ("git", "rev-parse", "HEAD"), text=True).strip(),
+    "source_commit": _checkout_commit(Path(__file__).resolve().parents[2]),
     "command": "python docs/d1_review_support/d1_two_body_displacement_compare.py",
     "python": sys.version.split()[0],
     "platform": platform.platform(),

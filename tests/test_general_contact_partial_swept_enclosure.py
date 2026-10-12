@@ -12,8 +12,21 @@ def _manager():
     return model, owner.GeneralS3PatchManager(model, definition, settings)
 
 
+def _force_overlap_local_fallback(monkeypatch):
+    # The optimized whole-pair certificate is independently sufficient.
+    # Deliberately decline it to exercise this test's overlap-local fallback.
+    actual = owner._q4_s3_swept_chart_and_lower
+
+    def decline_gap(*args, **kwargs):
+        chart_ok, _ = actual(*args, **kwargs)
+        return chart_ok, -np.inf
+
+    monkeypatch.setattr(owner, "_q4_s3_swept_chart_and_lower", decline_gap)
+
+
 def test_partial_children_retain_original_path_endpoint_enclosures(monkeypatch):
     _, manager = _manager()
+    _force_overlap_local_fallback(monkeypatch)
     calls = []
 
     def force_subdivision(*args, endpoint_errors=None):
@@ -27,12 +40,12 @@ def test_partial_children_retain_original_path_endpoint_enclosures(monkeypatch):
     first = np.zeros(manager.n_dof)
     assert manager._swept_admissible(first, first)
     assert calls[0] is not None
-    assert all(np.array_equal(error, np.zeros_like(error)) for error in calls[0])
-    assert any(np.any(error > 0.0) for call in calls[1:] for error in call)
+    _assert_forwarded_endpoint_and_child_enclosures(manager, first, calls)
 
 
 def test_enclosed_child_orientation_cannot_use_only_rounded_representative(monkeypatch):
     _, manager = _manager()
+    _force_overlap_local_fallback(monkeypatch)
     real_midpoint = owner._affine_midpoint_with_error
     gap_calls = 0
 
@@ -87,3 +100,41 @@ def test_partial_revision_is_explicit_and_interior_revision_unchanged():
     settings = manager.restart_contract()["settings"]
     assert "partial_overlap_swept_certificate_revision" not in settings
     assert settings["d1_swept_certificate_revision"] == "affine_union_outward_swept_search_v2"
+
+
+def test_whole_pair_children_retain_original_endpoint_enclosures(monkeypatch):
+    _, manager = _manager()
+    actual = owner._q4_s3_swept_chart_and_lower
+    calls = []
+
+    def force_subdivision(*args, endpoint_errors=None, **kwargs):
+        calls.append(endpoint_errors)
+        chart_ok, lower = actual(*args, endpoint_errors=endpoint_errors, **kwargs)
+        return chart_ok, (-np.inf if len(calls) == 1 else lower)
+
+    monkeypatch.setattr(owner, "_q4_s3_swept_chart_and_lower", force_subdivision)
+    monkeypatch.setattr(owner, "overlap_local_swept_lower", lambda *a, **kw: (-np.inf, 1))
+    pose = np.zeros(manager.n_dof)
+    assert manager._swept_admissible(pose, pose)
+    _assert_forwarded_endpoint_and_child_enclosures(manager, pose, calls)
+
+
+def _assert_forwarded_endpoint_and_child_enclosures(manager, pose, calls):
+    # Physical-skin construction already has outward rounding at the original
+    # endpoints; it is not an exact zero-error coordinate copy.
+    errors = manager._position_errors(pose)
+    source = manager.law.source_face_indices[0]
+    target = manager.law.target_face_indices[0]
+    expected = (errors[0][source], errors[0][source],
+                errors[1][target], errors[1][target])
+    for actual, value in zip(calls[0], expected):
+        np.testing.assert_array_equal(actual, value)
+    positions = manager._positions(pose)
+    _, middle_errors = owner._affine_midpoint_with_error(
+        positions, positions, errors, errors)
+    child = (errors[0][source], middle_errors[0][source],
+             errors[1][target], middle_errors[1][target])
+    for actual, value in zip(calls[1], child):
+        np.testing.assert_array_equal(actual, value)
+    assert any(np.any(new > original) for new, original in
+               zip((child[1], child[3]), (expected[1], expected[3])))

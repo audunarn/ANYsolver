@@ -9,6 +9,15 @@ from anysolver.general_contact.native_retained_static import CURVED_MATERIAL_PRO
 from examples.general_contact_native_curved_material_plane import analysis
 
 
+def _canonical_fixture_payload(path):
+    raw=path.read_bytes()
+    # A text-container checkout may terminate the canonical payload's final
+    # newline as CRLF; drop only that container carriage return so strict
+    # restores and exact checkpoint byte equality see the producer payload,
+    # which itself ends with a final LF. No-op on LF checkouts.
+    return raw[:-2]+b'\n' if raw.endswith(b'\r\n') else raw
+
+
 def _analysis(targets=(1.,),iterations=24,stiffness=1e7):
     return analysis(targets,normal_stiffness_Pa_per_m=stiffness,max_iterations=iterations)
 
@@ -110,7 +119,7 @@ def test_curved_material_press_open_recontact():
 def test_curved_material_authentic_split_restart_and_atomic_failure():
     from anysolver.control import CancellationToken
     reference=Path(__file__).parent/'data/general_contact_native_curved_plane_v7.checkpoint'
-    full=reference.read_bytes()
+    full=_canonical_fixture_payload(reference)
     owner=_analysis((1.,0.,1.));prefix=owner.solve(stop_after=1)
     assert prefix.status=='paused',prefix.failure
     for cancelled in (False,True):

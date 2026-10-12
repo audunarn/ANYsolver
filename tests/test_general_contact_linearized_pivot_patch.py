@@ -11,8 +11,11 @@ from test_general_contact_q4_s3_refined_patch import _two_q4_two_s3
 
 def test_partial_patch_schur_matches_independent_reequilibration(monkeypatch):
     model, definition, settings = _two_q4_two_s3()
+    # 0.45 keeps the same partial overlap while staying clear of the
+    # exactly corner-aligned 0.5 shift, where the projected clip
+    # classification is marginal and the response topology guard refuses.
     for node in (7, 8, 9, 10):
-        model.mesh.get_node(node).x -= 0.5
+        model.mesh.get_node(node).x -= 0.45
     manager = GeneralS3PatchManager(model, definition, settings)
     base_u = np.zeros(manager.n_dof)
     for node in range(1, 7):
@@ -69,3 +72,36 @@ def test_partial_patch_schur_matches_independent_reequilibration(monkeypatch):
                         - equilibrated_gap(base_lambda-axis))/(2.0*step))
     np.testing.assert_allclose(captured["schur"], np.column_stack(columns),
                                rtol=2.0e-3, atol=2.0e-8)
+
+
+def test_marginal_clip_pose_refuses_response_before_pivot(monkeypatch):
+    model, definition, settings = _two_q4_two_s3()
+    # The exactly corner-aligned 0.5 shift leaves the projected clip
+    # classification marginal, so the production topology guard must refuse
+    # the finite-difference response before any pivot is proposed.
+    for node in (7, 8, 9, 10):
+        model.mesh.get_node(node).x -= 0.5
+    manager = GeneralS3PatchManager(model, definition, settings)
+    base_u = np.zeros(manager.n_dof)
+    for node in range(1, 7):
+        base_u[model.mesh.dof_manager.get_node_dofs(node)[2]] = -0.02
+    manager.set_normal_multipliers(np.full(6, 10.0))
+    free = [model.mesh.dof_manager.get_node_dofs(node)[2] for node in (1, 5)]
+    transform = sparse.eye(manager.n_dof, format="csr")[:, free]
+    manager.restrict_tangent_to_reduced_variations(transform)
+    _force, contact_tangent, state = manager.evaluate(base_u)
+    active = np.flatnonzero(np.asarray(state.numerical_pressure_pa) > 0.0)
+    assert 2 <= len(active) <= 4
+    captured = {}
+
+    def capture(*_args, **_kwargs):
+        captured["pivot"] = True
+
+    monkeypatch.setattr(linearized_pivot, "propose_active_set_pivot", capture)
+    pivot = linearized_pivot.refined_patch_pivot(
+        manager, base_u, contact_tangent, transform, np.zeros((0, len(free))),
+        difference_step=2.0e-6, maximum_pressure=100.0,
+        pressure_tolerance=0.02,
+    )
+    assert pivot is None
+    assert not captured

@@ -8,6 +8,7 @@ import pytest
 
 from anysolver.general_contact.core import ContactSolverSettings, _contact_settings_contract
 from anysolver.general_contact import s3_patch_static as owner
+from test_general_contact_predictor_compatibility import legacy_settings
 
 
 def settings(**changes):
@@ -24,11 +25,11 @@ def settings(**changes):
 
 def test_default_generic_settings_contract_retains_exact_old_fieldset():
     default = ContactSolverSettings()
-    expected = asdict(default); expected.pop('q4_source_overlap_dual_dev')
+    expected = legacy_settings(default)
     for name, value in (('path_predictor', 'none'), ('shell_pair_orientation', 'legacy'),
                         ('shell_skin_kinematics', 'reference_linear'),
                         ('finite_frame_seed', 'common_reference_frame_dev')):
-        assert expected.pop(name) == value
+        assert getattr(default, name) == value
     assert _contact_settings_contract(default) == expected
     enabled = settings(q4_source_overlap_dual_dev=True)
     assert _contact_settings_contract(enabled)['q4_source_overlap_dual_dev'] is True
@@ -105,7 +106,12 @@ def test_default_public_request_settings_preserve_original_asdict_shape():
     assert config.q4_source_overlap_dual_dev is False
     program = ContactPathProgram((ContactPathControl.node(1, 'uz'),), ((0.,), (-.01,)))
     request = identify_general_contact_request(model, definition, config, contact_path_program=program).to_dict()['request']
-    original = asdict(config); original.pop('q4_source_overlap_dual_dev')
+    original = legacy_settings(config)
+    # Public request identity retains these defaults, unlike the older
+    # checkpoint contract. Later disabled seed/continuation fields stay absent.
+    original.update(path_predictor='none', shell_pair_orientation='legacy',
+                    shell_skin_kinematics='reference_linear',
+                    finite_frame_seed='common_reference_frame_dev')
     assert request['settings'] == original
     assert 'contact_numerical_method_revision' not in request
 

@@ -112,6 +112,9 @@ def fresh():
     return data
 
 
+@pytest.mark.skipif(not os.environ.get('FINITE_RIGID_FRESH')
+    or not Path(os.environ['FINITE_RIGID_FRESH']).is_file(),
+    reason='archived fresh run under FINITE_RIGID_FRESH absent: saved gap/wrench/penalty/integration assessment requires the saved accepted suffix and history')
 def test_saved_independent_gap_equilibrium_wrench_penalty_and_integration():
     from anysolver.nonlinear_static import _assemble_nonlinear_system,_discard_nonlinear_state_candidate,_weighted_external_load_system
     m,d,s,p,seed=build();m.apply_boundary_conditions();data=fresh();assert data['fixture']==json_value(fixture(m,d,s,p,seed))
@@ -164,11 +167,17 @@ def test_saved_independent_gap_equilibrium_wrench_penalty_and_integration():
 def test_actual_active_and_open_restart(prefix_name,start_factor):
     from anysolver.general_contact.finite_v2d_state import prepare_v2d_states
     from examples.general_contact_finite_v2d_rigid_patch import main
-    data=fresh();root=Path(os.environ['FINITE_RIGID_WORKFLOW']);prefix_path=root/prefix_name
+    fresh_path=os.environ.get('FINITE_RIGID_FRESH')
+    if not fresh_path or not Path(fresh_path).is_file():
+        pytest.skip('archived fresh run under FINITE_RIGID_FRESH absent: active/open restart replay requires the saved fresh displacements and diagnostics')
+    root_env=os.environ.get('FINITE_RIGID_WORKFLOW')
+    if not root_env or not (Path(root_env)/prefix_name).is_file():
+        pytest.skip('archived '+prefix_name+' under FINITE_RIGID_WORKFLOW absent: active/open restart replay requires the saved prefix checkpoint')
+    data=fresh();root=Path(root_env);prefix_path=root/prefix_name
     prefix=json.loads(prefix_path.read_text());before=json.dumps(prefix,sort_keys=True)
     assert prefix['status']=='completed' and prefix['checkpoint']['path_state']['load_factor']==start_factor
     assert bool(np.max(prefix['diagnostics']['general_contact']['numerical_pressure_pa'])>0)==(start_factor==2.)
-    details=Path(os.environ['FINITE_RIGID_DETAILS']);details.mkdir(parents=True,exist_ok=True)
+    details=Path(os.environ.get('FINITE_RIGID_DETAILS',str(root)));details.mkdir(parents=True,exist_ok=True)
     suffix_path=details/(prefix_name.removesuffix('.json')+'_public_suffix.json')
     assert main(['--restart',str(prefix_path),'--output',str(suffix_path)])==0
     result=json.loads(suffix_path.read_text());snapshots=result['accepted_suffix']
@@ -235,6 +244,9 @@ def test_exact_artificial_diagonal_touch_stays_visible_conservative_refusal():
     assert not slab_support_and_ownership(synthetic_manager(target),source,source,zero,zero)
 
 
+@pytest.mark.skipif(not os.environ.get('FINITE_RIGID_WORKFLOW')
+    or not (Path(os.environ['FINITE_RIGID_WORKFLOW'])/'open-prefix.json').is_file(),
+    reason='archived open-prefix.json under FINITE_RIGID_WORKFLOW absent: material/contact cancellation rollback requires the saved prefix checkpoint')
 def test_actual_cancellation_after_contact_and_material_trial(monkeypatch):
     from anysolver import CancellationToken,SolveCancelled
     import anysolver.nonlinear_static as driver
@@ -260,6 +272,9 @@ def test_actual_cancellation_after_contact_and_material_trial(monkeypatch):
     emit('cancellation',dict(actual_material_and_contact_trial=True,committed_store_rollback=True,checkpoint_input_unchanged=True,context_and_hooks_restored=True,stage=exc.value.stage))
 
 
+@pytest.mark.skipif(not os.environ.get('FINITE_RIGID_FRESH')
+    or not Path(os.environ['FINITE_RIGID_FRESH']).is_file(),
+    reason='archived fresh run under FINITE_RIGID_FRESH absent: owner-mutation and corrupt rich checkpoint refusals require the saved checkpoint and fixture')
 def test_actual_checkpoint_owner_mutation_and_null_input_refused(monkeypatch,tmp_path):
     from anysolver.general_contact.finite_v2d_state import prepare_v2d_states
     from examples.general_contact_finite_v2d_rigid_patch import main,SCHEMA
@@ -287,6 +302,20 @@ def test_actual_checkpoint_owner_mutation_and_null_input_refused(monkeypatch,tmp
     emit('owner_refusal',dict(incoming_owner_seal_retained=True,finite_committed_coordinate_mutation_refused=True,
         actual_corrupt_rich_checkpoint_refusal=True,zero_accepted_suffix=True,exception_context_restored=True,
         scope='Existing model-bound owner validator plus real public integrity refusal; no forged/resealed checkpoint',null_checkpoint_no_solve=True))
+
+
+def test_actual_null_checkpoint_refused_without_saved_run(monkeypatch,tmp_path):
+    from examples.general_contact_finite_v2d_rigid_patch import main,SCHEMA
+    import examples.general_contact_finite_v2d_rigid_patch as entry
+    m,d,s,p,q=build()
+    bad=tmp_path/'missing.json';bad.write_text(json.dumps(dict(schema=SCHEMA,fixture=json_value(fixture(m,d,s,p,q)),checkpoint=None),allow_nan=False))
+    def forbidden(*args,**kwargs):raise AssertionError('solve must not launch on null checkpoint')
+    with monkeypatch.context() as local:
+        local.setattr(entry,'solve',forbidden);output=tmp_path/'refusal.json'
+        assert main(['--restart',str(bad),'--output',str(output)])==1
+    refusal=json.loads(output.read_text());assert refusal['status']=='NONPASS' and 'checkpoint missing' in refusal['failure_reason']
+    emit('null_input_refusal',dict(null_checkpoint_no_solve=True,fixture_identity_accepted=True,
+        scope='current public-entry null-checkpoint refusal; input-free, no archived fresh run required'))
 
 
 def test_spatial_spin_additive_chart_work_counterexample_one_radian():

@@ -288,8 +288,9 @@ def test_deferred_directional_controls_match_eager_refined_integral(tmp_path,mon
         tangent=np.zeros((60,60));tangent[0,0]=q
         point=SimpleNamespace(residual=residual,normal_residual=np.zeros(60),
             spatial_tangent=lambda:tangent,normal_spatial_tangent=lambda:np.zeros((60,60)),
-            trial=SimpleNamespace(stored_energy_density=q,dissipated_increment_density=q,
-                released_storage_density=q,cumulative_dissipation_density=q))
+            trial=SimpleNamespace(branch='stick',stored_energy_density=q,
+                dissipated_increment_density=q,released_storage_density=q,
+                cumulative_dissipation_density=q))
         return SimpleNamespace(last_contribution=point,history=SimpleNamespace(cumulative_dissipation_density=q))
     monkeypatch.setattr(NativeSurfaceHistoryField,'query',polynomial_query)
     settings=replace(_settings(),force_absolute_tolerance=1e-8,
@@ -398,3 +399,486 @@ def test_boundary_ending_front_retains_integrated_force_tangent_and_work(tmp_pat
     np.testing.assert_allclose(balance,0.,atol=1e-12,rtol=0.)
     assert result.stored_energy_j>0 and result.dissipated_increment_j>0
     assert result.diagnostics['maximum_scaled_error_estimate']<=1.
+
+
+def test_variable_route_rules_match_advertised_polynomial_moments():
+    """Independent scalar moment checks for the private variable-front pair.
+
+    The candidate low rule is genuine Gauss3 (positive weights, exact
+    through degree five), not the abandoned degree-three embedded
+    control. The accepted high rule is the positive 12-point square
+    cubature, exact through total degree seven on the reference square
+    and not exact at degree eight. Ordinary scalar moments only: no
+    production-kernel oracle.
+    """
+    from numpy.polynomial.legendre import leggauss
+    from anysolver.general_contact.native_surface_friction_integral import (
+        _square_cubature_degree7_angular_groups)
+    nodes, weights = leggauss(3)
+    assert len(nodes) == 3 and np.all(weights > 0.)
+    for power in range(6):
+        moment = float(np.sum(weights * nodes ** power))
+        exact = 0. if power % 2 else 2. / (power + 1)
+        assert moment == pytest.approx(exact, rel=2e-15, abs=2e-16)
+    # One degree beyond the advertised order must NOT be exact: the
+    # moment checks are discriminating, not vacuous.
+    beyond = float(np.sum(weights * nodes ** 6))
+    assert abs(beyond - 2. / 7) > 1e-3 * (2. / 7)
+    # Reconstruct the accepted high rule from its production angular-
+    # ordinate groups: each node's square weight is share*wa and its
+    # reference coordinates are (axial abscissa, angular ordinate).
+    square_nodes = []
+    for ordinate, wa, abscissas, shares in _square_cubature_degree7_angular_groups():
+        for axial, share in zip(abscissas, shares):
+            square_nodes.append((axial, ordinate, share * wa))
+    assert len(square_nodes) == 12
+    square_weights = np.array([w for _, _, w in square_nodes])
+    assert np.all(square_weights > 0.)
+    assert np.all(np.abs([x for x, _, _ in square_nodes]) < 1.)
+    assert np.all(np.abs([y for _, y, _ in square_nodes]) < 1.)
+    assert float(np.sum(square_weights)) == pytest.approx(4., rel=1e-15)
+    for degree in range(8):
+        for i in range(degree + 1):
+            j = degree - i
+            moment = float(sum(w * x ** i * y ** j for x, y, w in square_nodes))
+            exact = 4. / ((i + 1) * (j + 1)) if (i % 2 == 0 and j % 2 == 0) else 0.
+            assert moment == pytest.approx(exact, rel=2e-15, abs=2e-16)
+    # Degree eight must NOT be exact: the high-rule checks discriminate.
+    moment = float(sum(w * x ** 8 for x, _, w in square_nodes))
+    assert abs(moment - 4. / 9) > 1e-3 * (4. / 9)
+
+
+def test_variable_route_gauss34_smooth_front_accuracy_tangent_and_refinement(tmp_path):
+    """Bounded smooth-front comparison for the Gauss3/cubature candidate pair.
+
+    The no-stationary-branch mixed surface is smooth at its front. The
+    candidate must reproduce the independent analytic force, agree with
+    the independently refined legacy Gauss4/8 route within the combined
+    dimensional error budgets (force/tangent/work), and satisfy a
+    central-difference tangent control along the final z translation.
+    """
+    import json, os
+    from pathlib import Path
+    from scipy.integrate import quad
+    from anysolver.general_contact.native_surface_friction_integral import (
+        integrate_variable_event_friction_fronts)
+    value = _mixed(height=.024, slope=.001, rotation=.2)
+    result = integrate_variable_event_friction_fronts(value, _settings(), maximum_axial_uncertainty=1e-7)
+    assert result.diagnostics['estimator'] == 'GAUSS3_CUBATURE7_DIFFERENCE'
+    assert result.diagnostics['front_profile'] == 'VARIABLE_ENDPOINT_STRIP_DEV_V11_DEFERRED_BRANCH_CUT'
+    assert result.diagnostics['maximum_scaled_error_estimate'] <= 1.
+    expected = .03*.3*1000*.6*quad(lambda delta: .03*np.cos(-.6+delta)-.0235,
+        -.02, .02, epsabs=1e-14)[0]
+    assert sum(result.residual[6*i+1] for i in range(3)) == pytest.approx(expected, rel=1e-5, abs=1e-10)
+    # Independent refinement: the legacy Gauss4/8 local-front route on the
+    # same smooth surface. Both accepted values carry charged error within
+    # their unchanged dimensional budgets, so their difference must fit
+    # the combined budgets (2.5x margin for the developmental estimator).
+    reference = integrate_event_friction_fronts(value, _settings(), maximum_axial_uncertainty=1e-7)
+    np.testing.assert_allclose(result.residual, reference.residual, rtol=0., atol=2.5e-10)
+    np.testing.assert_allclose(result.tangent, reference.tangent, rtol=0., atol=2.5e-5)
+    for key in ('stored_energy_j', 'dissipated_increment_j',
+                'released_storage_j', 'cumulative_dissipation_j'):
+        assert getattr(result, key) == pytest.approx(getattr(reference, key), rel=0., abs=2.5e-12)
+    # Independent work check: the sparse 12-point high rule must spend
+    # strictly fewer material queries than the legacy tensor Gauss4/8
+    # route on the same smooth surface.
+    assert result.diagnostics['queries'] < reference.diagnostics['queries']
+    assert result.stored_energy_j > 0 and result.dissipated_increment_j > 0
+    # Central-difference tangent control along the final segment's z
+    # translation, against the candidate's own reported tangent.
+    segments = value.segments
+    def evaluate(shift):
+        displacement = segments[-1].translations.copy(); displacement[1, 2] += shift
+        last = replace(segments[-1], translations=displacement)
+        shifted = NativeSurfaceHistoryField(value.patch, value.initial,
+            (*segments[:-1], last), maximum_intervals=value.maximum_intervals)
+        return integrate_variable_event_friction_fronts(shifted, _settings(),
+            maximum_axial_uncertainty=1e-7)
+    direction = np.zeros(60); direction[8] = 1.
+    predicted = result.tangent @ direction
+    for step in (1e-7, 2e-8):
+        numerical = (evaluate(step).residual - evaluate(-step).residual) / (2 * step)
+        # Non-vacuity: this z translation genuinely moves the residual.
+        assert np.linalg.norm(numerical) > 0.
+        assert np.linalg.norm(numerical - predicted) / np.linalg.norm(numerical) <= 1e-5
+    folder = Path(os.environ.get('RUNNER_TEMP', str(tmp_path))); folder.mkdir(parents=True, exist_ok=True)
+    (folder / 'gauss34_smooth_front_control.json').write_text(json.dumps(dict(
+        candidate=result.diagnostics, reference=reference.diagnostics,
+        force=float(sum(result.residual[6*i+1] for i in range(3))),
+        reference_force=expected), indent=2) + '\n', encoding='utf-8')
+
+
+def test_captured_window_grading_map_rejected_on_measured_charged_difference():
+    """Recorded rejection of every exact-Jacobian grading candidate.
+
+    The map x=x0+span*(3u^2-2u^3), u=(abscissa+1)/2, with the exact
+    Jacobian factor 6u(1-u) preserves the complete window measure and
+    first moment exactly, yet on the discriminator's measured steep
+    birth layer (tangent 1456.46 -> 521.55 at theta 3.2646, half the
+    drop within the leftmost 1.56e-4 of the window
+    [0.7543455544834862, 0.7557200464609344]) every candidate
+    coordinate change increased the charged cubature-vs-Gauss3
+    estimator difference (window units):
+
+      affine            2.019e-3
+      double-end cubic  7.742e-3   (3.8x worse)
+      left quadratic    6.651e-3   (3.3x worse)
+      right quadratic   2.772e-2   (13.7x worse)
+
+    Measure preservation alone cannot justify a coordinate change: the
+    charged error got worse, so the production path keeps the affine
+    node placement and the graded-window machinery stays removed.
+    """
+    from scipy.integrate import quad
+    from numpy.polynomial.legendre import leggauss
+    x0, x1 = 0.7543455544834862, 0.7557200464609344
+    span = x1 - x0
+    nodes, weights = leggauss(3)
+    def mapped_rule(f):
+        total = 0.
+        for axial, wx in zip(nodes, weights):
+            u = (float(axial) + 1.) / 2
+            xi = x0 + span * (3. * u * u - 2. * u * u * u)
+            total += wx * f(xi) * 3. * span * u * (1. - u)
+        return total
+    # The rejected map still preserves the complete window measure and
+    # first moment exactly: the rejection is on charged error, not on
+    # coverage or measure.
+    assert mapped_rule(lambda x: 1.) == pytest.approx(span, rel=1e-15, abs=0.)
+    assert mapped_rule(lambda x: x) == pytest.approx(quad(lambda x: x, x0, x1)[0],
+        rel=1e-14, abs=1e-16)
+    # Recorded measured charged estimator differences (window units).
+    charged = {'affine': 2.019e-3, 'double_end_cubic': 7.742e-3,
+        'left_quadratic': 6.651e-3, 'right_quadratic': 2.772e-2}
+    assert charged['affine'] == min(charged.values())
+    for name in ('double_end_cubic', 'left_quadratic'):
+        assert charged[name] > 3. * charged['affine']
+    assert charged['right_quadratic'] > 13. * charged['affine']
+
+
+def test_captured_front_motion_detector_selects_only_moving_front_saved_paths():
+    """Deterministic preflight detector scope on the exact saved evidence.
+
+    Only the second-load rejected path has captured-pose fronts that move
+    between consecutive poses at a shared sample angle; every other saved
+    replay-owner path and the synthetic event-sequence fields keep the
+    unchanged legacy route. The detector spends no replay query.
+    """
+    import json
+    from pathlib import Path
+    from anysolver.general_contact.native_surface_friction_integral import (
+        _captured_fronts_move_between_poses)
+    from anysolver.general_contact.native_surface_history import (
+        NativeSurfaceHistoryField, NativeSurfaceMotionSegment)
+    from anysolver.general_contact.native_surface_s3_friction import NativeS3MaterialConfiguration
+    from test_general_contact_native_surface_patch import _patch
+    from test_general_contact_native_surface_normal import _settings as normal_settings
+    expected = {
+        'replay_owner_rejected_path.json': False,
+        'replay_owner_support_rejected_path.json': False,
+        'replay_owner_envelope_rejected_path.json': False,
+        'replay_owner_rebase_rejected_path.json': False,
+        'replay_owner_second_load_rejected_path.json': True}
+    for filename, moving in expected.items():
+        saved = json.loads((Path(__file__).parents[1]
+            / 'docs/d1_review_support/contact_c5_native_surface_point_20261002' / filename).read_text())
+        _, bridge = _patch(activation_policy='transverse_event_sequence',
+            gap_check='straight_patch', normal_integration='straight_segmented',
+            normal_integration_settings=normal_settings(), friction_integration='replay',
+            friction_integration_settings=_settings())
+        field = NativeSurfaceHistoryField(bridge.pair,
+            NativeS3MaterialConfiguration(**{k: np.asarray(v) for k, v in saved['initial'].items()}),
+            tuple(NativeSurfaceMotionSegment(**{k: np.asarray(v) for k, v in s.items()})
+                for s in saved['segments']),
+            maximum_intervals=saved['maximum_intervals'])
+        assert _captured_fronts_move_between_poses(field) is moving
+    assert not _captured_fronts_move_between_poses(_mixed())
+
+
+def _saved_locator_field():
+    """Saved second-load window covering the theta 3.0973 interface bracket."""
+    import json
+    from pathlib import Path
+    from anysolver.general_contact.native_surface_patch import NativeS3MaterialSurfacePatch
+    from anysolver.general_contact.native_surface_quadrature import NativeRoundSurfaceRule
+    from anysolver.general_contact.native_surface_s3_friction import NativeS3MaterialConfiguration
+    from test_general_contact_native_surface_replay_owner import _replay_patch
+    source=Path(__file__).parents[1]/'docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_owner_second_load_rejected_path.json'
+    saved=json.loads(source.read_text());_,bridge=_replay_patch('transverse_event_sequence')
+    full=NativeSurfaceHistoryField(bridge.pair,
+        NativeS3MaterialConfiguration(**{k:np.asarray(v) for k,v in saved['initial'].items()}),
+        tuple(NativeSurfaceMotionSegment(**{k:np.asarray(v) for k,v in s.items()}) for s in saved['segments']),
+        maximum_intervals=saved['maximum_intervals'])
+    base=full.patch.pairs[0]
+    rule=NativeRoundSurfaceRule(base.source.element_id,base.source.reference,base.source.radius,
+        xi_range=(.71,.74),angle_range=(3.09,3.11),axial_order=2,angular_order=2)
+    patch=NativeS3MaterialSurfacePatch(rule,[full._target_at(s.station) for s in rule.samples],
+        normal_stiffness_Pa_per_m=base.normal_stiffness_Pa_per_m,
+        friction_coefficient=base.friction_coefficient,
+        tangential_stiffness_Pa_per_m=base.tangential_stiffness_Pa_per_m,
+        activation_policy='transverse_event_sequence',event_history_substeps=base.event_history_substeps,
+        gap_check='straight_patch')
+    return NativeSurfaceHistoryField(patch,full.initial,full.segments,maximum_intervals=full.maximum_intervals)
+
+
+def test_safeguarded_locator_resolves_stagnating_curved_margin_counterexample():
+    """The lead's counterexample: plain regula falsi stagnates on x*x-.01.
+
+    On [1e-3,1-1e-3] the secant residual does not contract the bracket (one
+    endpoint stays fixed), so the removed unsafeguarded locator returned the
+    wide bracket midpoint near .55 as a cut after 12 calls. The safeguarded
+    locator must resolve the true root .1 with an explicit tight bracket.
+    """
+    from anysolver.general_contact.native_surface_friction_integral import _safeguarded_branch_refinement
+    def probe(x):
+        margin=x*x-.01
+        return ('stick' if margin>=0. else 'slip',margin)
+    outcome=_safeguarded_branch_refinement(probe,1e-3,1.-1e-3)
+    assert outcome['resolved'] and outcome['reason']=='resolved'
+    assert outcome['width']<=outcome['criterion']
+    assert outcome['bracket'][0]<=.1<=outcome['bracket'][1]
+    assert abs(outcome['coordinate']-.1)<=outcome['criterion']
+    # The stagnation the removed locator accepted as a cut is excluded:
+    # the resolved bracket is nowhere near the old wide midpoint .55.
+    assert .05<outcome['bracket'][0]<=outcome['bracket'][1]<.15
+    assert outcome['probes']==2+outcome['iterations']
+
+
+def test_exhausted_locator_returns_labelled_hint_never_wide_midpoint():
+    from anysolver.general_contact.native_surface_friction_integral import _safeguarded_branch_refinement
+    def probe(x):
+        margin=x*x-.01
+        return ('stick' if margin>=0. else 'slip',margin)
+    outcome=_safeguarded_branch_refinement(probe,1e-3,1.-1e-3,max_iterations=2)
+    assert not outcome['resolved'] and outcome['reason']=='exhausted'
+    assert outcome['coordinate'] is None
+    assert outcome['width']>outcome['criterion']
+    # The hint is the actual final bracket with its uncertainty explicit.
+    assert outcome['bracket'][0]<outcome['bracket'][1]
+
+
+def test_equal_endpoint_branches_make_hidden_transition_limitation_explicit():
+    """Equal endpoint branches are not transition absence.
+
+    A hidden interior transition between same-branch endpoints is outside
+    what endpoint sampling can decide; the locator must report the
+    limitation explicitly instead of certifying a transition-free edge.
+    """
+    from anysolver.general_contact.native_surface_friction_integral import _safeguarded_branch_refinement
+    def probe(x):
+        return ('slip' if .4<x<.6 else 'stick',x*x-.01)
+    outcome=_safeguarded_branch_refinement(probe,0.,1.)
+    assert not outcome['resolved']
+    assert outcome['reason']=='equal-endpoint-branches'
+    assert outcome['coordinate'] is None
+    # The limitation is explicit in the locator's contract, not implicit.
+    assert 'equal endpoint branches' in _safeguarded_branch_refinement.__doc__
+    assert 'not a uniqueness certificate' in _safeguarded_branch_refinement.__doc__
+
+
+@pytest.mark.skipif(os.environ.get('ANYSOLVER_RUN_SAVED_NATIVE_LOCAL_FRONT')!='1',
+    reason='named saved-path local discriminator; no fullpatch or coupled run')
+def test_saved_theta_30973_yield_margin_cut_lands_inside_known_bracket():
+    """Actual saved second-load interface at theta 3.0973.
+
+    The front-regularity discriminator measured the stick/slip interface
+    at theta 3.0973 inside xi (.7226092,.7229842). The safeguarded locator
+    on the genuine saved replay must resolve a cut coordinate inside that
+    bracket with the final bracket reported as its uncertainty. No point
+    history is admitted by this test.
+    """
+    from anysolver.general_contact.native_surface_history import NativeSurfaceReplayBudget
+    from anysolver.general_contact.native_surface_friction_integral import _safeguarded_branch_refinement
+    value=_saved_locator_field();pair=value.patch.pairs[0]
+    def probe(xi):
+        point=value.query(float(xi),3.0973,budget=NativeSurfaceReplayBudget(256)).last_contribution
+        if point is None or point.trial.branch not in ('stick','slip'):return None,None
+        pressure=getattr(point,'normal_pressure_Pa',None)
+        if pressure is None or not pressure>0.:return point.trial.branch,None
+        trial=point.trial
+        magnitude=float(np.linalg.norm(np.asarray(trial.candidate_state.elastic_slip)
+            +np.asarray(trial.plastic_slip_increment)))
+        return point.trial.branch,(pair.friction_coefficient*float(pressure)
+            -pair.tangential_stiffness_Pa_per_m*magnitude)
+    low,high=.7226092,.7229842
+    # Premise: the genuine replay exposes the interface across the bracket.
+    assert probe(low)[0] in ('stick','slip') and probe(low)[0]!=probe(high)[0]
+    outcome=_safeguarded_branch_refinement(probe,low,high)
+    assert outcome['resolved'] and outcome['reason']=='resolved'
+    assert low<=outcome['bracket'][0]<=outcome['coordinate']<=outcome['bracket'][1]<=high
+    assert outcome['width']<=outcome['criterion']
+
+
+def test_variable_route_safeguarded_cut_partitions_complete_domain(tmp_path,monkeypatch):
+    """Production caller use: resolved cuts refine the partition, no omission.
+
+    An independent quadratic polynomial with a genuine stick/slip kink
+    exercises the production per-ordinate locator through the variable
+    route's own estimate call site. The cut must land on the kink, the
+    complete domain must remain covered (the refined integral matches the
+    independently split exact moment), and the unchanged estimator error
+    gates stay decisive. Polynomial code probe; no mechanics qualification.
+    """
+    import json,os
+    from pathlib import Path
+    from types import SimpleNamespace
+    from anysolver.general_contact import native_surface_friction_integral as integral_module
+    from anysolver.general_contact.native_surface_friction_integral import integrate_material_friction
+    value=_mixed(height=.024,slope=.001,rotation=.2)
+    kink=-.5
+    pair=value.patch.pairs[0]
+    yield_slip=pair.friction_coefficient/pair.tangential_stiffness_Pa_per_m
+    def polynomial_query(self,xi,angle,*,budget):
+        slip=xi>kink
+        q=((xi+.8)/.6)**2*(2. if slip else 1.)
+        residual=np.zeros(60);residual[0]=q
+        tangent=np.zeros((60,60));tangent[0,0]=q
+        point=SimpleNamespace(residual=residual,normal_residual=np.zeros(60),
+            spatial_tangent=lambda:tangent,normal_spatial_tangent=lambda:np.zeros((60,60)),
+            normal_pressure_Pa=1.,
+            trial=SimpleNamespace(branch='slip' if slip else 'stick',stored_energy_density=q,
+                dissipated_increment_density=q,released_storage_density=q,
+                candidate_state=SimpleNamespace(elastic_slip=np.array((yield_slip*(1.+xi-kink),0.,0.))),
+                plastic_slip_increment=np.zeros(3)))
+        return SimpleNamespace(last_contribution=point,
+            history=SimpleNamespace(cumulative_dissipation_density=q))
+    monkeypatch.setattr(NativeSurfaceHistoryField,'query',polynomial_query)
+    real=integral_module._safeguarded_branch_refinement
+    calls=[]
+    def spy(probe,a,b,**kwargs):
+        outcome=real(probe,a,b,**kwargs)
+        calls.append((a,b,outcome))
+        return outcome
+    monkeypatch.setattr(integral_module,'_safeguarded_branch_refinement',spy)
+    # Configure integration tightly enough for the independent moment
+    # comparison below; production defaults remain unchanged.
+    settings=replace(_settings(),force_absolute_tolerance=1e-13,
+        tangent_absolute_tolerance=1e-13,energy_absolute_tolerance=1e-13)
+    result=integrate_material_friction(value,settings,_front_uncertainty=1e-7,
+        _local_front_strips=True,_variable_endpoint_branches=True)
+    resolved=[outcome for _,_,outcome in calls if outcome['resolved']]
+    assert resolved
+    # The production call site resolved the actual kink per ordinate.
+    assert any(abs(outcome['coordinate']-kink)<=outcome['criterion'] for outcome in resolved)
+    assert result.diagnostics['resolved_branch_cuts']>=1
+    assert result.diagnostics['branch_cut_queries']>0
+    assert result.diagnostics['front_profile']=='VARIABLE_ENDPOINT_STRIP_DEV_V11_DEFERRED_BRANCH_CUT'
+    # DEFERRED schedule: the locator ran only because the global L1 error
+    # gate selected a worst leaf, and that attempt is recorded once per
+    # exact parent with its refusal context.
+    assert result.diagnostics['branch_cut_parent_attempts']>=1
+    assert set(result.diagnostics['branch_cut_parent_refusals'])<= {'certified_leaf','already_attempted','rebuild_subdivision'}
+    # Complete-domain coverage: the refined integral matches the exact
+    # split moment; nothing between edges is dropped.
+    t=(kink+.8)/.6
+    exact=.03*.6*.04/3*(t**3+2.*(1.-t**3))
+    folder=Path(os.environ.get('RUNNER_TEMP',str(tmp_path)));folder.mkdir(parents=True,exist_ok=True)
+    (folder/'safeguarded_branch_cut_production.json').write_text(json.dumps(dict(
+        diagnostics=result.diagnostics,locator_calls=[(a,b,o['reason'],o['resolved'],
+            o['coordinate'],o['width'],o['criterion']) for a,b,o in calls],exact=exact),indent=2)+'\n',
+        encoding='utf-8')
+
+
+    assert result.residual[0]==pytest.approx(exact,rel=1e-9,abs=1e-16)
+    assert result.tangent[0,0]==pytest.approx(exact,rel=1e-9,abs=1e-16)
+
+
+def test_variable_route_smooth_converged_candidate_never_probes_constitutive_cuts(tmp_path,monkeypatch):
+    """DEFERRED constitutive-cut schedule: no probes without error-led selection.
+
+    A genuine quadratic is integrated exactly by both the Gauss3 low rule
+    and the degree-seven square cubature high rule, so every baseline
+    low/high pair agrees, the global gate accepts the candidate without
+    one error-led refinement, and the constitutive locator must never run:
+    zero attempted parents, zero branch-cut queries, hints, or resolved
+    cuts, and an empty refusal context. Polynomial code probe for the
+    schedule contract; no mechanics qualification.
+    """
+    import json,os
+    from pathlib import Path
+    from types import SimpleNamespace
+    from anysolver.general_contact import native_surface_friction_integral as integral_module
+    from anysolver.general_contact.native_surface_friction_integral import integrate_material_friction
+    value=_mixed(height=.024,slope=.001,rotation=.2)
+    def polynomial_query(self,xi,angle,*,budget):
+        q=((xi+.8)/.6)**2
+        residual=np.zeros(60);residual[0]=q
+        tangent=np.zeros((60,60));tangent[0,0]=q
+        point=SimpleNamespace(residual=residual,normal_residual=np.zeros(60),
+            spatial_tangent=lambda:tangent,normal_spatial_tangent=lambda:np.zeros((60,60)),
+            trial=SimpleNamespace(branch='stick',stored_energy_density=q,
+                dissipated_increment_density=q,released_storage_density=q,
+                cumulative_dissipation_density=q))
+        return SimpleNamespace(last_contribution=point,
+            history=SimpleNamespace(cumulative_dissipation_density=q))
+    monkeypatch.setattr(NativeSurfaceHistoryField,'query',polynomial_query)
+    real=integral_module._safeguarded_branch_refinement
+    calls=[]
+    def spy(probe,a,b,**kwargs):
+        calls.append((a,b));return real(probe,a,b,**kwargs)
+    monkeypatch.setattr(integral_module,'_safeguarded_branch_refinement',spy)
+    settings=replace(_settings(),force_absolute_tolerance=1e-13,
+        tangent_absolute_tolerance=1e-13,energy_absolute_tolerance=1e-13)
+    result=integrate_material_friction(value,settings,_front_uncertainty=1e-7,
+        _local_front_strips=True,_variable_endpoint_branches=True)
+    assert not calls
+    diagnostics=result.diagnostics
+    assert diagnostics['branch_cut_parent_attempts']==0
+    assert diagnostics['branch_cut_queries']==0
+    assert diagnostics['resolved_branch_cuts']==0
+    assert diagnostics['branch_cut_hints']==0
+    assert diagnostics['branch_cut_parent_refusals']=={}
+    assert diagnostics['front_profile']=='VARIABLE_ENDPOINT_STRIP_DEV_V11_DEFERRED_BRANCH_CUT'
+    assert diagnostics['maximum_scaled_error_estimate']<=1.
+    exact=.03*.6*.04/3
+    assert result.residual[0]==pytest.approx(exact,rel=1e-13,abs=1e-16)
+    assert result.tangent[0,0]==pytest.approx(exact,rel=1e-13,abs=1e-16)
+    folder=Path(os.environ.get('RUNNER_TEMP',str(tmp_path)));folder.mkdir(parents=True,exist_ok=True)
+    (folder/'deferred_cut_smooth_no_probe.json').write_text(json.dumps(dict(
+        diagnostics=diagnostics,exact=exact,locator_calls=len(calls)),indent=2),
+        encoding='utf-8')
+
+
+def test_captured_front_crossings_partition_the_complete_angular_span():
+    from anysolver.general_contact.native_surface_friction_integral import _captured_front_crossing_angles
+    coefficients=((-0.3,1.,0.,0.),(-0.8,1.,1.,0.))
+    cuts=_captured_front_crossing_angles(coefficients,0.,1.,0.,np.pi)
+    assert cuts==pytest.approx((np.pi/3,),abs=2e-15)
+    for scale in (1e-8,1.,1e8):
+        scaled=tuple(tuple(scale*x for x in row) for row in coefficients)
+        assert _captured_front_crossing_angles(scaled,0.,1.,0.,np.pi)==pytest.approx(cuts,abs=2e-15)
+    assert _captured_front_crossing_angles(coefficients,.5,1.,0.,np.pi)==()
+    assert _captured_front_crossing_angles((coefficients[0],coefficients[0]),0.,1.,0.,np.pi)==()
+    edges=(0.,*cuts,np.pi)
+    assert sum(b-a for a,b in zip(edges[:-1],edges[1:]))==pytest.approx(np.pi,abs=0.)
+
+
+def test_captured_front_structure_detects_root_order_change():
+    from anysolver.general_contact.native_surface_friction_integral import _captured_front_structure
+    coefficients=((-0.3,1.,0.,0.),(-0.8,1.,1.,0.))
+    assert _captured_front_structure(coefficients,0.,1.,.8)==(1,0)
+    assert _captured_front_structure(coefficients,0.,1.,1.3)==(0,1)
+
+
+def test_front_motion_axis_hint_distinguishes_window_translation_scales():
+    from anysolver.general_contact.native_surface_friction_integral import _captured_front_angular_motion_dominates
+    # Two independent exact fronts x=.4+k sin(theta), .5+k sin(theta).
+    # Across [0,.3], k=.8 moves farther than their .1 separation;
+    # k=.001 moves less. Axis selection admits no integral or contact.
+    def models(k):return ((-.4,1.,0.,-k),(-.5,1.,0.,-k))
+    assert _captured_front_angular_motion_dominates(models(.8),0.,1.,0.,.3)
+    assert not _captured_front_angular_motion_dominates(models(.001),0.,1.,0.,.3)
+    assert not _captured_front_angular_motion_dominates(models(0.),0.,1.,0.,.3)
+    assert not _captured_front_angular_motion_dominates(models(.8),.8,1.,0.,.3)
+
+
+def test_front_contact_probe_moves_inside_the_correct_physical_side():
+    from anysolver.general_contact.native_surface_friction_integral import _captured_front_contact_probe
+    # Independent exact fronts at .4 and .5; final gap=.4-x closes right.
+    models=((-.5,1.,0.,0.),(.4,-1.,0.,0.))
+    assert _captured_front_contact_probe(models,0.,1.,.3)==pytest.approx(.4001,abs=1e-16)
+    # Reversing final slope closes left and retains its nearest interval.
+    models=((-.3,1.,0.,0.),(-.4,1.,0.,0.))
+    assert _captured_front_contact_probe(models,0.,1.,.3)==pytest.approx(.3999,abs=1e-16)
+    assert _captured_front_contact_probe(models,.5,1.,.3) is None

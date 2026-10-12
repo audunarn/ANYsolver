@@ -161,3 +161,75 @@ def test_native_surface_point_resource_preflight():
         NativeS3MaterialPointFriction(pair.source,pair.target,reference_weight_m2=.01,
             normal_stiffness_Pa_per_m=1000.,friction_coefficient=.3,
             tangential_stiffness_Pa_per_m=1000.,maximum_coupled_dofs=59)
+
+
+@pytest.mark.parametrize('angle', [.01, .2])
+def test_local_geometry_memo_and_exact_rotation_match_uncached_jet_oracle(monkeypatch, angle):
+    import anysolver.general_contact.native_surface_s3_friction as module
+    from anysolver._ge_beam3_mixed_ad import Jet2, so3_exp, matvec
+    _, pair, origin, history = _case()
+    spin = np.zeros(60); spin[18] = 1.
+    candidate = _moved(origin, spin, angle)
+    actual = pair.evaluate(origin, candidate, history)
+    def old_rotation(variations):
+        delta = [Jet2.variable(0., 3+i, 15) for i in range(3)]
+        return matvec(so3_exp(delta), [Jet2.constant(v,15) for v in variations.surface_arm])
+    frame = module._skin_frame_jet.__wrapped__
+    monkeypatch.setattr(module, '_rotated_arm_jet', old_rotation)
+    monkeypatch.setattr(module, '_skin_frame_jet', frame)
+    expected = pair.evaluate(origin, candidate, history)
+    np.testing.assert_allclose(actual.residual, expected.residual, rtol=1e-13, atol=1e-14)
+    np.testing.assert_allclose(actual.chart_tangent, expected.chart_tangent, rtol=1e-13, atol=1e-13)
+    assert actual.trial == expected.trial
+
+
+def test_skin_frame_memo_is_bounded_readonly_and_invalid_pose_still_rejects():
+    import anysolver.general_contact.native_surface_s3_friction as module
+    _, pair, origin, history = _case()
+    module._skin_frame_jet.cache_clear()
+    for shift in range(40):
+        direction=np.zeros(60); direction[42]=1.
+        candidate=_moved(origin,direction,1e-7*shift)
+        pair.evaluate(origin,candidate,history)
+    assert module._skin_frame_jet.cache_info().currsize == 32
+    corners=pair.target.adapter.current_positions(origin.shell_displacement)
+    cached=module._skin_frame_jet(corners.tobytes())
+    assert all(not j.gradient.flags.writeable and not j.hessian.flags.writeable
+               for row in cached for j in row)
+    u=origin.shell_displacement.copy(); u[6:9] = (-4.,0.,0.)
+    invalid=NativeS3MaterialConfiguration(origin.positions,origin.position_low,origin.cell_rotations,u)
+    with pytest.raises(ValueError,match='degenerate|inverted'):
+        pair.evaluate(origin,invalid,history)
+
+
+
+@pytest.mark.parametrize('angle', [.01,.2])
+def test_batched_local_jets_match_scalar_jet2_work(monkeypatch, angle):
+    import anysolver.general_contact.native_surface_s3_friction as module
+    from anysolver._ge_beam3_mixed_ad import Jet2, so3_exp, matvec, dot
+    _,pair,origin,history=_case()
+    spin=np.zeros(60); spin[18]=1.
+    candidate=_moved(origin,spin,angle)
+    actual=pair.evaluate(origin,candidate,history)
+    def scalar(new,corners,barycentric,old_target,old,history,partner_key):
+        delta=[Jet2.variable(0.,i,15) for i in range(15)]
+        rotated=matvec(so3_exp(delta[3:6]),[Jet2.constant(v,15) for v in new.surface_arm])
+        x=[delta[i]+rotated[i]+new.station.surface_position[i]-new.surface_arm[i] for i in range(3)]
+        y=[[Jet2.constant(corners[a,i],15)+delta[6+3*a+i] for i in range(3)] for a in range(3)]
+        first=[y[1][i]-y[0][i] for i in range(3)];second=[y[2][i]-y[0][i] for i in range(3)]
+        t1=module._unit(first);n=module._unit(module._cross(first,second));t2=module._cross(n,t1)
+        F=[[t1[i],t2[i],n[i]] for i in range(3)]
+        point=[sum(barycentric[a]*y[a][i] for a in range(3)) for i in range(3)]
+        separation=[x[i]-point[i] for i in range(3)]
+        components=np.asarray(old_target.material_frame).T@(old.surface_position-np.asarray(old_target.position))
+        transported=matvec(F,[Jet2.constant(v,15) for v in components])
+        d=[separation[i]-transported[i] for i in range(3)]
+        q=dot(n,d);d=[d[i]-n[i]*q for i in range(3)]
+        retained=np.asarray(history.elastic_slip) if history.partner_key==partner_key else np.zeros(3)
+        old_elastic=np.asarray(history.material_frame).T@retained
+        transported=matvec(F,[Jet2.constant(v,15) for v in old_elastic])
+        return dot(n,separation),[d[i]+transported[i] for i in range(3)]
+    monkeypatch.setattr(module,'_local_contact_jets',scalar)
+    expected=pair.evaluate(origin,candidate,history)
+    np.testing.assert_allclose(actual.residual,expected.residual,rtol=1e-13,atol=1e-14)
+    np.testing.assert_allclose(actual.chart_tangent,expected.chart_tangent,rtol=1e-13,atol=1e-13)

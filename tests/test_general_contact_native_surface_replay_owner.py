@@ -250,11 +250,20 @@ def test_replay_coupled_active_rebase_and_split_restart(monkeypatch):
     from pathlib import Path
     import anysolver.general_contact.native_surface_friction_integral as module
     original=module.integrate_material_friction
-    calls=0
-    def captured(field,settings):
+    calls=0;timings=[]
+    def captured(field,settings,**kwargs):
         nonlocal calls
-        calls+=1
-        try:return original(field,settings)
+        import time
+        calls+=1;started=time.perf_counter()
+        try:
+            result=original(field,settings,**kwargs)
+            folder=os.environ.get('RUNNER_TEMP')
+            if folder:
+                timings.append(dict(call=calls,seconds=time.perf_counter()-started,
+                    segments=len(field.segments),queries=result.diagnostics['queries'],
+                    scaled_error=result.diagnostics['maximum_scaled_error_estimate']))
+                Path(folder,'coupled_integral_timings.json').write_text(json.dumps(timings)+'\n')
+            return result
         except (MemoryError,ValueError) as error:
             folder=os.environ.get('RUNNER_TEMP')
             if folder:
@@ -267,35 +276,40 @@ def test_replay_coupled_active_rebase_and_split_restart(monkeypatch):
             raise
     monkeypatch.setattr(module,'integrate_material_friction',captured)
     owner,bridge=_replay_patch();transaction=NativeS3MaterialTransaction(bridge)
-    def stage(name):
+    def stage(name,current=None):
+        current=transaction if current is None else current
         folder=os.environ.get('RUNNER_TEMP')
         if folder:
             Path(folder,'coupled_stage.json').write_text(json.dumps(dict(stage=name,
-                accepted_sequence=transaction.accepted.sequence,integral_calls=calls))+'\n')
-            if transaction.accepted.sequence:
-                Path(folder,'accepted_material_checkpoint.json').write_bytes(transaction.checkpoint())
+                accepted_sequence=current.accepted.sequence,integral_calls=calls))+'\n')
+            if current.accepted.sequence:
+                Path(folder,'accepted_material_checkpoint.json').write_bytes(current.checkpoint())
     stage('initial')
     owner.solve_material_increment(transaction,1.)
     stage('first_load_accepted')
     accepted=transaction.accepted
     assert len(accepted.friction_history.segments)==1
-    same=transaction.propose(np.zeros(42),np.zeros(18),1.).assembly
-    assert max(same.metrics)<owner.equilibrium_tolerance
-    assert same.material.contribution.friction_integral.stored_energy_j>0
-    assert same.material.contribution.friction_integral.dissipated_increment_j==0.
-    assert same.material.contribution.friction_integral.diagnostics['queries']>0
-    stage('committed_origin_rebased')
     capsule=transaction.checkpoint()
     owner.solve_material_increment(transaction,1.05)
+    uninterrupted_checkpoint=transaction.checkpoint()
     stage('uninterrupted_path_completed')
     # A real restart reconstructs its analysis; it does not reset the original
     # context's deadline. Each analysis retains its own unchanged120s guard.
     restarted_owner,restarted_bridge=_replay_patch()
     restored=NativeS3MaterialTransaction.restore(restarted_bridge,capsule,sha256(capsule).hexdigest())
-    stage('active_checkpoint_restored')
+    stage('active_checkpoint_restored',restored)
+    # Perform the independent zero-increment diagnostic on this already
+    # restored first-load origin, keeping the original analysis uninterrupted
+    # for its two solver loads. Both analyses retain the unchanged120s guard.
+    same=restored.propose(np.zeros(42),np.zeros(18),1.).assembly
+    assert max(same.metrics)<restarted_owner.equilibrium_tolerance
+    assert same.material.contribution.friction_integral.stored_energy_j>0
+    assert same.material.contribution.friction_integral.dissipated_increment_j==0.
+    assert same.material.contribution.friction_integral.diagnostics['queries']>0
+    stage('restored_origin_rebased',restored)
     restarted_owner.solve_material_increment(restored,1.05)
-    assert transaction.checkpoint()==restored.checkpoint()
-    stage('split_restart_identical')
+    assert uninterrupted_checkpoint==restored.checkpoint()
+    stage('split_restart_identical',restored)
 
 
 def test_saved_replay_candidate_branch_discriminator(tmp_path):
@@ -366,11 +380,12 @@ def test_saved_replay_candidate_front_refinement(tmp_path,filename,monkeypatch,a
             try:value=profiler.runcall(integrate_material_friction,field,friction_settings())
             finally:profiler.dump_stats(os.environ['NATIVE_REPLAY_PROFILE_PATH'])
         else:value=integrate_material_friction(field,friction_settings())
-    except MemoryError as error:
+    except (MemoryError,ValueError) as error:
         snapshot=None
         traceback=error.__traceback__
         while traceback is not None:
-            if traceback.tb_frame.f_code.co_name=='integrate_material_friction':
+            if (traceback.tb_frame.f_code.co_name=='integrate_material_friction'
+                    and 'support_budget' in traceback.tb_frame.f_locals):
                 local=traceback.tb_frame.f_locals
                 scale=local.get('scale')
                 rows=[]
@@ -525,7 +540,11 @@ def test_saved_native_active_checkpoint_continues_second_load(tmp_path):
     import json,os
     from pathlib import Path
     path=Path(__file__).parents[1]/'docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_owner_first_accepted_checkpoint.json'
-    capsule=path.read_bytes();owner,bridge=_replay_patch()
+    capsule=path.read_bytes()
+    # The saved container ends with CRLF while the producer checkpoint() emits
+    # LF; correct only that container newline to the producer contract at load.
+    if capsule.endswith(b'\r\n'):capsule=capsule[:-2]+b'\n'
+    owner,bridge=_replay_patch()
     transaction=NativeS3MaterialTransaction.restore(bridge,capsule,sha256(capsule).hexdigest())
     assert transaction.accepted.sequence==1
     folder=Path(os.environ.get('RUNNER_TEMP',str(tmp_path)))

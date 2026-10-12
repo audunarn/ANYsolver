@@ -153,3 +153,204 @@ def test_remote_equal_minima_and_resource_exhaustion_fail_explicitly():
             maximum_depth=20,
             maximum_cells=10000,
         )
+
+def test_source_interval_gap_lower_matches_original_polynomial_oracle():
+    """The local exact-coefficient interval bound reproduces the original
+    numpy Polynomial arithmetic bit-exactly: identical conservative
+    guards, identical threshold behavior across near-zero, parallel and
+    endpoint geometries, and no sampled certificate."""
+    from scipy.optimize import brentq
+    from anysolver.general_contact.beam_curve_pair import (
+        _positions, _source_interval_target_gap_lower,
+    )
+
+    def oracle_roots(polynomial):
+        coefficients = np.asarray(polynomial.coef, dtype=float)
+        while len(coefficients) > 1 and coefficients[-1] == 0.0:
+            coefficients = coefficients[:-1]
+        if len(coefficients) <= 1:
+            return ()
+        normalized = np.polynomial.Polynomial(
+            coefficients / float(np.max(np.abs(coefficients))),
+        )
+        critical = oracle_roots(normalized.deriv())
+        stations = (0.0, *critical, 1.0)
+        values = tuple(float(normalized(station)) for station in stations)
+        evaluation_guard = 128.0 * np.finfo(float).eps * float(
+            np.sum(np.abs(normalized.coef)),
+        )
+        roots = [station for station, value in zip(stations, values)
+                 if abs(value) <= evaluation_guard]
+        for left, right, value_left, value_right in zip(
+            stations[:-1], stations[1:], values[:-1], values[1:],
+        ):
+            if value_left * value_right < 0.0:
+                roots.append(float(brentq(
+                    normalized, left, right, xtol=1e-14, rtol=1e-14,
+                )))
+        return tuple(sorted(set(float(np.clip(root, 0.0, 1.0))
+                                for root in roots)))
+
+    def oracle_bound(source, left, right, target, radius):
+        from anysolver.general_contact.beam_curve_pair import _curve
+        start = _curve(source, left)[0]
+        end = _curve(source, right)[0]
+        middle = _curve(source, 0.5 * (left + right))[0]
+        chord_deviation = float(np.linalg.norm(middle - 0.5 * (start + end)))
+        vector = end - start
+        squared_length = float(vector @ vector)
+        if squared_length <= 0.0:
+            raise MemoryError("B3 pair source interval chord is degenerate")
+        polynomial = np.polynomial.Polynomial
+        target_curve = tuple(polynomial((
+            target[0, axis],
+            -3.0*target[0, axis] + 4.0*target[1, axis] - target[2, axis],
+            2.0*target[0, axis] - 4.0*target[1, axis] + 2.0*target[2, axis],
+        )) for axis in range(3))
+        offset = tuple(component - float(start[axis])
+                       for axis, component in enumerate(target_curve))
+        along = sum((component*float(vector[axis])
+                     for axis, component in enumerate(offset)),
+                    polynomial((0.0,)))
+        projection = along / squared_length
+        start_distance = sum((component*component for component in offset),
+                             polynomial((0.0,)))
+        end_distance = sum(((component - float(end[axis]))**2
+                             for axis, component in enumerate(target_curve)),
+                            polynomial((0.0,)))
+        interior_distance = start_distance - along*along/squared_length
+        cuts = (0.0, *sorted(set((
+            *oracle_roots(projection),
+            *oracle_roots(projection - 1.0),
+        ))), 1.0)
+        minimum_squared = np.inf
+        coefficient_scale = 0.0
+        for first, last in zip(cuts[:-1], cuts[1:]):
+            if last - first <= 1.0e-14:
+                continue
+            projected = float(projection(0.5*(first + last)))
+            branch = (start_distance if projected <= 0.0 else
+                      end_distance if projected >= 1.0
+                      else interior_distance)
+            coefficient_scale = max(
+                coefficient_scale, float(np.sum(np.abs(branch.coef))),
+            )
+            stations = (first, *oracle_roots(branch.deriv()), last)
+            minimum_squared = min(
+                minimum_squared,
+                *(float(branch(station)) for station in stations
+                  if first <= station <= last),
+            )
+        if not np.isfinite(minimum_squared):
+            raise MemoryError("B3 pair interval distance could not be bounded")
+        squared_guard = 1024.0 * np.finfo(float).eps * max(
+            coefficient_scale, radius*radius, np.finfo(float).tiny,
+        )
+        position_guard = 1024.0 * np.finfo(float).eps * max(
+            float(np.max(np.abs(source))), float(np.max(np.abs(target))),
+            radius,
+        )
+        return (float(np.sqrt(max(0.0, minimum_squared - squared_guard)))
+                - radius - chord_deviation - position_guard)
+
+    rng = np.random.default_rng(20261011)
+    cases = [
+        # near-parallel straight centrelines at small normal clearance
+        (np.array(((0., 0., 0.), (.5, 0., 0.), (1., 0., 0.))),
+         np.array(((0., 1e-7, 0.), (.5, 1e-7, 0.), (1., 1e-7, 0.))), .01),
+        # curved near-parallel centrelines
+        (np.array(((0., 0., 0.), (.5, .1, 0.), (1., 0., 0.))),
+         np.array(((0., 1e-4, 0.), (.5, .1 + 1e-4, 0.), (1., 1e-4, 0.))),
+         .01),
+        # endpoint-close configuration
+        (np.array(((0., 0., 0.), (.5, 0., 0.), (1., 0., 0.))),
+         np.array(((1. + 1e-9, 0., 0.), (1.5, .2, 0.), (2., .5, 0.))), .05),
+        # near-touching straight pair, bound crosses zero near the threshold
+        (np.array(((0., 0., 0.), (.5, 0., 0.), (1., 0., 0.))),
+         np.array(((0., .02 - 1e-9, 0.), (.5, .02 - 1e-9, 0.),
+                   (1., .02 - 1e-9, 0.))), .02),
+        # crossing centrelines
+        (np.array(((0., 0., 0.), (.5, 0., 0.), (1., 0., 0.))),
+         np.array(((.5, -1., 0.), (.5, 0., 0.), (.5, 1., 0.))), .05),
+        # large coordinates with tiny radius
+        (np.array(((1e3, 0., 0.), (1e3 + 5, 1., 0.), (1e3 + 10, 0., 0.))),
+         np.array(((1e3, .05, 0.), (1e3 + 5, 1.05, 0.),
+                   (1e3 + 10, .05, 0.))), 1e-4),
+    ]
+    cases.extend((np.column_stack([rng.uniform(-2, 2, 3) for _ in range(3)]),
+                  np.column_stack([rng.uniform(-2, 2, 3) for _ in range(3)]),
+                  float(rng.uniform(.01, .2))) for _ in range(24))
+    intervals = ((0., 1.), (0., .5), (.5, 1.), (.25, .75),
+                 (.125, .375), (0., 1e-9), (.999999, 1.))
+    compared = 0
+    for source, target, radius in cases:
+        try:
+            source = _positions(source, "source")
+            target = _positions(target, "target")
+        except ValueError:
+            continue
+        for left, right in intervals:
+            expected = oracle_bound(source, left, right, target, radius)
+            actual = _source_interval_target_gap_lower(
+                source, left, right, target, radius)
+            assert expected == actual and repr(expected) == repr(actual)
+            compared += 1
+    assert compared >= 200
+    # A degenerate chord fails closed through both arithmetics.
+    source = _positions(np.array(((0., 0., 0.), (.5, 0., 0.), (1., 0., 0.))),
+                        "source")
+    target = _positions(np.array(((0., .08, 0.), (.5, .08, 0.),
+                                  (1., .08, 0.))), "target")
+    with pytest.raises(MemoryError):
+        oracle_bound(source, .3, .3, target, .1)
+    with pytest.raises(MemoryError):
+        _source_interval_target_gap_lower(source, .3, .3, target, .1)
+
+def test_coef_sub_helper_matches_numpy_polyutils_sub_exactly():
+    """Focused parity for the local subtraction helper against numpy
+    polyutils._sub: a not-shorter second operand is negated wholesale,
+    so its trailing coefficients carry the negated sign, a mid-series
+    zero becomes -0.0 and survives the final trim, cancellation trims
+    to the first element, and a longer first operand keeps its
+    trailing coefficients unchanged."""
+    import math
+    from numpy.polynomial import polyutils as pu
+    from anysolver.general_contact.beam_curve_pair import _coef_sub
+
+    # the repaired defect direction, as an explicit canary
+    assert _coef_sub((1.0,), (2.0, 3.0)) == (-1.0, -3.0)
+    cases = [
+        # shorter first operand: trailing second coefficients negated
+        ((1.0,), (2.0, 3.0)),
+        ((1.0, 2.0), (3.0, 4.0, 5.0)),
+        ((0.0,), (0.0, 4.0, 0.0, 5.0)),
+        # cancellation and trailing zeros trim to the first element
+        ((1.0, 1.0), (1.0, 1.0)),
+        ((5.0, 0.0, 0.0), (5.0, 0.0, 0.0)),
+        ((2.0, -2.0, 0.0), (2.0, -2.0)),
+        # signed zero: negation keeps -0.0 mid-series after the trim
+        ((1.0,), (1.0, 0.0, 5.0)),
+        ((0.0,), (0.0, 0.0, 2.0)),
+        ((-0.0,), (-0.0, 0.0, 3.0)),
+        ((1.0,), (-0.0, 0.0, -0.0, 7.0)),
+        ((0.0,), (-0.0,)),
+        ((-0.0,), (0.0,)),
+        # longer first operand keeps its trailing coefficients
+        ((1.0, 0.0, 6.0), (2.0,)),
+        ((0.0, 0.0, 4.0), (0.0,)),
+        # equal lengths
+        ((1.0, -2.0), (3.0, 4.0)),
+    ]
+    rng = np.random.default_rng(20261011)
+    cases.extend((tuple(rng.uniform(-4.0, 4.0, int(rng.integers(1, 6)))),
+                  tuple(rng.uniform(-4.0, 4.0, int(rng.integers(1, 7)))))
+                 for _ in range(200))
+    for first, second in cases:
+        expected = pu._sub(np.asarray(first, dtype=float),
+                           np.asarray(second, dtype=float))
+        actual = _coef_sub(first, second)
+        assert len(actual) == len(expected), (first, second)
+        for produced, reference in zip(actual, expected):
+            assert produced == reference, (first, second)
+            assert math.copysign(1.0, produced) == math.copysign(
+                1.0, reference), (first, second)

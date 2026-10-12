@@ -3,11 +3,43 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 
 import numpy as np
 from scipy import sparse
 
 from .s3_skin_work import S3SkinWorkAdapter
+
+
+@lru_cache(maxsize=128)
+def _physical_skin_frame(corner_bytes,reference_bytes):
+    """Bounded immutable frame geometry; exact reference and current bytes bind checks."""
+    corners=np.frombuffer(corner_bytes,dtype=np.float64).reshape(3,3)
+    reference=np.frombuffer(reference_bytes,dtype=np.float64).reshape(3,3)
+    first = corners[1] - corners[0]
+    second = corners[2] - corners[0]
+    reference_cross = np.cross(reference[1] - reference[0],
+                               reference[2] - reference[0])
+    current_cross = np.cross(first, second)
+    first_length = float(np.linalg.norm(first))
+    second_length = float(np.linalg.norm(second))
+    area_scale = float(np.linalg.norm(current_cross))
+    reference_area_scale = float(np.linalg.norm(reference_cross))
+    if (first_length == 0.0 or second_length == 0.0
+            or area_scale <= 1.0e-12 * max(
+                reference_area_scale, first_length * second_length,
+            )):
+        raise ValueError("S3 material skin is degenerate at the candidate pose")
+    if float(current_cross @ reference_cross) <= 0.0:
+        raise ValueError("S3 material skin is inverted at the candidate pose")
+    tangent_1 = first / first_length
+    normal = current_cross / area_scale
+    tangent_2 = np.cross(normal, tangent_1)
+    frame = np.column_stack((tangent_1, tangent_2, normal))
+    if not np.all(np.isfinite(frame)):
+        raise ValueError("S3 material skin pose exceeded finite range")
+    frame.setflags(write=False)
+    return frame
 
 
 @dataclass(frozen=True)
@@ -52,26 +84,8 @@ class S3SkinMaterialPoint:
     def physical_pose(self, displacement: np.ndarray) -> S3SkinPointPose:
         corners = self.adapter.current_positions(displacement)
         reference = self.adapter.reference_positions
-        first = corners[1] - corners[0]
-        second = corners[2] - corners[0]
-        reference_cross = np.cross(reference[1] - reference[0],
-                                   reference[2] - reference[0])
-        current_cross = np.cross(first, second)
-        first_length = float(np.linalg.norm(first))
-        second_length = float(np.linalg.norm(second))
-        area_scale = float(np.linalg.norm(current_cross))
-        reference_area_scale = float(np.linalg.norm(reference_cross))
-        if (first_length == 0.0 or second_length == 0.0
-                or area_scale <= 1.0e-12 * max(
-                    reference_area_scale, first_length * second_length,
-                )):
-            raise ValueError("S3 material skin is degenerate at the candidate pose")
-        if float(current_cross @ reference_cross) <= 0.0:
-            raise ValueError("S3 material skin is inverted at the candidate pose")
-        tangent_1 = first / first_length
-        normal = current_cross / area_scale
-        tangent_2 = np.cross(normal, tangent_1)
-        frame = np.column_stack((tangent_1, tangent_2, normal))
+        frame=_physical_skin_frame(np.asarray(corners,dtype=np.float64).tobytes(),
+            np.asarray(reference,dtype=np.float64).tobytes())
         position = np.asarray(self.barycentric) @ corners
         if not np.all(np.isfinite(frame)) or not np.all(np.isfinite(position)):
             raise ValueError("S3 material skin pose exceeded finite range")

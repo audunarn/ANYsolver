@@ -110,7 +110,7 @@ def test_partial_overlap_force_and_boundary_tangent_match_exact_area():
     force,K,_certificate=owner.evaluate(u)
     normal,K_normal,_certificate=owner.normal.evaluate(u)
     # x_source=.2+.4*bary1+.55. Inside x<=1 -> bary1<=.625.
-    # P(bary1<=a)=2a-a² and reference area=.08; p=5, mu=.3.
+    # P(bary1<=a)=2a-aÂ² and reference area=.08; p=5, mu=.3.
     assert x@(force-normal)==pytest.approx(1.5*.08*(2*.625-.625**2),rel=1e-9)
     assert x@((K-K_normal)@x)==pytest.approx(-.225,rel=1e-6)
     for h in (1e-4,2e-5):
@@ -196,7 +196,14 @@ def test_hidden_patch_crossing_and_nonfinite_work_reject_without_commit():
 
 @pytest.mark.parametrize("normal_guide",(False,True))
 def test_partial_overlap_coupled_workflow_and_split_restart(monkeypatch,tmp_path,normal_guide):
-    _partial_overlap_coupled_workflow(monkeypatch,tmp_path,normal_guide)
+    # The ordinary actual-pressure route intrinsically exceeds the committed
+    # maximum_event_stages cap in prepare_commit control refinement on this
+    # partial-overlap fixture (linux-29b6-m4/P02: both settings, 645/657 s).
+    # That refusal is preserved and covered by bounded focused checks in
+    # test_general_contact_s3_replay_ordinary_refusal.py. The positive coupled
+    # workflow explicitly selects the existing prepared partial-pressure
+    # route; mechanical inputs and scientific gates are unchanged.
+    _partial_overlap_coupled_workflow(monkeypatch,tmp_path,normal_guide,prepared_partial=True)
 
 
 def test_partial_overlap_coupled_full_workflow(monkeypatch,tmp_path):
@@ -284,8 +291,34 @@ def _partial_overlap_coupled_workflow(monkeypatch,tmp_path,normal_guide,*,split_
     assert resumed.status=="completed",resumed.info
     (tmp_path/"resumed_checkpoint.json").write_text(json.dumps(resumed.to_restart_checkpoint()),encoding="utf-8")
     np.testing.assert_allclose(resumed.displacements,reference['displacements'],rtol=1e-7,atol=1e-9)
-    assert resumed.info["force_displacement_history"]==history
+    observed_history=resumed.info["force_displacement_history"]
+    if reference_checkpoint is not None:
+        _assert_legacy_reference_history(observed_history,history)
+    else:
+        assert observed_history==history
 
+
+
+def _assert_legacy_reference_history(observed,reference):
+    """Only the newly explicit world-origin label differs from this old record."""
+    compared=copy.deepcopy(observed)
+    assert len(compared)==len(reference)
+    for actual,legacy in zip(compared,reference):
+        if "wrench_origin_m" not in legacy["contact"]:
+            assert actual["contact"].pop("wrench_origin_m")==[0.,0.,0.]
+    assert compared==reference
+
+
+def test_legacy_reference_metadata_preserves_every_numerical_and_other_field():
+    legacy=[dict(contact=dict(force=1.),step_index=1)]
+    actual=[dict(contact=dict(force=1.,wrench_origin_m=[0.,0.,0.]),step_index=1)]
+    _assert_legacy_reference_history(actual,legacy)
+    assert actual[0]["contact"]["wrench_origin_m"]==[0.,0.,0.]
+    for changed in (dict(force=2.,wrench_origin_m=[0.,0.,0.]),
+                    dict(force=1.,wrench_origin_m=[1.,0.,0.]),
+                    dict(force=1.,wrench_origin_m=[0.,0.,0.],unrelated=0)):
+        with pytest.raises(AssertionError):
+            _assert_legacy_reference_history([dict(contact=changed,step_index=1)],legacy)
 
 def test_opening_deformation_can_create_a_real_hidden_contact_interval():
     from anysolver.general_contact.s3_friction_replay import ReplayContactSubdivisionRequired
@@ -734,6 +767,7 @@ def test_prepared_partial_stage_decline_uses_counted_ordinary_fallback(monkeypat
     assert not prepared.full_coverage
     # Exercise the documented decline contract independently of which floating
     # interpolation first loses bitwise planarity on a particular platform.
+    monkeypatch.setattr(prepared,"_uniform_partial_pressure",lambda *args:None)
     monkeypatch.setattr(owner,"_partial_planar_pressure",lambda *args:None)
     key=(first["local"].tobytes(),last["local"].tobytes())
     before=owner.checkpoint_state()

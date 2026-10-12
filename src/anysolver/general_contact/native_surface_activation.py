@@ -69,7 +69,7 @@ def _freeze_jets(values):
 @lru_cache(maxsize=32)
 def _event_rotation_chart(rotation_entries,size):
     """Pure endpoint rotation derivatives; no geometry/history is cached."""
-    q=[Jet2.variable(0.,3+i,size) for i in range(3)]
+    q=[Jet2.constant(0.,0) if size==0 else Jet2.variable(0.,3+i,size) for i in range(3)]
     rotation=matmul(so3_exp(q),constant_matrix(np.asarray(rotation_entries).reshape(3,3),size))
     return _freeze_jets(so3_log(rotation))
 
@@ -79,6 +79,15 @@ def _endpoint_virtual_rotation():
     q=[Jet2.variable(0.,3+i,30) for i in range(3)]
     v=[Jet2.variable(0.,18+i,30) for i in range(3)]
     return tuple(_freeze_jets(row) for row in matmul(so3_exp(v),so3_exp(q)))
+
+
+@lru_cache(maxsize=32)
+def _endpoint_frame_jets(corner_bytes):
+    """Immutable endpoint geometry jets, shared across material coordinates."""
+    corners=np.frombuffer(corner_bytes,dtype=np.float64).reshape(3,3)
+    y=[[Jet2.constant(corners[a,i],30)+Jet2.variable(0.,6+3*a+i,30)
+        +Jet2.variable(0.,21+3*a+i,30) for i in range(3)] for a in range(3)]
+    return tuple(_freeze_jets(row) for row in _frame(y))
 
 
 def evaluate_first_touch(pair, start, history, translations, angular, shell_increment,
@@ -186,11 +195,42 @@ def _evaluate_transverse_event(pair, start, history, translations, angular, shel
     return _closing_event_endpoint(pair,start,end,history,alpha,g1,padding,ownership)
 
 
-def _closing_event_endpoint(pair,start,end,history,alpha,g1,padding,ownership):
+def _certified_endpoint_primal(g,padding,certified_gap):
+    """Validate a private certified endpoint gap; correct only the Jet2 primal.
+
+    The certified exact gap is admitted only when finite, strictly closed, and
+    in agreement with the endpoint law's own binary64 evaluation within the
+    existing work-map mismatch padding. Inside the coordinate padding that
+    evaluation cannot resolve the contact sign; the certified magnitude then
+    replaces only the primal, preserving the declared chart's gradient/Hessian.
+    Exact touches, out-of-profile open gaps, nonfinite values, and
+    above-padding contradictions refuse.
+    """
+    if not np.isfinite(certified_gap):
+        raise ValueError('certified endpoint gap must be finite')
+    if certified_gap==0.:
+        raise ValueError('certified endpoint gap exact touch unresolved')
+    if certified_gap>0.:
+        raise ValueError('certified endpoint gap contradicts closed endpoint profile')
+    if abs(g.value-certified_gap)>padding:
+        raise ValueError('certified endpoint gap contradicts endpoint work geometry')
+    if abs(g.value)>padding:
+        # Agreement with a strictly closed certified gap beyond the padding
+        # means the binary64 evaluation resolved a clearly closed endpoint.
+        return g
+    return Jet2(certified_gap,g.gradient,g.hessian)
+
+
+def _closing_event_endpoint(pair,start,end,history,alpha,g1,padding,ownership,*,certified_gap=None):
     """Closing-root force map differentiated from the original physical path.
 
     Caller certifies the root and event schedule. Earlier released windows may
     contribute cumulative history, but must leave zero elastic traction.
+    The optional certified_gap is the exact signed endpoint gap from the
+    precise coefficient schedule (native_event_polynomial), admitted only for
+    endpoints whose binary64 evaluation lies inside the coordinate padding;
+    it corrects only the primal above, leaving the declared derivative chart
+    and both-body work maps untouched.
     """
     if type(history) is not FrictionPointState or history.partner_key is not None:
         raise ValueError('closing event requires released physical history')
@@ -223,29 +263,42 @@ def _closing_event_endpoint(pair,start,end,history,alpha,g1,padding,ownership):
     if abs(G.value)>padding:raise ValueError('first-touch differentiated root mismatch')
     if G.gradient[15]>=-padding:raise ValueError('first-touch derivative lost transversality')
     alpha_gradient=-G.gradient[:15]/G.gradient[15]
-    gradient=np.zeros(30);gradient[:15]=alpha_gradient
-    event_alpha=Jet2(alpha,gradient,np.zeros((30,30)))
-    q=[Jet2.variable(0.,i,30) for i in range(15)]
-    v=[Jet2.variable(0.,15+i,30) for i in range(15)]
-    event_frame,event_relative=event_geometry(q,event_alpha,30)
+    state_only=getattr(pair,'_history_state_only',False)
+    size=0 if state_only else 30
+    gradient=np.zeros(size)
+    if not state_only:gradient[:15]=alpha_gradient
+    event_alpha=Jet2(alpha,gradient,np.zeros((size,size)))
+    q=[Jet2.constant(0.,size) if state_only else Jet2.variable(0.,i,size) for i in range(15)]
+    v=[Jet2.constant(0.,size) if state_only else Jet2.variable(0.,15+i,size) for i in range(15)]
+    event_frame,event_relative=event_geometry(q,event_alpha,size)
     event_components=[sum(event_frame[j][i]*event_relative[j] for j in range(3)) for i in range(3)]
-    rotated=matvec(_endpoint_virtual_rotation(),
-                   [Jet2.constant(x,30) for x in new.surface_arm])
+    rotated=matvec(constant_matrix(np.eye(3),0) if state_only else _endpoint_virtual_rotation(),
+                   [Jet2.constant(x,size) for x in new.surface_arm])
     x=[base1[i]+q[i]+v[i]+rotated[i] for i in range(3)]
     y=[[y1[a,i]+q[6+3*a+i]+v[6+3*a+i] for i in range(3)] for a in range(3)]
-    frame=_frame(y);normal=[row[2] for row in frame];point=_point(y,target.barycentric)
+    frame=(_frame(y) if state_only else _endpoint_frame_jets(np.asarray(y1,dtype=np.float64).tobytes()))
+    normal=[row[2] for row in frame];point=_point(y,target.barycentric)
     relative=[x[i]-point[i] for i in range(3)]
     transported=matvec(frame,event_components)
     slip=[relative[i]-transported[i] for i in range(3)]
     normal_slip=dot(normal,slip)
     elastic=[slip[i]-normal[i]*normal_slip for i in range(3)]
-    g=dot(normal,relative);pressure=-pair.normal_stiffness_Pa_per_m*g.value
+    g=dot(normal,relative)
     if abs(g.value-g1)>padding:raise ValueError('first-touch endpoint work geometry mismatch')
+    if certified_gap is not None:
+        g=_certified_endpoint_primal(g,padding,certified_gap)
+    pressure=-pair.normal_stiffness_Pa_per_m*g.value
     trial=trial_coulomb_point(history,material_frame=np.array([[j.value for j in row] for row in frame]),
         relative_increment=np.array([j.value for j in elastic]),normal_pressure=pressure,
         friction_coefficient=pair.friction_coefficient,tangential_stiffness=pair.tangential_stiffness_Pa_per_m,
         partner_key=pair.partner_key)
     energy=.5*pair.normal_stiffness_Pa_per_m*g*g
+    if state_only:
+        count=42+target.adapter.work_map.shape[1]
+        zero=_readonly(np.zeros(count));matrix=_readonly(np.zeros((count,count)))
+        return NativeS3ActivationResult(zero,matrix,trial,g.value,pressure,
+            pair.reference_weight_m2*energy.value,float(alpha),_readonly(alpha_gradient),
+            ownership.path_sha256,ownership.intervals,zero,matrix)
     residual=energy.gradient[15:].copy(); tangent=energy.hessian[15:,:15].copy()
     W=np.array([j.gradient[15:] for j in elastic]); D=np.array([j.gradient[:15] for j in elastic])
     H=np.array([j.hessian[15:,:15] for j in elastic]); traction=np.asarray(trial.traction)
@@ -305,11 +358,11 @@ def _release_history(pair,start,end,history,translations,angular,shell_increment
     dissipation and separately report the final vanishing storage release.
     """
     previous=start; state=history; released=0.; plastic_material=np.zeros(3); dissipations=[]
+    old_source=pair.source.evaluate(previous.positions,previous.position_low,previous.cell_rotations)
+    old_target=pair.target.physical_pose(previous.shell_displacement)
     for fraction in np.linspace(0.,alpha,pair.event_history_substeps+1)[1:]:
         current=material_path_pose(start,translations,angular,shell_increment,float(fraction))
-        old_source=pair.source.evaluate(previous.positions,previous.position_low,previous.cell_rotations)
         source=pair.source.evaluate(current.positions,current.position_low,current.cell_rotations)
-        old_target=pair.target.physical_pose(previous.shell_displacement)
         target=pair.target.physical_pose(current.shell_displacement)
         increment=objective_relative_tangent_increment(source_committed=old_source.surface_position,
             target_committed=old_target.position,source_candidate=source.surface_position,
@@ -325,6 +378,7 @@ def _release_history(pair,start,end,history,translations,angular,shell_increment
         plastic_material+=np.asarray(target.material_frame).T@np.asarray(trial.plastic_slip_increment)
         dissipations.append(trial.dissipated_increment_density)
         state=trial.candidate_state; released+=trial.released_storage_density; previous=current
+        old_source=source; old_target=target
     target=pair.target.physical_pose(end.shell_displacement)
     trial=trial_coulomb_point(state,material_frame=target.material_frame,relative_increment=(0.,0.,0.),
         normal_pressure=0.,friction_coefficient=pair.friction_coefficient,

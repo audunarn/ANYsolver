@@ -250,11 +250,13 @@ def test_panel_support_distinguishes_persistent_contact_from_hidden_pulse():
     persistent=classify_history_panel(field,0,(-.8,-.7),angles,budget=SupportIntervalBudget(128))
     assert persistent.status=='resolved'
     hidden=classify_history_panel(field,0,(-.25,-.2),angles,budget=SupportIntervalBudget(128))
-    assert hidden.status=='unresolved'
+    # The complete transverse time cover may admit this pulse, but must
+    # label it nonzero/event-bearing rather than empty or persistently closed.
+    assert hidden.status=='resolved' and hidden.event_covered
     assert not panel_closed_over_history(field,0,(-.25,-.2),angles,
         maximum_intervals=128,budget=SupportIntervalBudget(128),segment_index=1)
     mixed=classify_history_panel(field,0,(-.8,-.2),angles,budget=SupportIntervalBudget(128))
-    assert mixed.status=='unresolved'
+    assert mixed.status=='resolved' and mixed.event_covered
 
 
 def test_unresolved_nonzero_panel_cannot_be_accepted(monkeypatch):
@@ -319,3 +321,43 @@ def test_support_exhaustion_preserves_region_and_named_recovery_contract(monkeyp
     assert diagnostics['support_region']==regions[1]
     assert diagnostics['quadrature_panel']==regions[0]
     assert diagnostics['last_unresolved']==dict(region=regions[0],reason='hidden history control')
+
+
+def test_closed_endpoints_allow_transverse_release_and_recontact_cover(monkeypatch):
+    # Independent scalar fixture, identical at every material point:
+    # g(t) = -t**2+t-3/16. Closed endpoints; simple roots at1/4,3/4.
+    # Positive/negative root rates are both necessary in a complete cover.
+    from types import SimpleNamespace
+    import anysolver.general_contact.native_surface_support as module
+    def enclosure(left,right):
+        values=[-left*left+left-3/16,-right*right+right-3/16]
+        if left<=.5<=right:values.append(1/16)
+        return SimpleNamespace(gap_lower=min(values),gap_upper=max(values),
+            zero_derivative_lower=1-2*right,zero_derivative_upper=1-2*left,
+            spatial_derivative_width=0.,temporal_derivative_width=2*(right-left))
+    monkeypatch.setattr(module,'segment_gap_slab_enclosure',lambda *args:enclosure)
+    # No scalar geometry/point sampling is used to certify the time cover.
+    budget=module.SupportIntervalBudget(32)
+    field=SimpleNamespace(maximum_intervals=32)
+    assert module.panel_transverse_event_cover(field,0,(0.,1.),(0.,1.),0,
+        budget=budget)=='events'
+    assert 1<budget.intervals<=32
+
+
+def test_zero_rate_tangency_is_not_admitted_by_transverse_cover(monkeypatch):
+    from types import SimpleNamespace
+    import anysolver.general_contact.native_surface_support as module
+    # g(t)=(t-1/2)**2 has a double root; enclosing q includes0 on every
+    # root slab. Exact spatial certainty does not certify transverse motion.
+    def enclosure(left,right):
+        values=[(left-.5)**2,(right-.5)**2]
+        lower=0. if left<=.5<=right else min(values)
+        return SimpleNamespace(gap_lower=lower,gap_upper=max(values),
+            zero_derivative_lower=2*left-1,zero_derivative_upper=2*right-1,
+            spatial_derivative_width=0.,temporal_derivative_width=2*(right-left))
+    monkeypatch.setattr(module,'segment_gap_slab_enclosure',lambda *args:enclosure)
+    budget=module.SupportIntervalBudget(16)
+    field=SimpleNamespace(maximum_intervals=16)
+    assert module.panel_transverse_event_cover(field,0,(0.,1.),(0.,1.),0,
+        budget=budget) is None
+    assert budget.intervals<=16

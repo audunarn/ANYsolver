@@ -13,7 +13,8 @@ from .friction_point import initial_friction_point
 from .native_retained_station import NativeRetainedRoundStation, _readonly
 from .native_surface_path import material_path_pose
 from .native_surface_quadrature import certify_station_orientation_path, surface_geometry
-from .native_surface_s3_friction import NativeS3MaterialConfiguration, NativeS3MaterialPointFriction
+from .native_surface_s3_friction import (NativeS3MaterialConfiguration,
+    NativeS3MaterialPathResult, NativeS3MaterialPointFriction)
 from .s3_friction_point import S3SkinMaterialPoint
 
 
@@ -158,6 +159,105 @@ class NativeSurfaceHistoryField:
             maximum_coupled_dofs=base.maximum_coupled_dofs,
             activation_policy=base.activation_policy,event_history_substeps=base.event_history_substeps)
 
+    def _bind_whole_history_target_ownership(self):
+        """Bind only the actual motions covered by this evaluation's domain proof."""
+        from .native_surface_path import _ownership_motion_identity
+        pose=self.initial;paths=[]
+        for segment in self.segments:
+            paths.append(_ownership_motion_identity(pose,segment.translations,segment.angular,
+                segment.shell_increment,self.maximum_intervals))
+            pose=material_path_pose(pose,segment.translations,segment.angular,segment.shell_increment,1.)
+        self._whole_history_target_paths=frozenset(paths)
+        self._whole_history_target_proof=self.identity
+
+
+    def _replay_increment(self,pair,pose,history,translations,angular,shell_increment,
+            budget,maximum_intervals):
+        """Bounded event-by-event replay of one declared increment.
+
+        A refused multi-event increment is replayed as two dyadic substeps, each
+        routed through the existing single-event branches. The declared physical
+        path is unchanged; the shared point-path budget bounds the subdivision.
+        """
+        budget.consume()
+        from .native_surface_path import _ownership_motion_identity
+        lo,hi=self.patch.rule.definition['xi_range'];alo,ahi=self.patch.rule.definition['angle_range']
+        domain=(pair.source.reference is self.patch.source.reference
+            and pair.source.element_id==self.patch.source.element_id
+            and pair.target.adapter is self.patch.target.adapter
+            and lo<pair.source.xi<hi and alo<pair.source.angle<ahi)
+        motion=_ownership_motion_identity(pose,translations,angular,shell_increment,maximum_intervals)
+        if (getattr(self,'_whole_history_target_proof',None)==self.identity and domain
+                and motion in getattr(self,'_whole_history_target_paths',())):
+            from .native_surface_path import _ownership_path_identity
+            pair._prepared_history_ownership=(_ownership_path_identity(pair,pose,translations,angular,
+                shell_increment,maximum_intervals),self.identity)
+        else:
+            pair._prepared_history_ownership=None
+        orientation=certify_station_orientation_path(pair.source,pose,translations,angular,
+            shell_increment,maximum_intervals=maximum_intervals)
+        try:
+            value=pair.evaluate_path(pose,history,translations,angular,shell_increment,
+                maximum_intervals=maximum_intervals)
+        except ValueError as error:
+            message=str(error)
+            subdividable=('opening/closure or facet exit','first-touch physical ownership unresolved',
+                'first-touch target area bound unresolved','first-touch transverse monotone path unresolved',
+                'first-touch needs resolved open and closed endpoints','first-touch root residual unresolved')
+            ordinary_resolution_request=(message ==
+                'native/S3 material history path requires subdivision: path resolution exhausted')
+            if (not (any(fragment in message for fragment in subdividable) or ordinary_resolution_request)
+                    or pair.activation_policy not in ('transverse_events','transverse_event_sequence')):
+                raise
+            value=self._sequence_replay(pair,pose,history,translations,angular,shell_increment,
+                maximum_intervals)
+        budget.certified_intervals+=orientation+value.certified_intervals
+        last=value.contribution
+        return value.configuration,last,last.trial.candidate_state
+
+    def _sequence_replay(self,pair,pose,history,translations,angular,shell_increment,
+            maximum_intervals):
+        """Certified event-by-event replay of one refused multi-event increment.
+
+        The tight compensated slab certificates locate the complete alternating
+        root schedule, including whole-patch facet ownership; each closed window
+        is replayed through the existing release/first-touch endpoint laws. No
+        history is dropped and no pulse is assumed negligible: an unresolved
+        schedule refuses. This answers the subdivision demand of the ordinary
+        point certificate without changing the declared physical path.
+        """
+        from .native_surface_event_sequence import (evaluate_open_event_sequence,
+            evaluate_closed_event_sequence,evaluate_closed_or_persistent_sequence)
+        end=material_path_pose(pose,translations,angular,shell_increment,1.)
+        def gap_at(current):
+            source=pair.source.evaluate(current.positions,current.position_low,
+                current.cell_rotations).surface_position
+            target=pair.target.physical_pose(current.shell_displacement)
+            return float((source-np.asarray(target.position))@np.asarray(target.material_frame)[:,2])
+        gap,next_gap=gap_at(pose),gap_at(end)
+        if gap>0. and next_gap>0.:
+            contribution=evaluate_open_event_sequence(pair,pose,history,translations,angular,
+                shell_increment,maximum_intervals=maximum_intervals)
+            return NativeS3MaterialPathResult(end,contribution,contribution.path_sha256,
+                contribution.ownership_intervals)
+        if gap>0.:
+            contribution=evaluate_closed_event_sequence(pair,pose,history,translations,angular,
+                shell_increment,maximum_intervals=maximum_intervals)
+            return NativeS3MaterialPathResult(end,contribution,contribution.path_sha256,
+                contribution.ownership_intervals)
+        if gap<0. and next_gap>=0.:
+            contribution=evaluate_open_event_sequence(pair,pose,history,translations,angular,
+                shell_increment,maximum_intervals=maximum_intervals)
+            return NativeS3MaterialPathResult(end,contribution,contribution.path_sha256,
+                contribution.ownership_intervals)
+        if gap<0.:
+            contribution,sequence=evaluate_closed_or_persistent_sequence(pair,pose,history,
+                translations,angular,shell_increment,maximum_intervals=maximum_intervals)
+            return NativeS3MaterialPathResult(end,contribution,sequence.path_sha256,
+                sequence.intervals)
+        raise ValueError('native/S3 material history path requires subdivision: '
+            'unresolved endpoint contact state')
+
     def query(self,xi,angle,*,budget,maximum_intervals=None):
         if type(budget) is not NativeSurfaceReplayBudget:
             raise TypeError('explicit shared material replay budget required')
@@ -167,17 +267,45 @@ class NativeSurfaceHistoryField:
             raise ValueError('replay path cap must not exceed bound history cap')
         budget.consume()  # Also bounds query preparation with an empty history.
         pair=self.pair_at(xi,angle); pose=self.initial
-        surface_geometry(pair.source,pose.positions,pose.position_low,pose.cell_rotations)
-        history=initial_friction_point(pair.target.physical_pose(pose.shell_displacement).material_frame)
+        cache=getattr(self,'_query_prefix_cache',None)
+        capacity=getattr(self,'_query_prefix_capacity',0)
+        key=(float(xi),float(angle),maximum_intervals)
+        saved=cache.get(key) if cache is not None and capacity else None
+        prefix=self.segments[:-1] if self.segments else ()
+        if saved is None:
+            surface_geometry(pair.source,pose.positions,pose.position_low,pose.cell_rotations)
+            history=initial_friction_point(pair.target.physical_pose(pose.shell_displacement).material_frame)
+            paths0=budget.point_paths; intervals0=budget.certified_intervals
+            # Prefix contributions are discarded: retain their exact law,
+            # root/transversality/ownership checks and physical state, without
+            # building unused endpoint force Hessians. The final segment is
+            # always a complete fresh contribution, even after exceptions.
+            pair._history_state_only=True
+            try:
+                for segment in prefix:
+                    pose,_,history=self._replay_increment(pair,pose,history,segment.translations,
+                        segment.angular,segment.shell_increment,budget,maximum_intervals)
+            finally:
+                pair._history_state_only=False
+            if cache is not None and capacity:
+                # A conservative 4 KiB charge covers each small immutable pose,
+                # state, key and bookkeeping record; no pair/tangent is cached.
+                cache[key]=(pose,history,budget.point_paths-paths0,
+                            budget.certified_intervals-intervals0)
+                cache.move_to_end(key)
+                while len(cache)>capacity:cache.popitem(last=False)
+        else:
+            pose,history,paths,intervals=saved
+            cache.move_to_end(key)
+            # Resource and certificate diagnostics retain the represented path
+            # count even when its immutable prefix is reused.
+            for _ in range(paths):budget.consume()
+            budget.certified_intervals+=intervals
         last=None
-        for segment in self.segments:
-            budget.consume()
-            orientation=certify_station_orientation_path(pair.source,pose,segment.translations,segment.angular,
-                segment.shell_increment,maximum_intervals=maximum_intervals)
-            value=pair.evaluate_path(pose,history,segment.translations,segment.angular,
-                segment.shell_increment,maximum_intervals=maximum_intervals)
-            budget.certified_intervals+=orientation+value.certified_intervals
-            pose=value.configuration;last=value.contribution;history=last.trial.candidate_state
+        if self.segments:
+            segment=self.segments[-1]
+            pose,last,history=self._replay_increment(pair,pose,history,segment.translations,
+                segment.angular,segment.shell_increment,budget,maximum_intervals)
         return NativeSurfaceHistoryQuery(pair,pose,history,last)
 
     @classmethod

@@ -229,10 +229,22 @@ production_control_reaction = (
     production_internal[list(control_dofs)]-external[list(control_dofs)]
     +production_contact.force[list(control_dofs)])
 reaction_scale = max(float(np.linalg.norm(production_control_reaction)), 1e-10)
+# Attribute only this checkout, never an enclosing development worktree.
+# Exported/installed sources retain their file hashes without inventing a SHA.
+def _checkout_commit(project_root):
+    try:
+        top = subprocess.check_output(("git", "rev-parse", "--show-toplevel"),
+            cwd=project_root, text=True, stderr=subprocess.DEVNULL).strip()
+        if Path(top).resolve() != project_root.resolve():
+            return None
+        return subprocess.check_output(("git", "rev-parse", "HEAD"),
+            cwd=project_root, text=True, stderr=subprocess.DEVNULL).strip()
+    except (OSError, subprocess.CalledProcessError):
+        return None
+source_commit = _checkout_commit(Path(__file__).resolve().parents[2])
 record = {
     "status": "development_independent_contact_nonlinear_kkt",
-    "source_commit": subprocess.check_output(("git", "rev-parse", "HEAD"),
-                                              text=True).strip(),
+    "source_commit": source_commit,
     "command": "python docs/d1_review_support/d1_two_body_nonlinear_kkt_compare.py",
     "saved_source_sha256": hashlib.sha256(saved_bytes).hexdigest(),
     "current_skin_oracle_source_sha256": hashlib.sha256(Path(
