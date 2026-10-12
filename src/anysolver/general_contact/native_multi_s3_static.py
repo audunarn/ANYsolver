@@ -281,6 +281,7 @@ class NativeRetainedMultiS3Analysis:
         self._contact_reuse_entry = None
         self._assembly_reuse_enabled = False
         self._assembly_reuse_entry = None
+        self._construction_contact_entry = None
         self.curved_trial_failures=[]
         initial = self.context.initial
         u = np.zeros(n_shell)
@@ -291,6 +292,12 @@ class NativeRetainedMultiS3Analysis:
             if r.contact.minimum_gap_m < -256*np.finfo(float).eps*scale:
                 raise ValueError(p.name+': unresolved initial native/S3 penetration')
         self.initial = NativeMultiS3Accepted(initial.mechanical, initial.histories, _readonly(u), 0, first)
+        if self._fibre_mode and self._curved_mode:
+            # The construction preflight already evaluated this exact pose;
+            # the first candidate assembly reuses it under the unchanged
+            # key/intactness validation instead of duplicating that work.
+            self._construction_contact_entry = (self._contact_cache_key(initial.mechanical, u),
+                first, _candidate_work_signature(first))
 
     def _shell_contract(self):
         model = self.shell_model
@@ -383,8 +390,7 @@ class NativeRetainedMultiS3Analysis:
                 nodes = self.context.nodes[i]
                 p.work._configuration(mechanical.positions[nodes], mechanical.position_low[nodes],
                     mechanical.cell_rotations[i], displacement)
-            key = sha(dict(positions=mechanical.positions, low=mechanical.position_low,
-                rotations=mechanical.cell_rotations, shell=displacement))
+            key = self._contact_cache_key(mechanical, displacement)
             entry = self._contact_reuse_entry
             if entry is not None and key == entry[0]:
                 try:
@@ -428,6 +434,10 @@ class NativeRetainedMultiS3Analysis:
                     array.setflags(write=False)
             self._contact_reuse_entry = key, result, _candidate_work_signature(result)
         return result
+
+    def _contact_cache_key(self, mechanical, displacement):
+        return sha(dict(positions=mechanical.positions, low=mechanical.position_low,
+            rotations=mechanical.cell_rotations, shell=displacement))
 
     def _contact_admissible(self, result):
         return all(r.contact.minimum_gap_m >= -p.gap_tolerance_m for p, r in result.pairs)
@@ -663,7 +673,9 @@ class NativeRetainedMultiS3Analysis:
         if self._fibre_mode:self.context.activate_cancellation(cancellation_token)
         self._contact_reuse_enabled = self._fibre_mode and self._curved_mode
         self._assembly_reuse_enabled = self._contact_reuse_enabled
-        self._contact_reuse_entry = None
+        # A candidate context starts from the construction evaluation of
+        # the initial pose; every other entry was cleared at context end.
+        self._contact_reuse_entry = self._construction_contact_entry
         self._assembly_reuse_entry = None
 
     def _end_candidate_context(self):

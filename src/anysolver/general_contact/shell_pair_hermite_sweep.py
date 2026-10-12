@@ -7,7 +7,7 @@ as exact rationals; upstream work-map arithmetic is outside this contract.
 
 from dataclasses import dataclass
 from fractions import Fraction
-from math import comb, inf, nextafter
+from math import comb, gcd, inf, nextafter
 from numbers import Integral
 
 import numpy as np
@@ -88,12 +88,38 @@ def _nodes(first, last, rate0, rate1, h):
 
 
 def _split(coefficients):
-    left, right = [coefficients[0]], [coefficients[-1]]
-    row = coefficients
+    """Exact midpoint de Casteljau subdivision of a Bernstein polynomial.
+
+    Fraction coefficients are aligned at a common denominator so the averaging
+    pyramid stays in exact integer arithmetic with power-of-two denominators;
+    only the child outputs are canonicalized back to Fractions. Non-Fraction
+    coefficients keep the original generic arithmetic, including empty,
+    singleton and mixed-type behavior. The endpoint prefetch keeps the
+    original unsupported-input refusal before any iteration.
+    """
+    first, last = coefficients[0], coefficients[-1]
+    den = 1
+    for c in coefficients:
+        if type(c) is not Fraction:
+            left, right = [first], [last]
+            row = coefficients
+            while len(row) > 1:
+                row = tuple((x+y)/2 for x, y in zip(row, row[1:]))
+                left.append(row[0])
+                right.append(row[-1])
+            return tuple(left), tuple(reversed(right))
+        cd = c.denominator
+        if cd != 1:
+            den = den // gcd(den, cd) * cd
+    row = [c.numerator * (den // c.denominator) for c in coefficients]
+    left = [first]
+    right = [last]
+    d = den
     while len(row) > 1:
-        row = tuple((x+y)/2 for x, y in zip(row, row[1:]))
-        left.append(row[0])
-        right.append(row[-1])
+        row = [x+y for x, y in zip(row, row[1:])]
+        d *= 2
+        left.append(Fraction(row[0], d))
+        right.append(Fraction(row[-1], d))
     return tuple(left), tuple(reversed(right))
 
 

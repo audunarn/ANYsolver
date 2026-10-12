@@ -8,6 +8,17 @@ import pytest
 from docs.d1_review_support.d1_radial_spatial_assessment import assess_saved_radial_spatial
 
 
+def _saved_pose_record_bytes(raw):
+    """The saved-pose record form the frozen evidence binds, whatever the
+    checkout line endings are."""
+    return raw.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
+
+
+def _saved_pose_record_sha256(path):
+    """Exact saved-pose record binding, independent of checkout line endings."""
+    return hashlib.sha256(_saved_pose_record_bytes(path.read_bytes())).hexdigest()
+
+
 def records():
     support = Path(__file__).resolve().parents[1]/"docs/d1_review_support"
     paths = [support/name for name in (
@@ -15,7 +26,17 @@ def records():
         "d1_radial_saved_physical_bins_v10_20260930.json",
         "d1_radial_saved_wrench_v9_20260930.json",
         "d1_radial_linear_saved_assessment_v1_20260930.json")]
-    return [json.loads(p.read_text(encoding="utf-8")) for p in paths], hashlib.sha256(paths[0].read_bytes()).hexdigest()
+    return [json.loads(p.read_text(encoding="utf-8")) for p in paths], _saved_pose_record_sha256(paths[0])
+
+
+def test_saved_pose_identity_binds_record_content_not_checkout_line_endings():
+    data, identity = records()
+    support = Path(__file__).resolve().parents[1]/"docs/d1_review_support"
+    raw = (support/"d1_radial_nonmatching_swept_search_coupled_v8_20260930.json").read_bytes()
+    flipped = raw.replace(b"\r\n", b"\n") if b"\r\n" in raw else raw.replace(b"\n", b"\r\n")
+    assert hashlib.sha256(_saved_pose_record_bytes(flipped)).hexdigest() == identity
+    assert hashlib.sha256(_saved_pose_record_bytes(raw)).hexdigest() == identity
+    assert all(record["input_sha256"] == identity for record in data[1:3])
 
 
 def test_residual_compliance_does_not_replace_reference_uncertainty():
