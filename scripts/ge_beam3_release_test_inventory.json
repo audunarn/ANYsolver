@@ -21,7 +21,8 @@
     "tests/test_ge_beam3_public_workflows.py",
     "tests/test_ge_beam3_shell_joint_state.py",
     "tests/test_ge_beam3_shell_joint_trial.py",
-    "tests/test_ge_beam3_variational_shell.py"
+    "tests/test_ge_beam3_variational_shell.py",
+    "tests/test_ge_beam3_deterministic_reduction.py"
   ],
   "extended": [
     "tests/test_ge_beam3_native_connected_bending.py",
