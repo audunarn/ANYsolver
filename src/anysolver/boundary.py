@@ -906,6 +906,43 @@ else:
     _WARNING_IMPLEMENTATION = warnings
 
 
+class _InstanceDictLayoutProbe:
+    pass
+
+
+def _shared_instance_dict_descriptor() -> Any:
+    """CPython 3.15's one ``__dict__`` getset descriptor shared by all classes.
+
+    Up to 3.14 each class with an instance dict gets its own descriptor, owned
+    (``__objclass__``) by that class. From 3.15 every class stores the same
+    descriptor, owned by ``object``. Captured once at import from a fresh class;
+    None where the interpreter does not use the shared layout.
+    """
+    if sys.version_info < (3, 15):
+        return None
+    descriptor = type.__getattribute__(_InstanceDictLayoutProbe, "__dict__").get("__dict__")
+    if (type(descriptor) is not types.GetSetDescriptorType
+            or descriptor.__objclass__ is not object
+            or descriptor.__name__ != "__dict__"):
+        return None
+    return descriptor
+
+
+_SHARED_INSTANCE_DICT = _shared_instance_dict_descriptor()
+
+
+def _builtin_instance_dict_descriptor(descriptor: Any, owner: type) -> bool:
+    """True for the interpreter's own ``__dict__`` descriptor of ``owner``.
+
+    That is the per-class getset descriptor owned by ``owner`` (3.14 and
+    earlier), or exactly the shared descriptor captured at import (3.15).
+    """
+    return (type(descriptor) is types.GetSetDescriptorType
+            and descriptor.__name__ == "__dict__"
+            and (descriptor.__objclass__ is owner
+                 or (_SHARED_INSTANCE_DICT is not None and descriptor is _SHARED_INSTANCE_DICT)))
+
+
 def _canonical_python_function(function: Any, module: Any, name: str) -> bool:
     # Python 3.14's warnings facade re-exports the stdlib implementation.
     if module is warnings:
@@ -1067,10 +1104,8 @@ def _numpy_error_routes_are_builtin() -> bool:
             current = vars(owner)
             dictionary = current.get("__dict__", _MISSING)
             if (type(owner) is not type or "log" in current
-                    or (dictionary is not _MISSING and
-                        (type(dictionary) is not types.GetSetDescriptorType
-                         or dictionary.__objclass__ is not owner
-                         or dictionary.__name__ != "__dict__"))
+                    or (dictionary is not _MISSING
+                        and not _builtin_instance_dict_descriptor(dictionary, owner))
                     or type.__getattribute__(owner, "__mro__") != mro
                     or len(current) != len(namespace)
                     or any(current.get(name, _MISSING) is not member or
