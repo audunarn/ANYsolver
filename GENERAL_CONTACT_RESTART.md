@@ -1,3 +1,20 @@
+# Contact CI2 restart - 12 October 2026
+
+Branch codex/contact-ci2; production checkpoint 6e055f0b0af9da487a34eb26677f99444e46a392, based on main 9e4b0f68489357ff4a6b1415df61dd48fdd78da9.
+Read docs/GENERAL_CONTACT_CI2_STATUS_20261012.md and .development/contact-ci2-20261012/COMPLETION_REPORT.md/.json. Local evidence is retained uncommitted; source/test repairs are committed. No pushes or GitHub changes.
+
+All owned checks are terminal. Original nine nodes pass focused local default checks, but CI is not green:
+- Haswell/Python 3.14.7 reproduces the exact hosted KKT control-reaction discrepancy 1.4948506139016305e-5 > 1e-6. Keep it red, along with preserved six Haswell physical replay failures; no tolerance, oracle, checkpoint or physical record changes.
+- Candidate Linux 5/2 retains the original clipped-contact transient test and reaches the unchanged shared 1200 s limit (1205.6634s supervised). Current stack is in S3Jet2 work/evaluation. Exact Fraction subdivision repair is verified but does not close this timeout.
+- Other reproduced shared/native/prepared/gauge failures are listed separately. Main and previous worktree source remains untouched.
+
+Use the unmodified portable CI arguments and verify actual selected modules: file-size-based partitioning moved KKT to 2/0 and radial to 2/2 in this candidate. Corrected isolated installed environments preserve dependencies when child tests remove PYTHONPATH. Most full groups used Python 3.12; the final KKT discriminator additionally matches hosted Windows minor 3.14. Raw baseline groups using private PYTHONPATH targets have documented installed-child limitations.
+
+Next outcome: resolve the complete clipped-transient cost under the existing gate, with measured preparation/evaluation reuse; independently diagnose the demonstrated KKT/replay dispatch sensitivity. Do not force a BLAS implementation, drop physical fields, relax tolerances, change reference inputs or expand consumed qualification authority. Keep runner architecture with its owner. No new workers/jobs are running; do not repeat passed checks merely to reconstruct evidence.
+The previous restart history follows byte-for-byte.
+
+---
+
 ## 2026-10-12 contact CI repair — local handoff, CI remains red
 
 Worktree `C:/Github/ANYsolver/.worktrees/contact-ci`; branch `codex/contact-ci`, base `b382a3bb43773cfb8c706fe0a7f3ad71ee6c513e`. Implementation commits: `53fb46c5` and `615d5068`. No push, PR, workflow run, merge, main/sibling edit or shared-backend change.
