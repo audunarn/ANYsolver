@@ -20,6 +20,10 @@ def prior_prerequisite_evidence():
 
 @pytest.fixture(scope='module')
 def assembled():
+    if 'ANYSOLVER_WEAK_RAW' not in os.environ:
+        pytest.skip('ANYSOLVER_WEAK_RAW raw-array output binding absent; '
+            'the weak-continuum reference fixture writes its raw arrays '
+            'only to the designated bound location')
     model=tool.specimen();k,elements=tool.assemble_body(model)
     cs,_=tool.constraints(model,'strong');cw,_=tool.constraints(model,'weak')
     np.savez(Path(os.environ['ANYSOLVER_WEAK_RAW'],'operators-v1.npz'),

@@ -15,6 +15,9 @@ class Controls(unittest.TestCase):
     def test_deterministic_load_support(self):
         self.assertEqual(s.inventory(5000)['loaded_dof'],15752);self.assertEqual(s.inventory(5000)['fixed_dofs'],306)
         self.assertEqual(s.CONFIGS[10000]['line_rows'],list(range(4,100,10)))
+    @unittest.skipUnless(s.FULL.exists(),
+        'local assembly-series full fixture evidence '
+        '(docs/agent_plans/development/r8-b2-installed-batch-persistence-20261010) is absent')
     def test_frozen_full_identity(self):
         import ast,json
         self.assertEqual(s.sha(s.FULL),s.FULL_SHA)
@@ -72,12 +75,38 @@ class Controls(unittest.TestCase):
         self.assertEqual(s.cap_obstruction(2500)['scalar_objects_lower_bound'],0)
         for size in s.CONFIGS:self.assertFalse(s.cap_obstruction(size)['executable'])
         with self.assertRaises(RuntimeError):s.installed_samples(None,{},2500,[1])
+        if not ((s.BASE/'PREPARED.json').exists() and (s.OUT/'EXECUTABLE_PREPARED.json').exists() and (s.OUT/'ROOT_DEVELOPMENT_AUTHORITY.json').exists()):
+            self.skipTest('local assembly-series authority evidence '
+                '(docs/agent_plans/development/execution-v9) is absent; '
+                'tampered-authority refusals require the exact '
+                'frozen grant bytes')
         import json,copy
         a=json.loads((s.OUT/'ROOT_DEVELOPMENT_AUTHORITY.json').read_text());p=json.loads((s.OUT/'EXECUTABLE_PREPARED.json').read_text())
-        p['predecessor_prepared_sha256']=s.sha(s.BASE/'PREPARED.json');a['slot_status']='TRANSFERRED';s.authority_gate(a,p,'low')
-        for key,value in [('tree_rss_limit_bytes',4*1024**3),('input_prepared_sha256','wrong'),('jit_disabled',False)]:
-            changed=copy.deepcopy(a);changed[key]=value
-            with self.assertRaises(RuntimeError):s.authority_gate(changed,p,'low')
+        p['predecessor_prepared_sha256']=s.sha(s.BASE/'PREPARED.json');a['slot_status']='TRANSFERRED'
+        def tampered_refuses(a,p):
+            for key,value in [('tree_rss_limit_bytes',4*1024**3),('input_prepared_sha256','wrong'),('jit_disabled',False)]:
+                changed=copy.deepcopy(a);changed[key]=value
+                with self.assertRaises(RuntimeError):s.authority_gate(changed,p,'low')
+        if Path(a['package_site']).resolve()==Path(p['package_site']).resolve()==(s.OUT/'package/site').resolve():
+            s.authority_gate(a,p,'low');tampered_refuses(a,p)
+        else:
+            # Relocated evidence: the exact package-site gate refuses. Relocation
+            # does not revive an executable authority or admit a different site.
+            with self.assertRaises(RuntimeError):s.authority_gate(a,p,'low')
+            # Keep the contract controls meaningful through a synthetic
+            # compatible current binding; the frozen gate semantics stay exact.
+            import hashlib
+            from tempfile import TemporaryDirectory
+            from unittest.mock import patch
+            with TemporaryDirectory() as name:
+                temporary=Path(name);grant=dict(a);grant['package_site']=str(temporary/'package/site')
+                frozen=json.dumps(grant,sort_keys=True).encode()
+                sp=dict(p);sp.update(package_site=grant['package_site'],
+                    frozen_grant_sha256=hashlib.sha256(frozen).hexdigest(),
+                    authority_contract_sha256=s.authority_contract_sha(grant))
+                (temporary/'ROOT_DEVELOPMENT_AUTHORITY.json').write_bytes(frozen)
+                with patch.object(s,'OUT',temporary):
+                    s.authority_gate(grant,sp,'low');tampered_refuses(grant,sp)
     def test_ratio_and_five_samples(self):
         groups={size:[dict(physical_pass=True,status='PASS',owner_close=dict(private_mesh_released=True,private_elements_remaining=0,factor_handle_released=True),assembly_seconds=n,selected_prefactor_bytes=n*100) for _ in range(5)] for size,n in ((2500,1.),(5000,2.),(10000,4.))}
         self.assertTrue(s.summarize(groups)['screen_pass']);groups[10000][0]['physical_pass']=False
@@ -173,6 +202,11 @@ class LauncherControls(unittest.TestCase):
         with self.assertRaises(RuntimeError):s.record_target('../../bin/fixture.exe','other.dist-info/RECORD',launchers)
         with self.assertRaises(RuntimeError):s.record_target('bin/fixture.exe','other.dist-info/RECORD',launchers)
     def test_untransferred_slot_refuses(self):
+        if not ((s.OUT/'EXECUTABLE_PREPARED.json').exists() and (s.OUT/'ROOT_DEVELOPMENT_AUTHORITY.json').exists()):
+            self.skipTest('local assembly-series authority evidence '
+                '(docs/agent_plans/development/execution-v9) is absent; '
+                'the untransferred-slot refusal requires the exact '
+                'frozen grant bytes')
         from unittest.mock import patch
         frozen=(s.OUT/'ROOT_DEVELOPMENT_AUTHORITY.json').read_bytes()
         p=json.loads((s.OUT/'EXECUTABLE_PREPARED.json').read_text())

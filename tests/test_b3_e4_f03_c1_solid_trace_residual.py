@@ -9,6 +9,16 @@ from scripts.b3_e4_f03_ccx_six_channel_preflight import _element_domain_nodes
 from scripts.b3_e4_f03_solid_bond_pose_projection import _read_deck_nodes
 
 
+import pytest
+
+
+pytestmark = pytest.mark.skipif(
+    not any((SOURCE / "tip_mx").glob("*.inp")),
+    reason="local detached-port solid trace evidence "
+    "(.qualification/b3-ge-e4-pl/f03-c1-detached-port-dev-20260926-v2) is absent")
+
+
+
 def test_local_plate_director_fit_preserves_representable_motion():
     deck, = (SOURCE / "tip_mx").glob("*.inp")
     coords = _read_deck_nodes(deck)

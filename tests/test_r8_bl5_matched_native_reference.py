@@ -20,6 +20,8 @@ def owner():
 
 
 def test_actual_installed_runtime():
+    if 'ANYSOLVER_MATCHED_INSTALLED' not in os.environ:
+        pytest.skip('ANYSOLVER_MATCHED_INSTALLED installed-runtime binding absent')
     import anysolver, numba
     from threadpoolctl import threadpool_info
     expected=Path(os.environ['ANYSOLVER_MATCHED_INSTALLED']).resolve()
@@ -191,6 +193,8 @@ def test_finite_common_rigid_pose_and_actual_spatial_chart_derivatives(owner):
         assert max(errors)<=1e-6,errors
 
 
+@pytest.mark.skipif('ANYSOLVER_MATCHED_RESULT' not in os.environ,
+    reason='ANYSOLVER_MATCHED_RESULT installed calibration binding absent')
 def test_one_virgin_public_reference_linear_calibration(owner):
     Path(os.environ['ANYSOLVER_MATCHED_RESULT']).with_name('input-v2.json').write_text(json.dumps(tool.input_record(owner._definition),indent=2)+'\n')
     result=tool.calibration(owner)

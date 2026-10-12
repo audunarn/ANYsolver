@@ -8,6 +8,8 @@ from anysolver._stiffened_shell_l1_supported_work_experimental import SupportedS
 
 def test_effective_bounded_numerical_runtime():
     import os
+    if "NUMBA_DISABLE_JIT" not in os.environ:
+        pytest.skip("explicit NUMBA_DISABLE_JIT runtime binding absent")
     import psutil
     from threadpoolctl import threadpool_info
     assert psutil.Process().cpu_affinity() == [0]

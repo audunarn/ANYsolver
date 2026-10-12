@@ -388,7 +388,16 @@ def test_beam_rich_recovery_counts_selected_work_and_refuses_omission():
 
 def test_beam_rich_frozen_registration_precedes_budget_spend(tmp_path, monkeypatch):
     import json
-    original = json.loads(runner.INSTALLED_BEAM_RICH_REGISTRATION.read_text())
+    frozen = runner.INSTALLED_BEAM_RICH_REGISTRATION
+    if not frozen.exists():
+        pytest.skip(
+            "exact historical frozen beam-rich registration bytes are absent "
+            "from this evidence-free source export: " + str(frozen) + " "
+            "(docs/agent_plans/development/r8-b2-beam-rich-20261009/"
+            "registration.json); the frozen-registration refusal contract "
+            "exercises only the exact historical artifact, so a supplied "
+            "corrupted or changed registration still runs and refuses")
+    original = json.loads(frozen.read_text())
     registration = tmp_path / "registration.json"
     monkeypatch.setattr(runner, "INSTALLED_BEAM_RICH_REGISTRATION", registration)
     identity = {"installed_wheel_sha256": runner.INSTALLED_REFINEMENT_WHEEL_SHA256}
@@ -397,7 +406,16 @@ def test_beam_rich_frozen_registration_precedes_budget_spend(tmp_path, monkeypat
         runner.INSTALLED_BEAM_RICH_BUDGET, runner.INSTALLED_BEAM_RICH_OUT)
     with pytest.raises(FileNotFoundError):
         runner.verify_beam_rich_registration(*args)
+    # The restored registration is a historical frozen artifact: a runner
+    # identity frozen against an earlier runner must not authorize the
+    # current request's budget spend.
     registration.write_text(json.dumps(original))
+    if original["candidate"]["runner_sha256"] != runner.digest(runner.__file__):
+        with pytest.raises(ValueError, match="frozen registration"):
+            runner.verify_beam_rich_registration(*args)
+    current = json.loads(json.dumps(original))
+    current["candidate"]["runner_sha256"] = runner.digest(runner.__file__)
+    registration.write_text(json.dumps(current))
     assert runner.verify_beam_rich_registration(*args)["registration_sha256"] == runner.digest(registration)
     for key, value in (("runner_sha256", "0"*64), ("wheel_sha256", "0"*64)):
         changed = json.loads(json.dumps(original))

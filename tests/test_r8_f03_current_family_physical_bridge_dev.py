@@ -1,5 +1,6 @@
 """Manufactured/saved binding controls; no real family compile or equilibrium."""
 import json
+from pathlib import Path
 from types import SimpleNamespace as NS
 import numpy as np
 import pytest
@@ -232,16 +233,51 @@ def test_regional_p0_row_order_and_refusals(cells):
     with pytest.raises(ValueError,match='endpoints'):p0_region_masks(bad,cells)
     with pytest.raises(ValueError,match='finite regional'):p0_regional_actions(np.zeros((2,5*supports)),np.zeros(5*supports),np.zeros(5*supports),m)
 
-def historical16_record():
-    from pathlib import Path
-    p=Path(__file__).resolve().parents[1]/'.development/r8-f03-sparse-signed-20261009/current16-v1/result.json'
-    assert sha(p)=='a940525e3652e3b706893bc43fd9a2fbda8ef04b1ea752532e2d1905dc883515'
-    return json.loads(p.read_text())
+CURRENT16_ARCHIVE=Path(__file__).resolve().parents[1]/'docs/agent_plans/development/r8-f03-sparse-signed-20261009/raw-current16-v1.zip'
+CURRENT16_ARCHIVE_SHA='4cd598d482a0bd6e6eb4f67fccfe99bb2c8380c547a9e3392c134da86048f8e2'
+CURRENT16_MEMBER='.development/r8-f03-sparse-signed-20261009/current16-v1/result.json'
+CURRENT16_MEMBER_SHA='a940525e3652e3b706893bc43fd9a2fbda8ef04b1ea752532e2d1905dc883515'
 
-def test_saved_record_schema_real16_summary_cannot_mask_metrics():
+def historical16_record(tmp_path,archive=None):
+    """Read-only current16 reader through a pytest tmp fixture. The protected
+    archive and the absent .development member are never rewritten; member
+    metadata is verified against the committed archive manifest, not invented.
+    An absent archive skips only saved-data controls; an existing bad archive
+    or member path fails."""
+    import hashlib,zipfile
+    location=Path(archive) if archive is not None else CURRENT16_ARCHIVE
+    if not location.exists():
+        pytest.skip('current16 archive absent: %s'%location)
+    assert sha(location)==CURRENT16_ARCHIVE_SHA,'current16 archive identity drift'
+    manifest=json.loads((Path(__file__).resolve().parents[1]/'docs/agent_plans/development/r8-f03-sparse-signed-20261009/archive-members-current16-v1.json').read_text())
+    with zipfile.ZipFile(location) as z:
+        names=set(z.namelist())
+        assert names==set(manifest['members']) and manifest['count']==len(names),'current16 archive member set drift'
+        for name,digest in manifest['members'].items():
+            assert hashlib.sha256(z.read(name)).hexdigest()==digest,'current16 archive member drift: %s'%name
+        z.extract(CURRENT16_MEMBER,tmp_path)
+    record=tmp_path/CURRENT16_MEMBER
+    assert sha(record)==CURRENT16_MEMBER_SHA,'current16 record identity drift'
+    return json.loads(record.read_text())
+
+def test_current16_reader_skip_and_bad_archive_contract(tmp_path):
+    # Absent archive skips only saved-data controls; an existing bad archive
+    # fails; the protected archive is never rewritten.
+    with pytest.raises(pytest.skip.Exception,match='current16 archive absent'):
+        historical16_record(tmp_path,tmp_path/'absent-raw-current16-v1.zip')
+    bad=tmp_path/'bad-raw-current16-v1.zip';bad.write_bytes(b'not the exact current16 archive')
+    with pytest.raises(AssertionError,match='archive identity drift'):
+        historical16_record(tmp_path,bad)
+    if not CURRENT16_ARCHIVE.exists():
+        pytest.skip('current16 archive absent; protected-read check is saved-data only')
+    before=sha(CURRENT16_ARCHIVE)
+    historical16_record(tmp_path)
+    assert sha(CURRENT16_ARCHIVE)==before==CURRENT16_ARCHIVE_SHA
+
+def test_saved_record_schema_real16_summary_cannot_mask_metrics(tmp_path):
     from copy import deepcopy
     from scripts.r8_f03_current_family_physical_bridge_dev import admit_saved_record
-    r=historical16_record();assert 'physical_parity_pass' not in r
+    r=historical16_record(tmp_path);assert 'physical_parity_pass' not in r
     assert admit_saved_record(r,16)
     good=deepcopy(r);good['physical_parity_pass']=True;assert admit_saved_record(good,16)
     bad=deepcopy(good);bad['owner_metrics']['equilibrium']=1.1e-8
@@ -253,9 +289,9 @@ def test_saved_record_schema_real16_summary_cannot_mask_metrics():
         with pytest.raises(ValueError,match='summary'):admit_saved_record(bad,16)
 
 @pytest.mark.parametrize('mode',('parity_nan','metric_inf','metric_nan','negative_metric','missing_metric','missing_group','missing_role','invalid_public','wrong_load','wrong_space','wrong_domain','wrong_node'))
-def test_saved_record_schema_missing_corrupt_nonfinite_refuses(mode):
+def test_saved_record_schema_missing_corrupt_nonfinite_refuses(tmp_path,mode):
     from scripts.r8_f03_current_family_physical_bridge_dev import admit_saved_record
-    r=historical16_record();r['physical_parity_pass']=True
+    r=historical16_record(tmp_path);r['physical_parity_pass']=True
     if mode=='parity_nan':r['parity']['shell']=float('nan')
     elif mode=='metric_inf':r['reduced_metrics']['weak_gap']=float('inf')
     elif mode=='metric_nan':r['owner_metrics']['compatible_work_relative']=float('nan')
@@ -272,7 +308,7 @@ def test_saved_record_schema_missing_corrupt_nonfinite_refuses(mode):
 
 def test_saved_record_schema_real16_actual_caller_reaches_array_boundary(tmp_path,monkeypatch):
     from scripts import r8_f03_current_family_physical_bridge_dev as module
-    records=historical16_record();directory=tmp_path/'native';directory.mkdir()
+    records=historical16_record(tmp_path);directory=tmp_path/'native';directory.mkdir()
     (directory/'result.json').write_text(json.dumps(records))
     for name in CONSUMED:
         if name!='result.json':(directory/name).write_bytes(b'inert-unloaded-control')

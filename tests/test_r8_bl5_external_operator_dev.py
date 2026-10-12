@@ -14,6 +14,28 @@ operator = importlib.util.module_from_spec(MODULE_SPEC)
 MODULE_SPEC.loader.exec_module(operator)
 
 
+TOY_RAW = SOURCE.parents[1] / ".development/r8-bl5-opensees-matrix-api-20261009-v1/raw.json"
+FY_RAW = (SOURCE.parents[1] / "docs/agent_plans/development"
+          / "r8-bl5-external-operator-20261009/fy-fullgeneral-v3/raw.json")
+skip_without_toy_raw = unittest.skipUnless(
+    TOY_RAW.exists(),
+    "local OpenSees toy fullgeneral capture evidence "
+    "(.development/r8-bl5-opensees-matrix-api-20261009-v1/raw.json) is absent")
+skip_without_fy_raw = unittest.skipUnless(
+    FY_RAW.exists(),
+    "local fy fullgeneral capture evidence "
+    "(docs/agent_plans/development/r8-bl5-external-operator-20261009/"
+    "fy-fullgeneral-v3/raw.json) is absent")
+
+
+def saved_three_case_helper_binding_host_parsable():
+    """The saved helper_sources binding must be parsable on this host."""
+    summary = json.loads((operator.FIXTURE / "fy" / "summary.json").read_text())
+    bound = summary.get("helper_sources", {})
+    return all(Path(key).name != key or ("\\" not in key and "/" not in key)
+               for key in bound)
+
+
 def small_bundle():
     spec = {"dof_order": [(1, 1), (2, 1)], "fixed_dofs": [(1, 1)],
             "rows": [[1, 1, 1.0, 2, 1, -1.0]], "physical_dimension": 2,
@@ -67,6 +89,7 @@ def saved_toy_bundle():
 
 
 class CaptureIdentityTests(unittest.TestCase):
+    @skip_without_toy_raw
     def test_saved_toy_fullgeneral_permutation_and_analytic_k(self):
         spec, capture = saved_toy_bundle()
         raw = capture
@@ -83,6 +106,7 @@ class CaptureIdentityTests(unittest.TestCase):
         self.assertEqual([sum(x*y for x, y in zip(row, [0.0, 0.05, 0.05])) for row in k],
                          [-10.0, 5.0, 5.0])
 
+    @skip_without_toy_raw
     def test_permuted_capture_refuses_wrong_map_and_rows(self):
         spec, good = saved_toy_bundle()
         bads = []
@@ -109,6 +133,7 @@ class CaptureIdentityTests(unittest.TestCase):
             with self.subTest(mutation=i), self.assertRaises(operator.IdentityError):
                 operator.validate_fullgeneral_capture(spec, bad)
 
+    @skip_without_toy_raw
     def test_mp_dependent_coefficient_normalization(self):
         spec, capture = saved_toy_bundle()
         spec["rows"] = [[2, 1, 0.5, 3, 1, -0.5]]
@@ -119,6 +144,7 @@ class CaptureIdentityTests(unittest.TestCase):
         with self.assertRaises(operator.IdentityError):
             operator.validate_fullgeneral_capture(bad, capture)
 
+    @skip_without_fy_raw
     def test_saved_fy_fullgeneral_capture_maps_all_constraints(self):
         spec = operator.fixture_preflight()
         raw = json.loads((SOURCE.parents[1] / "docs/agent_plans/development"
@@ -148,6 +174,14 @@ class CaptureIdentityTests(unittest.TestCase):
                 operator.validate_physical_force_assembly(a, b, c, dofs)
 
     def test_saved_three_case_preflight(self):
+        if not (operator.FIXTURE / "fy" / "summary.json").exists():
+            self.skipTest("saved three-case fixture evidence "
+                "(docs/agent_plans/development/r8-bl5-matched-comparison-20261001/"
+                "refinement-v1-raw/external/n16) is absent")
+        if not saved_three_case_helper_binding_host_parsable():
+            self.skipTest("saved three-case helper_sources record Windows "
+                "path strings whose basenames this host cannot recover; the "
+                "source-bound preflight refuses them here")
         spec = operator.fixture_preflight()
         self.assertEqual((spec["physical_dimension"], spec["sp_dimension"],
                           spec["mp_dimension"], spec["kkt_dimension"]),

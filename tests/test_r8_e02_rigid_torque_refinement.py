@@ -63,7 +63,14 @@ def test_signed_cancellation_does_not_erase_absolute_variation_or_extrema():
     assert r['maximum']==dict(x_m=.07500000000000001,value_rad=3.)
 
 def test_saved_d3_pair_and_same_common_stencils():
-    coarse=json.loads((ROOT/'.development/e02-rigid-torque-fields-20261009-v1/collect1/fields/native-fields.json').read_text())
+    coarse_path=ROOT/'.development/e02-rigid-torque-fields-20261009-v1/collect1/fields/native-fields.json'
+    saved_root=ROOT/'.development/e02-rigid-precision-20261009-v1/numerical-attempt3/static-fixed-root-elimination'
+    if not (coarse_path.exists() and all((saved_root/name).exists()
+            for name in ('reference.frd','reference.inp','candidate.json'))):
+        pytest.skip('saved e02 rigid-torque/precision field evidence '
+            '(.development/e02-rigid-torque-fields-20261009-v1 and '
+            '.development/e02-rigid-precision-20261009-v1) is absent')
+    coarse=json.loads(coarse_path.read_text())
     f=fixture80();cq=np.array(coarse['shell_coordinates']).reshape(17,41,6).transpose(1,0,2)
     for j in range(17):
         for i in range(41):f['shell_coordinates'][2*j*81+2*i]=cq[i,j].tolist()

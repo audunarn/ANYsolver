@@ -71,6 +71,13 @@ class FinitePadQpTrace:
                     poly *= np.poly1d([1., -b/self.p])/((a-b)/self.p)
             self._basis.append((poly, np.polyder(poly)))
         self._roots, self._weights = np.polynomial.legendre.leggauss(self.p+2)
+        # Invariant local node incidence of every cell, hoisted once here so
+        # the quadrature loops below never rebuild it per Gauss point.
+        self._cell_indices = tuple(
+            tuple(np.array([(i*self.p+a)*self.ny+k*self.p+b
+                for a in range(self.p+1) for b in range(self.p+1)],
+                dtype=int) for k in range(len(self.y)-1))
+            for i in range(len(self.x)-1))
         self._events = self._make_events()
 
     def _make_events(self):
@@ -111,6 +118,14 @@ class FinitePadQpTrace:
             if r > l:
                 yield i, l, r
 
+    def _gauss_basis(self, edges, i, low, high):
+        # Vectorized basis values at the Gauss points of one clipped span;
+        # the pointwise _shape below stays as the independent comparator.
+        h = edges[i+1]-edges[i]
+        t = (np.array([(low+high+(high-low)*root)/2 for root in self._roots])
+             - edges[i])/h
+        return np.array([basis(t) for basis, _ in self._basis])
+
     def _shape(self, x, y, *, side="right", cell=None):
         i, k = cell if cell is not None else (
             self._host(self.x, x, side), self._host(self.y, y, "right"))
@@ -126,27 +141,52 @@ class FinitePadQpTrace:
     def _area_rows(self, low, high, bottom, top, station):
         pose = np.zeros((3, 2*self.n))
         for i, xl, xr in self._intervals(self.x, low, high):
+            bx = self._gauss_basis(self.x, i, xl, xr)
             for k, yl, yr in self._intervals(self.y, bottom, top):
+                by = self._gauss_basis(self.y, k, yl, yr)
+                ids = self._cell_indices[i][k]
+                nids = self.n+ids
                 jac = (xr-xl)*(yr-yl)/4
-                for gx, wx in zip(self._roots, self._weights):
-                    xx = (xl+xr+(xr-xl)*gx)/2
-                    for gy, wy in zip(self._roots, self._weights):
-                        yy = (yl+yr+(yr-yl)*gy)/2
-                        ids, shape, _ = self._shape(xx, yy, cell=(i, k))
+                for gx, (gxx, wx) in enumerate(zip(self._roots, self._weights)):
+                    xx = (xl+xr+(xr-xl)*gxx)/2
+                    bxx = bx[:, gx]
+                    for gy, (gyy, wy) in enumerate(zip(self._roots, self._weights)):
+                        yy = (yl+yr+(yr-yl)*gyy)/2
+                        shape = np.outer(bxx, by[:, gy]).ravel()
                         weight = jac*wx*wy
                         pose[0, ids] += weight*shape
-                        pose[1, self.n+ids] += weight*shape
+                        pose[1, nids] += weight*shape
                         pose[2, ids] -= weight*yy*shape/self.j
-                        pose[2, self.n+ids] += weight*(xx-station)*shape/self.j
+                        pose[2, nids] += weight*(xx-station)*shape/self.j
         return pose
 
     def _edge_rows(self, x, bottom, top, side):
         # x-edge integrals of u, u_x, eta*u, eta*u_x, separately by component.
         rows = np.zeros((6, 2*self.n))
-        for _, yl, yr in self._intervals(self.y, bottom, top):
-            for gy, wy in zip(self._roots, self._weights):
-                yy = (yl+yr+(yr-yl)*gy)/2
-                ids, shape, dx = self._shape(x, yy, side=side)
+        spans = list(self._intervals(self.y, bottom, top))
+        if not spans:
+            return rows
+        i = self._host(self.x, x, side)
+        hx = self.x[i+1]-self.x[i]
+        tx = (x-self.x[i])/hx
+        bx = np.array([basis(tx) for basis, _ in self._basis])
+        dbx = np.array([derivative(tx)/hx for _, derivative in self._basis])
+        for k, yl, yr in spans:
+            by = self._gauss_basis(self.y, k, yl, yr)
+            for gy, (gyy, wy) in enumerate(zip(self._roots, self._weights)):
+                yy = (yl+yr+(yr-yl)*gyy)/2
+                kh = self._host(self.y, yy, "right")
+                if kh == k:
+                    ids = self._cell_indices[i][k]
+                    byy = by[:, gy]
+                else:
+                    # A one-ulp span can round a Gauss point onto an edge;
+                    # keep the pointwise host-cell evaluation as before.
+                    ty = (yy-self.y[kh])/(self.y[kh+1]-self.y[kh])
+                    byy = np.array([basis(ty) for basis, _ in self._basis])
+                    ids = self._cell_indices[i][kh]
+                shape = np.outer(bx, byy).ravel()
+                dx = np.outer(dbx, byy).ravel()
                 weight = (yr-yl)*wy/2
                 rows[0, ids] += weight*shape
                 rows[1, self.n+ids] += weight*shape

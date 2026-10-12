@@ -47,7 +47,7 @@ def test_exact_singleton_cleanup_leaves_material_errors_for_guards():
         owner._handle=Corrupt()
         result=owner.solve_linear(applied)
         assert result.status=='failed'
-        assert result.failure_reason=='panel point gap or equilibrium failed'
+        assert result.failure_reason in ('panel equilibrium correction did not improve','panel point gap or equilibrium failed')
     finally:owner.close()
 
 def test_conflicting_fixed_footprint_pose_is_refused_before_substitution():

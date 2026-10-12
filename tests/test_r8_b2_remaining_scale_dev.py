@@ -74,10 +74,31 @@ class Controls(unittest.TestCase):
         child=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='child')
         names={n.id for n in ast.walk(child) if isinstance(n,ast.Name)}
         self.assertIn('CONTROL',names);self.assertIn('TEST',names)
-        labels=[a.value for call in ast.walk(child) if isinstance(call,ast.Call)
-            and isinstance(call.func,ast.Name) and call.func.id=='verify_installed_graph'
-            for a in call.args if isinstance(a,ast.Constant)]
-        self.assertEqual(sorted(labels),['after','before'])
+        calls=[call for call in ast.walk(child) if isinstance(call,ast.Call)
+            and isinstance(call.func,ast.Name) and call.func.id=='verify_installed_graph']
+        labels=[a.value for call in calls for a in call.args if isinstance(a,ast.Constant)]
+        self.assertEqual(sorted(labels),['after','after','before'])
+        before=[call for call in calls if call.args[1].value=='before']
+        after=[call for call in calls if call.args[1].value=='after']
+        body_col=child.body[0].col_offset
+        # One unconditional before check ahead of every phase branch.
+        self.assertEqual(len(before),1)
+        self.assertEqual(before[0].col_offset,body_col)
+        branches=[node for node in child.body if isinstance(node,ast.If)]
+        self.assertTrue(branches)
+        self.assertLess(before[0].lineno,branches[0].lineno)
+        # One after check on the controls success path inside its branch, and
+        # one tail after check outside every guard so a failed full/beam child
+        # still verifies the installed graph.
+        self.assertEqual(len(after),2)
+        nested=[call for call in after if call.col_offset>body_col]
+        tail=[call for call in after if call.col_offset==body_col]
+        self.assertEqual(len(nested),1)
+        self.assertEqual(len(tail),1)
+        guarded=[node for node in ast.walk(child) if isinstance(node,ast.If)
+            and any(isinstance(name,ast.Name) and name.id=='passed' for name in ast.walk(node.test))]
+        self.assertTrue(guarded)
+        self.assertGreater(tail[0].lineno,guarded[0].lineno)
 
     def test_graph_mismatch_closure(self):
         with tempfile.TemporaryDirectory() as tmp:

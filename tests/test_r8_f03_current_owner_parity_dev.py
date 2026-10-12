@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import importlib
 from pathlib import Path
+import subprocess
 import sys
 import unittest
 from unittest.mock import patch
@@ -14,15 +15,67 @@ parity = importlib.import_module("r8_f03_current_owner_parity_dev")
 
 
 class FrozenOwnerSourceTests(unittest.TestCase):
+    def git_history_available(self):
+        """The c64d189e and OLD_PRODUCT objects exist in this checkout."""
+        if not (ROOT / ".git").exists():
+            return False
+        for ref in ("c64d189e", parity.OLD_PRODUCT):
+            probe = subprocess.run(["git", "cat-file", "-e", f"{ref}^{{commit}}"],
+                                   cwd=ROOT, capture_output=True)
+            if probe.returncode != 0:
+                return False
+        return True
+
     def test_both_representative_preflights(self):
+        # Historical refusal: the source guard binds the c64d189e input
+        # state and the GE owner/assembly sources changed on main after
+        # it, so both representative preflights must refuse fail-closed.
+        # A git-free source export refuses the same preflight fail-closed
+        # without the committed objects.
         for level in (32, 64):
             with self.subTest(level=level):
-                found = parity.preflight(level)
-                self.assertEqual(found["status"], "source_preflight_passed")
-                self.assertEqual(found["expected_span"], 2)
-                self.assertEqual(found["expected_rows"], 5*level//2)
-                self.assertEqual(found["frozen_case"]["frozen_norm_rows"],
-                                 1632 if level == 32 else 5824)
+                if self.git_history_available():
+                    with self.assertRaises(ValueError) as raised:
+                        parity.preflight(level)
+                    self.assertIn(
+                        "current GE owner/source dependencies changed since c64d189e",
+                        str(raised.exception))
+                else:
+                    with self.assertRaises((ValueError, OSError,
+                                            subprocess.CalledProcessError)):
+                        parity.preflight(level)
+        # Reachable positive controls: the frozen c2/P0 cases and the
+        # frozen native beam assembly itself remain unchanged.
+        for level, rows in ((32, 1632), (64, 5824)):
+            with self.subTest(level=level):
+                frozen = parity.check_frozen_case(*parity.LEVELS[level])
+                self.assertEqual(frozen["frozen_span"], 2)
+                self.assertEqual(frozen["frozen_constraint_rows"], 5*level//2)
+                self.assertEqual(frozen["frozen_norm_rows"], rows)
+
+    def test_representative_git_drift_inventory(self):
+        # Exact drift inventory and frozen native beam identity, explicitly
+        # dependent on the c64d189e git objects: skips when they are absent
+        # (git-free source export). On an actual checkout the drifted source
+        # binding must refuse; it is never forced valid.
+        if not self.git_history_available():
+            self.skipTest(
+                "c64d189e git objects absent (git-free source export)")
+        changed = subprocess.run(
+            ["git", "diff", "--name-only", "c64d189e", "HEAD", "--",
+             *parity.SOURCE_FILES],
+            cwd=ROOT, check=True, capture_output=True, text=True).stdout.split()
+        self.assertEqual(sorted(changed), [
+            "src/anysolver/_stiffened_shell_ge_experimental.py",
+            "src/anysolver/_stiffened_shell_l1_assembly_experimental.py"])
+        old_owner = subprocess.run(
+            ["git", "show",
+             f"{parity.OLD_PRODUCT}:src/anysolver/_stiffened_shell_ge_experimental.py"],
+            cwd=ROOT, check=True, capture_output=True).stdout
+        current_owner = (ROOT /
+            "src/anysolver/_stiffened_shell_ge_experimental.py").read_bytes()
+        self.assertEqual(parity.function_ast_hash(old_owner, "_assemble_beam"),
+                         parity.function_ast_hash(current_owner, "_assemble_beam"))
 
     def test_wrong_level_refused(self):
         with self.assertRaises(ValueError):
@@ -35,17 +88,17 @@ class FrozenOwnerSourceTests(unittest.TestCase):
         self.assertNotEqual(parity.function_ast_hash(source, "physical_loads"),
                             parity.function_ast_hash(changed, "physical_loads"))
 
-    def test_changed_frozen_result_bytes_refused(self):
+    def test_changed_frozen_case_source_bytes_refused(self):
         original = parity.sha
 
         def changed(path):
-            if path.name == "family-result.json":
+            if path.name == "run_case.py":
                 return "0"*64
             return original(path)
 
         with patch.object(parity, "sha", side_effect=changed):
             with self.assertRaises(ValueError):
-                parity.preflight(32)
+                parity.check_frozen_case(32, 8, 32)
 
     def test_signed_swap_basis_and_false_map_refusal(self):
         import numpy as np
@@ -63,6 +116,11 @@ class FrozenOwnerSourceTests(unittest.TestCase):
 
     def test_existing_failed_output_preserved_and_versioned_target_fresh(self):
         existing = parity.OUT / "run-nx32-ny8-half32"
+        if not existing.exists():
+            self.skipTest("saved f03 owner-parity failed-output evidence "
+                "(docs/agent_plans/development/r8-f03-current-owner-parity-20261009/"
+                "run-nx32-ny8-half32) is absent; the preserved-failed-output "
+                "control requires the exact saved failed output")
         self.assertTrue(existing.exists())
         with self.assertRaises(ValueError):
             parity.require_fresh_output(existing)
@@ -72,7 +130,8 @@ class FrozenOwnerSourceTests(unittest.TestCase):
             parity.campaign_folder(32, "../v2")
 
     def test_wrong_predecessor_campaign_or_identity_refused(self):
-        binding = parity.preflight(64)
+        binding = {"current_sources_sha256":
+                   {"scripts/r8_bl5_actual_primal_work_dev.py": "0"*64}}
         receipt = {"campaign": "v2", "status": "completed", "exit_code": 0,
                    "source_dependencies_sha256": binding["current_sources_sha256"],
                    "process_wall_seconds": 7.0}

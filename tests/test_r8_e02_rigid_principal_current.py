@@ -5,11 +5,23 @@ from pathlib import Path
 import numpy as np
 import pytest
 from scripts.r8_e02_rigid_principal_current import admitted,binding,prepare,staged,observation,accurate_rigid_fit,parse_current_solid,ordinary_rigid_observation,read_double_output
+from scripts.r8_e02_rigid_principal_current import SITE
+
+CASES=Path(__file__).resolve().parents[1]/'.development/e02-rigid-principal-current-20261009-v1/cases'
+skip_without_saved_cases=pytest.mark.skipif(not CASES.exists(),
+    reason='local saved E02 principal case evidence '
+    '(.development/e02-rigid-principal-current-20261009-v1) is absent')
+skip_without_installed_site=pytest.mark.skipif(not SITE.exists(),
+    reason='separately installed E02 site '
+    '(docs/agent_plans/development/r8-b2-work-guard-installed-20261009/site) is absent; '
+    'the installed site is not current source')
 from scripts.r8_e02_rigid_precision import build_precision_deck,root_elimination_proof
 from scripts.r8_e02_rigid_tip_reference import LOADS
 from scripts.r8_e02_rigid_acceptance import identity,measure
 
 @pytest.mark.parametrize('load',['Fz','My'])
+@skip_without_saved_cases
+@skip_without_installed_site
 def test_principal_actual_saved_caller_serializes_and_keeps_print_flags(tmp_path,load):
     from scripts.r8_e02_rigid_principal_current import solid
     case=Path(__file__).resolve().parents[1]/'.development/e02-rigid-principal-current-20261009-v1/cases'/load
@@ -28,6 +40,7 @@ def test_principal_actual_saved_caller_serializes_and_keeps_print_flags(tmp_path
     assert all(type(x) is bool for x in parsed['ordinary_port']['dual_checks_passed'])
 
 @pytest.mark.parametrize('tamper',['loadcontrol','unloadedcontrol','multiple','binary','energy','stdout','geometry'])
+@skip_without_saved_cases
 def test_principal_observation_retains_loaded_control_and_structural_refusals(tamper):
     args=saved_fz();case=Path(__file__).resolve().parents[1]/'.development/e02-rigid-principal-current-20261009-v1/cases/My'
     args.update(data=(case/'reference.frd').read_bytes(),dat=(case/'reference.dat').read_text(),
@@ -58,6 +71,7 @@ def test_accurate_rigid_fit_recovers_manufactured_pose_and_refuses_nonrigid_or_d
     with pytest.raises(ValueError):accurate_rigid_fit(np.array([[0,0,0],[1,0,0],[2,0,0]]),np.zeros((3,3)),port)
     with pytest.raises(ValueError):accurate_rigid_fit(p,np.full_like(p,np.nan),port)
 
+@skip_without_saved_cases
 def test_saved_fz_accurate_pose_preserves_all_original_print_intervals_and_old_failure():
     r=parse_current_solid(**saved_fz())
     assert not r['ordinary_strict_comparison_passed']
@@ -67,6 +81,7 @@ def test_saved_fz_accurate_pose_preserves_all_original_print_intervals_and_old_f
     assert r['port']['rigid_mapping_max_gap_m']<1e-18
     assert not r['can_certify_energy_work_1e_minus_8']
 
+@skip_without_saved_cases
 def test_saved_my_accurate_dual_retains_historical_failed_diagnostic():
     args=saved_fz();case=Path(__file__).resolve().parents[1]/'.development/e02-rigid-principal-current-20261009-v1/cases/My'
     args.update(data=(case/'reference.frd').read_bytes(),dat=(case/'reference.dat').read_text(),
@@ -97,6 +112,7 @@ def test_accurate_dual_manufactured_work_and_refusals():
     with pytest.raises(ValueError):accurate_rigid_fit(p,u,port,F,M)
 
 @pytest.mark.parametrize('tamper',['control','energy','binary','stdout','geometry'])
+@skip_without_saved_cases
 def test_saved_fz_accurate_parser_keeps_structural_and_print_refusals(tamper):
     args=saved_fz()
     if tamper=='control':args['dat']=args['dat'].replace('-3.204015E-15','-4.204015E-15')
@@ -107,6 +123,7 @@ def test_saved_fz_accurate_parser_keeps_structural_and_print_refusals(tamper):
     with pytest.raises(ValueError):parse_current_solid(**args)
 
 @pytest.mark.parametrize('load',['Fz','My'])
+@skip_without_installed_site
 def test_actual_current_load_full_geometry_and_artifact_inputs(tmp_path,load):
     c,d,m,a=prepare(load,tmp_path/load)
     assert c['wrench_SI']==np.array(LOADS[load]).ravel().tolist()
@@ -127,6 +144,7 @@ def test_no_mx_mixed_or_new_sign_case(load):
     with pytest.raises(ValueError):admitted(load)
 
 @pytest.mark.parametrize('field',['contract','native-input','candidate','reference'])
+@skip_without_installed_site
 def test_staging_bytes_and_semantics_tamper_refusal(tmp_path,field):
     prepare('Fz',tmp_path/'Fz')
     path=tmp_path/'Fz'/('reference.inp' if field=='reference' else field+'.json')
@@ -135,12 +153,14 @@ def test_staging_bytes_and_semantics_tamper_refusal(tmp_path,field):
         value=json.loads(path.read_text());value['tamper']=True;path.write_text(json.dumps(value))
     with pytest.raises(ValueError):staged('Fz',tmp_path/'Fz')
 
+@skip_without_installed_site
 def test_geometry_and_load_identity_are_independent(tmp_path):
     f,d,_,_=prepare('Fz',tmp_path/'Fz');m,e,_,_=prepare('My',tmp_path/'My')
     assert f['native_input_sha256']!=m['native_input_sha256'] and d!=e
     assert f['artifacts']==m['artifacts']
 
 @pytest.mark.parametrize('load',['Fz','My'])
+@skip_without_installed_site
 def test_actual_prepare_save_staged_to_measure_roundtrip(tmp_path,load):
     prepare(load,tmp_path/load);c,d,m,a=staged(load,tmp_path/load)
     nodes=dict(zip(c['model']['node_ids'],c['model']['coordinates']));W=np.array(c['wrench_SI'])

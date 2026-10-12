@@ -5,8 +5,30 @@ import os
 import pytest
 
 
+def _skip_without_saved_candidate(a):
+    candidate=a.PREP/'candidate-direction.json'
+    if not candidate.exists():
+        pytest.skip('saved branch-domain candidate evidence '
+            '(docs/agent_plans/development/r8-f06-log-domain-20261010/'
+            'paired-displacement-v1/loaded-x-v1/active-tangent-v1/'
+            'branch-domain-v1/preparation3/candidate-direction.json) is absent; '
+            'supplied changed candidate bytes still refuse')
+
+
+def _skip_without_saved_direction_map(a):
+    saved_map=a.domain.SAVED/'direction-and-row-map.npz'
+    if not saved_map.exists():
+        pytest.skip('saved branch-domain direction-and-row-map evidence '
+            '(docs/agent_plans/development/r8-f06-log-domain-20261010/'
+            'paired-displacement-v1/loaded-x-v1/active-tangent-v1/'
+            'attempt-installed-assessment1/direction-and-row-map.npz) is absent')
+    return saved_map
+
+
 def test_source_adopted_scale_and_complete_nonzeros():
     from scripts import r8_f06_paired_branch_assessment_dev as a
+    _skip_without_saved_candidate(a)
+    _skip_without_saved_direction_map(a)
     candidate,prepared=a.load_candidate()
     original=a.domain.read_vector(a.domain.SAVED/'direction-and-row-map.npz','direction')
     scaled=a.scaled_from_original(original,candidate)
@@ -17,6 +39,8 @@ def test_source_adopted_scale_and_complete_nonzeros():
 def test_source_changed_scale_channel_and_metadata_refused():
     from copy import deepcopy
     from scripts import r8_f06_paired_branch_assessment_dev as a
+    _skip_without_saved_candidate(a)
+    _skip_without_saved_direction_map(a)
     candidate,_=a.load_candidate();vector=a.domain.read_vector(a.domain.SAVED/'direction-and-row-map.npz','direction')
     for field,value in [('uniform_scale',a.SCALE*2),('h',[1e-4,1e-5,2e-6]),('direction',[0.]*132)]:
         changed=deepcopy(candidate);changed[field]=value
@@ -25,6 +49,7 @@ def test_source_changed_scale_channel_and_metadata_refused():
 
 def test_source_changed_candidate_bytes_refused(tmp_path):
     from scripts import r8_f06_paired_branch_assessment_dev as a
+    _skip_without_saved_candidate(a)
     path=tmp_path/'candidate-direction.json';path.write_bytes((a.PREP/'candidate-direction.json').read_bytes()+b' ')
     with pytest.raises(ValueError,match='changed candidate'):a.load_candidate(path)
 
@@ -59,6 +84,7 @@ def test_source_override_refused_outside_installed_child(tmp_path,monkeypatch):
         evaluations=[dict(h=h,branches_stable=True,groups={g:dict(good) for g in
             ('shell','beam','constraints','fibre_retained','generalized_retained')}) for h in a.original.STEPS],
         local_adjacent_plateau={'0':True},local_derivatives=[dict(metrics=dict(good)) for _ in range(3)])
+    _skip_without_saved_direction_map(a)
     vector=a.domain.read_vector(a.domain.SAVED/'direction-and-row-map.npz','direction')
     def fake_direction(owner,residual):return vector
     monkeypatch.setattr(a.original,'frozen_direction',fake_direction)
@@ -86,5 +112,7 @@ def test_source_override_refused_outside_installed_child(tmp_path,monkeypatch):
 
 def test_installed_branch_domain_tangent():
     from scripts.r8_f06_paired_branch_assessment_dev import assess
+    if 'F06_BRANCH_ASSESSMENT_OUTPUT' not in os.environ:
+        pytest.skip('F06_BRANCH_ASSESSMENT_OUTPUT installed assessment binding absent')
     result=assess(Path(os.environ['F06_BRANCH_ASSESSMENT_OUTPUT']))
     assert result['status']=='SCOPED_PASS' and all(result['complete_observations'].values())

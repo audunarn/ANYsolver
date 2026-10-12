@@ -11,6 +11,8 @@ from anysolver import b3_ge, stiffened_shell as ss
 from anysolver.control import CancellationToken, SolveCancelled
 from test_stiffened_shell_ge_physical_fibre_linear import _definition
 from test_stiffened_shell_staged_material_history import _capture, _same, _canonical
+from test_stiffened_shell_fibre_chart_boundary_comparison import (
+    cell_operators, cyclic_fibre_boundary_hook, fibre_sections)
 
 
 PREFIX = (.125, .5, .75, 1.)
@@ -98,8 +100,20 @@ def check(snapshot, previous, owner):
         force_N=force, moment_Nm=moment, fibre_accumulated=accumulated)))
 
 
-def same(a, b, model, *, exact=False):
-    _same(a,b,model,FORCE_SCALE,exact=exact)
+def same(a, b, model, *, exact=False, predecessors=None, sections=None,
+        operators=None):
+    # The default route stays the uniform comparator. Only the explicit
+    # cross-chart comparison passes each branch's own accepted predecessor
+    # capture and the model's actual retained-fibre operators; the hook then
+    # re-verifies every fibre tangent/branch against the unchanged law - by
+    # exact station-pair reconstruction, or by exact local cell replay from
+    # the capture's own retained resultants when the published pairs lose
+    # the 80-digit tail - before comparing the paired records.
+    hook = None
+    if not exact and predecessors is not None:
+        hook = cyclic_fibre_boundary_hook(sections, operators, a, b,
+            predecessors[0], predecessors[1])
+    _same(a,b,model,FORCE_SCALE,exact=exact,fibre_material=hook)
     x,y = a['result'].point_wrenches,b['result'].point_wrenches
     assert len(x) == len(y)
     for left,right in zip(x,y):
@@ -220,10 +234,24 @@ def test_loaded_native_fibre_cyclic_chart_transport(request, tmp_path, record_pr
         following = []
         run(branch, label, FOLLOWING, following)
     reference = histories['control']
+    # Each branch's actual accepted predecessor chain. on_accepted captures
+    # every accepted substep (adaptive control may insert steps), and each
+    # capture snapshots the driver's immutable accepted origins at capture
+    # time, so the capture immediately preceding a compared capture is the
+    # actual predecessor its records were recovered from. The control chain
+    # therefore starts at the prefix-final capture, and the reset/restored
+    # chains at their rebase/restore captures. The hook refuses a tampered,
+    # missing or cross-station predecessor and any recovery inconsistency.
+    chains = {'control': initial[-1:]+histories['control'],
+              'reset': [after]+histories['reset'],
+              'restored': [restored]+histories['restored']}
+    sections = fibre_sections(model)
+    operators = cell_operators(model)
     for label in ('reset','restored'):
         assert len(histories[label]) == len(reference)
-        for a,b in zip(reference,histories[label]):
-            same(a,b,model)
+        for index,(a,b) in enumerate(zip(reference,histories[label])):
+            same(a,b,model,predecessors=(chains['control'][index],chains[label][index]),
+                 sections=sections, operators=operators)
     measured = {label:{field:coverage(initial+history,field)
         for field in ('shell','beam','cell','fibre_nodes','fibre_cells')}
         for label,history in histories.items() if label != 'prefix'}
