@@ -64,6 +64,52 @@ def test_saved_slide_matches_independent_current_contact_kkt():
         assert result[name] <= 1e-6, (name, result[name])
 
 
+def test_active_contact_work_is_exactly_independent_of_control_dofs():
+    """The control-reaction contact route is bitwise zero, for every FD step.
+
+    Locks the KKT control-reaction diagnosis: the active pressure modes'
+    source elements are disjoint from the control nodes' elements and the
+    control nodes are absent from the target skin, so the independent
+    finite-difference control gradient and the production contact force at
+    the control dofs are exactly zero. The control reaction is a purely
+    structural cancelled sum; its independent-vs-production comparison is
+    limited by arithmetic-realization rounding of that sum, not by contact
+    work or finite-difference error.
+    """
+    root = Path(__file__).resolve().parents[1]
+    environment = os.environ.copy()
+    environment["PYTHONPATH"] = os.pathsep.join((
+        str(root / "src"), str(root), str(root / "docs" / "d1_review_support"),
+    ))
+    completed = subprocess.run(
+        [sys.executable, str(root / "docs" / "d1_review_support"
+                                   / "d1_two_body_control_reaction_route_probe.py")],
+        cwd=root, env=environment, capture_output=True, text=True,
+        check=True, timeout=120,
+    )
+    result = json.loads(completed.stdout)
+    assert result["status"] == "development_control_reaction_route_probe"
+    assert result["active_pressure_modes"] == [3, 8]
+    disjointness = result["disjointness"]
+    assert disjointness["active_mode_nodes"] == [4, 9]
+    assert disjointness["control_nodes"] == [1, 6]
+    assert disjointness["active_elements_disjoint_from_control_elements"] is True
+    assert disjointness["control_nodes_on_target_skin"] == [False, False]
+    zeros = [[0.0, 0.0], [0.0, 0.0]]
+    for label, key in (("half", "half_step"), ("nominal", "nominal"),
+                       ("double", "double_step")):
+        gradient = result["independent_control_gradient_"+key]
+        active_gradient = [gradient[index]
+                           for index in result["active_pressure_modes"]]
+        assert active_gradient == zeros, (label, gradient)
+        assert result["active_rows_bitwise_invariance"][label] is True
+    assert result["production_contact_force_control_n"] == [0.0, 0.0]
+    active_rows = [result["production_gap_gradient_control_columns"][index]
+                   for index in result["active_pressure_modes"]]
+    assert active_rows == zeros
+    assert result["external_control_n"] == [0.0, 0.0]
+
+
 @pytest.mark.parametrize("script", ["d1_two_body_nonlinear_kkt_compare.py", "d1_two_body_displacement_compare.py"])
 def test_oracle_source_identity_does_not_attribute_an_enclosing_checkout(monkeypatch,tmp_path,script):
     # Extract this metadata-only helper without running the nonlinear fixture.
