@@ -1,3 +1,19 @@
+## 2026-10-12 contact CI repair — local handoff, CI remains red
+
+Worktree `C:/Github/ANYsolver/.worktrees/contact-ci`; branch `codex/contact-ci`, base `b382a3bb43773cfb8c706fe0a7f3ad71ee6c513e`. Implementation commits: `53fb46c5` and `615d5068`. No push, PR, workflow run, merge, main/sibling edit or shared-backend change.
+
+Repairs: four capture modules fall back to `tempfile.gettempdir()`; the independent recomputed partition oracle implements `pop(violations)` with a refusal regression; two example factories use `math.hypot` for stable tangent normalization. Fresh default/Haswell processes preserve four original checkpoint definition identities. No golden hashes, scientific tolerances, replay validators, skips/xfails or native resource limits changed.
+
+Evidence root `.development/contact-ci-20261012/`: read `COMPLETION_REPORT.md` and `.json` for the original 19-case dispositions, five timeout groups, exact commands and receipts; `TASK.md` records decisions and ownership. Raw evidence/private dependencies remain uncommitted. All 19 baseline group reproductions are terminal, with the unmodified portable runner and workers=2 / 1200 seconds / 8x4 shard arguments on Windows and WSL. CI numerical packages and Q1M pins match; local Python versions differ. Forced Haswell reproduces the hosted constructor identity difference but is hardware emulation, not an exact hosted machine. No green candidate matrix is claimed.
+
+Candidate checks: Windows 9 passed; Linux 13 passed, with TEMP absent, JIT enabled and the real input-free increment. Nine further original nodes pass under default-dispatch Linux, including all four native deadline cases (56.46, 52.61, 49.00, 60.18 seconds process wall). Native 120-second guards and supervisor 953 MiB remain unchanged. Isolated passes do not prove shared-worker speed or cross-hardware replay. No speedup claim.
+
+Unchanged red: saved-slide KKT control-reaction relative L2 error 1.4948506139016305e-5 exceeds 1e-6. Under Haswell, anchored enclosure, candidate reuse and multifacet single-facet extension reach strict replay differences after definition binding repair; curved-pair lifecycle and retained-body-pair byte comparisons also fail. Exact IDs and evidence are in the completion report. Differences include last-bit physical potential/moment values, not only diagnostics; engineering inaccuracy is not established, but the deterministic gate stays binding. The additional multifacet-v1 constructor remains hardware dependent.
+
+Linux 5/2 reproduces the shared 1200-second limit (1205.53 seconds process wall), with its incomplete worker's active node unknown. Other original timeout groups are intercepted by forced-Haswell native crashes: three stacks identify outside F03/shared retained work; Windows 4/3 origin is unknown. Windows 6/1 crashes in the contact seed route; the default Linux input-free increment passes. Keep runtime crashes distinct from scientific assertions; no native crash or shared-worker performance fix is claimed.
+
+Next owner: read the source-bound report; adjudicate KKT and deterministic physical replay separately. Localize the unfinished shard worker before choosing a performance repair. Preserve all guards and history; this CI slice establishes neither C0–C9 acceptance nor release. Prior restart history below is preserved.
+
 ## 2026-10-12 restart definition of done MET - STOP for Claude integration
 
 Branch codex/contact-on-main; base1b45319f,38 local commits including the final replay repair. Exact integration SHA and complete commit list: .development/contact-restart-20261011/FINAL_RESTART_REPORT.md and ADDED_COMMITS.txt. No main merge/rebase, push, PR, Actions or sibling/shared edits.
