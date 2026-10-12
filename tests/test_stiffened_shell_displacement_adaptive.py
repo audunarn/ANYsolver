@@ -5,6 +5,7 @@ from anysolver.control import CancellationToken,SolveCancelled
 from test_stiffened_shell_bl5_coupled_material import coupled
 from test_stiffened_shell_bl5_material import make
 from test_stiffened_shell_bl5_finite import _action
+from test_stiffened_shell_displacement_increment import assert_single_cutback_history
 
 
 @pytest.mark.parametrize("policy",(None,ss.GENERALIZED_BRANCH_EVENT_TRIAL))
@@ -44,7 +45,8 @@ def test_cutback_cancel_restart_preserves_attempts(request,monkeypatch,policy):
         restored.solve(_action(50.),(targets[-1],),displacement_control=control)
     a=owner.solve(_action(50.),targets,**kw)
     b=restored.solve(_action(50.),targets,**kw)
-    assert a.status==b.status=="completed" and len(a.increment_attempts)==4
+    assert_single_cutback_history(a,b,prefix,initial,targets,limits)
+    assert a.free_equilibrium_ratio<=1e-8 and a.constraint_max<=1e-9
     assert owner.checkpoint()==restored.checkpoint()
 
     # Exhaustion before any displacement acceptance still persists spent budget.
