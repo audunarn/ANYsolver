@@ -144,7 +144,7 @@ fibre owners, generic MPCs and spectral use are not silently approximated.
         self.targets, self.shell_fixed = targets, shell_fixed
         self.forces = forces
         self.max_iterations, self.max_backtracks = max_iterations, max_backtracks
-        self._linear_solve = np.linalg.solve if _linear_solve is None else _linear_solve
+        self._linear_solve = _linear_solve
         self.shell_length = max(float(np.linalg.norm(x-y)) for x in assembly.coordinates for y in assembly.coordinates)
         self.free = tuple([i for i in range(assembly.shell_count) if i not in shell_fixed]
             + [assembly.shell_count+int(i) for i in assembly.beam.free]
@@ -214,7 +214,8 @@ fibre owners, generic MPCs and spectral use are not silently approximated.
 
     def _step(self, response, residual, mechanical, u, multipliers):
         step = np.zeros(self.assembly.count)
-        step[list(self.free)] = self._linear_solve(response.tangent[np.ix_(self.free, self.free)],
+        solve = np.linalg.solve if self._linear_solve is None else self._linear_solve
+        step[list(self.free)] = solve(response.tangent[np.ix_(self.free, self.free)],
             -residual[list(self.free)])
         if not np.isfinite(step).all():
             raise ValueError('nonfinite coupled Newton step')

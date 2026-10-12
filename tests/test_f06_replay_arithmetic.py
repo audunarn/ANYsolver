@@ -347,16 +347,20 @@ def test_state_step_routes_through_the_private_hook():
         and isinstance(node.targets[0], ast.Attribute)
         and node.targets[0].attr == "_linear_solve"]
     assert len(assigns) == 1
-    assert _dotted(assigns[0].value.body) == "np.linalg.solve"
-    assert _dotted(assigns[0].value.orelse) == "_linear_solve"
+    assert _dotted(assigns[0].value) == "_linear_solve"
     step = next(node for node in owner.body
         if isinstance(node, ast.FunctionDef) and node.name == "_step")
-    hooks = [node for node in ast.walk(step) if isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Attribute)
-        and node.func.attr == "_linear_solve"
-        and isinstance(node.func.value, ast.Name) and node.func.value.id == "self"]
-    assert len(hooks) == 1
-    assert "np.linalg.solve" not in ast.unparse(step)
+    selections = [node for node in ast.walk(step) if isinstance(node, ast.Assign)
+        and isinstance(node.targets[0], ast.Name) and node.targets[0].id == "solve"]
+    assert len(selections) == 1
+    selection = selections[0].value
+    assert isinstance(selection, ast.IfExp)
+    assert ast.unparse(selection.test) == "self._linear_solve is None"
+    assert _dotted(selection.body) == "np.linalg.solve"
+    assert _dotted(selection.orelse) == "self._linear_solve"
+    calls = [node for node in ast.walk(step) if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name) and node.func.id == "solve"]
+    assert len(calls) == 1
 
 
 def test_probe_wires_the_reference_backend_and_records_provenance():
