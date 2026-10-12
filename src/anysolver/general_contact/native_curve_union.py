@@ -8,6 +8,7 @@ from math import isfinite
 
 import numpy as np
 
+from anysolver._ge_beam3_deterministic_reduction import deterministic_norm
 from .beam_curve_pair import (
     _bezier_controls,
     _curve,
@@ -224,7 +225,7 @@ class NativeTwoCellUnionSearch:
             sampled = min(sampled, nearest.gap_m)
             point = _curve(self.source, middle)[0]
             controls = _bezier_controls(self.source, left, right)
-            reach = max(float(np.linalg.norm(control-point))
+            reach = max(float(deterministic_norm(control-point))
                         for control in controls)
             lower = max(nearest.gap_m-reach-self.roundoff, global_lower)
             upper = nearest.gap_m+reach+self.roundoff

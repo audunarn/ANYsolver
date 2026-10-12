@@ -9,6 +9,7 @@ from math import cos, sin, tau
 import numpy as np
 from numpy.polynomial.legendre import leggauss
 
+from anysolver._ge_beam3_deterministic_reduction import deterministic_dot, deterministic_norm
 from anysolver._ge_beam3_p5_seeded.core import sha
 from .native_retained_station import NativeRetainedRoundStation, _readonly
 
@@ -31,8 +32,8 @@ class NativeRoundSurfaceGeometry:
 
 def _oriented_measure(xi, angle, radial):
     cross=np.cross(angle,xi)
-    jacobian=float(np.linalg.norm(cross))
-    if not np.isfinite(jacobian) or jacobian<=0 or float(cross@radial)<=0:
+    jacobian=float(deterministic_norm(cross))
+    if not np.isfinite(jacobian) or jacobian<=0 or deterministic_dot(cross,radial)<=0:
         raise ValueError('native round surface singular or reversed at sample')
     return cross,jacobian
 

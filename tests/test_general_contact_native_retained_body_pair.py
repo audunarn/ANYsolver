@@ -72,6 +72,25 @@ def test_default_saved_curved_energy_and_identity():
     assert owner._checkpoint(records)==raw
 
 
+def test_saved_curved_full_record_replay_is_exact():
+    """CI4 requires every saved field, before any local checkpoint fallback."""
+    from test_general_contact_native_curved_fibre_pair_static import _curved_owner
+    from anysolver._ge_beam3_p5_seeded.codec import _load
+    from anysolver._ge_beam3_p5_seeded.core import canonical
+    owner = _curved_owner()
+    fixture = Path(__file__).parent/'data/general_contact_native_curved_fibre_pair_v14.checkpoint'
+    raw = _canonical_fixture_payload(fixture)
+    capsule = _load(raw.decode('ascii'))
+    assert owner.identity == capsule['identity']
+    record = capsule['records'][0]
+    mechanical = owner.context.make(record['mechanical'], decoded=True)
+    _, replayed = owner._record(record['target'], mechanical, owner.initial.histories,
+                               record['previous_sha256'])
+    assert canonical(record) == canonical(replayed)
+    _, records = owner._restore(raw, sha256(raw).hexdigest())
+    assert owner._checkpoint(records) == raw
+
+
 def test_active_connected_static_restart_and_rollback():
     if os.environ.get('CONTACT_NATIVE_BODY_SOLVE')!='1':pytest.skip('explicit bounded active solve')
     owner=analysis();initial=owner._checkpoint(())

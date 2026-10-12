@@ -13,6 +13,7 @@ import math
 import numpy as np
 
 from anysolver import ge_beam3_curved_reference as source
+from anysolver._ge_beam3_deterministic_reduction import deterministic_dot, deterministic_norm
 
 
 EVALUATION_ID = 'CENTERED_Q2_TWO_COMPONENT_COEFFICIENT_ANALYTIC_LIFT_V1'
@@ -109,11 +110,15 @@ class CenteredCurvedBeam3ReferenceGeometry(source.CurvedBeam3ReferenceGeometry):
         a, b = self._coefficient_high; al, bl = self._coefficient_low
         return np.array([_sum_pair((a[i],al[i],value*b[i],value*bl[i]))[0] for i in range(3)])
 
+    def tangent(self, xi):
+        derivative = self.derivative(xi)
+        return derivative/deterministic_norm(derivative)
+
     def tangent_derivative(self, xi):
         value = source._parameter(xi); derivative = self.derivative(value)
-        jacobian = float(np.linalg.norm(derivative)); tangent = derivative/jacobian
+        jacobian = float(deterministic_norm(derivative)); tangent = derivative/jacobian
         curvature = self._coefficient(1)
-        return (curvature-tangent*float(tangent@curvature))/jacobian
+        return (curvature-tangent*deterministic_dot(tangent,curvature))/jacobian
 
     def position_pair(self, xi):
         value = source._parameter(xi)

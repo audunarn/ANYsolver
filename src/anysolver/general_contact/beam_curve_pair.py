@@ -10,6 +10,7 @@ from dataclasses import dataclass
 
 import numpy as np
 from scipy.optimize import brentq
+from anysolver._ge_beam3_deterministic_reduction import deterministic_dot, deterministic_norm
 
 
 @dataclass(frozen=True)
@@ -60,11 +61,11 @@ def _positions(value: np.ndarray, label: str) -> np.ndarray:
         raise ValueError(f"{label} B3 endpoints must be distinct")
     first = -3.0 * positions[0] + 4.0 * positions[1] - positions[2]
     second = 2.0 * positions[0] - 4.0 * positions[1] + 2.0 * positions[2]
-    curvature_norm = float(second @ second)
-    station = (float(np.clip(-float(first @ second) / (2.0 * curvature_norm),
+    curvature_norm = deterministic_dot(second, second)
+    station = (float(np.clip(-deterministic_dot(first, second) / (2.0 * curvature_norm),
                              0.0, 1.0)) if curvature_norm > 0.0 else 0.0)
-    if (float(np.linalg.norm(first + 2.0 * station * second))
-            <= 1.0e-12 * float(np.linalg.norm(positions[2] - positions[0]))):
+    if (float(deterministic_norm(first + 2.0 * station * second))
+            <= 1.0e-12 * float(deterministic_norm(positions[2] - positions[0]))):
         raise ValueError(f"{label} B3 centreline has a stationary cusp")
     return positions
 
@@ -94,10 +95,10 @@ def closest_on_b3(point: np.ndarray, target_positions: np.ndarray) -> CurveProje
     b = -3.0 * target[0] + 4.0 * target[1] - target[2]
     c = 2.0 * target[0] - 4.0 * target[1] + 2.0 * target[2]
     coefficients = np.array((
-        float(a @ b),
-        2.0 * float(a @ c) - float(b @ b),
-        -3.0 * float(b @ c),
-        -2.0 * float(c @ c),
+        deterministic_dot(a, b),
+        2.0 * deterministic_dot(a, c) - deterministic_dot(b, b),
+        -3.0 * deterministic_dot(b, c),
+        -2.0 * deterministic_dot(c, c),
     ))
     scale = float(np.max(np.abs(coefficients)))
     roots: list[float] = []
@@ -113,11 +114,11 @@ def closest_on_b3(point: np.ndarray, target_positions: np.ndarray) -> CurveProje
         if root - stations[-1] > 1.0e-10:
             stations.append(root)
     stations.append(1.0)
-    distances = [float(np.linalg.norm(point - _curve(target, t)[0]))
+    distances = [float(deterministic_norm(point - _curve(target, t)[0]))
                  for t in stations]
     smallest = min(distances)
-    length_scale = max(float(np.linalg.norm(b)), float(np.linalg.norm(c)),
-                       float(np.linalg.norm(a)), smallest, np.finfo(float).tiny)
+    length_scale = max(deterministic_norm(b), deterministic_norm(c),
+                       deterministic_norm(a), smallest, np.finfo(float).tiny)
     threshold = 256.0 * np.finfo(float).eps * length_scale
     candidates = [(float(t), distance) for t, distance in zip(stations, distances)
                   if distance - smallest <= threshold]
@@ -125,10 +126,10 @@ def closest_on_b3(point: np.ndarray, target_positions: np.ndarray) -> CurveProje
     # rounded distance. Treat geometrically indistinguishable stations as one
     # branch, retaining the candidate with the lowest computed distance.
     station_tolerance = (16.0 * np.sqrt(np.finfo(float).eps)
-                         * float(np.linalg.norm(target[2] - target[0])))
+                         * float(deterministic_norm(target[2] - target[0])))
     clusters: list[list[tuple[float, float]]] = []
     for candidate in candidates:
-        if (clusters and float(np.linalg.norm(
+        if (clusters and float(deterministic_norm(
             _curve(target, candidate[0])[0]
             - _curve(target, clusters[-1][-1][0])[0]
         )) <= station_tolerance):
@@ -176,7 +177,7 @@ def _b3_distance_jet_at_station(source, target, s, radius, t, *, source_is_a=Tru
     target_shape, target_shape_t, _target_shape_tt = _shape(t)
     target_position, target_tangent, target_second = _curve(target, t)
     separation = source_position - target_position
-    distance = float(np.linalg.norm(separation))
+    distance = float(deterministic_norm(separation))
     if distance <= 0.0:
         raise ValueError("coincident B3 centrelines cannot define a contact normal")
     normal = separation / distance
@@ -194,8 +195,8 @@ def _b3_distance_jet_at_station(source, target, s, radius, t, *, source_is_a=Tru
         distance_t = -target_tangent
         mixed = (jacobian_t.T @ normal
                  + jacobian.T @ projector @ distance_t / distance)
-        curvature = (float(distance_t @ projector @ distance_t) / distance
-                     - float(normal @ target_second))
+        curvature = (deterministic_dot(distance_t @ projector, distance_t) / distance
+                     - deterministic_dot(normal, target_second))
         if curvature <= 0.0:
             raise ValueError("B3 closest-point branch lacks positive curvature")
         hessian -= np.outer(mixed, mixed) / curvature
@@ -387,9 +388,9 @@ def _source_interval_target_gap_lower(
     start = _curve(source, left)[0]
     end = _curve(source, right)[0]
     middle = _curve(source, 0.5 * (left + right))[0]
-    chord_deviation = float(np.linalg.norm(middle - 0.5 * (start + end)))
+    chord_deviation = float(deterministic_norm(middle - 0.5 * (start + end)))
     vector = end - start
-    squared_length = float(vector @ vector)
+    squared_length = deterministic_dot(vector, vector)
     if squared_length <= 0.0:
         raise MemoryError("B3 pair source interval chord is degenerate")
 

@@ -1,7 +1,8 @@
-"""Experimental deterministic scalar reductions, not an admitted replay route.
+"""Deterministic scalar reductions, not a fully portable replay route.
 
-The native analysis owners do not use this candidate. Complete archived
-checkpoint portability remains unresolved; its original gates are unchanged.
+Selected native geometry and contact work kernels use these reductions.
+Complete archived checkpoint portability remains unresolved; its original
+gates are unchanged.
 
 `np.linalg.norm` (ord=None) and small vector dot products dispatch to OpenBLAS
 ddot, and ord=2 matrix norms dispatch to LAPACK SVD; both accumulation orders

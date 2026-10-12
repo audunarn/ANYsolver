@@ -10,6 +10,7 @@ from math import cos, pi, sqrt
 
 import numpy as np
 
+from anysolver._ge_beam3_deterministic_reduction import deterministic_norm
 from anysolver._ge_beam3_p5.arrays import _array, _frames
 from .native_retained_station import _readonly
 from .native_surface_quadrature import NativeRoundSurfaceRule
@@ -26,8 +27,8 @@ def _restrict_q2(lanes, left, right):
 def _rotation_gain(frame):
     """Upper spectral norm from the Gram residual, including its arithmetic."""
     eps = np.finfo(float).eps
-    residual = float(np.linalg.norm(frame.T@frame-np.eye(3)))
-    residual += 128*eps*(1+float(np.linalg.norm(frame))**2)
+    residual = float(deterministic_norm(frame.T@frame-np.eye(3)))
+    residual += 128*eps*(1+deterministic_norm(frame)**2)
     gain = sqrt(1+residual)*(1+128*eps)
     if not np.isfinite(gain):
         raise ValueError('native material frame bound overflow')
