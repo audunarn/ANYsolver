@@ -7,6 +7,7 @@ invented here. Native second derivatives use its spatial multiplicative chart.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -83,6 +84,77 @@ def _cross(a,b):
 def _unit(v):
     length=sqrt(dot(v,v))
     return [a/length for a in v]
+
+
+def _rotated_arm_jet(variations):
+    """Exact spatial Exp(delta) arm jet at delta=0, in the local 15 chart."""
+    arm = variations.surface_arm
+    generators = np.array(((0., 0., 0.), (0., 0., -1.), (0., 1., 0.),
+                           (0., 0., 1.), (0., 0., 0.), (-1., 0., 0.),
+                           (0., -1., 0.), (1., 0., 0.), (0., 0., 0.))).reshape(3, 3, 3)
+    gradient = np.einsum('iab,b->ai', generators, arm)
+    result = []
+    for axis in range(3):
+        g = np.zeros(15); h = np.zeros((15, 15))
+        g[3:6] = gradient[axis]
+        h[3:6, 3:6] = variations.surface_rotation_hessian[axis]
+        result.append(Jet2(arm[axis], g, h))
+    return result
+
+
+@lru_cache(maxsize=32)
+def _skin_frame_jet(corner_bytes):
+    """Bounded immutable geometry-only memo; never stores material response.
+
+    The exact binary64 physical corners determine the frame and its vertex
+    derivatives in this fixed local chart. Candidate geometry/polarity checks
+    precede this helper on every evaluation, including memo hits.
+    """
+    corners = np.frombuffer(corner_bytes, dtype=np.float64).reshape(3, 3)
+    y = [[Jet2.variable(corners[a, i], 6+3*a+i, 15)
+          for i in range(3)] for a in range(3)]
+    first = [y[1][i]-y[0][i] for i in range(3)]
+    second = [y[2][i]-y[0][i] for i in range(3)]
+    t1 = _unit(first); n = _unit(_cross(first, second)); t2 = _cross(n, t1)
+    frame = tuple(tuple(row) for row in zip(t1, t2, n))
+    for row in frame:
+        for entry in row:
+            entry.gradient.setflags(write=False); entry.hessian.setflags(write=False)
+    return frame
+
+
+def _local_contact_jets(new, corners, barycentric, old_target, old, history, partner_key):
+    """Batch the existing local Jet2 sum/product rules; no new work law."""
+    rotated = _rotated_arm_jet(new)
+    separation = np.array([j.value + new.station.surface_position[i]-new.surface_arm[i]
+                           for i,j in enumerate(rotated)]) - np.asarray(barycentric) @ corners
+    B = np.array([j.gradient for j in rotated]); H = np.array([j.hessian for j in rotated])
+    B[:, :3] += np.eye(3)
+    for a,w in enumerate(barycentric): B[:,6+3*a:9+3*a] -= w*np.eye(3)
+    frame = _skin_frame_jet(np.asarray(corners,dtype=np.float64).tobytes())
+    F = np.array([[j.value for j in row] for row in frame])
+    FB = np.array([[j.gradient for j in row] for row in frame])
+    FH = np.array([[j.hessian for j in row] for row in frame])
+    n, nB, nH = F[:,2], FB[:,2], FH[:,2]
+    components = np.asarray(old_target.material_frame).T @ (old.surface_position-np.asarray(old_target.position))
+    d = separation - F @ components
+    dB = B - np.einsum('aci,c->ai',FB,components)
+    dH = H - np.einsum('acij,c->aij',FH,components)
+    def scalar_product(v, vB, vH):
+        value = float(n @ v)
+        gradient = n @ vB + v @ nB
+        cross = nB.T @ vB
+        hessian = np.einsum('a,aij->ij',n,vH)+np.einsum('a,aij->ij',v,nH)+cross+cross.T
+        return Jet2(value,gradient,hessian)
+    q = scalar_product(d,dB,dH)
+    retained = np.asarray(history.elastic_slip) if history.partner_key==partner_key else np.zeros(3)
+    old_elastic = np.asarray(history.material_frame).T @ retained
+    e = d-n*q.value+F@old_elastic
+    eB = dB-n[:,None]*q.gradient-nB*q.value+np.einsum('aci,c->ai',FB,old_elastic)
+    eH = (dH-n[:,None,None]*q.hessian-nH*q.value
+          -nB[:,:,None]*q.gradient[None,None,:]-nB[:,None,:]*q.gradient[None,:,None]
+          +np.einsum('acij,c->aij',FH,old_elastic))
+    return scalar_product(separation,B,H), [Jet2(e[i],eB[i],eH[i]) for i in range(3)]
 
 
 class NativeS3MaterialPointFriction:
@@ -228,29 +300,16 @@ class NativeS3MaterialPointFriction:
         trial=trial_coulomb_point(history,material_frame=frame,relative_increment=increment,
             normal_pressure=pressure,friction_coefficient=self.friction_coefficient,
             tangential_stiffness=self.tangential_stiffness_Pa_per_m,partner_key=self.partner_key)
+        if getattr(self,'_history_state_only',False):
+            count=42+self.target.adapter.work_map.shape[1]
+            zero=_readonly(np.zeros(count));matrix=_readonly(np.zeros((count,count)))
+            return NativeS3MaterialPointResult(zero,matrix,trial,gap,pressure,
+                self.reference_weight_m2*.5*self.normal_stiffness_Pa_per_m*min(gap,0.)**2,
+                zero,matrix)
         # Fifteen local coordinates: base translation, cell spatial rotation,
         # and three physical S3 vertices. Pull back once to authoritative DOFs.
-        delta=[Jet2.variable(0.,i,15) for i in range(15)]
-        arm=[Jet2.constant(v,15) for v in new.surface_arm]
-        rotated=matvec(so3_exp(delta[3:6]),arm)
-        x=[delta[i]+rotated[i]+new.station.surface_position[i]-new.surface_arm[i] for i in range(3)]
-        y=[[Jet2.constant(corners[a,i],15)+delta[6+3*a+i] for i in range(3)] for a in range(3)]
-        first=[y[1][i]-y[0][i] for i in range(3)];second=[y[2][i]-y[0][i] for i in range(3)]
-        t1=_unit(first);n=_unit(_cross(first,second));t2=_cross(n,t1)
-        F=[[t1[i],t2[i],n[i]] for i in range(3)]
-        point=[sum(self.target.barycentric[a]*y[a][i] for a in range(3)) for i in range(3)]
-        separation=[x[i]-point[i] for i in range(3)]
-        old_frame=np.asarray(old_target.material_frame)
-        old_components=old_frame.T@(old.surface_position-np.asarray(old_target.position))
-        transported=matvec(F,[Jet2.constant(v,15) for v in old_components])
-        relative_increment=[separation[i]-transported[i] for i in range(3)]
-        normal_part=dot(n,relative_increment)
-        relative_increment=[relative_increment[i]-n[i]*normal_part for i in range(3)]
-        retained=(np.asarray(history.elastic_slip) if history.partner_key==self.partner_key else np.zeros(3))
-        old_elastic=np.asarray(history.material_frame).T@retained
-        transported_elastic=matvec(F,[Jet2.constant(v,15) for v in old_elastic])
-        elastic=[relative_increment[i]+transported_elastic[i] for i in range(3)]
-        g=dot(n,separation)
+        g,elastic=_local_contact_jets(new,corners,self.target.barycentric,
+            old_target,old,history,self.partner_key)
         E=(.5*self.normal_stiffness_Pa_per_m*g*g if gap<0 else Jet2.constant(0.,15))
         residual=E.gradient.copy();tangent=E.hessian.copy()
         if pressure>0:

@@ -186,6 +186,19 @@ class NativeS3MaterialSurfacePatch:
         # history. Reusing the previous physical increment's tangent is wrong.
         field=NativeSurfaceHistoryField(self,history.initial,(*history.segments,segment),
             maximum_segments=self.maximum_replay_segments+1,maximum_intervals=maximum_intervals)
+        # Only the immutable physical-origin prefix is reusable. The final
+        # candidate segment and its endpoint law are always evaluated afresh,
+        # including zero candidates and independent commit/restore validation.
+        from collections import OrderedDict
+        prefix_identity=sha(dict(definition=self.definition_sha256,initial=asdict(history.initial),
+            segments=[asdict(v) for v in history.segments],maximum_intervals=maximum_intervals))
+        if getattr(self,'_query_prefix_identity',None)!=prefix_identity:
+            self._query_prefix_identity=prefix_identity
+            self._query_prefix_cache=OrderedDict()
+        reserve=self.friction_integration_settings.maximum_cache_bytes//8
+        field._query_prefix_cache=self._query_prefix_cache
+        field._query_prefix_capacity=reserve//4096
+        field._query_prefix_reserved_bytes=field._query_prefix_capacity*4096
         friction=integrate_material_friction(field,self.friction_integration_settings)
         current=field.current
         normal=integrate_straight_normal(self.rule,self.target,current,

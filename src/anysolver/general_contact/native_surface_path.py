@@ -5,6 +5,7 @@ subdivision by the future analysis owner; endpoint history must not be committed
 """
 from dataclasses import dataclass
 from fractions import Fraction
+from collections import OrderedDict
 
 import numpy as np
 
@@ -12,6 +13,32 @@ from anysolver._ge_beam3_p5.compensated_coordinates import advance
 from anysolver._ge_beam3_p5.algebra import rotation
 from anysolver._ge_beam3_p5_seeded.core import sha
 from .native_surface_s3_friction import NativeS3MaterialConfiguration
+
+
+# Geometry only: no force, material state, certificate or analysis deadline is
+# cached. Exact binary64 inputs include every shape. At most 64 small entries
+# retain less than 1 MiB of input/output array payload; larger paths bypass it.
+_PATH_POSES = OrderedDict()
+
+
+def _path_pose_key(start, translations, angular, shell_increment, fraction):
+    arrays = (start.positions, start.position_low, start.cell_rotations,
+              start.shell_displacement, translations, angular, shell_increment)
+    if sum(value.nbytes for value in arrays) > 8192:
+        return None
+    return tuple((value.shape, value.dtype.str, value.tobytes()) for value in arrays) + (
+        float(fraction).hex(),)
+
+
+def _immutable_path_pose(pose):
+    # A bytes backing store cannot be made writable by a caller. Sharing this
+    # already validated geometry therefore cannot leak mutations across paths.
+    result = object.__new__(NativeS3MaterialConfiguration)
+    for name in ('positions', 'position_low', 'cell_rotations', 'shell_displacement'):
+        value = getattr(pose, name)
+        object.__setattr__(result, name,
+            np.frombuffer(value.tobytes(), dtype=value.dtype).reshape(value.shape))
+    return result
 
 
 @dataclass(frozen=True)
@@ -52,8 +79,8 @@ def affine_gap_polynomial(pair, start, translations, angular, shell_increment):
               edge1[2]*edge2[0]-edge1[0]*edge2[2],
               edge1[0]*edge2[1]-edge1[1]*edge2[0]]
     source = pair.source; cell = source.cell; t = F(source.t)
-    arm = source.surface_variations(start.positions, start.position_low,
-                                    start.cell_rotations).surface_arm
+    station = source.evaluate(start.positions, start.position_low, start.cell_rotations)
+    arm = start.cell_rotations[source.cell] @ (source._reference_lift + source._radial_reference)
     base = [(1-t)*(F(start.positions[cell,i])+F(start.position_low[cell,i]))
             +t*(F(start.positions[cell+1,i])+F(start.position_low[cell+1,i]))
             +F(arm[i])-F(corners[0,i]) for i in range(3)]
@@ -79,13 +106,23 @@ def material_path_pose(start, translations, angular, shell_increment, fraction):
         raise ValueError('finite native/S3 path increments and fraction required')
     if np.max(np.linalg.norm(angular, axis=1)) >= .9*np.pi:
         raise ValueError('native material path exceeds admitted rotation chart')
+    key = _path_pose_key(start, translations, angular, shell_increment, fraction)
+    if key is not None and key in _PATH_POSES:
+        _PATH_POSES.move_to_end(key)
+        return _PATH_POSES[key]
     high = np.empty((3, 3)); low = np.empty((3, 3))
     for index in np.ndindex(3, 3):
         high[index], low[index] = advance(float(start.positions[index]),
             float(start.position_low[index]), float(fraction*translations[index]))
     cells = np.array([rotation(fraction*angular[i]) @ start.cell_rotations[i] for i in range(2)])
-    return NativeS3MaterialConfiguration(high, low, cells,
+    pose = NativeS3MaterialConfiguration(high, low, cells,
         start.shell_displacement + fraction*shell_increment)
+    if key is not None:
+        pose = _immutable_path_pose(pose)
+        _PATH_POSES[key] = pose
+        if len(_PATH_POSES) > 64:
+            _PATH_POSES.popitem(last=False)
+    return pose
 
 
 def certify_material_path(pair, start, translations, angular, shell_increment,
@@ -96,9 +133,32 @@ def certify_material_path(pair, start, translations, angular, shell_increment,
                                   closed=closed, maximum_intervals=maximum_intervals)
 
 
+def _ownership_motion_identity(start,translations,angular,shell_increment,maximum_intervals):
+    return sha(dict(positions=start.positions.tolist(),position_low=start.position_low.tolist(),
+        rotations=start.cell_rotations.tolist(),shell=start.shell_displacement.tolist(),
+        translations=np.asarray(translations).tolist(),angular=np.asarray(angular).tolist(),
+        shell_increment=np.asarray(shell_increment).tolist(),maximum_intervals=maximum_intervals))
+
+
+def _ownership_path_identity(pair,start,translations,angular,shell_increment,maximum_intervals):
+    return sha(dict(definition=pair.definition_sha256,motion=_ownership_motion_identity(
+        start,translations,angular,shell_increment,maximum_intervals)))
+
+
 def certify_material_ownership(pair, start, translations, angular, shell_increment,
                                *, maximum_intervals=256):
     """Certify only physical facet ownership; this does not admit contact history."""
+    prepared=getattr(pair,'_prepared_history_ownership',None)
+    if prepared is not None:
+        if sha(pair._definition())!=pair.definition_sha256:
+            raise ValueError('native/S3 material-point definition changed')
+        identity=_ownership_path_identity(pair,start,translations,angular,shell_increment,maximum_intervals)
+        if identity==prepared[0]:
+            # Issued only by a field whose complete-domain temporal ownership
+            # certificate passed in this evaluation. No gap or event admission
+            # follows from this proof, and a changed path cannot reuse it.
+            return MaterialPathCertificate(True,'bound whole-history target ownership',0,
+                sha(dict(path=identity,whole_history=prepared[1])))
     return _certify_material_path(pair, start, translations, angular, shell_increment,
                                   closed=None, maximum_intervals=maximum_intervals)
 
@@ -151,8 +211,9 @@ def _certify_material_path(pair, start, translations, angular, shell_increment,
                     np.linalg.norm(np.cross(da,b1)+np.cross(a1,db)))
     normal_acceleration=(2*np.linalg.norm(np.cross(da,db))/area_lower
                          +3*cross_speed**2/area_lower**2)
-    variation = source.surface_variations(start.positions, start.position_low, start.cell_rotations)
-    arm = np.linalg.norm(variation.surface_arm)
+    source.evaluate(start.positions, start.position_low, start.cell_rotations)
+    arm = np.linalg.norm(start.cell_rotations[source.cell] @
+                         (source._reference_lift + source._radial_reference))
     nodes0 = start.positions+start.position_low
     nodes1 = end.positions+end.position_low
     cell, t = source.cell, source.t

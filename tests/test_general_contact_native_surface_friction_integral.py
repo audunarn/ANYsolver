@@ -51,6 +51,7 @@ def test_integral_enforces_aggregate_query_and_memory_caps():
 
 
 def test_integral_rejects_hidden_temporal_pulse_before_quadrature():
+    from dataclasses import replace
     from anysolver.general_contact.native_surface_history import NativeSurfaceMotionSegment
     from anysolver.general_contact.native_surface_friction_integral import NativeFrictionIntegrationLimit
     from anysolver._ge_beam3_p5_seeded.core import sha
@@ -62,7 +63,10 @@ def test_integral_rejects_hidden_temporal_pulse_before_quadrature():
     assert .025-.03*np.cos(.8-.02)>0.
     assert .025-.03<0.
     initial_definition=sha(field._definition())
-    settings=_settings()
+    # The complete sequence support proof now resolves this fixture at 128
+    # intervals. Preserve the pre-quadrature refusal contract with an explicitly
+    # insufficient proof budget; the resolved pulse work is checked below.
+    settings=replace(_settings(),maximum_support_intervals=1)
     with pytest.raises(NativeFrictionIntegrationLimit,match='aggregate support interval cap') as caught:
         integrate_material_friction(field,settings)
     diagnostics=caught.value.integration_diagnostics
@@ -70,6 +74,29 @@ def test_integral_rejects_hidden_temporal_pulse_before_quadrature():
     assert diagnostics['support_intervals']==settings.maximum_support_intervals
     assert diagnostics['last_unresolved'] is not None
     assert sha(field._definition())==initial_definition
+
+
+def test_resolved_hidden_temporal_pulse_preserves_independent_release_work():
+    from math import cos, fsum
+    from anysolver.general_contact.native_surface_history import NativeSurfaceMotionSegment
+    from test_general_contact_native_surface_support import _field as support_field
+    segment=NativeSurfaceMotionSegment(np.zeros((3,3)),np.array(((1.6,0.,0.),(0.,0.,0.))),np.zeros(18))
+    field=support_field(height=.025,rotation=-.8,segments=(segment,))
+    result=integrate_material_friction(field,_settings())
+    # Independently restate the declared 32-substep Coulomb release law.
+    theta=acos(.025/.03); elastic=0.; previous=.03*sin(-theta); work=[]
+    for index in range(1,32):
+        angle=-theta+2*theta*index/32; current=.03*sin(angle)
+        trial=elastic+current-previous; cap=.3*1000*(.03*cos(angle)-.025)
+        next_elastic=min(trial,cap/1000); work.append(cap*(trial-next_elastic))
+        elastic=next_elastic; previous=current
+    area=.03*.6*.04
+    assert result.dissipated_increment_j==pytest.approx(area*fsum(work),rel=1e-8,abs=1e-14)
+    assert result.cumulative_dissipation_j==pytest.approx(result.dissipated_increment_j,rel=1e-12)
+    assert result.released_storage_j==pytest.approx(area*.5*1000*elastic**2,rel=1e-8,abs=1e-14)
+    assert result.dissipated_increment_j>0
+    np.testing.assert_array_equal(result.residual,np.zeros(60))
+    assert result.diagnostics['maximum_scaled_error_estimate']<=1.
 
 
 def test_integral_support_budget_is_shared_across_panels():

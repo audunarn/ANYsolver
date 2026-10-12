@@ -139,3 +139,59 @@ def test_native_round_station_rejects_ambiguous_or_invalid_geometry():
     invalid[0, 0, 0] = -1.0
     with pytest.raises(ValueError, match="proper rotations"):
         station.evaluate(reference.coordinates, np.zeros((3, 3)), invalid)
+
+
+@pytest.mark.parametrize('curved',[False,True])
+@pytest.mark.parametrize('xi,angle',[(-.47,.3),(.63,2*np.pi-2.4)])
+def test_exact_spatial_exponential_variations_match_independent_jet2(curved,xi,angle):
+    from scipy.spatial.transform import Rotation
+    from anysolver._ge_beam3_mixed_ad import Jet2,so3_exp,matmul,constant_matrix
+    reference=_reference(curved)
+    station=NativeRetainedRoundStation(7,reference,xi,.03,angle)
+    positions=reference.coordinates.copy();low=np.zeros((3,3))
+    rotations=np.tile(Rotation.from_rotvec((.4,-.3,.2)).as_matrix(),(2,1,1))
+    actual=station.surface_variations(positions,low,rotations)
+    frame=rotations[station.cell]@reference.frame(xi)
+    radial=.03*(np.cos(angle)*reference.frame(xi)[:,1]+np.sin(angle)*reference.frame(xi)[:,2])
+    arm=rotations[station.cell]@(reference.half_cell_lift(station.cell,station.t)+radial)
+    exponential=so3_exp([Jet2.variable(0.,i,3) for i in range(3)])
+    made_frame=matmul(exponential,constant_matrix(frame,3))
+    made_arm=[sum(exponential[i][j]*arm[j] for j in range(3)) for i in range(3)]
+    np.testing.assert_allclose(actual.section_frame_gradient,
+        np.array([[v.gradient for v in row] for row in made_frame]),rtol=1e-13,atol=1e-14)
+    np.testing.assert_allclose(actual.section_frame_hessian,
+        np.array([[v.hessian for v in row] for row in made_frame]),rtol=1e-13,atol=1e-14)
+    np.testing.assert_allclose(actual.surface_rotation_hessian,
+        np.array([v.hessian for v in made_arm]),rtol=1e-13,atol=1e-14)
+    for array in (actual.section_frame_gradient,actual.section_frame_hessian,actual.surface_rotation_hessian):
+        assert not array.flags.writeable
+
+
+def test_exact_station_pose_reuse_is_bounded_and_keeps_input_and_geometry_guards():
+    reference=_reference(False)
+    station=NativeRetainedRoundStation(7,reference,-.4,.03,.2)
+    positions=reference.coordinates.copy();low=np.zeros((3,3));rotations=np.tile(np.eye(3),(2,1,1))
+    first=station.evaluate(positions,low,rotations)
+    assert station.evaluate(positions.copy(),low.copy(),rotations.copy()) is first
+    for delta in np.linspace(.001,.012,12):
+        moved=positions.copy();moved[:,2]+=delta
+        value=station.evaluate(moved,low,rotations)
+        np.testing.assert_allclose(value.surface_position,first.surface_position+(0.,0.,delta),rtol=0.,atol=1e-14)
+    assert len(station._pose_cache)==8
+    bad=positions.copy();bad[0,0]=np.nan
+    with pytest.raises(ValueError):station.evaluate(bad,low,rotations)
+    station.radius=.04
+    with pytest.raises(ValueError,match='geometry changed'):station.evaluate(positions,low,rotations)
+
+
+def test_station_byte_reuse_rejects_shape_rotation_and_reference_mutations():
+    reference=_reference(False)
+    station=NativeRetainedRoundStation(7,reference,-.4,.03,.2)
+    high=reference.coordinates.copy();low=np.zeros((3,3));rot=np.tile(np.eye(3),(2,1,1))
+    station.evaluate(high,low,rot)
+    with pytest.raises(ValueError):station.evaluate(high.reshape(9),low,rot)
+    bad=rot.copy();bad[0,0,0]=2.
+    with pytest.raises(ValueError):station.evaluate(high,low,bad)
+    reference._coefficient_low=reference._coefficient_low.copy()
+    reference._coefficient_low[0,0]=1e-9
+    with pytest.raises(ValueError,match='reference identity changed'):station.evaluate(high,low,rot)

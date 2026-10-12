@@ -9,6 +9,7 @@ contact admission until a surface adapter and solver transaction use it.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 
 import numpy as np
 
@@ -24,11 +25,22 @@ def _frame3(values) -> np.ndarray:
     result = np.asarray(values, dtype=float)
     if result.shape != (3, 3) or not np.all(np.isfinite(result)):
         raise ValueError("material frame must be a finite 3 by 3 matrix")
-    if (not np.allclose(result.T @ result, np.eye(3), rtol=0.0, atol=1.0e-9)
-            or not np.isclose(np.linalg.det(result), 1.0,
+    _validate_frame_bytes(result.tobytes())
+    return result
+
+
+@lru_cache(maxsize=128)
+def _validate_frame_bytes(value):
+    """Exact geometry-only validation reuse; no caller array is retained.
+
+    Shape and finite checks precede every lookup. Changed frame bits always
+    undergo the original orthonormality and polarity tests.
+    """
+    frame = np.frombuffer(value, dtype=np.float64).reshape(3, 3)
+    if (not np.allclose(frame.T @ frame, np.eye(3), rtol=0.0, atol=1.0e-9)
+            or not np.isclose(np.linalg.det(frame), 1.0,
                               rtol=0.0, atol=1.0e-9)):
         raise ValueError("material frame must be right-handed and orthonormal")
-    return result
 
 
 def _frozen_vector(values: np.ndarray) -> tuple[float, float, float]:

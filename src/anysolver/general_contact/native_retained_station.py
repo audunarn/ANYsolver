@@ -6,7 +6,9 @@ not condense the cell rotations or admit the native beam to generic FEModel.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields, is_dataclass
+from struct import pack
+from collections import OrderedDict
 from math import cos, fsum, isfinite, sin, tau
 
 import numpy as np
@@ -28,6 +30,15 @@ def _readonly(value: np.ndarray) -> np.ndarray:
     result = np.array(value, dtype=float, copy=True)
     result.setflags(write=False)
     return result
+
+
+# Exp(delta)=I+hat(delta)+hat(delta)^2/2+O(||delta||^3).
+# Thus its exact zero-increment derivatives are Gi and (Gi Gj+Gj Gi)/2.
+# The physical spatial chart and all work maps remain unchanged.
+_SPATIAL_ROTATION_GENERATORS=_readonly(np.stack([_cross_matrix(axis) for axis in np.eye(3)]))
+_SPATIAL_ROTATION_SECOND=_readonly(np.stack([
+    np.stack([.5*(a@b+b@a) for b in _SPATIAL_ROTATION_GENERATORS])
+    for a in _SPATIAL_ROTATION_GENERATORS]))
 
 
 @dataclass(frozen=True)
@@ -85,6 +96,22 @@ class NativeRetainedRoundSurfaceVariations:
         return _readonly(tangent)
 
 
+def _reference_guard_value(value):
+    if isinstance(value,np.ndarray):return (value.shape,value.dtype.str,value.tobytes())
+    if isinstance(value,(float,np.floating)):return pack('>d',float(value))
+    if isinstance(value,tuple):return tuple(_reference_guard_value(v) for v in value)
+    if is_dataclass(value):return tuple((f.name,_reference_guard_value(getattr(value,f.name))) for f in fields(value))
+    return value
+
+
+def _reference_guard_snapshot(reference):
+    # Exact bytes cover the full instance data underlying canonical_data,
+    # including derived coefficients/frame branches and regularity controls.
+    return (type(reference),tuple((name,_reference_guard_value(value))
+        for name in sorted({slot for cls in type(reference).__mro__ for slot in getattr(cls,'__slots__',())})
+        for value in (getattr(reference,name),)))
+
+
 class NativeRetainedRoundStation:
     """One owned interior material station and declared circular section point."""
 
@@ -117,21 +144,39 @@ class NativeRetainedRoundStation:
             element_id=element_id, reference=self._reference_digest,
             xi=xi, radius=radius, angle=angle, cell=self.cell,
         ))
+        self._geometry_signature=(element_id,xi,radius,angle,self.cell,self.t)
+        self._reference_guard=_reference_guard_snapshot(reference)
+        self._reference_frame=_readonly(reference.frame(xi))
+        self._reference_lift=_readonly(reference.half_cell_lift(self.cell,self.t))
+        self._radial_reference=_readonly(radius*(cos(angle)*self._reference_frame[:,1]
+            +sin(angle)*self._reference_frame[:,2]))
+        # Exact pose memo, local to one material station. At most eight small
+        # readonly geometry/work-map records; no material state is stored.
+        self._pose_cache=OrderedDict()
 
     def evaluate(self, positions: np.ndarray, position_low: np.ndarray,
                  cell_rotations: np.ndarray) -> NativeRetainedRoundStationState:
-        if sha(self.reference.canonical_data()) != self._reference_digest:
+        if (self.element_id,self.xi,self.radius,self.angle,self.cell,self.t)!=self._geometry_signature:
+            raise ValueError("native contact station geometry changed")
+        if _reference_guard_snapshot(self.reference) != self._reference_guard:
             raise ValueError("native contact station reference identity changed")
-        high = _array(positions, (3, 3), "native contact nodal positions")
-        low = _array(position_low, (3, 3), "native contact nodal low parts")
-        rotations = _frames(cell_rotations, 2, "native contact cell rotations")
+        high=np.asarray(positions,dtype=float);low=np.asarray(position_low,dtype=float)
+        rotations=np.asarray(cell_rotations,dtype=float)
+        key=(high.shape,low.shape,rotations.shape,high.tobytes(),low.tobytes(),rotations.tobytes())
+        if key in self._pose_cache:
+            # Byte-identical values have already passed all finite, rotation,
+            # shape and compensated-pair checks. Changed values take the full
+            # validation path; geometry/reference binding is checked above.
+            self._pose_cache.move_to_end(key)
+            return self._pose_cache[key]
+        high = _array(high, (3, 3), "native contact nodal positions")
+        low = _array(low, (3, 3), "native contact nodal low parts")
+        rotations = _frames(rotations, 2, "native contact cell rotations")
         for first, second in zip(high.flat, low.flat):
             validate_pair(float(first), float(second))
-        lift = self.reference.half_cell_lift(self.cell, self.t)
-        frame = self.reference.frame(self.xi)
-        radial_reference = self.radius*(
-            cos(self.angle)*frame[:, 1]+sin(self.angle)*frame[:, 2]
-        )
+        lift = self._reference_lift
+        frame = self._reference_frame
+        radial_reference = self._radial_reference
         rotation = rotations[self.cell]
         curved_lift = rotation @ lift
         surface_lift = rotation @ (lift+radial_reference)
@@ -154,26 +199,24 @@ class NativeRetainedRoundStation:
         angular = slice(18+3*self.cell, 21+3*self.cell)
         centerline_jacobian[:, angular] = -_cross_matrix(curved_lift)
         surface_jacobian[:, angular] = -_cross_matrix(surface_lift)
-        return NativeRetainedRoundStationState(
+        result=NativeRetainedRoundStationState(
             _readonly(centerline), _readonly(surface),
             _readonly(centerline_jacobian), _readonly(surface_jacobian),
         )
+        self._pose_cache[key]=result
+        if len(self._pose_cache)>8:self._pose_cache.popitem(last=False)
+        return result
 
     def surface_variations(self, positions, position_low, cell_rotations):
-        """Element-owned R=Uc R0 and exact local Jet2 position/frame variations."""
-        from anysolver._ge_beam3_mixed_ad import Jet2, so3_exp, matmul, constant_matrix
+        """Element-owned R=Uc R0 and exact zero-increment exponential variations."""
         state=self.evaluate(positions,position_low,cell_rotations)
         rotation=np.asarray(cell_rotations)[self.cell]
-        reference_frame=self.reference.frame(self.xi)
-        radial=self.radius*(cos(self.angle)*reference_frame[:,1]+sin(self.angle)*reference_frame[:,2])
-        arm=rotation@(self.reference.half_cell_lift(self.cell,self.t)+radial)
+        reference_frame=self._reference_frame
+        arm=rotation@(self._reference_lift+self._radial_reference)
         frame=rotation@reference_frame
-        delta=[Jet2.variable(0.,i,3) for i in range(3)]
-        increment=so3_exp(delta)
-        made_frame=matmul(increment,constant_matrix(frame,3))
-        made_arm=[sum(increment[i][j]*arm[j] for j in range(3)) for i in range(3)]
+        frame_gradient=np.einsum('iab,bc->aci',_SPATIAL_ROTATION_GENERATORS,frame)
+        frame_hessian=np.einsum('ijab,bc->acij',_SPATIAL_ROTATION_SECOND,frame)
+        arm_hessian=np.einsum('ijab,b->aij',_SPATIAL_ROTATION_SECOND,arm)
         return NativeRetainedRoundSurfaceVariations(state,
             tuple(range(18+3*self.cell,21+3*self.cell)),_readonly(arm),_readonly(frame),
-            _readonly(np.array([[value.gradient for value in row] for row in made_frame])),
-            _readonly(np.array([[value.hessian for value in row] for row in made_frame])),
-            _readonly(np.array([value.hessian for value in made_arm])))
+            _readonly(frame_gradient),_readonly(frame_hessian),_readonly(arm_hessian))
