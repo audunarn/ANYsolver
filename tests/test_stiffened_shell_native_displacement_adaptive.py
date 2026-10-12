@@ -10,6 +10,7 @@ from anysolver._stiffened_shell_displacement_adaptive import (
 from anysolver._stiffened_shell_displacement_increment import DisplacementIncrementState
 from test_stiffened_shell_native_point_displacement import owner,ACTIONS,DIRECTION,CONTROL,OPTIONS
 from test_stiffened_shell_native_plastic_s3_displacement import definition,compare
+from test_stiffened_shell_displacement_increment import assert_single_cutback_history
 
 
 def reject(driver,**args):
@@ -61,7 +62,7 @@ def test_native_adaptive_actual_s3_cutback_cancel_restart(request,monkeypatch):
         restored.solve(DIRECTION,(targets[-1],),displacement_control=CONTROL,**OPTIONS)
     a=analysis.solve(DIRECTION,targets,**kw);b=restored.solve(DIRECTION,targets,**kw)
     compare(a,b)
-    assert a.status==b.status=='completed' and len(a.increment_attempts)==4
+    assert_single_cutback_history(a,b,prefix,initial,targets,limits)
     assert analysis.checkpoint()==restored.checkpoint()
     assert a.free_equilibrium_ratio<=1e-8 and a.constraint_max<=1e-9
     assert not a.production_qualified
