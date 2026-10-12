@@ -44,8 +44,26 @@ def test_release_archive_contains_only_current_user_documents() -> None:
 
 
 def test_cleanup_retains_only_referenced_authority_plans() -> None:
-    plans = sorted((ROOT / "docs/agent_plans").glob("*.md"))
+    # The cleanup describes the released 0.4.6 tree, not a permanent cap on
+    # later development plans. Retain the exact historical count.
+    reference = f"v{gate.VERSION}"
+    release_tree = subprocess.run(
+        ["git", "ls-tree", "-r", "--name-only", reference, "--", "docs/agent_plans"],
+        cwd=ROOT, capture_output=True, text=True, timeout=15,
+    )
+    if release_tree.returncode:
+        pytest.skip(f"historical {reference} tree unavailable; exact release cleanup requires its Git history")
+    plans = {
+        path for path in release_tree.stdout.splitlines()
+        if Path(path).parent.as_posix() == "docs/agent_plans" and path.endswith(".md")
+    }
     assert len(plans) == 120
+    assert {
+        "docs/agent_plans/S3_E4_PL_V6W_FINAL_QUALIFICATION_PLAN.md",
+        "docs/agent_plans/S4_E4_PL_Q1V_LOCAL_COMPLETION_PLAN.md",
+        "docs/agent_plans/GE_BEAM3_VARIATIONAL_SHELL_MAP.md",
+    } <= plans
+    assert "docs/agent_plans/GE_BEAM3_ACTIVE_PLASTIC_ARC_SMOKE.md" not in plans
     assert (ROOT / "docs/agent_plans/S3_E4_PL_V6W_FINAL_QUALIFICATION_PLAN.md").is_file()
     assert (ROOT / "docs/agent_plans/S4_E4_PL_Q1V_LOCAL_COMPLETION_PLAN.md").is_file()
     assert (ROOT / "docs/agent_plans/GE_BEAM3_VARIATIONAL_SHELL_MAP.md").is_file()

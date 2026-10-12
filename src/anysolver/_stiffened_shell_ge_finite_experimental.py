@@ -1265,7 +1265,7 @@ class FinitePointDriver:
 
     def _native_boundary_amount(self, state, increment):
         """Copy the proposal before any candidate invalidates parent recovery."""
-        if not (self.owner._bl5_native_material or self._paired_fibre_event): return None
+        if not (self.owner._bl5_native_material or getattr(self, "_paired_fibre_event", False)): return None
         cached = self._native_boundary_trial
         if (cached is None or cached[0] is not state or cached[1] is not self._beam_origins or
                 cached[2] != self.owner._generation):

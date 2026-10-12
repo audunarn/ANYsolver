@@ -1015,3 +1015,6 @@ scripts/r8_ge_merit_interpolation_execution_dev.py -text whitespace=blank-at-eol
 scripts/r8_ge_paired_adaptive_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
 tests/test_r8_f06_fibre_launch_seam_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
 tests/test_r8_ge_merit_history_entrypoint_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+
+# Preserve the density reference's pinned source bytes on every checkout.
+scripts/r8_bl5_external_affine_reference_dev.py -text

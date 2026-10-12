@@ -1,5 +1,10 @@
 """Focused JIT-off generic Beam scatter/assembly compatibility checks."""
 from types import SimpleNamespace
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
 
 import numpy as np
 import pytest
@@ -80,10 +85,30 @@ def beam_model():
     return model
 
 
-def test_actual_beam_assembly_exact_parity(monkeypatch):
+def test_actual_beam_assembly_exact_parity(monkeypatch, tmp_path):
     from anysolver import nonlinear_static
     import numba
+    # JIT-off must be selected before decorators and Numba overloads load.
+    # Toggling it after an ordinary JIT-on import can corrupt cold overloads.
+    child = 'ANYSOLVER_GENERIC_SCATTER_JIT_OFF_CHILD'
+    if os.environ.get(child) == '1':
+        assert numba.config.DISABLE_JIT, 'fresh child must actually disable JIT'
+    if not numba.config.DISABLE_JIT:
+        env = dict(os.environ, NUMBA_DISABLE_JIT='1')
+        env[child] = '1'
+        command = [sys.executable, '-m', 'pytest', '-q', '-p', 'no:cacheprovider',
+                   '-o', 'pythonpath=', '--basetemp='+str(tmp_path/'jit-off'),
+                   str(Path(__file__).resolve())+'::test_actual_beam_assembly_exact_parity']
+        run = subprocess.run(command, env=env, capture_output=True, text=True, timeout=60)
+        (tmp_path/'jit-off-stdout.log').write_text(run.stdout, encoding='utf-8')
+        (tmp_path/'jit-off-stderr.log').write_text(run.stderr, encoding='utf-8')
+        assert run.returncode == 0, run.stdout+'\n'+run.stderr
+        return
     assert numba.config.DISABLE_JIT
+    (tmp_path/'jit-off-runtime.json').write_text(json.dumps({
+        'python': sys.version, 'source': performance.__file__,
+        'disable_jit': bool(numba.config.DISABLE_JIT),
+        'numba_threads': numba.get_num_threads()}), encoding='utf-8')
     model=beam_model()
     nonlinear_static._ensure_nonlinear_acceleration()
     n=model.mesh.dof_manager.total_dofs
