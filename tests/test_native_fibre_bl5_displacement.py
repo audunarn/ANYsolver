@@ -108,7 +108,7 @@ def test_refusals_and_restore_are_atomic(request):
     from anysolver._stiffened_shell_displacement_adaptive import MAGICS
     for magic in MAGICS:
         untouched=owner(request)
-        with pytest.raises(ValueError,match='adaptive checkpoints'): untouched.restore(magic+saved)
+        with pytest.raises(ValueError,match=r'^(?:bounded adaptive displacement checkpoint required|native material BL5 displacement excludes adaptive checkpoints)$'): untouched.restore(magic+saved)
         assert untouched._finite_driver is None and untouched._generation==0
     assert control.checkpoint() == saved
 
