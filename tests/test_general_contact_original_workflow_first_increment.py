@@ -34,6 +34,7 @@ engineering acceptance.
 import importlib.util
 import json
 import os
+import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -204,7 +205,7 @@ def test_actual_first_original_increment_completes_under_production_gates():
                   "not installed/engineering acceptance"),
     }
     # Capture the actual returned evidence BEFORE any assertion.
-    with open(os.path.join(os.environ["TEMP"], CAPTURE_NAME), "w",
+    with open(os.path.join((os.environ.get("TEMP") or tempfile.gettempdir()), CAPTURE_NAME), "w",
               encoding="utf-8") as handle:
         json.dump(owned._plain(capture), handle, indent=2, sort_keys=True,
                   allow_nan=False)
@@ -282,7 +283,7 @@ def test_input_free_first_increment_completes_under_production_gates():
                   "not a complete trajectory claim"),
     }
     # Capture the actual returned evidence BEFORE any assertion.
-    with open(os.path.join(os.environ["TEMP"], INPUT_FREE_CAPTURE_NAME), "w",
+    with open(os.path.join((os.environ.get("TEMP") or tempfile.gettempdir()), INPUT_FREE_CAPTURE_NAME), "w",
               encoding="utf-8") as handle:
         json.dump(owned._plain(capture), handle, indent=2, sort_keys=True,
                   allow_nan=False)

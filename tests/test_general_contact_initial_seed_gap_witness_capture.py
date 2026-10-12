@@ -34,6 +34,7 @@ acceptance gate beyond the unchanged production ones is evaluated.
 """
 import json
 import os
+import tempfile
 
 import numpy as np
 import pytest
@@ -183,7 +184,7 @@ def test_real_seed_gap_witnesses_are_captured_at_the_refusal(monkeypatch):
                 "free_gap_min_m"):
         if key in decision:
             record[f"proposal_{key}"] = decision[key]
-    with open(os.path.join(os.environ["TEMP"], CAPTURE_NAME), "w",
+    with open(os.path.join((os.environ.get("TEMP") or tempfile.gettempdir()), CAPTURE_NAME), "w",
               encoding="utf-8") as handle:
         json.dump(record, handle, indent=2, sort_keys=True)
         handle.write("\n")

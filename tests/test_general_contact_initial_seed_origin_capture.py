@@ -20,6 +20,7 @@ acceptance gate is evaluated here and no trajectory claim is made.
 """
 import json
 import os
+import tempfile
 
 import numpy as np
 import pytest
@@ -131,7 +132,7 @@ def test_real_origin_seed_proposal_is_captured_with_counts_and_reason():
         assert type(record["qp_iterations"]) is int
     if "cost_s" in record:
         assert record["cost_s"] >= 0.0
-    with open(os.path.join(os.environ["TEMP"], _CAPTURE_NAME), "w",
+    with open(os.path.join((os.environ.get("TEMP") or tempfile.gettempdir()), _CAPTURE_NAME), "w",
               encoding="utf-8") as handle:
         json.dump(record, handle, indent=2, sort_keys=True)
         handle.write("\n")

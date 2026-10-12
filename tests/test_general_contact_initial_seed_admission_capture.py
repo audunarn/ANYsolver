@@ -24,6 +24,7 @@ no trajectory claim is made.
 """
 import json
 import os
+import tempfile
 
 import numpy as np
 import pytest
@@ -172,7 +173,7 @@ def test_real_seed_admission_decision_is_captured_before_newton():
         record["seed_merit"] = float(decision["seed_merit"])
     else:
         assert isinstance(decision.get("reason"), str) and decision["reason"]
-    with open(os.path.join(os.environ["TEMP"], _CAPTURE_NAME), "w",
+    with open(os.path.join((os.environ.get("TEMP") or tempfile.gettempdir()), _CAPTURE_NAME), "w",
               encoding="utf-8") as handle:
         json.dump(record, handle, indent=2, sort_keys=True)
         handle.write("\n")

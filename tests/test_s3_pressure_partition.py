@@ -14,9 +14,14 @@ class RecomputedPartition:
     @property
     def totals(self):return module._aggregate(self.cells,self.count)
 
-    def pop(self):
+    def pop(self,violations=None):
         choices=[i for i,cell in enumerate(self.cells)
-                 if cell[3][3] and cell[2]<self.maximum_depth]
+                 if cell[3][3] and cell[2]<self.maximum_depth
+                 and (violations is None or any(
+                     index in violations and
+                     cell[3][2 if violations[index] else 1][local][0]
+                         <cell[3][2 if violations[index] else 1][local][1]
+                     for local,index in enumerate(cell[0].ids)))]
         if not choices:return None
         return self.cells.pop(max(choices,key=lambda i:module._fraction(self.cells[i][1])))
 
@@ -53,6 +58,32 @@ def test_depth_exhaustion_keeps_all_nonrefinable_cell_contributions():
     assert fast.pop() is None
     assert fast.totals==module._aggregate(cells,3)
     assert all(v[0]>0 for v in fast.totals[0])
+
+
+def test_pop_refuses_cells_that_cannot_tighten_the_violated_inequality():
+    # Production defers eligible cells whose failed-side bound interval is
+    # already empty; the reference must refuse them identically and keep
+    # every deferred contribution in the totals.
+    def cell(ids,vertices,opens,closed):
+        return (SimpleNamespace(ids=ids),vertices,0,
+                (((Q(1),Q(2)),)*3,opens,closed,True))
+    live=((Q(-1),Q(1)),(Q(-2),Q(2)),(Q(-3),Q(3)))
+    flat=tuple((Q(n),Q(n)) for n in (5,6,7))
+    blocked=cell((0,1,2),module._ROOT,live,flat)
+    usable=cell((0,1,2),module._children(module._ROOT)[0],live,live)
+    fast=module._SpatialPartition([blocked,usable],3,4)
+    slow=RecomputedPartition([blocked,usable],3,4)
+    assert fast.totals==slow.totals
+    a,b=fast.pop({0:True}),slow.pop({0:True})
+    assert a==b and a is usable
+    assert fast.totals==slow.totals==module._aggregate([blocked],3)
+    assert fast.pop({0:True}) is None and slow.pop({0:True}) is None
+    assert fast.totals==slow.totals==module._aggregate([blocked],3)
+    blocked_opens=cell((0,1,2),module._ROOT,flat,live)
+    fast2=module._SpatialPartition([blocked_opens],3,4)
+    slow2=RecomputedPartition([blocked_opens],3,4)
+    assert fast2.pop({0:False}) is None and slow2.pop({0:False}) is None
+    assert fast2.totals==slow2.totals==module._aggregate([blocked_opens],3)
 
 
 @pytest.mark.parametrize('case',('mixed','tiny','hidden','cancel'))
