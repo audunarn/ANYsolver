@@ -211,3 +211,76 @@ def test_flexible_pairs_match_independent_full_descriptor_quotient(shift_hz, tmp
             bound = abs(A)@abs(x)+abs(value)*(abs(B)@abs(x))
             assert np.linalg.norm(residual)/np.linalg.norm(bound) <= 1e-8
     finally: owner.close()
+
+
+def test_near_zero_screen_decisions_are_invariant_under_equivalent_units_and_frames():
+    """Same physical panel in equivalent unit systems and frames.
+
+    The injected mechanism must be refused and the genuine flexible pairs
+    resolved in every equivalent description: a mixed-unit spectral floor
+    would decide from the numeric scale instead of the physics.
+    """
+    from scipy import sparse
+    resolved = []
+    for angle in (0., .63):
+        for length, mass in ((1., 1.), (1000., .001)):
+            definition = replace(_definition(angle=angle, length_unit=length,
+                mass_unit=mass), fixed=(),
+                modal_boundary_policy=api.GE_FREE_FREE_MODAL_ONLY_V1)
+            owner = api.create_analysis(definition=definition)
+            try:
+                genuine = owner.modes(api.GEReferenceModesRequest(3, 1.))
+                assert genuine.status == 'completed', genuine.failure_reason
+                assert max(genuine.flexible.equation_residuals) <= 1e-8
+                assert max(genuine.flexible.constraint_residuals) <= 1e-9
+                resolved.append(np.asarray(genuine.flexible.eigenvalues_rad2_s2))
+                q = np.asarray(genuine.flexible.full_coordinates[0])
+                old = owner._K.toarray()
+                action = old@q
+                work = float(q@action)
+                assert work > 0.
+                owner._K = sparse.csr_matrix(old-np.outer(action, action)/work)
+                owner._A = sparse.bmat([[owner._K, owner._C.T], [owner._C, None]],
+                    format='csc')
+                refused = owner.modes(api.GEReferenceModesRequest(1, 1.))
+                assert refused.status == 'failed', refused
+                assert 'mechanism' in refused.failure_reason, refused.failure_reason
+                assert not refused.rigid_coordinates
+                assert not refused.flexible.full_coordinates
+            finally:
+                owner.close()
+    for values in resolved[1:]:
+        np.testing.assert_allclose(values, resolved[0], rtol=1e-8, atol=1e-8)
+
+
+def test_genuinely_soft_positive_mode_is_resolved_by_the_physical_work_screen():
+    """A uniformly softer panel has positive modes far below any fixed
+    spectral floor; the physical work screen must resolve them, not refuse.
+    """
+    values = {}
+    for label, definition in (
+            ('base', replace(_definition(), fixed=(),
+                modal_boundary_policy=api.GE_FREE_FREE_MODAL_ONLY_V1)),
+            ('soft', replace(_definition(stiffness_unit=1e-11), fixed=(),
+                modal_boundary_policy=api.GE_FREE_FREE_MODAL_ONLY_V1)),
+            ('soft-scaled', replace(_definition(stiffness_unit=1e-11,
+                length_unit=1000., mass_unit=.001), fixed=(),
+                modal_boundary_policy=api.GE_FREE_FREE_MODAL_ONLY_V1))):
+        # The declared shift is a public request control; it is placed near
+        # the soft spectrum so sigma+1/mu reconstruction stays well above
+        # its own cancellation roundoff. The work screen itself uses no shift.
+        shift = 1. if label == 'base' else .01
+        owner = api.create_analysis(definition=definition)
+        try:
+            result = owner.modes(api.GEReferenceModesRequest(3, shift))
+            assert result.status == 'completed', result.failure_reason
+            assert max(result.flexible.equation_residuals) <= 1e-8
+            assert max(result.flexible.constraint_residuals) <= 1e-9
+            values[label] = np.asarray(result.flexible.eigenvalues_rad2_s2)
+        finally:
+            owner.close()
+    assert np.all(values['soft'] > 0.)
+    np.testing.assert_allclose(values['soft'], 1e-11*values['base'],
+        rtol=1e-8, atol=1e-18)
+    np.testing.assert_allclose(values['soft-scaled'], values['soft'],
+        rtol=1e-8, atol=1e-18)

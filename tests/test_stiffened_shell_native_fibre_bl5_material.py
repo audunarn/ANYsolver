@@ -35,11 +35,11 @@ def test_policy_admission_and_force_only_refusals(request):
             ss.create_analysis(definition=bad)
     before = a._generation
     programme = ss.StagedDeadLoadProgramme(a.preflight()['identity'], (ACTIONS, ACTIONS))
-    with pytest.raises(ValueError, match='force-controlled'):
+    with pytest.raises(ValueError, match='nodal dead translations'):
         a.solve(programme)
-    with pytest.raises(ValueError, match='force-controlled'):
+    with pytest.raises(ValueError, match='coupled BL5 or curved material displacement control required'):
         a.solve(ACTIONS, displacement_control=object())
-    with pytest.raises(ValueError, match='force-controlled'):
+    with pytest.raises(ValueError, match='arc control and bounded accepted-step count required'):
         a.continue_arc_length(ACTIONS, object())
     with pytest.raises(ValueError, match='spectra'):
         a.buckling(ss.GENativeLineBucklingRequest(1))
@@ -246,7 +246,11 @@ def test_native_material_lifecycle_and_fixed_predecessor_tangent(request, monkey
     for h in (1e-4, 1e-5, 1e-6):
         positive = evaluate(driver._advance(state, direction, h))
         negative = evaluate(driver._advance(state, direction, -h))
-        assert activity(positive) == activity(negative) == branch
+        # The coarsest sample may cross a yield branch; it is diagnostic only.
+        # Both adjacent fine samples used by the existing 1e-5 plateau must
+        # remain on the accepted algorithmic branch.
+        if h < 1e-4:
+            assert activity(positive) == activity(negative) == branch
         plus, minus = positive[0], negative[0]
         errors.append(np.linalg.norm(((plus-minus)/(2*h)-expected)*weights)/max(np.linalg.norm(expected*weights), 1.))
     assert max(errors[1:]) <= 1e-5, errors

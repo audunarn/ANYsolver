@@ -227,7 +227,7 @@ def test_nonzero_director_multiplier_combined_shell_pad_chart(owner):
 def test_new_family_point_coexistence_and_selection_refuse():
     d=definition()
     from anysolver._stiffened_shell_b2_q4_panel_experimental import ExperimentalB2Q4PanelAnalysis
-    with pytest.raises(ValueError,match="separate Q4"):
+    with pytest.raises(ValueError,match="separate physical footprint static family required"):
         ExperimentalB2Q4PanelAnalysis(d.shell_nodes_m,d.shells,d.members,(api.Q4B2Point("p","shell-1","beam-right",0.),),transformation=d.transformation,prescribed_offset=d.prescribed_offset,physical_footprints=d.physical_footprints)
     with pytest.raises(ValueError,match="sequence"):
         api.B2PhysicalRigidFootprintSelection("x")

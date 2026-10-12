@@ -320,7 +320,16 @@ def test_caller_ownership_and_selected_only_membership(request):
     owner = _owner(request, supplied)
     K = owner._K.copy(); C = owner._C.copy(); T = owner._T.copy()
     membership.clear(); groups.clear(); nodes[2][0] = 999.
-    supplied.transformation.data[:] = 999.; supplied.prescribed_offset[:] = 999.
+    supplied.transformation.data[:] = 999.
+    # The owned prescribed-offset snapshot is deliberately read-only: caller
+    # mutation is refused by the view itself, which is the isolation proof.
+    original_offset = np.array(supplied.prescribed_offset)
+    assert supplied.prescribed_offset.flags.writeable is False
+    with pytest.raises(ValueError):
+        supplied.prescribed_offset[:] = 999.
+    with pytest.raises(ValueError):
+        supplied.prescribed_offset[0] = 999.
+    np.testing.assert_array_equal(supplied.prescribed_offset, original_offset)
     np.testing.assert_array_equal(owner._K.data, K.data)
     np.testing.assert_array_equal(owner._C.data, C.data)
     np.testing.assert_array_equal(owner._T.data, T.data)

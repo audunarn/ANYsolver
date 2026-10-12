@@ -499,13 +499,33 @@ def solve(owner, request, *, cancellation_token=None):
                 raise _ModalFailure("nonphysical or unresolved finite reference pair")
             eigenvalue = sigma+1./float(mu.real)
             if free:
-                # Cancellation/roundoff resolution screen only: not a certified
-                # Arnoldi/LU eigenvalue error bound or exactly-six nullity proof.
+                # Retain the separate shift/reconstruction cancellation guard.
                 roundoff_screen = 64*np.finfo(float).eps*A.shape[0]*(abs(sigma)+abs(1./float(mu.real)))
                 if not np.isfinite(roundoff_screen) or eigenvalue <= roundoff_screen:
                     raise _ModalFailure("extra mechanism or unresolved near-zero flexible pair")
             x = scale*np.asarray(vector.real)
             q = np.zeros(owner._K.shape[0]); q[owner._free] = x[:n]
+            if free:
+                # Physical quadratic-work resolution screen on the reconstructed
+                # candidate (the congruence inverse applied to the Krylov vector).
+                # The pair is resolvable only when its inertial quadratic work
+                # exceeds the abs-coefficient quadratic-work roundoff of this
+                # candidate's elastic and descriptor constraint work. Both sides
+                # are physical energy, so the decision is invariant under
+                # equivalent diagonal unit/coordinate rescalings. Absolute-entry
+                # bounds can vary under general frame rotations; this is a
+                # conservative resolution screen, not a frame-invariance proof.
+                # Its coefficient uncertainty uses no fitted eigenvalue or shift. Cancellation/roundoff
+                # screen only: not a certified Arnoldi/LU eigenvalue error bound
+                # or exactly-six nullity proof.
+                kinetic = float(q@mass@q)
+                work = eigenvalue*kinetic
+                uncertainty = 64*np.finfo(float).eps*A.shape[0]*(
+                    float((abs(owner._K)@abs(q))@abs(q))+
+                    2.*float((abs(owner._C).T@abs(x[n:]))@abs(q)))
+                if (not np.isfinite(work) or not np.isfinite(uncertainty) or
+                        work <= uncertainty):
+                    raise _ModalFailure("extra mechanism or unresolved near-zero flexible pair")
             norm = float(q@mass@q)
             if not np.isfinite(eigenvalue) or eigenvalue <= 0. or not np.isfinite(norm) or norm <= 0.:
                 raise _ModalFailure("positive finite eigenvalue and physical modal mass required")

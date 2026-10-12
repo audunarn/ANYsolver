@@ -11,20 +11,22 @@ from test_stiffened_shell_bl5_material import model, make
 from test_stiffened_shell_bl5_finite import _action
 
 
-def coupled(basis="p0"):
+def coupled(basis="p0", *, simultaneous_yield_fixture=False):
     base=model(basis,hardening=1e8)
     p=1e6
-    curve=DNVC208MaterialCurve(p,1.05*p,1.1*p,.005,.01,4*p,.2)
+    # Keep saved-checkpoint consumers on their original material identity.
+    strains=(.0005,.001) if simultaneous_yield_fixture else (.005,.01)
+    curve=DNVC208MaterialCurve(p,1.05*p,1.1*p,*strains,4*p,.2)
     return replace(base,shell=replace(base.shell,j2_curve=curve),
                    bl5_material_policy=ss.BL5_COUPLED_J2_MATERIAL_V1)
 
 
 def test_yielded_bl5_actual_update_tangent_in_all_row_families(request, record_property):
     """Distinguish an untested coupled derivative from continuation control."""
-    definition = coupled("p0")
+    definition = coupled("p0", simultaneous_yield_fixture=True)
     owner = make(request, definition)
     programme = ss.StagedDeadLoadProgramme(
-        owner.preflight()["identity"], (_action(500.), _action(-500.)))
+        owner.preflight()["identity"], (_action(700.), _action(-500.)))
     result = owner.solve(programme, (.5, 1.), max_iterations=20,
                          max_backtracks=12,
                          increment_control=ss.AdaptiveIncrementControl(4, 64))
@@ -103,10 +105,10 @@ def test_yielded_bl5_actual_update_tangent_in_all_row_families(request, record_p
 def _coupled_history_roundtrip(request,monkeypatch,tmp_path,basis,*,reversal):
     from anysolver.control import CancellationToken,SolveCancelled
     from anysolver._stiffened_shell_ge_finite_experimental import FinitePointDriver
-    definition=coupled(basis);a=make(request,definition)
+    definition=coupled(basis, simultaneous_yield_fixture=True);a=make(request,definition)
     assert "shell J2 plastic" not in a.capabilities["excluded"]
     programme=ss.StagedDeadLoadProgramme(a.preflight()["identity"],
-                                       (_action(500.),_action(-500. if reversal else 550.)))
+                                       (_action(700.),_action(-500. if reversal else 770.)))
     targets=(.5,1.,1.25,1.75,2.) if reversal else (.5,1.,2.);control=ss.AdaptiveIncrementControl(4,64)
     kwargs=dict(max_iterations=20,max_backtracks=12,increment_control=control)
     token=CancellationToken()

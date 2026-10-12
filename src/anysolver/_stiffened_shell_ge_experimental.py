@@ -1878,6 +1878,16 @@ class ExperimentalGEAnalysis:
             raise RuntimeError("restore requires a fresh experimental GE analysis")
         if type(raw) is not bytes:
             raise ValueError("bounded mixed linear checkpoint required")
+        # The selected polishing candidate binds one effective identity at
+        # every framed restore layer: its tagged bytes restore only with the
+        # policy selected, and legacy bytes restore only without it. Every
+        # unselected analysis keeps its exact legacy identity, so OFF bytes
+        # and legacy owners built before the selector existed (missing
+        # selector means False) restore exactly as before.
+        from ._stiffened_shell_ge_finite_experimental import admissible_polish_identity
+        polish_selected = getattr(self, "_admissible_polish_candidate", False) is True
+        effective_identity = (admissible_polish_identity(self._identity)
+                              if polish_selected else self._identity)
         from ._stiffened_shell_displacement_adaptive import PAIRED_MAGIC as PAIRED_ADAPTIVE_MAGIC,PAIRED_INTERPOLATION_MAGIC
         if raw.startswith((PAIRED_ADAPTIVE_MAGIC,PAIRED_INTERPOLATION_MAGIC)):
             if legacy_compensated_base is not False:
@@ -1902,7 +1912,7 @@ class ExperimentalGEAnalysis:
             if not selected: raise ValueError('compensated checkpoint requires selected arithmetic policy')
             shapes=(('q_low',(self._K.shape[0],)),('frames_low',(len(self._beam_ids),3,3)),
                     ('cells_low',(len(self._beam_parts),2,3,3)),('resultants_low',(len(self._beam_parts),18)))
-            raw,corrections=decode_compensated(raw,self._identity,shapes)
+            raw,corrections=decode_compensated(raw,effective_identity,shapes)
         elif selected and not raw.startswith(STAGED_MAGIC):
             if legacy_compensated_base is not True:
                 raise ValueError('legacy checkpoint lacks durable corrections; explicit declared binary base import required')
@@ -2050,6 +2060,23 @@ class ExperimentalGEAnalysis:
             prepared._staged_context = compiled
             prepared._commit_lock = RLock()
             prepared._writing = False
+            # Staged-only auto restore inference of the private polishing
+            # candidate: after the staged decode/compile validated the
+            # envelope, a fresh owner with no explicit selection infers the
+            # polished mode from the inner checkpoint's tagged identity, on
+            # this private copy only. Raw legacy bytes keep the default
+            # route; explicit True/False stays binding; tagged bytes of a
+            # different owner or a non-staged tagged checkpoint keep their
+            # existing explicit refusal, and a refused checkpoint never
+            # mutates the live owner.
+            from ._stiffened_shell_ge_finite_experimental import (
+                _explicit_admissible_polish, _probe_checkpoint_model,
+                supports_native_chart_polish)
+            if (_explicit_admissible_polish(self) is None and not selected and
+                    supports_native_chart_polish(prepared) and
+                    _probe_checkpoint_model(inner) ==
+                        admissible_polish_identity(compiled.augmented_model_identity)):
+                prepared._admissible_polish_candidate = True
             result = prepared.restore(inner)
             driver = prepared._finite_driver
             if driver is None or result.load_position != position:
@@ -2072,7 +2099,7 @@ class ExperimentalGEAnalysis:
         if raw.startswith(INCREMENT_CONTROL_MAGIC):
             if self._distributing_cyclic:
                 raise ValueError("cyclic distributing material checkpoints exclude adaptive envelopes")
-            adaptive, raw = decode_control(raw, self._identity)
+            adaptive, raw = decode_control(raw, effective_identity)
             if selected:
                 from ._stiffened_shell_ge_finite_experimental import supports_paired_fibre_adaptive, supports_mixed_material_adaptive
                 staged = getattr(self, '_staged_context', None) is not None
@@ -2095,7 +2122,7 @@ class ExperimentalGEAnalysis:
             if self._line_samples and not self._finite_bl5:
                 raise ValueError("owned shell charts require a supported finite model")
             event_generation, anchors, witness, raw = _decode_chart_checkpoint(
-                raw, self._identity, len(self._shell_ids))
+                raw, effective_identity, len(self._shell_ids))
             chart = (event_generation, anchors, witness)
         if raw.startswith(BINARY_CHECKPOINT_MAGIC):
             def expected_shapes(kind, generation):
@@ -2177,8 +2204,11 @@ class ExperimentalGEAnalysis:
                         ("shell_origin_alpha", (len(self._shell_parts),12))) if coupled else ()
                     return base+shapes(self._beam_parts,'origin')+shapes(self._beam_parts,'accepted')+material
                 if kind == "finite_native_material":
+                    from ._stiffened_shell_ge_finite_experimental import (
+                        supports_generalized_stable_s3)
                     if ((not self._has_physical_fibre and not
-                         ((self._footprint_stable_s3 or body_stable) and stable_kind)) or
+                         ((self._footprint_stable_s3 or body_stable) and stable_kind) and
+                         not (stable_kind and supports_generalized_stable_s3(self))) or
                             self._definition.shell.j2_curve is not None):
                         raise ValueError("native material checkpoint requires elastic-shell fibre model")
                     from ._stiffened_shell_beam_history import shapes
@@ -2218,7 +2248,7 @@ class ExperimentalGEAnalysis:
                 return base
 
             kind, generation, arrays = _decode_binary_checkpoint(
-                raw, self._identity, expected_shapes)
+                raw, effective_identity, expected_shapes)
             kind = kind.replace("_chart", "")
             stable_q4 = kind.endswith("_stable_q4")
             kind = kind.removesuffix("_stable_q4")
@@ -2230,7 +2260,7 @@ class ExperimentalGEAnalysis:
                       FINITE_MATERIAL_CHECKPOINT if kind == "finite_material" else
                       FINITE_SHELL_MATERIAL_CHECKPOINT if kind == "finite_shell_material"
                       else FINITE_CHECKPOINT)
-            value = {"schema": schema, "model": self._identity,
+            value = {"schema": schema, "model": effective_identity,
                      "generation": generation, **arrays}
             if kind in ("finite_compensated_generalized_material", "finite_compensated_fibre_material", "finite_compensated_mixed_material", "finite_compensated_generalized_coupled", "finite_compensated_fibre_coupled", "finite_compensated_mixed_coupled", "finite", "finite_distributing", "finite_bl5", "finite_bl5_material", "finite_bl5_coupled", "finite_material", "finite_shell_material", "finite_native_material", "finite_native_material_stable") + CURVED_POINT_MATERIAL_KINDS + FINITE_DISTRIBUTING_MATERIAL_KINDS:
                 value["accepted_factors"] = arrays["accepted_factors"].tolist()
@@ -2240,10 +2270,10 @@ class ExperimentalGEAnalysis:
                 raise ValueError("native shell J2 checkpoint requires matching fibre point model")
             from ._stiffened_shell_ge_finite_experimental import native_shell_checkpoint_shapes
             generation, arrays, states = _decode_s3_binary_checkpoint(
-                raw, self._identity, lambda generation: native_shell_checkpoint_shapes(self, generation),
+                raw, effective_identity, lambda generation: native_shell_checkpoint_shapes(self, generation),
                 2*len(self._definition.shell.s3_elements), anchored=chart is not None,
                 native_material=True)
-            value = {"schema": NATIVE_SHELL_SCHEMA, "model": self._identity,
+            value = {"schema": NATIVE_SHELL_SCHEMA, "model": effective_identity,
                      "generation": generation, **arrays, "s3_states": states,
                      "accepted_factors": arrays["accepted_factors"].tolist()}
         elif raw.startswith(S3_BINARY_CHECKPOINT_MAGIC):
@@ -2270,10 +2300,10 @@ class ExperimentalGEAnalysis:
                         ("shell_alpha", (q4_count, 12)))
 
             generation, arrays, states = _decode_s3_binary_checkpoint(
-                raw, self._identity, expected_s3_shapes,
+                raw, effective_identity, expected_s3_shapes,
                 len(self._definition.shell.s3_elements), anchored=chart is not None)
             value = {"schema": FINITE_S3_MATERIAL_CHECKPOINT,
-                     "model": self._identity, "generation": generation,
+                     "model": effective_identity, "generation": generation,
                      **arrays, "s3_states": states,
                      "accepted_factors": arrays["accepted_factors"].tolist()}
         else:
@@ -2330,8 +2360,17 @@ class ExperimentalGEAnalysis:
                     getattr(self, '_staged_context', None) is not None and
                     value['schema'] == _BINARY_SCHEMAS['finite_compensated_fibre_material'] and
                     supports_paired_fibre_adaptive(self))
+                # Narrow coupled-profile accounting admission: only the
+                # coupled BL5 J2 mechanics schema on its matching owner may
+                # replay predictor work counters; every other profile keeps
+                # the historical/default or fibre rules unchanged.
+                allow_coupled_predictor = bool(
+                    value['schema'] in (_BINARY_SCHEMAS['finite_bl5_coupled'],
+                                        _BINARY_SCHEMAS['finite_chart_bl5_coupled']) and
+                    self._bl5_material and self._bl5_shell_material)
                 validate_control(adaptive, value["accepted_factors"],
-                                 _allow_fibre_predictor=allow_fibre_predictor)
+                                 _allow_fibre_predictor=allow_fibre_predictor,
+                                 _allow_coupled_predictor=allow_coupled_predictor)
                 if self._finite_distributing:
                     # Generic replay also supports decreasing sequences; this
                     # profile must admit the complete sequence before publish.
@@ -2351,8 +2390,19 @@ class ExperimentalGEAnalysis:
             raise ValueError("adaptive checkpoint requires a finite point state")
         if (type(value) is not dict or set(value) !=
                 {"schema", "model", "generation", "q", "multipliers", "load"} or
-                value["schema"] != CHECKPOINT or value["model"] != self._identity or
+                value["schema"] != CHECKPOINT or value["model"] != effective_identity or
                 type(value["generation"]) is not int or value["generation"] < 1):
+            # The selected polishing candidate admits only its tagged bytes,
+            # and its tagged bytes restore only with the policy selected;
+            # both cross-policy directions refuse explicitly.
+            if (polish_selected and type(value) is dict and
+                    value.get("model") == self._identity):
+                raise ValueError(
+                    "admissible polish candidate requires its tagged checkpoint")
+            if (not polish_selected and type(value) is dict and
+                    value.get("model") == admissible_polish_identity(self._identity)):
+                raise ValueError(
+                    "admissible polish checkpoint requires its selected candidate")
             raise ValueError("incompatible mixed linear checkpoint")
         q = _owned(value["q"], (self._K.shape[0],))
         lam = _owned(value["multipliers"], (self._C.shape[0],))

@@ -23,7 +23,8 @@ def owner(triangle=False):
     model, _, captured, _, parts = _shell_reference(panel)
     count = 6*len(nodes)
     return SimpleNamespace(_identity='a'*64, _require_open=lambda: None,
-        _definition=SimpleNamespace(lines=(), footprints=(), points=(object(),)),
+        _definition=SimpleNamespace(lines=(), footprints=(), points=(object(),),
+            distributing_footprints=(), finite_distributing_footprints=()),
         _line_samples=(), _shell_model=model, _shell_xyz=np.array(captured),
         _shell_parts=tuple(parts), _shell_count=count,
         _K=sparse.csr_matrix((count+6, count+6)))

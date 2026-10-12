@@ -401,19 +401,42 @@ def _restore_native_s3_histories(owner, q, rotation_anchors, value):
 
 
 def _require_native_s3_replay(owner, trial, accepted, candidates):
-    """Require exact accepted S3 serialization after same-predecessor replay."""
+    """Require exact accepted S3 serialization after same-predecessor replay.
+
+    A binary64 replay of an accepted update can round plastic-strain entries
+    at the last ulp without changing the material path. When the serialized
+    bytes differ, the replay is still accepted only if re-sealing the repeated
+    state with the saved plastic array reproduces the saved bytes exactly
+    (every other field and the integrity digest chain are then identical) and
+    the plastic arrays themselves stay within the 64-eps array-scale roundoff
+    bound. The saved accepted state stays authoritative either way.
+    """
     if len(accepted) != len(owner._shell_parts):
         raise ValueError("complete accepted shell material states required")
     q4_count = len(owner._definition.shell.q4_elements)
     repeated = _accepted_shell_material_origins(owner, trial, candidates)
     material = owner._shell_model.get_material("shell")
+    from .e4_pl_s3_v2d_state import seal_v2d_state
     for (_eid, element, _slots, _), saved_state, repeated_state in zip(
             owner._shell_parts[q4_count:], accepted[q4_count:], repeated[q4_count:]):
         saved_bytes = element.serialize_nonlinear_state(
             owner._shell_model.mesh, material, saved_state, 3)
         repeated_bytes = element.serialize_nonlinear_state(
             owner._shell_model.mesh, material, repeated_state, 3)
-        if saved_bytes != repeated_bytes:
+        if saved_bytes == repeated_bytes:
+            continue
+        saved_plastic = np.asarray(saved_state["plastic_strain"], dtype=float)
+        repeated_plastic = np.asarray(repeated_state["plastic_strain"], dtype=float)
+        resaved = dict(repeated_state)
+        resaved["plastic_strain"] = saved_plastic.copy()
+        resaved_bytes = element.serialize_nonlinear_state(
+            owner._shell_model.mesh, material, seal_v2d_state(resaved), 3)
+        scale = max(float(np.max(np.abs(saved_plastic), initial=0.)),
+                    float(np.max(np.abs(repeated_plastic), initial=0.)),
+                    np.finfo(float).tiny)
+        if (resaved_bytes != saved_bytes or
+                np.max(np.abs(saved_plastic - repeated_plastic), initial=0.) >
+                64.*np.finfo(float).eps*scale):
             raise ValueError("native S3 checkpoint response disagrees with accepted update")
 
 
@@ -552,8 +575,13 @@ def supports_mixed_material_adaptive(owner):
     from ._ge_beam3_generalized_ellipsoid_section import EllipsoidalGeneralizedSection
     from ._stiffened_shell_f06_increment_arithmetic import POLICY
     from ._stiffened_shell_affine_endpoint import is_native_point_material
-    d = owner._definition
-    parts = owner._beam_parts
+    d = getattr(owner, "_definition", None)
+    if d is None:
+        return False
+    # Domain predicate only: foreign or incomplete owners are simply
+    # outside the mixed-material adaptive domain (fail-closed False);
+    # errors during actual evaluation still propagate unchanged.
+    parts = getattr(owner, "_beam_parts", None)
     return bool(parts and is_native_point_material(owner) and d.points
         and d.shell.q4_elements and not d.shell.s3_elements and d.shell.j2_curve is not None
         and d.shell_reference_policy == 'flat' and not d.lines and not d.footprints
@@ -568,6 +596,36 @@ def supports_mixed_material_adaptive(owner):
         and any(type(e.section) is EllipsoidalGeneralizedSection for e, _, _ in parts))
 
 
+def supports_generalized_stable_s3(owner):
+    """Narrow native generalized POINT domain for the elastic stable S3 policy.
+
+    This reuses the existing cancellation-resistant elastic S3
+    deformation for the explicit experimental generalized point owner only.
+    It is a private numerical-policy predicate: no public selector, element
+    law, or checkpoint format changes with it.
+    """
+    from ._ge_beam3_retained_generalized import RetainedGeneralizedOperator
+    from ._ge_beam3_generalized_ellipsoid_section import EllipsoidalGeneralizedSection
+    from ._stiffened_shell_affine_endpoint import is_native_point_material
+    d = getattr(owner, "_definition", None)
+    if d is None:
+        return False
+    # Domain predicate only: foreign or incomplete owners stay outside the
+    # stable S3 policy (fail-closed False); evaluation errors propagate.
+    parts = getattr(owner, "_beam_parts", None)
+    return bool(parts and is_native_point_material(owner) and d.points
+        and d.shell.s3_elements and not d.shell.q4_elements
+        and d.shell.j2_curve is None
+        and d.shell_reference_policy == 'flat' and not d.lines and not d.footprints
+        and not owner._finite_distributing and not owner._curved_reference
+        and not owner._coordinate_support and not owner._has_physical_fibre
+        and getattr(owner, '_external_context', None) is None
+        and getattr(owner, '_staged_context', None) is None
+        and all(type(e.operator) is RetainedGeneralizedOperator and
+            type(e.section) is EllipsoidalGeneralizedSection
+            for e, _, _ in parts))
+
+
 def compensated_adaptive_load_admitted(owner, actions):
     """Keep the two adopted load contexts distinct at every public dispatch."""
     from ._stiffened_shell_staged_load_experimental import StagedDeadLoadProgramme
@@ -577,11 +635,132 @@ def compensated_adaptive_load_admitted(owner, actions):
                     and len(a.wrench) == 6 and not any(a.wrench[3:]) for a in actions)))
 
 
+ADMISSIBLE_POLISH_CANDIDATE_IDENTITY_SUFFIX = ":native-chart-admissible-polish-candidate-v1"
+
+
+def admissible_polish_identity(identity):
+    """Distinct checkpoint identity of the selected polishing candidate.
+
+    The candidate is not an accepted default: its checkpoints carry this
+    explicit policy tag so legacy bytes and selected analyses can never
+    silently mix. The identity is unchanged for every unselected analysis.
+    """
+    if type(identity) is not str or not identity:
+        raise ValueError("valid model identity required")
+    return identity + ADMISSIBLE_POLISH_CANDIDATE_IDENTITY_SUFFIX
+
+
+def supports_native_chart_polish(owner):
+    """Private domain of the admissible-state polishing candidate.
+
+    This is the native physical-fibre POINT chart route of the chart-energy
+    parity fixture: flat algorithmic-pullback elastic Q4 shell, physical-fibre
+    beam sections, point connections, and no line/footprint/distributing/
+    curved/coordinate-support/external contexts. It is a private numerical
+    policy predicate: no public selector, element law, or checkpoint format
+    changes with it, and foreign or incomplete owners stay outside (False).
+    """
+    from ._stiffened_shell_affine_endpoint import is_native_point_material
+    d = getattr(owner, "_definition", None)
+    if d is None:
+        return False
+    return bool(is_native_point_material(owner)
+        and getattr(owner, "_has_physical_fibre", False)
+        and d.shell.q4_elements and not d.shell.s3_elements
+        and d.shell.j2_curve is None
+        and not d.lines and not d.footprints
+        and not owner._finite_distributing and not owner._curved_reference
+        and not owner._coordinate_support
+        and getattr(owner, "_external_context", None) is None)
+
+
+def select_admissible_polish_candidate(analysis, enabled):
+    """Explicit private opt-in for the admissible-state polishing candidate.
+
+    Default False; no existing driver, checkpoint or public route opts in.
+    Once an increment first meets the UNCHANGED physical limits (equilibrium
+    work ratio <= 1e-8, constraint gap <= 1e-9), extra Newton work inside the
+    same iteration/backtrack budgets may retain only strictly lower-merit
+    states that still meet both limits; the last retained state is published.
+    The selected policy binds a distinct checkpoint identity: its bytes
+    restore only with the policy selected, and legacy bytes restore only
+    without it. Selection refuses outside the native physical-fibre point
+    chart route and after any accepted state exists.
+    """
+    if type(enabled) is not bool:
+        raise ValueError("strict boolean admissible polish selection required")
+    if (getattr(analysis, "_finite_driver", None) is not None or
+            getattr(analysis, "_accepted", None) is not None):
+        raise ValueError("admissible polish selection requires a fresh analysis")
+    if enabled and not supports_native_chart_polish(analysis):
+        raise ValueError("admissible polish candidate requires the native physical-fibre point chart route")
+    analysis._admissible_polish_candidate = enabled
+    # Explicit provenance: distinguishes a strict private False from an owner
+    # whose selector was never set (auto-eligible). No public API reads it.
+    analysis._admissible_polish_selection = enabled
+
+
+def _explicit_admissible_polish(owner):
+    """Explicit private polishing selection: True/False, or None when absent.
+
+    Only `select_admissible_polish_candidate` sets the provenance marker, so
+    None means a fresh owner that never made an explicit choice; legacy
+    owners restored before the policy existed also decode as None.
+    """
+    value = getattr(owner, "_admissible_polish_selection", None)
+    return value if type(value) is bool else None
+
+
+def _probe_checkpoint_model(raw):
+    """Bounded model probe of the outermost recognised checkpoint envelope.
+
+    Reads only the size-bounded JSON header of a known envelope framing
+    (adaptive controller, shell chart, or binary finite checkpoint) and
+    returns its declared model identity. Every digest, canonicality, schema
+    and shape check stays with the normal validated decoders that run after
+    this probe; unknown or malformed framings return None and never raise.
+    A forged header can only select which identity the subsequent full
+    validation expects, never bypass it.
+    """
+    from ._stiffened_shell_increment_control import (
+        MAGIC as CONTROL_MAGIC, MAX_METADATA_BYTES,
+    )
+    from ._stiffened_shell_ge_checkpoint_binary import (
+        MAGIC as BINARY_MAGIC, CHART_MAGIC, MAX_HEADER_BYTES,
+    )
+    if type(raw) is not bytes:
+        return None
+    for magic, bound in ((CONTROL_MAGIC, MAX_METADATA_BYTES),
+                         (CHART_MAGIC, MAX_HEADER_BYTES),
+                         (BINARY_MAGIC, MAX_HEADER_BYTES)):
+        if not raw.startswith(magic):
+            continue
+        start = len(magic) + 4
+        if len(raw) < start + 33:
+            return None
+        size = int.from_bytes(raw[len(magic):start], "little")
+        if not 1 <= size <= bound or start + size > len(raw) - 32:
+            return None
+        try:
+            header = json.loads(raw[start:start+size].decode("ascii"))
+        except (UnicodeError, ValueError, RecursionError):
+            return None
+        model = header.get("model") if type(header) is dict else None
+        return model if type(model) is str else None
+    return None
+
+
 class FinitePointDriver:
     """Finite updates with globally retained native B3 coordinates."""
 
     def __init__(self, owner):
         self.owner = owner
+        # Private polishing candidate: bound only by the explicit selector on
+        # the analysis; every unselected owner keeps its exact default route.
+        self._admissible_polish = (getattr(owner, "_admissible_polish_candidate",
+                                           False) is True)
+        if self._admissible_polish and not supports_native_chart_polish(owner):
+            raise ValueError("admissible polish candidate requires the native physical-fibre point chart route")
         from ._stiffened_shell_f06_increment_arithmetic import POLICY as compensated_policy
         selected=[getattr(element.operator,'arithmetic_policy',None)==compensated_policy for element,_,_ in owner._beam_parts]
         self._compensated=any(selected)
@@ -611,8 +790,11 @@ class FinitePointDriver:
             not owner._definition.footprints)
         # Numerical policy is checkpoint-bound. Legacy restored histories keep
         # their original arithmetic rather than changing endpoint validation.
+        # The plain elastic S3 generalized point owner reuses the same
+        # cancellation-resistant deformation; its old checkpoints still
+        # restore with the original arithmetic (see restore).
         self._stable_s3 = bool((owner._coordinate_support or owner._has_physical_fibre or owner._footprint_stable_s3
-                                 or owner._curved_s3) and
+                                 or owner._curved_s3 or supports_generalized_stable_s3(owner)) and
             owner._definition.shell.s3_elements and
             owner._definition.shell.j2_curve is None)
         beam_ids = owner._beam_ids
@@ -682,9 +864,16 @@ class FinitePointDriver:
 
     def _checkpoint_identity(self):
         if self._external is not None:
-            return self._external.augmented_model_identity
-        return (self.owner._identity if self._programme is None else
-                self._programme.augmented_model_identity)
+            identity = self._external.augmented_model_identity
+        else:
+            identity = (self.owner._identity if self._programme is None else
+                        self._programme.augmented_model_identity)
+        # The selected polishing candidate binds a distinct checkpoint
+        # identity at every encoded layer; unselected bytes are unchanged.
+        # Restored legacy drivers built before this policy existed simply
+        # keep their untagged identity (missing selector means False).
+        return (admissible_polish_identity(identity)
+                if getattr(self, "_admissible_polish", False) else identity)
 
     def _equilibrium_ratio(self, residual, applied):
         owner = self.owner
@@ -1047,6 +1236,33 @@ class FinitePointDriver:
         full = np.zeros(parent.shape[0]); full[free] = step
         return full, {'status': 'finite', 'backend': 'scipy.sparse.linalg.spsolve'}
 
+    def _coupled_probe_predictor(self, parent, residual, free, counts,
+                                 trial, increment, evaluate):
+        """Loading-branch pp correction from one just-past-kink probe.
+
+        Near yield, a rejected parent direction may use a no-flow branch.
+        A directional probe supplies alternative beam material compliance
+        blocks while every other row family stays at the parent state.
+        This is a predictor, not a consistent-Jacobian claim or a certified
+        yield boundary. The probe is never published; acceptance requires
+        evaluation of an advanced candidate with the physical checks.
+        """
+        try:
+            probe = self._advance(trial, increment, 1e-5)
+            evaluation = evaluate(probe)
+        except (_RotationStepTooLarge, BL5TrialDomainError,
+                DistributingPoseDomainError) as error:
+            return None, {'status': 'probe-domain', 'detail': type(error).__name__}
+        # Retain the already-counted probe evaluation. Strong local curvature
+        # can make this fixed small-distance sample the only measured
+        # decreasing candidate: the geometric ladder cannot reach its scale.
+        # This is only a record; the exhaustion path in _solve_fixed re-checks
+        # it against the identical acceptance comparison before using it.
+        self._coupled_probe_window = (trial, probe, evaluation)
+        predicted, diagnostic = self._fibre_material_predictor(
+            parent, evaluation[1], residual, free, counts)
+        return predicted, dict(diagnostic, source='probe')
+
     def _native_boundary_amount(self, state, increment):
         """Copy the proposal before any candidate invalidates parent recovery."""
         if not (self.owner._bl5_native_material or self._paired_fibre_event): return None
@@ -1055,7 +1271,7 @@ class FinitePointDriver:
                 cached[2] != self.owner._generation):
             raise ValueError('stale native material boundary trial')
         amounts = []
-        if self._paired_fibre_event:
+        if getattr(self, "_paired_fibre_event", False):
             retained = self.owner._shell_count+self._beam_nodal
             for i, material in cached[3]:
                 operator = self.owner._beam_parts[i][0].operator
@@ -1230,8 +1446,9 @@ class FinitePointDriver:
                 raise ValueError("adaptive load factors must change")
             control = _AdaptiveState(increment_control, targets, max_iterations,
                                      max_backtracks, 0, float(self._load_factor))
-            # Bound metadata before numerical work; no model-size-dependent search.
-            encode_control(self.owner._identity, control, b"resource-check")
+            # Bound metadata with the exact identity the published controller
+            # envelope will carry (the selected polishing candidate tags it).
+            encode_control(self._checkpoint_identity(), control, b"resource-check")
         remaining = targets[control.cursor:]
         if self.owner._finite_distributing and any(b <= a for a, b in zip(
                 (self._load_factor,)+remaining, remaining)):
@@ -1246,7 +1463,7 @@ class FinitePointDriver:
 
             def accepted(attempt):
                 next_control = control.accepted(replace(attempt, target=control.targets[control.cursor]))
-                encode_control(self.owner._identity, next_control, b"resource-check")
+                encode_control(self._checkpoint_identity(), next_control, b"resource-check")
                 return next_control
 
             try:
@@ -1268,6 +1485,25 @@ class FinitePointDriver:
                 if on_accepted is not None:
                     on_accepted(deepcopy(self._accepted))
         return self._accepted
+
+    def _bind_staged_force_polish(self, programme):
+        """Bind the admissible polishing policy for a fresh staged force solve.
+
+        The only auto-selection seam of the private candidate: the actual
+        force driver solve, after `_prepare_load` validated and compiled the
+        staged programme. Binding requires a fresh uncompensated owner of
+        the admitted native point chart domain whose private selector was
+        never explicitly set. Single-force solves (no programme) and the
+        arc/displacement routes never reach a staged programme here, so
+        they keep their default first-admissible route; already accepted or
+        restored legacy states never auto switch.
+        """
+        if (programme is None or self._admissible_polish or
+                self._accepted is not None or self._compensated or
+                _explicit_admissible_polish(self.owner) is not None or
+                not supports_native_chart_polish(self.owner)):
+            return
+        self._admissible_polish = True
 
     def _solve_fixed(self, actions, targets, *, cancellation_token=None,
               _prepared_pattern=None, _prepared_programme=None, _accepted_hook=None,
@@ -1297,15 +1533,35 @@ class FinitePointDriver:
             pattern, programme = self._prepare_load(actions, targets)
         else:
             pattern, programme = _prepared_pattern, _prepared_programme
+        # Validated staged compilation precedes any auto policy binding.
+        self._bind_staged_force_polish(programme)
         free = np.r_[owner._free,
                      np.arange(owner._K.shape[0],
                                owner._K.shape[0]+len(self._state.multipliers))]
         from ._stiffened_shell_same_parent_trial import FixedTrialHandoff
         allow_material_predictor = (_accepted_hook is not None and
                                     supports_paired_fibre_adaptive(owner))
+        allow_coupled_probe = (not allow_material_predictor and
+                               owner._bl5_material and owner._bl5_shell_material)
         self._material_predictor_diagnostics = []
         allow_handoff = (not owner._finite_distributing and programme is None and _accepted_hook is None and
                          self._adaptive_state is None)
+        # The private polishing candidate stays inside its admitted native
+        # point chart solve domain; a late external/unsupported context is an
+        # explicit refusal, never a silent policy change. Legacy drivers
+        # restored before this policy existed keep their default route
+        # (missing selector means False).
+        polish = getattr(self, "_admissible_polish", False) is True
+        if polish and (self._external is not None or
+                not supports_native_chart_polish(owner)):
+            raise ValueError("admissible polish candidate requires its native point chart solve domain")
+        # Bounded optional-polish reserve: the exact per-attempt evaluation
+        # ceiling the controller replay enforces. Once a state is retained,
+        # the last evaluation unit inside this ceiling is reserved for the
+        # one required retained-state re-verification at publish, so optional
+        # improvement can stop there and no published attempt can exceed the
+        # replay ceiling. Iteration and backtrack budgets are unchanged.
+        polish_evaluation_ceiling = 1 + (max_backtracks + 2) * max_iterations
         for factor in targets:
             handoff = None
             applied_load = None if programme is None else programme.load_at(factor)
@@ -1324,24 +1580,91 @@ class FinitePointDriver:
                 return IncrementAttempt(float(factor), accepted_from, float(factor),
                     status, iteration, **counts, equilibrium_ratio=float(relative),
                     constraint_max=float(gap), failure=failure)
+            # Last retained admissible state of the polishing candidate:
+            # (state, evaluation). polish_fresh records whether the latest
+            # assembly still belongs to that state.
+            polish_best = None
+            polish_fresh = False
+
+            def polish_reserve_reached():
+                # True once only the one required retained-state re-evaluation
+                # remains inside the replay ceiling: optional improvement
+                # must stop so the published attempt stays admissible to the
+                # controller replay with its exact honest counters.
+                return (polish and polish_best is not None and
+                        counts["evaluations"] + 1 >= polish_evaluation_ceiling)
+
+            def publish_polished(total_work):
+                state, evaluation = polish_best
+                if not polish_fresh:
+                    # A discarded candidate was assembled after the retained
+                    # state; deterministically re-assemble it so its recovery
+                    # payloads are current, and re-verify both limits before
+                    # the atomic commit. Never publish a stale or
+                    # inadmissible payload.
+                    evaluation = evaluated(state)
+                    if not (evaluation[2] <= 1e-8 and evaluation[3] <= 1e-9):
+                        raise RuntimeError("admissible polish candidate lost its accepted limits")
+                cancellation_safe_point(cancellation_token,
+                                        "stiffened-shell.finite.commit")
+                # Truthful work: the accepted attempt reports ALL Newton work
+                # of this increment, including the rejected polishing trials
+                # after the retained state was first found. The retained
+                # state's equilibrium metrics stay its own; its stored
+                # iteration can never hide the extra solves.
+                self._publish_equilibrium(state, evaluation, factor,
+                    pattern=pattern, programme=programme,
+                    applied_load=applied_load, cancellation_token=cancellation_token,
+                    iteration=total_work, attempt=attempt,
+                    accepted_hook=_accepted_hook, on_accepted=on_accepted)
+
             for iteration in range(max_iterations+1):
                 cancellation_safe_point(cancellation_token, "stiffened-shell.finite.trial")
+                if polish_reserve_reached():
+                    # Only the required retained-state re-evaluation remains
+                    # inside the replay ceiling: stop optional improvement and
+                    # publish the retained state with the truthful work.
+                    publish_polished(iteration)
+                    break
                 # Observe cancellation before validating a single-use payload.
                 ready = None if handoff is None else handoff.take(self, trial, factor, pattern)
                 handoff = None
                 residual, matrix, relative, gap, shell_next, beam_next = (
                     evaluated(trial) if ready is None else ready)
                 if relative <= 1e-8 and gap <= 1e-9:
-                    cancellation_safe_point(cancellation_token,
-                                            "stiffened-shell.finite.commit")
-                    self._publish_equilibrium(trial,
-                        (residual, matrix, relative, gap, shell_next, beam_next),
-                        factor, pattern=pattern, programme=programme,
-                        applied_load=applied_load, cancellation_token=cancellation_token,
-                        iteration=iteration, attempt=attempt,
-                        accepted_hook=_accepted_hook, on_accepted=on_accepted)
-                    break
+                    if not polish:
+                        cancellation_safe_point(cancellation_token,
+                                                "stiffened-shell.finite.commit")
+                        self._publish_equilibrium(trial,
+                            (residual, matrix, relative, gap, shell_next, beam_next),
+                            factor, pattern=pattern, programme=programme,
+                            applied_load=applied_load, cancellation_token=cancellation_token,
+                            iteration=iteration, attempt=attempt,
+                            accepted_hook=_accepted_hook, on_accepted=on_accepted)
+                        break
+                    # Private polishing candidate: the first admissible state is
+                    # retained, not published. Later admissible states replace
+                    # it only on a strict decrease of the same comparison
+                    # merit; anything else finishes at the last valid state.
+                    if (polish_best is not None and
+                            max(relative, gap) >= max(polish_best[1][2], polish_best[1][3])):
+                        polish_fresh = False
+                        publish_polished(iteration)
+                        break
+                    polish_best = (trial,
+                        (residual, matrix, relative, gap, shell_next, beam_next))
+                    polish_fresh = True
+                    if iteration == max_iterations:
+                        publish_polished(iteration)
+                        break
                 if iteration == max_iterations:
+                    if polish and polish_best is not None:
+                        # The retained admissible state is a complete accepted
+                        # increment; the extra polishing work simply failed to
+                        # improve it. Publish it with the truthful total work.
+                        polish_fresh = False
+                        publish_polished(iteration)
+                        break
                     raise FiniteIncrementFailure(attempt("rejected", iteration,
                         relative, gap, "finite mixed Newton iteration limit"))
                 with warnings.catch_warnings():
@@ -1382,11 +1705,31 @@ class FinitePointDriver:
                 boundary_amount = self._native_boundary_amount(trial, full) if (owner._bl5_native_material or
                     (self._paired_fibre_event and _accepted_hook is None)) else None
                 first_cutback = .5 if boundary_amount is None else min(.5, boundary_amount)
+                # A near-zero advisory event must not starve the ordinary geometric
+                # ladder: keep the full trial and the boundary probe, and once that
+                # probe rejects, resume the standard cuts instead of halving the
+                # event forever. The rejected probe barely moved the candidate, so
+                # it cannot speak against the ordinary cuts.
+                geometric_cuts = boundary_amount is None or first_cutback >= .5
+                # One probe sample per iteration: a record from an earlier
+                # iteration or a typed probe failure must never be accepted
+                # at this iteration's exhaustion.
+                self._coupled_probe_window = None
                 for backtrack in range(max_backtracks+1):
                     cancellation_safe_point(
                         cancellation_token, "stiffened-shell.finite.backtrack")
+                    if polish_reserve_reached():
+                        # Reserve the last evaluation unit inside the replay
+                        # ceiling for the retained-state re-verification; the
+                        # next iteration top publishes the retained state.
+                        break
                     try:
-                        amount = 1. if backtrack == 0 else first_cutback*.5**(backtrack-1)
+                        if backtrack == 0:
+                            amount = 1.
+                        elif backtrack == 1 or geometric_cuts:
+                            amount = first_cutback*.5**(backtrack-1)
+                        else:
+                            amount = .5**(backtrack-1)
                         candidate = self._advance(trial, full, amount)
                     except _RotationStepTooLarge:
                         if backtrack == 1 and allow_material_predictor:
@@ -1397,6 +1740,8 @@ class FinitePointDriver:
                         before = (FixedTrialHandoff.begin(self, candidate, factor, pattern)
                                   if allow_handoff else None)
                         changed = evaluated(candidate)
+                        if polish:
+                            polish_fresh = False
                     except (BL5TrialDomainError, DistributingPoseDomainError):
                         if backtrack == 1 and allow_material_predictor:
                             full = original_full
@@ -1410,8 +1755,20 @@ class FinitePointDriver:
                     # Current-state equilibrium is sufficient to advance to
                     # the next mandatory acceptance check. A frozen comparison
                     # norm must not reject an already equilibrated candidate.
-                    if ((changed[2] <= 1e-8 and changed[3] <= 1e-9) or
-                            max(candidate_relative, changed[3]) < old_merit):
+                    # Before the first admissible state the polishing
+                    # candidate keeps the ordinary Newton ladder unchanged.
+                    # Once a state is retained the ladder is stricter: a
+                    # candidate advances only when it still meets BOTH
+                    # physical limits and strictly decreases the retained
+                    # comparison merit; a lower merit that violates either
+                    # limit is refused.
+                    if ((not polish or polish_best is None) and
+                            ((changed[2] <= 1e-8 and changed[3] <= 1e-9) or
+                             max(candidate_relative, changed[3]) < old_merit) or
+                            polish and polish_best is not None and
+                            (changed[2] <= 1e-8 and changed[3] <= 1e-9 and
+                             max(candidate_relative, changed[3]) <
+                             max(polish_best[1][2], polish_best[1][3]))):
                         trial = candidate
                         if allow_handoff:
                             handoff = FixedTrialHandoff.capture(self, trial, factor, pattern, changed, before=before)
@@ -1425,14 +1782,76 @@ class FinitePointDriver:
                         cancellation_safe_point(cancellation_token, "stiffened-shell.finite.predictor")
                         if predicted is not None:
                             full = predicted
+                    if (backtrack == 0 and allow_coupled_probe and
+                            not polish_reserve_reached()):
+                        # The full Newton step was merit-rejected while the
+                        # accepted state may sit at a simultaneous yield kink.
+                        # Measured evidence: the minus-side physical rows
+                        # agree with the assembled tangent, but the retained
+                        # rows show a one-sided finite-difference mismatch
+                        # (~1), so no whole-tangent minus-side derivative
+                        # claim is made. One directional probe just past the
+                        # kink along the rejected direction supplies a
+                        # loading-branch sample of the beam pp blocks; it is
+                        # not a certified kink boundary. Splicing them into
+                        # the parent replaces the direction for the whole
+                        # remaining ladder. The probe evaluation itself never
+                        # publishes: it supplies the pp blocks and one
+                        # measured small-step sample whose acceptance still
+                        # requires the ordinary merit and equilibrium checks.
+                        cancellation_safe_point(cancellation_token,
+                                                "stiffened-shell.finite.probe")
+                        predicted, diagnostic = self._coupled_probe_predictor(
+                            matrix, residual, free, counts, trial, full, evaluated)
+                        self._material_predictor_diagnostics.append(dict(
+                            factor=float(factor), iteration=iteration, **diagnostic))
+                        cancellation_safe_point(cancellation_token,
+                                                "stiffened-shell.finite.probe")
+                        if predicted is not None:
+                            full = predicted
                     # The copied pp direction gets only the existing half trial.
                     # Rejection restores the parent direction for remaining fractions.
                     if backtrack == 1 and allow_material_predictor:
                         full = original_full
                     counts["rejected_trials"] += 1
                 else:
-                    raise FiniteIncrementFailure(attempt("rejected", iteration+1,
-                        relative, gap, "finite mixed backtrack budget exhausted"))
+                    if polish and polish_best is not None:
+                        # The exhausted ladder found no further admissible
+                        # decrease. The retained state is already a complete
+                        # accepted increment: publish it with the truthful
+                        # total work instead of failing the increment.
+                        polish_fresh = False
+                        publish_polished(iteration+1)
+                        break
+                    # The exhausted ladder found no decreasing cut, yet the
+                    # coupled probe already paid for one fully evaluated
+                    # candidate at its fixed small distance. Measured at the
+                    # captured coupled P0 parent, the merit descends there
+                    # (secants near -merit) with strong positive curvature,
+                    # so every geometric fraction overshoots the descent
+                    # window while the probe sample sits inside it. Accept
+                    # that measured strict decrease under the identical
+                    # comparison; anything else keeps the truthful failure.
+                    window = (self._coupled_probe_window
+                              if allow_coupled_probe else None)
+                    window_state = None
+                    if window is not None and window[0] is trial:
+                        cancellation_safe_point(
+                            cancellation_token, "stiffened-shell.finite.probe")
+                        evaluation = window[2]
+                        probe_relative = (evaluation[2] if merit_applied is None else
+                            self._frozen_trial_ratio(
+                                evaluation[0], merit_applied, trial_ratio))
+                        if ((evaluation[2] <= 1e-8 and evaluation[3] <= 1e-9) or
+                                max(probe_relative, evaluation[3]) < old_merit):
+                            window_state = window[1]
+                            self._material_predictor_diagnostics.append(dict(
+                                factor=float(factor), iteration=iteration,
+                                status='probe-window-accept'))
+                    if window_state is None:
+                        raise FiniteIncrementFailure(attempt("rejected", iteration+1,
+                            relative, gap, "finite mixed backtrack budget exhausted"))
+                    trial = window_state
         return self._accepted
 
     def _publish_equilibrium(self, trial, evaluation, factor, *, pattern,
@@ -1627,9 +2046,15 @@ class FinitePointDriver:
         if not np.allclose(physical_frames(q[:owner._shell_count], anchors), frames,
                            rtol=0., atol=1e-12):
             raise ValueError("rebase changed physical shell orientations")
-        # Rebase is the same accepted constitutive generation, not an unloading update.
-        rebase_beam_origins = (self._beam_predecessors if self._compensated and
-            is_native_point_material(owner) else self._beam_origins)
+        # Rebase is the same accepted constitutive generation, not an unloading
+        # update. The exact native beam history guard must replay the accepted
+        # update from its stored predecessor: re-evaluating from the accepted
+        # history re-runs the return mapping on a zero increment and rounds
+        # fibre entries at the last ulp instead of reproducing them.
+        native_beam_rebase = (owner._has_physical_fibre or
+            (self._compensated and is_native_point_material(owner)))
+        rebase_beam_origins = (self._beam_predecessors if native_beam_rebase
+            else self._beam_origins)
         residual, _, relative, gap, shell_repeated, beam_repeated = self._assemble(
             trial, self._load_factor,
             self._shell_predecessors if self._compensated_coupled else self._shell_origins,
@@ -1794,7 +2219,17 @@ class FinitePointDriver:
         if getattr(self.owner, "_finite_bl5", False) and not self.owner._bl5_native_fibre:
             return _encode_binary_checkpoint(kind("finite_bl5"),
                 self._checkpoint_identity(), generation, arrays)
-        if self.owner._has_physical_fibre or self.owner._footprint_stable_s3 or self._external_stable_s3:
+        generalized_stable = (self._stable_s3 and
+            supports_generalized_stable_s3(self.owner))
+        if (self._stable_s3 and not generalized_stable and not (
+                self.owner._has_physical_fibre or self.owner._footprint_stable_s3
+                or self._external_stable_s3 or self.owner._coordinate_support
+                or self.owner._curved_s3)):
+            # A late staged/external context change must not silently publish
+            # stable-live state through the legacy arithmetic branch.
+            raise ValueError("stable S3 generalized state requires its unchanged native point domain")
+        if (self.owner._has_physical_fibre or self.owner._footprint_stable_s3 or self._external_stable_s3 or
+                generalized_stable):
             if self.owner._definition.shell.j2_curve is not None:
                 owner = self.owner
                 q4_count = len(owner._definition.shell.q4_elements)
@@ -1985,12 +2420,25 @@ class FinitePointDriver:
         if native_shell:
             expected_keys |= {"shell_origin_plastic", "shell_origin_alpha",
                               "shell_origin_q", "shell_origin_anchors", "s3_states"}
+        # The selected polishing candidate restores only its own tagged
+        # checkpoints, and legacy bytes restore only without the selection;
+        # the two directions refuse explicitly instead of silently mixing.
+        polish_selected = getattr(self, "_admissible_polish", False) is True
+        expected_model = (admissible_polish_identity(owner._identity)
+                          if polish_selected else owner._identity)
+        if value["model"] != expected_model:
+            if polish_selected:
+                raise ValueError(
+                    "admissible polish candidate requires its tagged finite checkpoint")
+            if value["model"] == admissible_polish_identity(owner._identity):
+                raise ValueError(
+                    "admissible polish checkpoint requires its selected candidate")
+            raise ValueError("incompatible experimental finite checkpoint")
         if (set(value) != expected_keys or
                 value["schema"] not in
                 (_BINARY_SCHEMAS["finite_compensated_generalized_material"], _BINARY_SCHEMAS["finite_compensated_fibre_material"], _BINARY_SCHEMAS["finite_compensated_mixed_material"], _BINARY_SCHEMAS["finite_compensated_generalized_coupled"], _BINARY_SCHEMAS["finite_compensated_fibre_coupled"], _BINARY_SCHEMAS["finite_compensated_mixed_coupled"], *tuple(_BINARY_SCHEMAS[k] for k in CURVED_POINT_MATERIAL_KINDS + FINITE_DISTRIBUTING_MATERIAL_KINDS), _BINARY_SCHEMAS["finite_distributing"], FINITE_CHECKPOINT, _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"], NATIVE_MATERIAL_CHECKPOINT, STABLE_NATIVE_SCHEMA, NATIVE_SHELL_SCHEMA, FINITE_MATERIAL_CHECKPOINT,
                  FINITE_SHELL_MATERIAL_CHECKPOINT,
                  FINITE_S3_MATERIAL_CHECKPOINT) or
-                value["model"] != owner._identity or
                 type(value["generation"]) is not int or
                 value["generation"] < 1 or
                 shell_material != (owner._definition.shell.j2_curve is not None) or
@@ -2047,7 +2495,14 @@ class FinitePointDriver:
             if not np.array_equal(pattern, self._programme.load_at(factors[-1])):
                 raise ValueError("staged checkpoint applied force disagrees with programme")
         if native_material:
-            if not compensated_material and not owner._has_physical_fibre and not owner._footprint_stable_s3 and not self._external_stable_s3:
+            # The plain elastic S3 generalized point owner admits exactly its
+            # own stable native schema; every other native checkpoint still
+            # requires the fibre/footprint/external model as before.
+            generalized_stable = (stable_s3 and value.get("schema") == STABLE_NATIVE_SCHEMA
+                and supports_generalized_stable_s3(owner))
+            if (not compensated_material and not owner._has_physical_fibre
+                    and not owner._footprint_stable_s3 and not self._external_stable_s3
+                    and not generalized_stable):
                 raise ValueError("native material checkpoint requires fibre model")
             beam_origins = native_histories(owner._beam_parts, value, "origin")
             beam_accepted = native_histories(owner._beam_parts, value, "accepted")

@@ -157,10 +157,14 @@ def _dense_finite(owner, definition, driver, state, factor, load):
             force, local, _ = variational_shell_response(
                 owner._shell_model, element, state.q[slots], origin, 3)
         else:
+            # Mirror the driver's checkpoint-bound Q4 numerical policy so the
+            # oracle assembles the identical local operator; the scatter, not
+            # the rotation-difference formulation, is under assessment.
             force, local, _ = corotational_element_response(
                 owner._shell_model, eid, element, state.q[slots], True,
                 committed_state=origin, num_layers=3,
-                tangent_mode="consistent", centered_shell_reference=True)
+                tangent_mode="consistent", centered_shell_reference=True,
+                stable_shell_rotation=driver._stable_q4)
         add(slots, force, local)
 
     for member, ((element, _, _), origin) in enumerate(zip(

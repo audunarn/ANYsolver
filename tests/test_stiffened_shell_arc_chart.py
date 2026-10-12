@@ -12,8 +12,10 @@ from anysolver._ge_beam3_p5.algebra import rotation
 
 @pytest.mark.parametrize('plane',(False,True))
 def test_actual_shell_anchor_and_beam_multiplicative_row(plane):
-    owner=SimpleNamespace(_shell_count=6,_beam_ids=(1,),_beam_parts=(None,))
+    owner=SimpleNamespace(_shell_count=6,_beam_ids=(1,),_beam_parts=(None,),
+        _coordinate_support=None)
     driver=object.__new__(FinitePointDriver);driver.owner=owner;driver._beam_nodal=6
+    driver._compensated=False
     q=np.zeros(36);q[3:6]=[.3,-.2,.1]
     anchors=np.array([rotation([-.2,.1,.4])])
     parent=_State(q,np.array([rotation([.2,.3,-.1])]),

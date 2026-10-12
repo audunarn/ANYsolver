@@ -21,6 +21,46 @@ from ._stiffened_shell_branch_event_trial import POLICY as EVENT_TRIAL_POLICY
 CHART_POLICY="B3_GE_BL5_COUPLED_DISPLACEMENT_CONTROL_CHART_V2_DEV"
 DISTRIBUTING_KIND="finite_distributing_displacement"
 DISTRIBUTING_POLICY="B3_GE_DISTRIBUTING_DISPLACEMENT_V1_DEV"
+ELASTIC_S3_POLICY="B3_GE_NATIVE_POINT_ELASTIC_S3_DISPLACEMENT_V1_DEV"
+ELASTIC_S3_CHART_POLICY="B3_GE_NATIVE_POINT_ELASTIC_S3_DISPLACEMENT_CHART_V1_DEV"
+STABLE_ELASTIC_S3_POLICY="B3_GE_NATIVE_POINT_ELASTIC_S3_DISPLACEMENT_STABLE_V1_DEV"
+STABLE_ELASTIC_S3_CHART_POLICY="B3_GE_NATIVE_POINT_ELASTIC_S3_DISPLACEMENT_STABLE_CHART_V1_DEV"
+
+
+def generalized_stable_live(owner):
+    """True when the owner's live driver runs the new generalized stable S3 arithmetic.
+
+    This is the encoding mode only: a stable-live owner frames new snapshots
+    with the new private policy identity, while a restored legacy driver keeps
+    emitting the exact old identities and bytes. No live driver is fail-closed
+    legacy. Replay arithmetic is bound separately by the snapshot's policy.
+    """
+    from ._stiffened_shell_ge_finite_experimental import supports_generalized_stable_s3
+    driver=getattr(owner,"_finite_driver",None)
+    return bool(supports_generalized_stable_s3(owner) and driver is not None
+        and type(getattr(driver,"_stable_s3",None)) is bool and driver._stable_s3)
+
+
+def admitted_s3_policies():
+    """(base policy, chart policy, replay stable flag) for the generalized S3 domain.
+
+    The legacy identity keeps its original arithmetic (False); the new stable
+    identity binds the generalized stable selection (True). Both are admitted
+    for decoding so restored legacy histories replay without upgrade.
+    """
+    return ((ELASTIC_S3_POLICY,ELASTIC_S3_CHART_POLICY,False),
+            (STABLE_ELASTIC_S3_POLICY,STABLE_ELASTIC_S3_CHART_POLICY,True))
+
+
+def replay_s3_stable(owner,policy):
+    """Bind the replay S3 arithmetic to the snapshot's declared policy identity."""
+    from ._stiffened_shell_ge_finite_experimental import supports_generalized_stable_s3
+    if not supports_generalized_stable_s3(owner):
+        return None
+    for base,chart,stable in admitted_s3_policies():
+        if policy in (base,chart):
+            return stable
+    raise ValueError("unbound native S3 displacement numerical policy")
 
 
 def identities(owner):
@@ -44,8 +84,15 @@ def identities(owner):
             if owner._has_physical_fibre:
                 return ("finite_displacement_native_point_fibre_elastic_s3",
                         "B3_GE_NATIVE_POINT_FIBRE_ELASTIC_S3_DISPLACEMENT_V1_DEV","B3_GE_NATIVE_POINT_FIBRE_ELASTIC_S3_DISPLACEMENT_CHART_V1_DEV",None)
+            # The plain elastic S3 route binds its live numerical policy
+            # identity: the new generalized stable arithmetic frames new
+            # private identities, while a restored legacy driver keeps the
+            # exact old strings and bytes.
+            if generalized_stable_live(owner):
+                return ("finite_displacement_native_point_elastic_s3",
+                        STABLE_ELASTIC_S3_POLICY,STABLE_ELASTIC_S3_CHART_POLICY,None)
             return ("finite_displacement_native_point_elastic_s3",
-                    "B3_GE_NATIVE_POINT_ELASTIC_S3_DISPLACEMENT_V1_DEV","B3_GE_NATIVE_POINT_ELASTIC_S3_DISPLACEMENT_CHART_V1_DEV",None)
+                    ELASTIC_S3_POLICY,ELASTIC_S3_CHART_POLICY,None)
         if owner._definition.shell.j2_curve is not None:
             return ("finite_displacement_native_point_coupled",
                     "B3_GE_NATIVE_POINT_COUPLED_J2_DISPLACEMENT_V1_DEV","B3_GE_NATIVE_POINT_COUPLED_J2_DISPLACEMENT_CHART_V1_DEV",None)
@@ -162,6 +209,15 @@ def decode_snapshot(owner,raw):
     atomic publication in an isolated restoration owner.
     """
     kind,policy,chart_policy,event_policy=identities(owner)
+    base_policies={policy}
+    chart_policies={chart_policy} if chart_policy is not None else set()
+    from ._stiffened_shell_ge_finite_experimental import supports_generalized_stable_s3
+    if supports_generalized_stable_s3(owner):
+        # The generalized stable domain admits both its restored legacy
+        # arithmetic identity and the new stable identity; the replay
+        # arithmetic is bound later from the snapshot's declared policy.
+        for base,chart,_ in admitted_s3_policies():
+            base_policies.add(base);chart_policies.add(chart)
     magic=PAIRED_MAGIC if kind==PAIRED_KIND else MAGIC
     if (type(raw) is not bytes or
             not raw.startswith(magic) or not len(MAGIC)+4+32<len(raw)<=MAX_CHECKPOINT_BYTES):
@@ -184,8 +240,8 @@ def decode_snapshot(owner,raw):
     if chart_policy is None and (m.get("policy")!=policy or set(m)!=base_keys):
         raise ValueError("native point displacement excludes chart/event policies")
     if (canonical!=header or m.get("model")!=owner._identity or
-            not ((m.get("policy")==policy and set(m)==base_keys) or
-                 (m.get("policy")==chart_policy and set(m)==base_keys|{"chart_events"}
+            not ((m.get("policy") in base_policies and set(m)==base_keys) or
+                 (m.get("policy") in chart_policies and set(m)==base_keys|{"chart_events"}
                   and type(chart_events) is int and chart_events>0) or
                  (event_policy is not None and m.get("policy")==event_policy and
                   set(m)==base_keys|{"chart_events","trial_policy","event_cell_evaluations"} and
@@ -259,7 +315,9 @@ def validate_endpoint(owner,raw):
     paired=metadata["policy"] in (PAIRED_POLICY,PAIRED_CHART_POLICY)
     if paired:
         _validate_force_seed(owner,metadata,a)
-    return metadata,a,*validate_arrays(owner,a,native_chart=paired or metadata.get("chart_events",0)>0)
+    return metadata,a,*validate_arrays(owner,a,
+        native_chart=paired or metadata.get("chart_events",0)>0,
+        s3_stable=replay_s3_stable(owner,metadata["policy"]))
 
 
 def _validate_force_seed(owner,metadata,a):

@@ -15,6 +15,10 @@ from examples.stiffened_shell_b2_physical_rigid_footprint import definition, pre
 
 
 def test_focused_runtime_is_cpu0_one_thread_no_jit():
+    if (os.environ.get("NUMBA_DISABLE_JIT") != "1"
+            or psutil.Process().cpu_affinity() != [0]):
+        pytest.skip("qualified focused runtime (CPU0 pinning, NUMBA_DISABLE_JIT=1)"
+                    " is absent in ordinary portable CI")
     assert psutil.Process().cpu_affinity() == [0]
     assert os.environ["NUMBA_DISABLE_JIT"] == "1"
     pools = threadpool_info()

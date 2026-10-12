@@ -41,20 +41,20 @@ def _particle_inertia(points=PARTICLES, weights=WEIGHTS):
     return result
 
 
-def _definition(*, angle=0., length_unit=1., mass_unit=1.):
+def _definition(*, angle=0., length_unit=1., mass_unit=1., stiffness_unit=1.):
     base = _panel()
     rotation = Rotation.from_rotvec((0., 0., angle)).as_matrix()
     shell = replace(base.shell,
         coordinates_m=tuple(map(tuple, length_unit*np.asarray(base.shell.coordinates_m)@rotation.T)),
         thickness_m=length_unit*base.shell.thickness_m,
-        young_pa=mass_unit/length_unit*base.shell.young_pa,
+        young_pa=stiffness_unit*mass_unit/length_unit*base.shell.young_pa,
         density_kg_m3=mass_unit/length_unit**3*base.shell.density_kg_m3)
     length_roles = np.diag((1.,)*3+(length_unit,)*3)
     beams = []
     for definition in base.beams:
         element, _ = definition.instantiate()
         section = element.section
-        elastic = mass_unit*length_unit*length_roles@section.elastic@length_roles
+        elastic = stiffness_unit*mass_unit*length_unit*length_roles@section.elastic@length_roles
         law = b3_ge.EllipsoidalGeneralizedSection(
             elastic, section.metric, section.yield_force, section.hardening)
         # Build the same physical unit conversion from the particle geometry.

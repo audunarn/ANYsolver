@@ -29,6 +29,31 @@ def _chart_policy(owner):
     return NATIVE_BL5_CHART_POLICY if is_native_material_bl5_arc(owner) else NATIVE_CHART_POLICY
 
 
+def _s3_arc_policies():
+    """(legacy V1, legacy V2, stable V2) arc identities for the generalized S3 domain.
+
+    Derived with the exact identities() transform from the displacement policy
+    constants. Stable V1 is never admitted: fresh stable arcs are V2 only.
+    """
+    from ._stiffened_shell_displacement_checkpoint import ELASTIC_S3_POLICY,STABLE_ELASTIC_S3_POLICY
+    legacy=ELASTIC_S3_POLICY.replace('DISPLACEMENT_','TANGENT_PLANE_')
+    stable=STABLE_ELASTIC_S3_POLICY.replace('DISPLACEMENT_','TANGENT_PLANE_')
+    return (legacy,legacy.replace('_V1_DEV','_V2_DEV'),stable.replace('_V1_DEV','_V2_DEV'))
+
+
+def _replay_s3_stable(owner,policy):
+    """Bind arc replay S3 arithmetic to the snapshot's declared policy identity."""
+    from ._stiffened_shell_ge_finite_experimental import supports_generalized_stable_s3
+    if not supports_generalized_stable_s3(owner):
+        return None
+    legacy_v1,legacy_v2,stable_v2=_s3_arc_policies()
+    if policy in (legacy_v1,legacy_v2):
+        return False
+    if policy==stable_v2:
+        return True
+    raise ValueError('unbound native S3 arc numerical policy')
+
+
 def require_native_seed(owner,driver):
     """Admit ordinary/displacement seeds or this controller's validated prefix."""
     from ._stiffened_shell_affine_endpoint import require_native_displacement_policy
@@ -236,8 +261,15 @@ def decode_snapshot(owner,raw):
     director=(type(m) is dict and is_native_material_bl5_arc(owner)
               and m.get('policy')==director_policy(owner))
     if director:keys.update(('metric_kind','metric_shell_nodes'))
-    policies=((identities(owner,native_version=1)[1],identities(owner)[1])
-              if point else (identities(owner)[1],))
+    from ._stiffened_shell_ge_finite_experimental import supports_generalized_stable_s3
+    if point and supports_generalized_stable_s3(owner):
+        # The generalized stable domain admits its restored legacy V1/V2
+        # histories and the new stable V2 identity; the replay arithmetic is
+        # bound later from the snapshot's declared policy.
+        policies=_s3_arc_policies()
+    else:
+        policies=((identities(owner,native_version=1)[1],identities(owner)[1])
+                  if point else (identities(owner)[1],))
     if is_native_material_bl5_arc(owner):policies+=(director_policy(owner),)
     if (type(m) is not dict or set(m)!=keys or canonical(m)!=header
             or m['policy'] not in policies or m['model']!=owner._identity
@@ -313,7 +345,9 @@ def decode_snapshot(owner,raw):
     if not np.isfinite(norm) or abs(norm-1.)>1e-10:raise ValueError('arc physical normal is not unit')
     frames=np.concatenate((physical_frames(a['q'][:owner._shell_count],a['shell_anchors']),a['frames']))
     delta=a['q'][:nodes*6].reshape(-1,6)[:,:3]-a['origin_translations']
-    if native and (m['policy']==identities(owner)[1] or director):
+    if native and ((m['policy'] in _s3_arc_policies()[1:]
+                    if supports_generalized_stable_s3(owner)
+                    else m['policy']==identities(owner)[1]) or director):
         progress=m['orientation']*delta[dof//6,dof%6]
         if not progress>0.:raise ValueError('native arc selected coordinate made no oriented progress')
     distance,_,_=metric.plane(delta,frames,a['origin_frames'],translations,spins)
@@ -383,4 +417,6 @@ def from_selection(owner,selection,*,seed_generation,seed_sha256,history=(),atte
 def validate_endpoint(owner,raw):
     from ._stiffened_shell_affine_endpoint import validate_arrays,is_native_point_material
     metadata,arrays=decode_snapshot(owner,raw)
-    return metadata,arrays,*validate_arrays(owner,arrays,native_chart=is_native_point_material(owner))
+    return metadata,arrays,*validate_arrays(owner,arrays,
+                                            native_chart=is_native_point_material(owner),
+                                            s3_stable=_replay_s3_stable(owner,metadata['policy']))

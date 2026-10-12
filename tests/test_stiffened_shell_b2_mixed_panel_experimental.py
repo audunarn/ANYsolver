@@ -248,12 +248,23 @@ def test_native_s3_reference_normal_guard_is_not_bypassed(normal):
 
 
 @pytest.mark.parametrize("nodes", ((1, 1, 5), (1, 2, 3), (1, 2, 999), (1, 2, 5, 4),
-                                  [1, 2, 5], (np.int64(1), 2, 5)))
+                                  (np.int64(1), 2, 5)))
 def test_native_s3_connectivity_and_degeneracy_guards(nodes):
     definition, _ = _definition("s3")
     shells = (replace(definition.shells[0], node_ids=nodes),)+definition.shells[1:]
     with pytest.raises((ValueError, NativeParityCapabilityError)):
         api.create_analysis(definition=replace(definition, shells=shells))
+
+def test_native_s3_node_sequence_input_is_normalized_to_owned_tuple():
+    # The ownership layer snapshots caller sequences into owned tuples;
+    # a valid list is admitted normalized, not refused as malformed.
+    definition, _ = _definition("s3")
+    shells = (replace(definition.shells[0], node_ids=[1, 2, 5]),)+definition.shells[1:]
+    owned = replace(definition, shells=shells)
+    assert owned.shells[0].node_ids == (1, 2, 5)
+    assert type(owned.shells[0].node_ids) is tuple
+    owner = api.create_analysis(definition=owned)
+    owner.close()
 
 
 def test_s3_nodal_footprints_fail_before_factorization(monkeypatch):

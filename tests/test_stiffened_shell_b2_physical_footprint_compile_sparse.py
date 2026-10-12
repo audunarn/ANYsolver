@@ -81,10 +81,20 @@ def test_indexed_incidence_keeps_row_order_and_detaches_coordinates():
 @pytest.mark.parametrize("extra,moved,message", [
     (SimpleNamespace(shell_id="seam", node_ids=(1, 5, 6, 7),
                      reference_normal=(0., 0., -1.)), False, "ambiguous director seam"),
-    (SimpleNamespace(shell_id="triangle", node_ids=(1, 5, 6),
-                     reference_normal=(0., 0., 1.)), False, "requires Q4"),
+    (SimpleNamespace(shell_id="pentagon", node_ids=(1, 5, 6, 7, 8),
+                     reference_normal=(0., 0., 1.)), False,
+     "physical footprint requires native three/four-node shells"),
     (None, True, "coplanar with owned director"),
 ])
 def test_indexed_incidence_preserves_refusals(extra, moved, message):
     with pytest.raises(ValueError, match=message):
         compile_physical_footprints(*_case(extra, moved))
+
+def test_indexed_incidence_admits_native_three_node_shell():
+    # Mixed S3/Q4 admission: a native three-node shell with the owned
+    # director is admitted and leaves the compiled group unchanged.
+    extra = SimpleNamespace(shell_id="triangle", node_ids=(1, 5, 6),
+                            reference_normal=(0., 0., 1.))
+    _, nodes = compile_physical_footprints(*_case(extra))
+    assert tuple(node.shell_node for node in nodes) == (1, 2, 3, 4)
+    assert tuple(node.row_start for node in nodes) == (0, 5, 10, 15)

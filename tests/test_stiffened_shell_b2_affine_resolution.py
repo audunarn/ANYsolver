@@ -130,6 +130,10 @@ def test_actual_public_quarter_support_route_keeps_work_balance_gap_and_factor_c
     monkeypatch.setattr(owner,'_explicit_load_resolved',record)
     try:
         f=np.zeros(54);f[[13,14,48,49,50,51,52,53]]=[.017,-.025,.0315,.022,-.018,.004,-.006,.009]
+        # Certification is on demand: a tiny superposed explicit load below
+        # the roundoff-relative floor triggers the small-load resolution
+        # guard, so this route genuinely exercises the affine certificate.
+        f[12]=1e-8
         selected=api.B2PhysicalRigidFootprintSelection(('physical-left',))
         first=owner.solve_linear(f,selected_footprints=selected)
         assert first.status=='completed',first.failure_reason

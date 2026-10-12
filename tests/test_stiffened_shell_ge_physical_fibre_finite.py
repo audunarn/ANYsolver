@@ -1,6 +1,7 @@
 """Finite native histories through the existing experimental point owner."""
 from dataclasses import replace
 import json
+import warnings
 
 import anysolver
 import numpy as np
@@ -8,6 +9,7 @@ import pytest
 
 from anysolver import b3_ge
 from anysolver.control import CancellationToken, SolveCancelled
+from anysolver._stiffened_shell_increment_control import FiniteIncrementFailure
 from anysolver._stiffened_shell_ge_experimental import NodalAction
 from anysolver._stiffened_shell_ge_checkpoint_binary import decode, encode, SCHEMAS
 from anysolver._stiffened_shell_beam_history import arrays, histories, shapes
@@ -170,7 +172,7 @@ def test_native_cancel_after_material_recovery_preserves_accepted_state(monkeypa
 
 
 @pytest.mark.parametrize('yielding', (False,True))
-def test_pure_fibre_s3_monotonic_completion_and_restart(yielding):
+def test_pure_fibre_s3_monotonic_completion_and_restart(yielding, monkeypatch):
     """The stable shell map must actually converge the unchanged fixture.
 
     Earlier failures stay in immutable evidence; full G3 remains unqualified.
@@ -203,14 +205,55 @@ def test_pure_fibre_s3_monotonic_completion_and_restart(yielding):
             assert owner._finite_driver._stable_s3
             assert resumed._finite_driver._stable_s3
             if yielding:
-                # This unchanged unloading path still switches yield branches
-                # and exhausts backtracking. Test rollback, not physical
-                # acceptance of unloading; the retained diagnostic is open.
-                with pytest.raises(RuntimeError,match='finite mixed backtrack budget exhausted'):
-                    owner.solve(actions,targets=(.5,))
+                # Rollback is proved deterministically first: an untyped
+                # failure raised by the trial assembly must propagate and
+                # leave the accepted prefix, checkpoint and generation
+                # untouched.
+                class _InjectedTrialFailure(RuntimeError):
+                    pass
+                def injected(*args, **kwargs):
+                    raise _InjectedTrialFailure('injected trial assembly failure')
+                with monkeypatch.context() as context:
+                    context.setattr(owner._finite_driver,'_assemble',injected)
+                    with pytest.raises(_InjectedTrialFailure):
+                        owner.solve(actions,targets=(.5,))
                 assert owner.recover() is result
                 assert owner.checkpoint() == saved
                 assert owner._generation == result.generation
+                # The unchanged unloading is then attempted for real. Runtime
+                # nonconvergence is not guaranteed: a genuine budget
+                # exhaustion stays an unresolved diagnostic and a completed
+                # unload must satisfy the same physical contract. Neither
+                # outcome closes G3.
+                try:
+                    unload = owner.solve(actions,targets=(.5,))
+                except FiniteIncrementFailure as error:
+                    if error.attempt.failure != 'finite mixed backtrack budget exhausted':
+                        raise
+                    assert owner.recover() is result
+                    assert owner.checkpoint() == saved
+                    assert owner._generation == result.generation
+                    warnings.warn('genuine finite mixed backtrack budget exhaustion on '
+                        'the unchanged fibre unloading path: recorded as an unresolved '
+                        'diagnostic, not qualification; G3 remains open')
+                else:
+                    assert unload.free_equilibrium_ratio <= 1e-8
+                    assert unload.constraint_max <= 1e-9
+                    support = unload.support_reactions[:owner._shell_count].reshape(-1,6)
+                    force = support[:,:3].sum(axis=0)
+                    moment = support[:,3:].sum(axis=0)+np.cross(
+                        np.asarray(definition.shell.coordinates_m),support[:,:3]).sum(axis=0)
+                    applied = np.array((0.,0.,500.))
+                    assert np.linalg.norm(force+applied)/np.linalg.norm(applied)<1e-8
+                    assert np.linalg.norm(moment+np.cross(unload.beam_positions[-1],applied))/(
+                        np.linalg.norm(applied)*owner._reference_length)<1e-8
+                    repeated = resumed.solve(actions,targets=(.5,))
+                    assert owner.checkpoint() == resumed.checkpoint()
+                    assert unload.beam_fibre_energy == repeated.beam_fibre_energy
+                    for a,b in zip(unload.beam_fibre_material,repeated.beam_fibre_material):
+                        assert a.fibres == b.fibres
+                        np.testing.assert_array_equal(a.strain,b.strain)
+                        np.testing.assert_array_equal(a.resultants,b.resultants)
                 return
             direct = owner.solve(actions,targets=(.5,))
             continued = resumed.solve(actions,targets=(.5,))

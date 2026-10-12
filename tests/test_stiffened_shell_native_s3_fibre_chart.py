@@ -167,7 +167,7 @@ def test_rebase_refuses_changed_native_fibre_history(request, monkeypatch, trian
         return tuple(response)
 
     monkeypatch.setattr(driver, "_assemble", changed_history)
-    with pytest.raises(ValueError, match="changed native beam material history"):
+    with pytest.raises(ValueError, match="changed (exact )?native beam material history"):
         analysis.rebase_rotations(prefix.generation)
     assert analysis.checkpoint() == raw
     assert analysis.recover() is prefix
@@ -189,7 +189,7 @@ def test_rebase_refuses_changed_native_fibre_history(request, monkeypatch, trian
         break
     assert low_changed is not None, "fixture needs a valid nonzero compensated fibre half"
     changed = low_changed
-    with pytest.raises(ValueError, match="changed native beam material history"):
+    with pytest.raises(ValueError, match="changed (exact )?native beam material history"):
         analysis.rebase_rotations(prefix.generation)
     assert analysis.checkpoint() == raw
     assert analysis.recover() is prefix

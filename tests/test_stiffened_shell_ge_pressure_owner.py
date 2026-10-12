@@ -6,7 +6,7 @@ import pytest
 from anysolver import stiffened_shell as ss
 from anysolver.control import CancellationToken, SolveCancelled
 from anysolver._stiffened_shell_ge_finite_experimental import FinitePointDriver
-from anysolver._stiffened_shell_ge_pressure_load import encode_checkpoint,decode_checkpoint
+from anysolver._stiffened_shell_ge_pressure_load import encode_checkpoint,decode_checkpoint,VECTOR_EQUILIBRIUM_POLICY
 from test_stiffened_shell_ge_experimental import _panel
 
 
@@ -56,6 +56,10 @@ def test_reference_pressure_native_modes_restart_and_balance(request,kind,mode):
 @pytest.mark.parametrize('kind,mode',[('q4','reference_dead'),('q4','current_surface'),('mixed','current_surface'),('s3','current_surface')])
 def test_finite_pressure_cancelled_prefix_chart_restart(request,kind,mode):
     a,b=owner(request,kind),owner(request,kind);q=load(a,mode);token=CancellationToken()
+    if kind == 'mixed' and mode == 'current_surface':
+        # Explicit approved vector policy for the mixed finite-pressure path;
+        # preserve default checks in the other cases and refusal controls.
+        q=replace(q,equilibrium_policy=VECTOR_EQUILIBRIUM_POLICY)
     control=ss.AdaptiveIncrementControl(2,16)
     def cancel(r):token.cancel('accepted pressure prefix')
     with pytest.raises(SolveCancelled):

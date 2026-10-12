@@ -52,10 +52,18 @@ def is_native_material_bl5_arc(owner):
 
 def require_native_displacement_policy(owner,driver):
     """Never upgrade legacy S3 force-seed arithmetic during replay."""
-    if (is_native_point_material(owner) and owner._definition.shell.s3_elements and
-            driver._stable_s3 != bool(owner._has_physical_fibre and
-                                      owner._definition.shell.j2_curve is None)):
-        raise ValueError("native S3 displacement seed numerical policy mismatch")
+    if (is_native_point_material(owner) and owner._definition.shell.s3_elements):
+        stable=driver._stable_s3
+        if type(stable) is not bool:
+            raise ValueError("native S3 displacement seed numerical policy mismatch")
+        from ._stiffened_shell_ge_finite_experimental import supports_generalized_stable_s3
+        # The exact generalized stable domain admits both its restored legacy
+        # False seed and the new stable True arithmetic; a restored legacy
+        # seed is never upgraded. Every other owner keeps the pinned policy.
+        if (not supports_generalized_stable_s3(owner) and
+                stable != bool(owner._has_physical_fibre and
+                              owner._definition.shell.j2_curve is None)):
+            raise ValueError("native S3 displacement seed numerical policy mismatch")
 
 
 def has_native_s3_material(owner):
@@ -71,8 +79,16 @@ def has_shell_material(owner):
         and owner._definition.shell.j2_curve is not None)
 
 
-def validate_arrays(owner,a,*,native_chart=False):
-    """Replay decoded fixed-affine translation arrays in isolated mechanics."""
+def validate_arrays(owner,a,*,native_chart=False,s3_stable=None):
+    """Replay decoded fixed-affine translation arrays in isolated mechanics.
+
+    The replay S3 seed arithmetic is checkpoint-bound: ``s3_stable`` carries the
+    snapshot's declared numerical-policy identity, never the fresh constructor
+    selection. A legacy identity (False) replays the original arithmetic; a
+    new stable identity (True) refuses atomically unless the constructor
+    admitted exactly that policy. ``None`` keeps the constructor selection
+    for every route whose metadata does not bind the generalized policy.
+    """
     if not (owner._bl5_shell_material or getattr(owner,"_curved_reference",False) or uses_native_material_history(owner) or getattr(owner,"_finite_distributing",False)):
         raise ValueError("bounded coupled affine endpoint required")
     prepared=copy(owner);prepared._commit_lock=RLock();prepared._writing=False
@@ -93,6 +109,18 @@ def validate_arrays(owner,a,*,native_chart=False):
     if getattr(owner,"_external_context",None) is not None:
         raise ValueError("displacement snapshot excludes external load contexts")
     driver=FinitePointDriver(prepared)
+    if s3_stable is not None:
+        # The snapshot's policy identity owns the replay arithmetic. A legacy
+        # identity never upgrades to the constructor's new generalized stable
+        # selection; a new stable identity must match it exactly or refuse
+        # atomically before any replay state exists.
+        from ._stiffened_shell_ge_finite_experimental import supports_generalized_stable_s3
+        if (type(s3_stable) is not bool or not supports_generalized_stable_s3(owner)
+                or type(driver._stable_s3) is not bool
+                or (s3_stable and driver._stable_s3 is not True)):
+            raise ValueError("native S3 displacement seed numerical policy mismatch")
+        if not s3_stable:
+            driver._stable_s3=False
     n=owner._shell_count+6*len(owner._beam_ids)
     q=_owned(a["q"])
     if (np.any(q[owner._fixed]!=0.) or np.any(q[n:]!=0.) or

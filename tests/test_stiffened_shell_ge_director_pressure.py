@@ -7,7 +7,7 @@ from anysolver import stiffened_shell as ss
 from anysolver.control import CancellationToken, SolveCancelled
 from anysolver._stiffened_shell_ge_finite_experimental import FinitePointDriver
 from anysolver._stiffened_shell_ge_pressure_load import (
-    DIRECTOR_CONFIGURATION, DIRECTOR_LOAD_POLICY, POLICY, decode_checkpoint,
+    DIRECTOR_CONFIGURATION, DIRECTOR_LOAD_POLICY, POLICY, VECTOR_EQUILIBRIUM_POLICY, decode_checkpoint,
 )
 from test_stiffened_shell_ge_pressure_owner import owner, balance, load
 
@@ -65,7 +65,10 @@ def test_actual_owner_external_work_tangent_and_anchor_rebase(request, kind):
 @pytest.mark.parametrize('kind', ['mixed', 's3'])
 def test_director_pressure_finite_cancel_restore_continue(request, kind):
     a, b = owner(request, kind), owner(request, kind)
-    action = director_load(a)
+    # Finite S3 pressure has tiny Cartesian components after rotation. This
+    # lifecycle exercises the separately selected, checkpoint-bound nodal
+    # force/moment-vector policy; the default component contract stays strict.
+    action = replace(director_load(a), equilibrium_policy=VECTOR_EQUILIBRIUM_POLICY)
     token = CancellationToken()
     control = ss.AdaptiveIncrementControl(2, 16)
     with pytest.raises(SolveCancelled):
