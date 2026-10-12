@@ -3,7 +3,7 @@ import json
 import argparse
 from hashlib import sha256
 from pathlib import Path
-from math import pi
+from math import hypot,pi
 import numpy as np
 from anysolver import create_shell_element
 from anysolver.fe_core import FEModel
@@ -30,7 +30,7 @@ def analysis(targets=(1.,0.,1.),*,normal_stiffness_Pa_per_m=1e7,two_facets=False
     points=[];frames=[]
     for x in np.linspace(0.,2.,3):
         points.append((x,.2*(1-(x-1)**2),0.))
-        tangent=np.array((1.,.4*(1-x),0.));tangent/=np.linalg.norm(tangent)
+        tangent=np.array((1.,.4*(1-x),0.));tangent/=hypot(*tangent)
         second=np.array((0.,0.,1.));frames.append(np.column_stack((tangent,second,np.cross(tangent,second))))
     reference=CenteredCurvedBeam3ReferenceGeometry(np.array(points),np.array(frames))
     if physical_fibres:

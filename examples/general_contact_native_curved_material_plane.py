@@ -5,7 +5,7 @@ No caps, friction, dynamics, unselected collisions or engineering admission.
 Run with an installed ANYsolver package on PYTHONPATH.
 """
 import json
-from math import pi
+from math import hypot,pi
 import numpy as np
 
 from anysolver._ge_beam3_centered_reference import CenteredCurvedBeam3ReferenceGeometry
@@ -26,7 +26,7 @@ def analysis(targets=(1.,0.,1.),*,normal_stiffness_Pa_per_m=1e7,max_iterations=2
     points=[];frames=[]
     for x in np.linspace(0.,2.,3):
         points.append((x,.2*(1-(x-1)**2),0.))
-        tangent=np.array((1.,.4*(1-x),0.));tangent/=np.linalg.norm(tangent)
+        tangent=np.array((1.,.4*(1-x),0.));tangent/=hypot(*tangent)
         second=np.array((0.,0.,1.))
         frames.append(np.column_stack((tangent,second,np.cross(tangent,second))))
     reference=CenteredCurvedBeam3ReferenceGeometry(np.array(points),np.array(frames))
