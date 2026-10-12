@@ -229,6 +229,13 @@ production_control_reaction = (
     production_internal[list(control_dofs)]-external[list(control_dofs)]
     +production_contact.force[list(control_dofs)])
 reaction_scale = max(float(np.linalg.norm(production_control_reaction)), 1e-10)
+# The contact route contributes exactly zero at the control dofs (the active
+# gap modes' elements are disjoint from the control nodes), so the reaction
+# difference is entirely the structural internal force between the two
+# roundoff-level solution realizations of the same system.
+control_reaction_structural_pose_term = (
+    independent_internal[list(control_dofs)]
+    -production_internal[list(control_dofs)])
 # Attribute only this checkout, never an enclosing development worktree.
 # Exported/installed sources retain their file hashes without inventing a SHA.
 def _checkout_commit(project_root):
@@ -284,5 +291,7 @@ record = {
     "control_reaction_relative_l2_difference": float(
         np.linalg.norm(independent_control_reaction
                        -production_control_reaction)/reaction_scale),
+    "control_reaction_structural_pose_term_n": (
+        control_reaction_structural_pose_term.tolist()),
 }
 print(json.dumps(record, indent=2))
