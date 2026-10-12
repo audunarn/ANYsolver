@@ -2,6 +2,10 @@
 
 This is deliberately separate from the V1 coupled owner and its checkpoint.
 It admits only the curved S3 fixture below and one rebase at cursor two.
+Every fresh F06 control, prototype owner and private checkpoint replay in this
+path takes its Newton step from the private deterministic fixed-order binary64
+reference solve below; the public CoupledShellBeamAnalysis default remains
+numpy.linalg.solve and legacy checkpoints keep that backend.
 """
 
 from __future__ import annotations
@@ -52,6 +56,75 @@ PILOT_FLOORS = {
     "solver_scaled_residual": (1.e-12, "mixed_solver_scale"),
     "tangent_fd": (1.e-10, "scaled_directional_residual"),
 }
+
+# Private backend identifier.  The unchanged V1 measurement payload carries no
+# backend key (the strict adjudicator allows only effective_environment as an
+# extra field); the selected implementation stays bound by the full probe
+# source_sha256 and the root records this identifier in ordinary receipt
+# metadata outside the frozen metric schema.
+REFERENCE_LINEAR_SOLVE_ID = (
+    "F06_OWNED_REBASE_V4_PRIVATE_DETERMINISTIC_FIXED_ORDER_PARTIAL_PIVOT_LU_BINARY64_V1")
+
+
+def _reference_linear_solve(matrix, rhs):
+    """Private deterministic general LU solve for the F06 Newton step.
+
+    Fixed-order binary64 partial-pivot LU on owned copies of both operands:
+    the first row of maximal magnitude wins pivot ties, elimination and
+    substitution use vectorized elementwise row updates in one fixed order
+    (no BLAS dot reductions, no FMA reassociation), an exact zero pivot is
+    refused with its column, complex operands are refused before any real
+    cast so imaginary parts are never discarded, nonfinite operands and
+    nonfinite intermediate elimination or substitution updates are refused
+    and no diagonal regularization is applied.  This backend is private to
+    the F06 owned-rebase prototype path; every other CoupledShellBeamAnalysis
+    caller keeps the numpy.linalg.solve default.
+    """
+    if np.iscomplexobj(matrix) or np.iscomplexobj(rhs):
+        raise ValueError("F06 reference solve refuses complex operands")
+    a = np.array(matrix, dtype=float, copy=True)
+    b = np.array(rhs, dtype=float, copy=True)
+    if a.ndim != 2 or a.shape[0] != a.shape[1] or not a.shape[0]:
+        raise ValueError("F06 reference solve requires a nonempty square matrix")
+    n = a.shape[0]
+    if b.ndim not in (1, 2) or b.shape[0] != n:
+        raise ValueError("F06 reference solve right-hand side shape mismatch")
+    if not np.isfinite(a).all() or not np.isfinite(b).all():
+        raise ValueError("F06 reference solve nonfinite operand")
+    x = b.reshape(n, 1) if b.ndim == 1 else b
+    for k in range(n-1):
+        pivot = k+int(np.argmax(np.abs(a[k:, k])))
+        if a[pivot, k] == 0.:
+            raise ValueError(
+                f"F06 reference solve exactly singular: zero pivot column {k}")
+        if pivot != k:
+            a[[k, pivot]] = a[[pivot, k]]
+            x[[k, pivot]] = x[[pivot, k]]
+        factors = a[k+1:, k]/a[k, k]
+        if not np.isfinite(factors).all():
+            raise ValueError("F06 reference solve nonfinite elimination multiplier")
+        a[k+1:, k] = factors
+        a[k+1:, k+1:] -= factors[:, None]*a[k, k+1:]
+        x[k+1:] -= factors[:, None]*x[k]
+        if not np.isfinite(a[k+1:, k+1:]).all() or not np.isfinite(x[k+1:]).all():
+            raise ValueError(
+                "F06 reference solve nonfinite intermediate elimination update")
+    for j in range(n-1, -1, -1):
+        if a[j, j] == 0.:
+            raise ValueError(
+                f"F06 reference solve exactly singular: zero pivot column {j}")
+        x[j] = x[j]/a[j, j]
+        if not np.isfinite(x[j]).all():
+            raise ValueError(
+                "F06 reference solve nonfinite intermediate substitution update")
+        if j:
+            x[:j] -= a[:j, j][:, None]*x[j]
+            if not np.isfinite(x[:j]).all():
+                raise ValueError(
+                    "F06 reference solve nonfinite intermediate substitution update")
+    if not np.isfinite(x).all():
+        raise ValueError("F06 reference solve produced nonfinite values")
+    return x.reshape(-1) if b.ndim == 1 else x
 
 
 def _hash(raw: bytes) -> str:
@@ -269,7 +342,8 @@ class OwnedRebasePrototype:
         seed = fixture("S3-V2D", True)
         self.owner = CoupledShellBeamAnalysis(seed.assembly, targets=TARGETS,
             shell_fixed=seed.shell_fixed, nodal_forces=seed.forces,
-            max_iterations=seed.max_iterations, max_backtracks=seed.max_backtracks)
+            max_iterations=seed.max_iterations, max_backtracks=seed.max_backtracks,
+            _linear_solve=_reference_linear_solve)
         self._lock = Lock()
         self._consumed_base = set()
         self._head_sha256 = None
@@ -1165,6 +1239,8 @@ def measure_pilot(*, checkpoint_dir=None):
     started = perf_counter()
     effective_environment = _effective_environment()
     source = OwnedRebasePrototype()
+    if source.owner._linear_solve is not _reference_linear_solve:
+        raise RuntimeError("F06 private reference linear solve is not configured")
     prefix = source.legacy_prefix()
     if prefix.status != "paused" or prefix.state.cursor != 2:
         raise RuntimeError(f"loaded F06 seed failed: {prefix.status}: {prefix.failure}")

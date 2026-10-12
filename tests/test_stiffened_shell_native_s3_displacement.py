@@ -1,10 +1,14 @@
 """Native elastic mixed/all-S3 fixed displacement lifecycle."""
+import json
 from dataclasses import replace
+from hashlib import sha256
 import numpy as np
 import pytest
 from anysolver import stiffened_shell as ss
 from anysolver.control import CancellationToken, SolveCancelled
-from anysolver._stiffened_shell_displacement_checkpoint import decode_snapshot
+from anysolver._stiffened_shell_displacement_checkpoint import (
+    MAGIC, ELASTIC_S3_POLICY, STABLE_ELASTIC_S3_POLICY, decode_snapshot,
+    identities, replay_s3_stable)
 from test_stiffened_shell_native_point_displacement import (
     model, owner, compare, native_state, ACTIONS, DIRECTION, CONTROL, OPTIONS, HISTORICAL_POLICY)
 
@@ -34,8 +38,41 @@ def test_native_elastic_s3_displacement_cancel_restore_reject(request, monkeypat
     saved = analysis.checkpoint()
     prefix = analysis.recover()
     metadata, arrays = decode_snapshot(analysis, saved)
-    assert metadata['policy'] == 'B3_GE_NATIVE_POINT_ELASTIC_S3_DISPLACEMENT_V1_DEV'
+    # The live numerical policy identity is bound by the model domain: the
+    # all-S3 mesh frames the authoritative generalized stable identity, while
+    # the mixed Q4/S3 mesh keeps the historical identity (the stable domain
+    # predicate excludes q4_elements, so its replay binding is fail-closed).
+    _, live_policy, live_chart_policy, _ = identities(analysis)
+    if q4:
+        assert live_policy == ELASTIC_S3_POLICY
+        assert replay_s3_stable(analysis, live_policy) is None
+    else:
+        assert live_policy == STABLE_ELASTIC_S3_POLICY
+        assert replay_s3_stable(analysis, live_policy) is True
+        # Legacy restart compatibility: decoding admits the historical
+        # identity, and its replay keeps the historical arithmetic (False).
+        assert replay_s3_stable(analysis, ELASTIC_S3_POLICY) is False
+        with pytest.raises(ValueError, match='unbound native S3 displacement numerical policy'):
+            replay_s3_stable(analysis, 'B3_GE_NATIVE_POINT_ELASTIC_S3_DISPLACEMENT_UNBOUND_V1_DEV')
+    assert metadata['policy'] == live_policy
     assert not any(name.startswith('shell_plastic') for name in arrays)
+    # Byte corruption is refused by the framing digest before any replay.
+    corrupted = bytearray(saved)
+    corrupted[len(saved)//2] ^= 1
+    with pytest.raises(ValueError, match='displacement snapshot digest mismatch'):
+        decode_snapshot(analysis, bytes(corrupted))
+    # A digest-valid re-framed snapshot that swaps in an unbound numerical
+    # policy is refused: decoding admits only this domain's bound identities.
+    header_start = len(MAGIC)+4
+    header_length = int.from_bytes(saved[len(MAGIC):header_start], 'little')
+    header = json.loads(saved[header_start:header_start+header_length])
+    header['policy'] = 'B3_GE_NATIVE_POINT_ELASTIC_S3_DISPLACEMENT_UNBOUND_V1_DEV'
+    reframed_header = json.dumps(header, sort_keys=True, separators=(',', ':'),
+                                 allow_nan=False).encode('ascii')
+    reframed = (MAGIC+len(reframed_header).to_bytes(4, 'little')+reframed_header
+                +saved[header_start+header_length:-32])
+    with pytest.raises(ValueError, match='incompatible displacement metadata'):
+        decode_snapshot(analysis, reframed+sha256(reframed).digest())
     restored = resumed.restore(saved)
     assert resumed.checkpoint() == saved
     compare(prefix, restored)
@@ -61,6 +98,7 @@ def test_native_elastic_s3_displacement_cancel_restore_reject(request, monkeypat
     rebased_raw = analysis.checkpoint()
     assert resumed.checkpoint() == rebased_raw
     rebased_metadata, rebased_arrays = decode_snapshot(analysis, rebased_raw)
+    assert rebased_metadata['policy'] == live_chart_policy
     assert rebased_metadata['chart_events'] == 1
     assert not np.any(rebased_arrays['q'][:analysis._shell_count].reshape(-1,6)[:,3:])
     np.testing.assert_array_equal(rebased_arrays['shell_anchors'], prefix.shell_frames)

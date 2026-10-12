@@ -112,13 +112,15 @@ class CoupledShellBeamAnalysis:
 Shell material is the seam's explicit elastic material; generalized beam history
 may be nonlinear. Multiple elements within the owned beam subdomain are allowed.
 Only zero supports and nodal spatial dead forces are admitted by this version.
+    The Newton step solve defaults to numpy.linalg.solve; the private
+    _linear_solve hook exists only for the F06 prototype reference backend.
 Shell histories are corotated, shell coordinates additive, beam frames spatial
 multiplicative. Unsupported shell material, arbitrary starts, nodal couples,
 fibre owners, generic MPCs and spectral use are not silently approximated.
 """
 
     def __init__(self, assembly, *, targets, shell_fixed, nodal_forces,
-                 max_iterations=24, max_backtracks=8):
+                 max_iterations=24, max_backtracks=8, _linear_solve=None):
         if type(assembly) is not ShellBeamTrialAssembly:
             raise ValueError('exact real shell/beam assembly required')
         assembly.guard()
@@ -132,6 +134,8 @@ fibre owners, generic MPCs and spectral use are not silently approximated.
         if (type(max_iterations) is not int or not 1 <= max_iterations <= 24
                 or type(max_backtracks) is not int or not 0 <= max_backtracks <= 8):
             raise ValueError('bounded coupled iteration controls required')
+        if _linear_solve is not None and not callable(_linear_solve):
+            raise ValueError('callable coupled Newton linear solve required')
         forces = _array(nodal_forces, (assembly.shell_count+assembly.beam.nodal_count,))
         if np.any(forces.reshape(-1, 6)[:, 3:] != 0.):
             raise ValueError('nodal couples require their separate work contract')
@@ -140,6 +144,7 @@ fibre owners, generic MPCs and spectral use are not silently approximated.
         self.targets, self.shell_fixed = targets, shell_fixed
         self.forces = forces
         self.max_iterations, self.max_backtracks = max_iterations, max_backtracks
+        self._linear_solve = _linear_solve
         self.shell_length = max(float(np.linalg.norm(x-y)) for x in assembly.coordinates for y in assembly.coordinates)
         self.free = tuple([i for i in range(assembly.shell_count) if i not in shell_fixed]
             + [assembly.shell_count+int(i) for i in assembly.beam.free]
@@ -209,7 +214,8 @@ fibre owners, generic MPCs and spectral use are not silently approximated.
 
     def _step(self, response, residual, mechanical, u, multipliers):
         step = np.zeros(self.assembly.count)
-        step[list(self.free)] = np.linalg.solve(response.tangent[np.ix_(self.free, self.free)],
+        solve = np.linalg.solve if self._linear_solve is None else self._linear_solve
+        step[list(self.free)] = solve(response.tangent[np.ix_(self.free, self.free)],
             -residual[list(self.free)])
         if not np.isfinite(step).all():
             raise ValueError('nonfinite coupled Newton step')
