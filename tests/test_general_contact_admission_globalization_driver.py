@@ -9,7 +9,6 @@ tampered or incompatible continuation history.
 """
 import copy
 from dataclasses import replace
-from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -18,7 +17,10 @@ from anysolver import solve_static_nonlinear
 from anysolver.control import SolveCancelled
 from anysolver.general_contact import static_path
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
-from anysolver.general_contact.semismooth_path import solve_increment
+from anysolver.general_contact.semismooth_path import (
+    SemismoothStep,
+    solve_increment,
+)
 from anysolver.nonlinear_restart import (
     _CHECKPOINT_HASH_KEY,
     _checkpoint_without_hash,
@@ -108,9 +110,18 @@ def _force_first_macro_refusal(monkeypatch, calls):
             "iterations": None,
         })
         if len(calls) == 1:
-            return SimpleNamespace(
+            # Typed conformance: the production refusal path reads
+            # step_result.initial_seed unconditionally, so the
+            # injected refusal is a real SemismoothStep, not a loose
+            # namespace mock.
+            return SemismoothStep(
                 completed=False, reason="contact_semismooth_stagnation",
-                diagnostics=None, iterations=3, candidate_evaluations=2,
+                q=np.asarray(kwargs["q"], dtype=float).copy(),
+                reactions=np.asarray(kwargs["reactions"], dtype=float).copy(),
+                nodal_forces=np.asarray(kwargs["nodal_forces"], dtype=float).copy(),
+                candidate_states=None, contact=None, iterations=3,
+                residual_norm=float("inf"), constraint_norm=float("inf"),
+                complementarity_norm=float("inf"), candidate_evaluations=2,
                 backtracks=1)
         result = original(*args, **kwargs)
         calls[-1]["iterations"] = int(result.iterations)

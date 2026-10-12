@@ -64,9 +64,10 @@ def test_gap_step_control_affine_event_and_restart_binding():
     with pytest.raises(ValueError,match='settings changed'):event._guard()
 
 
-def test_gap_geometry_query_observes_cancellation_before_consumption(monkeypatch):
+@pytest.mark.parametrize('gap_step_control',(False,True))
+def test_gap_geometry_query_observes_cancellation_before_consumption(monkeypatch,gap_step_control):
     from anysolver.control import SolveCancelled
-    owner=_owner(gap_step_control=True);token=CancellationToken()
+    owner=_owner(gap_step_control=gap_step_control);token=CancellationToken()
     before=canonical(owner.initial.histories);raw=owner._checkpoint(())
     def cancel_inside_geometry(*args,**kwargs):
         token.cancel('during geometry-only pair query')
@@ -77,6 +78,20 @@ def test_gap_geometry_query_observes_cancellation_before_consumption(monkeypatch
         with pytest.raises(SolveCancelled):owner._swept_gap(owner.initial.mechanical)
     assert canonical(owner.initial.histories)==before and owner._checkpoint(())==raw
     assert owner.context._token is None and not owner.context._lock.locked()
+
+
+@pytest.mark.parametrize('gap_step_control',(False,True))
+def test_swept_midpoint_certifies_full_pair_without_force_evaluation(monkeypatch,gap_step_control):
+    owner=_owner(gap_step_control=gap_step_control)
+    before=canonical(owner.initial.histories);raw=owner._checkpoint(())
+    def forbidden_force(_pose):
+        raise AssertionError('swept midpoint must not construct force/tangent')
+    monkeypatch.setattr(owner,'_contact',forbidden_force)
+    lower=owner._swept_gap(owner.initial.mechanical)
+    # Two initially straight, parallel centreline tubes: independent gap.
+    exact=.101-owner.contact.radius
+    assert exact-1e-10<=lower<=exact
+    assert canonical(owner.initial.histories)==before and owner._checkpoint(())==raw
 
 
 @pytest.mark.skipif(not os.environ.get('CONTACT_PAIR_SAVED_TRIAL'),
@@ -235,12 +250,90 @@ def test_fibre_pair_cancel_before_complete_evaluation_reuse(monkeypatch):
     assert owner.context._token is None and not owner.context._lock.locked()
 
 
+def test_fibre_pair_small_open_motion_prepared_record_replay(monkeypatch):
+    # Completing fibre route on entirely open motion: the converged
+    # prepared record evaluation must publish the accepted target
+    # without a second contact evaluation of the accepted pose,
+    # and restore replay must re-assemble to byte-identical records.
+    import sys
+    owner=_owner(force=-.0001);origin=canonical(owner.initial.histories)
+    contact=owner._contact;record=owner._record
+    callers=[];records=[]
+    def counted(state):
+        callers.append(sys._getframe(1).f_code.co_name);return contact(state)
+    def traced_record(*args,**kwargs):
+        records.append(kwargs.get('prepared') is not None)
+        return record(*args,**kwargs)
+    monkeypatch.setattr(owner,'_contact',counted)
+    monkeypatch.setattr(owner,'_record',traced_record)
+    run=owner.solve()
+    assert run.status=='completed' and run.accepted.completed_targets==1,run.failure
+    assert records==[True] and callers
+    restored,replayed=owner._restore(run.checkpoint,run.checkpoint_sha256)
+    assert records==[True,False]
+    assert restored.histories==run.accepted.histories
+    assert owner._checkpoint(replayed)==run.checkpoint
+    assert canonical(owner.initial.histories)==origin
+    assert owner.context._token is None and not owner.context._lock.locked()
+
+def test_fibre_pair_prepared_record_rejects_foreign_identity_and_rechecks_guard(monkeypatch):
+    # Commit boundary of the cached record bundle: only the exact converged
+    # pose, target parameter and material origins may supply it; every
+    # foreign identity refuses before any checkpoint work, and the cached
+    # branch rechecks the guard exactly as the assembly path does.
+    owner=_owner(force=-.0001);origin=canonical(owner.initial.histories)
+    captured=[]
+    record=owner._record
+    def traced(*args,**kwargs):
+        if kwargs.get('prepared') is not None and not captured:
+            captured.append(kwargs['prepared'])
+        return record(*args,**kwargs)
+    monkeypatch.setattr(owner,'_record',traced)
+    run=owner.solve()
+    assert run.status=='completed' and run.accepted.completed_targets==1,run.failure
+    pose,parameter,origins,bundle=captured[0]
+    for foreign in ((owner.initial.mechanical,parameter,origins,bundle),
+                    (pose,parameter+1.,origins,bundle),
+                    (pose,parameter,object(),bundle)):
+        with pytest.raises(ValueError,
+                match='exact accepted pose, target and origins'):
+            owner._record(1,pose,origins,'0'*64,prepared=foreign)
+    owner.gap_step_control=not owner.gap_step_control
+    with pytest.raises(ValueError,match='settings changed'):
+        owner._record(1,pose,origins,'0'*64,
+            prepared=(pose,parameter,origins,bundle))
+    owner.gap_step_control=not owner.gap_step_control
+    restored,replayed=owner._restore(run.checkpoint,run.checkpoint_sha256)
+    assert owner._checkpoint(replayed)==run.checkpoint
+    assert canonical(owner.initial.histories)==origin
+    assert owner.context._token is None and not owner.context._lock.locked()
+
+
 def test_fibre_pair_actual_coupled_commit_and_restart():
-    _check_coupled_commit_and_restart(_owner())
+    # Prospective resolved numerical enforcement, unchanged physical fixture
+    # and dimensional gap/equilibrium/history gates. The former stiffness100
+    # success expectation was contradicted by preserved gap-limit failures.
+    _check_coupled_commit_and_restart(_owner(line_stiffness=4000.))
 
 
 def test_fibre_pair_staged_coupled_commit_and_restart():
-    _check_coupled_commit_and_restart(_owner(targets=(.005,.01,.02,.03,.04,.05)))
+    _check_coupled_commit_and_restart(_owner(targets=(.005,.01,.02,.03,.04,.05),
+        line_stiffness=4000.))
+
+
+def test_fibre_pair_weak_normal_regularization_is_not_reported_completed():
+    # Keep the original100 fixture as an explicit non-success regression.
+    # No unsupported converged equilibrium is invented: the bounded solver
+    # rejects its attempted path before committing the first physical target.
+    owner=_owner();origin=canonical(owner.initial.histories)
+    raw=owner._checkpoint(())
+    run=owner.solve()
+    assert run.status=='failed' and run.accepted.completed_targets==0
+    assert 'line-search/gap limit' in run.failure,run.failure
+    assert canonical(owner.initial.histories)==origin
+    assert canonical(run.accepted.histories)==origin
+    assert run.checkpoint==raw
+    assert owner.context._token is None and not owner.context._lock.locked()
 
 
 def test_fibre_pair_refined_coupled_commit_and_restart():
@@ -353,7 +446,7 @@ def test_event_limited_saved_checkpoint_material_work_and_restart():
 @pytest.mark.skipif(os.environ.get('ANYSOLVER_CONTACT_PROFILE')!='1',
     reason='explicit bounded first-Newton cost diagnostic, not qualification')
 def test_fibre_pair_first_newton_cost_discriminator():
-    import cProfile,faulthandler,time
+    import cProfile,time
     output=Path(os.environ['CONTACT_APP_RESULT_RECORD']+'-first-newton-cost.json')
     rows=[]
     owner=_owner();origin=canonical(owner.initial.histories)
@@ -369,43 +462,42 @@ def test_fibre_pair_first_newton_cost_discriminator():
             profile.disable();profile.dump_stats(str(output)+f'.{len(rows)}.prof')
             row['elapsed_s']=time.monotonic()-started;rows.append(row)
             output.write_text(json.dumps(dict(scope='first Newton cost diagnostic only',operations=rows),indent=2))
-    with open(str(output)+'.stacks','w') as traces:
-        faulthandler.dump_traceback_later(20,repeat=True,file=traces)
-        try:
-            r,k,metrics,_,contact=measured('initial_assembly',
-                lambda:owner._assemble(owner.initial.mechanical,.05,owner.initial.histories))
-            step,correction=measured('initial_step',
-                lambda:owner.context.step(owner.initial.mechanical,r,k))
-            for cut in range(owner.program.max_backtracks+1):
-                increment=step*(.5**cut)
-                candidate=owner.context.advance(owner.initial.mechanical,increment)
-                try:
-                    endpoint=measured(f'endpoint_cut_{cut}',lambda:owner._contact(candidate))
-                except (ValueError,MemoryError) as exc:
-                    if owner._recoverable_trial_contact_error(exc):continue
-                    raise
-                rows[-1].update(gap_lower_m=endpoint.conservative_lower_gap_m,
-                    potential_j=endpoint.potential_j)
-                output.write_text(json.dumps(dict(scope='first Newton cost diagnostic only',operations=rows),indent=2))
-                if endpoint.conservative_lower_gap_m < -owner.gap_tolerance:continue
-                safe=measured(f'swept_cut_{cut}',lambda:owner._swept_admissible(
-                    owner.initial.mechanical,increment,candidate,
-                    contact.conservative_lower_gap_m,endpoint.conservative_lower_gap_m))
-                rows[-1]['admissible']=safe
-                if not safe:continue
-                changed=measured('candidate_assembly',lambda:owner._assemble(candidate,.05,
-                    owner.initial.histories,prepared_contact=(candidate,endpoint)))
-                rows[-1]['metrics']=list(changed[2]);break
-        finally:
-            faulthandler.cancel_dump_traceback_later()
+    # The external bounded supervisor harness owns crash watchdog duty;
+    # no recurring in-process faulthandler timer perturbs the measurements.
+    try:
+        r,k,metrics,_,contact=measured('initial_assembly',
+            lambda:owner._assemble(owner.initial.mechanical,.05,owner.initial.histories))
+        step,correction=measured('initial_step',
+            lambda:owner.context.step(owner.initial.mechanical,r,k))
+        for cut in range(owner.program.max_backtracks+1):
+            increment=step*(.5**cut)
+            candidate=owner.context.advance(owner.initial.mechanical,increment)
+            try:
+                endpoint=measured(f'endpoint_cut_{cut}',lambda:owner._contact(candidate))
+            except (ValueError,MemoryError) as exc:
+                if owner._recoverable_trial_contact_error(exc):continue
+                raise
+            rows[-1].update(gap_lower_m=endpoint.conservative_lower_gap_m,
+                potential_j=endpoint.potential_j)
             output.write_text(json.dumps(dict(scope='first Newton cost diagnostic only',operations=rows),indent=2))
+            if endpoint.conservative_lower_gap_m < -owner.gap_tolerance:continue
+            safe=measured(f'swept_cut_{cut}',lambda:owner._swept_admissible(
+                owner.initial.mechanical,increment,candidate,
+                contact.conservative_lower_gap_m,endpoint.conservative_lower_gap_m))
+            rows[-1]['admissible']=safe
+            if not safe:continue
+            changed=measured('candidate_assembly',lambda:owner._assemble(candidate,.05,
+                owner.initial.histories,prepared_contact=(candidate,endpoint)))
+            rows[-1]['metrics']=list(changed[2]);break
+    finally:
+        output.write_text(json.dumps(dict(scope='first Newton cost diagnostic only',operations=rows),indent=2))
     assert canonical(owner.initial.histories)==origin
 
 
 @pytest.mark.skipif(os.environ.get('ANYSOLVER_CONTACT_PROFILE')!='1',
     reason='explicit ten-contact-call path diagnostic, not qualification')
 def test_fibre_pair_contact_path_discriminator(monkeypatch):
-    import sys,time,faulthandler
+    import sys,time
     output=Path(os.environ['CONTACT_APP_RESULT_RECORD']+'-contact-path.json')
     owner=_owner();rows=[];contact=owner._contact
     origin=canonical(owner.initial.histories);raw=owner._checkpoint(())
@@ -427,10 +519,9 @@ def test_fibre_pair_contact_path_discriminator(monkeypatch):
             row['elapsed_s']=time.monotonic()-started;rows.append(row)
             output.write_text(json.dumps(dict(scope='ten-call diagnostic only',calls=rows),indent=2))
     monkeypatch.setattr(owner,'_contact',traced)
-    with open(str(output)+'.stacks','w') as traces:
-        faulthandler.dump_traceback_later(20,repeat=True,file=traces)
-        try:run=owner.solve()
-        finally:faulthandler.cancel_dump_traceback_later()
+    # The external bounded supervisor harness owns crash watchdog duty;
+    # no recurring in-process faulthandler timer perturbs the route.
+    run=owner.solve()
     output.write_text(json.dumps(dict(scope='ten-call diagnostic only',calls=rows,
         solver_status=run.status,failure=run.failure,completed_targets=run.accepted.completed_targets),indent=2))
     assert canonical(owner.initial.histories)==origin
@@ -450,6 +541,42 @@ def test_fibre_pair_refined_path_discriminator(monkeypatch):
     assert canonical(owner.initial.histories)==origin
     assert run.checkpoint==raw and run.accepted.completed_targets==0
     assert run.status=='failed' and 'diagnostic stop' in run.failure
+
+
+@pytest.mark.skipif(os.environ.get('ANYSOLVER_CONTACT_PROFILE')!='1',
+    reason='explicit full-route contact cost diagnostic, not qualification')
+def test_fibre_pair_route_cost_discriminator(monkeypatch):
+    # One unmodified production solve traced at the owned contact boundary.
+    # The cooperative deadline ends the run; no cap, tolerance or admission
+    # is changed and no faulthandler/pose dump perturbs the route.
+    import sys,time
+    output=Path(os.environ['CONTACT_APP_RESULT_RECORD']+'-route-cost.json')
+    owner=_owner();rows=[]
+    contact=owner._contact
+    origin=canonical(owner.initial.histories);raw=owner._checkpoint(())
+    def traced(state):
+        row=dict(caller=sys._getframe(1).f_code.co_name,index=len(rows))
+        started=time.monotonic()
+        try:
+            value=contact(state)
+            row.update(status='completed',
+                gap_lower_m=value.conservative_lower_gap_m,
+                potential_j=value.potential_j)
+            return value
+        except Exception as exc:
+            row.update(status=type(exc).__name__,failure=str(exc)[:200]);raise
+        finally:
+            row['elapsed_s']=time.monotonic()-started;rows.append(row)
+            output.write_text(json.dumps(dict(scope='full-route cost diagnostic only',
+                calls=rows),indent=2))
+    monkeypatch.setattr(owner,'_contact',traced)
+    run=owner.solve()
+    output.write_text(json.dumps(dict(scope='full-route cost diagnostic only',calls=rows,
+        solver_status=run.status,failure=run.failure,
+        completed_targets=run.accepted.completed_targets),indent=2))
+    assert canonical(owner.initial.histories)==origin
+    assert run.checkpoint==raw
+    assert run.status=='failed' and 'cooperative deadline' in run.failure
 
 
 def _trace_refined_pair(owner,monkeypatch,maximum_calls=None):

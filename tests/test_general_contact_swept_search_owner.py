@@ -16,6 +16,10 @@ def owner_fixture():
     count = len(source)
     manager._positions = lambda values: (np.asarray(values).reshape(-1,3)[:count],
                                          np.asarray(values).reshape(-1,3)[count:])
+    # The overridden positions are exact coordinate literals, so their endpoint
+    # enclosure is exactly zero; the production certify/bound search stays real.
+    manager._position_errors = lambda values: (np.zeros((count,3)),
+                                               np.zeros((len(target),3)))
     for index,nodes in enumerate(manager.law.source_face_indices):
         source[nodes,0] += 8.7*index
     for index,nodes in enumerate(manager.law.target_face_indices):

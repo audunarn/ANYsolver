@@ -18,7 +18,9 @@ REF=Path('C:/ANYworkspaceWork/contact_paired_pressure_response_20261008/outputs/
 REF_SHA='0f3ace2e13a1c3e4dbb597ad0f79d550cabbd400c300c91cbf5b2d11368750a7'
 
 def save(data):
-    Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(data,indent=2,default=lambda v:v.tolist() if isinstance(v,np.ndarray) else float(v) if isinstance(v,np.generic) else v),encoding='utf-8')
+    root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if not root:return
+    Path(root).write_text(json.dumps(data,indent=2,default=lambda v:v.tolist() if isinstance(v,np.ndarray) else float(v) if isinstance(v,np.generic) else v),encoding='utf-8')
 
 def skin(manager,q):
     f=manager.finite_skin;directors=np.array([old.prior.decimal_director(q[d[3:]],ref) for d,ref in zip(f.dofs,f.directors)])
@@ -76,6 +78,8 @@ def test_common_frame_exact_two_body_mortar():
         reports.append(dict(refined=refined,exact_support=exact['exact_support'],support_error_m2=support_error,exact_normal_work=exact['normal_work'],code_gradient_error=code_gradient_error,force_l1_error_relative=force_error,overlap_bin_areas_m2=areas,reference_clearance_m=float(a.sum()/S.sum()),norm_scales=dict(force_n=1e-4,moment_nm=1e-4)))
     save(dict(verified=True,common_frame_degrees=60,source_slide_m=.02,original_bilinear_both_body_work=True,exact_fraction_rectangle_proof=reports))
 
+@pytest.mark.skipif(not os.environ.get('MORTAR_STAGE'),
+    reason='installed mortar stage input MORTAR_STAGE absent: staged loaded-pose solve requires the original workflow stage selection')
 def test_actual_loaded_pose_independent_work_and_bins():
     refined=os.environ['MORTAR_STAGE']=='refined';model,manager,program,meta,pose,q,z,provenance=posed(refined)
     reference,points,directors=skin(manager,q)
@@ -115,6 +119,8 @@ def test_actual_loaded_pose_independent_work_and_bins():
     gates=old.physical_gates(model,manager.settings if hasattr(manager,'settings') else old.fixture(refined)[2],old.fixture(refined)[3],program,meta,pose)
     save(dict(verified=True,refined=refined,provenance=provenance,quadrature_self_resolution=quadrature,fd_steps_m=(2e-6,1e-6),fd_force_resolution_relative=derivative_resolution,code_comparison=code,physical_spin_work_relative=work_error,reference=independent,physical_force=f,bin_force=bins,overlap_only_bin_work_force_allocation=physical,physical_source_resultant_n=physical_total,physical_gates=gates,positions=points,reference_positions=reference,chart_map=chart,spin_map=spin,pressure_space_unchanged=True,bin_definition='d(sum z_i*a_i_bin/S_i), including global S derivatives; not lambda*n traction'))
 
+@pytest.mark.skipif(not (RAW/'refined.json').is_file(),
+    reason='archived mortar trace input MORTAR_EVIDENCE/refined.json absent: fixed-structure pressure-trace replay requires the original saved trace')
 def test_fixed_structure_pressure_trace_discriminator():
     from anysolver.nonlinear_static import _assemble_nonlinear_system,_discard_nonlinear_state_candidate
     model,manager,program,meta,pose,q,z,provenance=posed(True)
@@ -176,6 +182,8 @@ def test_fixed_structure_pressure_trace_discriminator():
         bin_differences.append(dict(source_material_x_bin=((.1,.6),(.6,1.1))[i],allocated_force_difference_n=np.asarray(b['allocated_source_force_n'])-a['allocated_source_force_n'],allocated_moment_difference_nm=np.asarray(b['allocated_source_moment_nm'])-a['allocated_source_moment_nm']))
     save(dict(verified=True,fixed_model_pose_sha256=provenance,free_selector=free,pressure_transfer=E,overlap_reference_mass_m2=M,coarse_trace_projection_error_pa_m=float(trace_projection_error),reference_responses=reports,pressure_trace_chart_response_difference_l2=float(np.linalg.norm(difference)),actual_fixed_z_vs_structural_only_response_relative=nonlinear_tangent_difference,actual_trace_common_geometry_response=actual_traces,actual_trace_common_chart_response_difference_l2=float(np.linalg.norm(common_response_delta)),observed_actual_resultant_difference_n=observed_delta,common_geometry_trace_resultant_difference_n=common_delta,observed_minus_common_geometry_resultant_difference_n=remainder,overlap_work_allocation_bin_differences=bin_differences,independent_physical_sum_closure=sum_closure,model_scope='same local frozen-pose Kstruct+baselinefine fixed-z contact K for both traces; signed pressure probes and mapped accepted traces are not coarse nonlinear equilibria',interpretation='checkerboard probe alone does not attribute prior16.85percent shift; common actual-trace difference and observed remainder are diagnostic identities, not causal separation of structural/pressure effects',physical_spatial_convergence_gate=False,pressure_admission=False))
 
+@pytest.mark.skipif(not BASE.is_file(),
+    reason='archived mortar pose input contact_tilted_relative_sliding_20261008/outputs/v3/run-14.json absent: loaded directional-tangent replay requires the original saved pose')
 def test_independent_loaded_directional_tangent():
     from anysolver.nonlinear_static import _assemble_nonlinear_system,_discard_nonlinear_state_candidate
     model,manager,program,meta,pose,q,z,provenance=posed(False)

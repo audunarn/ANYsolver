@@ -534,6 +534,27 @@ class NativeCurvedMaterialPlaneWork:
                     row['error_bounds']=tuple(error)
                     row['enclosure_refinement']='declared_material_arc'
                 remaining=np.asarray(limits)-root_errors
+        if np.all(np.isfinite(root_errors)) and np.any(remaining<=0):
+            # A rejected whole-bracket enclosure may still be certified by
+            # further bounded isolation of the SAME retained brackets. Every
+            # sub-band keeps its own representative station, depressed-field
+            # angular union and work enclosure; the partition's summed
+            # enclosure replaces the rejected one only when it fits the
+            # unchanged limits within the same finite interval budget. No
+            # root is asserted, no representation pad is released, and no
+            # already passing evaluation enters this branch.
+            groups,attempt=self._certified_root_subbands(high,low,U,geometry,
+                settings,limits,budget,root_brackets,alo,ahi)
+            if groups is not None:
+                prepared,root_brackets=self._partition_root_subbands(prepared,
+                    root_brackets,groups,root_stations)
+                root_errors=np.sum([node['error'] for group in groups for node in group],axis=0)
+                remaining=np.asarray(limits)-root_errors
+            else:
+                failure=ValueError('curved axial front bracket work uncertainty exceeds integration budget')
+                failure.integration_diagnostics=dict(root_brackets=root_brackets,
+                    error_bounds=tuple(root_errors),subband_isolation=attempt)
+                raise failure
         if not np.all(np.isfinite(root_errors)) or np.any(remaining<=0):
             failure=ValueError('curved axial front bracket work uncertainty exceeds integration budget')
             failure.integration_diagnostics=dict(root_brackets=root_brackets,error_bounds=tuple(root_errors))
@@ -697,6 +718,141 @@ class NativeCurvedMaterialPlaneWork:
 
     def _refined_root_work_bound(self,*args,**kwargs):
         return None
+
+    def _certified_root_subbands(self,high,low,U,geometry,settings,limits,budget,
+                                 brackets,alo,ahi):
+        """Budget-aware further certified isolation of rejected root brackets.
+
+        Bisection partitions each retained bracket into sub-bands sharing the
+        caller's finite interval budget. A sub-band's depressed station field
+        bounds its complete active angular union, its work enclosure bounds
+        its complete work uncertainty, and the partition sum is valid by
+        finite subadditivity. Splitting stops when the summed enclosure fits
+        strictly under the unchanged limits, the shared budget or float
+        resolution ends refinement, or any sub-band enclosure is unresolved.
+        An enclosure that cannot be certified smaller by splitting (grazing or
+        representation floor) is explicitly rejected as a refinement target
+        while other sub-bands continue; no new cap is introduced. The
+        partition total is recomputed from the nonnegative sub-band
+        enclosures after every replacement, never by a running subtraction;
+        an empty group or a nonfinite/negative enclosure keeps the existing
+        non-success.
+        The representation pad stays in every sub-band; feature identity is
+        inherited; no root is ever asserted. Returns the per-bracket sub-band
+        groups (None when certification fails) and attempt diagnostics.
+        """
+        if not brackets:return None,dict(subband_evaluations=0)
+        groups=[]
+        for index,row in enumerate(brackets):
+            error=np.asarray(row['error_bounds'],float)
+            if not np.all(np.isfinite(error)) or np.any(error<0):
+                return None,dict(subband_evaluations=0)
+            groups.append([dict(parent=index,cell=row['cell'],pad=row['representation_gap_m'],
+                features=row['features'],lo=row['lower'],hi=row['upper'],
+                station=row['representative_xi'],active=row['active_angular_width_bound'],
+                fallback=row['angular_fallback'],error=error,
+                refinement=row.get('enclosure_refinement'))])
+        evaluations=0
+        def subband(node):
+            active,fallback,station=_root_band_active_width(self.rule,high,low,U,
+                node['cell'],node['lo'],node['hi'],alo,ahi,self.origin,self.normal,node['pad'])
+            error=self._refined_root_work_bound(high,low,U,node['cell'],node['hi']-node['lo'],
+                active,geometry,settings,self.stiffness,self.normal,node['pad'],
+                fallback=fallback,interval=(node['lo'],node['hi']),station=station)
+            refined=error is not None
+            if error is None:
+                error=self._root_work_bound(high,low,U,node['cell'],node['hi']-node['lo'],
+                    active,geometry,settings,self.stiffness,self.normal,node['pad'],
+                    fallback=fallback,interval=(node['lo'],node['hi']),station=station)
+            node.update(active=active,fallback=fallback,station=station,
+                error=np.asarray(error,float),
+                refinement='declared_material_arc' if refined else None)
+        def split(node,ceiling):
+            mid=(node['lo']+node['hi'])/2
+            if not node['lo']<mid<node['hi']:return False
+            # Two sub-band evaluations plus one net new integration rectangle
+            # must fit the isolation-side share of the shared budget.
+            if budget['visited']+3>ceiling or budget['visited']+3>budget['limit']:return False
+            children=[dict(parent=node['parent'],cell=node['cell'],pad=node['pad'],
+                features=node['features'],lo=node['lo'],hi=mid),
+                dict(parent=node['parent'],cell=node['cell'],pad=node['pad'],
+                features=node['features'],lo=mid,hi=node['hi'])]
+            for child in children:
+                budget['visited']+=1
+                nonlocal evaluations;evaluations+=1
+                try:subband(child)
+                except (ValueError,ArithmeticError):return False
+                if not np.all(np.isfinite(child['error'])) or np.any(child['error']<0):
+                    return False
+            return children
+        caps=np.asarray(limits,float)
+        def partition_total():
+            # Recompute from the sub-band lists after every replacement; a
+            # running subtraction update can cancel and understate the sum.
+            errors=[node['error'] for group in groups for node in group]
+            if not errors:return None
+            total=np.sum(errors,axis=0)
+            if not np.all(np.isfinite(total)) or np.any(total<0):return None
+            return total
+        total=partition_total()
+        # Root-band certification and quadrature share one tangent/energy/force
+        # budget: every unit of certified root uncertainty is a unit the
+        # integration rectangles cannot use. Refine therefore past the first
+        # fitting partition towards the representation floor, spending at
+        # most half of the not-yet-spent shared interval budget; integration
+        # rectangles keep the other half.
+        ceiling=(budget['visited']+budget['limit'])//2
+        while total is not None:
+            component=int(np.argmax(total/caps))
+            target=None
+            for group in groups:
+                for node in group:
+                    if node.get('irreducible'):continue
+                    if target is None or node['error'][component]>target['error'][component]:
+                        target=node
+            if target is None:break
+            children=split(target,ceiling)
+            if children is False or (children[0]['error'][component]
+                    +children[1]['error'][component]>=target['error'][component]):
+                # Splitting cannot be certified to shrink this enclosure
+                # (grazing/representation floor, exhausted shared budget or
+                # float resolution). Reject it explicitly as a refinement
+                # target; other sub-bands keep the same unchanged caps.
+                target['irreducible']=True;continue
+            group=groups[target['parent']]
+            for position,node in enumerate(group):
+                if node is target:group[position:position+1]=children;break
+            total=partition_total()
+        attempt=dict(interval_visits=budget['visited'],interval_limit=budget['limit'],
+            subband_evaluations=evaluations,
+            summed_error_bounds=None if total is None else tuple(total))
+        if total is None or np.any(total>=caps):return None,attempt
+        return groups,attempt
+
+    def _partition_root_subbands(self,prepared,brackets,groups,stations):
+        """Replace subdivided bracket bands with their certified sub-bands."""
+        rebuilt=[];rows=[];position=0
+        for cell,bands in prepared:
+            fresh=[]
+            for band in bands:
+                if not band[2]:
+                    fresh.append(band);continue
+                group=groups[position];row=brackets[position];position+=1
+                if len(group)==1:
+                    fresh.append(band);rows.append(row);continue
+                for node in group:
+                    fresh.append((node['lo'],node['hi'],True,node['features']))
+                    stations[cell,node['lo'],node['hi']]=node['station']
+                    row=dict(cell=cell,lower=node['lo'],upper=node['hi'],
+                        features=node['features'],representation_gap_m=node['pad'],
+                        active_angular_width_bound=node['active'],
+                        angular_fallback=node['fallback'],representative_xi=node['station'],
+                        error_bounds=tuple(node['error']))
+                    if node['refinement'] is not None:
+                        row['enclosure_refinement']=node['refinement']
+                    rows.append(row)
+            rebuilt.append((cell,fresh))
+        return rebuilt,rows
 
     def certify_path(self,start,translations,angular,*,gap_tolerance_m,
                      maximum_intervals,cancellation_token=None):

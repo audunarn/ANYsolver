@@ -26,6 +26,7 @@ internal Newton checkpoint is ever exported.
 """
 import json
 import os
+import tempfile
 from dataclasses import asdict, replace
 
 import numpy as np
@@ -108,7 +109,7 @@ def test_coupled_2x2_prefix_seeded_outcome_recorded_and_exported():
         assert seed["seed_merit"] < seed["origin_merit"]
     else:
         assert isinstance(seed["reason"], str) and seed["reason"]
-    temp = os.environ["TEMP"]
+    temp = (os.environ.get("TEMP") or tempfile.gettempdir())
     outcome = {
         "schema": "INITIAL_SEED_COUPLED_PREFIX_OUTCOME_V1",
         "selection": "linearized_kkt_dev",

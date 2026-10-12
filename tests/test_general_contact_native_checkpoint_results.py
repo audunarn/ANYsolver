@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import struct
+import subprocess
 import sys
 
 import pytest
@@ -43,6 +44,7 @@ def _same(left, right):
 
 
 def test_portable_native_producer_public_consumer():
+    already_imported=set(sys.modules)
     from anysolver.general_contact import read_native_contact_checkpoint_results
     from examples.general_contact_native_checkpoint_results import read_portable
     raw = FIXTURE.read_bytes()
@@ -53,7 +55,7 @@ def test_portable_native_producer_public_consumer():
     assert result.completed_targets == 1
     assert result.identity == expected['identity']
     assert read_portable(FIXTURE).to_bytes() == raw
-    forbidden = [name for name in sys.modules if name in (
+    forbidden = [name for name in sys.modules if name not in already_imported and name in (
         'anysolver.general_contact.native_retained_pair_static',
         'anysolver.general_contact.native_fibre_context')]
     assert forbidden == []
@@ -64,6 +66,26 @@ def test_portable_native_producer_public_consumer():
             exact_original_bytes=True, completed_targets=result.completed_targets,
             example_public_read=True, native_owner_imports=forbidden,
             scope='DATA_INTEGRITY_ONLY_NO_MECHANICAL_REPLAY'), indent=2)+'\n', encoding='utf-8')
+
+
+def test_portable_native_consumer_cold_import_excludes_mechanics():
+    # Other test modules legitimately import native owners during collection.
+    # Cold import isolation is a fresh-process contract, not shared-process
+    # test order. Preserve the same real capsule and exact-byte round trip.
+    code="""import sys
+from pathlib import Path
+from anysolver.general_contact import read_native_contact_checkpoint_results
+from examples.general_contact_native_checkpoint_results import read_portable
+raw=Path(sys.argv[1]).read_bytes()
+assert read_native_contact_checkpoint_results(raw).to_bytes()==raw
+assert read_portable(Path(sys.argv[1])).to_bytes()==raw
+for name in ('anysolver.general_contact.native_retained_pair_static',
+             'anysolver.general_contact.native_fibre_context'):
+    assert name not in sys.modules, name
+"""
+    result=subprocess.run([sys.executable,'-c',code,str(FIXTURE)],
+        cwd=Path(__file__).parents[1],capture_output=True,text=True,timeout=30.)
+    assert result.returncode==0,result.stdout+'\n'+result.stderr
 
 
 def test_native_detachment_and_numeric_bits():

@@ -66,6 +66,34 @@ def _endpoint_polynomial(field,cell,index,time,angle):
     return coefficients
 
 
+def stationary_angular_coefficients(field,cell,index,time,angle):
+    """Exact sinusoidal A, A_t and A_tt coefficients at one path time.
+
+    These are coefficients of the declared round surface, not fitted samples.
+    B has no material-angle dependence. Callers supply rounding bounds before
+    using the resulting stationary numerator and its time derivative.
+    """
+    value=axial_contact_front(field,cell,index,time,angle)
+    start,segments=_support_path(field,index);segment=segments[0]
+    pose=material_path_pose(start,segment.translations,segment.angular,segment.shell_increment,time)
+    corners=field.patch.target.adapter.current_positions(pose.shell_displacement)
+    velocities=np.asarray(field.patch.target.adapter.work_map@segment.shell_increment).reshape(3,3)
+    e1,e2=corners[1]-corners[0],corners[2]-corners[0]
+    v1,v2=velocities[1]-velocities[0],velocities[2]-velocities[0]
+    c=np.cross(e1,e2);cd=np.cross(v1,e2)+np.cross(e1,v2);cdd=2*np.cross(v1,v2)
+    frame=pose.cell_rotations[cell]@field.patch.source.reference.nodal_triads[0]
+    base=_base(pose,cell,0.,corners[0]);t=1. if cell==0 else 0.
+    velocity=(1-t)*segment.translations[cell]+t*segment.translations[cell+1]-velocities[0]
+    radius=field.patch.rule.definition['radius'];omega=segment.angular[cell]
+    arms=(radius*frame[:,1],radius*frame[:,2])
+    a=(float(c@base),*(float(c@arm) for arm in arms))
+    ap=(float(cd@base+c@velocity),*(float(cd@arm+c@np.cross(omega,arm)) for arm in arms))
+    app=(float(cdd@base+2*cd@velocity),
+         *(float(cdd@arm+2*cd@np.cross(omega,arm)+c@np.cross(omega,np.cross(omega,arm))) for arm in arms))
+    if not np.all(np.isfinite((a,ap,app))):raise ValueError('nonfinite stationary angular coefficients')
+    return a,ap,app,value
+
+
 def _polynomial_guards(coefficients,error,lower,upper):
     """Enclose all zeros under uniform function error, including tangencies."""
     q0,qc,qs=coefficients;amplitude=float(np.hypot(qc,qs))

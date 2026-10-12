@@ -342,8 +342,8 @@ def test_s3_smooth_full_work_tangent_and_unsafe_path():
     unsafe=u.copy()
     for n in range(1,7):unsafe[model.mesh.dof_manager.get_node_dofs(n)[2]]=-.02
     assert not manager._swept_admissible(np.zeros_like(u),unsafe)
-    output=Path(os.environ['AUTOMATIC_DOMAIN_RESULT'])
-    output.write_text(json.dumps(dict(tangent_errors=errors,independent_gap=oracle,unsafe_endpoint_path_refused=True,kernel_scalar_integral_errors=kernel_errors),indent=2))
+    output=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if output:Path(output).write_text(json.dumps(dict(tangent_errors=errors,independent_gap=oracle,unsafe_endpoint_path_refused=True,kernel_scalar_integral_errors=kernel_errors),indent=2))
     assert max(errors)<=1e-5,errors
 
 
@@ -352,7 +352,9 @@ def test_s3_predictor_route_and_precancel_safety():
     from examples.general_contact_automatic_s3_pair import build_s3_pair,solve_shell_pair
     model,domain,settings,resolution,path=build_s3_pair()
     assert not validate_general_contact(model,resolution.definition,settings,analysis_control='force').valid
-    with pytest.raises(ValueError,match='frictionless'):
+    # Current typed refusal (static_path.py): the invalid friction object is
+    # rejected by the S3SlidingFrictionSettings/projected-penalty profile gate.
+    with pytest.raises(ValueError,match='physical-side/predicted friction path requires S3SlidingFrictionSettings'):
         solve_shell_pair(model,domain,settings,resolution,path,contact_friction=object())
     before=repr(model);token=CancellationToken();token.cancel('S3 pair public path precancel')
     with pytest.raises(SolveCancelled):solve_shell_pair(model,domain,settings,resolution,path,cancellation_token=token)

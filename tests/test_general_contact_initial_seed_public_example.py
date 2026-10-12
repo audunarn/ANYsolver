@@ -11,10 +11,10 @@ stdout with the effective seed selection and the full seed record
 with the reported status. No acceleration or nonlinear feasibility is
 assumed; the physical outcome is recorded as it occurs.
 
-Measured timing context (this scope): one real half solve of this
-fixture costs 167 s (default-none, attempt-05, terminated 'diverged')
-and the seeded run was still executing at the 180 s cap (attempt-06),
-so completing this check needs a fresh allowance with a longer cap.
+The current 4x4 example's source-bound Windows public entry completed in a
+recorded 12.32-second process wall interval. The earlier 2x2 fixture's
+167-second divergence and 180-second cap remain historical failures; the
+mesh change prevents using those timings to claim a production speedup.
 """
 import json
 import os

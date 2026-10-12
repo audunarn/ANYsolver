@@ -217,9 +217,49 @@ def stationary_front_slab(field,cell,segment_index,angle,left,right,*,include_a=
         nwidth+=(arate_theta*b_bound+a_theta*b1bound)*angular_width
         ndwidth+=(aacc_theta*b_bound+a_theta*b2)*angular_width
         result=(value.b-bwidth,value.b+bwidth,n-nwidth,n+nwidth,nd-ndwidth,nd+ndwidth)
+        angular_a_interval=None
+        if angle_bounds is not None:
+            # Retain the cancellation in the exact midpoint angular polynomial.
+            # Separate product norms can otherwise leave a fixed angular floor
+            # which temporal refinement cannot shrink. Uniform Taylor bounds
+            # still cover the entire time slab and all selected material angles.
+            from .native_surface_front_boundary import stationary_angular_coefficients
+            from .native_surface_support import _sinusoidal_extrema
+            acoef,apcoef,appcoef,v=stationary_angular_coefficients(field,cell,segment_index,middle,angle)
+            q=tuple(p*v.b-x*v.b_rate for x,p in zip(acoef,apcoef))
+            qp=tuple(p*v.b-x*v.b_acceleration for x,p in zip(acoef,appcoef))
+            qrange=_sinusoidal_extrema((q[0],),q[1],q[2],angle_bounds)
+            qprange=_sinusoidal_extrema((qp[0],),qp[1],qp[2],angle_bounds)
+            # Three coefficient errors plus arithmetic before cancellation.
+            qe=3*numerator_error+2048*np.finfo(float).eps*sum(
+                abs(p*v.b)+abs(x*v.b_rate) for x,p in zip(acoef,apcoef))
+            qpe=3*derivative_error+2048*np.finfo(float).eps*sum(
+                abs(p*v.b)+abs(x*v.b_acceleration) for x,p in zip(acoef,appcoef))
+            magnitude=lambda co:abs(co[0])+float(np.hypot(co[1],co[2]))
+            aa2=magnitude(appcoef)+3*eapp+a3*h
+            aa1=magnitude(apcoef)+3*eap+aa2*h
+            aa=magnitude(acoef)+3*ea+aa1*h
+            nn2=a3*b_bound+aa2*b1bound+aa1*b2+aa*b3
+            arange=_sinusoidal_extrema((acoef[0],),acoef[1],acoef[2],angle_bounds)
+            adelta=(magnitude(apcoef)+3*eap)*h+.5*aa2*h*h+3*ea
+            angular_a_interval=(float(np.nextafter(arange[0]-adelta,-np.inf)),
+                                float(np.nextafter(arange[1]+adelta,np.inf)))
+            delta=max(abs(qprange[0]),abs(qprange[1]))*h+qpe*h+.5*nn2*h*h+qe
+            ddelta=nn2*h+qpe
+            result=(result[0],result[1],
+                max(result[2],float(np.nextafter(qrange[0]-delta,-np.inf))),
+                min(result[3],float(np.nextafter(qrange[1]+delta,np.inf))),
+                max(result[4],float(np.nextafter(qprange[0]-ddelta,-np.inf))),
+                min(result[5],float(np.nextafter(qprange[1]+ddelta,np.inf))))
+            if result[2]>result[3] or result[4]>result[5]:
+                raise ValueError('inconsistent stationary angular Taylor bounds')
         if include_a:
             awidth=(abs(value.a_rate)+eap)*h+.5*a2*h*h+ea+a_theta*angular_width
-            result=(*result,value.a-awidth,value.a+awidth)
+            lower,upper=value.a-awidth,value.a+awidth
+            if angular_a_interval is not None:
+                lower=max(lower,angular_a_interval[0]);upper=min(upper,angular_a_interval[1])
+                if lower>upper:raise ValueError('inconsistent stationary angular gap bounds')
+            result=(*result,lower,upper)
         return result,(float(uniform_error),float(numerator_error))
     return result
 
@@ -244,8 +284,12 @@ class StationaryAngularCover:
     def __bool__(self):return bool(self.branches)
 
 
+class StationaryAngularSubdivision(ValueError):
+    """The fixed angular enclosure needs children; it certifies no support."""
+
+
 def stationary_front_angular_cover(field,cell,segment_index,angle_bounds,*,budget,xi_bounds=None,
-        endpoint_partition=None,_variable_endpoint_branches=False):
+        endpoint_partition=None,_variable_endpoint_branches=False,_allow_angular_subdivision=False):
     """Certify stationary-root branches over an entire angular interval.
 
     Each returned time bracket contains exactly one simple stationary root for
@@ -317,6 +361,25 @@ def stationary_front_angular_cover(field,cell,segment_index,angle_bounds,*,budge
                 front_slabs.append((left,right,bl,bu))
                 continue
         middle=(left+right)/2
+        if _allow_angular_subdivision and xi_bounds is not None:
+            # A fixed-angle enclosure can resolve N or N' at this time, while
+            # the whole band cannot. Time refinement cannot reduce that angular
+            # contribution at the same time. Yield only a refinement request,
+            # never support: the caller must represent both angular children.
+            angular=enclosure(middle,middle)
+            products=[float(np.nextafter(b*x,-np.inf))
+                      for b in angular[:2] for x in xi_bounds]
+            open_lower=float(np.nextafter(angular[6]+min(products),-np.inf))
+            if (open_lower<=0. and angular[2]<=0.<=angular[3]
+                    and angular[4]<=0.<=angular[5]):
+                if not budget.consume():
+                    raise MemoryError('stationary angular cover interval cap exhausted')
+                point=stationary_front_slab(field,cell,segment_index,angle,middle,middle,
+                    include_a=True,_return_error_controls=True)[0]
+                if ((point[0]>0. or point[1]<0.) and
+                        (point[2]>0. or point[3]<0. or point[4]>0. or point[5]<0.)):
+                    raise StationaryAngularSubdivision(
+                        'stationary angular cover requires angular subdivision')
         if not left<middle<right:raise ValueError('stationary angular cover temporal resolution exhausted')
         pending.extend(((middle,right),(left,middle)))
     if xi_bounds is None:
@@ -530,8 +593,14 @@ class PreparedStationaryBand:
     prepared_intervals: int
 
 
-def prepare_stationary_band(field,cover,*,budget):
-    """Prepare uniform geometric/error bounds once for a certified angle band."""
+def prepare_stationary_band(field,cover,*,budget,_reuse_endpoints=None):
+    """Prepare uniform geometric/error bounds once for a certified angle band.
+
+    A containing band's prepared endpoint controls may be reused verbatim:
+    B has no angular dependence and endpoint coordinate intervals intersect
+    the exact point values, so wider angular padding cannot widen them.
+    Branch controls are always recomputed for this band's angular width.
+    """
     from .native_surface_support import SupportIntervalBudget
     if type(budget) is not SupportIntervalBudget:raise TypeError('shared support budget required')
     if type(cover) is not StationaryAngularCover or cover.field_identity!=field.identity:
@@ -555,8 +624,14 @@ def prepare_stationary_band(field,cover,*,budget):
         None if not cover.branch_bounds else cover.branch_bounds[i]) for i,(a,b) in enumerate(cover.branches))
     for _,_,bounds,_ in branches:
         if bounds[4]<=0<=bounds[5]:raise ValueError('prepared stationary simple branch unresolved')
-    endpoints=tuple(controls(t,t,None if bl is None else (bl,bu))
-        for left,right,bl,bu in _front_components(cover) for t in (left,right))
+    expected=tuple((float(t),float(t))
+        for left,right,_,_ in _front_components(cover) for t in (left,right))
+    if _reuse_endpoints is not None and (len(_reuse_endpoints)!=len(expected)
+            or tuple((entry[0],entry[1]) for entry in _reuse_endpoints)!=expected):
+        _reuse_endpoints=None
+    endpoints=(tuple(_reuse_endpoints) if _reuse_endpoints is not None else
+        tuple(controls(t,t,None if bl is None else (bl,bu))
+            for left,right,bl,bu in _front_components(cover) for t in (left,right)))
     return PreparedStationaryBand(cover,branches,endpoints,budget.intervals-before)
 
 

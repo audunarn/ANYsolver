@@ -27,7 +27,7 @@ def test_projected_q4_pair_has_distinct_profile_and_restart_contract():
     report = validate_general_contact(model, definition, settings)
     assert report.valid, report.issues
     assert report.profile == (
-        "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1"
+        "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V2"
     )
     manager = GeneralS3PatchManager(model, definition, settings)
     assert manager.restart_contract()["settings"]["q4_source_gap_certificate"] == (
@@ -57,7 +57,7 @@ def test_projected_q4_pair_has_distinct_profile_and_restart_contract():
     )
     assert mixed_report.valid, mixed_report.issues
     assert mixed_report.profile == (
-        "Q4_S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1"
+        "Q4_S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V2"
     )
 
 
@@ -108,7 +108,7 @@ def test_projected_q4_pair_single_press_public_path():
     )
     contact = result.info["general_contact"]
     assert contact["profile"] == (
-        "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1"
+        "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V2"
     )
     assert contact["active_pressure_dofs"] == 4
     assert contact["gap_tolerance_met"]
@@ -153,7 +153,7 @@ def test_projected_q4_pair_four_phase_public_path():
     assert all(row["contact"]["minimum_gap"] >= -2e-4 for row in phases)
     assert phases[2]["contact"]["normal_multiplier_estimate_pa"] == [0.0]*4
     assert result.info["profile"] == (
-        "Q4_Q4_PATCH_GENERAL_AUGMENTED_PATH_DEV_V1"
+        "Q4_Q4_PATCH_GENERAL_AUGMENTED_PATH_DEV_V2"
     )
     for row in phases:
         contact = row["contact"]
@@ -235,7 +235,7 @@ def test_projected_q4_pair_ordinary_force_and_displacement_controls():
         )
         contact = result.info["general_contact"]
         assert contact["profile"] == (
-            "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1"
+            "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V2"
         )
         assert contact["gap_tolerance_met"]
         assert contact["active_pressure_dofs"] > 0

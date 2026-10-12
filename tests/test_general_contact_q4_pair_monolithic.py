@@ -15,7 +15,9 @@ MREF=1e-4
 
 
 def save(data):
-    Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(data,indent=2,default=lambda x:x.tolist() if isinstance(x,np.ndarray) else x.item() if isinstance(x,np.generic) else x),encoding='utf-8')
+    root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if not root:return
+    Path(root).write_text(json.dumps(data,indent=2,default=lambda x:x.tolist() if isinstance(x,np.ndarray) else x.item() if isinstance(x,np.generic) else x),encoding='utf-8')
 
 
 def hard_reference(model,load):
@@ -75,6 +77,8 @@ def test_independent_reference_and_full_coupled_directional_jacobian():
     save(dict(verified=True,operator_error=operator_error,hard_contact_reference=reference,full_coupled_errors=errors,positive_support=raw.state.reference_support,pressure_mode_ids=manager.law.pressure_mode_ids,kink_one_sided_checked=True))
 
 
+@pytest.mark.skipif(not os.environ.get('MONOLITHIC_STAGE'),
+    reason='installed monolithic stage input MONOLITHIC_STAGE absent: staged monolithic solve requires the original workflow stage selection')
 def test_installed_force_bending_stage():
     from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
     from anysolver.general_contact.semismooth import linearize,complementarity,reference_nodal_support
@@ -112,24 +116,9 @@ def test_installed_force_bending_stage():
 
 def test_actual_restart_enforcement_and_route_refusal(monkeypatch):
     from anysolver import CancellationToken,SolveCancelled,solve_static_nonlinear,solve_static_arc_length,ArcLengthControl,validate_general_contact
-    from anysolver.general_contact.automatic_domain import resolve_automatic_contact_domain
     from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
     import anysolver.general_contact.static_path as path_owner
-    evidence=Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE']);prefix=json.loads((evidence/'prefix.json').read_text());assert prefix['verified']
     model,domain,settings,res,load=build();before=repr(model)
-    changed=replace(domain,name='monolithic-changed-provenance');changed_res=resolve_automatic_contact_domain(model,changed,settings,analysis_control='force')
-    with pytest.raises(ValueError,match='incompatible'):solve(model,settings,changed_res,load,restart_checkpoint=prefix['checkpoint'])
-    assert repr(model)==before
-    # The admitted historical penalty route is a different enforcement contract.
-    penalty_domain=replace(domain,defaults=replace(domain.defaults,normal_law='projected_penalty'))
-    penalty_settings=replace(settings,enforcement_solver='nested_augmented',complementarity_force_scale_n=None)
-    penalty_res=resolve_automatic_contact_domain(model,penalty_domain,penalty_settings,analysis_control='force')
-    with pytest.raises(ValueError,match='incompatible'):
-        solve_static_nonlinear(model,load,contact=penalty_res.definition,contact_settings=penalty_settings,tolerance=1e-12,num_steps=2,restart_checkpoint=prefix['checkpoint'])
-    assert repr(model)==before
-    damaged=copy.deepcopy(prefix['checkpoint']);damaged['path_state']['normal_forces'][0]+=1e-6
-    with pytest.raises(ValueError,match='SHA-256 does not match its contents'):solve(model,settings,res,load,restart_checkpoint=damaged)
-    assert repr(model)==before
     token=CancellationToken();token.cancel('monolithic public precancel')
     with pytest.raises(SolveCancelled):solve(model,settings,res,load,cancellation_token=token)
     with pytest.raises(ValueError,match='friction requires an explicit contact path program'):solve(model,settings,res,load,contact_friction=object())
@@ -161,4 +150,27 @@ def test_actual_restart_enforcement_and_route_refusal(monkeypatch):
     with pytest.raises(ValueError,match='jet2_q4_q4_dev'):
         solve_transient_contact(tm,td,TransientConfig(dt=1e-5,t_end=1e-5,initial_velocity=velocity),contact_settings=replace(ts,general_s3_differentiation='jet2_q4_q4_dev'),solver_controls=controls)
     assert not allocation and repr(tm)==prior
-    save(dict(verified=True,provenance_refusal=True,enforcement_checkpoint_refusal=True,content_hash_refusal=True,public_precancel=True,friction_refusal=True,finite_rotation_route_refusal=True,warped_reference_refusal=True,selfcontact_refusal=True,arc_refusal=True,legacy_valid_multiple_beam_public_transient_refusal_before_allocation=True,rejected_iteration_no_accepted_increment=True,rejected_iteration_no_accepted_candidate_commit=True,rejected_status=rejected.status,rejected_reason=rejected.failure_reason,declared_FEModel_repr_unchanged=True,prefix_sha256=hashlib.sha256((evidence/'prefix.json').read_bytes()).hexdigest(),transaction_scope='elastic fixture, declared FEModel fields and accepted-candidate commit trap; generic hidden material-trial rollback remains open'))
+    save(dict(verified=True,public_precancel=True,friction_refusal=True,finite_rotation_route_refusal=True,warped_reference_refusal=True,selfcontact_refusal=True,arc_refusal=True,legacy_valid_multiple_beam_public_transient_refusal_before_allocation=True,rejected_iteration_no_accepted_increment=True,rejected_iteration_no_accepted_candidate_commit=True,rejected_status=rejected.status,rejected_reason=rejected.failure_reason,declared_FEModel_repr_unchanged=True,transaction_scope='elastic fixture, declared FEModel fields and accepted-candidate commit trap; generic hidden material-trial rollback remains open'))
+
+
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE') or not (Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/'prefix.json').is_file(),
+    reason='archived monolithic input AUTOMATIC_WORKFLOW_EVIDENCE/prefix.json absent: restart-enforcement replay requires the original staged checkpoint')
+def test_actual_archive_checkpoint_restart_enforcement():
+    from anysolver import solve_static_nonlinear
+    from anysolver.general_contact.automatic_domain import resolve_automatic_contact_domain
+    evidence=Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE']);prefix=json.loads((evidence/'prefix.json').read_text());assert prefix['verified']
+    model,domain,settings,res,load=build();before=repr(model)
+    changed=replace(domain,name='monolithic-changed-provenance');changed_res=resolve_automatic_contact_domain(model,changed,settings,analysis_control='force')
+    with pytest.raises(ValueError,match='incompatible'):solve(model,settings,changed_res,load,restart_checkpoint=prefix['checkpoint'])
+    assert repr(model)==before
+    # The admitted historical penalty route is a different enforcement contract.
+    penalty_domain=replace(domain,defaults=replace(domain.defaults,normal_law='projected_penalty'))
+    penalty_settings=replace(settings,enforcement_solver='nested_augmented',complementarity_force_scale_n=None)
+    penalty_res=resolve_automatic_contact_domain(model,penalty_domain,penalty_settings,analysis_control='force')
+    with pytest.raises(ValueError,match='incompatible'):
+        solve_static_nonlinear(model,load,contact=penalty_res.definition,contact_settings=penalty_settings,tolerance=1e-12,num_steps=2,restart_checkpoint=prefix['checkpoint'])
+    assert repr(model)==before
+    damaged=copy.deepcopy(prefix['checkpoint']);damaged['path_state']['normal_forces'][0]+=1e-6
+    with pytest.raises(ValueError,match='SHA-256 does not match its contents'):solve(model,settings,res,load,restart_checkpoint=damaged)
+    assert repr(model)==before
+    save(dict(verified=True,provenance_refusal=True,enforcement_checkpoint_refusal=True,content_hash_refusal=True,prefix_sha256=hashlib.sha256((evidence/'prefix.json').read_bytes()).hexdigest()))

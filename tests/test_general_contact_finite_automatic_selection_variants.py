@@ -2,6 +2,8 @@
 import importlib.util
 import json
 import os
+
+import pytest
 from dataclasses import replace
 from pathlib import Path
 
@@ -12,6 +14,11 @@ from anysolver.general_contact import (
 )
 
 
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_VARIANT_FIXTURE')
+                    or not Path(os.environ['AUTOMATIC_VARIANT_FIXTURE']).is_file(),
+                    reason='archived automatic fixture module under '
+                           'AUTOMATIC_VARIANT_FIXTURE absent: selection-variant '
+                           'inverse matrix requires the existing automatic fixtures')
 def test_current_resolution_inverse_variant_matrix():
     fixture_path = Path(os.environ['AUTOMATIC_VARIANT_FIXTURE'])
     spec = importlib.util.spec_from_file_location('existing_automatic_fixtures', fixture_path)
@@ -78,7 +85,9 @@ def test_current_resolution_inverse_variant_matrix():
                              resolution_inverse_measured=False))
         else:
             check('oblique_' + kind, model, restored_domain, settings, result)
-    output = Path(os.environ['AUTOMATIC_VARIANT_OUTPUT'])
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(dict(status='PASS', structural_solves=0,
-        cases=rows, scope='Inverse of actual admitted current records; refused cylinder is domain persistence only'), indent=2))
+    output_env = os.environ.get('AUTOMATIC_VARIANT_OUTPUT')
+    if output_env:
+        output = Path(output_env)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(dict(status='PASS', structural_solves=0,
+            cases=rows, scope='Inverse of actual admitted current records; refused cylinder is domain persistence only'), indent=2))

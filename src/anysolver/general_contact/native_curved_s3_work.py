@@ -223,6 +223,7 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
         mapping=self._local_mapping(cell,self._coordinate_count())
         full_scale=self._coordinate_scale(self._coordinate_count())
         components=anchored=None
+        station_empty=False
         if interval is not None and station is not None:
             # Complete mapped gradient is affine in cos(alpha),sin(alpha) at
             # one xi. Keep the historical circle bound for passing evaluations;
@@ -237,6 +238,16 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
                      if declared_arc else np.linalg.norm(gradients[0])+np.linalg.norm(circular,2))
             tight=angular+max(abs(station-x) for x in interval)*gx
             g=min(g,tight*(1+8192*np.finfo(float).eps))
+            if declared_arc:
+                # Exact zero-depth certification at the retained station: the
+                # projected scalar normal gap is positive at every declared-arc
+                # critical angle (exact bounded-precision values), so the
+                # station's active angular set is empty and the production
+                # station quadrature contributes exactly zero. Both angular
+                # rule paths yield only negative scalars, grazing included.
+                sfield=_station_field(high,low,cell,t,ref.half_cell_lift(cell,t),
+                    ref.frame(station),U[cell],r,self.origin,self.normal)
+                station_empty=min(_critical_gaps(sfield,*self.rule.definition['angle_range']))>0
             if declared_arc and self.root_tangent_enclosure_policy in ('componentwise','anchored'):
                 components=_root_component_gradient_bounds(gradients,self.rule.definition['angle_range'],
                     max(abs(station-x) for x in interval)*gx,np.any(mapping!=0.,axis=0))
@@ -272,6 +283,17 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
             if anchored is not None:
                 leading=min(leading,_anchored_root_leading_difference_bound(factor,*anchored))
             te=leading+2*sqrt(active)*factor*depth*h
+        if station_empty:
+            bounds=components if components is not None else _root_component_gradient_bounds(
+                gradients,self.rule.definition['angle_range'],
+                max(abs(station-x) for x in interval)*gx,np.any(mapping!=0.,axis=0))
+            # One-sided enclosure: the station integral is exactly zero,
+            # so |A_ij|<=factor*b_i*b_j over the true region (measure
+            # <=width*angular_width, Jacobian<=area) bounds the leading
+            # infinity norm by factor*max(b)*sum(b); the gap*Hessian
+            # remainder keeps one spectral count with unchanged depth,h.
+            single=float(np.nextafter(factor*np.max(bounds)*fsum(bounds),np.inf))
+            te=min(te,single+sqrt(active)*factor*depth*h)
         return np.array((ee,fe,te))*(1+8192*np.finfo(float).eps)
 
     def _refined_root_work_bound(self,*args,**kwargs):

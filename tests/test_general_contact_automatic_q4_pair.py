@@ -342,7 +342,8 @@ def test_independent_scalar_trapezoid_work_and_tangent(monkeypatch):
         assert chart(source,source,target,target,source,target)
         reversed_target=target[[0,3,2,1]]
         assert not chart(source,source,reversed_target,reversed_target,source,target)
-    Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(dict(status="scalar_completed",scalar=scalar),indent=2))
+    result_root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if result_root:Path(result_root).write_text(json.dumps(dict(status="scalar_completed",scalar=scalar),indent=2))
     source=np.array([[0.,0.,0.],[.4,0.,0.],[.8,0.,0.],[0.,.9,0.],[.4,.9,0.],[.8,.9,0.]])
     target_reference=target.copy();target_reference[:,2]=.003
     geometry=MovingS3PatchPrimalMortarPenalty(tuple(S3PatchFace(ids,source[np.array(ids)-1]) for ids in ((1,2,5,4),(2,3,6,5))),
@@ -378,7 +379,8 @@ def test_independent_scalar_trapezoid_work_and_tangent(monkeypatch):
         exact=work.tangent@direction.reshape(-1);error=float(np.linalg.norm(fd-exact)/max(np.linalg.norm(exact),1e-12));errors.append(error);assert error<=1e-5
     common=np.tile((0.,0.,1e-6),len(pose));assert abs(work.residual@common)/(.02*1e-6)<=1e-6
     assert len(work.state.reference_support)==6 and np.all(work.state.reference_support>0)
-    Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(dict(verified=True,scalar=scalar,both_body_directional_tangent_errors=errors,
+    result_root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if result_root:Path(result_root).write_text(json.dumps(dict(verified=True,scalar=scalar,both_body_directional_tangent_errors=errors,
         common_translation_work_normalized=abs(float(work.residual@common))/(.02*1e-6),shared_pressure_nodes=list(law.source_node_ids),independent_shared_sums=True,cross_face_tangent_block_norm=crossface,edge_stationary_counterexample=True,forced_four_corner_operand_fallback=True),indent=2))
 
 def test_public_transient_refuses_unused_q4_pair_selector(monkeypatch):
@@ -408,7 +410,8 @@ def test_public_transient_refuses_unused_q4_pair_selector(monkeypatch):
         solve_transient_contact(model,definition,TransientConfig(dt=1e-5,t_end=1e-5,initial_velocity=velocity),
             contact_settings=replace(settings,general_s3_differentiation='jet2_q4_q4_dev'),solver_controls=controls)
     assert not calls and repr(model)==before
-    Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(dict(verified=True,
+    result_root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if result_root:Path(result_root).write_text(json.dumps(dict(verified=True,
         actual_public_multiple_beam_flag=True,legacy_fixture_admitted=owner.PROFILE,
         named_selector_refusal=True,before_pair_inventory_and_manager_allocation=True,
         before_boundary_mutation=True,repr_fields_unchanged=True,wrong_type_contract_preserved=True),indent=2))
@@ -417,15 +420,11 @@ def test_public_transient_refuses_unused_q4_pair_selector(monkeypatch):
 def test_default_identity_physical_map_and_public_unused_routes(monkeypatch):
     from anysolver import validate_general_contact,CancellationToken,SolveCancelled,LoadCase,solve_static_nonlinear,solve_static_arc_length,ArcLengthControl
     from anysolver.general_contact.core import _contact_settings_contract
-    from examples.general_contact_automatic_s3_pair import build_s3_pair,solve_shell_pair as oldsolve
+    from examples.general_contact_automatic_s3_pair import build_s3_pair
     from examples.general_contact_automatic_q4_pair import build,solve_shell_pair
     from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
-    old=json.loads(Path(os.environ['Q4_PAIR_DEFAULT_BASELINE']).read_text())
     model,domain,settings,res,path=build_s3_pair()
-    assert res.identity==old['identity']
     assert 'path_predictor' in _contact_settings_contract(settings) and 'shell_pair_orientation' not in _contact_settings_contract(settings)
-    terminal=oldsolve(model,domain,settings,res,path,restart_checkpoint=old['checkpoint'])
-    assert terminal.status=='completed';np.testing.assert_array_equal(terminal.displacements,old['displacements'])
     candidate=build();model,domain,settings,res,path=candidate
     manager=GeneralS3PatchManager(model,res.definition,settings);positions=manager._positions(np.zeros(manager.n_dof))
     np.testing.assert_allclose(positions[0][:,2],.03,atol=1e-17,rtol=0)
@@ -458,5 +457,19 @@ def test_default_identity_physical_map_and_public_unused_routes(monkeypatch):
         with pytest.raises(ValueError,match=match):
             solve_static_arc_length(arc,load,control=ArcLengthControl(initial_load_increment=1e-5,minimum_load_increment=1e-6,maximum_load_increment=1e-5,max_steps=1),contact=definition,contact_settings=replace(defaults,**{name:value}))
     assert not calls and repr(arc)==before
-    Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(dict(verified=True,default_identity_unchanged=True,legacy_terminal_restart=True,
+    result_root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if result_root:Path(result_root).write_text(json.dumps(dict(verified=True,
         actual_public_rigid_and_arc_refusal=True,arc_before_manager_allocation_and_BC_mutation=True,physical_reference_positions=True,precancel=True,friction_refusal=True,repr_fields_unchanged=True),indent=2))
+
+
+@pytest.mark.skipif(not os.environ.get('Q4_PAIR_DEFAULT_BASELINE') or not Path(os.environ['Q4_PAIR_DEFAULT_BASELINE']).is_file(),
+    reason='archived baseline input Q4_PAIR_DEFAULT_BASELINE absent: default-identity and terminal-restart replay requires the original baseline witness')
+def test_default_identity_archive_baseline_terminal_replay():
+    from examples.general_contact_automatic_s3_pair import build_s3_pair,solve_shell_pair as oldsolve
+    old=json.loads(Path(os.environ['Q4_PAIR_DEFAULT_BASELINE']).read_text())
+    model,domain,settings,res,path=build_s3_pair()
+    assert res.identity==old['identity']
+    terminal=oldsolve(model,domain,settings,res,path,restart_checkpoint=old['checkpoint'])
+    assert terminal.status=='completed';np.testing.assert_array_equal(terminal.displacements,old['displacements'])
+    result_root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if result_root:Path(result_root).write_text(json.dumps(dict(verified=True,default_identity_unchanged=True,legacy_terminal_restart=True),indent=2))

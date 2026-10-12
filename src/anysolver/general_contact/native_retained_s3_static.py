@@ -431,6 +431,23 @@ class NativeRetainedRoundS3Analysis:
                 cancellation_safe_point(cancellation_token, 'native material backtrack')
                 candidate_increment = increment+(0.5**cut)*step
                 try:
+                    # The complete continuous gap gate is independent of
+                    # friction history. Apply the identical gate before
+                    # expensive replay on candidates that cannot be accepted.
+                    # The full proposal and post-assembly gate still run for
+                    # every admitted candidate; no sampled-gap shortcut.
+                    pair=transaction.contributor.pair
+                    if getattr(pair,'gap_check',None)=='straight_patch':
+                        from .native_surface_extrema import straight_patch_s3_gap
+                        from .native_surface_s3_friction import NativeS3MaterialConfiguration
+                        origin=transaction.accepted
+                        posed=self.context.advance(origin.mechanical,candidate_increment[:n])
+                        nodes=self.context.nodes[0]
+                        geometry=NativeS3MaterialConfiguration(posed.positions[nodes],posed.position_low[nodes],
+                            posed.cell_rotations[0],origin.shell_displacement+candidate_increment[n:])
+                        if straight_patch_s3_gap(pair.rule,pair.target,geometry).lower_bound < -self.gap_tolerance:
+                            material_trial_reason='candidate gap tolerance'
+                            continue
                     candidate = transaction.propose(candidate_increment[:n], candidate_increment[n:], parameter,
                                                       cancellation_token=cancellation_token)
                 except MemoryError as exc:

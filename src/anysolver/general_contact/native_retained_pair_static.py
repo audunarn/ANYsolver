@@ -269,13 +269,28 @@ class NativeRetainedRoundPairAnalysis:
         if self.native._family=='PHYSICAL_FIBRE_NODAL':self.context.guard()
 
     def _record(self, target: int, mechanical, origins,
-                previous_sha256: str):
+                previous_sha256: str, prepared=None):
         if type(target) is not int or not 1 <= target <= len(self.program.targets):
             raise ValueError("native pair checkpoint target")
+        if prepared is not None and (prepared[0] is not mechanical
+                or prepared[1] is not self.program.targets[target-1]
+                or prepared[2] is not origins):
+            raise ValueError("native pair prepared record requires the exact accepted pose, target and origins")
         mechanical = self.context.make(mechanical.descriptor())
-        residual, tangent, metrics, responses, contact = self._assemble(
-            mechanical, self.program.targets[target-1], origins,
-        )
+        if prepared is None:
+            residual, tangent, metrics, responses, contact = self._assemble(
+                mechanical, self.program.targets[target-1], origins,
+            )
+        else:
+            # The converged evaluation of this exact accepted pose: the same
+            # deterministic assemble, parameter and origins that just
+            # certified equilibrium. Reusing it removes the redundant second
+            # full contact evaluation of an unchanged pose; the cached branch
+            # rechecks the guard exactly as the assembly path does, every
+            # checkpoint gate below still runs on those identical values, and
+            # restore replay re-assembles each record from scratch.
+            self._guard()
+            residual, tangent, metrics, responses, contact = prepared[3]
         _, correction = self.context.step(mechanical, residual, tangent)
         if max(*metrics, correction) > self.equilibrium_tolerance:
             raise ValueError("native pair checkpoint requires coupled equilibrium")
@@ -473,8 +488,15 @@ class NativeRetainedRoundPairAnalysis:
     def _swept_gap(self, mechanical):
         if self._uses_physical_gap():
             return self._physical_gap(mechanical)
-        if not self.gap_step_control:
+        if (not self.gap_step_control
+                and type(self.contact) is not NativeRetainedWholeCurvePair):
             return self._contact(mechanical).conservative_lower_gap_m
+        # A swept midpoint needs the complete physical gap certificate, not
+        # residuals or tangents. The whole-pair geometry query validates every
+        # retained cell and uses the same finite search controls. Its early
+        # return proves the requested minimum over the complete pair; endpoint
+        # equilibrium and checkpoint acceptance still use the full force law.
+        # This does not enable the separate Newton gap-step controller.
         self._guard()
         a,b=self.indices
         value=self.contact.geometry_gap_lower(
@@ -722,6 +744,9 @@ class NativeRetainedRoundPairAnalysis:
                         )))
                         proposed, record = self._record(
                             index+1, trial, origins, previous,
+                            prepared=(trial, parameter, origins,
+                                      (residual, tangent, metrics,
+                                       responses, contact)),
                         )
                         next_records = (*records, record)
                         staged = self._checkpoint(next_records)

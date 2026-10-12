@@ -12,7 +12,9 @@ _cycle=load('_q4_orientation_cycle','test_general_contact_q4_pair_monolithic_cyc
 FREF=MREF=1e-4
 
 def save(data):
-    Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(data,indent=2,default=lambda x:x.tolist() if isinstance(x,np.ndarray) else x.item() if isinstance(x,np.generic) else x),encoding='utf-8')
+    root=os.environ.get('AUTOMATIC_DOMAIN_RESULT')
+    if not root:return
+    Path(root).write_text(json.dumps(data,indent=2,default=lambda x:x.tolist() if isinstance(x,np.ndarray) else x.item() if isinstance(x,np.generic) else x),encoding='utf-8')
 def read(stage):return json.loads((Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/(stage+'.json')).read_text())
 def sha(stage):return hashlib.sha256((Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/(stage+'.json')).read_bytes()).hexdigest()
 def label_signs(label):return tuple(1 if c=='p' else -1 for c in label)
@@ -79,6 +81,8 @@ def configure_cycle(monkeypatch,stage,label):
     monkeypatch.setattr(_cycle,'report_sha',lambda name:sha(name+'-'+label))
     monkeypatch.setenv('CYCLE_STAGE',stage)
 
+@pytest.mark.skipif(not os.environ.get('ORIENTATION_STAGE'),
+    reason='installed orientation stage input ORIENTATION_STAGE absent: staged orientation cycle requires the original workflow stage selection')
 def test_actual_installed_orientation_cycle(monkeypatch):
     stage,label=os.environ['ORIENTATION_STAGE'].rsplit('-',1);configure_cycle(monkeypatch,stage,label)
     _cycle.test_installed_cycle_solver_saved_inventory()
@@ -92,12 +96,33 @@ def test_actual_installed_orientation_cycle(monkeypatch):
         result['matched_phase_errors']=errors;result['plus_full_sha256']=sha('full-pp')
     save(result)
 
+@pytest.mark.skipif(not os.environ.get('ORIENTATION_STAGE'),
+    reason='installed orientation stage input ORIENTATION_STAGE absent: saved orientation proof requires the original staged report and stage selection')
 def test_saved_orientation_physical_proof(monkeypatch):
     stage,label=os.environ['ORIENTATION_STAGE'].rsplit('-',1);configure_cycle(monkeypatch,stage,label)
     _cycle.test_saved_cycle_mechanical_proof()
 
 def test_public_orientation_restart_and_unused_route_refusals(monkeypatch):
     from anysolver import CancellationToken,SolveCancelled,validate_general_contact
+    from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+    model,domain,settings,res,program=build(signs=(-1,-1));before=repr(model)
+    wrong=replace(settings,enforcement_solver='nested_augmented',complementarity_force_scale_n=None)
+    with pytest.raises(ValueError,match='physical_sides_dev'):GeneralS3PatchManager(model,res.definition,wrong)
+    assert not validate_general_contact(model,res.definition,settings,analysis_control='force').valid
+    token=CancellationToken();token.cancel('orientation precancel')
+    with pytest.raises(SolveCancelled):solve(model,settings,res,program,cancellation_token=token)
+    assert repr(model)==before
+    # Actual legacy-valid multiple-beam public route and allocation traps are
+    # independently maintained in the protected S3 orientation test.
+    old=load('_s3_orientation_refusal','test_general_contact_s3_physical_orientation.py')
+    old.test_public_multiple_beam_transient_refuses_physical_orientation_before_allocation(monkeypatch)
+
+
+@pytest.mark.skipif(not os.environ.get('AUTOMATIC_WORKFLOW_EVIDENCE') or not os.environ.get('Q4_ORIENTATION_LEGACY_FULL')
+    or not all((Path(os.environ['AUTOMATIC_WORKFLOW_EVIDENCE'])/(name+'.json')).is_file() for name in ('prefix-mm','proof-prefix-mm','prefix-pp'))
+    or not Path(os.environ['Q4_ORIENTATION_LEGACY_FULL']).is_file(),
+    reason='archived orientation inputs AUTOMATIC_WORKFLOW_EVIDENCE/{prefix-mm,proof-prefix-mm,prefix-pp}.json and Q4_ORIENTATION_LEGACY_FULL absent: restart-binding replay requires the original evidence root')
+def test_public_orientation_archive_restart_binding_and_legacy_identity(monkeypatch):
     from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
     from anysolver.general_contact.core import _contact_settings_contract
     model,domain,settings,res,program=build(signs=(-1,-1));prefix=read('prefix-mm');proof=read('proof-prefix-mm');assert proof['verified'] and proof['opening_verified'] and proof['source_sha256']==sha('prefix-mm');before=repr(model)
@@ -106,18 +131,9 @@ def test_public_orientation_restart_and_unused_route_refusals(monkeypatch):
     from anysolver.general_contact import resolve_automatic_contact_domain
     changed=resolve_automatic_contact_domain(model,replace(domain,name='changed-coherent-q4-orientation'),settings,analysis_control='contact_path')
     with pytest.raises(ValueError,match='incompatible'):solve(model,settings,changed,program,restart_checkpoint=prefix['checkpoint'])
-    wrong=replace(settings,enforcement_solver='nested_augmented',complementarity_force_scale_n=None)
-    with pytest.raises(ValueError,match='physical_sides_dev'):GeneralS3PatchManager(model,res.definition,wrong)
-    assert not validate_general_contact(model,res.definition,settings,analysis_control='force').valid
-    token=CancellationToken();token.cancel('orientation precancel')
-    with pytest.raises(SolveCancelled):solve(model,settings,res,program,cancellation_token=token)
     damaged=copy.deepcopy(prefix['checkpoint']);damaged['path_state']['normal_forces'][0]+=1e-6
     with pytest.raises(ValueError,match='SHA-256 does not match its contents'):solve(model,settings,res,program,restart_checkpoint=damaged)
     assert repr(model)==before
-    # Actual legacy-valid multiple-beam public route and allocation traps are
-    # independently maintained in the protected S3 orientation test.
-    old=load('_s3_orientation_refusal','test_general_contact_s3_physical_orientation.py')
-    old.test_public_multiple_beam_transient_refuses_physical_orientation_before_allocation(monkeypatch)
     # Prior automatic legacy fixture identity/checkpoint is reused by bytes.
     from examples.general_contact_q4_pair_monolithic_cycle import build as legacy
     lm,ld,ls,lr,lp=legacy();baseline=json.loads(Path(os.environ['Q4_ORIENTATION_LEGACY_FULL']).read_text())

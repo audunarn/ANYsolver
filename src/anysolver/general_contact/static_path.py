@@ -856,6 +856,10 @@ def solve_static_contact_path(
                     manager = create_s3_friction_manager(model, manager, friction)
                     # The enclosing scope restores its original context token.
                     _ACTIVE_CONTACT.set(manager)
+                # Restricted sliding patch managers carry no macro pressure
+                # law; pressure-support equilibrium tightening is gated on
+                # this optional capability.
+                manager_law = getattr(manager, "law", None)
                 contract = {
                     "schema": "ANYSOLVER_STATIC_RESTART_CONTRACT_V2",
                     "control": "contact_path",
@@ -960,7 +964,10 @@ def solve_static_contact_path(
                         ]
                         controls[index, dof] += weight
                 rows = np.asarray(controls @ T, dtype=float)
-                if np.linalg.matrix_rank(rows) != len(program.controls):
+                # Empty controls and controls projected into an empty reduced
+                # space have rank zero. Nonempty dependent controls still fail.
+                rank = np.linalg.matrix_rank(rows) if rows.size else 0
+                if rank != len(program.controls):
                     raise ValueError("contact path controls are constrained or dependent")
                 if finite:
                     from scipy.linalg import null_space
@@ -1749,7 +1756,7 @@ def solve_static_contact_path(
                                     u, tangent=False,
                                 )[2]
                                 if (augmented and getattr(
-                                        manager.law, "pressure_basis", None) is not None):
+                                        manager_law, "pressure_basis", None) is not None):
                                     supported_area = np.asarray(
                                         proposed_certificate.reference_support_m2,
                                         dtype=float,
@@ -2065,7 +2072,7 @@ def solve_static_contact_path(
                                 "minimum_gap": _reported_lower_gap(certificate),
                                 "residual_norm": residual_norm,
                                 **({"macro_equilibrium_force_limit_n": equilibrium_force_limit}
-                                   if getattr(manager.law, "pressure_basis", None) is not None else {}),
+                                   if getattr(manager_law, "pressure_basis", None) is not None else {}),
                                 "active_pressure_dofs": certificate.active_pressure_dofs,
                                 "source_contact_force_n": (
                                     None if not hasattr(certificate, "integration_force")

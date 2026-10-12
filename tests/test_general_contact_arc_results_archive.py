@@ -78,6 +78,8 @@ def test_actual_arc_producer_consumer():
     if path:Path(path).write_text(json.dumps(record,indent=2))
 
 
+@pytest.mark.skipif(not os.environ.get('ARC_ARCHIVE_LEGACY_ROOT'),
+    reason='archived legacy source root ARC_ARCHIVE_LEGACY_ROOT absent: legacy wire byte-compare requires the original legacy archive sources')
 def test_legacy_static_and_transient_wire_unchanged():
     from test_general_contact_static_results_archive import sample as static_sample
     from test_general_contact_transient_results_archive import sample as transient_sample

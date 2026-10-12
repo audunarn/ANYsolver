@@ -3,7 +3,7 @@
 Original source functions and reference measure are retained on spatial children.
 Exact rational Bernstein polynomials bound target barycentric coordinates, source
 normal projection and weighted gaps. Boundary cells are never treated as outside
-because different vertices lie outside different target edges. Aggregate W±tau*S
+because different vertices lie outside different target edges. Aggregate WÂ±tau*S
 is tested before normalization, including arbitrarily small/zero support.
 """
 from dataclasses import dataclass, replace
@@ -179,10 +179,25 @@ class _SpatialPartition:
                 total[index][0]+=sign*part[local][0]
                 total[index][1]+=sign*part[local][1]
 
-    def pop(self):
-        if not self.heap:return None
-        cell=heappop(self.heap)[2];self._change(cell,-1)
-        return cell
+    def pop(self,violations=None):
+        # Refining an unrelated clipped cell cannot tighten the failed nodal
+        # inequality. Keep it in both the heap and aggregate, and yield to
+        # temporal subdivision when no spatial cell can improve that proof.
+        deferred=[]
+        while self.heap:
+            entry=heappop(self.heap);cell=entry[2]
+            relevant=violations is None or any(
+                index in violations and
+                cell[3][2 if violations[index] else 1][local][0]
+                    <cell[3][2 if violations[index] else 1][local][1]
+                for local,index in enumerate(cell[0].ids))
+            if relevant:
+                for other in deferred:heappush(self.heap,other)
+                self._change(cell,-1)
+                return cell
+            deferred.append(entry)
+        for other in deferred:heappush(self.heap,other)
+        return None
 
     def add(self,cell):
         self._change(cell,1);self._offer(cell)
@@ -357,7 +372,10 @@ def s3_pressure_hermite_bounds(reference_source,reference_target,source_faces,
                         slow[i]=min(slow[i],_lower_float(supports[i][0]))
                         shigh[i]=max(shigh[i],_upper_float(supports[i][1]))
                     break
-                chosen=partition.pop()
+                violations={
+                    i:active_mode for i,active_mode in enumerate(phase)
+                    if (closed[i][1]>0 if active_mode else opens[i][0]<0)}
+                chosen=partition.pop(violations)
                 if chosen is None:break
                 face,vertices,spatial_depth,_=chosen
                 factor=_factor(face)[0]
@@ -367,7 +385,7 @@ def s3_pressure_hermite_bounds(reference_source,reference_target,source_faces,
                     partition.add((face,child,spatial_depth+1,_cell(face,child,tolerance,factor)));visited_space+=1
             if _admissible(opens,closed,phase):continue
         if depth>=maximum_depth:
-            return result(False,'pressure_phase_unresolved','joint W±tolerance*S does not certify the phase')
+            return result(False,'pressure_phase_unresolved','joint WÂ±tolerance*S does not certify the phase')
         left=[];right=[]
         for face in faces:
             pairs=tuple(_split(p) for p in face.polynomials)

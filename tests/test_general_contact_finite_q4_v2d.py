@@ -234,6 +234,9 @@ def independent_physical_gap_lower(model,q):
     return get_oracle().gap_bound(model,q)
 
 
+@pytest.mark.skipif(not os.environ.get('FINITE_MIXED_WORKFLOW')
+    or not (Path(os.environ['FINITE_MIXED_WORKFLOW'])/'fresh.json').is_file(),
+    reason='archived fresh.json workflow under FINITE_MIXED_WORKFLOW absent: saved complete workflow independent skin-gap replay requires the saved accepted suffix')
 def test_saved_complete_workflow_independent_skin_gap():
     root=Path(os.environ['FINITE_MIXED_WORKFLOW']);saved=json.loads((root/'fresh.json').read_text())
     model,definition,settings,program=build()
@@ -250,6 +253,9 @@ def test_saved_complete_workflow_independent_skin_gap():
     assert all(v['gate_pass'] for v in lower)
 
 
+@pytest.mark.skipif(not os.environ.get('FINITE_MIXED_WORKFLOW')
+    or not (Path(os.environ['FINITE_MIXED_WORKFLOW'])/'fresh.json').is_file(),
+    reason='archived fresh.json workflow under FINITE_MIXED_WORKFLOW absent: saved scaled equilibrium/NCP/integration replay requires the saved poses and history')
 def test_saved_actual_scaled_equilibrium_wrench_ncp_and_integration():
     from anysolver.nonlinear_static import _assemble_nonlinear_system,_discard_nonlinear_state_candidate
     oracle=get_oracle()
@@ -344,6 +350,9 @@ def test_saved_actual_scaled_equilibrium_wrench_ncp_and_integration():
     emit('scaled_workflow',dict(complete=True,poses=reports))
 
 
+@pytest.mark.skipif(not os.environ.get('FINITE_MIXED_WORKFLOW')
+    or not all((Path(os.environ['FINITE_MIXED_WORKFLOW'])/name).is_file() for name in ('prefix.json','fresh.json')),
+    reason='archived prefix.json/fresh.json under FINITE_MIXED_WORKFLOW absent: material-trial cancellation rollback requires the saved prefix checkpoint')
 def test_mixed_actual_cancellation_after_material_contact_trial(monkeypatch):
     # This test's output dependency is prospectively bound in its own job;
     # it never invents a prefix from a terminal snapshot.
@@ -384,6 +393,9 @@ def test_mixed_actual_cancellation_after_material_contact_trial(monkeypatch):
     emit('cancellation',dict(stage=stopped.value.stage,actual_material_contact_trial_before_cancel=True,committed_state_rollback=True,checkpoint_input_unchanged=True,context_and_hook_restored=True))
 
 
+@pytest.mark.skipif(not os.environ.get('FINITE_MIXED_WORKFLOW')
+    or not all((Path(os.environ['FINITE_MIXED_WORKFLOW'])/name).is_file() for name in ('prefix.json','fresh.json')),
+    reason='archived prefix.json/fresh.json under FINITE_MIXED_WORKFLOW absent: public restart suffix and terminal restore require the saved prefix/fresh checkpoints')
 def test_public_actual_restart_suffix_and_terminal_restore():
     root=Path(os.environ['FINITE_MIXED_WORKFLOW'])
     prefix=json.loads((root/'prefix.json').read_text());fresh=json.loads((root/'fresh.json').read_text())
@@ -452,6 +464,9 @@ def test_public_actual_restart_suffix_and_terminal_restore():
                        owner_model_validation=True,elastic_constitutive_history_equal=True))
 
 
+@pytest.mark.skipif(not os.environ.get('FINITE_LEGACY_EVIDENCE')
+    or not all((Path(os.environ['FINITE_LEGACY_EVIDENCE'])/name).is_file() for name in ('current-prefix15.json','fresh.json')),
+    reason='archived current-prefix15.json/fresh.json under FINITE_LEGACY_EVIDENCE absent: legacy installed suffix requires the saved legacy checkpoints')
 def test_legacy_q4_actual_installed_suffix():
     from examples.general_contact_tilted_relative_sliding import build as legacy_build,solve as legacy_solve
     from anysolver.general_contact.finite_rotation_state import COORDINATES as legacy_coordinates
@@ -474,6 +489,9 @@ def test_legacy_q4_actual_installed_suffix():
         scope='affected legacy solve/seal/restart dispatch on new wheel; full old trajectory reused by impact'))
 
 
+@pytest.mark.skipif(not os.environ.get('FINITE_MIXED_WORKFLOW')
+    or not (Path(os.environ['FINITE_MIXED_WORKFLOW'])/'fresh.json').is_file(),
+    reason='archived fresh.json workflow under FINITE_MIXED_WORKFLOW absent: saved release opening witness requires the saved step-15 pose')
 def test_saved_release_strict_positive_physical_opening():
     root=Path(os.environ['FINITE_MIXED_WORKFLOW']);saved=json.loads((root/'fresh.json').read_text())
     model,definition,settings,program=build();require_saved_fixture(saved,model,definition,settings,program)

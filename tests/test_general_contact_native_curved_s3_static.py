@@ -90,3 +90,47 @@ def test_shared_swept_wrapper_preserves_historical_subclass_dispatch():
             assert args==(1,2,3);return 'historical override'
     assert NativeRetainedMultiS3Analysis._swept_cancellable(Historical(),1,2,3,
         cancellation_token=object())=='historical override'
+
+
+def test_curved_s3_checkpoint_binding_field_classification_and_valid_restore():
+    from hashlib import sha256
+    from anysolver._ge_beam3_p5_seeded.core import canonical, sha
+    from anysolver._ge_beam3_p5_seeded.codec import _load
+    owner=_analysis(targets=(1.,));initial=owner._checkpoint(())
+    # Matching valid checkpoint restore through the real caller: no target
+    # trajectory is needed, the initial checkpoint already suffices.
+    run=owner.solve(checkpoint=initial,expected_sha256=sha256(initial).hexdigest(),stop_after=0)
+    assert run.status=='paused' and run.failure is None
+    assert run.accepted.completed_targets==0 and run.checkpoint==initial
+    value=_load(initial.decode('ascii'))
+    def resealed(body,inner):
+        raw=canonical({**body,'checkpoint_sha256':inner})
+        return raw,sha256(raw).hexdigest()
+    def tampered(**changes):
+        # External checksum stays valid; the inner checksum is recomputed so
+        # exactly one semantic binding field is isolated per case.
+        body={k: v for k,v in value.items() if k!='checkpoint_sha256'}
+        body.update(changes)
+        return resealed(body,sha(body))
+    cases={'schema':tampered(schema='NATIVE_B3_GE_MULTIPLE_S3_CHECKPOINT_DEV_V0'),
+        'profile':tampered(profile='NATIVE_B3_GE_CURVED_MATERIAL_PATCHES_S3_STATIC_DEV_V0'),
+        'identity':tampered(identity='0'*64),
+        # Body stays valid; the recorded inner digest is stale by itself.
+        'checkpoint_sha256':resealed({k: v for k,v in value.items() if k!='checkpoint_sha256'},'0'*64)}
+    for field,(raw,external) in cases.items():
+        with pytest.raises(ValueError,match='multiple native/S3 checkpoint definition/settings binding: '+field) as raised:
+            owner.solve(checkpoint=raw,expected_sha256=external)
+        message=str(raised.value)
+        if field=='checkpoint_sha256':
+            assert 'body=' in message and 'recorded=' in message
+        else:
+            assert 'checkpoint=' in message and 'owner=' in message
+        # The refusal leaves the owner's initial physical state unchanged.
+        assert owner._checkpoint(())==initial
+    # A combined disagreement lists every offending binding field.
+    raw,external=tampered(schema='NATIVE_B3_GE_MULTIPLE_S3_CHECKPOINT_DEV_V0',identity='0'*64)
+    with pytest.raises(ValueError,match='schema checkpoint=.*; identity checkpoint=') as raised:
+        owner.solve(checkpoint=raw,expected_sha256=external)
+    message=str(raised.value)
+    assert 'profile' not in message and 'checkpoint_sha256' not in message
+    assert owner._checkpoint(())==initial
