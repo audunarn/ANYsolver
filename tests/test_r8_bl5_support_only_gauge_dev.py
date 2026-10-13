@@ -129,6 +129,35 @@ class SavedGaugeIdentityTests(unittest.TestCase):
             with self.assertRaises(gauge.identity.IdentityError):
                 gauge.helper_source_binding()
 
+    def test_reject_checkout_byte_drift_of_implicated_helpers(self):
+        import subprocess
+        root = SCRIPTS.parent
+        attributes = (root / ".gitattributes").read_bytes()
+        probe = None
+        if (root / ".git").exists():
+            probe = subprocess.run(
+                ["git", "show", "HEAD:scripts/r8_bl5_external_operator_dev.py"],
+                cwd=root, capture_output=True)
+        if probe is None or probe.returncode != 0:
+            self.skipTest("actual immutable git history is absent from this "
+                "source export; the checkout-byte refusal compares current "
+                "helper bytes with the committed HEAD blob")
+        for helper in sorted(gauge.HELPERS):
+            with self.subTest(helper=helper):
+                self.assertIn(
+                    ("scripts/" + helper + " -text").encode(), attributes,
+                    helper + " lacks the -text checkout rule that "
+                    "preserves its committed source bytes")
+                committed = subprocess.run(
+                    ["git", "show", "HEAD:scripts/" + helper],
+                    cwd=root, capture_output=True)
+                self.assertEqual(committed.returncode, 0)
+                self.assertEqual(
+                    (SCRIPTS / helper).read_bytes(), committed.stdout,
+                    helper + " working bytes differ from the committed "
+                    "HEAD blob; checkout byte conversion or mutation "
+                    "changed the source")
+
 
 if __name__ == "__main__":
     unittest.main()
