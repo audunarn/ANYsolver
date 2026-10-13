@@ -28,6 +28,7 @@ from .native_retained_station import _readonly
 from .s3_skin_work import S3SkinWorkAdapter
 from .native_s3_swept import native_s3_swept_admissible
 from .native_shell_static_driver import solve_native_shell
+from .native_replay_diagnostics import component_digests, replay_difference_message
 
 PROFILE = 'NATIVE_B3_GE_MULTIPLE_ELASTIC_S3_INTERIORS_STATIC_DEV_V1'
 MATERIAL_PROFILE = 'NATIVE_B3_GE_TWO_MATERIAL_PATCHES_SHARED_S3_STATIC_DEV_V1'
@@ -360,7 +361,7 @@ class NativeRetainedMultiS3Analysis:
                 for eid, e in sorted(self.shell_model.mesh.elements.items())],
             'pairs': [p.descriptor() for p in self.pairs]})
 
-    def _identity(self):
+    def _identity_components(self):
         descriptor = {'profile': self.profile if self._material_mode else PROFILE, 'revision': 'uncondensed_explicit_native_s3_work_v1',
             'native': self.context.identity, 'support': sha256(self.context.support_identity).hexdigest(),
             'shell': self.shell_contract_sha, 'cached_shell': [self.shell_stiffness, self.shell_free, self.shell_fixed],
@@ -372,7 +373,10 @@ class NativeRetainedMultiS3Analysis:
         if self._material_mode and self.activation_settings is not None:
             from .native_material_activation import REVISION
             descriptor['activation'] = (REVISION, self.activation_settings)
-        return sha(descriptor)
+        return descriptor
+
+    def _identity(self):
+        return sha(self._identity_components())
 
     def _guard(self):
         self.context.guard(); self.native._guard()
@@ -629,7 +633,9 @@ class NativeRetainedMultiS3Analysis:
         if value['profile'] != self.profile:
             disagreements.append('profile checkpoint=%s owner=%s' % (_binding_token(value['profile']), _binding_token(self.profile)))
         if value['identity'] != self.identity:
-            disagreements.append('identity checkpoint=%s owner=%s' % (_binding_token(value['identity']), _binding_token(self.identity)))
+            disagreements.append('identity checkpoint=%s owner=%s owner components %s'
+                % (_binding_token(value['identity']), _binding_token(self.identity),
+                   component_digests(self._identity_components())))
         if body_sha256 != value['checkpoint_sha256']:
             disagreements.append('checkpoint_sha256 body=%s recorded=%s' % (_binding_token(body_sha256), _binding_token(value['checkpoint_sha256'])))
         if disagreements:
@@ -644,7 +650,8 @@ class NativeRetainedMultiS3Analysis:
                 raise ValueError('multiple native/S3 checkpoint accepted chain')
             mechanical = self.context.make(row['mechanical'], decoded=True)
             accepted, replay = self._record(index, mechanical, row['shell_displacement'], accepted.native_histories, previous)
-            if canonical(row) != canonical(replay): raise ValueError('multiple native/S3 checkpoint replay mismatch')
+            if canonical(row) != canonical(replay): raise ValueError('multiple native/S3 checkpoint replay mismatch'
+                + replay_difference_message(row, replay, 'record %d' % index))
             records += (replay,); previous = sha(replay)
         if self._checkpoint(records) != raw: raise ValueError('multiple native/S3 noncanonical checkpoint replay')
         return accepted, records

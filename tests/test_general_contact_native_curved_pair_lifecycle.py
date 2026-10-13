@@ -14,6 +14,7 @@ from anysolver._ge_beam3_p5_seeded.codec import _load
 from anysolver._ge_beam3_p5_seeded.core import canonical
 from anysolver.control import CancellationToken
 from test_general_contact_native_fibre_s3 import _independent_material_history
+from anysolver.general_contact.native_replay_diagnostics import replay_difference_message
 
 ROOT=Path(__file__).parents[1]
 EVIDENCE=Path(os.environ.get('CONTACT_NATIVE_CURVED_LIFECYCLE_EVIDENCE',
@@ -139,7 +140,7 @@ def test_nonvirgin_rejected_trial_cancellation_and_exception_roll_back(monkeypat
                                         if key not in diagnostic_keys}}
     # Exact histories, mechanical state, force/work/gap fields and chain
     # binding remain mandatory. A physical difference is never rebased.
-    assert canonical(physical(record))==canonical(physical(replayed))
+    assert canonical(physical(record))==canonical(physical(replayed)), replay_difference_message(physical(record), physical(replayed), 'physical record')
     if canonical(record)!=canonical(replayed):
         # Authenticate the foreign capsule with the unchanged production
         # codec and require its strict refusal before creating a local one.

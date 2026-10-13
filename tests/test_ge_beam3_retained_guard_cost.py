@@ -48,7 +48,9 @@ def test_full_guard_mutations(mutation,monkeypatch):
         monkeypatch.setattr(m.mesh.elements[1],'get_mpc_constraints',lambda mesh:[
             dict(slave=12,masters={6:1.},value=0.,label='injected')],raising=False)
     elif mutation=='program':c.program=replace(c.program,targets=(.5,))
-    else:c.started-=121
+    else:
+        from anysolver._ge_beam3_effective_deadline import effective_deadline_seconds
+        c.started-=effective_deadline_seconds(120)+1
     with pytest.raises((ValueError,RuntimeError)):c.guard()
 
 

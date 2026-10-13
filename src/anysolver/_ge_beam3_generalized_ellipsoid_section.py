@@ -6,6 +6,7 @@ from time import monotonic
 import numpy as np
 from ._ge_beam3_fibre_section import _owned,_number,canonical
 from ._ge_beam3_station_resultant_cell import dec,pair,mv,dot,solve,ident,cholesky
+from ._ge_beam3_effective_deadline import effective_deadline_seconds
 
 POLICY='GE_BEAM3_SIX_RESULTANT_ASSOCIATED_ELLIPSOID_HARDENING_V1'
 MEASURE='NATIVE_GENERALIZED_STRAIN_AND_REFERENCE_SECTION_RESULTANT_WORK'
@@ -129,7 +130,7 @@ class EllipsoidalGeneralizedSection:
         data=_owned(values,(6,));origin=self.virgin() if origin is None else origin
         captured=canonical(origin);started=monotonic()
         def check():
-            if monotonic()-started>15.:raise RuntimeError('generalized section response deadline')
+            if monotonic()-started>effective_deadline_seconds(15.):raise RuntimeError('generalized section response deadline')
             self.guard()
         with localcontext() as ctx:
             ctx.prec=80;z0,p0=self._origin(origin);v=list(map(lambda x:D.from_float(float(x)),data))

@@ -8,6 +8,7 @@ Standard-library Decimal is a bounded arithmetic backend, not certification.
 from decimal import Decimal as D, localcontext
 from time import monotonic
 from copy import deepcopy
+from ._ge_beam3_effective_deadline import effective_deadline_seconds
 
 
 def zero(n, m): return [[D(0) for _ in range(m)] for _ in range(n)]
@@ -99,7 +100,7 @@ class StationResultantCell:
         if type(digits) is not int or not 60 <= digits <= 100: raise ValueError('bounded Decimal precision')
         self.digits = digits; data = deepcopy(data); started = monotonic()
         def check():
-            if monotonic()-started > 60: raise ValueError('station compiler deadline')
+            if monotonic()-started > effective_deadline_seconds(60): raise ValueError('station compiler deadline')
         with localcontext() as ctx:
             ctx.prec = digits
             c = [[dec(x) for x in row] for row in data['elastic']]
@@ -173,7 +174,7 @@ class StationResultantCell:
     def response(self, resultants, *, origins=None):
         started = monotonic()
         def check():
-            if monotonic()-started > 60: raise ValueError('station conjugate deadline')
+            if monotonic()-started > effective_deadline_seconds(60): raise ValueError('station conjugate deadline')
         with localcontext() as ctx:
             ctx.prec = self.digits
             p = [dec(x) for x in resultants]

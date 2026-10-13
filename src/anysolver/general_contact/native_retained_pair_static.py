@@ -29,6 +29,7 @@ from .native_retained_whole_pair import (
     NativeRetainedWholeCurvePair,
     NativeRetainedWholePairResult,
 )
+from .native_replay_diagnostics import replay_difference_message
 
 
 def _directed_fraction(value, upward):
@@ -386,7 +387,8 @@ class NativeRetainedRoundPairAnalysis:
                 index, mechanical, accepted.histories, previous,
             )
             if canonical(row) != canonical(replay):
-                raise ValueError("native pair checkpoint physical replay mismatch")
+                raise ValueError("native pair checkpoint physical replay mismatch"
+                                 + replay_difference_message(row, replay, "record %d" % index))
             accepted = proposed
             records = (*records, replay)
             previous = sha(replay)

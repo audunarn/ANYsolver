@@ -8,6 +8,7 @@ import pytest
 from examples.general_contact_native_retained_body_pair import analysis
 from anysolver.general_contact.native_retained_body_pair import omitted_cell_dominated
 from test_general_contact_native_curved_static import _canonical_fixture_payload
+from anysolver.general_contact.native_replay_diagnostics import replay_difference_message
 
 
 def test_complete_line_potential_work_crossblocks_and_refusals():
@@ -62,7 +63,7 @@ def test_default_saved_curved_energy_and_identity():
     physical=lambda row:{**row,'contact':{k:v for k,v in row['contact'].items()
         if k not in diagnostic_keys}}
     from anysolver._ge_beam3_p5_seeded.core import canonical
-    assert canonical(physical(record))==canonical(physical(replayed))
+    assert canonical(physical(record))==canonical(physical(replayed)), replay_difference_message(physical(record), physical(replayed), 'physical record')
     if canonical(record)!=canonical(replayed):
         with pytest.raises(ValueError,match='physical replay mismatch'):
             owner._restore(raw,sha256(raw).hexdigest())
@@ -70,6 +71,16 @@ def test_default_saved_curved_energy_and_identity():
     state,records=owner._restore(raw,sha256(raw).hexdigest())
     assert state.contact.potential_j>0
     assert owner._checkpoint(records)==raw
+    # Direct-caller failure integration: the unchanged production restore
+    # control refuses a sealed capsule whose recorded contact does not
+    # replay, and the refusal carries the bounded first-difference context.
+    tampered={**replayed,'contact':{**replayed['contact'],
+        'potential_j':replayed['contact']['potential_j']+1.}}
+    tampered_raw=owner._checkpoint((tampered,))
+    with pytest.raises(ValueError,match='physical replay mismatch') as failure:
+        owner._restore(tampered_raw,sha256(tampered_raw).hexdigest())
+    assert 'path=contact.potential_j' in str(failure.value)
+    assert replay_difference_message(tampered,replayed,'record 1') in str(failure.value)
 
 
 def test_saved_curved_full_record_replay_is_exact():
@@ -86,7 +97,7 @@ def test_saved_curved_full_record_replay_is_exact():
     mechanical = owner.context.make(record['mechanical'], decoded=True)
     _, replayed = owner._record(record['target'], mechanical, owner.initial.histories,
                                record['previous_sha256'])
-    assert canonical(record) == canonical(replayed)
+    assert canonical(record) == canonical(replayed), replay_difference_message(record, replayed, 'full record')
     _, records = owner._restore(raw, sha256(raw).hexdigest())
     assert owner._checkpoint(records) == raw
 

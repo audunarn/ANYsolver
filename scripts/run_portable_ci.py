@@ -329,6 +329,10 @@ def _worker_environment(root: Path) -> dict[str, str]:
             "OMP_NUM_THREADS": "1",
             "OPENBLAS_NUM_THREADS": "1",
             "MKL_NUM_THREADS": "1",
+            # Cooperative native timers are execution guards, not mechanics.
+            # Give shared CI hardware bounded headroom; the outer process-tree
+            # timeout and all iteration/integration/scientific limits still apply.
+            "ANYSOLVER_GE_BEAM3_DEADLINE_SCALE": "4",
             "NUMEXPR_NUM_THREADS": "1",
             "PYTHONHASHSEED": "0",
             "PYTHONNOUSERSITE": "1",
@@ -487,6 +491,8 @@ def run(
             worker_root = run_root / f"P{index:02d}"
             worker_root.mkdir()
             environment = _worker_environment(worker_root)
+            print("[portable-ci] native cooperative deadline scale="
+                  + environment["ANYSOLVER_GE_BEAM3_DEADLINE_SCALE"], flush=True)
             command = _worker_command(modules_for_worker, worker_root)
             if development:
                 # Explicit targets are never silently filtered by CI/history rules.

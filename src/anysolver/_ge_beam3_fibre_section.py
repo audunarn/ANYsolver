@@ -15,6 +15,7 @@ from time import monotonic
 import numpy as np
 
 from ._ge_beam3_station_resultant_cell import cholesky, history_row, pair
+from ._ge_beam3_effective_deadline import effective_deadline_seconds
 
 
 POLICY = 'GE_BEAM3_PHYSICAL_FIBRE_INCREMENTAL_POTENTIAL_V1'
@@ -244,7 +245,7 @@ class PhysicalFibreSection:
         started = monotonic()
         def guard():
             if check is not None: check()
-            if monotonic()-started > 30.: raise TimeoutError('physical fibre response bound')
+            if monotonic()-started > effective_deadline_seconds(30.): raise TimeoutError('physical fibre response bound')
         guard()
         strain = _owned(strain, (6,))
         strain_low = _owned(np.zeros(6) if strain_low is None else strain_low, (6,))

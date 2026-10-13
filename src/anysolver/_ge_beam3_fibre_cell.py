@@ -16,6 +16,7 @@ from ._ge_beam3_fibre_section import (
 from ._ge_beam3_station_resultant_cell import (
     zero, tr, mul, mv, dot, dec, pair, solve, cholesky, frozen,
 )
+from ._ge_beam3_effective_deadline import effective_deadline_seconds
 
 
 POLICY = 'GE_BEAM3_COUPLED_PHYSICAL_FIBRE_CELL_CONJUGATE_V1'
@@ -87,7 +88,7 @@ class FibreCellConjugate:
             raise ValueError('bounded station inventory required')
         started = monotonic()
         def check():
-            if monotonic()-started > 60.: raise TimeoutError('fibre cell compiler deadline')
+            if monotonic()-started > effective_deadline_seconds(60.): raise TimeoutError('fibre cell compiler deadline')
         self.section = section; self.size = 6+3*len(stations)
         rows = []; capture = []
         with localcontext() as context:
@@ -201,7 +202,7 @@ class FibreCellConjugate:
         started = monotonic()
         def guard():
             if check is not None: check()
-            if monotonic()-started > 60.: raise TimeoutError('fibre boundary proposal deadline')
+            if monotonic()-started > effective_deadline_seconds(60.): raise TimeoutError('fibre boundary proposal deadline')
         with localcontext() as context:
             context.prec = 80
             correction = tuple(direction)
@@ -310,7 +311,7 @@ class FibreCellConjugate:
         started = monotonic()
         def guard():
             if check is not None: check()
-            if monotonic()-started > 60.: raise TimeoutError('coupled fibre cell deadline')
+            if monotonic()-started > effective_deadline_seconds(60.): raise TimeoutError('coupled fibre cell deadline')
         guard()
         origin = self.virgin() if origin is None else origin
         with localcontext() as context:
