@@ -126,7 +126,9 @@ def _callable_state(function: Any, seen: Optional[set[int]] = None) -> Any:
 def _class_state(cls: type) -> Any:
     result = []
     for base in cls.__mro__:
-        for name, value in vars(base).items():
+        # Sorted by name: deleting and re-adding an attribute reorders a class
+        # dict without changing the class; the members themselves are compared.
+        for name, value in sorted(vars(base).items(), key=lambda item: str(item[0])):
             if name == "__slotnames__":
                 # copy/pickle cache this on a class at its first use
                 # (copyreg._slotnames); a deep copy is not a class change.
