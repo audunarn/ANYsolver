@@ -304,7 +304,20 @@ def validate_v2d_state(
             expected_committed_total_u, (18,), "expected committed_total_u"
         )
         if not np.array_equal(arrays["committed_total_u"], expected):
-            raise V2DStateError("V2D committed displacement binding mismatch")
+            actual = arrays["committed_total_u"]
+            differing = np.flatnonzero(actual != expected)
+            index = int(differing[0]) if differing.size else -1
+            stored = float(actual[index]) if index >= 0 else None
+            bound = float(expected[index]) if index >= 0 else None
+            raise V2DStateError(
+                "V2D committed displacement binding mismatch"
+                f"; element_id={int(made['element_id'])}"
+                f"; node_ids={[int(value) for value in made['node_ids']]}"
+                f"; differing_entries={int(differing.size)}/18"
+                f"; first_index={index}"
+                f"; stored={stored.hex() if stored is not None else None}"
+                f"; expected={bound.hex() if bound is not None else None}"
+            )
     supplied_integrity = made["state_integrity_sha256"]
     if not isinstance(supplied_integrity, str) or supplied_integrity != _integrity(made):
         raise V2DStateError("V2D committed state integrity mismatch")
