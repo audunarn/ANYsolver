@@ -156,10 +156,11 @@ def test_remote_equal_minima_and_resource_exhaustion_fail_explicitly():
 
 def test_source_interval_gap_lower_matches_original_polynomial_oracle():
     """The local exact-coefficient interval bound reproduces the original
-    numpy Polynomial arithmetic bit-exactly: identical conservative
+    numpy Polynomial arithmetic and fixed scalar reductions bit-exactly: identical conservative
     guards, identical threshold behavior across near-zero, parallel and
     endpoint geometries, and no sampled certificate."""
     from scipy.optimize import brentq
+    from fractions import Fraction
     from anysolver.general_contact.beam_curve_pair import (
         _positions, _source_interval_target_gap_lower,
     )
@@ -191,14 +192,24 @@ def test_source_interval_gap_lower_matches_original_polynomial_oracle():
         return tuple(sorted(set(float(np.clip(root, 0.0, 1.0))
                                 for root in roots)))
 
+    def oracle_squared_length(vector):
+        # Independent exact-arithmetic oracle for the production contract's
+        # ascending, singly rounded products/additions. A host-dispatched
+        # BLAS norm is not an exact oracle for that specified operation order.
+        result = 0.
+        for component in vector:
+            value = Fraction(float(component))
+            result = float(value*value + Fraction(result))
+        return result
+
     def oracle_bound(source, left, right, target, radius):
         from anysolver.general_contact.beam_curve_pair import _curve
         start = _curve(source, left)[0]
         end = _curve(source, right)[0]
         middle = _curve(source, 0.5 * (left + right))[0]
-        chord_deviation = float(np.linalg.norm(middle - 0.5 * (start + end)))
+        chord_deviation = float(np.sqrt(oracle_squared_length(middle - 0.5 * (start + end))))
         vector = end - start
-        squared_length = float(vector @ vector)
+        squared_length = oracle_squared_length(vector)
         if squared_length <= 0.0:
             raise MemoryError("B3 pair source interval chord is degenerate")
         polynomial = np.polynomial.Polynomial
