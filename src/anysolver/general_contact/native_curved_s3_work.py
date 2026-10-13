@@ -11,6 +11,7 @@ from scipy import sparse
 
 from anysolver._ge_beam3_mixed_ad import Jet2,dot,sqrt as jet_sqrt
 from anysolver._ge_beam3_deterministic_reduction import deterministic_dot, deterministic_norm
+from .native_replay_arithmetic import gap_matrix_product, gap_vector_product
 from anysolver._ge_beam3_generalized_static_boundary import spatial_jacobian
 from anysolver._ge_beam3_p5_seeded.core import sha
 from .native_curved_plane_work import NativeCurvedMaterialPlaneWork,_station_field,_critical_gaps
@@ -120,6 +121,12 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
         self.shell_map=work.shell.work_map.toarray()
         self.dn=dn;self.hn=hn
         self.origin_map=np.zeros((3,9));self.origin_map[:,:3]=np.eye(3)
+        # Normal derivatives and the corner-origin map are fixed for this
+        # disposable candidate. Reuse their exact contractions at every
+        # quadrature station; the next candidate constructs them afresh.
+        self._origin_gradient=gap_vector_product(self.origin_map.T,self.normal)
+        self._origin_hessian_left=gap_matrix_product(dn.T,self.origin_map)
+        self._origin_hessian_right=gap_matrix_product(self.origin_map.T,dn)
         self._axial_centres=None
         self.integration_budget_policy=work.integration_budget_policy
         self.root_tangent_enclosure_policy=work.root_tangent_enclosure_policy
@@ -179,18 +186,19 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
         return mapping
 
     def _gap_work_jet(self,gap,high,low,cell,t,arm):
-        n=self.normal;dn=self.dn;hn=self.hn;o=self.origin_map
+        n=self.normal;dn=self.dn;hn=self.hn
         d=self._candidate_relative_center(high,low,cell,t,arm)
         # DX maps left spatial section increments; shell corner motion is affine.
         a,b,c=arm
         dx=np.column_stack(((1-t)*np.eye(3),t*np.eye(3),
                             np.array(((0,c,-b),(-c,0,a),(b,-a,0)))))
-        gradient=np.r_[dx.T@n,dn.T@d-o.T@n]
+        gradient=np.r_[gap_vector_product(dx.T,n),gap_vector_product(dn.T,d)-self._origin_gradient]
         hessian=np.zeros((18,18))
-        hessian[6:9,6:9]=(np.outer(arm,n)+np.outer(n,arm))/2-float(n@arm)*np.eye(3)
-        hessian[:9,9:]=dx.T@dn
+        hessian[6:9,6:9]=(np.outer(arm,n)+np.outer(n,arm))/2-deterministic_dot(n,arm)*np.eye(3)
+        hessian[:9,9:]=gap_matrix_product(dx.T,dn)
         hessian[9:,:9]=hessian[:9,9:].T
-        hessian[9:,9:]=np.einsum('i,ijk->jk',d,hn)-dn.T@o-o.T@dn
+        hessian[9:,9:]=(np.einsum('i,ijk->jk',d,hn)
+            -self._origin_hessian_left-self._origin_hessian_right)
         return Jet2(gap,gradient,hessian)
 
     def _spatial_tangent(self,residual,hessian):

@@ -81,7 +81,10 @@ def _shape(t: float) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
 
 def _curve(positions: np.ndarray, t: float) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     shape, first, second = _shape(t)
-    return shape @ positions, first @ positions, second @ positions
+    # Specify the archived three-term fused order independently of BLAS dispatch.
+    from .native_replay_arithmetic import gap_matrix_product
+    values = gap_matrix_product(np.array((shape, first, second)), positions)
+    return values[0], values[1], values[2]
 
 
 def closest_on_b3(point: np.ndarray, target_positions: np.ndarray) -> CurveProjection:
@@ -155,8 +158,7 @@ def b3_distance_jet(source_positions: np.ndarray,
         raise ValueError("combined round radius must be finite and positive")
     if type(source_is_a) is not bool:
         raise ValueError("source_is_a must be a boolean")
-    source_shape = _shape(s)[0]
-    source_position = source_shape @ source
+    source_position = _curve(source, s)[0]
     projection = closest_on_b3(source_position, target)
     if not projection.unique:
         raise ValueError("B3 projection has competing equal-distance minima")
@@ -173,7 +175,7 @@ def _b3_distance_jet_at_station(source, target, s, radius, t, *, source_is_a=Tru
     station exactly as before and shares these identical derivative formulas.
     """
     source_shape = _shape(s)[0]
-    source_position = source_shape @ source
+    source_position = _curve(source, s)[0]
     target_shape, target_shape_t, _target_shape_tt = _shape(t)
     target_position, target_tangent, target_second = _curve(target, t)
     separation = source_position - target_position
@@ -236,9 +238,9 @@ def _endpoint_projection_cuts(source: np.ndarray,
     for t in (0.0, 1.0):
         target_point, target_tangent, _ = _curve(target, t)
         coefficients = np.array((
-            float((source_a - target_point) @ target_tangent),
-            float(source_b @ target_tangent),
-            float(source_c @ target_tangent),
+            deterministic_dot(source_a - target_point, target_tangent),
+            deterministic_dot(source_b, target_tangent),
+            deterministic_dot(source_c, target_tangent),
         ))
         scale = float(np.max(np.abs(coefficients)))
         if scale <= 0.0:
