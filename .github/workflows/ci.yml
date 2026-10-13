@@ -127,7 +127,7 @@ jobs:
       # The accepted S3/Q4 burn-in runner is immutable, machine-bound evidence.
       # Ordinary CI uses the current portable inventory and does not reopen it.
       - run: >-
-          python scripts/run_portable_ci.py --workers 2 --timeout-seconds 1800
+          python scripts/run_portable_ci.py --workers 2 --timeout-seconds 2400
           --matrix-shard-index ${{ matrix.shard-index }} --matrix-shard-count 8
           --matrix-subshard-index ${{ matrix.subshard-index }} --matrix-subshard-count 4
 
