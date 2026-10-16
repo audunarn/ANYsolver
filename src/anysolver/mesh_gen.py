@@ -128,6 +128,12 @@ class PanelGeometry:
             geometry.pressure = anystructure_data.pressure
         return geometry
 
+# Parent-adopted input-admission threshold for coupling shape weights:
+# the weights must form a partition of unity within this absolute
+# dimensionless tolerance (rtol=0).  Weights are never renormalized.
+COUPLING_PARTITION_OF_UNITY_ATOL = 1.0e-10
+
+
 class InterpolatedBeamShellMPCElement:
     """
     Duck-typed MPC-only element for eccentric beam-to-shell coupling.
@@ -155,6 +161,8 @@ class InterpolatedBeamShellMPCElement:
         self.node_ids = [beam_node_id] + self.shell_node_ids
         self._stiffness_matrix = None
         self._mass_matrix = None
+        self._validated_shape_weights()
+        self._validated_eccentricity()
 
     @property
     def num_nodes(self) -> int:
@@ -219,19 +227,78 @@ class InterpolatedBeamShellMPCElement:
     ) -> Dict[str, np.ndarray]:
         return {}
 
+    def _validated_shape_weights(self) -> np.ndarray:
+        """Return the admitted shape weights, revalidated against mutation."""
+        weights = np.asarray(self.shape_weights, dtype=float)
+        if weights.ndim != 1 or weights.size != len(self.shell_node_ids):
+            raise ValueError(
+                f"Interpolated MPC element {self.element_id} requires a 1-D "
+                f"shape-weight array with one weight per shell master node "
+                f"({len(self.shell_node_ids)} expected, got shape {weights.shape})"
+            )
+        if not np.all(np.isfinite(weights)):
+            raise ValueError(
+                f"Interpolated MPC element {self.element_id} shape weights "
+                "contain non-finite values"
+            )
+        # The reduction itself may overflow to +/-inf or NaN for finite
+        # mixed-sign weights; the explicit finiteness check below rejects
+        # that, so the overflow warning is deliberately silenced here.
+        with np.errstate(over="ignore", invalid="ignore"):
+            weight_sum = float(weights.sum())
+        if (
+            not np.isfinite(weight_sum)
+            or abs(weight_sum - 1.0) > COUPLING_PARTITION_OF_UNITY_ATOL
+        ):
+            raise ValueError(
+                f"Interpolated MPC element {self.element_id} shape weights must "
+                f"form a partition of unity within "
+                f"{COUPLING_PARTITION_OF_UNITY_ATOL}; got sum {weight_sum!r}"
+            )
+        return weights
+
+    def _validated_eccentricity(self) -> np.ndarray:
+        """Return the admitted common offset r, revalidated against mutation."""
+        eccentricity = np.asarray(self.eccentricity, dtype=float)
+        if eccentricity.shape != (3,):
+            raise ValueError(
+                f"Interpolated MPC element {self.element_id} eccentricity must "
+                f"have shape (3,), got {eccentricity.shape}"
+            )
+        if not np.all(np.isfinite(eccentricity)):
+            raise ValueError(
+                f"Interpolated MPC element {self.element_id} eccentricity "
+                "contains non-finite values"
+            )
+        return eccentricity
+
     def get_mpc_constraints(self, mesh: "FEMesh") -> List[Dict[str, Any]]:
+        # Revalidate the aliased mutable inputs so later corruption cannot
+        # silently bypass admission, and fail closed on any missing
+        # referenced node (including zero-weight masters) before returning
+        # a partial constraint set.
+        shape_weights = self._validated_shape_weights()
+        rx, ry, rz = self._validated_eccentricity()
+
         beam_node = mesh.get_node(self.beam_node_id)
         if beam_node is None:
-            return []
+            raise ValueError(
+                f"Interpolated MPC element {self.element_id} references missing "
+                f"beam node {self.beam_node_id}"
+            )
 
         beam_dofs = beam_node.dofs
-        rx, ry, rz = self.eccentricity
         translational_masters = [{}, {}, {}]
         rotational_masters = [{}, {}, {}]
 
-        for shell_node_id, weight in zip(self.shell_node_ids, self.shape_weights):
+        for shell_node_id, weight in zip(self.shell_node_ids, shape_weights):
             shell_node = mesh.get_node(shell_node_id)
-            if shell_node is None or abs(float(weight)) == 0.0:
+            if shell_node is None:
+                raise ValueError(
+                    f"Interpolated MPC element {self.element_id} references "
+                    f"missing shell master node {shell_node_id}"
+                )
+            if float(weight) == 0.0:
                 continue
             s = shell_node.dofs
             w = float(weight)

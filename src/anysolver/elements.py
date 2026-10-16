@@ -5331,6 +5331,8 @@ class CoupledBeamShellElement(Element):
         self.shell_node_id = shell_node_id
         self.coupling_stiffness = coupling_stiffness
         self.eccentricity = None if eccentricity is None else np.asarray(eccentricity, dtype=float)
+        if self.eccentricity is not None:
+            self._validate_eccentricity_shape(self.eccentricity)
 
     @property
     def num_nodes(self) -> int:
@@ -5347,11 +5349,26 @@ class CoupledBeamShellElement(Element):
             raise ValueError(f"Coupling element {self.element_id} references a missing node")
         return np.array([beam_node.coords(), shell_node.coords()], dtype=float)
 
+    def _validate_eccentricity_shape(self, eccentricity: np.ndarray) -> np.ndarray:
+        eccentricity = np.asarray(eccentricity, dtype=float)
+        if eccentricity.shape != (3,):
+            raise ValueError(
+                f"Coupling element {self.element_id} eccentricity must have shape (3,), "
+                f"got {eccentricity.shape}"
+            )
+        if not np.all(np.isfinite(eccentricity)):
+            raise ValueError(
+                f"Coupling element {self.element_id} eccentricity contains non-finite values"
+            )
+        return eccentricity
+
     def _eccentricity_vector(self, mesh: "FEMesh") -> np.ndarray:
         if self.eccentricity is not None:
-            return np.asarray(self.eccentricity, dtype=float)
-        coords = self.get_node_coordinates(mesh)
-        return coords[0] - coords[1]
+            r = np.asarray(self.eccentricity, dtype=float)
+        else:
+            coords = self.get_node_coordinates(mesh)
+            r = np.asarray(coords[0] - coords[1], dtype=float)
+        return self._validate_eccentricity_shape(r)
 
     def compute_stiffness_matrix(self, mesh: "FEMesh", material: "Material") -> np.ndarray:
         # Coupling is enforced exactly by assembly.build_constraint_transformation().
@@ -5371,8 +5388,16 @@ class CoupledBeamShellElement(Element):
         """
         beam_node = mesh.get_node(self.beam_node_id)
         shell_node = mesh.get_node(self.shell_node_id)
-        if beam_node is None or shell_node is None:
-            return []
+        if beam_node is None:
+            raise ValueError(
+                f"Coupling element {self.element_id} references missing beam node "
+                f"{self.beam_node_id}"
+            )
+        if shell_node is None:
+            raise ValueError(
+                f"Coupling element {self.element_id} references missing shell node "
+                f"{self.shell_node_id}"
+            )
 
         b = beam_node.dofs
         s = shell_node.dofs
