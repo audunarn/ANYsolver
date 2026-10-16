@@ -741,15 +741,10 @@ def test_portable_ci_executes_process_state_sensitive_modules_in_fresh_processes
 
 
 def test_portable_ci_observed_costs_separate_the_four_heaviest_modules() -> None:
-    partitions = portable_ci.partition_modules(
-        portable_ci.merge_test_modules(), 4
-    )
-    heaviest = {
-        "tests/test_beam_shell_verification.py",
-        "tests/test_e4_pl_q4_state_lifecycle.py",
-        "tests/test_e4_pl_s3_restart_history.py",
-        "tests/test_e4_pl_s3_state_lifecycle.py",
-    }
+    modules = portable_ci.merge_test_modules()
+    partitions = portable_ci.partition_modules(modules, 4)
+    # The observed heavy set evolves as new timings replace source-size costs.
+    heaviest = set(sorted(modules, key=lambda name: (-portable_ci._module_weight(name), name))[:4])
     owners = {
         index
         for index, partition in enumerate(partitions)
@@ -781,7 +776,9 @@ def test_portable_ci_matrix_shards_cover_general_once_and_s3_critical_always() -
 )
 def test_portable_ci_matrix_shards_reject_invalid_bounds(index, count) -> None:
     with pytest.raises(ValueError, match="matrix shard"):
-        portable_ci.matrix_modules(portable_ci.merge_test_modules(), index, count)
+        # Invalid bounds must be rejected before inspecting the inventory.
+        # Full discovery/coverage is exercised independently above.
+        portable_ci.matrix_modules(("unused.py",), index, count)
 
 
 @pytest.mark.parametrize("workers", [0, -1, True])

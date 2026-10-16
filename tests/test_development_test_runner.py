@@ -74,12 +74,16 @@ def test_child_non_success_is_never_accepted(tmp_path, monkeypatch, code):
 
 def test_runtime_reports_observed_settings_and_rejects_wrong_source(tmp_path, monkeypatch):
     monkeypatch.setenv('NUMBA_DISABLE_JIT', '1')
-    numba = SimpleNamespace(config=SimpleNamespace(DISABLE_JIT=True), get_num_threads=lambda: 1)
+    monkeypatch.setenv('ANYSOLVER_DEVELOPMENT_NUMBA_THREADS', '1')
+    numba = SimpleNamespace(config=SimpleNamespace(DISABLE_JIT=True, NUMBA_NUM_THREADS=1),
+                            get_num_threads=lambda: 1)
     modules = {'anysolver': SimpleNamespace(__file__=str(tmp_path/'__init__.py')), 'numba': numba}
-    result = runtime.runtime_record(modules, tmp_path, [{'num_threads': 1}])
+    result = runtime.runtime_record(modules, tmp_path, [{'user_api': 'blas', 'num_threads': 1}])
     assert not result['errors'] and result['jit_disabled'] is True and result['numba_threads'] == 1
+    assert result['requested_threads'] == 1 and result['numba_max_threads'] == 1
+    assert result['requested_jit_disabled'] is True
     assert runtime.runtime_record(modules, tmp_path/'other')['errors']
-    assert runtime.runtime_record(modules, tmp_path, [{'num_threads': 2}])['errors']
+    assert runtime.runtime_record(modules, tmp_path, [{'user_api': 'blas', 'num_threads': 2}])['errors']
     numba.config.DISABLE_JIT = False
     assert runtime.runtime_record(modules, tmp_path)['errors']
 
@@ -195,3 +199,117 @@ def test_ci_does_not_launch_more_work_after_immediate_failure(tmp_path, monkeypa
 
 def test_ci_worker_stops_at_first_failure(tmp_path):
     assert '-x' in runner._worker_command(('tests/test_x.py',), tmp_path)
+
+
+def test_runtime_record_requires_explicit_requested_profile(tmp_path, monkeypatch):
+    monkeypatch.delenv('NUMBA_DISABLE_JIT', raising=False)
+    monkeypatch.delenv('ANYSOLVER_DEVELOPMENT_NUMBA_THREADS', raising=False)
+    numba = SimpleNamespace(config=SimpleNamespace(DISABLE_JIT=True, NUMBA_NUM_THREADS=1),
+                            get_num_threads=lambda: 1)
+    result = runtime.runtime_record({'numba': numba}, tmp_path)
+    assert result['requested_threads'] is None and result['requested_jit_disabled'] is None
+    assert any('requested runtime profile' in error for error in result['errors'])
+
+
+def test_runtime_record_admits_bounded_profile_and_requires_restored_baseline(tmp_path, monkeypatch):
+    monkeypatch.setenv('NUMBA_DISABLE_JIT', '0')
+    monkeypatch.setenv('ANYSOLVER_DEVELOPMENT_NUMBA_THREADS', '3')
+    def numba_at(active, capacity):
+        return SimpleNamespace(config=SimpleNamespace(DISABLE_JIT=False, NUMBA_NUM_THREADS=capacity),
+                               get_num_threads=lambda: active)
+    restored = {'numba': numba_at(1, 3)}
+    assert not runtime.runtime_record(restored, tmp_path, [{'user_api': 'openmp', 'num_threads': 3}])['errors']
+    assert not runtime.runtime_record(restored, tmp_path, [{'user_api': 'blas', 'num_threads': 1}])['errors']
+    assert runtime.runtime_record(restored, tmp_path, [{'user_api': 'blas', 'num_threads': 3}])['errors']
+    assert runtime.runtime_record({'numba': numba_at(3, 3)}, tmp_path)['errors']
+    assert runtime.runtime_record({'numba': numba_at(1, 1)}, tmp_path)['errors']
+    assert runtime.runtime_record(restored, tmp_path, [{'user_api': 'openmp', 'num_threads': 4}])['errors']
+    monkeypatch.setenv('ANYSOLVER_DEVELOPMENT_NUMBA_THREADS', '1')
+    assert runtime.runtime_record(restored, tmp_path, [{'user_api': 'openmp', 'num_threads': 3}])['errors']
+
+
+def test_compiled_profile_refuses_unavailable_or_partial_numba(tmp_path, monkeypatch):
+    monkeypatch.setenv('NUMBA_DISABLE_JIT', '0')
+    monkeypatch.setenv('ANYSOLVER_DEVELOPMENT_NUMBA_THREADS', '3')
+    assert runtime.runtime_record({}, tmp_path)['errors']
+    assert runtime.runtime_record({'numba': SimpleNamespace()}, tmp_path)['errors']
+    monkeypatch.setenv('NUMBA_DISABLE_JIT', '1')
+    assert not runtime.runtime_record({}, tmp_path)['errors']
+
+
+@pytest.mark.parametrize('pool', [{}, {'user_api': 'blas', 'num_threads': None},
+                                 {'user_api': 'unknown', 'num_threads': 1}, None])
+def test_runtime_refuses_unknown_or_unobserved_pools(tmp_path, monkeypatch, pool):
+    monkeypatch.setenv('NUMBA_DISABLE_JIT', '1')
+    monkeypatch.setenv('ANYSOLVER_DEVELOPMENT_NUMBA_THREADS', '1')
+    assert runtime.runtime_record({}, tmp_path, [pool])['errors']
+
+
+def test_runtime_initializes_active_baseline_without_reducing_capacity(monkeypatch):
+    monkeypatch.setenv('NUMBA_DISABLE_JIT', '0')
+    monkeypatch.setenv('ANYSOLVER_DEVELOPMENT_NUMBA_THREADS', '3')
+    active = [3]
+    fake = SimpleNamespace(config=SimpleNamespace(DISABLE_JIT=False, NUMBA_NUM_THREADS=3),
+                           get_num_threads=lambda: active[0],
+                           set_num_threads=lambda value: active.__setitem__(0, value))
+    monkeypatch.setitem(runtime.sys.modules, 'numba', fake)
+    monkeypatch.setattr(runtime, '_INITIAL_RUNTIME', None)
+    monkeypatch.setattr(runtime, '_STARTUP_ERRORS', [])
+    runtime.pytest_configure(None)
+    assert runtime._INITIAL_RUNTIME['before_initialization']['numba_threads'] == 3
+    assert runtime._INITIAL_RUNTIME['numba_threads'] == 1
+    assert runtime._INITIAL_RUNTIME['numba_max_threads'] == 3
+    assert not runtime._STARTUP_ERRORS
+
+
+def test_real_runtime_rejects_a_leaked_active_thread_scope(tmp_path):
+    import importlib.util
+    import os
+    import subprocess
+    import sys
+    if importlib.util.find_spec('numba') is None:
+        pytest.skip('Numba is not installed')
+    target = tmp_path/'test_leaked_scope.py'
+    target.write_text('def test_leak():\n    import numba\n    numba.set_num_threads(3)\n')
+    record = tmp_path/'runtime.json'
+    env = {**os.environ, 'NUMBA_DISABLE_JIT': '0', 'NUMBA_NUM_THREADS': '3',
+           'ANYSOLVER_DEVELOPMENT_NUMBA_THREADS': '3',
+           'ANYSOLVER_DEVELOPMENT_SOURCE': str(runner.ROOT/'src'),
+           'ANYSOLVER_DEVELOPMENT_RECORD': str(record),
+           'PYTEST_DISABLE_PLUGIN_AUTOLOAD': '1'}
+    child = subprocess.run([sys.executable, '-m', 'pytest', '-q', '--noconftest',
+                            '-p', 'no:cacheprovider', '-p', 'scripts.development_test_runtime', str(target)],
+                           cwd=runner.ROOT, env=env, capture_output=True, text=True, timeout=30)
+    assert child.returncode == 1, child.stdout + child.stderr
+    payload = json.loads(record.read_text())
+    assert payload['initial_runtime']['numba_threads'] == 1
+    assert payload['numba_max_threads'] == payload['numba_threads'] == 3
+    assert any('not restored' in error for error in payload['errors'])
+
+
+def test_development_thread_profile_is_explicit_and_bounded(tmp_path, monkeypatch):
+    monkeypatch.setattr(runner, 'ROOT', tmp_path)
+    monkeypatch.setenv('RUNNER_TEMP', str(tmp_path/'temp'))
+    (tmp_path/'tests').mkdir()
+    (tmp_path/'tests/test_x.py').write_text('')
+    environments = []
+    def launch(command, *, cwd, env, **kwargs):
+        environments.append(env)
+        Path(env['ANYSOLVER_DEVELOPMENT_RECORD']).write_text('{}')
+        return SimpleNamespace(poll=lambda: 0, returncode=0)
+    monkeypatch.setattr(runner.subprocess, 'Popen', launch)
+    assert runner.run(workers=1, timeout_seconds=1,
+                      development_targets=['tests/test_x.py'], threads=3) == 0
+    assert environments[0]['NUMBA_NUM_THREADS'] == '3'
+    assert environments[0]['ANYSOLVER_DEVELOPMENT_NUMBA_THREADS'] == '3'
+    selection = json.loads(next((tmp_path/'temp').glob('*/P01/selection.json')).read_text())
+    assert selection['threads'] == 3
+    assert runner.run(workers=1, timeout_seconds=1, development_targets=['tests/test_x.py']) == 0
+    assert environments[1]['NUMBA_NUM_THREADS'] == '1'
+    assert environments[1]['ANYSOLVER_DEVELOPMENT_NUMBA_THREADS'] == '1'
+    for rejected in (0, 9, True, '2'):
+        with pytest.raises(ValueError):
+            runner.run(workers=1, timeout_seconds=1, development_targets=['tests/test_x.py'],
+                       threads=rejected)
+    with pytest.raises(ValueError):
+        runner.run(workers=1, timeout_seconds=1, threads=2)

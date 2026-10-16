@@ -132,5 +132,8 @@ def test_curved_s3_checkpoint_binding_field_classification_and_valid_restore():
     with pytest.raises(ValueError,match='schema checkpoint=.*; identity checkpoint=') as raised:
         owner.solve(checkpoint=raw,expected_sha256=external)
     message=str(raised.value)
-    assert 'profile' not in message and 'checkpoint_sha256' not in message
+    # Identity component names may include "profile"; classify only the
+    # explicit disagreement markers, not the diagnostic component details.
+    assert 'profile checkpoint=' not in message
+    assert 'checkpoint_sha256 body=' not in message
     assert owner._checkpoint(())==initial

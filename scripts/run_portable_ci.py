@@ -170,6 +170,22 @@ PORTABLE_MODULE_WEIGHT_OVERRIDES = {
     "tests/test_fe_solver_nonlinear_static.py": 150_000,
     "tests/test_hht_alpha.py": 100_000,
     "tests/test_mixed_shell_quadrature_grouping.py": 120_000,
+    # Hosted run 38899727006 (b0202d33) failed-worker --durations output shows
+    # these native-contact modules concentrating measured cost far beyond their
+    # source size (457.75 s observed in a 1.4 KB module).  The size proxy alone
+    # underweighted them, concentrating whole subshards (measured job step walls
+    # up to 1882 s against 283 s siblings in the same matrix shard).  Values
+    # are heuristic scheduling units (roughly 1000 per observed second), not
+    # a wall-time prediction. Partial -x workers give lower-bound samples;
+    # these weights change no test, timeout, or scientific result.
+    "tests/test_general_contact_admission_globalization_final_checks.py": 500_000,
+    "tests/test_general_contact_native_curved_static.py": 380_000,
+    "tests/test_general_contact_hemisphere_cylinder_motion.py": 360_000,
+    "tests/test_general_contact_native_curved_s3_static.py": 220_000,
+    "tests/test_general_contact_monolithic_restart.py": 130_000,
+    "tests/test_general_contact_coupled_tool_staging.py": 110_000,
+    "tests/test_general_contact_skew_partial_work.py": 100_000,
+    "tests/test_general_contact_native_curved_pair_lifecycle.py": 95_000,
 }
 # Runtime panel tests repeatedly construct and solve independent application
 # models.  Keep them in a fresh interpreter so report/restart tests cannot
@@ -183,6 +199,7 @@ PORTABLE_ISOLATED_MODULES = (
     "tests/test_generalized_shell_sections.py",
 )
 DEFAULT_WORKERS = 4
+MAX_DEVELOPMENT_THREADS = 8
 DEFAULT_TIMEOUT_SECONDS = 2_400
 TIMEOUT_EXIT_CODE = 124
 
@@ -514,6 +531,7 @@ def run(
     development_targets: Sequence[str] | None = None,
     jit: str | None = None,
     memory_limit_mib: int | None = None,
+    threads: int | None = None,
 ) -> int:
     if isinstance(timeout_seconds, bool) or timeout_seconds < 1:
         raise ValueError("timeout_seconds must be a positive integer")
@@ -537,9 +555,13 @@ def run(
                 )
         if memory_limit_mib is not None and (isinstance(memory_limit_mib, bool) or memory_limit_mib < 1):
             raise ValueError("memory_limit_mib must be positive")
+        if threads is None:
+            threads = 1
+        if not isinstance(threads, int) or isinstance(threads, bool) or not 1 <= threads <= MAX_DEVELOPMENT_THREADS:
+            raise ValueError("focused development threads must be an integer in [1, " + str(MAX_DEVELOPMENT_THREADS) + "]")
     else:
-        if jit is not None or memory_limit_mib is not None:
-            raise ValueError("JIT/memory options belong to explicit focused development")
+        if jit is not None or threads is not None or memory_limit_mib is not None:
+            raise ValueError("JIT/thread/memory options belong to explicit focused development")
         modules = matrix_modules(
             merge_test_modules(), matrix_shard_index, matrix_shard_count
         )
@@ -590,6 +612,8 @@ def run(
                            "-p", "scripts.development_test_runtime", "--durations=10",
                            f"--basetemp={worker_root / 'basetemp'}", *modules_for_worker]
                 environment.update(NUMBA_DISABLE_JIT="0" if jit == "on" else "1",
+                    NUMBA_NUM_THREADS=str(threads),
+                    ANYSOLVER_DEVELOPMENT_NUMBA_THREADS=str(threads),
                     ANYSOLVER_DEVELOPMENT_RECORD=str(worker_root / "runtime.json"),
                     ANYSOLVER_DEVELOPMENT_SOURCE=str(ROOT / "src" / "anysolver"))
                 (worker_root / "selection.json").write_text(json.dumps({
@@ -602,7 +626,7 @@ def run(
                     "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
                     "source_identity_scope": "working-tree paths and selected files; not an installed artifact binding",
                     "memory_limit_mib": memory_limit_mib,
-                    "jit": jit or "off"}, indent=2)+"\n", encoding="utf-8")
+                    "jit": jit or "off", "threads": threads}, indent=2)+"\n", encoding="utf-8")
                 print(f"[development] exact targets={len(modules_for_worker)}; record={worker_root}", flush=True)
             print(
                 f"[portable-ci] starting P{index:02d}/{len(partitions):02d} "
@@ -694,6 +718,8 @@ def _parser() -> argparse.ArgumentParser:
                         help="Run exactly these test files/node IDs in one source process; no qualification")
     parser.add_argument("--jit", choices=("off", "on"),
                         help="Focused development JIT mode (default off); use on for affected compiled paths")
+    parser.add_argument("--threads", type=int,
+                        help="Focused development Numba thread capacity (default 1, bounded); use for admitted compiled scopes")
     parser.add_argument("--memory-limit-mib", type=int,
                         help="Focused child process-tree RSS ceiling; requires psutil when selected")
     return parser
@@ -711,6 +737,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         matrix_subshard_count=args.matrix_subshard_count,
         development_targets=args.development,
         jit=args.jit,
+        threads=args.threads,
         memory_limit_mib=args.memory_limit_mib,
     )
 
