@@ -459,12 +459,56 @@ def _worker_command(modules: Sequence[str], root: Path) -> list[str]:
         "-x",
         "-p",
         "no:cacheprovider",
+        # Opt-in progress evidence only; inert without the runner's record
+        # environment and never a qualification or runtime input.
+        "-p",
+        "scripts.ci_progress_runtime",
         "--durations=20",
         "--durations-min=0.0",
         f"--basetemp={root / 'basetemp'}",
         *(f"--deselect={node}" for node in deselections),
         *modules,
     ]
+
+
+def _read_worker_progress(worker_root: Path) -> dict[str, object] | None:
+    path = worker_root / "progress.json"
+    if not path.is_file():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def _write_ci_termination(
+    run_root: Path,
+    worker_records: Sequence[tuple[Path, tuple[str, ...]]],
+    launched: Sequence[subprocess.Popen[bytes]],
+    status: str,
+    started: float,
+) -> None:
+    """Record what each stopped CI worker was running; pure diagnostic evidence."""
+
+    record = {
+        "scope": "ci termination evidence only; not qualification",
+        "status": status,
+        "elapsed_seconds": time.monotonic() - started,
+        "workers": [
+            {
+                "worker": f"P{index:02d}",
+                "allocated_modules": list(modules_for_worker),
+                "exit_code": worker.returncode,
+                "progress": _read_worker_progress(worker_root),
+            }
+            for index, ((worker_root, modules_for_worker), worker) in enumerate(
+                zip(worker_records, launched), start=1
+            )
+        ],
+    }
+    (run_root / "termination.json").write_text(
+        json.dumps(record, indent=2) + "\n", encoding="utf-8"
+    )
 
 
 def _terminate_tree(worker: subprocess.Popen[bytes], grace_seconds: float = 10.0) -> None:
@@ -581,6 +625,7 @@ def run(
     temp_parent.mkdir(parents=True, exist_ok=True)
     run_root = Path(tempfile.mkdtemp(prefix="anysolver-portable-ci-", dir=temp_parent))
     launched: list[subprocess.Popen[bytes]] = []
+    worker_records: list[tuple[Path, tuple[str, ...]]] = []
     monitor = None
     peak_bytes = 0
     if memory_limit_mib is not None:
@@ -599,6 +644,8 @@ def run(
                 for worker in launched:
                     _terminate_tree(worker)
                 print("[portable-ci] failed worker; stopped remaining work", flush=True)
+                _write_ci_termination(run_root, worker_records, launched,
+                                      "failed_worker", started)
                 return 1
             worker_root = run_root / f"P{index:02d}"
             worker_root.mkdir()
@@ -628,6 +675,20 @@ def run(
                     "memory_limit_mib": memory_limit_mib,
                     "jit": jit or "off", "threads": threads}, indent=2)+"\n", encoding="utf-8")
                 print(f"[development] exact targets={len(modules_for_worker)}; record={worker_root}", flush=True)
+            else:
+                # Diagnostic evidence only: which modules this subshard owns and
+                # which node it currently runs.  Never a runtime or selection input.
+                environment["ANYSOLVER_CI_PROGRESS_RECORD"] = str(worker_root / "progress.json")
+                (worker_root / "selection.json").write_text(json.dumps({
+                    "scope": "ci allocation evidence only; not qualification",
+                    "allocated_modules": list(modules_for_worker), "command": command,
+                    "matrix_shard_index": matrix_shard_index,
+                    "matrix_shard_count": matrix_shard_count,
+                    "matrix_subshard_index": matrix_subshard_index,
+                    "matrix_subshard_count": matrix_subshard_count,
+                    "timeout_seconds": timeout_seconds,
+                    "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+                }, indent=2)+"\n", encoding="utf-8")
             print(
                 f"[portable-ci] starting P{index:02d}/{len(partitions):02d} "
                 f"with {len(modules_for_worker)} modules",
@@ -641,6 +702,7 @@ def run(
                     **options,
                 )
             )
+            worker_records.append((worker_root, tuple(modules_for_worker)))
 
         deadline = started + timeout_seconds
         while True:
@@ -649,6 +711,8 @@ def run(
                 for worker in launched:
                     _terminate_tree(worker)
                 print(f"[portable-ci] failed worker; child exits={codes}; stopped siblings", flush=True)
+                _write_ci_termination(run_root, worker_records, launched,
+                                      "failed_worker", started)
                 return 1
             if all(code is not None for code in codes):
                 break
@@ -683,11 +747,23 @@ def run(
                         "limit_mib": memory_limit_mib, "elapsed_seconds": time.monotonic()-started,
                         "status": "timeout", "child_exit_codes": [w.returncode for w in launched]})+"\n",
                         encoding="utf-8")
+                else:
+                    _write_ci_termination(run_root, worker_records, launched,
+                                          "timeout", started)
                 return TIMEOUT_EXIT_CODE
             time.sleep(0.1)
-    except BaseException:
+    except BaseException as interruption:
         for worker in launched:
             _terminate_tree(worker)
+        if not development:
+            # Best-effort interruption evidence; a diagnostic I/O failure must
+            # neither mask the primary exception nor leave children alive.
+            try:
+                _write_ci_termination(run_root, worker_records, launched,
+                                      f"interrupted:{type(interruption).__name__}",
+                                      started)
+            except OSError:
+                pass
         raise
 
     returncodes = [int(worker.returncode) for worker in launched]

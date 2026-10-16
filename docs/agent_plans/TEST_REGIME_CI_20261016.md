@@ -1,152 +1,115 @@
-# Test regime and b0202d33 CI repair
+# Portable testing and CI fixes — 2026-10-16
 
-Status: implementation started, 16 October 2026. Base b0202d33; isolated branch
-codex/test-regime-ci-b020. Preserve unrelated main work and all earlier evidence.
+## Active scope and delivery gate
 
-The user requests a sweep of the existing testing method, faster execution,
-inspection of b0202d33 hosted CI and fixes. Extend the existing focused portable
-runner, deterministic sharding, isolation and retirement overlay; do not create
-a competing test framework. Coverage, scientific tolerances, refusal/lifecycle
-checks and retired-test selection remain authoritative.
+User authorizes remaining CI fixes, bounded Mistral implementation, CI optimization,
+and push to main. Work is isolated on `codex/test-regime-ci-b020`, based on local
+verified tooling commit `85bffc8d`, above main `b0202d33`.
 
-CI run38899727006 initially had35successful jobs,7failed and7running. Saved logs
-identify six native-contact replay/checkpoint failures and one stale Q4 source-
-binding assertion. These are findings on main, not established consequences of
-the small immutable-vector patch. Preserve exact failures; no blanket skips or
-relaxed replay comparison to make CI green.
+Preserve all unrelated primary work, exact scientific comparisons/tolerances,
+active coverage, retired selections, saved fixtures and historical evidence.
+No numerical kernel or mechanics change was justified or made in this slice.
+Local checks pass; full hosted CI for the candidate remains the promotion gate.
+Do not report the old hosted replay failures repaired merely from local passes.
 
-1. Mistral owns a connected tooling/runtime/sharding slice: audit actual setup,
-   collection, compilation and test costs; implement evidenced low-risk fixes in
-   the existing method; prove active inventory/coverage and retirement unchanged.
-2. A separate Mistral Read assessment traces contact failures and proposes the
-   smallest compatible repair. OpenAI adopts consequential source/replay contracts
-   before implementation expands into checkpoint mechanics or frozen metadata.
-3. Verify affected tooling and public runner paths, actual JIT/thread settings,
-   cancellation/timeout and deterministic partition completeness. Report measured
-   changes separately from estimated shard balance and unmeasured hosted savings.
-4. OpenAI independently reviews source, actual receipts and dirty-work preservation.
-   Local candidate delivery only; the previous main-push authority was consumed.
+## Implemented changes
 
-This is a new ordinary CI/tooling task, not a renewal of PR35's closed300second
-salvage allowance or retired programme execution. First milestone uses a600second
-cumulative process-wall bound with180seconds reserved for final checks, one serial
-numerical/check tree, bounded commands and preserved failures. No full historical
-campaign, parameter sweep, fixture rewrite or automatic budget extension. Stop
-after three failed attempts at the same issue and record the concrete boundary.
+- Existing portable weighted sharding gains eight observed contact-test cost
+  overrides. All 658 active modules, critical repetition, process isolation and
+  all 32 OS/Python/shard/subshard allocations remain. Both assignments scored
+  against one fixed heuristic model reduce maximum modeled load from 851658 to
+  564133 (33.8%). This is not measured hosted wall-time savings.
+- Seven invalid-shard-bound tests avoid rediscovering the entire inventory.
+  Their error cases and separate full-coverage assertions remain. The same
+  53-check set measured 115.9889903 -> 54.8651325 seconds locally, one before/after
+  pair, with no whole-suite speedup claim.
+- Focused development explicitly admits `--threads 1..8` (default 1), retaining
+  `--jit on/off`. Runtime records distinguish capacity from active threads,
+  initialize/require baseline active 1, keep BLAS 1, check bounded OpenMP,
+  reject unavailable requested JIT and detect leaked scopes. Public
+  `JIT_ENABLED` semantics and normal CI controls are unchanged.
+- CI resolves/installs the four pinned sibling source packages and editable
+  dev/Numba runtime in one pip invocation instead of two. Existing pip caching,
+  pins, pip checks, matrix and 2400-second limits remain.
+- CI workers emit small selection/progress/current-node/phase/lifecycle records;
+  the parent records failure/timeout/interruption termination. The optional
+  plugin does not change runtime settings, selection or pytest outcomes.
+  The pinned upload action collects only named diagnostic JSON files, with
+  unique matrix names and three-day retention, excluding all caches/basetemp.
+- The checkpoint diagnostic assertion checks explicit disagreement markers,
+  avoiding false matches on legitimate identity-component names.
+- A compact Q4 current-source binding successor links immutable 0.4.2 evidence.
+  The existing 47 roots now bind 133 transitive symbols, including the extracted
+  nonlinear core. This is SOURCE_BINDING_ONLY_NO_NEW_QUALIFICATION. Historical
+  records, source laws and defaults are unchanged. Optional sampling and the
+  named experimental prepared consumers are explicitly not newly qualified.
+  Mutation/default-workflow exclusion checks guard this boundary.
 
-Evidence: C:/Github/ANYsolver/.development/test-regime-ci-b020-20261016/ and
-the isolated checkout's .development/test-regime-ci/. Exact commands, source and
-effective settings, wall time, outcomes and remaining budget accompany each run.
+## Verification and unresolved evidence
 
-## Mistral checkpoint 1 (implementation start)
+Current local verification on the observed Python 3.14 CI dependency versions:
 
-Concrete findings from the owned sources (run_portable_ci.py 719 lines,
-development_test_runtime.py 46 lines, ci.yml 452 lines, harness read-only):
+- 59 runner/retirement checks pass, including a live CI-plugin run of its own
+  tests: 59 started/completed/passed, no remaining current node, exit 0.
+- 36 final affected inventory/matrix/isolation, Q4 authority/default/tangent and
+  diagnostic checks pass through the public focused CLI with JIT enabled.
+- All five original replay failures pass unchanged, including rejected trials,
+  cancellation, split restart and saved-record comparisons. This does not identify
+  the hosted-only cause or constitute a numerical repair.
+- License compliance passes. Preservation checks confirm all 731 pre-existing
+  files, primary HEAD/index, frozen evidence and retired policies unchanged.
 
-- The runtime recorder hardcodes the focused contract: any
-  `numba.get_num_threads() != 1`, any pool `num_threads != 1`, or effective JIT
-  differing from `NUMBA_DISABLE_JIT` is an error. `os.environ["NUMBA_DISABLE_JIT"]`
-  is an unguarded KeyError when unset. It records only final active values; no
-  max/initial/final pool history. A compiled `recovery_threads=3` test therefore
-  cannot pass even when explicitly admitted, and an OpenMP pool left at the
-  admitted maximum is rejected although active threads were restored.
-- The development envelope pins `NUMBA_NUM_THREADS=1` (via `_worker_environment`)
-  with no CLI thread control; `--jit on` only flips `NUMBA_DISABLE_JIT=0`, so a
-  3-thread compiled test cannot execute at all under the current envelope.
-- CI: 32 pytest jobs (8 matrix shards x 4 subshards, Windows+Ubuntu, Python
-  3.11-3.14), `--workers 2 --timeout-seconds 2400`, ten checked-in weight
-  overrides; pip cache already enabled (not a new improvement).
+The exact observed stack is reproduced in the disposable local environment:
+Python 3.14, NumPy 2.5.4, SciPy 1.18.1, Numba 0.68.0, llvmlite 0.50.0,
+pytest 9.1.1, threadpoolctl 3.7.0. Earlier local checks used NumPy 2.4.3 or 2.4.6;
+those passes alone were insufficient. The saved CI 3.11 failure used NumPy 2.4.6.
+No shared installed runtime was modified.
 
-Intended edit (existing services only, no new framework):
+Old hosted run: https://github.com/audunarn/ANYsolver/actions/runs/38899727006
+It ended with 40 successful and 9 failed jobs: five exact replay failures, the
+locally corrected diagnostic assertion, the locally corrected Q4 source binding,
+and two shared-limit timeouts. Hosted replay/timeout disposition awaits the new
+candidate's full CI. Saved fixtures and failure output are retained unchanged.
 
-1. Add an explicit bounded development thread profile: `--threads N`
-   (default 1, admitted 1..8, development mode only) setting
-   `NUMBA_NUM_THREADS`; record the requested profile in selection.json.
-2. Make the recorder validate against the explicitly requested profile
-   (env-passed) instead of hardcoded 1: strict single-thread default retained;
-   admitted N allows pools up to N while final active Numba threads must be
-   restored to 1; record max/initial/final/actual pools and requested/effective
-   JIT; missing contract env becomes an explicit error, not KeyError.
-3. Derive measured cost concentration from saved job logs (`--durations` /
-   step timings) and update weight overrides only where measured data
-   justifies; distinguish measured vs modeled balance.
-4. Regression coverage in tests/test_development_test_runner.py; focused checks
-   and one production runner smoke through the 600 s harness.
+## Ownership, review and bounds
 
-Remaining checks: tooling tests, runner smoke, weight-override justification
-from logs. Reserved decisions for parent: public `JIT_ENABLED` meaning change
-(proposed only); Q4 symbol-manifest binding contract (existing
-`compute_nonlinear_response`/`compute_stresses` differ from the successor symbol
-list; not refreshed to green).
+Mistral owned the connected investigation and CI implementation/repair. ROOT owned
+the consequential Q4 binding disposition, independent review, reconciliation and
+Git delivery. Independent Mistral review of the actual bundled Q4 diff/record has
+no unresolved consequential finding. A tool-response mismatch in an earlier
+multi-file read was detected; that incomplete review was not used for acceptance.
 
-## Completion checkpoint (2026-10-16)
+Turn-bound worker runs left implementation without final handoff/verification.
+ROOT preserved the logs and completed small integration repairs: a malformed test
+newline, independent unit-plugin state, and failed-setup phase transition. The
+real pytest child tests cover pass/skip/setup-fail/teardown-fail and unchanged
+exit status; the live-plugin check guards counter contamination. No further
+worker extension or mechanics formulation was started.
 
-The candidate keeps all658 active merge modules, existing repeated critical
-coverage, Windows/Linux/Python matrix, process isolation, retirement overlay and
-scientific tolerances. Eight contact-module scheduling overrides now use saved
-hosted durations rather than tiny source sizes. Both assignments were scored
-against the same candidate cost model: maximum modeled subshard cost851658 to
-564133 (33.8% reduction). This is a scheduling estimate, not measured hosted
-wall-time savings; failed-worker samples are lower bounds and two actual shards
-hit2400seconds. Existing pip caching was already enabled.
+The new local check cap is 1800 seconds, one serial local check tree, with 450
+seconds reserved for final/integration checks. Accounted use at local acceptance
+is 647.8724368 seconds, including a conservative 3.374-second charge recovered
+from untimed metadata/edit tool intervals. Exact child process times, failures,
+source/settings and remaining allowance are in the ledger. Prior 600-second and
+PR35 budgets remain closed; no retired campaign authority is renewed.
 
-Focused development gains explicit --threads1..8 (default1), paired with existing
---jit on/off. The recorder initializes active Numba1 before collection, retains
-requested capacity, records initial/final state, enforces BLAS1, admits only
-bounded OpenMP capacity, rejects unavailable requested JIT and failed observations,
-and detects leaked active-thread scopes. Public JIT_ENABLED semantics are unchanged.
-Example: python scripts/run_portable_ci.py --development
- tests/test_recovery_batches.py::test_compiled_isotropic_s4_matches_scalar_oracle_for_warped_global_output
- --jit on --threads 3 --timeout-seconds 90
-This unchanged production oracle
-passed with actual JIT enabled, capacity3, initial/final active1, BLAS1.
+One pre-promotion hosted workflow dispatch uses the unchanged full matrix and
+limits. No manual whole-workflow retry or parameter campaign is authorized by
+this plan. A successful main push normally triggers its own automatic CI; that
+standard trigger is preserved. Required failing gates must not be waived.
 
-One CI refusal-diagnostic test now matches explicit disagreement markers instead
-of looking for the word profile anywhere in identity-component details. Valid
-restore and isolated semantic tamper checks remain unchanged. No checkpoint or
-mechanics implementation, schema, fixture or tolerance was changed.
+## Restart and evidence
 
-Hosted b0202d33 run38899727006 ended40passed jobs/9failed jobs: five exact native
-contact replay failures, one refusal assertion, one Q4 source-authority mismatch,
-and two2400second timeouts. Only the refusal assertion has a demonstrated local
-fix. Replay determinism and current Q4 authority need separate bounded slices;
-CI is still red. The decoded-state hypothesis was disproved by source inspection.
-Do not refresh frozen evidence or loosen exact comparisons.
+Raw evidence and full commands are local, outside the integration payload:
+`C:/Github/ANYsolver/.development/test-regime-ci-b020-20261016/continuation/`.
+Worker ledger and disposable runtime:
+`C:/Github/ANYsolver/.worktrees/test-regime-ci-b020-20261016/.development/ci-fixes-continuation/`.
+The complete pre-compaction note is retained locally; earlier committed history
+also retains the prior milestone. The current compact source binding is
+`docs/reference_cases/e4_pl_q4_current_source_binding_20261016.json`.
 
-Mistral owned the initial connected implementation and seven passing check
-attempts. Its review-fix continuation ended after inspection without edits or
-handoff. Root completed the concrete small repair to avoid repeated ineffective
-extensions. A separate Mistral final patch review completed; its two caller-context
-concerns were resolved against baseline and actual runtime evidence. Full review
-and adjudication are retained in the evidence root.
-
-Evidence root: C:/Github/ANYsolver/.development/test-regime-ci-b020-20261016
-Worker check ledger: this checkout's .development/test-regime-ci/BUDGET.json.
-All process attempts, failures and settings are retained. One initial parent
-check hit sandbox WinError5 path resolution; runner checks then passed with normal
-Windows filesystem access. The old PR35 budget remains closed and unused.
-Final totals and acceptance are recorded below after final verification.
-
-## Final local acceptance
-
-53 affected checks pass through the public focused CLI at JIT-off/threads1;
-the unchanged compiled recovery oracle separately passes at JIT-on/capacity3.
-All runtime records report no contract errors. The final timing report justified
-one further mechanical test-only optimization: seven invalid-shard-bound cases
-now use a tiny input instead of rediscovering the complete repository inventory.
-All seven refusal cases and independent full-coverage checks remain. The same53
-checks took115.9889903seconds before and54.8651325seconds after (process wall,
-one local before/after pair; no hosted-speedup claim).
-
-Final cumulative check process-wall:478.0781439/600seconds, including the failed
-sandbox attempt. Remaining121.9218561seconds is unused; no extension or further
-check campaign. Final preservation receipt confirms all731 pre-existing files,
-primary HEAD/index and protected retirement/frozen CI paths unchanged. No source
-mechanics or experimental-programme file was altered. The local candidate is
-accepted for these tooling/diagnostic changes only, not as a green-CI release.
-No integration to main or push has been performed for this milestone.
-
-Exact commands, candidate hashes, effective settings, before/after schedule
-scores, completed independent review/adjudication and all failure logs remain
-under the evidence root. CI_REPAIR_STATUS.md identifies the next bounded replay,
-Q4 authority and timeout-diagnosis slices without relaxing their gates.
+Before resuming, inspect candidate GitHub checks, `ACTIVE_CONTINUATION.md`,
+`Q4_ACCEPTANCE.md`, `CANDIDATE_PRESERVATION.json` and `BUDGET.json`. Do not rerun
+passed unchanged checks to reconstruct evidence or renew consumed limits. A
+remaining failure needs its exact current node/state and a bounded discriminating
+check; no tolerance relaxation, fixture overwrite or retirement-based exclusion.

@@ -42,6 +42,9 @@ Q4_REPLAY_CANONICALIZATION = (
     / "reference_cases"
     / "e4_pl_q4_0_4_2_replay_canonicalization.json"
 )
+Q4_CURRENT_SOURCE_BINDING = (
+    ROOT / "docs" / "reference_cases" / "e4_pl_q4_current_source_binding_20261016.json"
+)
 Q4_MECHANICS_AUTHORITY_SCHEMA = "anysolver.python-ast-mechanics-closure-v1"
 Q4_MECHANICS_CANONICALIZATION = (
     "AST_NODE_ORDERED_FIELDS_COMPACT_JSON_WITHOUT_LOCATIONS_DOCSTRINGS_"
@@ -493,10 +496,13 @@ def test_qualification_contract_and_replay_hotfix_bind_q4_mechanics_symbols() ->
         if actual["symbols"][name] != digest
     )
     added = sorted(set(actual["symbols"]) - set(expected))
-    assert changed == successor_correction["cumulative_updated_existing_symbols"]
-    assert added == successor_correction["cumulative_added_symbols"]
-    assert correction["updated_existing_symbols"] == changed
-    assert set(correction["added_symbols"]) < set(added)
+    # The immutable historical successors retain their own source boundaries.
+    # Later, reviewed source changes have a separate binding, not a rewritten
+    # historical qualification result.
+    assert correction["updated_existing_symbols"] == successor_correction[
+        "cumulative_updated_existing_symbols"
+    ]
+    assert set(correction["added_symbols"]) < set(successor_correction["cumulative_added_symbols"])
     assert authority["aggregate_sha256"] == correction[
         "prior_mechanics_aggregate_sha256"
     ]
@@ -506,9 +512,102 @@ def test_qualification_contract_and_replay_hotfix_bind_q4_mechanics_symbols() ->
     assert hashlib.sha256(Q4_REPLAY_HOTFIX.read_bytes()).hexdigest().upper() == successor[
         "prior_evidence"
     ]["sha256"]
-    assert _q4_mechanics_aggregate(actual) == successor_correction[
-        "current_mechanics_aggregate_sha256"
+    binding = _strict_json(Q4_CURRENT_SOURCE_BINDING.read_bytes())
+    assert binding["schema"] == "anysolver.q4-current-source-binding-successor-v1"
+    assert binding["disposition"] == "SOURCE_BINDING_ONLY_NO_NEW_QUALIFICATION"
+    assert binding["scope"] == "SELECTED_ROOT_CLOSURE_IN_ONE_SOURCE_FILE_ONLY"
+    assert binding["excluded_prepared_route_consumers"] == [
+        "src/anysolver/_stiffened_shell_ge_finite_experimental.py",
+        "src/anysolver/_stiffened_shell_q4_algorithmic_pullback.py",
     ]
+    assert binding["prior_evidence"] == {
+        "path": Q4_REPLAY_CANONICALIZATION.relative_to(ROOT).as_posix(),
+        "sha256": hashlib.sha256(Q4_REPLAY_CANONICALIZATION.read_bytes()).hexdigest().upper(),
+    }
+    current = binding["source"]
+    assert current["path"] == authority["path"]
+    assert current["root_symbol_count"] == len(actual["roots"]) == 47
+    assert current["symbol_count"] == len(actual["symbols"]) == 133
+    assert changed == current["cumulative_updated_existing_symbols"]
+    assert added == current["cumulative_added_symbols"]
+    assert _q4_mechanics_aggregate(actual) == current["aggregate_sha256"]
+    assert binding["boundaries"] == {
+        "historical_qualification_records_unchanged": True,
+        "historical_numerical_results_reused_as_current_evidence": False,
+        "new_qualification_claimed": False,
+        "prepared_route_newly_qualified": False,
+        "optional_sampling_newly_qualified": False,
+        "formulation_defaults_changed_by_this_binding": False,
+        "scientific_tolerances_changed": False,
+    }
+
+
+def test_current_q4_binding_includes_extracted_nonlinear_core() -> None:
+    authority = _strict_json(QUALIFICATION_CONTRACT.read_bytes())["candidate"]["qualified_q4_mechanics_authority"]
+    source = QUALIFIED_Q4_MECHANICS.read_text(encoding="utf-8")
+    kwargs = dict(schema=authority["schema"], path=authority["path"], required_symbols=set(authority["symbols"]))
+    actual = _q4_mechanics_authority_payload(source, set(authority["roots"]), **kwargs)
+    extracted = "QualifiedE4PLShellElement._nonlinear_response_core"
+    assert extracted in actual["edges"]["QualifiedE4PLShellElement.compute_nonlinear_response"]
+    tree = ast.parse(source)
+    owner = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "QualifiedE4PLShellElement")
+    core = next(node for node in owner.body if isinstance(node, ast.FunctionDef) and node.name == "_nonlinear_response_core")
+    # A real executable-body mutation must invalidate the exact current binding.
+    core.body.append(ast.Return(value=ast.Constant(value=0)))
+    mutated = _q4_mechanics_authority_payload(ast.unparse(ast.fix_missing_locations(tree)), set(authority["roots"]), **kwargs)
+    assert mutated["symbols"][extracted] != actual["symbols"][extracted]
+    assert _q4_mechanics_aggregate(mutated) != _q4_mechanics_aggregate(actual)
+
+
+def test_default_q4_workflow_does_not_enter_experimental_prepared_route() -> None:
+    import numpy as np
+    from anysolver.fe_core import FEModel
+    from anysolver.elements import create_shell_element
+    from anysolver.boundary import FixedSupport, LoadCase
+    from anysolver.nonlinear_static import solve_static_nonlinear
+    from anysolver.e4_pl_element import _GAUSS
+
+    model = FEModel("default Q4 source-binding boundary")
+    model.add_material("steel", 210e9, 0.3)
+    for node, (x, y) in enumerate(((0., 0.), (1., 0.), (1., 1.), (0., 1.)), 1):
+        model.add_node(node, x, y, 0.)
+    element = create_shell_element(1, [1, 2, 3, 4], "steel", thickness=0.02)
+    model.add_element(1, element)
+    model.add_boundary_condition(FixedSupport("left", [1, 4]))
+    load = LoadCase("small dead load")
+    for node in (2, 3):
+        load.add_nodal_load(node, [10., 0., 0., 0., 0., 0.])
+    calls = set()
+    previous = sys.getprofile()
+
+    def observe(frame, event, arg):
+        if event == "call" and frame.f_code.co_filename.replace("\\", "/").endswith("/anysolver/e4_pl_element.py"):
+            calls.add(frame.f_code.co_name)
+        if previous is not None:
+            previous(frame, event, arg)
+
+    try:
+        sys.setprofile(observe)
+        result = solve_static_nonlinear(model, load, num_steps=1, convergence_settings="legacy")
+        material = model.get_material("steel")
+        # The solver may use the vectorized default kernel. Exercise the public
+        # scalar entry separately, with the same model, without forcing its path.
+        element.compute_nonlinear_response(model.mesh, material, result.displacements,
+                                          element.init_nonlinear_state(3), 3, True)
+        default = element.compute_stresses(model.mesh, result.displacements, material)
+        explicit = element.compute_stresses(model.mesh, result.displacements, material, natural_points=_GAUSS)
+        for name, value in default.items():
+            if isinstance(value, np.ndarray):
+                np.testing.assert_array_equal(value, explicit[name])
+        for invalid in ([], [[float("nan"), 0.]], [[1.01, 0.]], [[0., 0., 0.]]):
+            with pytest.raises(ValueError, match="natural stress points"):
+                element.compute_stresses(model.mesh, result.displacements, material, natural_points=invalid)
+    finally:
+        sys.setprofile(previous)
+    assert result.status == "completed"
+    assert np.isfinite(result.displacements).all() and np.any(result.displacements)
+    assert {"compute_nonlinear_response", "_nonlinear_response_core", "compute_stresses"} <= calls
+    assert not {"_prepare_nonlinear_linear_correction", "_compute_prepared_nonlinear_response"} & calls
 
 
 def test_q4_mechanics_symbol_authority_rejects_missing_duplicate_and_change() -> None:
@@ -532,11 +631,12 @@ def test_q4_mechanics_symbol_authority_rejects_missing_duplicate_and_change() ->
         "def _shape(r: float, s: float, marker: int = 0) -> np.ndarray:",
         1,
     )
+    original_hashes = _q4_mechanics_symbol_hashes(source, selected)
     changed_hashes = _q4_mechanics_symbol_hashes(changed, selected)
     assert {
         name
         for name in selected
-        if changed_hashes[name] != authority["symbols"][name]
+        if changed_hashes[name] != original_hashes[name]
     } == {"_shape"}
 
 

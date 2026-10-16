@@ -1,0 +1,57 @@
+{
+  "schema": "anysolver.q4-current-source-binding-successor-v1",
+  "disposition": "SOURCE_BINDING_ONLY_NO_NEW_QUALIFICATION",
+  "prior_evidence": {
+    "path": "docs/reference_cases/e4_pl_q4_0_4_2_replay_canonicalization.json",
+    "sha256": "C210BE974874D582D79B42D68FF27DFB3443FB3C690FC3D3BA58B03363953259"
+  },
+  "source": {
+    "aggregate_sha256": "ADA3164069ED350FC0A5A672C729850E2323ADFBB4102D422F92D8F10E60F266",
+    "cumulative_added_symbols": [
+      "QualifiedE4PLShellElement._is_compact_batch_constitutive_state",
+      "QualifiedE4PLShellElement._nonlinear_response_core",
+      "_Q4_COMPACT_REPLAY_MAX_ULPS",
+      "_q4_compact_replay_last_place_equivalent"
+    ],
+    "symbol_count": 133,
+    "cumulative_updated_existing_symbols": [
+      "QualifiedE4PLShellElement._replay_accepted_algorithmic_response",
+      "QualifiedE4PLShellElement.compute_nonlinear_response",
+      "QualifiedE4PLShellElement.compute_stresses"
+    ],
+    "root_symbol_count": 47,
+    "git_blob": "6b996905e67374b6e755b44978f2cd2c69acef82",
+    "path": "src/anysolver/e4_pl_element.py"
+  },
+  "reviewed_changes": [
+    {
+      "commit": "0d494d1a",
+      "new_transitive_symbol": "QualifiedE4PLShellElement._nonlinear_response_core",
+      "scope": "NONLINEAR_BODY_EXTRACTION_WITH_DEFAULT_UNPREPARED_CORRECTION"
+    },
+    {
+      "commit": "3bcd3211",
+      "scope": "OPTIONAL_PLANAR_HOMOGENEOUS_RECOVERY_POINTS_AND_COORDINATE_METADATA",
+      "default_points": "UNCHANGED_FOUR_GAUSS_POINTS"
+    }
+  ],
+  "boundaries": {
+    "formulation_defaults_changed_by_this_binding": false,
+    "historical_qualification_records_unchanged": true,
+    "prepared_route_newly_qualified": false,
+    "scientific_tolerances_changed": false,
+    "new_qualification_claimed": false,
+    "optional_sampling_newly_qualified": false,
+    "historical_numerical_results_reused_as_current_evidence": false
+  },
+  "required_current_regressions": [
+    "Q4 mechanics symbol graph and mutation refusals",
+    "Q4 current nonlinear tangent/component and accepted-state checks",
+    "default Gauss versus explicit Gauss recovery and unsupported-point refusals"
+  ],
+  "scope": "SELECTED_ROOT_CLOSURE_IN_ONE_SOURCE_FILE_ONLY",
+  "excluded_prepared_route_consumers": [
+    "src/anysolver/_stiffened_shell_ge_finite_experimental.py",
+    "src/anysolver/_stiffened_shell_q4_algorithmic_pullback.py"
+  ]
+}

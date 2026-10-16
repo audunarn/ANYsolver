@@ -313,3 +313,239 @@ def test_development_thread_profile_is_explicit_and_bounded(tmp_path, monkeypatc
                        threads=rejected)
     with pytest.raises(ValueError):
         runner.run(workers=1, timeout_seconds=1, threads=2)
+
+
+def test_ci_worker_writes_allocation_and_progress_evidence(tmp_path, monkeypatch):
+    monkeypatch.setenv('RUNNER_TEMP', str(tmp_path))
+    monkeypatch.setattr(runner, 'merge_test_modules', lambda: ('a.py', 'b.py'))
+    monkeypatch.setattr(runner, 'execution_partitions',
+                        lambda modules, workers: (('a.py',), ('b.py',)))
+    launched = []
+    def launch(command, *, cwd, env, **kwargs):
+        launched.append((command, env))
+        return SimpleNamespace(poll=lambda: 0, returncode=0)
+    monkeypatch.setattr(runner.subprocess, 'Popen', launch)
+    assert runner.run(workers=2, timeout_seconds=1) == 0
+    assert all(command.count('scripts.ci_progress_runtime') == 1
+               for command, _ in launched)
+    selections = sorted(tmp_path.glob('anysolver-portable-ci-*/P*/selection.json'))
+    assert len(selections) == 2
+    records = [json.loads(path.read_text()) for path in selections]
+    # The evidence mirrors the unchanged partition allocation exactly.
+    assert [record['allocated_modules'] for record in records] == [['a.py'], ['b.py']]
+    assert all(record['scope'] == 'ci allocation evidence only; not qualification'
+               and record['timeout_seconds'] == 1 for record in records)
+    for (command, env), path in zip(launched, selections):
+        assert json.loads(path.read_text())['command'] == command
+        assert Path(env['ANYSOLVER_CI_PROGRESS_RECORD']) == path.parent/'progress.json'
+
+
+def test_ci_timeout_termination_evidence_identifies_current_node(tmp_path, monkeypatch):
+    monkeypatch.setenv('RUNNER_TEMP', str(tmp_path))
+    monkeypatch.setattr(runner, 'merge_test_modules', lambda: ('a.py',))
+    monkeypatch.setattr(runner, 'execution_partitions', lambda modules, workers: (('a.py',),))
+    process = SimpleNamespace(poll=lambda: None, returncode=None)
+    def launch(command, *, cwd, env, **kwargs):
+        Path(env['ANYSOLVER_CI_PROGRESS_RECORD']).write_text(json.dumps({
+            'current_node': 'a.py::test_hung', 'completed': 3, 'collected': 5})+'\n')
+        return process
+    monkeypatch.setattr(runner.subprocess, 'Popen', launch)
+    ticks = iter((0., 0., 5., 5.))
+    monkeypatch.setattr(runner.time, 'monotonic', lambda: next(ticks))
+    monkeypatch.setattr(runner, '_terminate_tree', lambda worker: None)
+    assert runner.run(workers=1, timeout_seconds=1) == runner.TIMEOUT_EXIT_CODE
+    termination = json.loads(
+        next(tmp_path.glob('anysolver-portable-ci-*/termination.json')).read_text())
+    assert termination['status'] == 'timeout' and termination['elapsed_seconds'] == 5
+    worker = termination['workers'][0]
+    assert worker['worker'] == 'P01' and worker['allocated_modules'] == ['a.py']
+    assert worker['exit_code'] is None
+    assert worker['progress']['current_node'] == 'a.py::test_hung'
+
+
+def test_ci_failed_worker_cancellation_writes_termination_evidence(tmp_path, monkeypatch):
+    monkeypatch.setenv('RUNNER_TEMP', str(tmp_path))
+    monkeypatch.setattr(runner, 'merge_test_modules', lambda: ('a.py', 'b.py'))
+    monkeypatch.setattr(runner, 'execution_partitions',
+                        lambda modules, workers: (('a.py',), ('b.py',)))
+    launched = []
+    def launch(*args, **kwargs):
+        process = SimpleNamespace(returncode=None)
+        process.poll = lambda: 1
+        process.returncode = 1
+        launched.append(process)
+        return process
+    monkeypatch.setattr(runner.subprocess, 'Popen', launch)
+    monkeypatch.setattr(runner, '_terminate_tree', lambda worker: None)
+    assert runner.run(workers=2, timeout_seconds=1) == 1
+    assert len(launched) == 1
+    termination = json.loads(
+        next(tmp_path.glob('anysolver-portable-ci-*/termination.json')).read_text())
+    assert termination['status'] == 'failed_worker'
+    assert [worker['allocated_modules'] for worker in termination['workers']] == [['a.py']]
+
+
+def test_development_records_stay_free_of_ci_progress_evidence(tmp_path, monkeypatch):
+    monkeypatch.setattr(runner, 'ROOT', tmp_path)
+    monkeypatch.setenv('RUNNER_TEMP', str(tmp_path/'temp'))
+    (tmp_path/'tests').mkdir()
+    (tmp_path/'tests/test_x.py').write_text('')
+    commands = []
+    def launch(command, *, cwd, env, **kwargs):
+        commands.append((command, env))
+        Path(env['ANYSOLVER_DEVELOPMENT_RECORD']).write_text('{}')
+        return SimpleNamespace(poll=lambda: 0, returncode=0)
+    monkeypatch.setattr(runner.subprocess, 'Popen', launch)
+    assert runner.run(workers=1, timeout_seconds=1,
+                      development_targets=['tests/test_x.py']) == 0
+    command, env = commands[0]
+    assert 'scripts.ci_progress_runtime' not in command
+    assert 'ANYSOLVER_CI_PROGRESS_RECORD' not in env
+
+
+def test_ci_progress_plugin_is_optional_and_never_alters_the_session(tmp_path, monkeypatch):
+    import importlib.util
+    # CI loads the real module as a live plugin. Exercise a separate module
+    # instance so this unit test cannot replace its running session counters.
+    spec = importlib.util.spec_from_file_location('ci_progress_unit', runner.ROOT/'scripts/ci_progress_runtime.py')
+    progress = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(progress)
+    monkeypatch.delenv(progress.RECORD_ENV, raising=False)
+    progress.pytest_configure(SimpleNamespace(args=['-q', 'tests/test_x.py']))
+    progress.pytest_collection_finish(SimpleNamespace(items=[1, 2, 3]))
+    progress.pytest_runtest_logstart('tests/test_x.py::test_a', None)
+    progress.pytest_runtest_logreport(SimpleNamespace(when='setup', outcome='passed'))
+    progress.pytest_runtest_logreport(SimpleNamespace(when='call', outcome='passed'))
+    session = SimpleNamespace(exitstatus=0)
+    progress.pytest_sessionfinish(session, 0)
+    assert session.exitstatus == 0 and not list(tmp_path.iterdir())
+    record = tmp_path/'progress.json'
+    monkeypatch.setenv(progress.RECORD_ENV, str(record))
+    progress.pytest_configure(SimpleNamespace(args=['-q', 'tests/test_x.py']))
+    progress.pytest_collection_finish(SimpleNamespace(items=[1, 2, 3]))
+    # Call finished but teardown still pending: not yet a completed lifecycle.
+    progress.pytest_runtest_logstart('tests/test_x.py::test_a', None)
+    progress.pytest_runtest_logreport(SimpleNamespace(when='setup', outcome='passed'))
+    progress.pytest_runtest_logreport(SimpleNamespace(when='call', outcome='passed'))
+    payload = json.loads(record.read_text())
+    assert payload['started'] == 1 and payload['completed'] == 0
+    assert payload['current_node'] == 'tests/test_x.py::test_a'
+    assert payload['current_phase'] == 'teardown'
+    assert payload['outcomes'] == {'passed': 1}
+    progress.pytest_runtest_logreport(SimpleNamespace(when='teardown', outcome='passed'))
+    progress.pytest_runtest_logfinish('tests/test_x.py::test_a', None)
+    progress.pytest_runtest_logstart('tests/test_x.py::test_b', None)
+    progress.pytest_runtest_logreport(SimpleNamespace(when='setup', outcome='skipped'))
+    progress.pytest_runtest_logreport(SimpleNamespace(when='teardown', outcome='passed'))
+    progress.pytest_runtest_logfinish('tests/test_x.py::test_b', None)
+    session = SimpleNamespace(exitstatus=0)
+    progress.pytest_sessionfinish(session, 2)
+    assert session.exitstatus == 0
+    payload = json.loads(record.read_text())
+    assert payload['scope'] == 'ci progress evidence only; not qualification'
+    assert payload['allocated_modules'] == ['tests/test_x.py']
+    assert payload['collected'] == 3 and payload['started'] == 2
+    assert payload['completed'] == 2 and payload['outcomes'] == {'passed': 1, 'skipped': 1}
+    assert payload['current_node'] is None and payload['current_phase'] is None
+    assert payload['pytest_exit_code'] == 2 and 'updated_utc' in payload
+
+
+def test_ci_progress_plugin_records_a_real_pytest_child(tmp_path):
+    import os
+    import subprocess
+    import sys
+    target = tmp_path/'test_progress_child.py'
+    target.write_text('def test_ok():\n    assert True\n')
+    record = tmp_path/'progress.json'
+    env = {**os.environ, 'ANYSOLVER_CI_PROGRESS_RECORD': str(record),
+           'PYTEST_DISABLE_PLUGIN_AUTOLOAD': '1'}
+    child = subprocess.run([sys.executable, '-m', 'pytest', '-q', '--noconftest',
+                            '-p', 'no:cacheprovider', '-p', 'scripts.ci_progress_runtime',
+                            str(target)],
+                           cwd=runner.ROOT, env=env, capture_output=True, text=True,
+                           timeout=60)
+    assert child.returncode == 0, child.stdout + child.stderr
+    payload = json.loads(record.read_text())
+    assert payload['allocated_modules'] == [str(target)]
+    assert payload['current_node'] is None and payload['current_phase'] is None
+    assert payload['outcomes'] == {'passed': 1} and payload['completed'] == 1
+    assert payload['pytest_exit_code'] == 0
+
+
+def test_ci_progress_plugin_classifies_real_pytest_lifecycle_outcomes(tmp_path):
+    import os
+    import subprocess
+    import sys
+    target = tmp_path/'test_progress_lifecycle.py'
+    target.write_text(
+        'import pytest\n'
+        '\n'
+        'def test_pass():\n'
+        '    assert True\n'
+        '\n'
+        '@pytest.mark.skip(reason="setup skip")\n'
+        'def test_setup_skip():\n'
+        '    assert True\n'
+        '\n'
+        '@pytest.fixture\n'
+        'def broken_setup():\n'
+        '    raise RuntimeError("setup failure")\n'
+        '\n'
+        'def test_setup_fail(broken_setup):\n'
+        '    assert True\n'
+        '\n'
+        '@pytest.fixture\n'
+        'def broken_teardown():\n'
+        '    yield\n'
+        '    raise RuntimeError("teardown failure")\n'
+        '\n'
+        'def test_teardown_fail(broken_teardown):\n'
+        '    assert True\n')
+    record = tmp_path/'progress.json'
+    env = {**os.environ, 'PYTEST_DISABLE_PLUGIN_AUTOLOAD': '1'}
+    base = [sys.executable, '-m', 'pytest', '-q', '--noconftest',
+            '-p', 'no:cacheprovider', str(target)]
+    plain = subprocess.run(base, cwd=runner.ROOT, env=env, capture_output=True,
+                           text=True, timeout=60)
+    env['ANYSOLVER_CI_PROGRESS_RECORD'] = str(record)
+    with_plugin = subprocess.run(
+        [sys.executable, '-m', 'pytest', '-q', '--noconftest',
+         '-p', 'no:cacheprovider', '-p', 'scripts.ci_progress_runtime', str(target)],
+        cwd=runner.ROOT, env=env, capture_output=True, text=True, timeout=60)
+    # The plugin never changes the session outcome or its reported summary.
+    assert with_plugin.returncode == plain.returncode != 0
+    for text in (plain.stdout, with_plugin.stdout):
+        assert '2 passed' in text and '1 skipped' in text and '2 errors' in text
+    payload = json.loads(record.read_text())
+    assert payload['started'] == 4 and payload['completed'] == 4
+    assert payload['current_node'] is None and payload['current_phase'] is None
+    assert payload['outcomes'] == {'passed': 2, 'skipped': 1,
+                                   'setup_error': 1, 'teardown_error': 1}
+    assert payload['pytest_exit_code'] == with_plugin.returncode
+
+
+def test_ci_parent_interruption_records_termination_and_reraises(tmp_path, monkeypatch):
+    monkeypatch.setenv('RUNNER_TEMP', str(tmp_path))
+    monkeypatch.setattr(runner, 'merge_test_modules', lambda: ('a.py',))
+    monkeypatch.setattr(runner, 'execution_partitions',
+                        lambda modules, workers: (('a.py',),))
+    def hung():
+        raise KeyboardInterrupt
+    process = SimpleNamespace(poll=hung, returncode=None)
+    def launch(command, *, cwd, env, **kwargs):
+        Path(env['ANYSOLVER_CI_PROGRESS_RECORD']).write_text(json.dumps({
+            'current_node': 'a.py::test_current', 'current_phase': 'call'})+'\n')
+        return process
+    monkeypatch.setattr(runner.subprocess, 'Popen', launch)
+    terminated = []
+    monkeypatch.setattr(runner, '_terminate_tree',
+                        lambda worker: terminated.append(worker))
+    with pytest.raises(KeyboardInterrupt):
+        runner.run(workers=1, timeout_seconds=1)
+    assert terminated == [process]
+    termination = json.loads(
+        next(tmp_path.glob('anysolver-portable-ci-*/termination.json')).read_text())
+    assert termination['status'] == 'interrupted:KeyboardInterrupt'
+    worker = termination['workers'][0]
+    assert worker['worker'] == 'P01' and worker['exit_code'] is None
+    assert worker['progress']['current_node'] == 'a.py::test_current'

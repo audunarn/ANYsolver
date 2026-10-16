@@ -112,10 +112,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - run: python -m pip install --upgrade pip
-      - run: >-
+      - name: Resolve pinned siblings and the editable development runtime together
+        run: >-
           python -m pip install .ecosystem/ANYmaterial .ecosystem/ANYgeometry
-          .ecosystem/ANYmesh .ecosystem/ANYfileIO
-      - run: python -m pip install -e ".[dev,numba]"
+          .ecosystem/ANYmesh .ecosystem/ANYfileIO -e ".[dev,numba]"
       - name: Install Windows process-supervision dependency
         if: runner.os == 'Windows'
         run: python -m pip install pywin32
@@ -130,6 +130,20 @@ jobs:
           python scripts/run_portable_ci.py --workers 2 --timeout-seconds 2400
           --matrix-shard-index ${{ matrix.shard-index }} --matrix-shard-count 8
           --matrix-subshard-index ${{ matrix.subshard-index }} --matrix-subshard-count 4
+      - name: Upload CI diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ci-diagnostics-${{ runner.os }}-py${{ matrix.python-version }}-shard${{ matrix.shard-index }}-subshard${{ matrix.subshard-index }}
+          retention-days: 3
+          # Explicit tiny diagnostic files only; never the workers' NUMBA cache,
+          # __pycache__ prefix or basetemp trees (hundreds of MB per job).
+          path: |
+            ${{ runner.temp }}/anysolver-portable-ci-*/P*/selection.json
+            ${{ runner.temp }}/anysolver-portable-ci-*/P*/progress.json
+            ${{ runner.temp }}/anysolver-portable-ci-*/P*/progress.json.partial
+            ${{ runner.temp }}/anysolver-portable-ci-*/termination.json
+          if-no-files-found: warn
 
   anymesher-compatibility:
     name: ANYmesher ${{ matrix.anymesher-version }} compatibility
@@ -397,10 +411,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - run: python -m pip install --upgrade pip
-      - run: >-
+      - name: Resolve pinned siblings and the editable development runtime together
+        run: >-
           python -m pip install .ecosystem/ANYmaterial .ecosystem/ANYgeometry
-          .ecosystem/ANYmesh .ecosystem/ANYfileIO
-      - run: python -m pip install -e ".[dev,numba]"
+          .ecosystem/ANYmesh .ecosystem/ANYfileIO -e ".[dev,numba]"
       - run: python -m pip check
       - run: python -m pytest tests/test_batch_b_activation.py tests/test_nonlinear_performance_batch_b.py tests/test_nonlinear_performance_batch_c.py
 
