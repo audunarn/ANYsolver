@@ -13,6 +13,7 @@ from scipy.optimize import minimize_scalar
 from test_general_contact_native_curved_s3_static import _analysis
 from test_general_contact_native_surface_bounds import _independent_point
 from test_general_contact_native_curved_s3_work import _corners
+from native_s3_fixture_replay import restore_native_s3_fixture
 
 DATA=Path(__file__).parent/'data'
 BASE='general_contact_native_fibre_s3_plastic_active_v1.checkpoint'
@@ -65,8 +66,8 @@ def _response_errors(coarse,fine):
 
 
 def test_enforcement_coarse_independent_gap_and_fixture_preflight():
-    raw=(DATA/BASE).read_bytes();owner=_analysis(physical_fibres=True,plastic_fibres=True)
-    state,records=owner._restore(raw,sha256(raw).hexdigest())
+    owner=_analysis(physical_fibres=True,plastic_fibres=True)
+    state,records,raw=restore_native_s3_fixture(owner,DATA/BASE)
     values=[_gap(owner,state,n) for n in (65,129)]
     assert abs(values[1]-values[0])<=1e-10
     assert values[1]>=-3e-5
@@ -139,7 +140,8 @@ def _enforcement_case(stiffness,seeded=False,source_checkpoint=None,integration_
     if seeded:
         source=_analysis(physical_fibres=True,plastic_fibres=True,normal_stiffness_Pa_per_m=stiffness/2,
             integration_budget_policy=source_integration_budget_policy)
-        guess=owner.make_initial_guess(source,raw,sha256(raw).hexdigest())
+        source_payload=restore_native_s3_fixture(source,raw)[2]
+        guess=owner.make_initial_guess(source,source_payload,sha256(source_payload).hexdigest())
         if output:Path(output+'-initial-guess-provenance.json').write_text(json.dumps(dict(
             fingerprint=guess.fingerprint,owner_identity=guess.owner_identity,
             structure_identity=guess.structure_identity,source_owner_identity=guess.source_owner_identity,
@@ -158,7 +160,7 @@ def _enforcement_case(stiffness,seeded=False,source_checkpoint=None,integration_
     assert run.accepted.completed_targets==1
     coarse=_analysis(physical_fibres=True,plastic_fibres=True,normal_stiffness_Pa_per_m=stiffness/2,
         integration_budget_policy=source_integration_budget_policy)
-    state,_=coarse._restore(raw,sha256(raw).hexdigest())
+    state,_,_=restore_native_s3_fixture(coarse,raw)
     assert coarse.context.identity==owner.context.identity
     np.testing.assert_array_equal(coarse.shell_stiffness,owner.shell_stiffness)
     independent=_gap(owner,run.accepted,129)

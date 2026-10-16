@@ -394,6 +394,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
     assert ci_hashes == {
         "11d5960a326750d5838078e36cf38b85af677262",
         "a26af69be951a213d495a4c3e4e4022e16d87065",
+        "ea165f8d65b6e75b540449e92b4886f43607fa02",
         "d8a233ef4c5e38d25dbba0eb20e6cfa8d44ec5a2",
         "dd954f088a4cb95e267280cc4777b09e16232bd9",
         "27e428188a891705288fef82bab0b166e330aff2",
@@ -542,7 +543,10 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         assert block.count(checkout_ref) == 5
     pytest_block = job_block(ci, "pytest")
     numba_block = job_block(ci, "numba")
-    numba_test_install = 'python -m pip install -e ".[dev,numba]"'
+    numba_test_install = (
+        'python -m pip install .ecosystem/ANYmaterial .ecosystem/ANYgeometry\n'
+        '          .ecosystem/ANYmesh .ecosystem/ANYfileIO -e ".[dev,numba]"'
+    )
     assert pytest_block.count(numba_test_install) == 1
     assert numba_block.count(numba_test_install) == 1
     for name, expected in compatibility_checkouts.items():

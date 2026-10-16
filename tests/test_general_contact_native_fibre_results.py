@@ -9,6 +9,7 @@ from anysolver.control import CancellationToken,SolveCancelled
 from anysolver._ge_beam3_p5_seeded.core import canonical
 from test_general_contact_native_curved_s3_static import _analysis
 from test_ge_beam3_fibre_section import exact_array,exact_pair,rational_fibre,integral
+from native_s3_fixture_replay import restore_native_s3_fixture
 
 
 def _checkpoint():
@@ -31,6 +32,7 @@ def _stored_dissipation(section,station,origin):
 
 def test_committed_recovery_energy_units_origins_and_separate_storage():
     raw=_checkpoint();owner=_analysis(physical_fibres=True,plastic_fibres=True)
+    raw=restore_native_s3_fixture(owner,raw)[2]
     initial=canonical(owner.initial.native_histories)
     report=owner.recover_material(raw,sha256(raw).hexdigest(),include_stations=True)
     assert report['completed_targets']==2 and not report['energy_balance_qualified']
@@ -73,18 +75,20 @@ def test_committed_recovery_energy_units_origins_and_separate_storage():
 
 def test_material_recovery_binding_precancel_and_no_partial_publication():
     raw=_checkpoint();owner=_analysis(physical_fibres=True,plastic_fibres=True)
+    payload=restore_native_s3_fixture(owner,raw)[2]
     with pytest.raises(ValueError,match='hash'):owner.recover_material(raw,'0'*64)
     with pytest.raises(ValueError,match='binding'):_analysis(physical_fibres=True).recover_material(raw,sha256(raw).hexdigest())
     with pytest.raises(ValueError,match='family'):_analysis().recover_material(raw,sha256(raw).hexdigest())
-    with pytest.raises(ValueError,match='boolean'):owner.recover_material(raw,sha256(raw).hexdigest(),include_stations=1)
+    with pytest.raises(ValueError,match='boolean'):owner.recover_material(payload,sha256(payload).hexdigest(),include_stations=1)
     token=CancellationToken();token.cancel()
-    with pytest.raises(SolveCancelled):owner.recover_material(raw,sha256(raw).hexdigest(),cancellation_token=token)
+    with pytest.raises(SolveCancelled):owner.recover_material(payload,sha256(payload).hexdigest(),cancellation_token=token)
     assert owner.context._token is None and not owner.context._lock.locked()
 
 
 @pytest.mark.parametrize('cancelled',(False,True))
 def test_station_recovery_interruption_leaves_committed_state(monkeypatch,cancelled):
     raw=_checkpoint();owner=_analysis(physical_fibres=True,plastic_fibres=True)
+    raw=restore_native_s3_fixture(owner,raw)[2]
     initial=canonical(owner.initial.native_histories);token=CancellationToken()
     section=owner.context.elements[0][1].section;response=type(section).response
     replayed=False;restore=owner._restore
@@ -108,6 +112,7 @@ def test_station_recovery_interruption_leaves_committed_state(monkeypatch,cancel
 def test_cancellation_at_result_publication_returns_no_partial_report(monkeypatch):
     import anysolver.general_contact.native_fibre_results as results
     raw=_checkpoint();owner=_analysis(physical_fibres=True,plastic_fibres=True)
+    raw=restore_native_s3_fixture(owner,raw)[2]
     token=CancellationToken();serialize=results.canonical;attempted=False
     initial=canonical(owner.initial.native_histories)
     def before_publication(value):
@@ -125,9 +130,14 @@ def test_example_recovers_material_json_without_solving_new_target(monkeypatch,t
     from anysolver.general_contact.native_multi_s3_static import NativeRetainedMultiS3Analysis
     source=Path(__file__).parent/'data/general_contact_native_fibre_s3_plastic_open_v1.checkpoint'
     output=tmp_path/'material.json'
+    # Fresh locally verified capsule written only to tmp_path; the strict-first
+    # helper restore independently authenticates the original fixture.
+    restart=tmp_path/'material_locally_verified.checkpoint'
+    restart.write_bytes(restore_native_s3_fixture(
+        _analysis(physical_fibres=True,plastic_fibres=True),source)[2])
     def forbidden_solve(*args,**kwargs):raise AssertionError('recovery must not advance the contact path')
     monkeypatch.setattr(NativeRetainedMultiS3Analysis,'solve',forbidden_solve)
-    monkeypatch.setattr('sys.argv',['example','--plastic-fibres','--restart',str(source),
+    monkeypatch.setattr('sys.argv',['example','--plastic-fibres','--restart',str(restart),
         '--recover-material',str(output),'--material-stations'])
     example.main()
     summary=json.loads(capsys.readouterr().out);report=json.loads(output.read_text())

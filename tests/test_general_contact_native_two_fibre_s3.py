@@ -7,6 +7,7 @@ import pytest
 from test_general_contact_native_curved_s3_static import _analysis
 from test_general_contact_native_fibre_s3 import _independent_material_history
 from anysolver._ge_beam3_p5_seeded.core import canonical
+from native_s3_fixture_replay import restore_native_s3_fixture
 
 
 def _owner(two_facets=False):
@@ -181,19 +182,25 @@ def test_two_fibre_saved_example_cli_recovery(tmp_path,monkeypatch,two_facets):
         'a8211bce3cf3468fa2c4f10328b031b635f88bb240f9fee0bdb98b09653282da')
     example=Path(__file__).parents[1]/'examples/general_contact_native_curved_material_s3.py'
     output=tmp_path/'two_beam_material.json'
+    # Fresh locally verified capsule written only to tmp_path; the original
+    # fixture is independently authenticated by the pinned digest above and
+    # by the helper's strict-first restore.
+    restart=tmp_path/'two_beam_locally_verified.checkpoint'
+    restart.write_bytes(restore_native_s3_fixture(_owner(two_facets),fixture)[2])
+    capsule=restart.read_bytes()
     argv=[str(example),'--targets','1','--two-beams','--plastic-fibres',
         '--normal-stiffness','80000000','--integration-budget-policy','certified_active',
-        '--root-tangent-enclosure-policy','anchored','--restart',str(fixture),
+        '--root-tangent-enclosure-policy','anchored','--restart',str(restart),
         '--recover-material',str(output),'--material-stations']
     if two_facets:argv.append('--two-facets')
     monkeypatch.setattr(sys,'argv',argv)
     runpy.run_path(str(example),run_name='__main__')
     report=json.loads(output.read_text())
-    assert report['completed_targets']==1 and report['checkpoint_sha256']==digest
+    assert report['completed_targets']==1 and report['checkpoint_sha256']==sha256(capsule).hexdigest()
     assert not report['independent_engineering_acceptance'] and not report['energy_balance_qualified']
     elements=report['increments'][0]['elements'];assert [row['element_id'] for row in elements]==[1,2]
     owner=_owner(two_facets)
-    state,_=owner._restore(fixture.read_bytes(),digest)
+    state,_=owner._restore(capsule,sha256(capsule).hexdigest())
     from types import SimpleNamespace
     from test_general_contact_native_fibre_enforcement import _gap
     gaps=[]
@@ -240,9 +247,8 @@ def test_two_fibre_saved_example_cli_recovery(tmp_path,monkeypatch,two_facets):
 
 def _fixture_owner(two_facets):
     name='general_contact_native_fibre_s3_plastic_two_beams'+('_two_patches' if two_facets else '')+'_v1.checkpoint'
-    raw=(Path(__file__).parent/'data'/name).read_bytes()
     owner=_owner(two_facets)
-    state,_=owner._restore(raw,sha256(raw).hexdigest())
+    state,_,raw=restore_native_s3_fixture(owner,Path(__file__).parent/'data'/name)
     return owner,state,raw
 
 

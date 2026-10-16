@@ -113,3 +113,54 @@ Before resuming, inspect candidate GitHub checks, `ACTIVE_CONTINUATION.md`,
 passed unchanged checks to reconstruct evidence or renew consumed limits. A
 remaining failure needs its exact current node/state and a bounded discriminating
 check; no tolerance relaxation, fixture overwrite or retirement-based exclusion.
+
+## Hosted gate failed — do not promote
+
+The full candidate run [38913033117](https://github.com/audunarn/ANYsolver/actions/runs/38913033117)
+finished with 34 successful jobs, 11 failures and four cancellations after the
+required gates were already red. Main remains `b0202d33`. The candidate is not
+accepted for integration; cancelled coverage is not a pass.
+
+Mistral's subsequent test-only helper first attempts strict native/S3 fixture
+restore, then permits a fresh local capsule only when differences are confined
+to three derived contact diagnostic estimates. All physical/history/mechanical
+fields remain exact; binding, hash, chain, malformed and physical one-ULP
+differences stay refused. Production replay and original fixture bytes are
+unchanged. Positive fixture consumers use the helper; CLI capsules go only to
+temporary test folders. Eight helper/refusal cases passed. Consumer verification
+and its timeout evidence must be read from the final local handoff/receipts.
+
+ROOT corrected the workflow assertion for the adopted single dependency-resolver
+invocation; the exact sibling pins, editable extras and official artifact-action
+SHA remain asserted. This small connected CI assertion repair does not change
+the workflow or mechanics. Mistral's editing continuation recovered and delivered
+the helper after tool stalls; no mechanics implementation was taken over.
+
+Unresolved hosted gates: an anchored/fine-lifecycle shell-moment one-ULP replay
+failure; the sliding-friction displacement-force predictor; surface-replay
+first-touch history; and the independent D1 KKT control-reaction comparison
+(`1.4948506139016305e-05` against the unchanged `1e-6` criterion).
+A final logging-only Windows run
+[38920452517](https://github.com/audunarn/ANYsolver/actions/runs/38920452517)
+passed its selected tests with eight captured evaluations and no observer errors.
+It did not reproduce the moment failure and establishes no repair. Prior failed
+observer attempts remain preserved, without physics-evidence status.
+
+No further full-workflow retry, tolerance change, fixture regrading or main push
+is justified by these results. Continue only from the exact failures and local
+remaining budget in `continuation/FINAL_DISPOSITION.md` and the worker ledger.
+Required full CI still has to pass before promotion. No hosted speedup is claimed.
+
+Final local reconciliation: eight helper/refusal cases, two multifacet cases,
+six material-recovery cases, six two-fibre cases, three enforcement cases and
+the isolated CLI restart case passed. Three earlier restart items completed
+before the combined batch's 250-second timeout; partial output is preserved.
+The CLI-only retry passed in 94.5784 process-wall seconds within the same cap.
+ROOT's final workflow assertion, license and preservation checks passed: all
+731 protected primary files and the 32-row matrix remain intact. No `src/`,
+fixture-data or retirement-policy changes exist relative to `b0202d33`.
+Accounted local use is 1253.6266239 seconds; 546.3733761 seconds remain unused.
+Raw worker handoff at `WE/FIXTURE_HELPER_HANDOFF.md` overstates two test counts
+and misidentifies the folded editable install as a wheel install; actual
+commands/output in the receipts and ROOT's reconciliation are authoritative.
+These local results do not resolve the hosted gates or authorize promotion.
