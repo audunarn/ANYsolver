@@ -49,10 +49,14 @@ def trace(frame, event, arg):
     frame.f_trace_lines = False
     try:
         # Python 3.14 frame locals are a proxy whose keys() may be a list.
-        if event == 'return' and {'corners', 'shell_forces', 'shell_moment'} <= set(frame.f_locals):
+        values = frame.f_locals
+        force_name = 'shell_forces' if 'shell_forces' in values else 'sf'
+        moment_name = 'shell_moment' if 'shell_moment' in values else 'sm'
+        if event == 'return' and {'corners', force_name, moment_name, 'residual'} <= set(values):
             if len(captured['evaluations']) < 8:
-                fields = {name: hex_array(frame.f_locals[name])
-                          for name in ('corners', 'shell_forces', 'shell_moment', 'residual')}
+                fields = {name: hex_array(values[key]) for name, key in
+                          [('corners', 'corners'), ('shell_forces', force_name),
+                           ('shell_moment', moment_name), ('residual', 'residual')]}
                 captured['evaluations'].append({'node': current, 'producer': frame.f_code.co_filename, **fields})
     except Exception as error:
         # Logging must never turn the original numerical outcome into another
