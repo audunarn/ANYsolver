@@ -7,16 +7,24 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
+os.chdir(ROOT)
+sys.path.insert(0, str(ROOT/'src'))
 sys.path.insert(0, str(ROOT))
+if len(sys.argv) > 1:
+    os.environ.setdefault('PHYSICAL_CAPTURE_OUTPUT', sys.argv[1])
+if len(sys.argv) > 2:
+    os.environ.setdefault('PHYSICAL_CAPTURE_SELECTION', sys.argv[2])
 OUTPUT = Path(os.environ['PHYSICAL_CAPTURE_OUTPUT'])
 OUTPUT.mkdir(parents=True, exist_ok=True)
 os.environ['ANYSOLVER_CI_PROGRESS_RECORD'] = str(OUTPUT/'progress.json')
+os.environ.setdefault('NUMBA_CACHE_DIR', str(OUTPUT/'numba-cache'))
 selection_path = Path(os.environ.get('PHYSICAL_CAPTURE_SELECTION', ROOT/'scripts/ci_physical_capture_selection.json'))
 selection = json.loads(selection_path.read_text())
 args = selection['command'][3:]
 args = [f'--basetemp={OUTPUT / "basetemp"}' if arg.startswith('--basetemp=') else arg for arg in args]
 captured = {'scope': 'LOGGING_ONLY_NOT_QUALIFICATION', 'source_base': '1e0102033b3f181e0c5dc8dfce11a493fe06302d',
-            'command': [sys.executable, '-m', 'pytest', *args], 'evaluations': [], 'failures': []}
+            'command': [sys.executable, '-m', 'pytest', *args], 'evaluations': [], 'failures': [],
+            'capture_errors': []}
 
 def hex_array(value):
     return {'dtype': str(value.dtype), 'shape': list(value.shape), 'strides': list(value.strides),
@@ -39,11 +47,17 @@ def trace(frame, event, arg):
     if frame.f_code.co_name != 'evaluate' or 'general_contact' not in frame.f_code.co_filename:
         return None
     frame.f_trace_lines = False
-    if event == 'return' and {'corners', 'shell_forces', 'shell_moment'} <= frame.f_locals.keys():
-        if len(captured['evaluations']) < 8:
-            fields = {name: hex_array(frame.f_locals[name])
-                      for name in ('corners', 'shell_forces', 'shell_moment', 'residual')}
-            captured['evaluations'].append({'node': current, 'producer': frame.f_code.co_filename, **fields})
+    try:
+        # Python 3.14 frame locals are a proxy whose keys() may be a list.
+        if event == 'return' and {'corners', 'shell_forces', 'shell_moment'} <= set(frame.f_locals):
+            if len(captured['evaluations']) < 8:
+                fields = {name: hex_array(frame.f_locals[name])
+                          for name in ('corners', 'shell_forces', 'shell_moment', 'residual')}
+                captured['evaluations'].append({'node': current, 'producer': frame.f_code.co_filename, **fields})
+    except Exception as error:
+        # Logging must never turn the original numerical outcome into another
+        # exception. Record an observer gap rather than interrupt the producer.
+        captured['capture_errors'].append(type(error).__name__ + ': ' + str(error))
     return trace
 
 class Capture:
@@ -81,6 +95,7 @@ finally:
     sys.settrace(previous)
 captured['pytest_exit_code'] = int(code)
 captured['python'] = sys.version
+captured['anysolver_file'] = sys.modules['anysolver'].__file__
 captured['versions'] = {name: importlib.metadata.version(name) for name in
                         ('numpy', 'scipy', 'numba', 'llvmlite', 'pytest', 'threadpoolctl')}
 core = sys.modules.get('numpy._core._multiarray_umath')
