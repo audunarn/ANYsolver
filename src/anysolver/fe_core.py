@@ -53,14 +53,67 @@ def _clear_element_local_caches(element: "Element") -> None:
             object.__setattr__(element, name, None)
 
 
+def _is_canonical_qualified_vector(value: Any) -> bool:
+    """Return whether ``value`` already has the qualified frozen-vector form.
+
+    Qualified vector inputs are stored as contiguous, aligned, native-
+    ``float64`` 3-vectors without dtype metadata, backed by immutable
+    bytes.  Recreating that same view is value-preserving, but it changes
+    its object identity.  Recovery plan preparation reuses warm assembly
+    plans that bind the identity of their immutable inputs, so needless
+    recreation during that preparation discards reusable work.  Recognise
+    the canonical representation before allocating a replacement; a
+    readonly flag alone does not prove immutable backing, and metadata-
+    bearing or unaligned views keep the original normalization outcome.
+    """
+
+    if (
+        type(value) is not np.ndarray
+        or value.dtype != np.dtype(np.float64)
+        or value.dtype.metadata is not None
+        or value.shape != (3,)
+        or not value.flags.c_contiguous
+        or not value.flags.aligned
+    ):
+        return False
+    current: Any = value
+    seen: set[int] = set()
+    while type(current) is np.ndarray:
+        if current.flags.writeable or id(current) in seen:
+            return False
+        seen.add(id(current))
+        current = current.base
+        if current is None:
+            return False
+    return bool(
+        type(current) is bytes
+        or (
+            type(current) is memoryview
+            and current.readonly
+            and type(current.obj) is bytes
+        )
+    )
+
+
 def _freeze_qualified_element_vector_inputs(element: "Element") -> None:
-    """Restore immutable vector inputs for qualified cache-aware elements."""
+    """Restore immutable vector inputs for qualified cache-aware elements.
+
+    Recovery plan preparation and the mesh deepcopy backstop call this to
+    restore the frozen input form.  The operation is idempotent for an
+    already canonical immutable input, so it retains the object identity
+    bound by existing warm assembly plans during that preparation.  Public
+    mapping reinsertion advances the mutation epoch and deepcopy drops
+    derived caches; both deliberately invalidate warm plans, and this
+    helper does not preserve them across those operations.
+    """
 
     if not hasattr(element, "_qualified_plan_state_revision"):
         return
     for name in ("material_direction", "reference_normal"):
         value = getattr(element, name, None)
         if value is None:
+            continue
+        if _is_canonical_qualified_vector(value):
             continue
         made = np.ascontiguousarray(np.asarray(value, dtype=float))
         frozen = np.frombuffer(made.tobytes(order="C"), dtype=float).reshape(
