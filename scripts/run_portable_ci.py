@@ -30,12 +30,41 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.run_e4_pl_burnin_gate import inventory  # noqa: E402
+from scripts.run_e4_pl_burnin_gate import inventory as _burnin_inventory  # noqa: E402
+from scripts import retirement_policy  # noqa: E402
+
+
+def inventory() -> dict[str, list[str]]:
+    """Return the active burn-in lane inventory for the current runner.
+
+    The frozen burn-in inventory is immutable historical evidence and stays
+    untouched; the current runner overlays the administrative programme
+    retirement so ``inventory()`` and ``merge_test_modules()`` expose one
+    consistent active extent.  Retirement is administrative and separate from
+    the scientific historical qualification rules, which still apply inside
+    ``merge_test_modules()``.
+    """
+    lanes = _burnin_inventory()
+    if retirement_policy.opt_in_enabled():
+        return lanes
+    retired = retirement_policy.retired_module_paths()
+    return {
+        lane: [module for module in modules if module not in retired]
+        for lane, modules in lanes.items()
+    }
 
 
 MERGE_LANES = ("quick", "additive", "functional")
 POST_CLOSEOUT_HISTORICAL_MODULES = (
     "tests/test_e4_pl_s3_q4_burnin_authority.py",
+)
+# The frozen GE inventory of the rev8-trackA checkout registers one
+# explicitly retired non-GE historical companion in its extended lane (the
+# pre-existing pilot closure; absent from the primary checkout's inventory).
+# It is the only tolerated non-GE registration; the GE entries themselves
+# must match the on-disk test_ge_beam3_*.py set exactly.
+GE_INVENTORY_RETIRED_NON_GE_COMPANIONS = (
+    "tests/test_e4_pl_pilot_closure.py",
 )
 # Versioned S3 files record authority, experiments, incidents, and formal
 # evidence accumulated while the successor was developed.  Most of those
@@ -295,19 +324,41 @@ def merge_test_modules() -> tuple[str, ...]:
         raise RuntimeError(
             f"current S3 successor modules are absent: {sorted(missing_current)}"
         )
-    modules = [
+    modules = tuple(
         module
         for module in registered
         if not _is_portable_historical_module(module)
-    ]
-    return tuple(modules)
+    )
+    if not retirement_policy.opt_in_enabled():
+        raw_registered = {
+            module
+            for lane in MERGE_LANES
+            for module in _burnin_inventory()[lane]
+        }
+        excluded = sorted(raw_registered - set(registered))
+        if excluded:
+            report = retirement_policy.retirement_report()
+            print(
+                "[portable-ci] programme retirement: excluded "
+                f"{len(excluded)} merge-test module(s) "
+                f"(policy {report['policy']}; manifest total "
+                f"{report['retired_module_count']} modules, "
+                f"{report['retired_node_count']} node(s); "
+                f"explicit future-use opt-in: {report['opt_in_env']}=1)",
+                flush=True,
+            )
+    return modules
 
 
 def _is_portable_historical_module(module: str) -> bool:
     """Return whether *module* needs frozen history or external evidence."""
 
-    if module.startswith("tests/test_ge_beam3_"):
-        return module in _ge_beam3_inventory()["extended"]
+    # The release inventory may explicitly register non-GE modules as
+    # historical (for example the rev8-trackA pilot closure); any
+    # extended registration means the module needs frozen history or
+    # external evidence and is not a portable merge test.
+    if module in _ge_beam3_inventory()["extended"]:
+        return True
     if module in POST_CLOSEOUT_HISTORICAL_MODULES:
         return True
     if module in PORTABLE_CURRENT_S3_SUCCESSOR_MODULES:
@@ -322,9 +373,30 @@ def _ge_beam3_inventory() -> dict[str, list[str]]:
         raise RuntimeError("invalid GE test inventory schema")
     portable, extended = record["portable"], record["extended"]
     registered = portable + extended
+    if len(registered) != len(set(registered)):
+        raise RuntimeError(
+            "GE test inventory is incomplete or overlapping (duplicate registration)"
+        )
+    companions = set(GE_INVENTORY_RETIRED_NON_GE_COMPANIONS)
+    if not companions <= retirement_policy.retired_module_paths():
+        raise RuntimeError(
+            "GE inventory non-GE companions must be retired programme modules"
+        )
     actual = {path.relative_to(ROOT).as_posix()
               for path in (ROOT / "tests").glob("test_ge_beam3_*.py")}
-    if len(registered) != len(set(registered)) or set(registered) != actual:
+    # Strict equality: every GE module on disk must stay registered so a
+    # future unknown active module is never silently hidden, and the only
+    # tolerated non-GE registrations are the exact explicitly retired
+    # historical companions above.  Any other non-GE extra (for example a
+    # misspelled or unclassified active entry) fails closed.
+    non_ge = {
+        module
+        for module in registered
+        if not module.startswith("tests/test_ge_beam3_")
+    }
+    if not non_ge <= companions:
+        raise RuntimeError("GE test inventory is incomplete or overlapping")
+    if set(registered) - non_ge != actual:
         raise RuntimeError("GE test inventory is incomplete or overlapping")
     return record
 
@@ -359,12 +431,18 @@ def _worker_environment(root: Path) -> dict[str, str]:
 
 def _worker_command(modules: Sequence[str], root: Path) -> list[str]:
     owned_modules = set(modules)
+    retired_nodes = (
+        ()
+        if retirement_policy.opt_in_enabled()
+        else retirement_policy.retired_nodes_in_modules(modules)
+    )
     deselections = [
         node
         for node in (
             *DEDICATED_LANE_NODES,
             *PORTABLE_HISTORY_ONLY_NODES,
             *PORTABLE_NONQUALIFYING_NODES,
+            *retired_nodes,
         )
         if node.partition("::")[0] in owned_modules
     ]
@@ -457,6 +535,18 @@ def run(
                                        matrix_subshard_index, matrix_subshard_count)):
             raise ValueError("focused development cannot select a CI matrix shard")
         modules = _development_targets(development_targets)
+        if not retirement_policy.opt_in_enabled():
+            refused = [
+                target
+                for target in modules
+                if retirement_policy.is_retired_node(target)
+            ]
+            if refused:
+                raise ValueError(
+                    "development targets include retired programme "
+                    f"selection(s): {', '.join(refused)}; explicit "
+                    f"future-use opt-in: {retirement_policy.OPT_IN_ENV}=1"
+                )
         if memory_limit_mib is not None and (isinstance(memory_limit_mib, bool) or memory_limit_mib < 1):
             raise ValueError("memory_limit_mib must be positive")
     else:
