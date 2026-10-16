@@ -20,7 +20,6 @@ jobs:
       ANYSOLVER_RUN_RETIRED_PROGRAMME_TESTS: "0"
       ANYSOLVER_GE_BEAM3_DEADLINE_SCALE: "4"
       PYTHONPATH: ${{ github.workspace }}/src
-      PHYSICAL_CAPTURE_OUTPUT: ${{ runner.temp }}/physical-capture
       Q1M_ANYMATERIAL_ROOT: ${{ github.workspace }}/.ecosystem/ANYmaterial
       Q1M_ANYGEOMETRY_ROOT: ${{ github.workspace }}/.ecosystem/ANYgeometry
       Q1M_ANYMESH_ROOT: ${{ github.workspace }}/.ecosystem/ANYmesh
@@ -28,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          fetch-depth: 2
+          fetch-depth: 5
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -70,7 +69,12 @@ jobs:
         run: |
           $changed = git diff 1e0102033b3f181e0c5dc8dfce11a493fe06302d HEAD -- src tests
           if ($changed) { throw "Diagnostic branch changed numerical source or tests" }
+          # Preserve the original worker's repository metadata inputs as well.
+          $originalWorkflow = git show 1e0102033b3f181e0c5dc8dfce11a493fe06302d:.github/workflows/ci.yml
+          [IO.File]::WriteAllText(".github/workflows/ci.yml", ($originalWorkflow -join "`n")+"`n")
       - name: Replay original worker and capture physical intermediates
+        env:
+          PHYSICAL_CAPTURE_OUTPUT: ${{ runner.temp }}/physical-capture
         timeout-minutes: 7
         run: python scripts/ci_physical_capture.py
       - name: Preserve logging-only output even on expected replay failure
