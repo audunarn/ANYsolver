@@ -2,12 +2,13 @@
 lean selected reactions were reverted to the pre-M31 code after review)."""
 import collections
 import copy
+import sys
 
 import numpy as np
 import pytest
 
 from anysolver import LoadCase, RecoveryConfig, prepare_static_evaluator, prepare_static_response_evaluator
-from anysolver.prepared_static import _plain_deepcopy
+from anysolver.prepared_static import _MEMO_NONE_IS_A_HIT, _plain_deepcopy
 from anysolver.prepared_static_loads import load_packet_storage_bytes
 from anysolver.static_batch import StaticCase
 import prepared_static_response_m16_assessment  # noqa: F401  (adds scripts/ to sys.path)
@@ -81,14 +82,27 @@ def test_plain_deepcopy_of_the_real_operator_info(builder):
 
 
 def test_plain_deepcopy_honours_a_memo_entry_of_none():
-    # M31b (review): a memo value of None is a memo hit, as in copy.deepcopy.
+    # M31b (review): a memo value of None is treated as the running copy.deepcopy
+    # treats it: a hit up to Python 3.14, a miss on entry from 3.15.
     shared = [1, [2]]
     pair = (shared, 3)
     for value in (shared, {'k': shared}, [shared, shared], pair):
         for target in (shared, pair):
-            ours = _plain_deepcopy(value, {id(target): None})
-            theirs = copy.deepcopy(value, {id(target): None})
+            memo_ours, memo_theirs = {id(target): None}, {id(target): None}
+            ours = _plain_deepcopy(value, memo_ours)
+            theirs = copy.deepcopy(value, memo_theirs)
             assert repr(ours) == repr(theirs)
+            assert repr(memo_ours[id(target)]) == repr(memo_theirs[id(target)])
+
+
+def test_plain_deepcopy_memo_none_rule_follows_the_interpreter():
+    assert _MEMO_NONE_IS_A_HIT is (sys.version_info < (3, 15))
+    shared = [1, [2]]
+    copied = _plain_deepcopy(shared, {id(shared): None})
+    if _MEMO_NONE_IS_A_HIT:
+        assert copied is None
+    else:
+        assert copied == shared and copied is not shared and copied[1] is not shared[1]
 
 
 def test_plain_deepcopy_tuple_rechecks_the_memo_after_its_items():

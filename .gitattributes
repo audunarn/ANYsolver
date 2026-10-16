@@ -1018,6 +1018,10 @@ tests/test_r8_ge_merit_history_entrypoint_dev.py -text whitespace=blank-at-eol,-
 
 # Preserve the density reference's pinned source bytes on every checkout.
 scripts/r8_bl5_external_affine_reference_dev.py -text
+# The support-only gauge binds these helper sources byte-exactly to the
+# committed HEAD blobs on every checkout.
+scripts/r8_bl5_external_operator_dev.py -text
+scripts/r8_bl5_external_operator_crosscase_dev.py -text
 # These companion references were registered with CRLF working-tree bytes.
 scripts/b3_e4_bl5_external_p0_refinement_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
 scripts/b3_e4_bl5_external_p0_enforcement_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol

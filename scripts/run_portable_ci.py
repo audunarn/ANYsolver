@@ -181,25 +181,9 @@ PORTABLE_ISOLATED_MODULES = (
     # exact qualified-authority tests in the shared interpreter.
     "tests/test_generalized_section_api_workflows.py",
     "tests/test_generalized_shell_sections.py",
-    # General-contact native checkpoint modules: each passes alone on Windows
-    # and Linux, but in a shared CI interpreter an earlier module's process
-    # state makes the native/S3 checkpoint definition/settings binding or
-    # replay disagree. Run each in a fresh interpreter (still run, still must
-    # pass) until the cross-module state is identified (owner decision
-    # 2026-10-12).
-    "tests/test_general_contact_native_active_budget.py",
-    "tests/test_general_contact_native_anchored_enclosure.py",
-    "tests/test_general_contact_native_candidate_reuse.py",
-    "tests/test_general_contact_native_curved_s3_multifacet.py",
-    "tests/test_general_contact_native_curved_s3_restart.py",
-    "tests/test_general_contact_native_fibre_enforcement.py",
-    "tests/test_general_contact_native_fibre_plastic_restart.py",
-    "tests/test_general_contact_native_fibre_results.py",
-    "tests/test_general_contact_native_fine_lifecycle.py",
-    "tests/test_general_contact_native_initial_guess.py",
 )
 DEFAULT_WORKERS = 4
-DEFAULT_TIMEOUT_SECONDS = 1_200
+DEFAULT_TIMEOUT_SECONDS = 2_400
 TIMEOUT_EXIT_CODE = 124
 
 
@@ -417,6 +401,10 @@ def _worker_environment(root: Path) -> dict[str, str]:
             "OMP_NUM_THREADS": "1",
             "OPENBLAS_NUM_THREADS": "1",
             "MKL_NUM_THREADS": "1",
+            # Cooperative native timers are execution guards, not mechanics.
+            # Give shared CI hardware bounded headroom; the outer process-tree
+            # timeout and all iteration/integration/scientific limits still apply.
+            "ANYSOLVER_GE_BEAM3_DEADLINE_SCALE": "4",
             "NUMEXPR_NUM_THREADS": "1",
             "PYTHONHASHSEED": "0",
             "PYTHONNOUSERSITE": "1",
@@ -593,6 +581,8 @@ def run(
             worker_root = run_root / f"P{index:02d}"
             worker_root.mkdir()
             environment = _worker_environment(worker_root)
+            print("[portable-ci] native cooperative deadline scale="
+                  + environment["ANYSOLVER_GE_BEAM3_DEADLINE_SCALE"], flush=True)
             command = _worker_command(modules_for_worker, worker_root)
             if development:
                 # Explicit targets are never silently filtered by CI/history rules.

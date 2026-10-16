@@ -21,6 +21,7 @@ from ._ge_beam3_p5_seeded.core import canonical, sha
 from ._ge_beam3_p5_seeded.codec import _load, MAX_BYTES
 from ._native_reference_modal import _owned
 from ._ge_beam3_operator_validation_scope import operator_call
+from ._ge_beam3_effective_deadline import effective_deadline_seconds
 
 SCHEMA='GE_BEAM3_RETAINED_GENERALIZED_DISTRIBUTED_ACCEPTED_CHAIN_V1'
 POLICY='CANDIDATE_GE_BEAM3_RETAINED_GENERALIZED_DISTRIBUTED_FORCE_V1'
@@ -107,7 +108,7 @@ class Context:
         self.guard()
 
     def guard(self):
-        if monotonic()-self.started>120:raise RuntimeError('retained generalized context deadline')
+        if monotonic()-self.started>effective_deadline_seconds(120):raise RuntimeError('retained generalized context deadline')
         # The complete supported transform is validated once in _model above.
         # Recheck all model/DOF authority and the full audited constraint rows,
         # including element MPC providers, without rebuilding sparse I/T/K/F.

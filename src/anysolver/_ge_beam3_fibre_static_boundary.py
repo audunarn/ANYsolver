@@ -15,6 +15,7 @@ from ._ge_beam3_p5.algebra import rotation
 from ._ge_beam3_p5.arrays import _array,_frames
 from ._ge_beam3_p5_seeded.core import sha
 from ._native_reference_modal import _owned
+from ._ge_beam3_effective_deadline import effective_deadline_seconds
 
 POLICY='GE_BEAM3_RETAINED_FIBRE_STATIC_BOUNDARY_DEVELOPMENT_V1'
 
@@ -70,7 +71,7 @@ def solve_static(operator,positions,position_low,nodal_frames,*,origin,
     def safe():
         if check is not None: check()
         operator.guard()
-        if monotonic()-started>60.: raise RuntimeError('static internal boundary deadline')
+        if monotonic()-started>effective_deadline_seconds(60.): raise RuntimeError('static internal boundary deadline')
 
     def evaluate(rotations,forces):
         safe()

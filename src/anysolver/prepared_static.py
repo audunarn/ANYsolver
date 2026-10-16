@@ -75,6 +75,20 @@ _PLAIN_ATOMIC = frozenset((type(None), bool, int, float, complex, str, bytes))
 _MISSING = object()
 
 
+def _deepcopy_memo_none_is_a_hit():
+    """Whether the running copy.deepcopy returns a memo value of None as the copy.
+
+    Up to Python 3.14 it does; from 3.15 a None entry is a miss on entry (the
+    object is copied and the entry overwritten), while the tuple re-check after
+    copying the items still treats a None entry as a hit. Measured once at import
+    so _plain_deepcopy follows the interpreter it runs on."""
+    probe = [[]]
+    return copy.deepcopy(probe, {id(probe): None}) is None
+
+
+_MEMO_NONE_IS_A_HIT = _deepcopy_memo_none_is_a_hit()
+
+
 def _plain_deepcopy(value, memo=None):
     """copy.deepcopy with the same result for the evaluator's plain per-case
     records (M31): dicts, lists and tuples are copied as deepcopy copies them
@@ -86,7 +100,7 @@ def _plain_deepcopy(value, memo=None):
     if kind in _PLAIN_ATOMIC:
         return value
     found = memo.get(id(value), _MISSING)
-    if found is not _MISSING:
+    if found is not _MISSING and (found is not None or _MEMO_NONE_IS_A_HIT):
         return found
     if kind is list:
         if all(type(item) in _PLAIN_ATOMIC for item in value):

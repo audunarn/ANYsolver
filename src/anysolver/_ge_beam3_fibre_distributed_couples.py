@@ -18,6 +18,7 @@ from ._ge_beam3_p5.arrays import _array, _frames
 from ._ge_beam3_p5.chart import exp_chart_terms
 from ._ge_beam3_p5_seeded.core import sha
 from ._native_reference_modal import _owned
+from ._ge_beam3_effective_deadline import effective_deadline_seconds
 
 POLICY = 'GE_BEAM3_REFERENCE_SPATIAL_DISTRIBUTED_COUPLE_STATIC_V1'
 
@@ -132,7 +133,7 @@ def solve_distributed_static(operator, positions, position_low, nodal_frames, *,
         if check is not None:
             check()
         operator.guard()
-        if monotonic()-started > 60.:
+        if monotonic()-started > effective_deadline_seconds(60.):
             raise RuntimeError('distributed static internal boundary deadline')
 
     def evaluate(rotations, forces):

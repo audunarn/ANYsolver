@@ -9,6 +9,7 @@ from math import isfinite
 import numpy as np
 from scipy.optimize import brentq
 
+from anysolver._ge_beam3_deterministic_reduction import deterministic_dot, deterministic_norm
 from anysolver._ge_beam3_centered_reference import (
     CenteredCurvedBeam3ReferenceGeometry,
 )
@@ -725,23 +726,23 @@ def _monotone_gap_endpoints(
     source_controls = _bezier_controls(source, left, right)
     target_controls = _bezier_controls(target, 0.0, 1.0)
     maximum_separation = max(
-        float(np.linalg.norm(a-b))
+        float(deterministic_norm(a-b))
         for a in source_controls for b in target_controls
     )
     target_first = _curve(target, 0.0)[1]
     target_last = _curve(target, 1.0)[1]
     target_delta = target_last-target_first
-    target_delta_square = float(target_delta@target_delta)
-    minimum_station = (float(np.clip(-float(target_first@target_delta)
+    target_delta_square = deterministic_dot(target_delta, target_delta)
+    minimum_station = (float(np.clip(-deterministic_dot(target_first, target_delta)
                                      /target_delta_square, 0.0, 1.0))
                        if target_delta_square > 0.0 else 0.0)
-    target_min_speed = float(np.linalg.norm(
+    target_min_speed = float(deterministic_norm(
         target_first+minimum_station*target_delta,
     ))
-    target_max_speed = max(float(np.linalg.norm(target_first)),
-                           float(np.linalg.norm(target_last)))
+    target_max_speed = max(deterministic_norm(target_first),
+                           deterministic_norm(target_last))
     convexity = (target_min_speed**2
-                 - maximum_separation*float(np.linalg.norm(target_delta)))
+                 - maximum_separation*deterministic_norm(target_delta))
     if convexity <= 0.0:
         return None
     middle = 0.5*(left+right)
@@ -751,13 +752,13 @@ def _monotone_gap_endpoints(
         return None
     target_point = _curve(target, projection.minimizers[0])[0]
     normal_vector = source_point-target_point
-    distance = float(np.linalg.norm(normal_vector))
-    reach = max(float(np.linalg.norm(control-source_point))
+    distance = deterministic_norm(normal_vector)
+    reach = max(deterministic_norm(control-source_point)
                 for control in source_controls)
     minimum_distance = distance-reach-roundoff_m
     if minimum_distance <= 0.0:
         return None
-    source_max_speed = max(float(np.linalg.norm(_curve(source, station)[1]))
+    source_max_speed = max(deterministic_norm(_curve(source, station)[1])
                            for station in (left, right))
     projection_hessian_bound = (
         1.0/minimum_distance
@@ -765,8 +766,8 @@ def _monotone_gap_endpoints(
         * maximum_separation/convexity
     )
     second_bound = (source_max_speed**2*projection_hessian_bound
-                    + float(np.linalg.norm(source_second)))
-    derivative = float((normal_vector/distance)@source_speed)
+                    + deterministic_norm(source_second))
+    derivative = deterministic_dot(normal_vector/distance, source_speed)
     derivative_roundoff = 256.0*np.finfo(float).eps*max(
         1.0, source_max_speed, target_max_speed,
     )
@@ -1489,7 +1490,7 @@ class NativeRetainedWholeCurvePair:
                                 "floating activation sign contradicts certified-active interval"
                             )
                         return np.zeros_like(total), False
-                    measure = float(np.linalg.norm(
+                    measure = float(deterministic_norm(
                         _curve(reference_curves[source_index], station)[1]
                     ))
                     factor = self.stiffness*measure

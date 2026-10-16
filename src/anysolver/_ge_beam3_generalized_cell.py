@@ -12,6 +12,7 @@ from ._ge_beam3_generalized_ellipsoid_section import EllipsoidalGeneralizedSecti
 from ._ge_beam3_fibre_section import canonical
 from ._ge_beam3_station_resultant_cell import zero,ident,tr,mul,mv,dot,dec,pair,solve,cholesky,frozen
 from ._ge_beam3_cell_identity import CapturedCellIdentity
+from ._ge_beam3_effective_deadline import effective_deadline_seconds
 
 POLICY='GE_BEAM3_CONSTRAINED_ELLIPSOID_CELL_CONJUGATE_V1'
 
@@ -101,7 +102,7 @@ class GeneralizedCellConjugate:
         started=monotonic()
         def guard():
             if check is not None:check()
-            if monotonic()-started>60.:raise TimeoutError('generalized cell deadline')
+            if monotonic()-started>effective_deadline_seconds(60.):raise TimeoutError('generalized cell deadline')
             self.guard()
         guard();origin=self.virgin() if origin is None else origin;captured=canonical(origin)
         with localcontext() as ctx:

@@ -10,6 +10,7 @@ import numpy as np
 from scipy import sparse
 
 from anysolver._ge_beam3_mixed_ad import Jet2,dot,sqrt as jet_sqrt
+from anysolver._ge_beam3_deterministic_reduction import deterministic_dot, deterministic_norm
 from anysolver._ge_beam3_generalized_static_boundary import spatial_jacobian
 from anysolver._ge_beam3_p5_seeded.core import sha
 from .native_curved_plane_work import NativeCurvedMaterialPlaneWork,_station_field,_critical_gaps
@@ -213,7 +214,7 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
         hn=np.einsum('ijk,ja,kb->iab',self.hn,w,w)
         n1=np.linalg.norm(dn);n2=np.linalg.norm(hn);o1=np.linalg.norm(o,2)
         center=[_relative_center(high,low,cell,t,self.origin) for t in (0.,1.)]
-        distance=max(np.linalg.norm(v) for v in center)+arm
+        distance=max(deterministic_norm(v) for v in center)+arm
         chord=np.array([fsum((high[cell+1,i],low[cell+1,i],-high[cell,i],-low[cell,i]))
                         for i in range(3)])
         xp=np.linalg.norm(chord)+ap

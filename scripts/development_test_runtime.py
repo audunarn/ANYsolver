@@ -22,6 +22,7 @@ def runtime_record(modules, source, pools=None):
         errors.append("effective numerical pools are not single-threaded")
     return {"scope": "source development only", "imports": imported, "effective_pools": pools,
             "numba_threads": actual_threads, "jit_disabled": actual_jit, "errors": errors,
+            "native_deadline_scale": os.environ.get("ANYSOLVER_GE_BEAM3_DEADLINE_SCALE"),
             "plugin_autoload_disabled": os.environ.get("PYTEST_DISABLE_PLUGIN_AUTOLOAD") == "1"}
 
 

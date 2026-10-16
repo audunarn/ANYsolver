@@ -21,6 +21,7 @@ from ._ge_beam3_spatial_nodal_moments import SpatialNodalMoments
 from ._native_reference_modal import _owned
 from ._ge_beam3_p5_seeded.core import canonical, sha
 from ._ge_beam3_p5_seeded.codec import _load, MAX_BYTES
+from ._ge_beam3_effective_deadline import effective_deadline_seconds
 
 
 SCHEMA = 'GE_BEAM3_RETAINED_PHYSICAL_FIBRE_ACCEPTED_CHAIN_V1'
@@ -149,7 +150,7 @@ class Context:
 
     def check(self):
         if self.external_check is not None: self.external_check()
-        if monotonic()-self.started > 120.: raise RuntimeError('retained fibre context cooperative deadline')
+        if monotonic()-self.started > effective_deadline_seconds(120.): raise RuntimeError('retained fibre context cooperative deadline')
 
     def guard(self):
         self.check(); self.layout.guard()

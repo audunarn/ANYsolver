@@ -153,11 +153,12 @@ def test_fibre_contact_guards_consumed_caches(cache):
 
 def test_fibre_contact_expired_context_is_explicit_resource_failure(monkeypatch):
     import anysolver._ge_beam3_retained_fibre_state as backend
+    from anysolver._ge_beam3_effective_deadline import effective_deadline_seconds
     owner=_analysis(targets=(1.,),physical_fibres=True)
     initial=owner.initial
     histories=canonical(initial.native_histories)
     started=owner.context._backend.started
-    monkeypatch.setattr(backend,'monotonic',lambda:started+121.)
+    monkeypatch.setattr(backend,'monotonic',lambda:started+effective_deadline_seconds(120.)+1.)
     with pytest.raises(RuntimeError,match='cooperative deadline'):owner.solve()
     assert owner.initial is initial and canonical(owner.initial.native_histories)==histories
     assert owner.context._backend.started==started

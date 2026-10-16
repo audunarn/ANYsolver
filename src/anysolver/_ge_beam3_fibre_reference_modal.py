@@ -17,6 +17,7 @@ from ._native_reference_modal import _owned
 from ._native_paired_factor_chain_modes import solve_paired_factor_chain_modes
 from ._ge_beam3_p5_seeded.core import sha
 from .control import cancellation_safe_point
+from ._ge_beam3_effective_deadline import effective_deadline_seconds
 
 POLICY='GE_BEAM3_PHYSICAL_FIBRE_REFERENCE_FACTOR_CHAIN_V1'
 
@@ -45,7 +46,7 @@ def prepare(analysis, cancellation_token=None):
     started=monotonic()
     def check():
         cancellation_safe_point(cancellation_token,'fibre-reference-modal.guard')
-        if monotonic()-started>120.:raise RuntimeError('physical-fibre reference modal deadline')
+        if monotonic()-started>effective_deadline_seconds(120.):raise RuntimeError('physical-fibre reference modal deadline')
         analysis._guard()
     check()
     nodal=analysis.model.mesh.dof_manager.total_dofs;size=nodal+6*len(analysis._elements)

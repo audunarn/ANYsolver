@@ -640,7 +640,7 @@ def test_ci_lane_is_exactly_quick_plus_functional_plus_additive() -> None:
         encoding="utf-8"
     )
     assert (
-        "python scripts/run_portable_ci.py --workers 2 --timeout-seconds 1200\n"
+        "python scripts/run_portable_ci.py --workers 2 --timeout-seconds 2400\n"
         "          --matrix-shard-index ${{ matrix.shard-index }} "
         "--matrix-shard-count 8\n"
         "          --matrix-subshard-index ${{ matrix.subshard-index }} --matrix-subshard-count 4"

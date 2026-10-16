@@ -70,7 +70,9 @@ def test_real_failure_does_not_return_result(seed,monkeypatch,kind):
     owner=context(seed); p=owner.physical; op=p.elements[0][1].operator
     token=CancellationToken(); calls=[]
     def full(): calls.append(1); owner.guard()
-    if kind=='deadline': monkeypatch.setattr(scope,'monotonic',lambda:p.started+120.01)
+    if kind=='deadline':
+        from anysolver._ge_beam3_effective_deadline import effective_deadline_seconds
+        monkeypatch.setattr(scope,'monotonic',lambda:p.started+effective_deadline_seconds(120.)+.01)
     if kind=='cancellation': token.cancel()
     if kind=='model':
         original=type(op).recover

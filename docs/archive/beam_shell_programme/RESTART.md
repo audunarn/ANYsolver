@@ -2,7 +2,7 @@
 
 Status: RETIRED, UNQUALIFIED, no active worker or run (16 October 2026).
 This is the single programme-history entrypoint retained in this delivery.
-Frozen source/tests stay in place; detailed logs are kept outside integration.
+Frozen source/tests on main stay in place; old worktree state is archived locally.
 
 ## Selection and preserved scientific state
 
@@ -27,11 +27,11 @@ it is conditional evidence, not a certified maximum-error bound.
 Original rev8 baseline: `436457c86d1a30b951086aa195748ca590f253e4`.
 Canonical later source: branch `codex/rev8-trackA`, commit
 `e10a646a1e3888bf3b7e98b5ecbd6741f04263f2` PLUS preserved dirty source,
-untracked tests and `.restart-ci/` at
-`C:/Github/ANYsolver/.worktrees/rev8-trackA`. That commit alone is incomplete.
+untracked tests and `.restart-ci/` in the archived `rev8-trackA` checkout.
+That commit alone is incomplete; see the local recovery package below.
 The earlier binding successor is branch `codex/rev8-binding-portability` at
-`e5e823cffbad391a1927217da830cd08d45a2dcf` in its same-named worktree; original
-fixtures and failed/provenance evidence remain preserved there.
+`e5e823cffbad391a1927217da830cd08d45a2dcf` in archived `rev8-binding-portability`;
+original fixtures and failed/provenance evidence remain preserved there.
 
 Read these frozen trackA records in order; older ACTIVE instructions are history:
 
@@ -46,8 +46,21 @@ Pilot package: `.restart-ci/nonlinear-pilot-closure-20261015/`, manifest
 Source receipt:
 `C:/ANYworkspaceWork/rev8-fable-review-20261015/parent-retry04-final-source-receipt-20261015T195741319907Z.json`.
 Product digest: `e26fb633f7a794e5dc9765248d6ff28821f7ae546f21ff08ebf1124a71af595e`.
-The worktree and external receipt/review package are essential frozen inputs;
+The archived checkout and external receipt/review package are essential inputs;
 the summary does not replace uncommitted source or invent missing evidence.
+
+## Local recovery package
+
+Old programme worktrees were removed after byte-verified preservation at
+`C:/ANYworkspaceWork/beam-shell-programme-archive-20261016/`. Its `README.md`,
+`ARCHIVE_RECEIPT.json` and `CLEANUP_RECEIPT.json` identify the five complete
+checkout manifests and original heads, including dirty/untracked/ignored files.
+`checkout-blobs.zip` stores deduplicated contents; `programme-history.bundle`
+retains complete branch histories. These bulk files stay outside main.
+Use `restore_checkout.py rev8-trackA <new-directory>` with a trusted Python
+interpreter to reconstruct frozen source/evidence without importing it.
+The managed standard integration worktree is separately archived in Codex.
+No restoration renews execution authority.
 
 ## Later standard-route lessons; no delivered finite-rotation feature
 

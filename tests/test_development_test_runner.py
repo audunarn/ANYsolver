@@ -8,6 +8,16 @@ from scripts import development_test_runtime as runtime
 from scripts import run_portable_ci as runner
 
 
+def test_portable_native_deadline_headroom_is_fixed_and_bounded(tmp_path, monkeypatch):
+    monkeypatch.setenv('ANYSOLVER_GE_BEAM3_DEADLINE_SCALE', '1000')
+    environment = runner._worker_environment(tmp_path)
+    assert environment['ANYSOLVER_GE_BEAM3_DEADLINE_SCALE'] == '4'
+    assert environment['OPENBLAS_NUM_THREADS'] == '1'
+    assert environment['MKL_NUM_THREADS'] == '1'
+    # Preparing CI execution settings does not mutate the calling application.
+    assert __import__('os').environ['ANYSOLVER_GE_BEAM3_DEADLINE_SCALE'] == '1000'
+
+
 def test_explicit_selection_preserves_node_and_rejects_empty_missing_escape(tmp_path, monkeypatch):
     monkeypatch.setattr(runner, 'ROOT', tmp_path)
     (tmp_path/'tests').mkdir()

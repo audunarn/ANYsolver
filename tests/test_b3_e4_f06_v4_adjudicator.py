@@ -136,7 +136,7 @@ def test_copied_pilot_is_only_a_candidate_screen(tmp_path, pilot_measurement):
     result = _screen(root)
     assert result["qualification_accepted"] is False
     assert result["check_count"] > 500
-    assert result["disposition"] == "CANDIDATE_SCREEN_PASSED"
+    assert result["disposition"] == "CANDIDATE_SCREEN_PASSED", result["failures"]
     assert result["failure_count"] == 0
 
 

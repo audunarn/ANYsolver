@@ -9,6 +9,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from time import monotonic
 from .control import cancellation_safe_point
+from ._ge_beam3_effective_deadline import effective_deadline_seconds
 
 POLICY = 'GE_BEAM3_LOCAL_OPERATOR_VALIDATION_BOUNDARY_V1'
 _ACTIVE = ContextVar('ge_beam3_local_operator_validation', default=None)
@@ -44,7 +45,7 @@ def operator_call(operator, method, full_check, started, *args, **kwargs):
         raise ValueError('exact sealed generalized operator required')
     def checkpoint():
         cancellation_safe_point(active[1], 'ge-beam3.local-operator')
-        if monotonic()-started > 120:
+        if monotonic()-started > effective_deadline_seconds(120):
             raise RuntimeError('retained generalized context deadline')
         operator.guard()
     return _boundary_call(
