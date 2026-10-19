@@ -1,6 +1,6 @@
 # General-contact candidate: status and restart handoff
 
-Updated 2026-10-19. This is the entry point for the next agent. Read the current
+Updated 2026-10-19. Committed candidate e40298cc5, reconciled source 049a20641, and local main merge a1efb6268 are complete. All 19 affected integration checks passed. The original 37-pass packaged artifact remains unchanged. Main's 13 unrelated dirty edits and untracked inventory were restored outside these commits; do not treat that dirty working tree as the tested source. This is the entry point for the next agent. Read the current
 repository/global AGENTS.md and ECOSYSTEM_GUIDE.md before continuing. The user
 authorized committing and merging this candidate into local main; no push or
 publication is authorized. Git reconciliation is owned by the integrating agent.
@@ -17,7 +17,7 @@ Capability/released/admitted flags remain unchanged.
 
 The candidate build used branch `codex/contact-portable-replay`, parent HEAD
 `59ba6acda0dbd7390487b758678a6f9b2681fdb2`, baseline `436457c8`, plus the
-then-uncommitted contact/shared-kernel implementation now being committed. The
+then-uncommitted contact/shared-kernel implementation committed as e40298cc5. The
 final verification required no solver repair. Earlier experimental enriched/native
 work is retained in source and tests; its presence does not establish qualification.
 Main contains subsequent beam-shell coupling work. The original artifact's test

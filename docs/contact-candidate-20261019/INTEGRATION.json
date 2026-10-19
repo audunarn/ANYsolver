@@ -1,5 +1,5 @@
 {
-  "status": "SOURCE_RECONCILED_WITH_CURRENT_MAIN_AND_FOCUSED_CHECKS_PASS",
+  "status": "MERGED_INTO_LOCAL_MAIN;19_FOCUSED_INTEGRATION_EXECUTIONS_PASS",
   "recorded_utc": "2026-10-19T20:05:37.9270437Z",
   "candidate_commit": "e40298cc5f1fce3bc6a25b803874e32efb45dffd",
   "main_parent": "eadb2c0735b7d32a1c1bb853be098a9e7ea99a07",
@@ -37,5 +37,28 @@
   },
   "no_push": true,
   "full_programme_qualified": false,
-  "evidence_directory": "C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/candidate-general-contact-20261019-v1/integration-20261019"
+  "evidence_directory": "C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/candidate-general-contact-20261019-v1/integration-20261019",
+  "main_merge_commit": "a1efb626836c19d4990121cd58d6043683c1c6a5",
+  "preservation_verified": {
+    "unrelated_patch_added_removed_lines_unchanged": true,
+    "unmerged_paths": [],
+    "unrelated_patch_line_counts": [
+      896,
+      896
+    ],
+    "stash_retained_for_recovery": "bfcd518fc6f242ee9466ec522ec368e77d7f51a1",
+    "pushes": 0,
+    "candidate_integration_commit": "049a20641ea66fa41df510dba1a5d016da8d14d7",
+    "tracked_original_exact_bytes": 12,
+    "staged_files": 0,
+    "tracked_dirty_files": 13,
+    "main_merge_commit": "a1efb626836c19d4990121cd58d6043683c1c6a5",
+    "expected_changed_file": [
+      {
+        "reason": "Merged candidate source changes plus preserved unrelated dirty delta; original unchanged line endings restored",
+        "path": "src/anysolver/prepared_static_recovery.py"
+      }
+    ],
+    "untracked_status_unchanged": true
+  }
 }
