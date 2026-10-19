@@ -186,6 +186,7 @@ def capture_prepared_static_snapshot(
     load_families: Optional[Sequence[str]],
     cancellation_token: Any = None,
     progress_callback: Any = None,
+    _resource_config: Any = None,
 ) -> PreparedStaticSnapshot:
     """Capture the complete immutable snapshot from the live model."""
 
@@ -254,14 +255,24 @@ def capture_prepared_static_snapshot(
     phases["load_maps"] = time.perf_counter() - phase_started
     phase_started = time.perf_counter()
     reaction_maps = capture_reaction_maps(model)
+    phases['reaction_map_capture'] = time.perf_counter()-phase_started
     recovery_compilation = None
+    recovery_started = time.perf_counter()
+    recovery_timings = {}
     if recovery_config.include_stresses and selected_element_ids:
         recovery_compilation = compile_affine_recovery(
-            model, recovery_config, selected_element_ids
+            model, recovery_config, selected_element_ids,_preparation_timings=recovery_timings,
+            _resource_config=_resource_config
         )
+    phases['affine_recovery_compile'] = time.perf_counter()-recovery_started
+    phases.update({'affine_recovery.'+(name[:-3]+'_seconds' if name.endswith('_ns') else name):
+                   float(value)/1e9 if name.endswith('_ns') else float(value)
+                   for name,value in recovery_timings.items()})
 
     from .prepared_static_envelopes import compile_envelope_plan
+    envelope_started = time.perf_counter()
     envelope_plan = compile_envelope_plan(model, envelope_recovery_config)
+    phases['envelope_plan_capture'] = time.perf_counter()-envelope_started
 
     checkpoint("prepared_static.prepare.recovery", 4)
     phases["recovery_and_reactions"] = time.perf_counter() - phase_started

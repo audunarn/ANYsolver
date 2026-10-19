@@ -43,6 +43,13 @@
       "status": "not-bundled"
     },
     {
+      "distribution": "ANYsolver-results",
+      "licence": "MPL-2.0",
+      "requirement": "ANYsolver-results>=2.1,<3",
+      "scope": "runtime",
+      "status": "not-bundled"
+    },
+    {
       "distribution": "ANYhydro",
       "licence": "MPL-2.0",
       "requirement": "ANYhydro>=0.1.0",

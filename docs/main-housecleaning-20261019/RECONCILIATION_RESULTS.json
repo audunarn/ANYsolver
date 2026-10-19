@@ -1,0 +1,113 @@
+{
+  "status": "HOUSEKEEPING_CHECKS_COMPLETE_WITH_DOCUMENTED_SESTRA_DEPENDENCY_FAILURES",
+  "source_files_compile_checked": 93,
+  "wheels": [
+    {
+      "file": "anysolver-0.4.7-py3-none-any.whl",
+      "sha256": "00f70c6a6eae847c6db019b9c36d0a86382401b10b97d28dc46b1e19d32d5d2a",
+      "source_files_exact": 727
+    },
+    {
+      "file": "anysolver_results-2.1.1-py3-none-any.whl",
+      "sha256": "c2ab7a457b6a19266a1ac9fe5a71313fc9abb5d43d876c9b07542b41f845656a",
+      "source_files_exact": 6
+    }
+  ],
+  "latest_case_counts": {
+    "skipped": 109,
+    "passed": 576,
+    "failed": 22
+  },
+  "unresolved": [
+    {
+      "module": "tests.test_sestra_deep_diagnostics",
+      "test": "test_prepared_six_model_control_and_physics_identity"
+    },
+    {
+      "module": "tests.test_sestra_deep_diagnostics",
+      "test": "test_offset_serialization_identity_does_not_allow_physical_shift"
+    },
+    {
+      "module": "tests.test_sestra_structure_benchmarks",
+      "test": "test_public_decks_and_effective_admission[4-inclined_frame]"
+    },
+    {
+      "module": "tests.test_sestra_structure_benchmarks",
+      "test": "test_public_decks_and_effective_admission[4-crossing_stiffeners]"
+    },
+    {
+      "module": "tests.test_sestra_structure_benchmarks",
+      "test": "test_public_decks_and_effective_admission[4-folded_plate]"
+    },
+    {
+      "module": "tests.test_sestra_structure_benchmarks",
+      "test": "test_public_decks_and_effective_admission[8-inclined_frame]"
+    },
+    {
+      "module": "tests.test_sestra_structure_benchmarks",
+      "test": "test_public_decks_and_effective_admission[8-crossing_stiffeners]"
+    },
+    {
+      "module": "tests.test_sestra_structure_benchmarks",
+      "test": "test_public_decks_and_effective_admission[8-folded_plate]"
+    },
+    {
+      "module": "tests.test_sestra_structure_benchmarks",
+      "test": "test_public_decks_and_effective_admission[16-inclined_frame]"
+    },
+    {
+      "module": "tests.test_sestra_structure_benchmarks",
+      "test": "test_public_decks_and_effective_admission[16-crossing_stiffeners]"
+    },
+    {
+      "module": "tests.test_sestra_structure_benchmarks",
+      "test": "test_public_decks_and_effective_admission[16-folded_plate]"
+    },
+    {
+      "module": "tests.test_sestra_structure_benchmarks",
+      "test": "test_castigliano_frame_native_tip_and_energy"
+    },
+    {
+      "module": "tests.test_sestra_structure_benchmarks",
+      "test": "test_changed_load_and_control_binding_refuse"
+    },
+    {
+      "module": "tests.test_sestra_structure_benchmarks",
+      "test": "test_load_result_serialization_is_bounded_and_does_not_mutate_source"
+    },
+    {
+      "module": "tests.test_sestra_three_case",
+      "test": "test_generator_byte_identity_loads_order_and_tip_handcheck"
+    },
+    {
+      "module": "tests.test_sestra_three_case",
+      "test": "test_no_reference_is_not_executed_and_source_mutation_refused"
+    },
+    {
+      "module": "tests.test_sestra_three_case",
+      "test": "test_public_importer_refuses_new_nodal_multi_case_aggregation"
+    },
+    {
+      "module": "tests.test_sestra_three_case",
+      "test": "test_named_flatbar_regime_refuses_changed_axes_and_section[orientation]"
+    },
+    {
+      "module": "tests.test_sestra_three_case",
+      "test": "test_named_flatbar_regime_refuses_changed_axes_and_section[dimension]"
+    },
+    {
+      "module": "tests.test_sestra_three_case",
+      "test": "test_named_flatbar_regime_refuses_changed_axes_and_section[area]"
+    },
+    {
+      "module": "tests.test_sestra_verification",
+      "test": "test_explicit_zero_poisson_ratio_public_admission"
+    },
+    {
+      "module": "tests.test_sestra_verification",
+      "test": "test_reported_rotated_frame_and_relabelled_descriptor_integrate"
+    }
+  ],
+  "scientific_criteria_unchanged": true,
+  "qualification": "Not full programme or installed/native qualification; skips are not passes"
+}

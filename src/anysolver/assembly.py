@@ -335,7 +335,10 @@ def _node_components(model: "FEModel") -> List[List[int]]:
 def _rigid_body_modes_full(model: "FEModel", total_dofs: int) -> Tuple[np.ndarray, List[Dict[str, Any]]]:
     """Build six full-system rigid body modes per connected component."""
     components = _node_components(model)
-    modes = np.zeros((total_dofs, 6 * len(components)), dtype=float)
+    # Supported components contribute no candidates. Retain the original full
+    # width/order for any unsupported component, but avoid a quadratic zero
+    # grid when every component is supported.
+    modes = None
     component_info: List[Dict[str, Any]] = []
     constrained_dofs = set(getattr(model.mesh.dof_manager, "_constrained_dofs", set()))
     for component_index, node_ids in enumerate(components):
@@ -361,6 +364,8 @@ def _rigid_body_modes_full(model: "FEModel", total_dofs: int) -> Tuple[np.ndarra
                 }
             )
             continue
+        if modes is None:
+            modes = np.zeros((total_dofs, 6 * len(components)), dtype=float)
         for node_id in node_ids:
             node = model.mesh.get_node(node_id)
             x, y, z = node.coords() - origin
@@ -390,6 +395,8 @@ def _rigid_body_modes_full(model: "FEModel", total_dofs: int) -> Tuple[np.ndarra
                 "supported": False,
             }
         )
+    if modes is None:
+        modes = np.zeros((total_dofs, 0), dtype=float)
     return modes, component_info
 
 
@@ -436,6 +443,10 @@ def build_reduced_rigid_body_modes(
         return np.zeros((0, 0), dtype=float), {"rank": 0, "kept_mode_indices": [], "components": component_info}
     reduced_seed = full_modes[np.asarray(independent_dofs, dtype=int), :]
     compatibility_rank = int(full_modes.shape[1])
+    if transformation is None and full_modes.shape[1] == 0:
+        # Legacy untransformed diagnostics reported the nominal six slots per
+        # component even when supported components left every slot zero.
+        compatibility_rank = 6 * len(component_info)
     compatibility_error = 0.0
     if transformation is None or full_modes.shape[1] == 0:
         reduced_modes = reduced_seed

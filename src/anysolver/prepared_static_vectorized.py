@@ -17,6 +17,8 @@ import sys
 from dataclasses import replace
 
 import numpy as np
+from anysolver_results.formulas import (shell_surface_von_mises as _shared_shell_von_mises,
+                                       beam_von_mises as _shared_beam_von_mises)
 from scipy import sparse
 
 from .prepared_static_loads import PreparedStaticError, PreparedStaticCapabilityError
@@ -44,22 +46,12 @@ SAFE_POINT_STRIDE = 128
 # --------------------------------------------------------------------------- derived
 
 def _shell_von_mises(fields):
-    mx, my, mxy, bx, by, bxy, sxz, syz = (np.asarray(fields[name], dtype=float) for name in SHELL_LINEAR_COMPONENTS)
-    best = None
-    for sign in (1.0, -1.0):
-        # Same expression and order as results._von_mises_surface with szz = 0.
-        sxx, syy, sxy = mx + sign * bx, my + sign * by, mxy + sign * bxy
-        szz = 0.0
-        value = np.sqrt(0.5 * ((sxx - syy) ** 2 + (syy - szz) ** 2 + (szz - sxx) ** 2)
-                        + 3.0 * (sxy ** 2 + syz ** 2 + sxz ** 2))
-        best = value if best is None else np.maximum(best, value)
-    return best
+    return _shared_shell_von_mises({name:np.asarray(fields[name],dtype=float)
+                                  for name in SHELL_LINEAR_COMPONENTS})
 
 
 def _beam_von_mises(fields):
-    sigma_x = fields['axial_stress'] + fields['bending_stress_y'] + fields['bending_stress_z']
-    return np.sqrt(sigma_x * sigma_x + 3.0 * (fields['shear_stress_y'] ** 2
-                   + fields['shear_stress_z'] ** 2 + fields['torsional_stress'] ** 2))
+    return _shared_beam_von_mises(fields)
 
 
 def _surface_tensor(fields, surface):

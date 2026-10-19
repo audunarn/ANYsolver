@@ -170,6 +170,9 @@ _NATIVE_DATA_CLASSES = (IsotropicMaterial, OrthotropicMaterial, Hill48Yield, DNV
                         GeneralizedBeamSection, GeneralizedShellSection)
 _NATIVE_CLASS_FACTS = {cls: _class_state(cls) for cls in (*_EXACT_ELEMENT_HOOKS, *_NATIVE_DATA_CLASSES, FEModel, FEMesh, Node, DOFManager, _QualifiedStateMapping)}
 
+from ._native_authority_dag import matches as _native_authority_matches, intern_facts as _intern_native_facts
+
+
 def _capture_native_helpers():
     records = []
     seen = set()
@@ -179,16 +182,27 @@ def _capture_native_helpers():
         if not function.__module__.startswith(("anysolver", "anymaterial")):
             return
         seen.add(id(function))
-        bindings = tuple((name, function.__globals__[name])
-                         for name in function.__code__.co_names if name in function.__globals__)
+        if function is _native_authority_matches:
+            # A missing global is also a fact for the new matcher: injecting
+            # id/type/all/etc must not shadow a builtin and alias memo keys.
+            def names(code):
+                return set(code.co_names).union(*(names(child) for child in code.co_consts if type(child) is types.CodeType))
+            bindings = tuple((name,name in function.__globals__,function.__globals__.get(name))
+                             for name in sorted(names(function.__code__)))
+        else:
+            bindings = tuple((name, function.__globals__[name])
+                             for name in function.__code__.co_names if name in function.__globals__)
         records.append((function, _callable_authority(function), bindings))
-        for _name, value in bindings:
-            visit(value)
+        for binding in bindings:
+            visit(binding[-1])
         for cell in function.__closure__ or ():
             try:
                 visit(cell.cell_contents)
             except ValueError:
                 pass
+    # The optimized matcher is itself covered by the unchanged literal
+    # predicate before it may consume any expected nodes.
+    visit(_native_authority_matches)
     for helper_name in ("_load_model_access_is_builtin", "_load_routing_classes_are_untouched", "_numpy_error_routes_are_builtin", "_builtin_acceleration_inputs", "_exact_load_case_instance_namespace"):
         visit(getattr(_boundary_module, helper_name))
     for cls in _NATIVE_CLASS_FACTS:
@@ -201,20 +215,55 @@ def _capture_native_helpers():
                         visit(accessor)
                 else:
                     visit(member)
-    return tuple(records)
+    return _intern_native_facts(tuple(records))
 
 _NATIVE_HELPER_FACTS = _capture_native_helpers()
 _PRESSURE_PROOF_IDENTITIES = tuple((name, getattr(_boundary_module, name)) for name in ("_load_model_access_is_builtin", "_load_routing_classes_are_untouched", "_numpy_error_routes_are_builtin", "_builtin_acceleration_inputs", "_exact_load_case_instance_namespace"))
 _EXACT_HOOK_FACTS = {cls: {name: _callable_authority(value) for name, value in hooks.items()} for cls, hooks in _EXACT_ELEMENT_HOOKS.items()}
 
+from . import _native_guard_dispatch as _native_guard_dispatch_module
+from .static_batch import _callable_state as _native_literal_callable_state
+def _native_cpp_literal_bindings():
+    # This body is not called. The native plan captures these original global
+    # observations and declines to the complete literal path if any changes.
+    return _class_state,_callable_authority_matches,_native_authority_matches
+_native_guard_dispatch_module.initialise(_NATIVE_CLASS_FACTS,_NATIVE_HELPER_FACTS,
+    _native_authority_matches.__globals__['_MISSING'],
+    (_class_state,_native_literal_callable_state,_callable_authority_matches,_native_authority_matches,_native_cpp_literal_bindings))
+_native_cpp_function=_native_guard_dispatch_module.try_compare
+def _native_cpp_names(code):
+    return set(code.co_names).union(*(_native_cpp_names(child) for child in code.co_consts if type(child) is types.CodeType))
+_NATIVE_CPP_BOOTSTRAP=(_native_cpp_function,_callable_authority(_native_cpp_function),
+    tuple((name,name in _native_cpp_function.__globals__,_native_cpp_function.__globals__.get(name))
+          for name in sorted(_native_cpp_names(_native_cpp_function.__code__))))
+
 def require_native_source_authority():
     if any(getattr(_boundary_module, name, None) is not expected for name, expected in _PRESSURE_PROOF_IDENTITIES):
         raise PreparedStaticCapabilityError("native runtime guard binding authority changed")
+    function,facts,bindings=_NATIVE_CPP_BOOTSTRAP
+    namespace=function.__globals__
+    cpp_valid=(_native_cpp_function is function and _native_guard_dispatch_module.try_compare is function
+        and _callable_authority_matches(function,facts) and all(type(key) is str for key in namespace)
+        and not any((name in namespace) is not present or (present and namespace[name] is not value)
+                    for name,present,value in bindings))
+    native_result=function(_NATIVE_CLASS_FACTS,_NATIVE_HELPER_FACTS) if cpp_valid else 2
+    if native_result is True:
+        return
     for cls, expected in _NATIVE_CLASS_FACTS.items():
         if _class_state(cls) != expected:
             raise PreparedStaticCapabilityError("native class executable authority changed", diagnostics={"stage": "native admission", "class": cls.__qualname__})
-    for function, authority, bindings in _NATIVE_HELPER_FACTS:
-        if not _callable_authority_matches(function, authority) or any(function.__globals__.get(name) is not value for name, value in bindings):
+    if not cpp_valid or (type(native_result) is int and native_result==2):
+        raise PreparedStaticCapabilityError('native helper executable authority changed',diagnostics={'stage':'native admission','function':'native guard binding'})
+    matcher, facts, bindings = _NATIVE_HELPER_FACTS[0]
+    if (_native_authority_matches is not matcher or not _callable_authority_matches(matcher,facts)
+            or any((name in matcher.__globals__) is not present or
+                   (present and matcher.__globals__[name] is not value) for name,present,value in bindings)):
+        raise PreparedStaticCapabilityError("native helper executable authority changed", diagnostics={"stage":"native admission","function":matcher.__qualname__})
+    # Fresh on every original safe-point/callback guard; never retain actual
+    # function metadata or proof results across caller observations.
+    memo = {}
+    for function, authority, bindings in _NATIVE_HELPER_FACTS[1:]:
+        if not matcher(function, authority, memo) or any(function.__globals__.get(name) is not value for name, value in bindings):
             raise PreparedStaticCapabilityError("native helper executable authority changed", diagnostics={"stage": "native admission", "function": function.__qualname__})
 
 

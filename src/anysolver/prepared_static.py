@@ -75,20 +75,6 @@ _PLAIN_ATOMIC = frozenset((type(None), bool, int, float, complex, str, bytes))
 _MISSING = object()
 
 
-def _deepcopy_memo_none_is_a_hit():
-    """Whether the running copy.deepcopy returns a memo value of None as the copy.
-
-    Up to Python 3.14 it does; from 3.15 a None entry is a miss on entry (the
-    object is copied and the entry overwritten), while the tuple re-check after
-    copying the items still treats a None entry as a hit. Measured once at import
-    so _plain_deepcopy follows the interpreter it runs on."""
-    probe = [[]]
-    return copy.deepcopy(probe, {id(probe): None}) is None
-
-
-_MEMO_NONE_IS_A_HIT = _deepcopy_memo_none_is_a_hit()
-
-
 def _plain_deepcopy(value, memo=None):
     """copy.deepcopy with the same result for the evaluator's plain per-case
     records (M31): dicts, lists and tuples are copied as deepcopy copies them
@@ -100,7 +86,7 @@ def _plain_deepcopy(value, memo=None):
     if kind in _PLAIN_ATOMIC:
         return value
     found = memo.get(id(value), _MISSING)
-    if found is not _MISSING and (found is not None or _MEMO_NONE_IS_A_HIT):
+    if found is not _MISSING:
         return found
     if kind is list:
         if all(type(item) in _PLAIN_ATOMIC for item in value):
@@ -429,6 +415,7 @@ class PreparedStaticEvaluator:
                     load_families=families,
                     cancellation_token=cancellation_token,
                     progress_callback=progress_callback,
+                    _resource_config=self._resource_config,
                 )
             _require_shared_execution(self)
             self._envelope = None if self._snapshot.envelope_plan is None else self._new_envelope(self._snapshot.envelope_plan)
@@ -682,6 +669,7 @@ class PreparedStaticEvaluator:
         batch_size: Optional[int] = None,
         cancellation_token: Any = None,
         progress_callback: Any = None,
+        _numeric_recovery: bool = False,
     ) -> Iterator[PreparedStaticBatch]:
         from .control import cancellation_safe_point, emit_progress
         from .threading_policy import solver_thread_scope
@@ -724,6 +712,13 @@ class PreparedStaticEvaluator:
                 recovery_bytes += len(element.derived_components) * max((base.nbytes for _name, base, _matrix, _shape in element.array_components), default=8)
         per_case_bytes = int((total_dofs * 10 + dofs.size) * 8 + recovery_bytes
             + (total_dofs * 160 + snapshot.reaction_maps.retained_bytes * 2 if recovery.include_reactions else 0))
+        if _numeric_recovery and getattr(self, '_numeric_export_plan', None) is not None:
+            plan = self._numeric_export_plan
+            width = max((entry[4].shape[0] for entry in self._element_library.values()),default=0)
+            patterns = len(self._pattern_names)
+            # Full source oracle, selected F planes, stack, derived tile and
+            # component rows coexist. Reserve conservatively before recovery.
+            per_case_bytes += plan[2] + 64*width*(patterns+1)*32
         effective = requested_batch_size
         limit = None if resource_config is None else resource_config.memory_limit_bytes
         if limit is not None:
@@ -970,10 +965,12 @@ class PreparedStaticEvaluator:
                 phase_start = time.perf_counter()
                 _require_shared_execution(self)
                 try:
-                    results, envelope_transaction, shared_statistics = self._recover_block(
+                    recover = self._recover_numeric_block if _numeric_recovery else self._recover_block
+                    numeric_options = {'cancellation_token':cancellation_token} if _numeric_recovery else {}
+                    results, envelope_transaction, shared_statistics = recover(
                         snapshot, full, F, recovery,
                         tuple((case_id, case_time, indices[j]) for j, (case_id, case_time, _owned) in enumerate(block)),
-                        certified, self._envelope, block)
+                        certified, self._envelope, block, **numeric_options)
                 except PreparedStaticError:
                     self._count_failure('case_recovery_failures')
                     raise

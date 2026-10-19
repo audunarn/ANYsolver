@@ -31,6 +31,9 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import copy
+import sys
+from types import MappingProxyType
+from time import perf_counter_ns as _recovery_preparation_clock_ns
 from contextlib import contextmanager, ExitStack, nullcontext
 from contextvars import ContextVar
 
@@ -78,7 +81,9 @@ def _authenticate_trusted_capture():
 
 import numpy as np
 from .prepared_static_measures import PRINCIPAL_COMPONENTS, shell_principal_stresses
-from .recovery import _compute_one_element_stress as _canonical_one_element_stress
+from .recovery import (_compute_one_element_stress as _canonical_one_element_stress,
+                       estimate_model_memory, enforce_memory_limit, MemoryEstimate,
+                       ResourcePolicyError)
 from .boundary import _callable_authority, _callable_authority_matches
 
 _PROBE_HELPER_AUTHORITY = _callable_authority(_canonical_one_element_stress)
@@ -156,8 +161,7 @@ from .prepared_static_loads import (
 
 from .boundary import (_numpy_error_routes_are_builtin as _capture_numpy_routes_are_builtin,
                        _load_routing_classes_are_untouched as _capture_routing_classes_are_untouched,
-                       _exact_load_case_instance_namespace as _capture_exact_load_case_namespace,
-                       _builtin_instance_dict_descriptor as _capture_builtin_instance_dict)
+                       _exact_load_case_instance_namespace as _capture_exact_load_case_namespace)
 from .prepared_static_loads import (_plain_numeric_state as _capture_plain_state,
                                     _instance_authority as _capture_instance_authority,
                                     _NATIVE_CLASS_FACTS as _capture_native_class_facts)
@@ -719,7 +723,13 @@ def _probe_element_stress(
     displacements: np.ndarray,
     element_id: int,
     recovery: "RecoveryConfig",
+    *, _publication_authority=None,
 ) -> Dict[str, Any]:
+    # A held checker is installed at module initialization. Caller-owned
+    # RecoveryConfig observations must not change delayed private publication.
+    if not _callable_authority_matches(_publication_authority[0],_publication_authority[1]):
+        raise PreparedStaticCapabilityError('recovery publication checker authority changed')
+    _publication_authority[0]()
     item = _canonical_one_element_stress(
         model, displacements, int(element_id), return_global=False,
     )
@@ -730,6 +740,9 @@ def _probe_element_stress(
             diagnostics={"stage": "recovery compilation", "element_id": int(element_id)},
         )
     requested = recovery.selected_components()
+    if not _callable_authority_matches(_publication_authority[0],_publication_authority[1]):
+        raise PreparedStaticCapabilityError('recovery publication checker authority changed')
+    _publication_authority[0]()
     if requested is not None:
         for name in set(requested).intersection(PRINCIPAL_COMPONENTS):
             try:
@@ -743,6 +756,9 @@ def _probe_element_stress(
         if wanted & {"von_mises", "equivalent_stress", "hill_utilization", *PRINCIPAL_COMPONENTS}:
             wanted.update({"von_mises", "membrane_xx", "membrane_yy", "membrane_xy", "bending_xx", "bending_yy", "bending_xy", "shear_xz", "shear_yz", "axial_stress", "bending_stress_y", "bending_stress_z", "shear_stress_y", "shear_stress_z", "torsional_stress"})
         recovered = {name: value for name, value in recovered.items() if name in wanted}
+    if not _callable_authority_matches(_publication_authority[0],_publication_authority[1]):
+        raise PreparedStaticCapabilityError('recovery publication checker authority changed')
+    _publication_authority[0]()
     return recovered
 
 
@@ -806,50 +822,24 @@ def _shell_surface_von_mises(record: Dict[str, Any]) -> Any:
     Source: ``elements.ShellElement.compute_stresses`` and
     ``e4_pl_s3_element.QualifiedE4PLS3ShellElement`` elastic recovery: the
     measure is the max of the top/bottom plane-stress von Mises with the
-    shared transverse shear.
+    shared transverse shear.  The formula is shared with the offline capsule
+    runtime through :mod:`anysolver_results.formulas`.
     """
 
-    membrane = (record["membrane_xx"], record["membrane_yy"], record["membrane_xy"])
-    bending = (record["bending_xx"], record["bending_yy"], record["bending_xy"])
-    shear = (record["shear_xz"], record["shear_yz"])
-
-    from .results import _von_mises_surface
-    arrays = np.broadcast_arrays(*membrane, *bending, *shear)
-    shape = arrays[0].shape
-    fields = [value.reshape(-1) for value in arrays]
-    result = []
-    for values in zip(*fields):
-        mx, my, mxy, bx, by, bxy, sxz, syz = values
-        surfaces = []
-        for sign in (1.0, -1.0):
-            fields_at_surface = dict(global_xx_s=mx + sign*bx,
-                global_yy_s=my + sign*by, global_zz_s=0.0,
-                global_xy_s=mxy + sign*bxy, global_xz_s=sxz, global_yz_s=syz)
-            surfaces.append(_von_mises_surface(fields_at_surface, "s"))
-        result.append(max(surfaces))
-    return np.asarray(result).reshape(shape)
+    from anysolver_results.formulas import shell_surface_von_mises
+    return shell_surface_von_mises(record)
 
 
 def _beam_von_mises(record: Dict[str, Any]) -> Any:
     """Reviewed beam von Mises from canonical section fields.
 
-    Source: ``elements.BeamElement.compute_stresses`` elastic path.
+    Source: ``elements.BeamElement.compute_stresses`` elastic path.  The
+    formula is shared with the offline capsule runtime through
+    :mod:`anysolver_results.formulas`.
     """
 
-    sigma_x = (
-        record["axial_stress"]
-        + record["bending_stress_y"]
-        + record["bending_stress_z"]
-    )
-    return np.sqrt(
-        sigma_x * sigma_x
-        + 3.0
-        * (
-            record["shear_stress_y"] ** 2
-            + record["shear_stress_z"] ** 2
-            + record["torsional_stress"] ** 2
-        )
-    )
+    from anysolver_results.formulas import beam_von_mises
+    return beam_von_mises(record)
 
 
 def _derived_measure(name: str, record: Dict[str, Any]) -> Any:
@@ -902,10 +892,108 @@ def _ordered_derived(names: Mapping[str, str]) -> Tuple[str, ...]:
     return tuple(name for name in _DERIVED_ORDER if name in names)
 
 
+_VERIFICATION_RECIPE_TILE = 64
+_VERIFICATION_PENDING_BYTES = 4 * 1024**2
+
+
+def _verification_storage_bytes(value):
+    """Conservative incoming copy/storage bound, without making that copy."""
+    if isinstance(value,np.ndarray):
+        if value.dtype.hasobject:
+            raise PreparedStaticCapabilityError('verification record contains object arrays')
+        return sys.getsizeof(value)+2*value.nbytes+128
+    if isinstance(value,Mapping):
+        size=0
+        count=0
+        for key,item in value.items():
+            size+=_verification_storage_bytes(key)+_verification_storage_bytes(item)
+            count+=1
+        # A Mapping subclass can be smaller than its normalized plain dict.
+        return max(sys.getsizeof(value)+40,sys.getsizeof({})+128*count)+size
+    if type(value) in (tuple,list):
+        return sys.getsizeof(value)+sum(_verification_storage_bytes(item) for item in value)
+    if value is None or type(value) in (bool,int,float,str,bytes) or isinstance(value,np.generic):
+        return sys.getsizeof(value)
+    raise PreparedStaticCapabilityError('verification record contains nonplain values')
+
+
+def _freeze_verification_value(value):
+    """Alias-free source dtype/shape/bytes; never retain mutable native caches."""
+    if isinstance(value,np.ndarray):
+        array=np.asarray(value)
+        return np.frombuffer(array.tobytes(order='C'),dtype=array.dtype).reshape(array.shape)
+    if isinstance(value,Mapping):
+        return MappingProxyType({key:_freeze_verification_value(item) for key,item in value.items()})
+    if type(value) in (tuple,list):
+        return tuple(_freeze_verification_value(item) for item in value)
+    return value
+
+
+def _check_verification_memory(memory_base,extra,resource_config,timing):
+    required=int(memory_base.total_bytes_estimate)+int(extra)
+    timing['pending_copy_peak_bytes']=max(timing['pending_copy_peak_bytes'],int(extra))
+    estimate=MemoryEstimate(**{**vars(memory_base),'total_bytes_estimate':required})
+    enforce_memory_limit(estimate,resource_config,context='prepared_static.recovery_verification_staging')
+
+
+def _compare_owner_scale(recipe,local_check,oracle_check,element_id,amplitude):
+    """Original source comparisons and tolerances, on frozen native operands."""
+    owned_check = _recover_owned_local(recipe,local_check)
+    for component,expected_value in oracle_check.items():
+        if component in PRINCIPAL_COMPONENTS:
+            owned_check[component] = _derived_measure(component,owned_check)
+        actual_value = owned_check[component]
+        expected_array = _array_value(expected_value)
+        if expected_array is not None:
+            if not np.allclose(actual_value,expected_array,rtol=1e-12,atol=1e-12):
+                raise PreparedStaticCapabilityError('owned canonical recovery failed multiple-scale verification',diagnostics={'element_id':int(element_id),'component':component,'scale':amplitude})
+        elif not _constant_equal(actual_value,expected_value):
+            raise PreparedStaticCapabilityError('owned canonical recovery metadata changed')
+
+
+def _verify_staged_recipes(pending,compiled,refused,timing,*,_publication_authority=None):
+    """No live model/config/caller observation; publish only after full scope exit."""
+    accepted=[]
+    if not _callable_authority_matches(_publication_authority[0],_publication_authority[1]):
+        raise PreparedStaticCapabilityError('recovery publication checker authority changed')
+    _publication_authority[0]()
+    started=_recovery_preparation_clock_ns()
+    with owned_recovery_scope(tuple(entry[0].local_recipe for entry in pending)):
+        entered=_recovery_preparation_clock_ns()
+        timing['verification_scope_entry_ns']+=entered-started
+        for candidate,checks,_size in pending:
+            try:
+                for amplitude,local,oracle in checks:
+                    _compare_owner_scale(candidate.local_recipe,local,oracle,candidate.element_id,amplitude)
+                    timing['owner_verification_calls']+=1
+                accepted.append(candidate)
+            except PreparedStaticCapabilityError as error:
+                refused.append(dict(element_id=candidate.element_id,formulation=candidate.formulation,reason=str(error)))
+            except Exception as error:
+                from .control import SolveCancelled
+                from .recovery import ResourcePolicyError
+                if isinstance(error,(SolveCancelled,ResourcePolicyError)):
+                    raise
+                refused.append(dict(element_id=candidate.element_id,formulation=candidate.formulation,
+                    reason='recovery oracle probe failed: '+str(error),original_exception_type=type(error).__name__))
+        finished=_recovery_preparation_clock_ns()
+        timing['owner_verification_ns']+=finished-entered
+    timing['verification_scope_exit_ns']+=_recovery_preparation_clock_ns()-finished
+    timing['verification_scope_count']+=1
+    timing['verification_recipe_max']=max(timing['verification_recipe_max'],len(pending))
+    if not _callable_authority_matches(_publication_authority[0],_publication_authority[1]):
+        raise PreparedStaticCapabilityError('recovery publication checker authority changed')
+    _publication_authority[0]()
+    for candidate in accepted:
+        compiled[candidate.element_id]=candidate
+        timing['admitted_elements']+=1
+
+
 def compile_affine_recovery(
     model: "FEModel",
     recovery: "RecoveryConfig",
     selected_element_ids: Sequence[int],
+    *, _preparation_timings=None, _resource_config=None, _publication_authority=None,
 ) -> PreparedRecoveryCompilation:
     """Compile recovery maps for the selected, admitted elements."""
 
@@ -914,20 +1002,51 @@ def compile_affine_recovery(
     from .analysis_session import _immutable_array
 
     started = time.perf_counter()
+    if not _callable_authority_matches(_publication_authority[0],_publication_authority[1]):
+        raise PreparedStaticCapabilityError('recovery publication checker authority changed')
+    _publication_authority[0]()
+    if _preparation_timings is not None and type(_preparation_timings) is not dict:
+        raise PreparedStaticCapabilityError('preparation timing sink must be a source-owned plain dict')
+    timing = dict(admission_ns=0, global_probe_allocation_ns=0, native_probe_ns=0,
+                  schema_ns=0, affine_validation_ns=0, owner_capture_ns=0,
+                  owner_verification_ns=0, publication_ns=0, initial_authority_ns=0,
+                  admitted_elements=0, native_probe_calls=0, owner_verification_calls=0,
+                  verification_scope_entry_ns=0,verification_scope_exit_ns=0,
+                  verification_scope_count=0,verification_recipe_max=0,
+                  pending_copy_peak_bytes=0,original_verification_fallback_elements=0)
+    memory_base=estimate_model_memory(model,num_rhs=0,recovery_config=recovery)
+    pending=[]
+    pending_bytes=0
+    flush_failed=False
+    def flush_pending():
+        nonlocal pending_bytes,flush_failed
+        if pending:
+            try:
+                _verify_staged_recipes(pending,compiled,refused,timing)
+            except Exception:
+                flush_failed=True
+                raise
+            finally:
+                pending.clear()
+                pending_bytes=0
     total_dofs = int(model.mesh.dof_manager.total_dofs)
     compiled: Dict[int, CompiledElementRecovery] = {}
     retained = 0
     probes = 0
     refused: List[Dict[str, Any]] = []
+    phase_started = _recovery_preparation_clock_ns()
     require_native_source_authority()
     if not _callable_authority_matches(_canonical_one_element_stress, _PROBE_HELPER_AUTHORITY):
         raise PreparedStaticCapabilityError("canonical element recovery helper authority changed")
     _authenticate_trusted_capture()
+    timing['initial_authority_ns'] = _recovery_preparation_clock_ns()-phase_started
     for element_id in selected_element_ids:
         element = model.mesh.elements.get(int(element_id))
         if element is None:
             continue
+        phase_started = _recovery_preparation_clock_ns()
         admitted, formulation, authority = _recovery_admission(model, element, recovery)
+        timing['admission_ns'] += _recovery_preparation_clock_ns()-phase_started
         if not admitted:
             refused.append({
                 "element_id": int(element_id),
@@ -940,9 +1059,16 @@ def compile_affine_recovery(
         )
         local_size = int(dof_mapping.size)
         try:
-            baseline = _probe_element_stress(model, np.zeros(total_dofs, dtype=float),
-                                             int(element_id), recovery)
+            phase_started = _recovery_preparation_clock_ns()
+            baseline_probe = np.zeros(total_dofs, dtype=float)
+            timing['global_probe_allocation_ns'] += _recovery_preparation_clock_ns()-phase_started
+            phase_started = _recovery_preparation_clock_ns()
+            baseline = _probe_element_stress(model, baseline_probe,int(element_id), recovery)
+            del baseline_probe
+            timing['native_probe_ns'] += _recovery_preparation_clock_ns()-phase_started
+            timing['native_probe_calls'] += 1
             probes += 1
+            phase_started = _recovery_preparation_clock_ns()
             names = sorted(baseline)
             constants: Dict[str, Any] = {}
             arrays: Dict[str, np.ndarray] = {}
@@ -968,11 +1094,18 @@ def compile_affine_recovery(
                                  "components": unclassifiable},
                 )
             columns: Dict[str, List[np.ndarray]] = {name: [] for name in arrays}
+            timing['schema_ns'] += _recovery_preparation_clock_ns()-phase_started
             for local_index in range(local_size):
+                phase_started = _recovery_preparation_clock_ns()
                 probe = np.zeros(total_dofs, dtype=float)
                 probe[dof_mapping[local_index]] = 1.0
+                timing['global_probe_allocation_ns'] += _recovery_preparation_clock_ns()-phase_started
+                phase_started = _recovery_preparation_clock_ns()
                 observed = _probe_element_stress(model, probe, int(element_id), recovery)
+                timing['native_probe_ns'] += _recovery_preparation_clock_ns()-phase_started
+                timing['native_probe_calls'] += 1
                 probes += 1
+                phase_started = _recovery_preparation_clock_ns()
                 if set(observed) != set(baseline):
                     raise PreparedStaticCapabilityError(
                         "recovery oracle changed its component set under local probes",
@@ -998,12 +1131,19 @@ def compile_affine_recovery(
                                          "component": str(name)},
                         )
                     columns[name].append(content.reshape(-1) - arrays[name])
+                timing['schema_ns'] += _recovery_preparation_clock_ns()-phase_started
             rng = np.random.default_rng(int(element_id))
             random_local = rng.uniform(-1.0, 1.0, local_size)
+            phase_started = _recovery_preparation_clock_ns()
             random_probe = np.zeros(total_dofs, dtype=float)
             random_probe[dof_mapping] = random_local
+            timing['global_probe_allocation_ns'] += _recovery_preparation_clock_ns()-phase_started
+            phase_started = _recovery_preparation_clock_ns()
             observed = _probe_element_stress(model, random_probe, int(element_id), recovery)
+            timing['native_probe_ns'] += _recovery_preparation_clock_ns()-phase_started
+            timing['native_probe_calls'] += 1
             probes += 1
+            phase_started = _recovery_preparation_clock_ns()
             linear: Dict[str, Tuple[np.ndarray, np.ndarray]] = {}
             frozen_constants = dict(constants)
             derived: Dict[str, str] = {}
@@ -1115,28 +1255,61 @@ def compile_affine_recovery(
                 if isinstance(value, np.ndarray):
                     retained += int(value.nbytes)
                 constant_items.append((name, value))
+            timing['affine_validation_ns'] += _recovery_preparation_clock_ns()-phase_started
+            phase_started = _recovery_preparation_clock_ns()
             local_recipe = _capture_owned_local_recovery(model, element)
+            timing['owner_capture_ns'] += _recovery_preparation_clock_ns()-phase_started
+            scale_checks=[]
+            scale_bytes=0
+            immediate=False
             # Check owned canonical arithmetic at distinct scales and under a
             # rigid displacement offset; affinity probes alone are insufficient.
             for amplitude in (1e-8, 1e-3):
                 local_check = random_local * amplitude
                 local_check[0::6] += .125
+                phase_started = _recovery_preparation_clock_ns()
                 global_check = np.zeros(total_dofs)
                 global_check[dof_mapping] = local_check
+                timing['global_probe_allocation_ns'] += _recovery_preparation_clock_ns()-phase_started
+                phase_started = _recovery_preparation_clock_ns()
                 oracle_check = _probe_element_stress(model, global_check, int(element_id), recovery)
-                owned_check = _recover_owned_local(local_recipe, local_check)
-                for component, expected_value in oracle_check.items():
-                    if component in PRINCIPAL_COMPONENTS:
-                        owned_check[component] = _derived_measure(component, owned_check)
-                    actual_value = owned_check[component]
-                    expected_array = _array_value(expected_value)
-                    if expected_array is not None:
-                        if not np.allclose(actual_value, expected_array, rtol=1e-12, atol=1e-12):
-                            raise PreparedStaticCapabilityError("owned canonical recovery failed multiple-scale verification", diagnostics={"element_id": int(element_id), "component": component, "scale": amplitude})
-                    elif not _constant_equal(actual_value, expected_value):
-                        raise PreparedStaticCapabilityError("owned canonical recovery metadata changed")
+                timing['native_probe_ns'] += _recovery_preparation_clock_ns()-phase_started
+                timing['native_probe_calls'] += 1
+                incoming=_verification_storage_bytes(oracle_check)+_verification_storage_bytes(local_check)+128
+                if not _callable_authority_matches(_publication_authority[0],_publication_authority[1]):
+                    raise PreparedStaticCapabilityError('recovery publication checker authority changed')
+                _publication_authority[0]()
+                # Account scratch while older immutable entries remain live. Freeze
+                # before any private verification can mutate a native shared cache.
+                _check_verification_memory(memory_base,pending_bytes+scale_bytes+2*incoming,_resource_config,timing)
+                saved_oracle=_freeze_verification_value(oracle_check)
+                saved_local=_freeze_verification_value(local_check)
+                if not _callable_authority_matches(_publication_authority[0],_publication_authority[1]):
+                    raise PreparedStaticCapabilityError('recovery publication checker authority changed')
+                _publication_authority[0]()
+                if pending_bytes+scale_bytes+incoming>_VERIFICATION_PENDING_BYTES:
+                    flush_pending()
+                if immediate or scale_bytes+incoming>_VERIFICATION_PENDING_BYTES:
+                    # Preserve unbounded/default caller admission for a single
+                    # oversized source record using original per-call authority.
+                    if not immediate:
+                        timing['original_verification_fallback_elements']+=1
+                        for prior_amplitude,prior_local,prior_oracle in scale_checks:
+                            _compare_owner_scale(local_recipe,prior_local,prior_oracle,element_id,prior_amplitude)
+                            timing['owner_verification_calls']+=1
+                        scale_checks.clear()
+                        scale_bytes=0
+                    phase_started=_recovery_preparation_clock_ns()
+                    _compare_owner_scale(local_recipe,saved_local,saved_oracle,element_id,amplitude)
+                    timing['owner_verification_ns']+=_recovery_preparation_clock_ns()-phase_started
+                    timing['owner_verification_calls']+=1
+                    immediate=True
+                else:
+                    scale_checks.append((amplitude,saved_local,saved_oracle))
+                    scale_bytes+=incoming
                 probes += 1
-            compiled[int(element_id)] = CompiledElementRecovery(
+            phase_started = _recovery_preparation_clock_ns()
+            candidate = CompiledElementRecovery(
                 element_id=int(element_id),
                 formulation=formulation,
                 admitted_by=authority,
@@ -1149,7 +1322,18 @@ def compile_affine_recovery(
                 verification_relative_residual=float(verification),
                 local_recipe=local_recipe,
             )
+            if immediate:
+                compiled[int(element_id)]=candidate
+                timing['admitted_elements']+=1
+            else:
+                pending.append((candidate,tuple(scale_checks),scale_bytes))
+                pending_bytes+=scale_bytes
+                if len(pending)>=_VERIFICATION_RECIPE_TILE:
+                    flush_pending()
+            timing['publication_ns'] += _recovery_preparation_clock_ns()-phase_started
         except PreparedStaticCapabilityError as error:
+            if flush_failed:
+                raise
             refused.append({
                 "element_id": int(element_id),
                 "formulation": formulation,
@@ -1159,7 +1343,7 @@ def compile_affine_recovery(
         except Exception as error:
             from .control import SolveCancelled
 
-            if isinstance(error, SolveCancelled):
+            if flush_failed or isinstance(error, (SolveCancelled,ResourcePolicyError)):
                 raise
             refused.append({
                 "element_id": int(element_id),
@@ -1168,6 +1352,10 @@ def compile_affine_recovery(
                 "original_exception_type": type(error).__name__,
             })
             continue
+    flush_pending()
+    if not _callable_authority_matches(_publication_authority[0],_publication_authority[1]):
+        raise PreparedStaticCapabilityError('recovery publication checker authority changed')
+    _publication_authority[0]()
     if refused:
         raise PreparedStaticCapabilityError(
             "stress recovery was requested for elements outside the source-reviewed "
@@ -1176,6 +1364,8 @@ def compile_affine_recovery(
             diagnostics={"stage": "recovery compilation", "refused": refused},
         )
     retained += sum(item.local_recipe.retained_bytes for item in compiled.values())
+    if _preparation_timings is not None:
+        _preparation_timings.update(timing)
     return PreparedRecoveryCompilation(
         elements=compiled,
         retained_bytes=int(retained),
@@ -1606,9 +1796,8 @@ def _make_capture_module_check():
                     return None
             member = members.get('__dict__')
             if member is not None and not (
-                    ((type(member) is types.MemberDescriptorType or type(member) is types.GetSetDescriptorType)
-                     and member.__objclass__ is cls)
-                    or _capture_builtin_instance_dict(member, cls)):  # CPython 3.15: one shared descriptor
+                    (type(member) is types.MemberDescriptorType or type(member) is types.GetSetDescriptorType)
+                    and member.__objclass__ is cls):
                 return None
             member = members.get('__getattribute__')
             if member is not None and not (type(member) is types.WrapperDescriptorType and member.__objclass__ is cls):
@@ -1834,3 +2023,37 @@ def _make_capture_span_authority():
 
 
 _require_capture_span_authority = _make_capture_span_authority()
+
+
+def _make_verification_publication_authority():
+    """Pin delayed publication before any live model/config observation."""
+    namespace=globals()
+    matches=_callable_authority_matches
+    records=[]
+    def require():
+        for name,function,authority,bindings in records:
+            if (dict.get(namespace,name) is not function or not matches(function,authority)
+                    or any(dict.get(function.__globals__,key) is not value for key,value in bindings)):
+                raise PreparedStaticCapabilityError('recovery verification publication authority changed')
+        if (sys.getsizeof is not storage_size or np.frombuffer is not frombuffer
+                or np.asarray is not asarray or np.allclose is not allclose):
+            raise PreparedStaticCapabilityError('recovery verification operation authority changed')
+    storage_size=sys.getsizeof
+    frombuffer=np.frombuffer
+    asarray=np.asarray
+    allclose=np.allclose
+    proof=(require,_callable_authority(require))
+    for name in ('_probe_element_stress','compile_affine_recovery','_verify_staged_recipes'):
+        namespace[name].__kwdefaults__['_publication_authority']=proof
+    for name in ('_probe_element_stress','compile_affine_recovery','_verify_staged_recipes',
+                 '_compare_owner_scale','_freeze_verification_value','_verification_storage_bytes',
+                 '_check_verification_memory','_recover_owned_local','_array_value',
+                 '_constant_equal','_derived_measure'):
+        function=namespace[name]
+        bindings=tuple((key,function.__globals__[key]) for key in function.__code__.co_names
+                       if key in function.__globals__)
+        records.append((name,function,_callable_authority(function),bindings))
+    return require
+
+
+_require_verification_publication_authority=_make_verification_publication_authority()

@@ -1062,3 +1062,7 @@ from .prepared_static_envelopes import PreparedEnvelopeResult, PreparedEnvelopeE
 
 from .prepared_static_response import PatternCase, PreparedStaticResponseEvaluator, prepare_static_response_evaluator
 __all__ += ['PatternCase', 'PreparedStaticResponseEvaluator', 'prepare_static_response_evaluator']
+from .result_capsule import (RecoveryCapsuleError, SINK_METHODS,
+                             export_recovery_capsule, export_recovery_capsule_to_sink)
+__all__ += ['export_recovery_capsule', 'export_recovery_capsule_to_sink',
+            'RecoveryCapsuleError', 'SINK_METHODS']

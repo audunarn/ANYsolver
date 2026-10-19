@@ -1,0 +1,465 @@
+{
+  "version": "marine_w6_cases_v4",
+  "status": "prospective explicit continuous v2 contact fixtures; legacy v1 no-root failure preserved",
+  "scope": "homogeneous fully submerged axial lines; frictionless horizontal compliant seabed; fixed-step native line dynamics",
+  "mesh_segments": [
+    16,
+    32,
+    64
+  ],
+  "static_cases": [
+    "suspended",
+    "buoyant",
+    "taut",
+    "touchdown"
+  ],
+  "fairlead_offsets": [
+    -0.25,
+    0.0,
+    0.25
+  ],
+  "static": {
+    "span": 8.0,
+    "length": 10.0,
+    "EA": 10000.0,
+    "mass_per_length": 2.0,
+    "water_density": 1000.0,
+    "displaced_area": 0.001,
+    "gravity": 9.81,
+    "force_atol": 1e-08,
+    "force_rtol": 1e-10,
+    "max_iterations": 40,
+    "max_line_search": 20
+  },
+  "touchdown": {
+    "anchor_center_z": -2.95,
+    "fairlead_z": -1.5,
+    "floor_z": -3.0,
+    "diameter": 0.1,
+    "pressure_stiffness": 10000000.0,
+    "pressure_damping": 0.0,
+    "penetration_limit_m": 0.0001
+  },
+  "axial_vibration": {
+    "rest_segment": 0.9,
+    "EA": 100.0,
+    "mass_per_length": 2.0,
+    "initial_displacement": 0.01,
+    "duration": 0.5,
+    "dt": [
+      0.01,
+      0.005,
+      0.0025
+    ],
+    "initial_velocity": 0.0
+  },
+  "contact_release": {
+    "diameter": 0.2,
+    "rest_segment": 2.0,
+    "mass_per_length": 2.0,
+    "pressure_stiffness": 100000.0,
+    "pressure_damping": [
+      0.0,
+      100.0
+    ],
+    "initial_gap": -0.001,
+    "duration": 0.04,
+    "dt": [
+      0.002,
+      0.001,
+      0.0005
+    ],
+    "penetration_limit_m": 0.00100001,
+    "initial_velocity": 0.0,
+    "floor_z": -2.1,
+    "EA": 100.0,
+    "activation_depth_m": 0.0001
+  },
+  "criteria": {
+    "catenary_force_geometry": 0.01,
+    "mesh_tension_fairlead": 0.02,
+    "time_response": 0.02,
+    "dynamic_reference": 0.02,
+    "compression_relative": 1e-10,
+    "balance_atol": 1e-08,
+    "balance_rtol": 1e-10,
+    "energy_growth_relative": 0.02,
+    "axial_energy_relative": 1e-08,
+    "contact_energy_defect_relative": 0.02,
+    "contact_energy_refinement_factor": 0.6,
+    "energy_roundoff_floor_relative": 1e-08
+  },
+  "normalization": {
+    "static_force": "max(norm_inf(reference fairlead force), abs(net reference weight)*length, 1N)",
+    "geometry": "max(reference sag from terminal chord, 0.01*reference length); taut uses reference length",
+    "mesh": "same prospectively fixed reference force scale; compare 32 to64 segment peak tension and fairlead force",
+    "dynamic_position": "axial: abs(q0); contact: hypot(q0,v0/sqrt(K/m)); fixed scale at every sample",
+    "contact_velocity": "sqrt(K/m)*hypot(q0,v0/sqrt(K/m))",
+    "dynamic_tension_anchor_force": "axial: max(EA*abs(q0)/rest_segment,1N); slack contact: 1N and exact zero load checked at balance_atol",
+    "balance_moment": "force scale times reference length",
+    "energy": "initial nonconstant mechanical energy, never instantaneous near-zero energy",
+    "contact_energy": "E0=.5*m*v0^2+.5*K*max(-q0,0)^2; defect=max|E-E0+trapezoidal_integral(D)|/E0. D retains clipping loss until geometric release."
+  },
+  "execution": {
+    "one_numerical_job": true,
+    "threads": 1,
+    "max_segments": 64,
+    "max_dynamic_steps_per_case": 200,
+    "new_pool_seconds": 300,
+    "per_process_seconds": 90,
+    "reserve_seconds": 60,
+    "BEM_runs": 0
+  },
+  "remaining_W6": [
+    "independent scientific assessment and acceptance",
+    "the explicit eight-case application replay inventory",
+    "regularized friction only after frictionless gate"
+  ],
+  "sources": [
+    "https://github.com/NatLabRockies/MoorPy/blob/main/moorpy/Catenary.py"
+  ],
+  "static_case_inputs": {
+    "suspended": {
+      "first": [
+        0.0,
+        0.0,
+        -5.0
+      ],
+      "last": [
+        8.0,
+        0.0,
+        -4.0
+      ]
+    },
+    "buoyant": {
+      "first": [
+        0.0,
+        0.0,
+        -8.0
+      ],
+      "last": [
+        8.0,
+        0.0,
+        -8.0
+      ],
+      "displaced_area": 0.003
+    },
+    "taut": {
+      "first": [
+        0.0,
+        0.0,
+        -5.0
+      ],
+      "last": [
+        8.0,
+        0.0,
+        -5.0
+      ],
+      "length": 7.5,
+      "displaced_area": 0.002
+    },
+    "touchdown": {
+      "first": [
+        0.0,
+        0.0,
+        -2.95
+      ],
+      "last": [
+        9.0,
+        0.0,
+        -1.5
+      ]
+    }
+  },
+  "fairlead_curve": {
+    "base": "suspended",
+    "mesh": 64,
+    "displacements": [
+      [
+        -0.25,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.25,
+        0.0,
+        0.0
+      ]
+    ]
+  },
+  "rigid_translation": {
+    "base": "suspended",
+    "mesh": 64,
+    "vector": [
+      1.5,
+      -0.2,
+      3.0
+    ],
+    "relative_force_tolerance": 1e-10,
+    "position_atol": 1e-08
+  },
+  "body_fairlead": {
+    "base": "suspended",
+    "mesh": 64,
+    "point_body": [
+      0.2,
+      0.3,
+      0.4
+    ],
+    "rotation_vector": [
+      0.2,
+      -0.1,
+      0.3
+    ],
+    "body_mass": 10.0,
+    "body_inertia_diagonal": [
+      2.0,
+      3.0,
+      4.0
+    ],
+    "body_position": "terminal minus Rodrigues(rotation_vector)*point_body"
+  },
+  "dynamic_fixture": {
+    "anchors": [
+      [
+        -1.0,
+        0.0,
+        -2.0
+      ],
+      [
+        1.0,
+        0.0,
+        -2.0
+      ]
+    ],
+    "center": [
+      0.0,
+      0.0,
+      -2.0
+    ],
+    "gravity_world": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "water_density": 1000.0,
+    "displaced_area": 0.0,
+    "axial_damping": 0.0,
+    "body_id": "unused-marker",
+    "body_mass": 5.0,
+    "body_inertia_diagonal": [
+      2.0,
+      3.0,
+      4.0
+    ],
+    "body_position": [
+      0.0,
+      0.0,
+      -1.0
+    ],
+    "initial_node_acceleration": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "native_residual_tolerance": 1e-10,
+    "max_newton_iterations": 20
+  },
+  "contact_landing": {
+    "diameter": 0.2,
+    "rest_segment": 2.0,
+    "mass_per_length": 2.0,
+    "pressure_stiffness": 100000.0,
+    "pressure_damping": [
+      0.0,
+      100.0
+    ],
+    "initial_gap": 0.0002,
+    "duration": 0.05,
+    "dt": [
+      0.001,
+      0.0005,
+      0.00025
+    ],
+    "penetration_limit_m": 0.00100001,
+    "initial_velocity": -0.1,
+    "floor_z": -2.1,
+    "EA": 100.0,
+    "activation_depth_m": 0.0001
+  },
+  "harmonic": {
+    "anchors": [
+      [
+        0.0,
+        -1.0,
+        -2.0
+      ],
+      [
+        0.0,
+        1.0,
+        -2.0
+      ]
+    ],
+    "segments": [
+      2,
+      4
+    ],
+    "length": 2.0,
+    "EA": 100.0,
+    "mass_per_length": 2.0,
+    "axial_damping": 0.0,
+    "gravity_world": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "water_depth": 20.0,
+    "water_density": 1000.0,
+    "gravity": 9.81,
+    "amplitude": 0.2,
+    "omega": 1.3,
+    "phase": 0.2,
+    "heading_degrees": 0.0,
+    "current": [
+      0.2,
+      0.0,
+      0.0
+    ],
+    "diameter": 0.1,
+    "drag_normal": 1.0,
+    "drag_tangential": 0.02,
+    "added_mass_normal": 2.0,
+    "added_mass_tangential": 0.4,
+    "inertia_normal": 3.0,
+    "inertia_tangential": 0.4,
+    "displaced_area": "pi*diameter^2/4",
+    "phase_samples": 12,
+    "phase_time_grid": "t_j=j*2*pi/(12*omega), j=0,...,11, endpoint excluded",
+    "force_atol": 1e-08,
+    "force_rtol": 1e-10
+  },
+  "prescribed_kinematics": {
+    "base": "harmonic",
+    "heading_degrees": 30.0,
+    "body_id": "prescribed-line-body",
+    "body_position": [
+      0.0,
+      0.0,
+      -2.0
+    ],
+    "body_mass": 5.0,
+    "body_inertia_diagonal": [
+      2.0,
+      3.0,
+      4.0
+    ],
+    "structure_velocity": [
+      0.1,
+      0.15,
+      -0.08
+    ],
+    "structure_acceleration": [
+      0.12,
+      -0.07,
+      0.09
+    ],
+    "angular_velocity": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "angular_acceleration": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "purpose": "instantaneous assembly at registered phases, not an integrated trajectory; nonzero normal/tangential fluid and structural branches; dry line inertia included once"
+  },
+  "contact_point_passivity": {
+    "gaps": [
+      -0.001,
+      -1e-05,
+      0.0,
+      0.001
+    ],
+    "velocities": [
+      -0.2,
+      0.0,
+      0.2
+    ],
+    "diameter": 0.2,
+    "reference_length": 2.0,
+    "pressure_stiffness": 100000.0,
+    "pressure_damping": 100.0,
+    "balance_atol": 1e-10,
+    "activation_depth_m": 0.0001
+  },
+  "qualification_levels": {
+    "static_reference": "64segments",
+    "mesh": "32to64segments",
+    "dynamic_reference": "finestdt",
+    "time_refinement": "middletofinestdt",
+    "dynamic_quantities": "node displacement/velocity, both segment tensions and anchor WORLD force histories at exact nested times",
+    "contact_energy": "all levels bounded; middle-to-finest defect decreases by factor<=0.6 plus roundoff floor"
+  },
+  "application_replay_inventory": [
+    "suspended-64",
+    "touchdown-64",
+    "axial-finest",
+    "contact-release-c0-finest",
+    "contact-release-c100-finest",
+    "contact-landing-c0-finest",
+    "contact-landing-c100-finest",
+    "contact-clipping-c100-finest"
+  ],
+  "application_replay_case_ids": {
+    "suspended-64": "suspended-64",
+    "touchdown-64": "touchdown-64",
+    "axial-finest": "axial_vibration-level2",
+    "contact-release-c0-finest": "contact_release-c0-level2",
+    "contact-release-c100-finest": "contact_release-c100-level2",
+    "contact-landing-c0-finest": "contact_landing-c0-level2",
+    "contact-landing-c100-finest": "contact_landing-c100-level2",
+    "contact-clipping-c100-finest": "contact_clipping-c100-level2"
+  },
+  "application_replay_predicates": [
+    "same exact registered inputs/installed candidate",
+    "save/reopen producing snapshot and authoritative arrays",
+    "all accepted frames body identity/matrices/nodes and named diagnostics",
+    "stale edited-project replay uses original snapshot",
+    "Qt ANY3dView GPU and documented software path"
+  ],
+  "continuous_contact": {
+    "api_version": "marine_seabed_contact_v2",
+    "law": "p=max(-g,0), f=min(p/activation_depth_m,1), Fn=max(K*p-C*f*v,0) when p>0, else0",
+    "scope": "stateless horizontal frictionless compliant contact; activation depth is uncalibrated development-fixture constitutive input, not a timestep tolerance or universal default",
+    "reference": "independently coded DOP853 scalar equation and dissipation, exact prelanding freeflight, gated surface/ramp/clipping events; rtol5e-12,atol[q5e-14,v5e-12,loss5e-14], internal step<=min(contactduration/200,1/(20*omega_n)); energy defect<=1e-9",
+    "legacy": "v1 unchanged, original incoming no-root record remains NO-GO; v4 is not evidence of v1 incoming acceptance"
+  },
+  "contact_clipping": {
+    "diameter": 0.2,
+    "rest_segment": 2.0,
+    "mass_per_length": 2.0,
+    "pressure_stiffness": 100000.0,
+    "pressure_damping": [
+      100.0
+    ],
+    "initial_gap": -5e-05,
+    "duration": 0.004,
+    "dt": [
+      0.0002,
+      0.0001,
+      5e-05
+    ],
+    "penetration_limit_m": 5.001e-05,
+    "initial_velocity": 0.2,
+    "floor_z": -2.1,
+    "EA": 100.0,
+    "activation_depth_m": 0.0001
+  }
+}

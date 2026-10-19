@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "case_id": "hanging_shell_development_not_sestra_validated",
+  "fem": "hanging_shell.FEM",
+  "load_case": 1,
+  "units": "SI",
+  "frame": "GLOBAL",
+  "observable": "global_shell_membrane_arithmetic_station_mean",
+  "element_ids": [1],
+  "tolerances": {"absolute_pa": 1.0, "relative": 0.001},
+  "execution": {
+    "argv": ["C:/Program Files/DNV/Sestra V11.1-00/Bin/sestra.exe", "/dsf"],
+    "timeout_seconds": 30,
+    "prefix": "hanging_shell_",
+    "control_template": "formatted_linear.inp",
+    "prefix_token": "{prefix}"
+  }
+}

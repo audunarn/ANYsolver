@@ -1,0 +1,14 @@
+HEAD
+COMM Generic linear-static development control; NOT NUMERICALLY SESTRA VALIDATED.
+CMAS    0.   1.   1.   0.   0.   0.   0.        0.
+SOLM              0.                            0.        0.
+ELOP                   1.   0.
+ITOP    1.
+INAM  {prefix}
+LNAM  {prefix} FORMATTED
+RNAM  {prefix} FORMATTED
+RSEL    1.   0.   0.   0.   0.   0.   1.   0.
+RETR    3.
+IDTY    1.
+DYMA    1.   0.   0.
+Z

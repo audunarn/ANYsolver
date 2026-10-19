@@ -1,0 +1,11 @@
+{
+  "all_new_owned_processes_terminal": true,
+  "status": "CLOSED_NO_FURTHER_LOCAL_NUMERICAL_CHECKS",
+  "prior_failure_and_skip_receipts_preserved": true,
+  "authorized_seconds": 900,
+  "charged_seconds": 129.92691440000635,
+  "remaining_authority_seconds": 0,
+  "ci": "Separate remote workflow execution authorized by user push/CI request",
+  "unused_seconds_closed": 770.0730855999936,
+  "sampler": "Sampled aggregate RSS, not kernel lifetime peak"
+}

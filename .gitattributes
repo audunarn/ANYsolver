@@ -1057,3 +1057,6 @@ examples/native_vibration_energy_acceptance_20261018.json -text
 examples/native_vibration_case_acceptance_20261018.json -text
 examples/native_vibration_physical_reference.py -text
 examples/native_vibration_canonical_case_envelope_acceptance_20261018.json -text
+
+# Preserve the portable SESTRA test input's original record bytes.
+tests/fixtures/sestra_three_case/*.FEM -text whitespace=-blank-at-eol,cr-at-eol

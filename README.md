@@ -312,3 +312,5 @@ License 2.0. See [LICENSE](LICENSE) for the full terms and
 
 Earlier published versions remain available under the licence terms that
 applied to those versions.
+
+The optional CPython 3.11 Windows x64 source-authority accelerator preserves the complete literal guard and every existing safe point. See [native source-authority guard](docs/NATIVE_SOURCE_AUTHORITY.md) for build, fallback, admission and bounded evidence details.

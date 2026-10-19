@@ -1,9 +1,14 @@
 """Owned source-response superposition with actual full-state certification."""
 from __future__ import annotations
 import sys
+from time import perf_counter_ns as _preparation_clock_ns
+from itertools import islice as _library_islice
 from dataclasses import dataclass, field
 from typing import Mapping, Optional
+from types import MappingProxyType
 import numpy as np
+from .prepared_static_numeric import (NumericCase, NumericField, prepare_numeric_plan,
+                                     recover_numeric_cases)
 from .analysis_session import _immutable_array
 from .prepared_static import PreparedStaticEvaluator, _certified_backward_error, _block_norm_data
 from .prepared_static_loads import (PreparedStaticError, PreparedStaticCapabilityError,
@@ -31,7 +36,10 @@ def _library_storage_bytes(value, seen=None):
     size = sys.getsizeof(value)
     if type(value) is np.ndarray:
         return size + (0 if value.base is None else _library_storage_bytes(value.base, seen))
-    if type(value) is dict:
+    if type(value) in (dict,MappingProxyType):
+        # The proxy's sizeof omits its owned backing dict. Reserve a generous
+        # fixed per-entry container bound for this package-created plain dict.
+        if type(value) is MappingProxyType:size+=256+256*len(value)
         return size + sum(_library_storage_bytes(k,seen) + _library_storage_bytes(v,seen)
                           for k,v in value.items())
     if type(value) in (tuple,list):
@@ -45,7 +53,19 @@ _SOURCE_AGREEMENT_RELATIVE = 1e-12
 # barge library preparation dominated by safe points (M16 barge timeout). Check the
 # token and authority on the first element and then once per stride, outside scopes.
 _LIBRARY_SAFE_POINT_STRIDE = 128
+_LIBRARY_SCOPE_TILE = 64
 _DERIVED_NAMES = frozenset(('von_mises', 'equivalent_stress', 'hill_utilization') + tuple(PRINCIPAL_COMPONENTS))
+
+
+def _library_tiles(union):
+    """Bounded source-owned recipes, split before original caller safe points."""
+    entries = iter(union.items())
+    start = 0
+    while start < len(union):
+        size = min(_LIBRARY_SCOPE_TILE, _LIBRARY_SAFE_POINT_STRIDE-start % _LIBRARY_SAFE_POINT_STRIDE)
+        tile = tuple(_library_islice(entries, size))
+        yield start, tile
+        start += len(tile)
 
 
 def _library_schema(element_id, zero):
@@ -104,7 +124,7 @@ def _relative_residual(residual, terms):
     return float(np.linalg.norm(residual)) / scale
 
 
-def _verify_library_element(element_id, recipe, local_size, zero, schema):
+def _verify_library_element(element_id, recipe, local_size, zero, schema, *, numerical_failures=None):
     """Random additivity, homogeneity, rigid-offset, constant and derived checks.
 
     Authority comes from the admitted owned recipe. These probes verify that
@@ -142,9 +162,12 @@ def _verify_library_element(element_id, recipe, local_size, zero, schema):
                     ('homogeneity', f['2a'] - 2.0 * f['a'] + z, (f['2a'], f['a'], z)),
                     ('rigid_offset', f['at'] - f['a'] - f['t'] + z, (f['at'], f['a'], f['t'], z))):
                 relative = _relative_residual(residual, terms)
-                if not np.isfinite(relative) or relative > _AFFINITY_RELATIVE_TOLERANCE:
+                if not np.isfinite(relative) or (relative > _AFFINITY_RELATIVE_TOLERANCE and numerical_failures is None):
                     raise _library_refusal(element_id, 'recovery field is not affine in displacement',
                                            component=str(name), check=label, relative_residual=relative)
+                if relative > _AFFINITY_RELATIVE_TOLERANCE:
+                    numerical_failures.append(dict(stage='response element library',element_id=int(element_id),
+                        component=str(name),check=label,relative_residual=relative))
                 worst = max(worst, relative)
         for key, record in records.items():
             try:
@@ -162,6 +185,26 @@ def _verify_library_element(element_id, recipe, local_size, zero, schema):
                                            component=str(name), relative_residual=relative)
                 worst = max(worst, relative)
     return worst
+
+
+def _native_affinity_record(fallback, local):
+    """Actual owned native values; no response column for the rejected element."""
+    order,linear,constants,derived,_zero,_reasons,_mapping,recipe = fallback
+    record = _recover_owned_local(recipe,local)
+    if tuple(record) != order:
+        raise PreparedStaticCapabilityError('native affinity fallback component set changed')
+    for name,value in constants:
+        if not _constant_equal(value,record[name]):
+            raise PreparedStaticCapabilityError('native affinity fallback constant changed',diagnostics={'component':name})
+    for name,shape,_is_array in linear:
+        value=_array_value(record[name])
+        if value is None or tuple(value.shape)!=shape or not np.all(np.isfinite(value)):
+            raise PreparedStaticCapabilityError('native affinity fallback field is invalid',diagnostics={'component':name})
+    for name in derived:
+        value=_array_value(record[name])
+        if value is None or not np.all(np.isfinite(value)):
+            raise PreparedStaticCapabilityError('native affinity fallback derived field is invalid',diagnostics={'component':name})
+    return record
 
 
 @dataclass(frozen=True)
@@ -182,11 +225,17 @@ class PreparedStaticResponseEvaluator(PreparedStaticEvaluator):
     _fixed_response_packets = True
 
     def __init__(self, model, patterns, *, baseline_load_case=None, stress_execution='canonical',
-                 selected_reaction_diagnostics='full', **kwargs):
+                 selected_reaction_diagnostics='full', numerical_affinity_fallback=False, **kwargs):
         if type(self) is not PreparedStaticResponseEvaluator:
             raise PreparedStaticCapabilityError("source response evaluator subclasses are not admitted")
         if type(stress_execution) is not str or stress_execution not in _STRESS_EXECUTIONS:
             raise PreparedStaticCapabilityError("stress_execution must be 'canonical', 'certified_library' or 'certified_vectorized'")
+        if type(numerical_affinity_fallback) is not bool or (numerical_affinity_fallback and stress_execution != 'certified_library'):
+            raise PreparedStaticCapabilityError('numerical_affinity_fallback must be an exact bool and requires certified_library')
+        self._numerical_affinity_fallback = numerical_affinity_fallback
+        self._native_affinity_mode_binding = numerical_affinity_fallback
+        self._native_affinity_fallbacks = {}
+        self._native_affinity_binding = None
         if type(selected_reaction_diagnostics) is not str or selected_reaction_diagnostics not in ('full', 'lean'):
             raise PreparedStaticCapabilityError("selected_reaction_diagnostics must be 'full' or 'lean'")
         if selected_reaction_diagnostics == 'lean' and stress_execution != 'certified_vectorized':
@@ -194,6 +243,7 @@ class PreparedStaticResponseEvaluator(PreparedStaticEvaluator):
         self._selected_reaction_diagnostics = selected_reaction_diagnostics
         self._stress_execution = stress_execution
         self._vector = None
+        self._numeric_export_plan = None
         self._vector_bytes = 0
         self._metadata_copies = None
         self._compiled_pressure = None
@@ -206,6 +256,11 @@ class PreparedStaticResponseEvaluator(PreparedStaticEvaluator):
         self._source_discrepancy_max = 0.0
         self._library_bytes = self._library_numeric_bytes = 0
         self._canonical_matches = {}
+        self._preparation_timings = {}
+        self._preparation_active = True
+        self._preparation_memory_peak_required_bytes = 0
+        self._memory_base_cache = None
+        self._memory_base_cache_misses = 0
         self._response_counts = dict(reconstructed_cases=0, canonical_envelope_cases=0,
                                      certification_fallback_cases=0, direct_cases=0,
                                      preparation_solves=0, reconstructed_element_records=0, canonical_stress_cases=0,
@@ -214,8 +269,11 @@ class PreparedStaticResponseEvaluator(PreparedStaticEvaluator):
                                      compiled_load_cases=0, native_load_cases=0,
                                      compiled_disagreement_cases=0, pattern_canonical_solves=0,
                                      native_load_scope_blocks=0, compiled_load_scope_blocks=0)
+        preparation_started = _preparation_clock_ns()
         super().__init__(model, **kwargs)
+        self._preparation_timings['snapshot_operator_seconds'] = (_preparation_clock_ns()-preparation_started)/1e9
         try:
+            stage_started = _preparation_clock_ns()
             if type(patterns) is not dict or any(type(k) is not str for k in patterns):
                 raise PreparedStaticCapabilityError('patterns must be a plain dict with string names')
             snapshot = self._require_open()
@@ -234,14 +292,20 @@ class PreparedStaticResponseEvaluator(PreparedStaticEvaluator):
             self._pattern_lookup = {name:i for i,name in enumerate(self._pattern_names)}
             packets = [ingest_static_case(StaticCase("baseline", baseline_load_case))[2]]
             packets.extend(ingest_static_case(StaticCase(name,value))[2] for name,value in patterns.items())
+            self._preparation_timings['pattern_ingress_seconds'] = (_preparation_clock_ns()-stage_started)/1e9
+            stage_started = _preparation_clock_ns()
             with owned_recovery_scope(tuple(snapshot.load_maps.pressure_recipes.values())):
                 forces = np.column_stack([evaluate_load_vector(snapshot.load_maps, p)[0] for p in packets])
             rhs = np.asarray(snapshot.transformation.T @ forces)
             rhs[:,0] -= np.asarray(snapshot.transformation.T @ (snapshot.stiffness @ snapshot.prescribed_offset))
             if self._operator_augmented:
                 rhs = np.vstack((rhs, np.zeros((snapshot.rigid_modes.shape[1],m))))
+            self._preparation_timings['load_rhs_seconds'] = (_preparation_clock_ns()-stage_started)/1e9
+            stage_started = _preparation_clock_ns()
             with solver_thread_scope(self._resource_config):
                 solved = super()._solve_block(rhs, ())
+            self._preparation_timings['basis_solve_seconds'] = (_preparation_clock_ns()-stage_started)/1e9
+            stage_started = _preparation_clock_ns()
             for j in range(m):
                 operator = self._operator_matrix if self._operator_augmented else snapshot.reduced_stiffness
                 error = self._backward_error(operator, solved[:,j], rhs[:,j])
@@ -251,6 +315,8 @@ class PreparedStaticResponseEvaluator(PreparedStaticEvaluator):
             self._response_counts['preparation_solves'] = m
             self._force_columns = _immutable_array(forces)
             self._solution_columns = _immutable_array(solved)
+            self._preparation_timings['basis_certification_publication_seconds'] = (_preparation_clock_ns()-stage_started)/1e9
+            stage_started = _preparation_clock_ns()
             if self._stress_execution == 'certified_library':
                 self._build_element_library(snapshot, solved, token, expected + packet_bytes + metadata_estimate)
             if self._stress_execution == 'certified_vectorized' and (self._recovery.include_stresses or snapshot.envelope_plan is not None):
@@ -267,15 +333,21 @@ class PreparedStaticResponseEvaluator(PreparedStaticEvaluator):
                 self._metadata_copies = make_metadata_copier(snapshot.constraint_info, snapshot.nullspace_info)
                 self._reaction_plan = ReactionPlan(snapshot.reaction_maps)
                 self._prepare_compiled_pressure(snapshot, packets, forces)
+            self._preparation_timings['recovery_preparation_seconds'] = (_preparation_clock_ns()-stage_started)/1e9
+            stage_started = _preparation_clock_ns()
             self._library_numeric_bytes = (self._force_columns.nbytes + self._solution_columns.nbytes
                                            + self._element_library_numeric_bytes)
             # Canonical mode keeps the M8 accounting exactly; only the library route owns element columns.
             self._library_bytes = _library_storage_bytes((self._pattern_names,self._pattern_lookup,
                 self._force_columns,self._solution_columns) + (
-                (self._element_library,) if self._stress_execution == 'certified_library' else ())) + self._vector_bytes
+                (self._element_library,self._native_affinity_fallbacks) if self._stress_execution == 'certified_library' else ())) + self._vector_bytes
             self._check_library_memory(self._library_bytes)
             self._response_safe_point(token, 'prepared_response.ready')
+            self._preparation_timings['accounting_ready_seconds'] = (_preparation_clock_ns()-stage_started)/1e9
+            self._preparation_timings['total_seconds'] = (_preparation_clock_ns()-preparation_started)/1e9
+            self._preparation_active = False
         except BaseException:
+            self._preparation_active = False
             self.close()
             raise
 
@@ -289,6 +361,12 @@ class PreparedStaticResponseEvaluator(PreparedStaticEvaluator):
 
     def _build_element_library(self, snapshot, solved, token, prepared_bytes):
         """Owned verified affine output columns for every recovered element."""
+        library_started = _preparation_clock_ns()
+        timing = dict(scope_entry_ns=0, scope_exit_ns=0, schema_work_ns=0,
+                      probe_work_ns=0, column_work_ns=0, publication_work_ns=0,
+                      caller_safe_point_ns=0, schema_scope_count=0, column_scope_count=0,
+                      schema_elements=0, probe_evaluations=0, column_evaluations=0,
+                      scope_recipe_max=0)
         union = self._library_elements(snapshot)
         if not union:
             return
@@ -297,40 +375,103 @@ class PreparedStaticResponseEvaluator(PreparedStaticEvaluator):
         full[:, 0] += snapshot.prescribed_offset
         m = full.shape[1]
         zeros, schemas, outputs = {}, {}, 0
-        for index, (eid, (mapping, recipe)) in enumerate(union.items()):
+        for index, tile in _library_tiles(union):
             if index % _LIBRARY_SAFE_POINT_STRIDE == 0:
+                safe_started = _preparation_clock_ns()
                 self._response_safe_point(token, 'prepared_response.element_schema')
-            with owned_recovery_scope((recipe,)):
-                zeros[eid] = _recover_owned_local(recipe, np.zeros(mapping.size))
-            schemas[eid] = _library_schema(eid, zeros[eid])
-            outputs += int(_library_vector(zeros[eid], schemas[eid][1]).size)
+                timing['caller_safe_point_ns'] += _preparation_clock_ns()-safe_started
+            scope_started = _preparation_clock_ns()
+            with owned_recovery_scope(tuple(item[1][1] for item in tile)):
+                body_started = _preparation_clock_ns()
+                timing['scope_entry_ns'] += body_started-scope_started
+                for eid, (mapping, recipe) in tile:
+                    work_started = _preparation_clock_ns()
+                    zeros[eid] = _recover_owned_local(recipe, np.zeros(mapping.size))
+                    timing['schema_work_ns'] += _preparation_clock_ns()-work_started
+                    schemas[eid] = _library_schema(eid, zeros[eid])
+                    outputs += int(_library_vector(zeros[eid], schemas[eid][1]).size)
+                body_finished = _preparation_clock_ns()
+            timing['scope_exit_ns'] += _preparation_clock_ns()-body_finished
+            timing['schema_scope_count'] += 1
+            timing['schema_elements'] += len(tile)
+            timing['scope_recipe_max'] = max(timing['scope_recipe_max'], len(tile))
         # Retained columns plus one transient column table; checked before allocation.
-        self._check_library_memory(prepared_bytes + 2 * 8 * m * outputs + 512 * len(union))
-        library, numeric, worst = {}, 0, 0.0
-        for index, (eid, (mapping, recipe)) in enumerate(union.items()):
+        native_metadata_bound = (max((4096+24576*len(schema[1]) for schema in schemas.values()),default=0)*min(_LIBRARY_SCOPE_TILE,len(union))
+                                 if self._numerical_affinity_fallback else 0)
+        self._check_library_memory(prepared_bytes + 2 * 8 * m * outputs + 512 * len(union)
+                                   + 512 * min(_LIBRARY_SCOPE_TILE, len(union)) + native_metadata_bound)
+        library, native_fallbacks, numeric, worst = {}, {}, 0, 0.0
+        native_metadata_bytes = 0
+        for index, tile in _library_tiles(union):
             if index % _LIBRARY_SAFE_POINT_STRIDE == 0:
+                safe_started = _preparation_clock_ns()
                 self._response_safe_point(token, 'prepared_response.element_library')
-            order, linear, constants, derived = schemas[eid]
-            with owned_recovery_scope((recipe,)):
-                worst = max(worst, _verify_library_element(eid, recipe, int(mapping.size), zeros[eid], schemas[eid]))
-                self._response_counts['element_library_probes'] += 12
-                zero_vector = _library_vector(zeros[eid], linear)
-                columns = np.empty((zero_vector.size, m))
-                for j in range(m):
-                    record = _recover_owned_local(recipe, full[mapping, j])
-                    if tuple(record) != order or any(not _constant_equal(v, record[k]) for k, v in constants):
-                        raise _library_refusal(eid, 'recovery schema changed for a library column', column=j)
-                    columns[:, j] = _library_vector(record, linear)
-                    if j:
-                        columns[:, j] -= zero_vector
-            if not np.all(np.isfinite(columns)):
-                raise _library_refusal(eid, 'nonfinite response library column')
-            columns = _immutable_array(columns)
-            numeric += columns.nbytes
-            library[int(eid)] = (order, linear, constants, derived, columns)
+                timing['caller_safe_point_ns'] += _preparation_clock_ns()-safe_started
+            scope_started = _preparation_clock_ns()
+            pending = []
+            with owned_recovery_scope(tuple(item[1][1] for item in tile)):
+                body_started = _preparation_clock_ns()
+                timing['scope_entry_ns'] += body_started-scope_started
+                for eid, (mapping, recipe) in tile:
+                    order, linear, constants, derived = schemas[eid]
+                    work_started = _preparation_clock_ns()
+                    reasons = [] if self._numerical_affinity_fallback else None
+                    element_worst = _verify_library_element(eid, recipe, int(mapping.size), zeros[eid], schemas[eid],numerical_failures=reasons)
+                    if not reasons:worst=max(worst,element_worst)
+                    probe_finished = _preparation_clock_ns()
+                    timing['probe_work_ns'] += probe_finished-work_started
+                    self._response_counts['element_library_probes'] += 12
+                    zero_vector = _library_vector(zeros[eid], linear)
+                    columns = np.empty((zero_vector.size, m))
+                    for j in range(m):
+                        record = _recover_owned_local(recipe, full[mapping, j])
+                        if (tuple(record) != order or any(not _constant_equal(v, record[k]) for k, v in constants)
+                                or any(_array_value(record[k]) is None or tuple(_array_value(record[k]).shape)!=shape for k,shape,_flag in linear)
+                                or any(_array_value(record[k]) is None or not np.all(np.isfinite(_array_value(record[k]))) for k in derived)):
+                            raise _library_refusal(eid, 'recovery schema changed for a library column', column=j)
+                        columns[:, j] = _library_vector(record, linear)
+                        if j:
+                            columns[:, j] -= zero_vector
+                    timing['column_work_ns'] += _preparation_clock_ns()-probe_finished
+                    pending.append((eid, order, linear, constants, derived, columns, reasons, mapping, recipe, zero_vector))
+                body_finished = _preparation_clock_ns()
+            timing['scope_exit_ns'] += _preparation_clock_ns()-body_finished
+            timing['column_scope_count'] += 1
+            timing['probe_evaluations'] += 12*len(tile)
+            timing['column_evaluations'] += m*len(tile)
+            publication_started = _preparation_clock_ns()
+            for eid, order, linear, constants, derived, columns, reasons, mapping, recipe, zero_vector in pending:
+                if not np.all(np.isfinite(columns)):
+                    raise _library_refusal(eid, 'nonfinite response library column')
+                if reasons:
+                    # Columns were all observed/validated, but are not admitted
+                    # or retained as an affine basis after a numerical refusal.
+                    # Charge this entry before its immutable copies/publication.
+                    # Per-entry conservative accounting avoids walking the
+                    # accumulated table after every tile. Mapping base chains
+                    # are detached, so shared snapshot storage is not retained.
+                    entry_bytes = (_library_storage_bytes((int(eid),order,linear,constants,derived,zero_vector,reasons,recipe))
+                        + 1536 + 2*mapping.nbytes + 2*zero_vector.nbytes
+                        + sum(256*(len(reason)+1) for reason in reasons))
+                    self._check_library_memory(prepared_bytes + 2*8*m*outputs + 512*len(union)
+                        + native_metadata_bound + native_metadata_bytes + entry_bytes)
+                    native_fallbacks[int(eid)] = (order,linear,constants,derived,_immutable_array(zero_vector),
+                        tuple(MappingProxyType(dict(reason)) for reason in reasons),_immutable_array(mapping),recipe)
+                    native_metadata_bytes += entry_bytes
+                else:
+                    columns = _immutable_array(columns)
+                    numeric += columns.nbytes
+                    library[int(eid)] = (order, linear, constants, derived, columns)
+            timing['publication_work_ns'] += _preparation_clock_ns()-publication_started
         self._element_library = library
+        self._native_affinity_fallbacks = MappingProxyType(native_fallbacks)
+        self._native_affinity_binding = self._native_affinity_fallbacks
         self._element_library_numeric_bytes = numeric
         self._element_library_verification = worst
+        self._preparation_timings['element_library'] = dict(timing,
+            native_metadata_conservative_bytes=native_metadata_bytes,
+            native_metadata_entries_accounted=len(native_fallbacks),
+            total_seconds=(_preparation_clock_ns()-library_started)/1e9)
 
     def _prepare_compiled_pressure(self, snapshot, packets, forces):
         """Option 1: compiled pressure loads, enabled only if every pattern column meets C7."""
@@ -402,16 +543,32 @@ class PreparedStaticResponseEvaluator(PreparedStaticEvaluator):
 
     def _check_library_memory(self, extra):
         cfg = self._resource_config
-        if cfg is None or cfg.memory_limit_bytes is None:
+        if (cfg is None or cfg.memory_limit_bytes is None) and not self._preparation_active:
             return
         from .recovery import MemoryEstimate, ResourcePolicyError
-        d = super().diagnostics()
-        operator = d['operator_bytes']
+        operator = (self._operator_matrix.data.nbytes+self._operator_matrix.indices.nbytes
+                    +self._operator_matrix.indptr.nbytes+self._operator_scaling.nbytes)
         factor = 0 if self._operator_handle is None else self._operator_handle.metadata.get('factor_storage_bytes',operator*4)
-        required = self._snapshot.nbytes() + operator + factor + extra + self._snapshot.total_dofs*80
+        # CSR storage belongs to the snapshot and can grow without changing its
+        # owner identity. This is a bounded byte-count read, not a model walk.
+        snapshot_bytes = self._snapshot.nbytes()
+        if type(factor) is int:
+            owners=(self._snapshot,self._operator_matrix,self._operator_scaling,self._operator_handle)
+            cached=self._memory_base_cache
+            if (cached is None or any(left is not right for left,right in zip(cached[0],owners))
+                    or cached[1] != operator or cached[2] != factor or cached[4] != snapshot_bytes):
+                base=snapshot_bytes+operator+factor+self._snapshot.total_dofs*80
+                self._memory_base_cache=(owners,operator,factor,base,snapshot_bytes)
+                self._memory_base_cache_misses+=1
+            required = self._memory_base_cache[3]+extra
+        else:
+            # Preserve original policy arithmetic for nonstandard backend metadata.
+            required=snapshot_bytes+operator+factor+extra+self._snapshot.total_dofs*80
         if self._envelope is not None:
             required += 3*self._envelope.nbytes()
-        if required > cfg.memory_limit_bytes:
+        if self._preparation_active:
+            self._preparation_memory_peak_required_bytes = max(self._preparation_memory_peak_required_bytes,int(required))
+        if cfg is not None and cfg.memory_limit_bytes is not None and required > cfg.memory_limit_bytes:
             fields = dict(self._snapshot.memory_estimate)
             fields['total_bytes_estimate'] = int(required)
             raise ResourcePolicyError('source response library exceeds memory policy', context='prepared_response',
@@ -422,6 +579,64 @@ class PreparedStaticResponseEvaluator(PreparedStaticEvaluator):
             yield from super()._iter_batches_open(cases, **kwargs)
         finally:
             self._canonical_matches.clear()
+
+    def _iter_capsule_batches(self, cases, *, batch_size=None, cancellation_token=None, progress_callback=None):
+        """Guarded numeric publication; public detailed batches stay unchanged."""
+        _prepared_static_module._require_shared_execution(self)
+        self._require_open()
+        if self._stress_execution != 'certified_library' or self._envelope is not None or not (self._element_library or self._native_affinity_fallbacks):
+            return self.iter_batches(cases, batch_size=batch_size,cancellation_token=cancellation_token,progress_callback=progress_callback)
+        if self._numeric_export_plan is None:
+            # Check before building Python layouts or numeric scatter tables.
+            entries=tuple(self._element_library.values())+tuple(self._native_affinity_fallbacks.values())
+            fields = max((len(entry[1])+len(entry[3]) for entry in entries),default=0)
+            self._check_library_memory(self._library_bytes + len(entries)*max(fields,1)*256)
+            plan = prepare_numeric_plan(self._snapshot,self._element_library,self._recovery,self._native_affinity_fallbacks)
+            self._check_library_memory(self._library_bytes+plan[3])
+            self._library_bytes += plan[3]
+            self._numeric_export_plan = plan
+        return self._iter_batches_open(cases, output_dofs=self._output_dofs,
+            batch_size=batch_size, cancellation_token=cancellation_token, progress_callback=progress_callback,
+            _numeric_recovery=True)
+
+    def _recover_numeric_block(self,snapshot,full,loads,recovery,labels,certified,envelope,block,*,cancellation_token=None):
+        flags = tuple(self._reconstructed_block)
+        if (self._stress_execution != 'certified_library' or envelope is not None
+                or not all(flags) or self._numeric_export_plan is None):
+            return self._recover_block(snapshot,full,loads,recovery,labels,certified,envelope,block)
+        packets = tuple(packet for _,_,packet in block)
+        for j,packet in enumerate(packets):
+            native_ids=tuple(eid for eid in self._native_affinity_fallbacks
+                if recovery.include_stresses and snapshot.recovery_compilation is not None and eid in snapshot.recovery_compilation.elements)
+            certified[j]['source_response'] = self._library_case_provenance(flags[j],packet,native_ids)
+        # Numeric publication invokes no element recovery kernel. In particular,
+        # caller token observations must remain outside owned recovery scopes.
+        self._response_safe_point(None,'prepared_response.before_numeric_publication')
+        def safe_point(native=False):
+            if cancellation_token is not None or native:
+                self._response_safe_point(cancellation_token,'prepared_response.numeric_tile')
+        results,transaction,statistics = recover_numeric_cases(snapshot,full,loads,recovery,
+            labels,certified,self._element_library,packets,self._combine,self._numeric_export_plan,safe_point,
+            self._native_affinity_fallbacks,_native_affinity_record)
+        self._response_safe_point(None,'prepared_response.after_numeric_publication')
+        self._response_counts['library_stress_cases'] += len(block)
+        self._response_counts['reconstructed_element_records'] += statistics['numeric_element_cases']
+        self._response_counts['numeric_vector_execution']=statistics['numeric_vector_execution']
+        for name in ('numeric_element_cases','numeric_kernel_fallback_tiles','numeric_grouped_trial_tiles',
+                     'source_oracle_seconds','grouped_trial_seconds',
+                     'derived_source_seconds','field_publication_seconds','nodal_source_seconds',
+                     'native_affinity_element_cases','native_affinity_seconds'):
+            self._response_counts[name] = self._response_counts.get(name,0) + statistics[name]
+        return results,transaction,statistics
+
+    def _library_case_provenance(self, reconstructed, packet, native_element_ids=()):
+        result={'reconstructed':reconstructed,'stress_execution':'certified_library' if reconstructed else 'canonical_fallback',
+            'active_patterns':len(packet.indices) if type(packet) is _PatternPacket else None}
+        if native_element_ids:
+            if reconstructed:result['stress_execution']='certified_library_native_affinity_fallback'
+            result['native_affinity_fallback_elements']=sorted(native_element_ids)
+            result['native_affinity_refusals']={str(eid):[dict(reason) for reason in self._native_affinity_fallbacks[eid][5]] for eid in sorted(native_element_ids)}
+        return result
 
     def _response_storage_bytes(self):
         return self._library_bytes
@@ -442,6 +657,9 @@ class PreparedStaticResponseEvaluator(PreparedStaticEvaluator):
     def diagnostics(self):
         result = super().diagnostics()
         result['source_response'] = dict(self._response_counts, library_bytes=self._library_bytes,
+            preparation_timings=copy.deepcopy(self._preparation_timings),
+            preparation_memory_peak_required_bytes=self._preparation_memory_peak_required_bytes,
+            memory_base_cache_misses=self._memory_base_cache_misses,
             library_numeric_bytes=self._library_numeric_bytes,
             library_metadata_bytes=self._library_bytes-self._library_numeric_bytes,
             pattern_names=list(getattr(self,'_pattern_names',())),
@@ -461,8 +679,12 @@ class PreparedStaticResponseEvaluator(PreparedStaticEvaluator):
                 governing_identity_basis='certified_response_values',
                 compiled_envelope_responses=self._envelope is not None and bool(library),
                 compiled_detailed_responses=bool(self._recovery.include_stresses and library),
-                detailed_response_execution='certified_response_library',
+                detailed_response_execution=('qualified_response_library_with_native_affinity_fallback'
+                    if self._native_affinity_fallbacks else 'certified_response_library'),
                 element_library_elements=len(library),
+                numerical_affinity_fallback=self._numerical_affinity_fallback,
+                native_affinity_fallback_elements=sorted(self._native_affinity_fallbacks),
+                native_affinity_refusals={str(eid):[dict(reason) for reason in entry[5]] for eid,entry in sorted(self._native_affinity_fallbacks.items())},
                 element_library_numeric_bytes=self._element_library_numeric_bytes,
                 element_library_worst_verification_residual=self._element_library_verification,
                 qualification_record='docs/PREPARED_STATIC_M16_CERTIFIED_ROUTE.md')
@@ -490,9 +712,13 @@ class PreparedStaticResponseEvaluator(PreparedStaticEvaluator):
         return result
 
     def close(self):
+        self._native_affinity_binding = None
+        self._native_affinity_fallbacks = {}
+        self._memory_base_cache = None
         super().close()
         self._force_columns = self._solution_columns = None
         self._element_library = {}
+        self._numeric_export_plan = None
         self._element_library_numeric_bytes = 0
         self._vector = None
         self._vector_bytes = 0
@@ -665,19 +891,27 @@ class PreparedStaticResponseEvaluator(PreparedStaticEvaluator):
             flags = tuple(self._reconstructed_block)
             packets = tuple(packet for _,_,packet in block)
             library = self._element_library
+            native_visits=[0 for _ in block]
+            native_visited_ids=set()
             for j,packet in enumerate(packets):
-                certified[j]['source_response'] = {'reconstructed': flags[j],
-                    'stress_execution': 'certified_library' if flags[j] else 'canonical_fallback',
-                    'active_patterns': len(packet.indices) if type(packet) is _PatternPacket else None}
+                certified[j]['source_response'] = self._library_case_provenance(flags[j],packet)
                 if flags[j]:
                     self._response_counts['library_stress_cases'] += 1
             def source(eid, column):
+                if eid in self._native_affinity_fallbacks:
+                    native_visits[column]+=1
+                    native_visited_ids.add(eid)
                 if not flags[column] or eid not in library:
                     return None
                 return self._library_record(eid, packets[column])
             results, transaction, stats = _prepared_static_module._SHARED_BINDINGS[0][1](
                 snapshot, full, loads, recovery, labels, certified, envelope, record_source=source)
             self._response_counts['reconstructed_element_records'] += stats.get('library_element_records', 0)
+            for j,packet in enumerate(packets):
+                certified[j]['source_response']=self._library_case_provenance(flags[j],packet,native_visited_ids)
+            native_count=sum(native_visits)
+            stats['native_affinity_element_cases']=native_count
+            self._response_counts['native_affinity_element_cases']=self._response_counts.get('native_affinity_element_cases',0)+native_count
             return results, transaction, stats
         if envelope is not None or recovery.include_stresses:
             return super()._recover_block(snapshot,full,loads,recovery,labels,certified,envelope,block)
@@ -705,10 +939,11 @@ class PreparedStaticResponseEvaluator(PreparedStaticEvaluator):
             results.append(item)
         return results,None,stats
 
-def prepare_static_response_evaluator(model, patterns, *, baseline_load_case=None, **kwargs):
+def prepare_static_response_evaluator(model, patterns, *, baseline_load_case=None, numerical_affinity_fallback=False, **kwargs):
     # stress_execution and selected_reaction_diagnostics (M24) pass through kwargs.
     """Prepare baseline plus homogeneous source responses; existing prepared kwargs apply."""
-    return PreparedStaticResponseEvaluator(model,patterns,baseline_load_case=baseline_load_case,**kwargs)
+    return PreparedStaticResponseEvaluator(model,patterns,baseline_load_case=baseline_load_case,
+        numerical_affinity_fallback=numerical_affinity_fallback,**kwargs)
 
 # Pin class methods, global aliases and transitive package helper code before
 # any input iterator or progress callback can replace executable authority.
@@ -719,12 +954,24 @@ from .static_batch import _class_state
 def _require_response_authority(owner):
     if type(owner) not in (PreparedStaticEvaluator, PreparedStaticResponseEvaluator):
         raise PreparedStaticCapabilityError("source response evaluator subclasses are not admitted")
+    if type(owner) is PreparedStaticResponseEvaluator:
+        if owner._numerical_affinity_fallback is not owner._native_affinity_mode_binding:
+            raise PreparedStaticCapabilityError('native affinity option binding changed')
+        if owner._native_affinity_binding is not None and owner._native_affinity_fallbacks is not owner._native_affinity_binding:
+            raise PreparedStaticCapabilityError('native affinity recipe binding changed')
     for cls, facts in _RESPONSE_CLASSES:
         if _class_state(cls) != facts:
             raise PreparedStaticCapabilityError('source response class authority changed')
     for function, authority, bindings in _RESPONSE_FUNCTIONS:
-        if (not _callable_authority_matches(function,authority) or
-            any(function.__globals__.get(name) is not value for name,value in bindings)):
+        changed=not _callable_authority_matches(function,authority)
+        if not changed and bindings and len(bindings[0]) == 3:
+            globals_changed=any((name in function.__globals__) is not present or
+                (present and function.__globals__[name] is not value) for name,present,value in bindings)
+        elif not changed:
+            globals_changed=any(function.__globals__.get(name) is not value for name,value in bindings)
+        else:
+            globals_changed=False
+        if changed or globals_changed:
             raise PreparedStaticCapabilityError('source response executable authority changed')
     for name in _RESPONSE_METHOD_NAMES:
         if name in vars(owner):
@@ -736,14 +983,21 @@ def _capture_response_functions():
         if type(function) is not _types.FunctionType or id(function) in seen:
             return
         seen.add(id(function))
-        bindings = tuple((name,function.__globals__[name]) for name in function.__code__.co_names
-                         if name in function.__globals__ and not name.startswith('_RESPONSE_'))
+        if function.__module__ in ('anysolver._native_authority_dag','anysolver._native_guard_dispatch'):
+            def names(code):
+                return set(code.co_names).union(*(names(child) for child in code.co_consts if type(child) is _types.CodeType))
+            bindings = tuple((name,name in function.__globals__,function.__globals__.get(name))
+                             for name in sorted(names(function.__code__)))
+        else:
+            bindings = tuple((name,function.__globals__[name]) for name in function.__code__.co_names
+                             if name in function.__globals__ and not name.startswith('_RESPONSE_'))
         records.append((function,_callable_authority(function),bindings))
-        for _,value in bindings:
+        for binding in bindings:
+            value=binding[-1]
             if type(value) is _types.FunctionType and value.__module__.startswith('anysolver'):
                 visit(value)
     for cls in (PreparedStaticEvaluator,PreparedStaticResponseEvaluator,PatternCase,_PatternPacket,
-                VectorEnvelope,VectorRecovery,CompiledPressure,ReactionPlan):
+                VectorEnvelope,VectorRecovery,CompiledPressure,ReactionPlan,NumericCase,NumericField):
         for value in vars(cls).values():
             visit(value.__func__ if type(value) is staticmethod else value)
     visit(prepare_static_response_evaluator)
@@ -751,7 +1005,7 @@ def _capture_response_functions():
     return tuple(records)
 
 _RESPONSE_CLASSES = tuple((cls,_class_state(cls)) for cls in
-    (PreparedStaticResponseEvaluator,PatternCase,_PatternPacket,VectorEnvelope,VectorRecovery,CompiledPressure,ReactionPlan))
+    (PreparedStaticResponseEvaluator,PatternCase,_PatternPacket,VectorEnvelope,VectorRecovery,CompiledPressure,ReactionPlan,NumericCase,NumericField))
 _RESPONSE_METHOD_NAMES = tuple({name for cls in (PreparedStaticEvaluator,PreparedStaticResponseEvaluator)
     for name,value in vars(cls).items() if callable(value) or type(value) is staticmethod})
 _RESPONSE_FUNCTIONS = _capture_response_functions()

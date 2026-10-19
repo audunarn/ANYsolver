@@ -8,6 +8,10 @@ __pycache__/
 .idea/
 build/
 dist/
+.results-wheels/
+**/.pytest-tmp/
+# Generated reports/evidence are retained through explicit archived evidence records.
+/output/
 reports/
 !reports/
 reports/*

@@ -1,0 +1,34 @@
+IDENT                  1               1               3               0
+UNITS                  5               1               1               1
+                       1
+TDMATER                4               1             104               0
+        Steel
+MISOSEL                1    210000000000  3.00000000E-01            7850
+                       0  1.20000000E-05               1             355
+GELTH                  1  2.00000000E-02
+GNODE                  1               1               6          123456
+GCOORD                 1               0               0               0
+GNODE                  2               2               6          123456
+GCOORD                 2               1               0               0
+GNODE                  3               3               6          123456
+GCOORD                 3               1               1               0
+GNODE                  4               4               6          123456
+GCOORD                 4               0               1               0
+GELMNT1                1               1              24               0
+                       1               2               3               4
+GELREF1                1               1               0               0
+                       0               0               0               0
+                       1               0               0               0
+BNBCD                  1               6               0               0
+                       1               1               1               1
+BNBCD                  2               6               0               0
+                       1               1               1               1
+BNBCD                  3               6               0               1
+                       1               1               1               1
+BNBCD                  4               6               1               1
+                       1               1               1               1
+TDLOAD                 4               1             103               0
+        LC1
+BGRAV                  1               0               0               0
+                       0             -10               0
+IEND                   0               0               0               0

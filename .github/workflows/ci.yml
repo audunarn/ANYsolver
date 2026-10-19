@@ -30,11 +30,13 @@ jobs:
         with:
           python-version: "3.13"
       - run: python -m pip install build
+      - name: Build the same-checkout results runtime wheel
+        run: python -m pip wheel --no-deps --wheel-dir .results-wheels ./packages/results
       - run: python -m build --wheel
       - name: Resolve the coordinated release wheels
         run: >-
           python -m pip install --dry-run --only-binary=:all:
-          dist/*.whl ANYmaterial==0.2.0 ANYgeometry==0.4.3
+          dist/*.whl .results-wheels/*.whl ANYmaterial==0.2.0 ANYgeometry==0.4.3
           ANYmesher==0.5.0 ANYfileio==0.3.2
 
   pytest:
@@ -115,6 +117,7 @@ jobs:
       - run: >-
           python -m pip install .ecosystem/ANYmaterial .ecosystem/ANYgeometry
           .ecosystem/ANYmesh .ecosystem/ANYfileIO
+      - run: python -m pip install ./packages/results
       - run: python -m pip install -e ".[dev,numba]"
       - name: Install Windows process-supervision dependency
         if: runner.os == 'Windows'
@@ -192,6 +195,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip build
           python -m pip install numpy scipy threadpoolctl
+          python -m pip install ./packages/results
           python -m pip install .ecosystem/ANYmaterial "${{ matrix.anygeometry-install }}" "${{ matrix.anymesher-install }}" "${{ matrix.anyfileio-install }}"
           python -m pip check
           python -m build --wheel
@@ -267,6 +271,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip build
           python -m pip install numpy scipy threadpoolctl
+          python -m pip install ./packages/results
           python -m pip install .ecosystem/ANYmaterial "${{ matrix.anygeometry-install }}" "${{ matrix.anymesher-install }}" "${{ matrix.anyfileio-install }}"
           python -m pip check
           python -m build --wheel
@@ -332,6 +337,7 @@ jobs:
       - name: Install and resolve current siblings
         run: |
           python -m pip install --upgrade pip build twine
+          python -m pip install ./packages/results
           python -m pip install .ecosystem/ANYmaterial .ecosystem/ANYgeometry .ecosystem/ANYmesh .ecosystem/ANYfileIO
           python -m pip check
       - name: Build and check distributions
@@ -342,7 +348,7 @@ jobs:
         run: >-
           python -c "import glob, subprocess, sys;
           subprocess.check_call([sys.executable, '-m', 'pip', 'install',
-          '--target', '.wheel-smoke', '.ecosystem/ANYmaterial',
+          '--target', '.wheel-smoke', './packages/results', '.ecosystem/ANYmaterial',
           '.ecosystem/ANYgeometry', '.ecosystem/ANYmesh', '.ecosystem/ANYfileIO',
           *glob.glob('dist/*.whl')])"
       - name: Import the installed wheel without site packages
@@ -400,6 +406,7 @@ jobs:
       - run: >-
           python -m pip install .ecosystem/ANYmaterial .ecosystem/ANYgeometry
           .ecosystem/ANYmesh .ecosystem/ANYfileIO
+      - run: python -m pip install ./packages/results
       - run: python -m pip install -e ".[dev,numba]"
       - run: python -m pip check
       - run: python -m pytest tests/test_batch_b_activation.py tests/test_nonlinear_performance_batch_b.py tests/test_nonlinear_performance_batch_c.py
@@ -446,6 +453,7 @@ jobs:
       - run: >-
           python -m pip install .ecosystem/ANYmaterial .ecosystem/ANYgeometry
           .ecosystem/ANYmesh .ecosystem/ANYfileIO
+      - run: python -m pip install ./packages/results
       - run: python -m pip install -e ".[dev,pardiso]"
       - run: python -m pip check
       - run: python -c "import pypardiso"

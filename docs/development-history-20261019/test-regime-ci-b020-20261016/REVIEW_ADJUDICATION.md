@@ -1,0 +1,12 @@
+# Independent review adjudication
+
+Review: INDEPENDENT_REVIEW.md (Mistral, complete patch read, final assessment received). Review is supporting evidence, not automatic acceptance.
+
+Finding1 (OpenMP environment): dismissed against the complete caller. _worker_environment already sets OMP_NUM_THREADS=1, OPENBLAS_NUM_THREADS=1, MKL_NUM_THREADS=1, NUMEXPR_NUM_THREADS=1 before development overrides. Those lines predate this patch (verified git show b0202d33:scripts/run_portable_ci.py). The development override changes Numba capacity only; the actual compiled production-path smoke demonstrates BLAS1, configured Numba3, initial/final active1 and OpenMP-reported3 with no errors. No widening to arbitrary host-sized pools.
+Finding2 (default capacity regression): dismissed against baseline. NUMBA_NUM_THREADS=1 was already pinned by _worker_environment at b0202d33; the new explicit --threads option permits an otherwise impossible bounded scope, retaining default1. No supported prior focused behavior removed.
+Minor duplicated8bound: retained as a small maintenance note; both current bounds and refusal tests match. No public option widened.
+Diagnostic-marker assertion: accepted against exact _restore formatting and actual CI traceback. The owner-component dictionary legitimately includes profile. Valid restore and every individually resealed semantic tamper assertion remain unchanged; only false substring classification is repaired. No checkpoint bytes, schema, admission or replay tolerance changed.
+
+Ownership: Mistral supplied connected initial implementation and seven passing attempts. Its focused review-fix continuation ended at its turn bound after inspection, without edits/handoff. Root completed the concrete small repair rather than repeatedly extending an unreliable completion loop; preserved all logs and failures. No product mechanics were changed.
+
+Post-review delta: the final timing report showed each of seven invalid matrix-bound cases spending9seconds in merge inventory discovery before calling the validator. Root replaced that test-only input with (unused.py,), preserving all seven argument/error assertions. Source confirms matrix_modules validates every listed invalid bound before inspecting modules. Full inventory, disjoint/complete coverage and critical-repetition tests remain unchanged. This mechanical test-only delta followed the Mistral patch review and is independently checked by the same53case final command. No claim that Mistral reviewed this subsequent delta.

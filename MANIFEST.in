@@ -4,6 +4,8 @@ include LICENSING.md
 include THIRD_PARTY_NOTICES.md
 include dependency-licenses.json
 include README.md
+include setup.py
+include src/anysolver/_native_guard.cpp
 include CHANGELOG.md
 include MIGRATION.md
 prune docs
@@ -13,6 +15,7 @@ include docs/B3_GE_PRODUCTION_OPT_IN.md
 include docs/E4_PL_MIGRATION.md
 include docs/GE_BEAM3_NATIVE_WORKFLOWS.md
 include docs/NONLINEAR_PERFORMANCE.md
+include docs/NATIVE_SOURCE_AUTHORITY.md
 include docs/PERFORMANCE_ARCHITECTURE.md
 include docs/QUALITY_CONTROL.md
 include docs/THEORY.md
