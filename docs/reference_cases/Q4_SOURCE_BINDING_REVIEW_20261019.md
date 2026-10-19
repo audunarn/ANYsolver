@@ -32,3 +32,7 @@ Existing PR35_IMMUTABLE_VECTOR_SALVAGE_PLAN_20261016.md:223–310 records the bo
 ## Remaining proof and acceptance boundary
 
 Root still must adopt the source-only disposition and inspect the actual successor/reader changes. Current failing CI supplies negative evidence only. A new passing source-binding reader check may establish its own source-gate result once run under root's existing CI authority; none ran in this review. Direct dependency code equality does not establish current merged mechanical qualification. Under a refusal to add any prospective source-only record/reader wiring, the existing gate must remain blocked rather than weakening its historical hash check.
+
+## Committed-byte correction after CI
+
+The preceding raw fe_core identity was measured from a Windows CRLF working copy. Git had committed LF bytes with SHA256 2377a0b492113a6ac80b009cebc9849c83867f7ac367f0a7d5d15d6c26153c0a. The two byte sequences differ only in line endings; their LF-normalized bytes are exactly equal. The prospective record now pins the committed LF bytes, protected by the existing -text attribute. The original CRLF evidence and prior failed CI observation remain preserved. No source statements, mechanics payload, scientific criteria or acceptance transfer changed.

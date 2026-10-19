@@ -100,6 +100,15 @@ retained and unused authority forfeited.
 
 ## Remaining CI issues requiring a separate decision or development
 
+CI follow-up at `af0344922` exposed a Windows working-copy/committed-blob
+newline mismatch in the new Q4 lifecycle metadata. The successor now binds
+the exact committed LF bytes (`2377a0b492113a6ac80b009cebc9849c83867f7ac367f0a7d5d15d6c26153c0a`),
+retaining the previous CRLF observation and failed CI evidence. Source statements
+are unchanged. All three existing binding/refusal checks passed in a fresh
+60-second ordinary check scope, now closed; no earlier allowance was reused.
+See [byte-correction evidence](main-housecleaning-20261019/CI_BINDING_BYTE_CORRECTION.json).
+The replacement CI run is not a complete qualification or a green-CI claim.
+
 - SESTRA development tests depend on five uncommitted ANYfileIO files:
   `__init__.py`, `sesam/__init__.py`, `sesam/document.py`, `sesam/semantics.py`,
   `sesam/sif.py`. That owner's committed baseline is still `db73950`. No sibling
@@ -122,6 +131,11 @@ retained and unused authority forfeited.
   lifetime/physics criteria or tune solver behavior merely to obtain green CI.
   Current public full364 enriched-path execution may reveal further genuine
   failures once its portable input is available; its criteria are unchanged.
+- The director-continuation plasticity equilibrium check stops at its minimum
+  control step. The exact-zero Q4 tangent comparison also differs by one ULP
+  in a Windows Python3.14 job (relative difference about `1.34e-16`). These
+  are recorded numerical failures, not packaging or test-interface repairs;
+  their assertions and solver behavior remain unchanged.
 
 These remaining issues do not alter the already delivered scoped contact bundle.
 They prevent claiming complete CI, full programme qualification or release.

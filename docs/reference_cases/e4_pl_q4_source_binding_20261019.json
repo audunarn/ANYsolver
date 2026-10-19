@@ -1315,16 +1315,18 @@
     "final_different_family_scientific_acceptance": "OPEN; supporting source review uses available OpenAI family",
     "historical_41_case_observation": "Original pre-reader41cases/123phases and source/result identities retained from predecessor; not rerun, current science, or CI credit.",
     "lifecycle_delta": {
+      "byte_reconciliation": "Exact committed LF bytes; previous CRLF working copy is LF-equal. No semantic change.",
       "disposition": "Existing accepted immutable-vector identity/cache-lifecycle repair; review verifies exact current source identity. Not Q4 scientific qualification.",
       "evidence": "docs/agent_plans/PR35_IMMUTABLE_VECTOR_SALVAGE_PLAN_20261016.md",
       "path": "src/anysolver/fe_core.py",
-      "sha256": "07549c53099a3f4b6ab91d3a4741bcda64a91126935450aa7e463ee0954932da"
+      "prior_windows_working_copy_sha256": "07549c53099a3f4b6ab91d3a4741bcda64a91126935450aa7e463ee0954932da",
+      "sha256": "2377a0b492113a6ac80b009cebc9849c83867f7ac367f0a7d5d15d6c26153c0a"
     },
     "physical_acceptance_transfer": false,
     "prior_elements_sha256": "293966acf50b06add3039905b5f1b682e17168fe832fae57d2b1c12efe602dde",
     "product_edited_in_this_binding_slice": false,
     "review_path": "docs/reference_cases/Q4_SOURCE_BINDING_REVIEW_20261019.md",
-    "review_sha256": "c63be84bc2e4fa8d59cf3ee1176a8c6159e645c008bebfb81d400616a39cb177",
+    "review_sha256": "946dd42285a4b0eb9df5c143ea1c648fe75e19f8bd12e90e5edcd7b49f8f3449",
     "unchanged_scope": "Exact47-root/159-symbol Q4 payload/edges/aggregate; entire Element/ShellElement classes; compensated helper and its relevant arithmetic declarations/imports; other two full raw carriers."
   },
   "status": "ROOT_ADOPTED_PROSPECTIVE_SOURCE_BINDING_ONLY_20261019"

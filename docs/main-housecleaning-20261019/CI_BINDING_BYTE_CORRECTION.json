@@ -1,0 +1,20 @@
+{
+  "scope": "committed-byte metadata correction only",
+  "status": "CLOSED",
+  "authorized_seconds": 60,
+  "charged_seconds": 4.12186870000005,
+  "unused_seconds_forfeited": 55.87813129999995,
+  "checks_passed": 3,
+  "source_statements_changed": false,
+  "scientific_criteria_changed": false,
+  "survivors": [],
+  "reconciliation": {
+    "previous_worktree_sha256": "07549c53099a3f4b6ab91d3a4741bcda64a91126935450aa7e463ee0954932da",
+    "committed_sha256": "2377a0b492113a6ac80b009cebc9849c83867f7ac367f0a7d5d15d6c26153c0a",
+    "lf_equal": true,
+    "record_sha256": "2a5ff36d0e911cb12cbbde1e834dbd512a70c1fa6d0bf1dead498a4eb215fc58",
+    "no_semantic_change": true
+  },
+  "final_record_sha256": "64B07F1A535E6D6EFCEAE0B2EC01BA539DF69BE7956C03DBDA65C2ACF7C7E74F",
+  "full_evidence": "C:/ANYworkspaceWork/main-housecleaning-20261019/ci-binding-newline-fix-v1"
+}
