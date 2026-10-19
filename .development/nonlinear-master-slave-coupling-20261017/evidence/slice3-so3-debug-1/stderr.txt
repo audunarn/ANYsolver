@@ -1,0 +1,1 @@
+.venv/Scripts/python.exe: can't open file 'C:\\Github\\ANYsolver\\diagnostics\\debug_so3_map.py': [Errno 2] No such file or directory

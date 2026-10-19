@@ -1492,11 +1492,13 @@ def _solve_static_displacement_control_block(
     progress_callback=None,
     record_increment_snapshots=False,
     initial_load_factor=0.0,
+    recover_initial_load_factor=False,
     step_index_offset=0,
     initial_steps=(),
     initial_history=(),
     initial_total_iterations=0,
     restart_analysis_contract=None,
+    rotating_mpc_map=None,
     _exact_guard=None,
 ):
     """Displacement control using block elimination on the structural tangent."""
@@ -1516,7 +1518,9 @@ def _solve_static_displacement_control_block(
     checkpoint_path = (
         active_contact_manager() is not None
         or restart_analysis_contract is not None
+        or rotating_mpc_map is not None
         or float(initial_load_factor) != 0.0
+        or bool(recover_initial_load_factor)
         or int(step_index_offset) != 0
         or bool(initial_steps)
         or bool(initial_history)
@@ -1556,11 +1560,13 @@ def _solve_static_displacement_control_block(
             progress_callback=progress_callback,
             record_increment_snapshots=record_increment_snapshots,
             initial_load_factor=initial_load_factor,
+            recover_initial_load_factor=recover_initial_load_factor,
             step_index_offset=step_index_offset,
             initial_steps=initial_steps,
             initial_history=initial_history,
             initial_total_iterations=initial_total_iterations,
             restart_analysis_contract=restart_analysis_contract,
+            rotating_mpc_map=rotating_mpc_map,
             _exact_guard=exact_guard,
         )
 
@@ -1618,11 +1624,13 @@ def _solve_static_displacement_control_block(
             progress_callback=progress_callback,
             record_increment_snapshots=record_increment_snapshots,
             initial_load_factor=initial_load_factor,
+            recover_initial_load_factor=recover_initial_load_factor,
             step_index_offset=step_index_offset,
             initial_steps=initial_steps,
             initial_history=initial_history,
             initial_total_iterations=initial_total_iterations,
             restart_analysis_contract=restart_analysis_contract,
+            rotating_mpc_map=rotating_mpc_map,
             _exact_guard=exact_guard,
         )
 

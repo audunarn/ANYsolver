@@ -1,0 +1,2 @@
+# Preserve exact source snapshots, commands, failed evidence and hash receipts.
+* -text -whitespace

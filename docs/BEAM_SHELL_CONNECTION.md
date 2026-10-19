@@ -1,0 +1,171 @@
+# Beam–shell connection options
+
+`CoupledBeamShellElement` connects a beam node to one shell node.
+`InterpolatedBeamShellMPCElement` connects it to weighted shell masters. Both
+accept the keyword-only Python boolean `rotating_eccentricity`, defaulting to
+`True`. This exposes the existing behavior without changing the default.
+
+For corotational analysis, `True` rotates the reference offset with the master
+frame: `u_beam = u_master + (R_master - I) r0`. Use
+`kinematics="corotational", corotational_tangent="auto"` (which selects
+`"work_conjugate"` for rotating connections), or request `"work_conjugate"`
+explicitly. `False` keeps the fixed-reference linearized relation
+`u_beam = u_master + theta_master × r0`, including in corotational solves.
+Linear analyses continue to use that linearized constraint in either mode.
+Zero offset retains the existing linear coincident connection in both modes.
+The option represents a kinematic tie; it adds no connection stiffness or
+connection strength/failure law.
+
+## Direct and interpolated construction
+
+The following complete example uses an elastic beam and prescribed shell-master
+motion to show the connection law. Node coordinates and eccentricities use SI
+units. Here the shell masters are represented by boundary nodes; a panel model
+would also contain its shell elements.
+
+```python
+import numpy as np
+from anysolver import (FEModel, BoundaryCondition, LoadCase,
+                       CoupledBeamShellElement, solve_static_nonlinear)
+from anysolver.elements import BeamElement
+
+model = FEModel("connected_beam")
+model.add_material("steel", 210e9, 0.3)
+for nid, xyz in [(1, (0, 0, 0)), (2, (1, 0, 0)),
+                 (3, (0, 0, 0.1)), (4, (1, 0, 0.1))]:
+    model.add_node(nid, *xyz)
+model.add_element(1, BeamElement(1, [3, 4], "steel",
+    dict(area=0.001, Iy=1e-6, Iz=1e-6, J=1e-6)))
+for master, slave in [(1, 3), (2, 4)]:
+    model.add_element(10 + slave, CoupledBeamShellElement(
+        10 + slave, slave, master, "steel",
+        eccentricity=np.array([0., 0., 0.1]), rotating_eccentricity=True))
+    conditions = dict(ux=0., uy=0., uz=0., rx=0., ry=0.1, rz=0.)
+    if master == 2:
+        del conditions["ux"]  # One free elastic equilibrium DOF.
+    model.add_boundary_condition(BoundaryCondition(str(master), [master], conditions))
+model.apply_boundary_conditions()
+load = LoadCase("probe")
+load.add_nodal_load(4, forces=(0., 0., -1.))
+model.add_load_case(load)
+result = solve_static_nonlinear(model, load, kinematics="corotational",
+    corotational_tangent="auto", num_steps=1, max_iterations=10)
+assert result.status == "completed"
+```
+
+For interpolation, supply existing shell-master IDs and shape weights. The beam
+node must lie at the weighted reference master position plus the declared
+offset. For example, for a beam node at that position:
+
+```python
+from anysolver import InterpolatedBeamShellMPCElement
+connection = InterpolatedBeamShellMPCElement(
+    20, beam_node_id=3, shell_node_ids=[1, 2],
+    shape_weights=np.array([0.5, 0.5]), eccentricity=np.array([0., 0., 0.1]),
+    material_name="steel", rotating_eccentricity=False)
+```
+
+Weights must be finite and sum to one within the existing admission tolerance;
+they are not renormalized. Nonzero rotating offsets additionally require nonnegative
+weights. With rotating offsets, the interpolated
+frame is the admitted intrinsic SO(3) mean, satisfying
+`sum(w_i Log(R_mean.T R_i)) = 0`, rather than an arithmetic average of rotation
+vectors. Two masters require a unique shortest geodesic. Larger means require
+the supported open π/4 anchor ball and principal rotation chart. Unsupported
+rotations are refused; this option does not widen that domain.
+
+## Generated panels
+
+```python
+from anysolver import MeshConfig, PanelGeometry, generate_stiffened_panel_mesh
+panel = PanelGeometry(length=1., width=0.5, plate_thickness=0.01,
+    stiffener_type="T-bar", stiffener_height=0.1,
+    stiffener_web_thickness=0.005, stiffener_flange_width=0.05,
+    stiffener_flange_thickness=0.005, num_stiffeners=1)
+config = MeshConfig(shell_num_divisions_x=2, shell_num_divisions_y=2,
+                    rotating_eccentricity=True)
+model = generate_stiffened_panel_mesh(panel, config)
+```
+
+The solver adapter passes this option to every generated interpolated connection.
+It is not a neutral ANYmesher option. Only actual Python booleans are accepted;
+integers, strings, `None` and NumPy booleans are rejected before mesh generation.
+Existing positional constructor and `MeshConfig` arguments retain their order.
+
+## Evidence and limits
+
+This is a public selection of existing kinematics, not general scientific
+qualification. Plastic coupled displacement-control continuation/restart remains
+incomplete in the current Slice3 evidence; completed target cases have not been
+established. Nonmatching interpolation accuracy and mesh convergence require
+case-specific verification, including comparisons with suitable independent
+references. A nonzero offset and finite rotations can make the two options give
+different physical predictions.
+
+Check `result.status == "completed"`, the actual controlled displacement against
+the requested target, equilibrium, constraints and physical reactions for the
+intended case. `result.converged` alone also covers some stopped-at-limit results
+and does not establish target completion. Do not infer collapse or absence of an
+equilibrium from a solver stop.
+
+## Experimental director-integrated edge trace
+
+`InterpolatedBeamShellMPCElement` additionally accepts the keyword-only
+`connection_trace="director_integrated"`. The default `"linear"` retains every
+existing translation trace, including the default and zero-offset behavior
+described above. The alternative is an experimental discretization; it is not a
+repair that silently changes the meaning of the existing law. It is not yet
+available through `MeshConfig`.
+
+For a declared straight reference edge with two distinct master endpoints and
+material coordinate `xi`, the new trace integrates the same shortest-geodesic
+director used for rotation:
+
+```
+R(xi) = R0 Exp(xi Log(R0.T R1))
+A(xi) = integral_0^xi R(s) ds
+Q(xi) = A(xi) inverse(A(1))
+p_beam = p0 + Q(xi) (p1 - p0) + R(xi) eccentricity
+```
+
+`Q` is a matrix endpoint weight, not a rotation. Translation derivatives,
+endpoint moments and translation/rotation cross terms are included in the full
+Jacobian, work map and geometric tangent. Linear/static MPCs use this same
+trace's derivative at the reference state. The nonlinear route requires
+corotational kinematics and `auto` or `work_conjugate` pullback.
+
+For example, the following constructs an interior connection on a declared edge;
+physical shell/beam elements, supports and loads must then be added as usual:
+
+```python
+import numpy as np
+from anysolver import FEModel, InterpolatedBeamShellMPCElement
+trace_model = FEModel("experimental_edge")
+trace_model.add_material("steel", 210e9, 0.3)
+trace_model.add_node(1, 0., 0., 0.)
+trace_model.add_node(2, 1., 0., 0.)
+trace_model.add_node(3, 0.4, 0., 0.03)
+trace_model.add_element(10, InterpolatedBeamShellMPCElement(
+    10, 3, [1, 2], np.array([0.6, 0.4]), np.array([0., 0., 0.03]),
+    rotating_eccentricity=True, connection_trace="director_integrated"))
+```
+
+The reference slave must equal the weighted master position plus the declared
+offset to reference floating-point roundoff, and the edge must have finite,
+positive length. Weights must be nonnegative and unit sum to reference roundoff;
+they are not fitted or renormalized. Three or more masters, duplicate endpoints,
+inconsistent geometry and `rotating_eccentricity=False` are refused. One-master
+endpoints reduce to the existing direct law. Interior new-mode connections remain
+nonlinear at zero offset; this is an explicit difference from the legacy mode.
+Input, relative and output rotations retain the existing principal-chart bounds.
+This defines an edge reconstruction, with no arbitrary bilinear-surface extension.
+
+The map passes focused bending/shear/axial, finite circular-trace, objectivity,
+work/wrench, derivative and small elastic restart/cancellation checks. This does
+not establish scientific accuracy: the tested nonmatching eccentric 30-degree
+nx8 arc equilibrated but failed the registered accuracy bound. The first nx16
+attempt timed out without a terminal result. After a same-map displacement
+arithmetic repair, nx16 completed and passed independent equilibrium, constraint
+and wrench checks, but still missed the analytical response by about 5.3%.
+No broader accuracy or plastic continuation acceptance follows. The earlier
+limits and explicit completion/target checks still apply.
