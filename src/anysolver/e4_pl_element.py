@@ -35,6 +35,8 @@ from . import elements as _elements_module
 from . import fe_core as _fe_core_module
 from . import plasticity as _plasticity_module
 from . import shell_sections as _shell_sections_module
+from . import vectorized_nonlinear as _elastic_increment_module
+from . import _compensated_contractions as _local_contractions
 from ._qualified_authority_epoch import (
     AuthorityEpochMeta,
     make_authority_epoch_manager,
@@ -688,6 +690,9 @@ _Q4_FAST_STATE_MAPPING_TYPE = _fe_core_module._QualifiedStateMapping
 _Q4_FAST_TOKEN_TYPE = _fe_core_module._QualifiedMutationEpoch
 _Q4_FAST_MATERIAL_TYPE = _fe_core_module.Material
 _Q4_FAST_PUBLIC_ARRAY_CONSTRUCTOR = np.ndarray
+# Exact immutable scalar only: production builders retain NumPy coordinates.
+# This binding is covered by the existing formulation and NumPy authorities.
+_Q4_FAST_COORDINATE_FLOAT64_TYPE = np.float64
 _Q4_FAST_ELEMENT_INPUT_NAMES = (
     "element_id",
     "node_ids",
@@ -923,8 +928,10 @@ def _capture_q4_fast_input_snapshot(
     mesh: Any,
     material: Any,
 ) -> Optional[_Q4FastInputSnapshot]:
-    """Capture a callback-free snapshot for the exact builtin warm path."""
+    """Capture raw builtin/NumPy-float64 inputs without numeric conversion."""
 
+    if vars(np).get("float64") is not _Q4_FAST_COORDINATE_FLOAT64_TYPE:
+        raise ValueError("qualified Q4 coordinate scalar authority changed")
     if type(mesh) is not _Q4_FAST_MESH_TYPE or type(material) is not _Q4_FAST_MATERIAL_TYPE:
         return None
     element_namespace = object.__getattribute__(element, "__dict__")
@@ -996,7 +1003,8 @@ def _capture_q4_fast_input_snapshot(
         except KeyError:
             return None
         if (
-            any(type(value) not in {int, float} or type(value) is bool for value in values[:3])
+            any(type(value) not in {int, float, _Q4_FAST_COORDINATE_FLOAT64_TYPE}
+                or type(value) is bool for value in values[:3])
             or type(values[3]) is not int
         ):
             return None
@@ -1085,7 +1093,8 @@ def _q4_fast_input_snapshot_matches(
     material_keys = snapshot.material_namespace
 
     if (
-        type(element) is not QualifiedE4PLShellElement
+        vars(np).get("float64") is not _Q4_FAST_COORDINATE_FLOAT64_TYPE
+        or type(element) is not QualifiedE4PLShellElement
         or type(mesh) is not _Q4_FAST_MESH_TYPE
         or type(material) is not _Q4_FAST_MATERIAL_TYPE
         or type(snapshot.nodes) is not _Q4_FAST_STATE_MAPPING_TYPE
@@ -2213,6 +2222,7 @@ def _stationary_blocks(
     local: np.ndarray,
     c: Mapping[str, float],
     constitutive: np.ndarray,
+    *, compensated: bool = False,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Assemble the frozen 35-field stationary system and its physical coupling.
 
@@ -2226,15 +2236,30 @@ def _stationary_blocks(
     coupling_20 = np.zeros((14, 20), dtype=float)
     strain_gram = np.zeros((21, 21), dtype=float)
     gram = np.zeros((3, 3), dtype=float)
+    f_terms, coupling_terms, strain_terms, gram_terms = [], [], [], []
+    weights = []
     for r, s in _GAUSS:
         determinant = _jacobian(c, r, s)[4]
         n_sigma, n_epsilon = _source_fields(c, r, s)
         compatible = _compatible(local, c, r, s)
-        f_matrix -= determinant * (n_epsilon.T @ n_sigma)
-        coupling_20 += determinant * (n_sigma.T @ compatible)
-        strain_gram += determinant * (n_epsilon.T @ constitutive @ n_epsilon)
         polynomial = np.asarray((1.0, r, s), dtype=float)
-        gram += determinant * np.outer(polynomial, polynomial)
+        if compensated:
+            product = _local_contractions.product
+            f_terms.append(-product(n_epsilon.T, n_sigma))
+            coupling_terms.append(product(n_sigma.T, compatible))
+            strain_terms.append(product(product(n_epsilon.T, constitutive), n_epsilon))
+            gram_terms.append(np.outer(polynomial, polynomial))
+            weights.append(determinant)
+        else:
+            f_matrix -= determinant * (n_epsilon.T @ n_sigma)
+            coupling_20 += determinant * (n_sigma.T @ compatible)
+            strain_gram += determinant * (n_epsilon.T @ constitutive @ n_epsilon)
+            gram += determinant * np.outer(polynomial, polynomial)
+    if compensated:
+        f_matrix = _local_contractions.weighted_sum(f_terms, weights)
+        coupling_20 = _local_contractions.weighted_sum(coupling_terms, weights)
+        strain_gram = _local_contractions.weighted_sum(strain_terms, weights)
+        gram = _local_contractions.weighted_sum(gram_terms, weights)
     stationary = np.zeros((35, 35), dtype=float)
     stationary[:14, 14:] = f_matrix.T
     stationary[14:, :14] = f_matrix
@@ -2877,6 +2902,12 @@ class QualifiedE4PLShellElement(
         self._qualified_cache_key: Optional[tuple[Any, ...]] = None
         self._qualified_component_guard: Optional[tuple[Any, ...]] = None
         self._qualified_plan_state_revision = 0
+        # Cold preparation replaces owned derived values, not the input
+        # namespace captured by an ORIGINAL response snapshot. Deserialization
+        # already establishes these same empty fields in __setstate__.
+        object.__setattr__(self, "_nl_cache", None)
+        object.__setattr__(self, "_nl_cache_key", None)
+        object.__setattr__(self, "_hourglass_stiffness_matrix", None)
 
     def validate_quadrature_authority(
         self,
@@ -5582,15 +5613,20 @@ class QualifiedE4PLShellElement(
             frame,
             post_observation=_qualified_runtime_post_observation,
         )
-        stationary, coupling, gram = _stationary_blocks(local, c, constitutive)
+        compensated = self._elastic_increment_admitted(mesh, material, None)
+        stationary, coupling, gram = _stationary_blocks(
+            local, c, constitutive, compensated=compensated)
         solution, stationary_solve_diagnostics = _solve_stationary_system(
             stationary,
             coupling,
         )
-        core_local = -coupling @ solution
+        core_local = (-_local_contractions.product(coupling, solution)
+                      if compensated else -coupling @ solution)
         core_local = 0.5 * (core_local + core_local.T)
         centre = _centre_taylor(c)
-        pl_local = self.pl_stabilization * drill_stiffness * (centre.T @ gram @ centre)
+        pl_core = (_local_contractions.product(_local_contractions.product(centre.T, gram), centre)
+                   if compensated else centre.T @ gram @ centre)
+        pl_local = self.pl_stabilization * drill_stiffness * pl_core
         gamma = _residual_mode(local, c)
         gamma_24 = np.zeros(24, dtype=float)
         gamma_24[5::6] = gamma
@@ -5603,13 +5639,21 @@ class QualifiedE4PLShellElement(
             * np.outer(gamma_24, gamma_24)
         )
         transform = _global_transform(frame)
-        core = transform @ core_local @ transform.T
-        pl = transform @ pl_local @ transform.T
-        hourglass = transform @ hourglass_local @ transform.T
+        if compensated:
+            product = _local_contractions.product
+            core = product(product(transform, core_local), transform.T)
+            pl = product(product(transform, pl_local), transform.T)
+            hourglass = product(product(transform, hourglass_local), transform.T)
+        else:
+            core = transform @ core_local @ transform.T
+            pl = transform @ pl_local @ transform.T
+            hourglass = transform @ hourglass_local @ transform.T
         for matrix in (core, pl, hourglass):
             matrix[:] = 0.5 * (matrix + matrix.T)
-        numerical = pl + hourglass
-        total = core + numerical
+        numerical = (_local_contractions.sum_arrays((pl, hourglass))
+                     if compensated else pl + hourglass)
+        total = (_local_contractions.sum_arrays((core, numerical))
+                 if compensated else core + numerical)
         result = {
             "core": core,
             "physical": core,
@@ -5689,7 +5733,10 @@ class QualifiedE4PLShellElement(
         """Return the qualified linear internal force for local or global input."""
 
         vector = self._get_element_displacements(mesh, displacements)
-        return self.compute_stiffness_matrix(mesh, material) @ vector
+        stiffness = self.compute_stiffness_matrix(mesh, material)
+        if self._elastic_increment_admitted(mesh, material, None):
+            return _local_contractions.product(stiffness, vector)
+        return stiffness @ vector
 
     def _qualified_linear_correction(
         self,
@@ -5715,6 +5762,11 @@ class QualifiedE4PLShellElement(
         increments already call ``_generalized_section_in_frame``, while this
         delta removes the numbered zero-state baseline (including its A66
         drill) and installs the covariant varying-frame tangent.
+
+        This remains the RAW inherited-kernel correction, including when the
+        eligible direct route reports it as diagnostic component metadata.
+        That route replaces the total response; it must not apply this delta
+        to its independently compensated scalar baseline a second time.
         """
 
         coordinates = self.get_node_coordinates(mesh)
@@ -5771,12 +5823,212 @@ class QualifiedE4PLShellElement(
             post_observation=_qualified_runtime_post_observation,
         )
 
+    def _defining_class_input_snapshot_matches(
+        self: Any,
+        mesh: Any,
+        material: Any,
+        snapshot: _Q4FastInputSnapshot,
+    ) -> bool:
+        """Compare only raw owned builtin state; never invoke a descriptor."""
+
+        if type(self) is not __class__:
+            raise ValueError('qualified Q4 defining class identity changed')
+        element = self
+        element_keys = snapshot.element_namespace
+        nodes_keys = snapshot.nodes_namespace
+        material_keys = snapshot.material_namespace
+
+        if (
+            vars(np).get("float64") is not _Q4_FAST_COORDINATE_FLOAT64_TYPE
+            or type(element) is not __class__
+            or type(mesh) is not _Q4_FAST_MESH_TYPE
+            or type(material) is not _Q4_FAST_MATERIAL_TYPE
+            or type(snapshot.nodes) is not _Q4_FAST_STATE_MAPPING_TYPE
+            or "get"
+            in type.__getattribute__(
+                _Q4_FAST_STATE_MAPPING_TYPE,
+                "__dict__",
+            )
+            or type(snapshot.token) is not _Q4_FAST_TOKEN_TYPE
+            or mesh is not snapshot.mesh
+            or material is not snapshot.material
+            or object.__getattribute__(element, "__dict__")
+            is not snapshot.element_namespace
+            or object.__getattribute__(mesh, "__dict__") is not snapshot.mesh_namespace
+            or object.__getattribute__(material, "__dict__")
+            is not snapshot.material_namespace
+            or len(element_keys) != len(snapshot.element_namespace_keys)
+            or not all(
+                map(
+                    _operator_is,
+                    element_keys,
+                    snapshot.element_namespace_keys,
+                )
+            )
+            or any(
+                name in snapshot.mesh_namespace
+                for name in _Q4_FAST_FORBIDDEN_MESH_SHADOWS
+            )
+            or len(material_keys) != len(snapshot.material_namespace_keys)
+            or not all(
+                map(
+                    _operator_is,
+                    material_keys,
+                    snapshot.material_namespace_keys,
+                )
+            )
+            or dict.get(snapshot.mesh_namespace, "nodes") is not snapshot.nodes
+            or dict.get(snapshot.mesh_namespace, "_qualified_direct_state_token")
+            is not snapshot.token
+            or len(snapshot.token) != 1
+            or type(snapshot.token[0]) is not int
+            or int(snapshot.token[0]) != snapshot.token_value
+            or object.__getattribute__(snapshot.nodes, "__dict__")
+            is not snapshot.nodes_namespace
+            or len(nodes_keys) != len(snapshot.nodes_namespace_keys)
+            or not all(
+                map(
+                    _operator_is,
+                    nodes_keys,
+                    snapshot.nodes_namespace_keys,
+                )
+            )
+            or dict.get(snapshot.nodes_namespace, "_qualified_token")
+            is not snapshot.token
+            or dict.get(snapshot.nodes_namespace, "_qualified_kind") != "node"
+        ):
+            return False
+        try:
+            current_element_values = _Q4_FAST_ELEMENT_ITEMGETTER(
+                snapshot.element_namespace
+            )
+        except KeyError:
+            return False
+        if not all(
+            map(
+                _operator_is,
+                current_element_values,
+                snapshot.element_values,
+            )
+        ):
+            return False
+        for node_id, node, namespace, value_types, values in snapshot.nodes_snapshot:
+            if (
+                type(node) is not _Q4_FAST_NODE_TYPE
+                or object.__getattribute__(node, "__dict__") is not namespace
+                or dict.get(snapshot.nodes, node_id) is not node
+            ):
+                return False
+            try:
+                current_values = _Q4_FAST_NODE_ITEMGETTER(namespace)
+            except KeyError:
+                return False
+            if (
+                len(current_values) != len(values)
+                or not all(map(_operator_is, current_values, values))
+            ):
+                return False
+        try:
+            current_material_values = _Q4_FAST_MATERIAL_ITEMGETTER(
+                snapshot.material_namespace
+            )
+        except KeyError:
+            return False
+        if not all(
+            map(
+                _operator_is,
+                current_material_values,
+                snapshot.material_values,
+            )
+        ):
+            return False
+        return True
+
+    def _elastic_increment_admitted(self, mesh, material, state):
+        """Narrow builtin planar elastic route; no state or result cache."""
+        if type(self) is not __class__:
+            raise ValueError('qualified Q4 defining class identity changed')
+        if (
+                type(mesh) is not _Q4_FAST_MESH_TYPE or
+                type(material) is not _Q4_FAST_MATERIAL_TYPE or
+                self.shell_section is not None or self.reduced_integration or
+                material.hardening_curve is not None or material.yield_stress != 0.0):
+            return False
+        if state is not None and (
+                type(state) is not dict or
+                any(key in state for key in _Q4_INITIAL_STATE_KEYS)):
+            return False
+        _require_q4_fast_base_authority()
+        snapshot = _capture_q4_fast_input_snapshot(self, mesh, material)
+        if snapshot is None:
+            return False
+        _frame, _local, warpage = equation7_frame(self.get_node_coordinates(mesh))
+        if not self._defining_class_input_snapshot_matches(mesh, material, snapshot):
+            raise RuntimeError("qualified Q4 elastic increment inputs changed")
+        return bool(warpage <= self.planar_tolerance)
+
+    def _elastic_increment_response(
+        self, mesh, material, vector, state, tangent, *, batch_linear=None,
+        batch_baseline=False,
+        _qualified_runtime_post_observation=None,
+    ):
+        """Replace cancelled elastic output sums, preserving the batch offset.
+
+        The caller first runs its existing state/constitutive path. Preparation
+        is local to this call and never survives an input mutation. The batch
+        baseline is not presumed identical to the inherited scalar tangent.
+        """
+        # Keep the ORIGINAL call input binding across admission and every
+        # preparation observation, including the batch caller (no callback).
+        # Never replace this snapshot with a newer post-preparation snapshot.
+        snapshot = _capture_q4_fast_input_snapshot(self, mesh, material)
+        if snapshot is None or not self._elastic_increment_admitted(mesh, material, state):
+            return None
+        geometry = self._nonlinear_geometry(mesh)
+        qualified = np.asarray(self.compute_stiffness_matrix(mesh, material), dtype=float)
+        if not self._defining_class_input_snapshot_matches(mesh, material, snapshot):
+            raise RuntimeError("qualified Q4 elastic increment inputs changed during preparation")
+        baseline = qualified
+        if batch_baseline:
+            if batch_linear is not None:
+                raise ValueError("ambiguous qualified Q4 batch baseline")
+            batch_linear = _elastic_increment_module.compensated_elastic_batch_zero(
+                geometry, float(material.elastic_modulus), float(material.poisson_ratio),
+                float(material.shear_modulus), self.thickness, self.drilling_stabilization)
+        if batch_linear is not None:
+            self._hourglass_stiffness_matrix = None
+            scalar_linear = _elements_module._compensated_elastic_zero_tangent(
+                self, mesh, material, _qualified_runtime_post_observation)
+            offset = _local_contractions.sum_arrays((batch_linear, -scalar_linear))
+            baseline = _local_contractions.sum_arrays((qualified, offset))
+        increment, material_increment, geometric = (
+            _elastic_increment_module.elastic_shell_nonlinear_increment(
+                vector, geometry, float(material.elastic_modulus),
+                float(material.poisson_ratio), self.thickness, tangent=tangent,
+            )
+        )
+        force = _local_contractions.sum_arrays((
+            _local_contractions.product(baseline, vector), increment))
+        material_tangent = (_local_contractions.sum_arrays((baseline, material_increment))
+                            if tangent else None)
+        total = (_local_contractions.sum_arrays((material_tangent, geometric))
+                 if tangent else None)
+        if _qualified_runtime_post_observation is not None:
+            _qualified_runtime_post_observation()
+        if not self._defining_class_input_snapshot_matches(mesh, material, snapshot):
+            raise RuntimeError("qualified Q4 elastic increment inputs changed")
+        self._validate_qualified_component_guard(
+            post_observation=_qualified_runtime_post_observation)
+        return force, total, material_tangent, geometric
+
     def _prepare_nonlinear_linear_correction(
         self, mesh: Any, material: Any, *,
         _qualified_runtime_post_observation: Optional[Callable[[], None]] = None,
     ) -> Optional[_PreparedQ4LinearCorrection]:
         """Prepare only exact builtin, nonyielding scalar-section Q4 inputs."""
-        if (type(self) is not QualifiedE4PLShellElement or
+        if type(self) is not __class__:
+            raise ValueError('qualified Q4 defining class identity changed')
+        if (
                 self.shell_section is not None or
                 type(mesh) is not _Q4_FAST_MESH_TYPE or
                 type(material) is not _Q4_FAST_MATERIAL_TYPE or
@@ -5802,7 +6054,7 @@ class QualifiedE4PLShellElement(
             if (binding is None or binding[0] is not self or
                     binding[1] is not mesh or binding[2] is not material or
                     self._qualified_component_guard is not binding[3] or
-                    not _q4_fast_input_snapshot_matches(self, mesh, material, binding[4])):
+                    not self._defining_class_input_snapshot_matches(mesh, material, binding[4])):
                 raise RuntimeError("qualified Q4 correction preparation is stale")
             self._validate_qualified_component_guard(
                 post_observation=_qualified_runtime_post_observation)
@@ -5832,6 +6084,7 @@ class QualifiedE4PLShellElement(
         if _qualified_runtime_post_observation is not None:
             _qualified_runtime_post_observation()
         vector = observed_vector.reshape(self.total_dofs)
+        direct_state_admissible = state is None or type(state) is dict
         if state is not None:
             if not isinstance(state, Mapping):
                 raise TypeError("qualified Q4 nonlinear state must be a mapping")
@@ -5873,12 +6126,17 @@ class QualifiedE4PLShellElement(
             layers,
             post_observation=_qualified_runtime_post_observation,
         )
-        force = np.asarray(force, dtype=float) + correction @ vector
+        direct = (self._elastic_increment_response(
+            mesh, material, vector, state, tangent,
+        ) if direct_state_admissible else None)
+        force = (np.asarray(force, dtype=float) + correction @ vector
+                 if direct is None else direct[0])
         if not tangent:
             return force, None, trial_state
         if inherited_tangent is None:
             raise RuntimeError("ShellElement returned no tangent with tangent=True")
-        total = np.asarray(inherited_tangent, dtype=float) + correction
+        total = (np.asarray(inherited_tangent, dtype=float) + correction
+                 if direct is None else direct[1])
         if _return_tangent_components:
             material_tangent = np.asarray(
                 inherited_components["material"], dtype=np.float64
@@ -5886,6 +6144,8 @@ class QualifiedE4PLShellElement(
             geometric_tangent = np.asarray(
                 inherited_components["geometric"], dtype=np.float64
             )
+            if direct is not None:
+                material_tangent, geometric_tangent = direct[2:]
             return force, total, trial_state, {
                 "material": material_tangent,
                 "geometric": geometric_tangent,
@@ -5988,6 +6248,10 @@ class QualifiedE4PLShellElement(
             ),
             "qualified_linear_material_correction": correction.copy(),
         }
+        direct = self._elastic_increment_response(
+            mesh, material, displacement, committed_state, True)
+        if direct is not None:
+            force, actual_total, components["material"], components["geometric"] = direct
         if canonical_json_bytes(committed_state) != before:
             raise RuntimeError(
                 "qualified Q4 committed tangent mutated its input state"
@@ -6103,7 +6367,10 @@ class QualifiedE4PLShellElement(
         frame, local, warpage = equation7_frame(coordinates)
         if warpage > self.planar_tolerance:
             raise ValueError("planar mixed recovery is unavailable for a warped-direct Q4")
-        local_displacement = _global_transform(frame).T @ element_displacements
+        compensated = self._elastic_increment_admitted(mesh, material, None)
+        transform = _global_transform(frame)
+        local_displacement = (_local_contractions.product(transform.T, element_displacements)
+                              if compensated else transform.T @ element_displacements)
         c = _coefficients(local)
         determinants = [c["jc"], *(_jacobian(c, r, s)[4] for r, s in _GAUSS)]
         jacobian_scale = _local_jacobian_scale(local)
@@ -6114,17 +6381,21 @@ class QualifiedE4PLShellElement(
             frame,
             post_observation=post_observation,
         )[0]
-        stationary, coupling, _gram = _stationary_blocks(local, c, constitutive)
+        stationary, coupling, _gram = _stationary_blocks(
+            local, c, constitutive,
+            compensated=compensated)
         solution, _stationary_solve_diagnostics = _solve_stationary_system(
             stationary,
             coupling,
         )
-        stationary_parameters = -solution @ local_displacement
+        stationary_parameters = (-_local_contractions.product(solution, local_displacement)
+                                 if compensated else -solution @ local_displacement)
         stress_parameters = stationary_parameters[:14]
         strain_parameters = stationary_parameters[14:]
-        stationarity_residual = (
-            stationary @ stationary_parameters + coupling.T @ local_displacement
-        )
+        stationarity_residual = (_local_contractions.sum_arrays((
+            _local_contractions.product(stationary, stationary_parameters),
+            _local_contractions.product(coupling.T, local_displacement))) if compensated else (
+                stationary @ stationary_parameters + coupling.T @ local_displacement))
         physical_displacement = np.concatenate(
             tuple(local_displacement[6 * node : 6 * node + 5] for node in range(4))
         )
@@ -6140,11 +6411,15 @@ class QualifiedE4PLShellElement(
                     f"E4-PL element {self.element_id} has a nonpositive recovery Jacobian"
                 )
             n_sigma, n_epsilon = _source_fields(c, float(r), float(s))
-            compatible[index] = (
-                _compatible(local, c, float(r), float(s)) @ physical_displacement
-            )
-            independent[index] = n_epsilon @ strain_parameters
-            resultants[index] = n_sigma @ stress_parameters
+            compatible_matrix = _compatible(local, c, float(r), float(s))
+            if compensated:
+                compatible[index] = _local_contractions.product(compatible_matrix, physical_displacement)
+                independent[index] = _local_contractions.product(n_epsilon, strain_parameters)
+                resultants[index] = _local_contractions.product(n_sigma, stress_parameters)
+            else:
+                compatible[index] = compatible_matrix @ physical_displacement
+                independent[index] = n_epsilon @ strain_parameters
+                resultants[index] = n_sigma @ stress_parameters
             point_determinants[index] = determinant
 
         recovered = {
@@ -7137,6 +7412,8 @@ def _bind_q4_exact_quadrature_boundary(method: Any) -> Any:
             _fe_core_module,
             _plasticity_module,
             _shell_sections_module,
+            _elastic_increment_module,
+            _local_contractions,
         )
     )
     expected_class = QualifiedE4PLShellElement
@@ -7634,6 +7911,8 @@ _q4_guarded_public_names = (
     "compute_nonlinear_response",
     "_prepare_nonlinear_linear_correction",
     "_compute_prepared_nonlinear_response",
+    "_elastic_increment_admitted",
+    "_elastic_increment_response",
     "compute_committed_current_tangent_components",
     "compute_stresses",
     "numerical_internal_force",

@@ -1,5 +1,7 @@
 # ANYsolver General Contact — full delivery programme
 
+**Prospective human-approved method amendment,17October2026:** A separately versioned, physically enriched E4-PL Q4 skin may qualify the D1 delivery instead of its former explicit bilinear-interpolation requirement. The existing bilinear formulation/profile/public compatibility remains available. All other C0-C9/D0-D8 functions, every independently supported fine-Q1 pressure mode and all scientific acceptance criteria remain required. This approves a bounded development route only, not any candidate or acceptance claim. The corrected37-field flat algebra is one-mode evidence; complete physical kinematics/energy/both-body work/derivatives/state and unchanged independent qualification remain necessary. Current controlling implementation record is [PLAN.md](../.development/contact-portable-replay-20261013/PLAN.md), with the exact approved [proposal](../.development/contact-portable-replay-20261013/D1_ENRICHED_SKIN_DELIVERY_DECISION_20261017.md). Historical bilinear failure/acceptance records below retain their original source and interpolation identities.
+
 **Current controlling basis:** current [goal](../GENERAL_CONTACT_GOAL.md),
 [plan](../GENERAL_CONTACT_PLAN.md) and [restart](../GENERAL_CONTACT_RESTART.md).
 The acceptance statements below apply to their named historical source/artifact;

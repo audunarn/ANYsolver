@@ -118,6 +118,26 @@ def helper_binding() -> dict[str, str]:
     return hashes
 
 
+def validate_archived_fixed_indices(layout: dict, archive: Path) -> list[int]:
+    """Same archived support guard, callable with explicitly synthetic archives."""
+    fixed = gauge.layout_fixed_indices(layout)
+    identity.require(fixed == sorted(gauge.archived_integer_array(archive, "fixed")),
+                     "native archived support indices changed")
+    return fixed
+
+
+def validate_saved_native_load(case: str, spec: dict, source_archive: Path,
+                               native_archive_path: Path) -> None:
+    """Same frozen/retained load guard; no historical authority is supplied here."""
+    load = npz_vector(source_archive, f"{case}_frozen_load")
+    native_load = npz_vector(source_archive, f"{case}_native_load")
+    native_archive = npz_vector(native_archive_path, "load")
+    identity.require(load == spec["cases"][case]["applied_load"] and
+                     len(load) == 708 and len(native_load) == 1092 and
+                     native_load == native_archive and native_load[:708] == load and
+                     all(value == 0 for value in native_load[708:]),
+                     f"{case} physical load/retained load changed")
+
 def preflight() -> dict:
     head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, check=True,
                           capture_output=True, text=True).stdout.strip()
@@ -137,9 +157,7 @@ def preflight() -> dict:
                      layout["counts"]["full_q"] == 1092 and
                      len(layout["fixed_coordinates"]) == len(spec["fixed_dofs"]) == 35,
                      "physical discretization/support count changed")
-    fixed = gauge.layout_fixed_indices(layout)
-    identity.require(fixed == sorted(gauge.archived_integer_array(NATIVE / "operators.npz", "fixed")),
-                     "native archived support indices changed")
+    fixed = validate_archived_fixed_indices(layout, NATIVE / "operators.npz")
     model = identity.import_recipe().geometry(16, identity.import_recipe().services()[3])
     geometry = validate_native_geometry(native_inputs, layout, model)
     identity.require([list(row) for row in spec["fixed_dofs"]] ==
@@ -166,14 +184,7 @@ def preflight() -> dict:
                     "one-yaw executed source")
     cases = {}
     for case in ("fy", "mx", "mz"):
-        load = npz_vector(CROSSCASE / "arrays.npz", f"{case}_frozen_load")
-        native_load = npz_vector(CROSSCASE / "arrays.npz", f"{case}_native_load")
-        native_archive = npz_vector(NATIVE / case / "raw-state.npz", "load")
-        identity.require(load == spec["cases"][case]["applied_load"] and
-                         len(load) == 708 and len(native_load) == 1092 and
-                         native_load == native_archive and native_load[:708] == load and
-                         all(value == 0 for value in native_load[708:]),
-                         f"{case} physical load/retained load changed")
+        validate_saved_native_load(case, spec, CROSSCASE / "arrays.npz", NATIVE / case / "raw-state.npz")
         load_binding = crosscase.bound_native_load(case)
         source = npz_vector(CROSSCASE / "arrays.npz", f"{case}_inferred_source_density")
         density = npz_vector(CROSSCASE / "arrays.npz", f"{case}_native_density")

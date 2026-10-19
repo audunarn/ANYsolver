@@ -11,6 +11,7 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.optimize import brentq
 from anysolver._ge_beam3_deterministic_reduction import deterministic_dot, deterministic_norm
+from .polynomial_roots import near_real_roots
 
 
 @dataclass(frozen=True)
@@ -109,9 +110,9 @@ def closest_on_b3(point: np.ndarray, target_positions: np.ndarray) -> CurveProje
         polynomial = np.polynomial.Polynomial(coefficients / scale).trim(
             tol=64.0 * np.finfo(float).eps,
         )
-        for root in polynomial.roots():
-            if abs(float(root.imag)) <= 1.0e-10 and 0.0 < float(root.real) < 1.0:
-                roots.append(float(root.real))
+        for root in near_real_roots(polynomial.coef):
+            if 0.0 < root < 1.0:
+                roots.append(root)
     stations = [0.0]
     for root in sorted(roots):
         if root - stations[-1] > 1.0e-10:
@@ -248,9 +249,9 @@ def _endpoint_projection_cuts(source: np.ndarray,
         polynomial = np.polynomial.Polynomial(coefficients / scale).trim(
             tol=64.0 * np.finfo(float).eps,
         )
-        for root in polynomial.roots():
-            if abs(float(root.imag)) <= 1.0e-10 and 0.0 < float(root.real) < 1.0:
-                cuts.append(float(root.real))
+        for root in near_real_roots(polynomial.coef):
+            if 0.0 < root < 1.0:
+                cuts.append(root)
     return tuple(sorted(set(cuts)))
 
 

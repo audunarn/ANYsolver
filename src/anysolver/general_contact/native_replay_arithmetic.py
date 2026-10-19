@@ -11,6 +11,7 @@ and three-coordinate matrix products use ascending fused accumulation.
 import ctypes
 import math
 import os
+from types import BuiltinMethodType
 
 import numpy as np
 
@@ -36,6 +37,27 @@ def _load_fma():
 
 
 _fma = _load_fma()
+# Eligibility only: arithmetic below still resolves the live _fma binding.
+# Python/fallback hooks retain their original operand-read/callback order.
+_native_fma = _fma if isinstance(_fma, ctypes._CFuncPtr) else None
+_native_double = ctypes.c_double
+_native_from_param = ctypes.c_double.from_param
+
+
+def _native_preparation_allowed():
+    function = _fma
+    if function is not _native_fma or function is None:
+        return False
+    if ctypes.c_double is not _native_double:
+        return False
+    conversion = ctypes.c_double.from_param
+    if type(conversion) is not BuiltinMethodType or conversion != _native_from_param:
+        return False
+    argtypes = function.argtypes
+    return (type(argtypes) is tuple and len(argtypes) == 3
+            and all(item is _native_double for item in argtypes)
+            and function.restype is _native_double
+            and getattr(function, 'errcheck', None) is None)
 
 
 def gap_vector_product(matrix, vector):
@@ -64,6 +86,15 @@ def gap_matrix_product(left, right):
     if not np.all(np.isfinite(left)) or not np.all(np.isfinite(right)):
         raise ValueError('native gap contraction requires finite operands')
     result = np.empty((left.shape[0], right.shape[1]))
+    if left.shape == (9, 3) and right.shape == (3, 9) and _native_preparation_allowed():
+        # One finite binary64 operand snapshot per call, never retained on a
+        # candidate. Conversion preserves IEEE signed zeros. No result cache.
+        columns = tuple(tuple(map(float, column)) for column in right.T)
+        for i, row in enumerate(left):
+            a, b, c = map(float, row)
+            for j, (x, y, z) in enumerate(columns):
+                result[i, j] = _fma(c, z, _fma(b, y, _fma(a, x, 0.)))
+        return result
     for i, row in enumerate(left):
         a, b, c = map(float, row)
         for j, column in enumerate(right.T):

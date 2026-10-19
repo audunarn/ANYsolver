@@ -190,11 +190,12 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
         d=self._candidate_relative_center(high,low,cell,t,arm)
         # DX maps left spatial section increments; shell corner motion is affine.
         a,b,c=arm
-        dx=np.column_stack(((1-t)*np.eye(3),t*np.eye(3),
+        identity=np.eye(3)
+        dx=np.column_stack(((1-t)*identity,t*identity,
                             np.array(((0,c,-b),(-c,0,a),(b,-a,0)))))
         gradient=np.r_[gap_vector_product(dx.T,n),gap_vector_product(dn.T,d)-self._origin_gradient]
         hessian=np.zeros((18,18))
-        hessian[6:9,6:9]=(np.outer(arm,n)+np.outer(n,arm))/2-deterministic_dot(n,arm)*np.eye(3)
+        hessian[6:9,6:9]=(np.outer(arm,n)+np.outer(n,arm))/2-deterministic_dot(n,arm)*identity
         hessian[:9,9:]=gap_matrix_product(dx.T,dn)
         hessian[9:,:9]=hessian[:9,9:].T
         hessian[9:,9:]=(np.einsum('i,ijk->jk',d,hn)
@@ -209,7 +210,7 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
     def _root_work_bound(self,high,low,U,cell,width,angular_width,geometry,
                          settings,stiffness,normal,pad,*,fallback=False,interval=None,station=None,
                          declared_arc=False):
-        # At this candidate n/Dn/D²n are constant in xi. Bound their COMPLETE
+        # At this candidate n/Dn/DÂ²n are constant in xi. Bound their COMPLETE
         # scaled authoritative maps, not just the native nine-coordinate block.
         ref=self.reference;r=self.radius;L=settings.characteristic_length_m
         _,jmax,f1,_=_reference_norm_bounds(ref,cell,actual_roll=True)
@@ -281,7 +282,7 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
         active=np.count_nonzero(np.any(mapping!=0.,axis=0))
         factor=stiffness*area*width*angular_width
         # Positive area and Gauss weights make both exact and approximate
-        # mapped leading g*g^T integrals PSD, bounded by factor*g². The
+        # mapped leading g*g^T integrals PSD, bounded by factor*gÂ². The
         # measure covers the true union AND grazing fallback quadrature mass.
         # Only the non-PSD Hessian/once-spatial remainder needs a sum bound.
         te=(_psd_root_tangent_difference_bound(factor*g*g,factor*depth*h,active)

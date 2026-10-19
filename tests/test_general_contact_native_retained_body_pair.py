@@ -7,7 +7,6 @@ import numpy as np
 import pytest
 from examples.general_contact_native_retained_body_pair import analysis
 from anysolver.general_contact.native_retained_body_pair import omitted_cell_dominated
-from test_general_contact_native_curved_static import _canonical_fixture_payload
 from anysolver.general_contact.native_replay_diagnostics import replay_difference_message
 
 
@@ -44,30 +43,21 @@ def test_endpoint_plateau_refusal_and_internal_motion():
 
 
 def test_default_saved_curved_energy_and_identity():
-    from test_general_contact_native_curved_fibre_pair_static import _curved_owner
+    from test_general_contact_native_curved_fibre_pair_static import _curved_owner, _saved_curved_fixture
     from anysolver._ge_beam3_p5_seeded.codec import _load
     owner=_curved_owner()
-    fixture=Path(__file__).parent/'data/general_contact_native_curved_fibre_pair_v14.checkpoint'
-    capsule=_load(_canonical_fixture_payload(fixture).decode('ascii'))
+    raw,_=_saved_curved_fixture()
+    capsule=_load(raw.decode('ascii'))
     assert owner.identity==capsule['identity']
     assert capsule['completed_targets']==1 and len(capsule['records'])==1
     record=capsule['records'][-1]
-    raw=_canonical_fixture_payload(fixture)
-    # Authenticated physical state is portable; byte-exact recomputed error
-    # estimates can differ between numerical libraries. Keep the production
-    # replay contract strict and exercise a fresh local producer/consumer.
+    # Every saved field, including all three error bounds, must replay exactly.
+    # A different local record cannot replace the authenticated saved fixture.
     mechanical=owner.context.make(record['mechanical'],decoded=True)
     _,replayed=owner._record(record['target'],mechanical,owner.initial.histories,
         record['previous_sha256'])
-    diagnostic_keys={'energy_error_j','force_error_n','tangent_error_n_per_m'}
-    physical=lambda row:{**row,'contact':{k:v for k,v in row['contact'].items()
-        if k not in diagnostic_keys}}
     from anysolver._ge_beam3_p5_seeded.core import canonical
-    assert canonical(physical(record))==canonical(physical(replayed)), replay_difference_message(physical(record), physical(replayed), 'physical record')
-    if canonical(record)!=canonical(replayed):
-        with pytest.raises(ValueError,match='physical replay mismatch'):
-            owner._restore(raw,sha256(raw).hexdigest())
-        raw=owner._checkpoint((replayed,))
+    assert canonical(record)==canonical(replayed), replay_difference_message(record, replayed, 'full record')
     state,records=owner._restore(raw,sha256(raw).hexdigest())
     assert state.contact.potential_j>0
     assert owner._checkpoint(records)==raw
@@ -84,13 +74,12 @@ def test_default_saved_curved_energy_and_identity():
 
 
 def test_saved_curved_full_record_replay_is_exact():
-    """CI4 requires every saved field, before any local checkpoint fallback."""
-    from test_general_contact_native_curved_fibre_pair_static import _curved_owner
+    """CI4 requires every saved field and the unchanged production restore."""
+    from test_general_contact_native_curved_fibre_pair_static import _curved_owner, _saved_curved_fixture
     from anysolver._ge_beam3_p5_seeded.codec import _load
     from anysolver._ge_beam3_p5_seeded.core import canonical
     owner = _curved_owner()
-    fixture = Path(__file__).parent/'data/general_contact_native_curved_fibre_pair_v14.checkpoint'
-    raw = _canonical_fixture_payload(fixture)
+    raw, _ = _saved_curved_fixture()
     capsule = _load(raw.decode('ascii'))
     assert owner.identity == capsule['identity']
     record = capsule['records'][0]

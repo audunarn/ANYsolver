@@ -102,6 +102,7 @@ def test_curve_position_and_derivatives_use_fixed_fused_chain(station):
 
 
 def test_endpoint_projection_cuts_use_fixed_coefficient_reductions():
+    from decimal import Decimal, localcontext
     from anysolver.general_contact.beam_curve_pair import _curve, _endpoint_projection_cuts
     source = np.array(((0., .11, .01), (1., .1101, .011), (2., .11, .01)))
     target = np.array(((1., 0., 0.), (2., .01, .002), (3., 0., 0.)))
@@ -118,8 +119,16 @@ def test_endpoint_projection_cuts_use_fixed_coefficient_reductions():
             coefficients.append(value)
         coefficients = np.asarray(coefficients)
         polynomial = np.polynomial.Polynomial(coefficients/np.max(np.abs(coefficients)))
-        roots = polynomial.trim(tol=64*np.finfo(float).eps).roots()
-        expected.extend(float(root.real) for root in roots
-                        if abs(float(root.imag)) <= 1e-10 and 0 < float(root.real) < 1)
+        trimmed = polynomial.trim(tol=64*np.finfo(float).eps).coef
+        # Independent root oracle: exact float-to-Decimal inputs and a
+        # high-precision quadratic formula, not the production isolator or LAPACK.
+        with localcontext() as context:
+            context.prec = 160
+            c, b, a = [Decimal.from_float(float(x)) for x in trimmed]
+            discriminant = b*b-4*a*c
+            assert discriminant > 0
+            radical = discriminant.sqrt()
+            roots = (float((-b-radical)/(2*a)), float((-b+radical)/(2*a)))
+        expected.extend(root for root in roots if 0 < root < 1)
     assert expected
     assert _endpoint_projection_cuts(source, target) == tuple(sorted(set(expected)))

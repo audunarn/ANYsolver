@@ -347,6 +347,7 @@ def test_functional_lane_direct_shell_calls_are_non_q4_or_explicit_refusal() -> 
         ("tests/test_stiffened_shell_b2_q4_panel_experimental.py", "_independent_dense"): 1,
         # Prepared static evaluator: staged qualified Q4 fixture.
         ("tests/test_prepared_static_q4.py", "_q4_model"): 1,
+        ("tests/test_prepared_static_q4_compensated_policy.py", "test_original_planar_coordinate_policy_parity_and_source_deletion"): 1,
     })
     assert calls["QualifiedE4PLShellElement"] == expected_qualified_q4
     assert sum(calls["QualifiedE4PLShellElement"].values()) == sum(

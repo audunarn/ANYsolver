@@ -1,0 +1,64 @@
+{
+  "schema": "ANY_NATIVE_VIBRATION_CASE_ENVELOPE_ACCEPTANCE_V2",
+  "id": "C7_NATIVE_VIBRATION_APPROVED_CASE_ENVELOPE_20261018_V2",
+  "status": "HUMAN_APPROVED_SCOPED_CONTRACT_AMENDMENT",
+  "governance_amendment_sha256": "571b7a4bf6ad4cc045097dce5e858345ba12bee7dfc4c89429e717685633e4af",
+  "approval": {
+    "verbatim": "Okay, we proceed with the proposed limits.",
+    "approved_proposal": "Case-specific normalized velocity 0.005,step energy3.5e-6,cumulative energy2.5e-6;all other criteria/functionality unchanged,preserve original failures,verify amended formal gate once."
+  },
+  "limits": {
+    "step_energy": 3.5e-06,
+    "cumulative_energy": 2.5e-06,
+    "velocity": 0.005
+  },
+  "scope": {
+    "case": "Existing native full-amplitude vibration benchmark only: original coarse4/fine8/half-amplitude8 plus2fresh replays;fixed definition/profile/installed700 identity and existing eligibility,not programme-wide tolerance changes.",
+    "definition_sha256": "9e087b9ebf541889a6eb217880c8139990c40a0b0b15bd62fb9805f8414c13ae",
+    "profile_sha256": "feeee50769b637a4c08b5a961dd313341ab4113f41377530723569ac94666454",
+    "product_python_manifest_sha256": "98139b92af8ff1a2a62b68669624c3bcb74b5376c783e0eaa74e1004b24475e9",
+    "physical_reference_sha256": "11774ba761047961b26c99c0af58d0a3957fd66e4884da4602985806fe8cf350"
+  },
+  "prescribed_workload": [
+    {
+      "label": "coarse",
+      "amplitude": 0.0001,
+      "steps": 4
+    },
+    {
+      "label": "fine",
+      "amplitude": 0.0001,
+      "steps": 8
+    },
+    {
+      "label": "half_fine",
+      "amplitude": 5e-05,
+      "steps": 8
+    }
+  ],
+  "binding_template": {
+    "amplitude": 0.0001,
+    "context_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "definition_sha256": "9e087b9ebf541889a6eb217880c8139990c40a0b0b15bd62fb9805f8414c13ae",
+    "dt_hex": "0x1.0000000000000p+0",
+    "endpoint_state_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "energy0_hex": "0x1.0000000000000p+0",
+    "epoch": 1,
+    "initial_state_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "label": "coarse",
+    "predecessor_state_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "profile_sha256": "feeee50769b637a4c08b5a961dd313341ab4113f41377530723569ac94666454",
+    "steps": 4,
+    "time_hex": "0x1.0000000000000p+0"
+  },
+  "binding_policy": "Template values describe field types; named definition/profile/workload and epoch range bind every scoped request. State hashes/time/scale must be well-formed. This case envelope is not an exact-value endpoint exception.",
+  "previous_capsules": {
+    "native_vibration_energy_acceptance_20261018.json": "50b66f7349e6179082cdaa0b88816bfbb00d8d142f178b60b0a65e2812418d7f",
+    "native_vibration_case_acceptance_20261018.json": "8ab00c45c1d128b3292b3ab3e9c1e74493f4db2bf52bb33a41e9e6c642030de4"
+  },
+  "scientific_acceptance": false,
+  "full_C7_acceptance": false,
+  "CI_credit": 0,
+  "scope_decision_sha256": "12d1e52dea0edd1f6fbee1aeb208d3cd081cfb8f974e19d9d870383d95711224",
+  "eligibility_policy": "Actual active product700 and physical-reference identities only. Runtime/host/profile coverage is governed separately by registered execution guards; historical measured-exception runtime pins remain solely with legacy helpers/capsules."
+}

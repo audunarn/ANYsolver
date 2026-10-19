@@ -129,3 +129,63 @@ remaining mechanics evidence. Twelve jobs consumed230.89657720038667/240 seconds
 source-only chronology and prepared test docstrings are historical preparation
 labels; they do not supersede the scoped execution record. No engineering
 acceptance or release follows.
+
+## Prospective independent connected physical balance candidate — 18 October 2026
+
+Status: **implemented source candidate; numerical and installed assessment
+UNRUN**. The current source assignment is `D6_CONNECTED_PHYSICAL_BALANCE_V1`.
+All historical attempts, including the single-element one-mode V2 energy
+failure and its finer-step/amplitude variants, remain unchanged and unclosed by
+this different connected assessment. The historical 9.103422799613327-second
+balance above is CLOSED and cannot fund any new check.
+
+`examples/native_connected_balance_reference.py` derives a separate bounded
+reference for the existing two straight elements, five shared nodes, identity
+reference triads, diagonal elastic tensor `(1e5,3e4,3e4,30,20,10)` and section
+inertia `(2,2,2,.02,.01,.01)`. It reads raw physical inputs and accepted public
+state records, never the owner's station cache, material response or reported
+energy as its reference. Exact polynomial integration of each straight
+halfcell gives kinetic energy, physical linear momentum and angular momentum
+about global zero. The complementary elastic energy is independently integrated
+from constant cell force and linear section moment. Reported mixed variational
+energy is compared to `Pi=p.k-Psi`, while **stored** elastic `Psi` enters the
+physical energy balance. `Pi-Psi` and independent resultant compatibility/work
+witnesses remain separate evidence; off-constraint states are not conflated.
+
+The fixed new case has nonuniform translational velocity
+`(.01,.02+.03*x*x,.01)` and four spatial cell spins
+`(1.5,.4,-.3),(1.8,-.2,.5),(1.2,.3,-.4),(1.6,-.4,.2)`.
+The clamp case zeros only the root translational velocity. Neither amplitude
+nor solver settings are tuned. Four coarse steps of `.00025` and eight fine
+steps of `.000125` have the **same .001-second horizon**. A fresh-owner prefix
+of two coarse steps and resumed full trajectory must reproduce every result
+and checkpoint byte exactly. Public trajectory supports, corruption,
+cancellation, atomic prefix and unsupported load/contact/time-method guards
+remain the existing ones.
+
+The independent clamp reaction includes the root consistent translational
+inertia, actual elastic cell force and constrained nodal-frame couple obtained
+from SO(3) log virtual work. Its global moment includes the root orbital arm;
+there is no fictitious algebraic frame inertia. Homogeneous support work is
+zero. Physical momentum change is checked against these independent stage
+impulses, separately from parity with reported support records.
+
+New prospective development predicates are parity `1e-10` and per-step plus
+cumulative physical energy/linear/angular balance `1e-6`, pending final root
+scientific adoption. The fixed analytic initial energy is `E*=.05230416666666667J` (free) or
+`.0516J` (clamped), with actual public initial rates/energy/momenta verified; `M*=4kg`, `L*=2m`, `P*=sqrt(2M*E*)`, `H*=L*P*`. No near-zero floors are
+introduced. Refinement reports common-time trends without inventing a ratio
+gate. Existing `1e-5` directional tangents, `1e-11` rigid translation, exact
+restart and all stricter original assertions are untouched. These new cases do
+not qualify all C7 sections/spatial domains, close the historical single-element
+gates, admit loads/contact or establish C8 impact.
+
+The explicit public candidate is
+`python -m examples.native_connected_transient_dev --balance-output <new-dir>`
+and the same command with `--clamped`. Each writes completed raw trajectory and
+checkpoint before independent predicates; `ASSESSMENT.json` identifies scoped
+development evidence only. The installed assessment must bind the current
+artifact and helper sources, authenticate actual imports, and prohibit a source
+package fallback. No installed artifact has been built or executed under this
+source-only assignment. All C0–C9/D0–D8, current CI and different-family final
+acceptance obligations remain required.

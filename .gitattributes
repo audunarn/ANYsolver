@@ -1031,3 +1031,29 @@ scripts/b3_e4_f03_bl5_opensees_line_reference.py -text whitespace=blank-at-eol,-
 # Original projected-envelope helpers were registered with these exact CRLF bytes.
 scripts/b3_e4_bl5_riesz_controls_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
 scripts/b3_e4_bl5_modal_reference_dev.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+
+# Provisional canonical-root replay fixture: preserve pinned canonical bytes on every checkout.
+tests/data/general_contact_native_curved_fibre_pair_v14.checkpoint -text
+tests/data/general_contact_native_curved_fibre_pair_v14_response.json -text
+
+# Provisional same-pose lifecycle press replay and its pinned provenance.
+tests/data/general_contact_native_curved_pair_lifecycle_press_v1.checkpoint -text
+tests/data/general_contact_native_curved_pair_lifecycle_press_v1_provenance.json -text
+
+# Preserve exact qualified Q4 dependency, evidence and mutation-oracle bytes.
+src/anysolver/elements.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+src/anysolver/vectorized_nonlinear.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+src/anysolver/_compensated_contractions.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+docs/reference_cases/e4_pl_q4_source_binding_20261016.json -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+tests/test_general_contact_c5_elastic_increment.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+tests/test_general_contact_c5_numpy_coordinate_admission.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+scripts/r8_bl5_projected_reference_action_dev.py text eol=lf
+
+# Portable BL5 refusal guard/test source bindings (2026-10-17).
+scripts/r8_bl5_common_density_response_dev.py text eol=lf
+tests/test_r8_bl5_common_density_response_dev.py text eol=lf
+examples/native_vibration_case_envelope_acceptance_20261018.json -text
+examples/native_vibration_energy_acceptance_20261018.json -text
+examples/native_vibration_case_acceptance_20261018.json -text
+examples/native_vibration_physical_reference.py -text
+examples/native_vibration_canonical_case_envelope_acceptance_20261018.json -text

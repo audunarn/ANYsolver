@@ -642,7 +642,7 @@ HISTORICAL_EXTENDED_EXACT = {
 ADDITIVE_CI_PREFIXES = ("test_e4_pl_s3_",)
 # This reference-batch file carries correctness and authority checks despite
 # its performance-shaped name, so exercise this exact file in pull requests.
-ADDITIVE_CI_EXACT = {"test_e4_pl_s3_reference_batch.py"}
+ADDITIVE_CI_EXACT = {"test_e4_pl_s3_reference_batch.py", "test_general_contact_enriched_moment_batch.py"}
 
 PACKAGE_CHECKS = (
     "BUILD_LOCAL_WHEELS_WITHOUT_ISOLATION",

@@ -1,11 +1,15 @@
 """Source-bound refusals for the saved BL5 common-density response experiment."""
 from __future__ import annotations
 
+import ast
 import copy
 import importlib
 import json
 from pathlib import Path
+import struct
 import subprocess
+import tempfile
+import zipfile
 import sys
 import unittest
 from unittest.mock import patch
@@ -33,17 +37,6 @@ class CommonDensitySourceTests(unittest.TestCase):
             ["git", "show", "HEAD:scripts/r8_bl5_external_operator_dev.py"],
             cwd=ROOT, capture_output=True)
         return probe.returncode == 0
-
-    def synthetic_committed_state(self):
-        """Synthetic c64d189e HEAD seam for the reader-mutation controls;
-        the unpatched stale binding refusal is retained separately."""
-        from types import SimpleNamespace
-
-        def fake_run(args, **kwargs):
-            return SimpleNamespace(returncode=0,
-                                   stdout="c64d189e synthetic committed input state",
-                                   stderr="")
-        return fake_run
 
     def test_bound_saved_preflight(self):
         # Historical refusal: the saved preflight binds the committed
@@ -99,39 +92,93 @@ class CommonDensitySourceTests(unittest.TestCase):
             with self.assertRaises(mod.identity.IdentityError):
                 mod.helper_binding()
 
+    @staticmethod
+    def write_synthetic_npz(path, arrays):
+        """Tiny valid NPY members, stdlib only; no saved evidence authority."""
+        with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_STORED) as bundle:
+            for name, (dtype, values) in arrays.items():
+                header = repr({"descr": dtype, "fortran_order": False,
+                               "shape": (len(values),)})
+                padding = (-(10 + len(header) + 1)) % 64
+                encoded = (header + " "*padding + "\n").encode("ascii")
+                code = "q" if dtype == "<i8" else "d"
+                raw = (b"\x93NUMPY\x01\x00" + struct.pack("<H", len(encoded)) + encoded
+                       + struct.pack(f"<{len(values)}{code}", *values))
+                bundle.writestr(name + ".npy", raw)
+
+    def synthetic_support_archive(self, root):
+        archive = root / "synthetic-support.npz"
+        layout = {"shell_node_ids": list(range(1, 7)), "beam_node_ids": [],
+                  "fixed_coordinates": [("shell", 1+i//6, i % 6) for i in range(35)]}
+        self.write_synthetic_npz(archive, {"fixed": ("<i8", list(range(35)))})
+        return layout, archive
+
+    def synthetic_load_archives(self, root):
+        source = root / "synthetic-crosscase.npz"
+        native = root / "synthetic-native.npz"
+        load = [0.0]*708; load[100] = 1.0
+        extended = load + [0.0]*384
+        self.write_synthetic_npz(source, {"fy_frozen_load": ("<f8", load),
+                                          "fy_native_load": ("<f8", extended)})
+        self.write_synthetic_npz(native, {"load": ("<f8", extended)})
+        return {"cases": {"fy": {"applied_load": load}}}, source, native
+
+    def test_synthetic_archive_guard_positives(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            layout, archive = self.synthetic_support_archive(root)
+            self.assertEqual(mod.validate_archived_fixed_indices(layout, archive), list(range(35)))
+            spec, source, native = self.synthetic_load_archives(root)
+            self.assertIsNone(mod.validate_saved_native_load("fy", spec, source, native))
+
     def test_changed_archived_fixed_index_refused(self):
-        original = mod.gauge.archived_integer_array
-
-        def mutated(path, key):
-            values = original(path, key)
-            values[0] += 1
-            return values
-
-        # Synthetic committed-state seam isolates the archived-reader
-        # mutation; the unpatched stale binding refuses above.
-        with patch.object(mod.subprocess, "run",
-                          side_effect=self.synthetic_committed_state()):
-            with patch.object(mod.gauge, "archived_integer_array",
-                              side_effect=mutated):
-                with self.assertRaises(mod.identity.IdentityError):
-                    mod.preflight()
+        with tempfile.TemporaryDirectory() as folder:
+            layout, archive = self.synthetic_support_archive(Path(folder))
+            self.assertEqual(mod.validate_archived_fixed_indices(layout, archive), list(range(35)))
+            original = mod.gauge.archived_integer_array; touched = []
+            def mutated(path, key):
+                values = original(path, key)
+                self.assertEqual((path, key), (archive, "fixed"))
+                touched.append((path, key)); values[0] += 1
+                return values
+            with patch.object(mod.gauge, "archived_integer_array", side_effect=mutated):
+                with self.assertRaisesRegex(mod.identity.IdentityError,
+                                            "^native archived support indices changed$"):
+                    mod.validate_archived_fixed_indices(layout, archive)
+            self.assertEqual(touched, [(archive, "fixed")])
 
     def test_changed_native_load_refused(self):
-        original = mod.npz_vector
-
-        def mutated(path, key):
-            values = original(path, key)
-            if path == mod.CROSSCASE / "arrays.npz" and key == "fy_native_load":
-                values[100] += 1.0
-            return values
-
-        # Synthetic committed-state seam isolates the saved-load
-        # mutation; the unpatched stale binding refuses above.
-        with patch.object(mod.subprocess, "run",
-                          side_effect=self.synthetic_committed_state()):
+        with tempfile.TemporaryDirectory() as folder:
+            spec, source, native = self.synthetic_load_archives(Path(folder))
+            self.assertIsNone(mod.validate_saved_native_load("fy", spec, source, native))
+            original = mod.npz_vector; touched = []; reads = []
+            def mutated(path, key):
+                values = original(path, key); reads.append((path, key))
+                if (path, key) == (source, "fy_native_load"):
+                    touched.append((path, key)); values[100] += 1.0
+                return values
             with patch.object(mod, "npz_vector", side_effect=mutated):
-                with self.assertRaises(mod.identity.IdentityError):
-                    mod.preflight()
+                with self.assertRaisesRegex(mod.identity.IdentityError,
+                                            "^fy physical load/retained load changed$"):
+                    mod.validate_saved_native_load("fy", spec, source, native)
+            self.assertEqual(touched, [(source, "fy_native_load")])
+            self.assertEqual(reads, [(source, "fy_frozen_load"),
+                                     (source, "fy_native_load"), (native, "load")])
+
+    def test_preflight_calls_same_extracted_guards(self):
+        """Source integration only; does not claim a historical full-preflight positive."""
+        tree = ast.parse(Path(mod.__file__).read_bytes())
+        preflight = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "preflight")
+        calls = [n for n in ast.walk(preflight) if isinstance(n, ast.Call)
+                 and isinstance(n.func, ast.Name) and n.func.id in
+                 ("validate_archived_fixed_indices", "validate_saved_native_load")]
+        self.assertEqual(len(calls), 2)
+        rendered = {n.func.id: [ast.unparse(a) for a in n.args] for n in calls}
+        self.assertEqual(rendered["validate_archived_fixed_indices"],
+                         ["layout", "NATIVE / 'operators.npz'"])
+        self.assertEqual(rendered["validate_saved_native_load"],
+                         ["case", "spec", "CROSSCASE / 'arrays.npz'", "NATIVE / case / 'raw-state.npz'"])
+        self.assertLess(calls[0].lineno, calls[1].lineno)
 
     def test_nonzero_retained_rhs_enters_signed_schur_load(self):
         # A negative retained block is intentional: no SPD shortcut is valid.

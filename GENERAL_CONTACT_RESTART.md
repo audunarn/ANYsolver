@@ -1,406 +1,354 @@
-# Contact CI2 restart - 12 October 2026
+Current source handoff: docs/GENERAL_CONTACT_CANDIDATE_HANDOFF_20261019.md. Local main integration is explicitly authorized; no push. Historical checkpoint follows.
 
-Branch codex/contact-ci2; production checkpoint 6e055f0b0af9da487a34eb26677f99444e46a392, based on main 9e4b0f68489357ff4a6b1415df61dd48fdd78da9.
-Read docs/GENERAL_CONTACT_CI2_STATUS_20261012.md and .development/contact-ci2-20261012/COMPLETION_REPORT.md/.json. Local evidence is retained uncommitted; source/test repairs are committed. No pushes or GitHub changes.
+Current restart — PLAN423
+# General-contact delivery plan — revision 423
 
-All owned checks are terminal. Original nine nodes pass focused local default checks, but CI is not green:
-- Haswell/Python 3.14.7 reproduces the exact hosted KKT control-reaction discrepancy 1.4948506139016305e-5 > 1e-6. Keep it red, along with preserved six Haswell physical replay failures; no tolerance, oracle, checkpoint or physical record changes.
-- Candidate Linux 5/2 retains the original clipped-contact transient test and reaches the unchanged shared 1200 s limit (1205.6634s supervised). Current stack is in S3Jet2 work/evaluation. Exact Fraction subdivision repair is verified but does not close this timeout.
-- Other reproduced shared/native/prepared/gauge failures are listed separately. Main and previous worktree source remains untouched.
+Updated UTC: 2026-10-19T19:49:47.241676+00:00. Branch codex/contact-portable-replay; HEAD59ba6acda0dbd7390487b758678a6f9b2681fdb2; baseline436457c8. Full C0–C9/D0–D8 retained. No commits, pushes or publication.
 
-Use the unmodified portable CI arguments and verify actual selected modules: file-size-based partitioning moved KKT to 2/0 and radial to 2/2 in this candidate. Corrected isolated installed environments preserve dependencies when child tests remove PYTHONPATH. Most full groups used Python 3.12; the final KKT discriminator additionally matches hosted Windows minor 3.14. Raw baseline groups using private PYTHONPATH targets have documented installed-child limitations.
+Current authorized next action: Scoped usable headless static/quasistatic general-contact candidate delivered locally: candidate-general-contact-20261019-v1/ANYsolver-contact-candidate-20261019.zip. 37 executions PASS,23 installed,0 failures/skips;7 finite-penalty analytical quantities within0.1%,13 same-host CPU quantities pass. Installed portable normal/friction/archive workflows pass without checkout paths. No solver product repair needed; ordinary packaging/invocation repairs complete. Root acceptance and supporting Read review recorded. No more automatic harness work; no pushes.
 
-Next outcome: resolve the complete clipped-transient cost under the existing gate, with measured preparation/evaluation reuse; independently diagnose the demonstrated KKT/replay dispatch sensitivity. Do not force a BLAS implementation, drop physical fields, relax tolerances, change reference inputs or expand consumed qualification authority. Keep runner architecture with its owner. No new workers/jobs are running; do not repeat passed checks merely to reconstruct evidence.
-The previous restart history follows byte-for-byte.
+Previous result: historical scientific and machinery failures remain immutable. The original 13-test amended case failed under its earlier approved limits; its closure and raw evidence remain at C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/c7-amended-case-current-v1. The earlier Haswell definition-binding failure remains at c7-accepted-case-windows-haswell-v1. The canonical candidate's original 720-second metadata-adjudication closure and separately recovered default identity PASS remain at c7-canonical-primitive-preparation-v1. The later successful five-phase scope does not reopen those allowances or relabel their failed executions. Original capsules, source before-images, reviews and full historical plan prefixes are retained.
+
+Current acceptance provenance: the V3 capsule f4d25dd4 binds the original approved definition9e087b9e/profilefeeee507, active installed700 manifest98139b92 and physical referenceba535575 under unchanged numerical governance571b7a4b. The source repair fixes the benchmark's approved primitive input bits; all 700 product files and nonprimitive mechanics remain unchanged. The earlier completed Windows scope establishes its per-profile exact restart and named case. Root adoption24c22454 now also completes the named Haswell installed vibration final artifact/terminal gate using its unchanged adopted primary, approved V3 envelope and complete authenticated terminal receipts. The corresponding default final gate retains its separate prior adoption. Broader C7 and programme claims require their retained gates; the historical ownership failure remains unexplained.
+
+Remaining full delivery: fullD1/364,material/buckling/transient,broaderC7 spatial/section/torque/load beforeC8,current complete metadata/both-host CI/original299/21sources/A128/no-x,package/no-contact/resources,separately ownedC9 applications and final independent acceptance. Required CI stays original2workers/2400s/8x4,all32maps/11proofs/native origins/default+Haswell/JIT profiles;1536MiB mandatory-CI-only and953MiB otherwise. Approved unfiltered5/0 remains required. Existing connected source49/147 and installed2/6 passes are scoped. Packaging-origin receipt gap remains OPEN;prepared fix belongs at the next required build,no helper campaign or unchanged science repeat. Historical C5 measured acceptance and versioned enriched-D1 route retain their limits and bilinear availability. All other functionality/criteria stay unchanged.
+
+Standing stops: native-material4methods/no fifth,TrackB3approaches,withdrawnworkspace/no third. All prior scopes/unused balances closed;completed120s synthetic allowance has no carry. Mistral/local cached unavailable; sustained OpenAI fallback owns connected work. No sibling/application ownership,branch/history change,commit or push is granted. Retain all failed/source/qualification evidence;current case produced no regenerable cache files or new runtime/environment copies.
+
+Goal turn classification: Candidate milestone COMPLETE within its restricted measured operating range; full C0-C9/D0-D8 programme remains INCOMPLETE. Coupled independent2% response, cross-host/Ubuntu/fullCI, broad Q4/native/material/dynamics/impact, cold installation and application admission remain explicit. No historical failure promoted; no generic engineering-accuracy claim.
+
+Prospective transition: The user explicitly requests reasonable relaxation to avoid endless development. This prospectively supersedes PLAN418's assumption that the complete retained programme must be qualified before any usable candidate delivery. It does not delete that programme, upgrade old failures, alter frozen historical criteria, revive consumed budgets or authorize publication. Existing scientific deviations remain scoped; new candidate acceptance is recorded separately below. Do not edit old test results or silently change their expectations.
+
+## Practical general-contact candidate: delivery contract
+
+The deliverable is an installed headless Python solver candidate with executable public examples, a finite demonstrated operating range, measured accuracy, explicit unsupported/unqualified cases and a short remaining-work list. Preserve implemented features in the source; classify their demonstrated support separately. The full C0-C9/D0-D8 roadmap remains, but complete native dynamics/impact, every geometry/material cross-product and finished sibling applications are not prerequisites for this candidate milestone. This is a milestone/claim change adopted from the current user request, not a declaration that missing functions are complete.
+
+Minimum useful core: normal contact with a rigid tool AND at least one deformable/deformable shell pairing; a full press/slide/open/recontact path; a supported Coulomb stick/slip path; state rollback/restart and readable contact results through an installed public workflow. Freeze the exact supported formulations, geometry, material and control ranges before verification. Existing beam/native routes may be included with their own evidence status. If a minimum-core workflow cannot be demonstrated, report the concrete missing capability rather than quietly dropping it or calling a source snapshot a usable general-contact candidate.
+
+| Candidate check | Practical standard |
+|---|---|
+| Analytical response | At most0.1% error in the declared primary force/displacement outputs for simple analytical cases; existing programme target reused. |
+| Representative independent reference | At most2% in each declared primary response, with matched physical definitions and an independent reference/error budget. Report peaks and paths where relevant; averages cannot hide a bad component or unstable pressure mode. Existing programme target reused. |
+| Cross-machine numerical reproducibility | Floating-point response/history fields need numerical agreement, not byte equality: for each physically dimensioned quantity family, infinity-norm difference<=1e-9*infinity-norm reference+1e-12*S, with positive characteristic scale S declared before the run. Same stable test inputs and branch are required. IDs, connectivity, schema, integrity checks and success/failure semantics remain exact. This is new prospective candidate acceptance, not retrospective conversion of original exact-replay failures into passes. |
+| Equilibrium and physical constraints | Retain the programme's normalized1e-6 force/wrench balance target for candidate cases, with declared force/length scales. Keep case-specific dimensional gap/constraint bounds and selected normal-law interpretation; no blanket penetration allowance or unilateral change to solver stopping laws. |
+| History, friction and energy | Correct stick/slip/open/recontact behavior, physical friction direction/dissipation, rollback and restart remain required. Keep case-specific energy limits/previous approved deviations; unexplained energy creation or known pressure-space instability is not excused by a2% response target. Affected unstable configurations remain explicitly unqualified. |
+| Robustness and usability | No silent successful result on nonconvergence, unsupported inputs, lost state or corruption. One installed public end-to-end workflow must run and export/read results. Descriptive capability reporting is not qualification: do not flip hard-coded admitted/released flags to manufacture application acceptance. |
+
+What is relaxed prospectively: bitwise equality for numerical replay; exhaustive qualification as a precondition for the first candidate; treating every internal derivative/conditioning diagnostic as a standalone delivery gate; and bespoke per-helper evidence/approval ceremonies. Internal diagnostic failures still require impact disposition and remain recorded. If they invalidate physical response, supported-domain robustness, state correctness or a public contract, they remain candidate blockers. No arbitrary thresholds will be tuned after seeing a failure.
+
+## Finite completion route
+
+1. Source reconciliation now: select6-10 existing end-to-end workflows covering the minimum core and declared geometric breadth, plus the impacted shared-kernel/no-contact compatibility and installation checks. Record exact cases, scales, primary outputs, reference and expected support before execution. Prefer existing examples, assessors, tests and runner; no new verification framework or unrelated feature development.
+2. Freeze one product candidate and run that fixed batch through a supported execution route with ordinary bounded repository process supervision. Retire the bespoke local bootstrapper as a prospective candidate prerequisite. Existing failed scopes/unknown old native activity and exact old lock remain protected; reconcile execution safety/host availability explicitly before launch, never signal unrelated processes or treat this plan as proof of cleanup. One owned numerical job at a time; retain953MiB ordinary and1536MiB mandatory-CI-only limits unless separately changed. Every new batch has a fresh finite execution record; no consumed allowance is reused.
+3. Permit one connected repair/integration slice for demonstrated candidate blockers, then one final affected verification/package pass. Do not broaden the case inventory automatically after a failure or start another numerical approach without a concrete decision. At that boundary deliver the working candidate with its measured support/limitations, or the explicit minimum-core obstruction and remaining decision. Do not keep iterating the local harness.
+4. Package source/artifact identity, reproducible install/run instructions, candidate accuracy table, known failures and a prioritized remaining-work list. Run impact-based regression and independent review appropriate to the supported claim; unavailable independent-family review is disclosed, never claimed. Broader full qualification and C9 application admission remain distinct later milestones. No push/merge/publication is authorized.
+
+Existing acceptance evidence can be reused only for matching identities and physical cases. Reassessment under this profile is labeled candidate assessment with its own metrics; original NONPASS, skipped and unrun outcomes remain intact. Full mandatory CI and full-programme qualification gaps remain visible in the limitations/backlog rather than silently counted as passes. A relevant regression affecting the candidate core cannot be hidden behind the reduced demonstration set.
+## Prospective candidate working policy
+
+Use normal risk-proportionate development for this new candidate milestone: authorize a connected implementation/check/repair/package outcome, collect the fixed batch's failures, and resolve them together. Routine reversible fixes and their focused verification do not need per-command or per-hash user approval. A failed ordinary candidate test is evidence to repair or disposition within the milestone, not an automatic request for another thirty-second grant. Identity drift, unsafe resource use or unknown supervision/cleanup of the NEW owned run still stops execution. Frozen older grants and first-failure conditions remain closed and unchanged; this policy cannot retrospectively fund or retry them.
+
+For prospective candidate work use the current workspace Normal-token worker-owned scheduling policy. Preserve the historical numerical.lock and old UNKNOWN status exactly; do not claim the old job stopped, recover its unmeasured resource use or signal it. That old resource-coordination record is no longer, by itself, a prerequisite for NEW candidate work in separate owned outputs under the current policy. Check current host capacity and write ownership before a new bounded batch, keep one newly owned numerical job at a time, and retain the ordinary953MiB/mandatory-CI1536MiB caps and command timeouts. Stop if safe available capacity or supervision cannot be established. This is a prospective scheduling/verification-process change under the user's reasonable-strictness direction, not an old cleanup-proof waiver or a relaxed physics criterion.
+
+
+W15 VERIFIED scopeddevelopment PASS/CLOSED 2026-10-18T00:58:58.8372714Z:8/24/all7gates+artifactfinal; closure0f8d3ff81f1f4fa45d17856c1c400acc7ebd1e09d185a3ed9c549bc45e1347c3, terminalreview3b38d604, PLAN173.335.3207190199755s charged/ALL264.6792809800245unusedCLOSED/rem0/nojob. BroaderfullD1/CI/programme acceptanceOPEN. Nextsource-only gateproposal pending; no nextexecutionrelease. No pushes.
+
+W15 terminal PASS 2026-10-18T00:55:09.7588511Z:8/8tests24/24phases/all7scientificgates plusartifactfinal PASS; session89051exit0. Charge335.3207190199755s; ALL264.6792809800245unused CLOSED; noactivejob orremainingexecutionauthority. Terminalreview/rootclosurepending; full300/CI/fullprogramme remainOPEN. Frozeninputs/evidenceunchanged; no pushes.
+
+W15 native check LIVE 2026-10-18T00:48:46.7997000Z, session89051; PLAN172.5600frozeninputs0aliases,47sourcechecks/supportingreviewclear;8parents24phases/all7scientificgates PENDING. Initial480/final120conditional/953MiB/onejob/firstfailure closesALLunused. Keepfrozeninputsunchanged; onlylivingnotesmutable. No pushes.
+
+W15 source-only checkpoint 2026-10-18T00:27:05.7029712Z: PLAN171; candidate implementation at C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/d1-polynomial-reference-work-v15, no numerical job or execution release. Earlycheckpoint00:31:21/sourcehard01:16:21/overall01:41:21UTC. W14 closed NONPASS, closurev2 5c98e779560dda3e0df06e3f0a801555eb80611b8d30896627a585e787b2457e; every prior unused balance CLOSED. Criteria/functionality unchanged. No pushes.
+
+W14 checkpoint 2026-10-18T00:22:49.8308348Z : terminal scientific NONPASS, session78784 exit1; 4/5 tests PASS, work gate5 FAIL, KKT/reference UNRUN. Charge197.9830018877692s; ALL402.0169981122308unused/final CLOSED; no live numerical job or execution authority. PLAN revision170 governs; closure/source-only disposition pending. No pushes.
+
+# Current contact restart — PLAN169, W14 LIVE
+Native session78784/scopeC:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/d1-enriched-independent-reference-v14; exact5parents15phases/full7criteria, initial480/supervisor460+20post/953MiB/onejob. NativeMF10d87db1/5575inputs; completecandidate/source/nonauthorreview/SCI/runtimeadopted. OriginalW13producercomparisononly/no rerun/referenceZERO238/ZERO25. Final120artifact-onlyconditionalactualPASS; firstfailureclosesALLunused/final/no retry/carry; overall01:05:45UTC. No immutableinputedits. W13verifieddevelopmentPASS/closuree012 preserved; allfullprogramme/CI/differentfamilygates remain. Historical liveparagraphs below superseded; no pushes.
+
+# Current contact restart — PLAN168, W14 SOURCE ONLY
+W13verifieddevelopmentPASS/closuree012b5d2, allunusedCLOSED/nojob. W14scopeC:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/d1-enriched-independent-reference-v14/AH07eead87a090f6fcf5246181bd3c872aff4cf02acd8ccf12c566e9bd5d3b74fc. Source50/overall75 from23:50:45UTC, checkpoint23:55:45/sourcehard00:40:45/overall01:05:45. Versioned238independentcontact/work/reference with originalsevencriteria/sharedstructuralFEboundary; existingall3891py/old174oracle/W13READONLY. NEW600conditionalUNRELEASED, no scientificimports/calls untilcompletecandidate/review/adoption/nativefreeze/rootrelease. All functionality/criteria/no pushes retained; historical liveparagraphs below superseded.
+
+# Current contact restart — PLAN167, W13 VERIFIED DEVELOPMENT PASS/CLOSED
+All6parents/18phases and artifactfinalPASS; rootclosuree012b5d201d88dc88c2383d05738b414ad24f4cafeb2430b2ded026974304934/44artifacts. Eq2.855e-10/NCP1.460e-12,400targetplane sample-35.99um vs-50um, authenticcheckpoint passed. Total440.68807890164317s;159.31192109835683unusedCLOSED/remaining0/no numericaljob. Next: coherent238independentcontact/work/reference adapter, preserveoriginal174oracle/sevencriteria/sharedstructuralFEindependence boundary. Fullqualification/CI/differentfamilyOPEN. ReportC:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/d1-certified-small-cut-v13/DELIVERY_REPORT.md. Historical liveparagraphs below superseded; no pushes.
+
+# Current W13 TERMINAL DEVELOPMENT PASS — all600 CLOSED
+Session31792terminalexit0; all6parents/18phasesPASS including unchangedoriginalcold,400gap and authenticcheckpoint. FinalartifactphasePASS. Totalcharged440.68807890164317;159.31192109835683unusedCLOSED,remaining0/nojob. Rootaudit636c953b2ed0d6a384202f5736295e92452800d997b2066e5a946468901fa384/5573inputs0drift. Terminalreview/rootclosure pending. Historical liveparagraphs below superseded; no pushes.
+
+# Current contact restart — PLAN166, W13 LIVE
+Native session31792, scopeC:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/d1-certified-small-cut-v13; sixparents/eighteenphases, initial480/supervisor460+20post/953MiB/onejob. RootfrozenMF14a141d2; final120artifact-only conditionalgenuineinitialPASS. Firstfailure closesallunused/final, no retries/carry. Allcriteria/functionality unchanged. No immutableinput edits; historical liveparagraphs below superseded. No pushes.
+
+# Current contact restart — PLAN165, W13 SOURCE ONLY
+W12 completed existing-value observation, scientificNONPASS; closurecdca667049020cb6fb9122e9870522d88dc0ecdc959e1566f22e51a30463a83c; all113.45203745638719unused/final30CLOSED, no numericaljobs. W13scope C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/d1-certified-small-cut-v13, sourceAHcc62b157c9cd6eb5042e244924a5ddb840258fbcaf36fbdeb46838b0dc9b69f5. Sameowner certifiedpositive-smallcut integration candidate, all37chains/all24criteria unchanged. Source45/overall65 from23:10:20UTC, checkpoint23:15:20,target23:40:20,sourcehard23:55:20/overall00:15:20. NEW600conditional/unreleased480/120,953MiB/onejob,no carry/retry. NO product/dependency/test/controller/freezer/physics imports/functions untilcompletecandidate/review/adoption/nativefreeze/rootrelease. Existing beforeimages mandatory; legacy/default/predictor/originalcoldtest protected. PLAN165/ACTIVE record govern; historical liveparagraphs below superseded. No pushes.
+
+# Current W12 STOPPED, observationcomplete/scientificNONPASS
+Session1268terminalexit0 ONLYdiagnosticcomplete; raw originalpytestexit1/callFAIL, positive small non-tie triangle area belowunchangedresolution. Scope C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/d1-triangle-provenance-v12. Charge66.54796254361281,ALL113.45203745638719unusedinclfinal30CLOSED. No livejob or executionauthority. Terminalreview/source-only disposition pending. No guard/threshold/criteriachange, no retries/pushes.
+
+# Current W12 LIVE existing-value capture — PLAN164
+Native session1268, scope C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/d1-triangle-provenance-v12. One unchanged originalcoldcase, expectedscientificFAIL preserved. Initial150/supervisor130+20post/953MiB/onejob. Everyterminal closesall180/final30; no retry/finalrelease. Source MF741c58a3157886344e1919cac60e75ba8518d27c2b160544ca25d923d72e9faa frozen5554inputs; finalsource review733fe2bf9aa50b8c20df2f60423e1db66cc3db58245bbeaa549d6acef32e8ea4. No immutableinput edits; observealreadycomputedgeometry/areaJet only.
+
+# Current contact restart — PLAN164, W11 CLOSED
+Worktree C:/Github/ANYsolver/.worktrees/contact-portable-replay, branchcodex/contact-portable-replay, HEAD59ba6acda0dbd7390487b758678a6f9b2681fdb2. No active numerical job; session39508terminalexit1. W11 five focusedPASS then originalcoldFAIL unresolved integration triangle atiteration0/alpha1 afterCERTIFIED25/184. No acceptedphysicalstate. ROOT_CLOSURE323ec003571ae167cfb87afdc9ef4952bf1c74cc737ae28b9e8e13a6007c70c1 binds32artifacts, allverified. Charge144.28892534654005;455.71107465345995unusedincludingfinal120CLOSED. Source/runtime/hook/cleanup/END/lockpass; failurecausewithingeometryguard UNKNOWN. Next: bounded existing-value triangleprovenance proposal with exactdiscriminator, no unchanged retry/guardrelaxation. W11 has no remainingexecutionauthority. Allcriteria/functionality and no pushes remain. PLAN164 is livingauthority; historicalliveparagraphs below are superseded.
+
+# Current W11 STOPPED, all numerical authority CLOSED
+Session39508 terminalexit1;5focusedPASS then unchangedcoldprimaryFAIL EnrichedGeometryError unresolved integration triangle firstphysicaltrial. ExactONE25/184predictor activation verified. Charge144.28892534654005, all455.71107465345995unusedCLOSED including final120UNRUN. Sourceafter/END/lockreleasedtrue; cleanup0survivors. Terminalreview/source-only disposition pending; NO retries/fixes/runs authorized underW11. No pushes.
+
+# Current W11 live run
+
+W11 original initial check launched once, native session39508; MF3840cfd268c71f2d726407e284314c2733d9c533fe4f31c04616641ee9f9d618 (5557inputs/742own/4815runtime), source review11737411375fe5d5fde58080695979c8491b6b0957d1d059a319350edc96f4fe, SCI640a9596b714771e7241ffd27f357d4d1c21e6cd0e8c9fdcf3eea1df7113312a, runtime45431313c22941cce974982f30fb9395fc8e7c86f5b774c2b7c82be902aaad53, exec e2d647bd9b9437f728aa800418ff327688da24f276648f5356da414fe275a8a7, release80f44b3bb6b6de86ad2ead6b833b2d3834db36944af9e1f487492a711b8fcc5f. Initial480/supervisor460+20post/953MiB/onejob; final120std-only artifactreconcile conditionalPASS; firstfailure closes unused, no retry/carry, overall23:22:39UTC. No immutableinput edits while live.
+
+# Current contact restart — PLAN 163
+
+No numerical job is active. V10session10853 TERMINALexit1 atfixeddeadline, primaryUNKNOWN; localalpha0.125accepted anditeration1reached,8completed equations/5rejects; no publishedAcceptedState/checkpoint. Sourceafter/expanded5551inputs/cleanup/END/lockrelease passed. Charge459.91990392142907seconds; all140.08009607857093unusedCLOSED, finalUNRUN/rem0. Closure C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/d1-primary-completion-v10/ROOT_CLOSURE.json SHAe6c66d72d7984673ecf234fcbce8692c0ab5f0e4c2a74ddf2a20cb61e63b4acc. Do notpoll/retry10853.
+
+V11 SOURCE ONLY: C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/d1-cold-unilateral-predictor-v11. SourceAH56db21f598d68de8d2681b2d58b7a04ac37ee884aa9891138895386966f04d68. Sustained owner ci_memory_successor owns centralcoldunilateral algorithm/newprofileintegration/focusedtests/frozenharness. Rootgoverningdirection H*d-G.T*(p-z)=-r withg+G*d>=0,p>=0,p.T*gap=0, fromactualalreadyassembledcoldmatrices. Exactphysicalevaluations/strictmerit/finalcriteria/allmodes/18iterations8halvings/zeroacceptedseed/legacy/default/warm/checkpointatomicity unchanged. NoPointJetmicrooptimization orunchangedretry.
+
+Checkpoint22:22:39UTC,target22:42:39,sourcehard23:02:39,overall23:22:39on2026-10-17. NEW600UNRELEASED:480initial120artifactfinal,460/100supervisor+20post,953MiB/onejob,noretry/carry,firstscientificfailurecloses. No product/dependency/test/controller/freezer imports/calls during sourcepreparation. Rootcompletecandidate review/adoption/nativefreeze/release required beforeanyrun. Preserve sourcebefore/beforeimages/allfailed evidence. Readactualcheckpoint/handoff beforecontinuation.
+
+Worktree C:/Github/ANYsolver/.worktrees/contact-portable-replay,branchcodex/contact-portable-replay,HEAD59ba6acda0dbd7390487b758678a6f9b2681fdb2. FullC0–C9/D0–D8goal/requiredfunctionalityandcriteria retained. Mistral/localcachedunavailable, OpenAIfallback; samefamilyreview supportingonly. Allfullfile/mandatoryWindowsUbuntuCI/public/installed/differentfamily acceptanceOPEN. No commits/pushes/PRs/workflow/sibling/main edits. Historical context below is superseded by this current note and PLAN163.
+# Current contact restart — PLAN 162
+
+V9 TERMINAL, no live numerical session. Initial16152 exited1; root caused source-binding failure by updating the frozen RESTART note. Full5554-input audit confirms only that note drifted. Frozen and changed versions and original failed RESULT/source-after FALSE are preserved. Six focused scientific calls were observed PASS; cold primary remains UNKNOWN. Charge462.25489743455546seconds; all137.74510256544454unused seconds CLOSED, final UNRUN. Never poll/retry the terminal session or reuse its budget.
+
+V10 SOURCE ONLY: C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/d1-primary-completion-v10. Authority fc298e69c2c65a61b88793373226b33aef5db1f5b27d8eb00d28041910bc0440. Owner ci_memory_successor fixes prospective mutable-input admission and prepares unchanged original cold case alone, no product/test/example changes or full-seven-case credit. Checkpoint21:58:54UTC, target22:05:54, source stop22:14:54, overall22:30:54 on2026-10-17. NEW600/480initial120final,460/100supervisor+20post,953MiB,onejob,firstfailurecloses/no retry, currently UNRELEASED. Root native freeze and review/release precede any run. Do not modify immutable inputs after freeze; mutable live notes must be excluded and owner admission must refuse them.
+
+All C0–C9/D0–D8 functionality and criteria remain required. Full files, original seven matched gates, mandatory Windows+Ubuntu CI, public/installed and independent acceptance remain open. Mistral/local cached unavailable; same-family supporting review is not different-family acceptance. No pushes, commits, PRs, workflow runs or sibling/main edits. Active worktree branch codex/contact-portable-replay, HEAD59ba6acda0dbd7390487b758678a6f9b2681fdb2. Use PLAN.md and actual scope artifacts for current authority. Prior notes below are historical only.
+
+# Current contact restart — PLAN 161
+
+Worktree: C:/Github/ANYsolver/.worktrees/contact-portable-replay. Branch codex/contact-portable-replay; HEAD 59ba6acda0dbd7390487b758678a6f9b2681fdb2. Full C0–C9/D0–D8 goal remains active. No commits, pushes, PRs, workflow runs or sibling edits.
+
+V8 is CLOSED. Session 47059 ended with exit1 at its deadline: six focused checks passed, original cold solve UNKNOWN. Charge460.0046874136606seconds, both timing caps held for measured intervals; cleanup/source-after/END/lock release passed. All139.9953125863394unused seconds are CLOSED; final UNRUN. Initial contact linearization48.49seconds versus prior123.39 is an observed component reduction, not complete solver fit. Missing runtime-after/JUnit/acceptedraw/numericproperties remains explicit. Closure b9efe37acbcfc699eb2338b73509e78c1256d2b947adcaf07e9bd4e982eb7924 and DELIVERY_REPORT.md in d1-moment-batch-cost-v8.
+
+Current V9 SOURCE ONLY: C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/d1-point-scalar-contractions-v9. Owner ci_memory_successor. Source authority e361677ad1814e8d9c215943a7ab4cef2c3351418e90a924f05646e15f4897e7. Equivalent constant contractions in the dedicated PointJet, first primitive test and harness property capture only. Allother690products, five other focused cases and original cold case remain protected. Preserve all zero terms and arithmetic semantics. Read the actual CHECKPOINT/HANDOFF before continuation.
+
+Checkpoint21:37:13UTC, target21:47:13, source stop21:57:13, overall22:12:13 on2026-10-17. NEW600seconds remain UNRELEASED:480/120outer,460/100supervisor+20postreserve,953MiB/onejob, first failure closes all, no retry/carry. No numerical job/session/lock is active. Reviewer and exact native freeze/root adoption precede runtime. All other scientific criteria/functionality remain unchanged; all fullfile/mandatoryCI/both-host/public/installed/independent gates remain required. Mistral/local cached unavailable; same-family review does not satisfy different-family acceptance.
+
+PLAN.md and ACTIVE_DELIVERY_RUN_20261016.json are canonical current records. Latest cleanup: CONTINUOUS_BATCH_TERMINAL_2133.json, three empty directories/zero filebytes saved; allraw/source/runtime failures preserved.
+
+--- Historical checkpoints below; current state above governs. ---
+
+# Current contact restart — PLAN160
+
+UTC2026-10-17. Worktree C:/Github/ANYsolver/.worktrees/contact-portable-replay, codex/contact-portable-replay, HEAD59ba6acda0dbd7390487b758678a6f9b2681fdb2. Full C0-C9/D0-D8 goal remains active; no pushes/commits/PR/workflows/sibling edits.
+
+V7 terminalsession37138 exit1: primaryUNKNOWN; guardreserve/stagediscriminator delivered. Charge462.29639986049733, both460/480caps held,cleanup0survivors/sourceafter/END/lockpass. Allunused137.70360013950267CLOSED,finalUNRUN. Threecompletedlinearizations123.387317/144.486299/143.173811s,2rejectedtrials,quarterstepincomplete. No acceptedraw/runtimeafter/terminalsciencePASS. ROOT_CLOSURE b99cf2afd7a2da09258c6e7e92c80eebe56fd27b59cbc46267c14563305392a2 in d1-primary-stage-trace-v7.
+
+Current SOURCE-ONLY owner ci_memory_successor: C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/d1-moment-batch-cost-v8. SourceAH7a1b1af7042aedfa3c2e0f90fc7d805d9d6435053105329c44c28911f075c604. Equivalent batched/local moment evaluator+real nonlinearcaller integration/newtests; legacy evaluators/tests/formulas/controls/criteria protected. Checkpoint21:16:31UTC,target21:51:31,sourcehard22:06:31,overall22:21:31. Read actual checkpoint/artifacts and resolve reserved boundaries; retain same owner. New600 conditional UNRELEASED; NO numerical job/session/lock active. All old budgetsCLOSED. Future480/120,460/100+20post,953MiB,onejob,firstfailurecloses,no retry. Nativefreeze/non-authorreview/rootadoption required before execution.
+
+Canonical living record .development/contact-portable-replay-20261013/PLAN.md and ACTIVE_DELIVERY_RUN_20261016.json. Read ROOT_SOURCE_AUTHORITY and ownerCHECKPOINT/HANDOFF before continuing. Mistral/local cachedunavailable; differentfamilyacceptanceOPEN. Originalfullfile/mandatoryCI/bothhosts/allscience/fullscope gates retained. Cleanup receipt storage-cleanup-20261017-v1/CONTINUOUS_TRACE_TERMINAL_2105.json:3emptydirs/0filebytes saved; allraw evidence preserved.
+
+--- Historical checkpoints below; current state above governs. ---
+
+# Current checkpoint — PLAN158; V6 resource NONPASS, primary UNKNOWN
+
+Four complete original cases5–8 passed; case9 has setup only. No accepted response, complete collection certificate, JUnit/verdict or runtime-after receipt survived. Known charge480.932823997573s exceeded initial480 by0.932823997573; peak244.26171875/953MiB. Forced cleanup/zero survivors/source-after/END/lock passed; before-runtime13checks passed; terminal runtime/origin validation missing. All119.067176002427unused seconds CLOSED, remaining0. Session50966 terminal exit1. Both workers completed. No current run/retry/authority.
+
+Latest evidence: C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/d1-union-global-binding-v6/ROOT_CLOSURE.json SHA71fca75f83de2920b9f1b11b8e3d79b50bcb4f7229333b9e9c19cd9c625491f9 and DELIVERY_REPORT.md. Kernel ecdebe2c02db201487c1a3c3b777f3e8f5a1861dc802b1b148b6670e1617eb8f is exact5-byte originalJet2sqrt import, allotherfunction bytes preserved. FailedLFsource prep and V4/V5 failures/beforeimages retained.
+
+Next: bounded source-only guard postprocessing reserve inside unchanged cap plus durable passive stage/iteration events for unchanged coldprimary. Distinguish long evaluations from repeated Newton/trials or insufficient remaining batch time; no proven physics/convergence defect. Adopt a separate fixed scope/reviewed freeze before any run. No blind optimization, physics/control/criterion change, retry or oldbudget carry. Full C0-C9/D0-D8/functionality/allscientific/fullfile/mandatoryCI/differentfamily gates remain required; no qualification/current9module/CI credit.
+
+PLAN.md revision158 is the authoritative living record; its complete retained requirements tail SHAbea8d8e2ba6730a3e61a080011495d058954954d41bd29fe79f0e8978c9d1564 is unchanged. Full prior revision157 is losslessly archived/verified under C:/ANYworkspaceWork/contact-history/general-contact-living-plan-archive-20261017/. Preserve all historical failures; old checkpoints below are historical only. No pushes/commits/PRs/workflows/sibling changes. Continuous cleanup removed3empty owned scratch dirs,0logical bytes saved; no environment/checkout copies.
+# Current checkpoint — PLAN155; V4 closed at first exact-offset failure
+
+V4 collected9,executed4/12phases:3PASS/1FAIL/5UNRUN. The actual-nodal beta-zero, independent physical energy and complete bubble/current-normal tangent cases passed. Case4 exact target-work-map equality failed6/378 coefficients: fixture literal .015 versus original element-derived .015000000000000001. Preserve exact equality and failed evidence. Real original-matched example already uses the authoritative element method; original238/184/25/.04N cold response/checkpoint and five later cases remain UNRUN.
+
+Known charge258.0480901405972/600s,peak209.62890625/953MiB; actual before/after13 runtime checks,225 product bindings,sourceafter,cleanup/END/lock passed;0survivors. Entireunused341.9519098594028CLOSED,remaining0;artifactfinalUNRUN;session15774terminalexit1. No worker/numerical job or shared lock remains. ROOT_CLOSURE.json SHA35ca1b4cdec13520dada4ad1c737e7a063d5b0df251897b93a9ad43a911f7152 at C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/d1-enriched-nonlinear-response-v4/. Non-author same-family source/terminal reviews under T/d1-enriched-nonlinear-review-20261017/; different-family gate still OPEN.
+
+Next shortest bounded successor: case4-only fixture correction deriving the original physical offset, preserving exact assertions/product bytes/default fixture and earlier3 inputs. No new method/criterion/functionality change. Prospectively adopt/freeze a distinct scope; V4 grants no run/retry/carry. All full C0-C9/D0-D8 functionality and scientific/mandatory CI gates remain. Full300 total is300+4*actual registered source-Q4 count, not an assumed364. Source-only disposition under W4/post-terminal-disposition/. Latest PLAN.md revision155 is the living task record. No pushes/commits/PRs/workflows/sibling changes.
+
+Continuous cleanup: no environment/checkout copies; three empty owned terminal scratch directories removed,0logical file bytes saved,all raw/failed evidence preserved. Receipt storage-cleanup-20261017-v1/CONTINUOUS_NONLINEAR_TERMINAL_2012.json.
+
+All older checkpoint entries below are historical and grant no execution authority.
+# Current checkpoint — PLAN154 nonlinear enriched source slice
+
+Previous V3 all19/57 plus artifact final PASS,CLOSED with0authority. Current source-only milestone: C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/d1-enriched-nonlinear-response-v4/ROOT_SOURCE_AUTHORITY.json. Same ownerci_memory_successor; newmodule/test/example boundary only. Preserve actual qualified Q4/S3 finite-state nodal response atbeta0; physical43fieldbubbleenergy and completecoupling; original16Q4/2S3/174+64/.04N/all25pressures. Sourcecheckpoint19:41:50UTC,target20:11:50,hard20:26:50. Numericalauthority0; NEW600conditional unreleased until complete reviewedfreeze. Allcriteria/fullC0-C9/D0-D8/oldfailureevidence intact; no pushes/commits/siblings. Prior entries below are historical.
+
+# Current checkpoint — PLAN153, 2026-10-17
+
+V3 mixed owned-cache lifecycle repair and all19/57 development checks PASS; final artifact-only reconciliation PASS. Exact91.94900537085778s charged,peak325.61328125MiB;all508.0509946291422unusedCLOSED,remaining0. No owned run/survivor/lock; source before/after and actual runtime checks pass. ROOT_CLOSURE.json SHA75de331eabce7469c348e86451dff2d38b51988792c50f4ede8d9f7517d6ad5e in C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/d1-mixed-assembly-cache-lifecycle-v3.
+
+Next: integrated nonzero enriched response/publiccheckpoint and original matched-reference predicates; allfullC0-C9/D0-D8 functionality/criteria retained. Full174/300/additionalcoordinate/pressure/trajectory/installed/CI/crosshost/differentfamily acceptance OPEN. No numerical authority remains; no further interpolation variant/native method authorized by this closed scope. Preserve earlierV1/V2 failures. No pushes/newcommits. PLAN.md revision153 is authoritative current task note; previous entries below are historical.
+
+PLAN152 current: boundedsharedmixedassemblycachelifecycleV3 SOURCE ONLY. Ownerci_memory_successor;onlymatrix_assembly.py+newregressiontest;physical/prototype/other681legacyimmutable. Sourcehard2026-10-17T19:30:29.862258+00:00,overall2026-10-17T19:40:29.862258+00:00. NEW600=480initial+120artifactreserve/953MiB/onejob conditional;no numericalrelease. AllV1/V2budgetsCLOSED,no activejob/session/lock,pushes ornewcommits. Exactsourceauthority C:\ANYworkspaceWork\contact_trackB_dependency_repair_20261013\d1-mixed-assembly-cache-lifecycle-v3\ROOT_SOURCE_AUTHORITY.json.
+
+Priorentriesbelowarehistorical,grantnorun.
+
+PLAN151 current: bounded publicS3 callerV2 SOURCE ONLY. Exact current public V2D target through unchanged V2C-equivalent elastic overlap; retain oldS3,version/bind formulationidentity,physics/criteria unchanged. Source ownerci_memory_successor,sourcehard2026-10-17T19:13:59.851884+00:00,overall2026-10-17T19:23:59.851884+00:00. NEW600(480initial+120artifactreserve)/953MiB/onejob CONDITIONAL; no runtime release yet. AllV1/other prior balancesCLOSED,remaining0;no fifthnative/pushes/siblings. Exactauthority C:\ANYworkspaceWork\contact_trackB_dependency_repair_20261013\d1-enriched-public-s3-caller-v2\ROOT_SOURCE_AUTHORITY.json.
+
+Historical entries below authorize no current run.
+
+PLAN150: enriched first slice CLOSED after1pass/1S3fixture-setupERROR/9UNRUN and terminal-originUNKNOWN. Charged11.865070263316738/600s,all588.1349297366833unusedCLOSED,remaining0;0survivors,lockreleased,session86336terminal. New6files remain development-only;682legacy/42baseline unchanged;criteria/fullfunctionality retained. Exact source-backedS3aliasV2D/olderclass mismatch; no mechanics result. See ROOT_CLOSURE/DELIVERY_REPORT in d1-enriched-physical-skin-v1 and caller/runtime successorproposal. No active worker/job/run or pushes; do not relaunch closed allowances.
+
+Preserved historical entries below grant no current execution authority.
+
+Current checkpoint: PLAN149; human APPROVED scoped separately-versioned enrichedphysicalQ4skin forD1 in place of explicitbilinear interpolation; retain oldprofile/allotherfunctions/criteria. Active source ownerci_memory_successor under C:\ANYworkspaceWork\contact_trackB_dependency_repair_20261013\d1-enriched-physical-skin-v1\ROOT_SOURCE_AUTHORITY.json SHA25a46f26a96d7f1745ae61be5f688338cf53c00a67662ee5401153652b73a78d. Checkpoint18:23:46UTC,target18:53:46,sourcehard19:08:46,overall19:18:46. NEW600checks/120reserve/953MiB/onejob approved conditionally, runtime0untilcompletecandidatefreeze+rootrelease. OldCI2520CLOSEDUNKNOWN/allbalances0;83duplicatecanonicalpairs diagnosed/equalhash/0errors, queuedrepair. Allnative/otherclosed scopes stayclosed. NoCI live; no commits/pushes/siblingedits; continuousownedcleanup. Exactcurrentstate in ACTIVE_DELIVERY_RUN.
+
+# Current: PLAN142; pressure/cut-front governing-method SOURCE design only. Root selected consistent stabilization retaining required bilinear physical skin; no productionlaw/criterion/functional change adopted. Ownerci_memory_successor,authorityC:\ANYworkspaceWork\contact_trackB_dependency_repair_20261013\d1-pressure-method-decision-v1\ROOT_SOURCE_AUTHORITY.json,early17:08:39,target17:26:39,hard17:36:39UTC17October. Zero numericalauthority/job/session. Lastmatched174all7PASS/CLOSED,141.2264558615425/420seconds,allunusedCLOSED; allolderhandles terminal. FullC0-C9/D0-D8/CI0of40/differentfamily remainOPEN;no nativefifth/closedroute reopening/push. Consult PLAN.md and ACTIVE_DELIVERY_RUN_20261016.json.
+
+Older prefixes below are historical and authorize no run.
+
+# Current: Q2 installed public restart check RELEASED, inputs frozen
+
+PLAN130; ROOT_RELEASE_initial SHAe902cc8840c50c9fa5584bbda0c640914af9c013c5bf6cec20bd54306726ecac under installed-runtime-closure-repair-v1. New600=540initial+60final,953MiB,onejob; unchanged oldwheel/private-target reuse and public/state/refusal criteria. First failurecloses,no retry/closedroute/native reopening/push. Source-only obsoletefilename failure fixed/preserved beforeguard; all11208bindings verified. Consult LIVE_HANDLE.json once launched. Older prefixes historical.
+
+# Current: complete installed numerical dependency closure SOURCE ONLY
+
+PLAN revision129; installed-runtime-closure-repair-v1 fresh authority600reserved540+60,953MiB,onejob; no execution release. Reuse exact prior wheel/private install after source682member reconciliation,complete required numerical-family provenance,unchanged public/state/refusal criteria. Old sliceclosed/unusedforfeited. First scientific/sourcebinding failurestops,no retry/closedroute/native reopening/push. Cleanupafterterminal. Older prefixes historical.
+
+# Current: installed slice CLOSED source-binding NONPASS; no active run
+
+PLAN revision128. Wheel/privateinstall passed; rawcontinuous10poses completed but after-runtime witness correctly refused unpinned numpy.version. Restart/refusal/parity/final UNRUN; no installed/CI acceptance. Known54.2237793696986s,all545.7762206303014unused CLOSED,remaining0,clean/no survivors/lock/sourceunchanged. ROOT_CLOSURE.json under installed-public-restart-delivery-v1. Terminal cleanup removed1402disposable files/29623334bytes,all7159source/713output files preserved. Next is numerical-family closure SOURCE ONLY; no retry/fifthnative/criteria change/push. Older prefixes below are historical.
+
+# Current: ONE bounded installed public restart development check released
+
+PLAN revision127; source42 frozen. ROOT_RELEASE_initial.json under installed-public-restart-delivery-v1 releases540+60seconds,953MiB,onejob. Exact development-only state/parity/refusal; no full qualification or CI credit. First failure closes; no retries or other closed route reopening. Final scratch cleanup required. No pushes. Older prefixes below are historical.
+
+# Current: installed public restart delivery source preparation; no active numerical job
+
+PLAN revision126; fresh authority C:\ANYworkspaceWork\contact_trackB_dependency_repair_20261013\installed-public-restart-delivery-v1\ROOT_AUTHORITY.json. All42 candidate inputs frozen. Source-only until root release; new600seconds reserved540+60,953MiB,onejob,firstscientific failurestops. Earlier scopes/balances closed. Cleanup completed and required after every terminal run. No pushes. Older prefixes below are historical.
+
+# Current: development repair and owned cleanup COMPLETE; no active job
+
+33 focused tests/maps/LF transport passed; candidate42 credit0/40. PLAN revision125 retains all requirements and continuous cleanup. 3834 unbound cache files removed; retired checkout compressed losslessly and old expanded folder removed, allfailed evidence recoverable. All6177 current input hashes unchanged. Cleanup receipt: C:\ANYworkspaceWork\contact_trackB_dependency_repair_20261013\storage-cleanup-20261017-v1\FINAL_CLEANUP_RECEIPT.json. Next installed public restart route is source-only until bounded release. No pushes. Older prefixes below are historical.
+
+# Current: repair verified and CLOSED; owned-scratch cleanup next
+
+33 focused cases passed, all32 maps reconciled, LF transport passed. Candidate42 credit0/40 minimum host obligations; prior failures/credits preserved under exact old identities. No active job or numerical allowance. Closure: C:\ANYworkspaceWork\contact_trackB_dependency_repair_20261013\constructor-registration-repair-v1\ROOT_CLOSURE.json. PLAN revision123 governs delivery order and continuous cleanup. Next installed public restart delivery is source-preparation only until separately bounded/released. No pushes. Earlier prefixes below are historical.
+
+# Current: bounded constructor registration repair; no active numerical job
+
+C3 originalWindows5/2 CLOSED NONPASS:501PASS/1FAIL/14originalSKIP; all5native/S3restartPASS. No credit added; all unused allowance CLOSED. Terminal disposition: C:\ANYworkspaceWork\contact_trackB_dependency_repair_20261013\post-refusal-windows-5-2-root-v3\ROOT_TERMINAL_DISPOSITION.json.
+
+Next: C:\ANYworkspaceWork\contact_trackB_dependency_repair_20261013\constructor-registration-repair-v1\ROOT_AUTHORITY.json; source preparation only, exact one-entry Counter registration plus candidate42/map reconciliation. No product/fixture/criterion changes or pushes. PLAN revision122 contains governing live state; earlier prefixes below are historical.
+
+# C3 TERMINAL/CLOSED; no active numerical job
+
+Scope B_POST_REFUSAL_WINDOWS_5_2_V3,session97528 terminalexit1/tool ee7532. Both516selectedcasescomplete(238+278);one constructor-inventory failure,allotherrawcasescomplete. ROOT_RESULT_REVIEW COMPLETE_WITH_FAILURES/all27root/allactualchecks true;actualreview6.975632401619805s,close2.3987303034227807s PASS. CI1546.108498269532/2460s,peak1125.53515625MiB;metadata18.009524753462756/60;combined1564.1180230229947/2520. Knowncleanup/no survivors/lock/source/START-END;all955.8819769770053unusedCLOSED,remaining0. Fullgateunaccepted,credit0,current41still1/38. Tailunmeasured. R3/review/TERMINAL_REVIEW pending Read,source/inputsfrozenuntilcompleted. No furtherC3function/run/retry. Minimalprospectiveoneexplicitqualifiedfixtureinventoryregistration identifiedR3/constructor-inventory-read/REVIEW.json;do noteditliveBbeforeterminalphysicalreview/rootadoption/newscope. No criteria/functionality changes or pushes. Earlier running checkpoints historical.
 
 ---
 
-## 2026-10-12 contact CI repair — local handoff, CI remains red
+# LIVE original Windows5/2V3 — current handle
 
-Worktree `C:/Github/ANYsolver/.worktrees/contact-ci`; branch `codex/contact-ci`, base `b382a3bb43773cfb8c706fe0a7f3ad71ee6c513e`. Implementation commits: `53fb46c5` and `615d5068`. No push, PR, workflow run, merge, main/sibling edit or shared-backend change.
-
-Repairs: four capture modules fall back to `tempfile.gettempdir()`; the independent recomputed partition oracle implements `pop(violations)` with a refusal regression; two example factories use `math.hypot` for stable tangent normalization. Fresh default/Haswell processes preserve four original checkpoint definition identities. No golden hashes, scientific tolerances, replay validators, skips/xfails or native resource limits changed.
-
-Evidence root `.development/contact-ci-20261012/`: read `COMPLETION_REPORT.md` and `.json` for the original 19-case dispositions, five timeout groups, exact commands and receipts; `TASK.md` records decisions and ownership. Raw evidence/private dependencies remain uncommitted. All 19 baseline group reproductions are terminal, with the unmodified portable runner and workers=2 / 1200 seconds / 8x4 shard arguments on Windows and WSL. CI numerical packages and Q1M pins match; local Python versions differ. Forced Haswell reproduces the hosted constructor identity difference but is hardware emulation, not an exact hosted machine. No green candidate matrix is claimed.
-
-Candidate checks: Windows 9 passed; Linux 13 passed, with TEMP absent, JIT enabled and the real input-free increment. Nine further original nodes pass under default-dispatch Linux, including all four native deadline cases (56.46, 52.61, 49.00, 60.18 seconds process wall). Native 120-second guards and supervisor 953 MiB remain unchanged. Isolated passes do not prove shared-worker speed or cross-hardware replay. No speedup claim.
-
-Unchanged red: saved-slide KKT control-reaction relative L2 error 1.4948506139016305e-5 exceeds 1e-6. Under Haswell, anchored enclosure, candidate reuse and multifacet single-facet extension reach strict replay differences after definition binding repair; curved-pair lifecycle and retained-body-pair byte comparisons also fail. Exact IDs and evidence are in the completion report. Differences include last-bit physical potential/moment values, not only diagnostics; engineering inaccuracy is not established, but the deterministic gate stays binding. The additional multifacet-v1 constructor remains hardware dependent.
-
-Linux 5/2 reproduces the shared 1200-second limit (1205.53 seconds process wall), with its incomplete worker's active node unknown. Other original timeout groups are intercepted by forced-Haswell native crashes: three stacks identify outside F03/shared retained work; Windows 4/3 origin is unknown. Windows 6/1 crashes in the contact seed route; the default Linux input-free increment passes. Keep runtime crashes distinct from scientific assertions; no native crash or shared-worker performance fix is claimed.
-
-Next owner: read the source-bound report; adjudicate KKT and deterministic physical replay separately. Localize the unfinished shard worker before choosing a performance repair. Preserve all guards and history; this CI slice establishes neither C0–C9 acceptance nor release. Prior restart history below is preserved.
-
-## 2026-10-12 restart definition of done MET - STOP for Claude integration
-
-Branch codex/contact-on-main; base1b45319f,38 local commits including the final replay repair. Exact integration SHA and complete commit list: .development/contact-restart-20261011/FINAL_RESTART_REPORT.md and ADDED_COMMITS.txt. No main merge/rebase, push, PR, Actions or sibling/shared edits.
-
-Original portable CI inventory:1213 modules/14363 nodes, terminal Windows and Linux coverage without-x. Current38-module contact impact:387 passed+8 existing opt-in skips on both hosts (Windows final full run; Linux full impact plus source-bound changed-path verification). Original42 queue: Windows36passed/6evidence-optional skips; Linux33passed/9evidence-optional skips. All historical contact failure dispositions are closed or explicitly superseded; failed and withdrawn experiments remain preserved. Out-of-scope failures are listed for their owners/Claude, not repaired here.
-
-Actual uninterrupted native loads1.0/1.05 and independent split restart pass with identical final checkpoints and unchanged120s guards. Repair retains positive degree-seven cubature, complete integration/error controls, both-body work, fresh candidate/commit response, exact-bound ownership, original caps and transactions. Bounded exact geometry/validation reuse and state-only physical-prefix replay reduce redundant work; no force/history law or scientific tolerance is weakened.
-
-This meets the restart brief's LOCAL CI definition of done. It does not establish C0-C9 scientific acceptance or release. Evidence under .development/ and docs/agent_plans/development/ stays local, dirty and uncommitted; older worktree qualification deletions are untouched. No owned activity remains. STOP: Claude integrates; programme development needs a subsequent instruction.
-
-## 2026-10-12 ordinary CI delivery checkpoint (DoD pending)
-
-Windows uninterrupted two-load native replay + independent split restart now passes with identical final checkpoint bytes and both original120s analysis guards. Full current impact (37 modules, no-x) is running; Linux current-source impact/caller verification and final source-bound disposition remain. HEAD b0dad164,37 commits from1b45319f; no main merge/rebase/push/PR/Actions. Protected evidence remains uncommitted. See .development/contact-restart-20261011/LEAD_CONTINUATION_20261012.md and DELIVERY_ADJUDICATION.md for exact repairs, failed/withdrawn experiments and receipts. This is CI repair, not scientific programme acceptance/release.
-
-## 2026-10-12 ordinary CI continuation (DoD still open)
-
-HEAD b0dad164,37 commits from restart base1b45319f. Windows/Linux original portable inventory is covered without-x;42-node original queue is green/clear optional skips. Broader native surface replay tests remain OPEN. No main merge/rebase/push/PR/Actions. Protected evidence stays dirty and uncommitted.
-
-Latest unchanged saved second-load sequence fails query2048: axial-01 62.3889941s; directed-01 61.3074499s. Caps/physical/error gates unchanged, failed receipts retained. New manufactured axial fixture has3failures due forbidden initial penetration, not a production pass. Mistral source-only adaptive continuation owns friction_integral/local_fronts and designated handoff; lead owns numerical jobs. Running worker log .development/contact-restart-20261011/mistral-adaptive-delivery.log. No test active at this checkpoint.
-
-Next: inspect actual worker artifacts, repair/verify focused checks, then saved/public coupled replay on both hosts. Definition of done is NOT met. Final source-bound adjudication/report remains pending; no scientific programme acceptance/release claimed. See .development/contact-restart-20261011/DELIVERY_ADJUDICATION.md and native-replay-integrated-delivery/ADAPTIVE_DELIVERY_HANDOFF.md.
-
-## 2026-10-12 restart CI repair - contact-on-main, HEAD b0dad164 (37 commits)
-Original42queue green/clearoptional on bothhosts; whole portable original1213modules14363nodes terminal bothhosts. Current sole owned failure group: native_surface_replay_owner (5Windows/6Linux historical positive nodes). Source-bound dispositions: .development/contact-restart-20261011/source-bound-contact-dispositions.json; full summary DELIVERY_ADJUDICATION.md. Not C0-C9 scientific acceptance or release.
-Mistral session7 branchcut/grading candidates failed and were removed; exact receipts/HANDOFF retained. Unsafeguarded regula-falsi locator could return wide midpoint without convergence; lead identified concrete defect in LEAD_BRANCH_LOCATOR_FINDING.md. Same owner assigned source-only bounded locator repair, log mistral-native-locator-repair.log; lead controls every check after worker exceeded reserve by a150.374s verification job. No frozen authority renewed. User/restart ordinary local CI authority remains; no cap/tolerance weakening. Public preflight selection currently supports both policies without remapping point policy; eight unaffected saved cases passed, half-trial timed out. No completion claim yet.
-Protected evidence remains dirty/uncommitted. No main merge/rebase/push/PR/Actions or other-chat messages. Finish actual public replay/coupled/restart bothhosts, inspect/commit onlyownedsource, final SHA+37/newcommits+coverage+42dispositions/outscope report, thenSTOPforClaudeintegration.
-## Current DoD delta ? 2026-10-12
-Both-host final non-replay checks green: Windows10passed9clear archive-input skips49.564s; Linux8passed9skips51.865s, including the full nonlinear oracle in fresh Gitless export contact-final-oracle-b0dad. Actual4000 fibre-pair restart now has direct current-source evidence on both hosts. Current42-node queue is green/clear platform or absent-evidence skips on both hosts; whole-programme DoD remains open because the broader inventory exposed native friction replay failures.
-Principal next slice: same Mistral owner implements a bounded Gauss3/Gauss4 genuine quadrature candidate with unchanged history/work/error/resource contracts; log mistral-native-replay-quadrature-delivery.log, session20938. It uses the remaining~293s of the prior600 ordinary allowance, with exact receipt accounting and one numerical job. No lead numerical jobs concurrently. A failed2048-query attempt is not a proof that all compatible algorithms exceed the cap. No zero-filled closed strips or cap/tolerance increase permitted. Private result alone is not public caller/restart completion.
-Root review correction: a padded lower gap bound<=0 does not alone prove physical penetration; conservative refusal/cost gating is distinct. safe_zero flag is not necessarily a zero-valued contribution. Prior reports remain preserved; do not repeat their overstrong claims.
-HEAD b0dad164,37commits; pending front/integral source remains uncommitted. Evidence paths untouched/unstaged. No main merge or publication. Final source-bound reconciliation report in .development/contact-restart-20261011/DELIVERY_ADJUDICATION.md.
-## Current consolidation checkpoint ? 2026-10-11 23:30
-Branch codex/contact-on-main, HEAD b0dad164 (37 contact-only commits since 1b45319f). No main merge, push or Actions. Original portable inventory has no unexecuted collected nodes on either host; source-bound adjudication is still required because older exported runs finished after repairs.
-Endpoint pressure/event correction is committed after Windows focused checks and Linux38/38 in receipts/linux-endpoint-pressure-impact-01. Corrects only the certified sub-roundoff gap primal; no pressure clamp or changed physical law.
-Principal DoD blocker remains ordinary native friction replay: private full-path open proofs work, but initial quadrature/enclosure duplication exhausts original caps. Mistral owns final connected reuse/public-caller implementation, log mistral-native-replay-final-integration.log; fresh600s ordinary measured allowance, <=180/job953MiB, one numerical job. No frozen authority renewed. Lead runs no simultaneous numerical jobs.
-Pending source-bound checks: native replay/front/integral final candidate on both hosts; actual4000 fibre-pair test (preserve100 refusal); two-fibre one-patch deadline verification; Gitless nonlinear oracle on current Linux source; archive guard source impact. Historical failures and evidence remain unstaged.
-This checkpoint is not a done/acceptance claim. Continue until contact inventory green on both hosts, then final queue/count/SHA report and stop for Claude integration.
-# Current restart verification state
-
-HEAD073e377c,35commits above1b45319f. Original official1213-module inventory has completed all collected14363nodes on Windows and Linux through retained portable partitions and bounded continuations (do not mistake old-source failures for current disposition). Current inventory1218 adds five contact regression modules, with focused coverage still being reconciled. C6 clipped baseline passes Windows2546.816s/Linux1824.010s; Linux full11checks3529.47s; Windows separate polygon comparison nowpasses2003.702s, and newtests committed073e377c.
-
-Native replay DoD is NOT met. Mistral owns bounded event endpoint repair; exact saved counterexample physicalbinary64 finalgap+5.06e-18 versus certifiedpathgap-3.87e-18 produces closing schedule. Classification repair passes31existing+10focused checks, but closing law computes negative pressure from roundedJet2 primal; this requires a certified scalar arithmetic repair, not clamping/tolerance relaxation. Private Gauss4/5 variable front/controller/precision changes remain developmental/unpromoted; original query2048/path8192/panel128/support128 caps unchanged. Mistral caller-impact180s timeout retained; ordinary worker allowance prospectively420s, frozen qualification authorities untouched.
-
-Root owns remaining private front/integral changes and the pulse-integral regression update: improved support now resolves formerly refused pulse, retain explicit cap1 prequadrature failure plus independent32-substep positive workcheck. Precise literal tilted-skin oracle2parameters passed bothhosts, pendingcommit. No main merge/rebase/push/PR/Actions or sibling/shared edits. Evidence stays unstaged. Full DoD requires native public caller completion, current impact checks bothhosts, final42queue/source/evidence report, then stopforClaudeintegration.
+Scope B_POST_REFUSAL_WINDOWS_5_2_V3 RUNNING. Unifiedexecsession97528,launch217954;nativePID56296,start epoch1792240212.4511354. Poll SAMEhandle untiltrueterminal;observationtimeoutnotpermissiontorestart. Both originalgroupsstarted22+24. R3=C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/post-refusal-windows-5-2-root-v3; LIVE_HANDLE.json andACTIVE_DELIVERY_RUN_20261016.json recordcurrentstate. ROOTCIrelease6774f95aa12ddf29ccd744d0a05bb1cde391d1aeb24cb10cd8648524c097fc79. Source/inputscarrierfrozen;original46modules,2workers/2400inner/2460root/1536MiB/onejob/oneattempt/no retry/carry. Overall13:31:19.522204UTC;metadataused8.63516204842017/60,postreview20+close10protected. Afteractualterminal+cleanup runexistingmetadata_native review thenclose once withmeasuredreceipts; preserveallrawfailures/unknowns. No newnumericaljob/native/Ubuntu/transientreopening/sourcechanges/pushes. EarlierC1session63410terminal;earlierC2preflightclosed;oldcheckpointsbelowhistorical.
 
 ---
 
-# Current verification checkpoint
+# Original Windows5/2V3 CI release — 2026-10-17T12:30:08.005912+00:00
 
-HEAD32eb634b,27commits before this checkpoint. DOD NOT met. S3 replay current immutable7ba impact: both coupled restart variants and full trajectory passed on both hosts. Linux55passed2failed3222.947s; Windows still running last cost checks. Two failures are test contracts, not mechanical differences: saved reference differs ONLY in five newly explicit zero wrench_origin_m labels (all numerical history and fingerprints EXACT); current strict helper checks that label and every other value unchanged. Both host producer checkpoint SHA4292a84c33c6a22598bec3edf1c4dac19dcbd869f6c04334bfc5deba75e3d4c8; postprocessing receipt windows-s3-reference-postprocess-01. Decline test patched only per-face fallback, not newly added uniform prepared provider; now explicitly declines both and retains exact pressure/counter/state checks. Fresh2contracts pass Windows4.969s, Linux included42checks8.828s. Original ordinary4096 stage failures preserved; positive fixture explicitly selects existing prepared-partial path; bounded ordinary-refusal tests remain.
-
-Actual S3 pressure-bound production repair now refines only cells with nonzero uncertainty in violated nodal inequalities. Deferred cells stay in heap AND totals; otherwise split time, same caps/gates. Independent positive-gap reproducer shows original64-cell budget failure and new success;27Windowschecks6.681s pass, Linux included42checks. Mistral independent assessment bounds-precise-targeted-review-result.md finds conservative proof and region/ordering sound; no formal engineering acceptance. Complete actual clipped transient remains running current-source windows36892/Linux70756; baseline test untouched. Auto-review rejected switching existing test default to polygon; preserved baseline and separate new prospective polygon comparison. Old duplicate baseline stopped with receipts preserved, no settings relaxation.
-
-New precise time numerator2sourcefiles/1test remain uncommitted. Windows13checks7.607s and Linux42combined8.828s pass. Reuses existing50digit sine kernel, restores old time enclosure before isolation forlarger angular paths. Lead corrected literal target barycentric weights; independent translation-offset test covers accepted near-one weights, no corner substitution. Root verified ownership function explicitly certifies target area/orientation overwholepath. Mistral assessment conditional assumptions recorded, private full native friction integration NOT promoted. Private nested4/6 attempt15 failed support128 at21panels1776queries; timeout70.067s+already-exited cleanup retained. Mistral now owns native-front precision milestone240s ordinary allowance, originalphysical/scientific/cap limits. Earlier cap-raise experiment intentionally stopped, unknown accounting conservatively charged180s. No extra frozen qualification authority or numerical cap raised.
-
-Official29b6 parents5 completed bothhosts~3430s; all10contact failures are archived-stage wrappers alreadyfixed32eb. Parents6-7 running Windows58466/Linux20876, Linux174-module supplement12188 queued. Parent4 timeout stillneeds complete unexecuted-node continuation (Windows533/Linux293), list event-extent-status.json. Current newmodule/changed caller impactcoverage needed, followed42queue disposition and exact SHA report; do not claim collection=execution. No main merge/rebase/push/PR/Actions/sibling edits. Local evidence remains unstaged.
+Plan121 current/fullretainedtailunchanged. B_POST_REFUSAL_WINDOWS_5_2_V3:272preflightcontrolsPASS4.711121133936103s;adoptPASS3.924040914484067s;knowncleanup/source/lineage,no survivors;metadataused8.63516204842017/60,postreview20+close10protected. ROOT_CI_RELEASE.json SHA6774f95aa12ddf29ccd744d0a05bb1cde391d1aeb24cb10cd8648524c097fc79 in C:\ANYworkspaceWork\contact_trackB_dependency_repair_20261013\post-refusal-windows-5-2-v3 releasesONE exactoriginal46modules22+24groups/default/current41/map,2workers/2400inner/2460root/1536MiB/oneglobaljob/no carry/retry. Overall13:31:19.522204UTC. Use reviewednative root_native.py -I -S -B/cmd.exe/loginfalse/cwdC3 only. Source/inputscarrierfrozen. ACTIVE andR3/LIVE_HANDLE.json willrecordactualhandle;observationtimeoutneverpermitsrestart. Aftertrueterminal measuredreview20+close10once. AlloldC1/C2/Nscopesclosed/evidencepreserved,currentcreditstill1/38. No criteria/product/test changes/native/Ubuntu/transientreopening or pushes.
 
 ---
 
-# Portable restart: remaining native and S3 work
+# C3 metadata released; CI unreleased
 
-HEAD7ba36ceb;26commits. Current Windows/Linux full portable inventories are still running; DoD is NOT met. Parent4 timed out on both hosts: retained event receipts expose 533Windows/293Linux unexecuted nodes, so collection alone must not count as execution. Current S3 prepared-partial impact fixture explicitly selects the existing route without changing mechanical inputs: both coupled/restart variants pass Linux; WindowsFalse completed, True running. Full module completion remains required. Evidence-wrapper tests now guard missing original staged inputs even when invoked through wrapper tests: Windows9pass13skip38.662s; Linux corresponding9pass13skip included in staged-and-precise01, whose unrelated new private helper test failed against an outdated runtime module. No tolerance/physics/cap change.
-
-Native private variable integration still fails query2048cap after74.641s (attempt14); no promotion. New precise time numerator is developmental, bounded to existing sine kernel argument range; larger paths retain original conservative enclosure chosen before isolation. Windows13focused checks6.782s pass. Formal independent assessment remains outstanding. Mistral precise Read ended20turns without final assessment. Mistral owns clipped-S3 spatial-budget repair and native-friction allocation delivery separately. Native worker was stopped when its checkpoint proposed prohibited private cap raises; logs preserved, incomplete execution accounting conservatively debited180seconds, continuation has120seconds remaining. Do not repeat that experiment or raise caps. New evidence stays unstaged. No main merge/rebase/push/Actions or sibling changes.
+B_POST_REFUSAL_WINDOWS_5_2_V3 source/static8055/18AST andfocusedreview25f72764f5c9aea8b0941072ad191860522ace2d3c1dbb7d0de66556e4512e09 passed22checks. Actualscopeconsumer/importID andnewtargetedrefusal traced;272controls nowreleased ONLY through existing measured metadata wrapper15/15/20/10,total60,953MiB,onejob,post30protected. C3=C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/post-refusal-windows-5-2-v3;ROOT_METADATA_RELEASE.json andROOT_CURRENT_SOURCE_ADOPTION.json exactsource records. No originalCI released before actualpreflight+adopt PASS andseparaterootCIrelease. AlloldC2/Nbalancesclosed;firstfailurecloses,noautomaticV4,no pushes. Source/input/carrierfrozen;ACTIVE recordsstate.
 
 ---
 
-# Portable test repair checkpoint
+# V2preflight CLOSED; bounded V3 scope-binding repair — 2026-10-17T12:21:19.522204+00:00
 
-Archive inventory now explicitly covers ten registered classes (two added result variants), with unchanged codec/security behavior. Windows13checks4.057s pass; Linux14checks3.545s pass and1missing-local-capture skip, including new independent front geometry test. Literal seed diagnosis skips only absent local SHA-bound capture; present-capture checks unchanged. Evidence windows-transient-archive-inventory-01/02 and receipts/linux-archive-front-current-01. Private front candidate remains uncommitted/unpromoted. Additional Mistral delta Read reached12turns without final report; logs preserved, no acceptance inferred. Official inventories still active.
+Plan120/currentACTIVE govern. V2preflight terminal1,known2.982675167149864s/peak90.73046875MiB/cleanup/no survivors. Stale V1literal in ci_protocol.py25 refusedcorrectnewV2authority. No CI/science launch;allunusedCLOSED,remaining0. GenericledgerCIchargeNULL preserved; no zeroCImeasurement asserted. Failedraw/source/review preserved. Root disposition C:\ANYworkspaceWork\contact_trackB_dependency_repair_20261013\post-refusal-windows-5-2-root-v2/ROOT_TERMINAL_DISPOSITION.json. No owned job.
 
----
-
-# Current restart checkpoint - branch ownership update
-
-User confirms main advances beyond1b45319f (550c927a and subsequent fixes). Do NOT merge or rebase main; continue codex/contact-on-main. Claude owns serial integration/push/CI. No pushes, PRs or Actions here.
-
-HEADfe0ac420,25commits; uncommitted private front candidate in3 source files and1 focused test. Full programme/portable DoD NOT met. Mistral front-polynomial Read review completed: no equation/partition counterexample; meaningful tests required, inherited angular-range assumption flagged. Result front-polynomial-review-result.md in local scratch. Independent rotating round-surface coefficients/tight-bound regression passes Windows3.949s. Private variable-front helper fails unchanged panel cap after62.620s (windows-variable-helper-quadrature-05); no owner/restart admission. Previous support and query cap failures retained. Do not increase caps or claim this route works.
-
-Official immutable29b6 inventories continue Windows58466/Linux20876 parents4-7; Linux supplement12188 waits final parent. Windows supplement complete2193.047s:2160pass28out-of-scopefail86skip,727contactpass17skip0fail. Windows parent3 contact367pass18skip0fail; Linux parent3 contact365pass19skip1old Git-export oracle failure (current repair separately verified). Evidence remains unstaged. Do not repeat completed source-unaffected checks. Next: finish missing private refinement tests/assessment or retain candidate experimental; resolve actual second-load integration, inspect remaining inventory, map42queue byhost/source and report only when DoDmet.
+NEW B_POST_REFUSAL_WINDOWS_5_2_V3 source-only C:\ANYworkspaceWork\contact_trackB_dependency_repair_20261013\post-refusal-windows-5-2-v3/ROOT_SOURCE_AUTHORITY.json SHA68ba3cff441921b3f398b25325520fa3c1b1330ac1991f7f051dce8af3d3ab94;phaseSHA5259f37fc70afa731bf96a004ad934b1247e961748dcdfbd998a02a1a785c71c. Checkpoint2026-10-17T12:25:19.522204+00:00,hard2026-10-17T12:36:19.522204+00:00,overall2026-10-17T13:31:19.522204+00:00. Correct only actualselector-authorityscopecomparison to current importedcommon.ID plusfreshcontextidentities; preserveallhash/path/selector/criteria/fullCI guards. Source/runtime gate trace before release. Fresh2520max(metadata60/CI2460),953/1536MiB,onejob/oneattempt/no carry/retry;noautomaticV4. Product/test/old evidence immutable,no pushes. Earliercheckpoints historical.
 
 ---
 
-# Verified transverse replay slice
+# Windows5/2V2 metadata release
 
-Current transverse support (q=g_t-k*g), complete finite covers permitting both crossing directions, no endpoint-open shortcut on event panels, and bounded point event replay pass33focused current caller/state/support checks on Windows10.069s/Linux7.283s. Eight saved first/envelope/rebase cases retain passes. Tangency admission remains unresolved; second-load workflow NOT passed or qualified. Checkpoint test CRLF conversion now removes both CR/LF, strict production decoder unchanged; actual continuation still needs its complete integration route.
-
-Mistral surface-v5 stopped after missed checkpoint/repeated inspection (owned pwsh49408 only); logs preserved. Narrow same-owner helper assignment completed HANDOFF: existing variable-front saved-path candidate fails2.006s at first support panel,128budget,0queries. No repeat unchanged. Next owner should implement bounded angular proof refinement before whole aggregate budget death, with complete coverage and unchanged laws/caps/gates. Source-only review interior-fold hypothesis remains rejected. Official inventories58466/20876 plus214Windows supplement14794 and174Linux queued12188 continue; DoD incomplete.
+Fresh B_POST_REFUSAL_WINDOWS_5_2_V2 METADATA ONLY released; CI unreleased. C2=C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/post-refusal-windows-5-2-v2. Source review78584ecd29e22bbdf5138e84135651d0c64dc1150cf37361c3b1732e5d739949 passed23checks;rootstatic7995bindings/18AST/current41/all1250/proof/dirty clear. Metadatarelease62f1684368dad3d39785308acef648c4351f05544178618a9f8118b3809780c1;sourceadoptionafd58630a9b47a6ebbda844bc2d5150b9bc0384a2f2c6db621b5d269956b2e45. Exactnative metadata_native.py preflight15/adopt15/review20/close10,953MiB,onejob/post30protected/60total,no retry/carry. Full originalCI remains unreleased pending actualknownclean preflight+adopt. Source/input/carrier frozen;failurecloses. No criteria/product/test change or pushes. ACTIVE records currentphase.
 
 ---
 
-# Current restart checkpoint - contact CI continuation
+# Observer repair closed; original5/2 v2 source preparation — 2026-10-17T12:10:19.537794+00:00
 
-HEAD0cc42172,24commits on codex/contact-on-main; base1b45319f unchanged. No rebase/merge/push/PR/Actions. Claude owns eventual serial integration. Current dirty files only surface support/history/integration/tests; evidence unstaged.
+Plan119 is current; full retained contract unchanged. Observerrepair VERIFIED DEVELOPMENT ONLY/CLOSED:12original/45controls/8workers,69artifacts/6151inputs,known37.00929511913273/300s,peak137.23046875MiB,clean/source/lock. All262.99070488086727unused CLOSED;remaining0,no newCIcredit. ROOT_CLOSURE C:\ANYworkspaceWork\contact_trackB_dependency_repair_20261013\ci-observer-serialization-repair-v1/ROOT_CLOSURE.json SHA685406873d42e32400b6de7fe53ceaa7394f01d63a42f8605498128d2bd8f7f1. Failed5/2raw evidence unchanged;old exact5/1credit retained,current41still1/38. No owned numerical activity.
 
-Live official Windows parents3-7 exec58466, Linux parents2-7 exec20876. Immutable29b6 source; source provenance repair3d and angular/multi cache1d86/0cc verified separately. Windows214 missing official modules exec14794 supplemental, Linux174 exec12188 queued after m7; weights changed across checkpoint shard assignments. Exact gap map official-extent-gap-check.json; no added deselection. Full inventory/DoD still incomplete.
-
-Surface author v4 exhausted40turns without HANDOFF. Root reconstructs state in surface-replay-delivery-v4/ROOT_RECONSTRUCTED_HANDOFF.md:26support passes,8saved cases pass, original second-load still cap failure; checkpoint loader had :-1 vs :-2 CRLF bug now corrected in test only. Unsafe existential tangency promotion removed. v5 same owner exec38502 owns connected support/front/history/transaction route; first target existing variable-front helper, no changed caps/laws/gates. Early checkpoint overdue, actual inspection artifacts monitored.
-
-Independent Read review25446 completed, preserved surface-certificate-route-review.md, but its interior-fold claim N_prime=0 disproved by existing analytical front: t=.725 N3.734e-7,N_prime-1.349e-6; t=1 N2.811e-10,N_prime-1.365e-6. See SURFACE_ROUTE_REVIEW_DISPOSITION.md and two30-second-bounded receipts(1.765s/1.889s). These point values do not certify full root topology. Existing endpoint-transition machinery is next candidate, NOT yet owner/restart admission.
-
-Current one-patch coupled/history/restart verified Windows119.520s/Linux75.528s; narrow Windows120s guard margin remains. Linux4cache safetychecks9.442s, weak100 refusal55.708s, provenance-only test0.718s. Original33queue nodes have pass evidence and9skip evidence(overlap),3yet unobserved; final per-host/source disposition pending. No programme qualification or whole-route speedup claim.
+NEW source-only B_POST_REFUSAL_WINDOWS_5_2_V2: C:\ANYworkspaceWork\contact_trackB_dependency_repair_20261013\post-refusal-windows-5-2-v2/ROOT_SOURCE_AUTHORITY.json SHA9dd5423944a0c914fa9393bba009490e8e7aa8b18549c6fd48dbe6ac4017bc4d;phase deltaSHAf29a945d1da8ad01cb3de8cbaee275c12f01445a2c8cdce42628f61aeec7316c. Sourcecheckpoint2026-10-17T12:16:19.537794+00:00,hard2026-10-17T12:40:19.537794+00:00,overall2026-10-17T13:35:19.537794+00:00. Fresh2520max(metadata60/CI2460),953MiBmetadata/1536mandatoryCI,onejob/oneattempt/no retry/carry. Integrate only same minimal captured-dumps change into FULL common/observer; never substitute stripped developmentcommon. Preserveoriginal46modules22+24groups/current41/map/command/criteria/admissions. Source/rootreview and actualpreflight/adopt before separately releasedCI. No fifthnative,UbuntuU4/transient reopening,product/test/sibling edits or pushes. Prior checkpoints historical.
 
 ---
 
-# Verified multi-S3 cache checkpoint
+# Observer final file-only reconciliation released
 
-Exact full-state/origin assembly reuse and angular kernel caller pass unchanged one-patch coupled/history/restart: Windows119.520s, Linux75.528s (Linux also9kernel regressions); Linux4cache mutation/restart/cancellation boundary checks9.442s, earlier Windows4checks16s. Two-patch actual91s retained. No120-second deadline reset or tolerance change. Windows margin remains narrow; no robust whole-route speed forecast. Candidate caches contain disposable material trials, never physical commits.
-
-Surface v3 exhausted without HANDOFF after preserving8passing saved cases; v4 same-owner continuation92232 must address root whole-panel certificate finding, not declare possible tangency resolved from sampled replay. Official inventories continue58466/20876. DoD unmet. Local evidence unstaged; no main merge or publication.
+Initial scope B_CI_OBSERVER_SERIALIZATION_REPAIR_V1 terminalPASS:35.002566530238255/240s,peak137.23046875MiB,45/45 controls,12/12 original nodes. Initialunused204.99743346976175CLOSED. Supportingreview113d1dee6a0255ae5c1810a8ebbc153cb539dbd7a3a48653468bb4e4418fa750 passed20checks. Root has released FINAL60 ONLY,file/hash-only reconciliation,no pytest/science: ROOT_RELEASE_final.json SHA54c93a057ee164265074da59c41f36146215c596d7dd1176cff2c8e30d919106 in ci-observer-serialization-repair-v1,953MiB,onejob,no retry. Sourcefrozen;remaining60. No originalCI/criteria/product changes/pushes. ACTIVE records exacthandle; earlier running records are historical.
 
 ---
 
-# Current contact CI repair checkpoint
+# Observer repair initial check released
 
-Branch contact-on-main remains based on1b45319f; no merge/rebase of moving main. Claude owns serial integration and publication. Latest committed f486e1c6 (22 commits). Local evidence remains unstaged.
-
-Windows/Linux official parent2 completed: Windows1777passed/106failed/55skipped/38errors, contact357passed/42skipped/7failed; Linux1771passed/107failed/60skipped/38errors, contact352passed/47skipped/7failed. All seven contact failures belong to saved native surface replay. Windows parents3-7 exec58466; Linux remaining parents exec20876 continue immutable29b6, without -x or extra deselection.
-
-Mistral angular kernel exact memo repaired twice after root review: complete Decimal flag side effects, including dirty-cache warm state and trapped exceptions. Nine focused regressions pass; unchanged values and caller evidence retained. Current coupled one-patch caller checks Windows24992/Linux21433 pending under unchanged120-second model guard; multi-S3 assembly candidate remains uncommitted. Linux original weak100 non-success/atomic rollback regression passes55.708s, matching Windows failure disposition.
-
-Surface owner exec63736 has provisional possible-tangency support admission. Root LEAD_REVIEW_DELTA.md rejects promotion without whole-panel missed force/tangent/history coverage; sampled replay alone is insufficient. Preserve original caps/tolerances and failed saved workflows. Worker handoff pending; no friction acceptance. Queue inventory has33 nodes with pass evidence,9 with skips (overlap),3 not yet observed; final host/source disposition remains pending.
-
-Evidence .development/contact-restart-20261011: flags-repair-v2/HANDOFF, receipts/linux-pair-weak-refusal-current-03, queue-evidence-inventory-current.json, immutable official runs. Current definition of done unmet; no engineering programme completion claim.
+Scope B_CI_OBSERVER_SERIALIZATION_REPAIR_V1; ROOT_RELEASE_initial.json SHA27c4c7fba94b480b8601d4254e4c7f58390c2edfd0464da3334e87758b2eb5a0 in C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/ci-observer-serialization-repair-v1. Source review ec0e0fc754935d82e19211abbcb1b5f48aacd609a9ad7decf47cdcc849f26f81:21checks true. Root source/AST/6171physical input adoption passed. Release one exact native run_development_check.py initial, -I -S -B,cmd.exe,cwdN;240seconds/953MiB/sharedonejob. Final60protected;no originalCI. Inputs frozen. First unexpected actual failure closes. Current owned handle/status in ACTIVE_DELIVERY_RUN_20261016.json; no retry on observation timeout. No criteria/product/test changes or pushes. Old5/2scope remains CLOSED.
 
 ---
 
-# Pair repair checkpoint - prospective resolved enforcement
+# Closed Windows5/2; bounded observer repair — 2026-10-17T11:54:13.929724+00:00
 
-Current pair driver exact prepared-record reuse and geometry-only swept query are now verified through refined4000 coupled/strict restart on both hosts, new identity/mutation/cancellation checks, and staged4000 workflow Windows91.543s/Linux60.030s. Original100 non-success/rollback regression passes Windows100.400s: no first-target commit or history corruption, exact original checkpoint retained. Gap/equilibrium/material criteria unchanged. No converged100 equilibrium or whole-route speedup is claimed. Current success fixtures prospectively use explicit4000; old100 failures remain in evidence.
+Plan118 and ACTIVE_DELIVERY_RUN_20261016.json govern current state. Session63410 TERMINAL exit1, tool7f99b3; no owned numerical activity. Legitimate public json.dumps probe collided with observer event/runtime publication. Whole-gate science UNKNOWN,credit0,current41 remains1/38. Root disposition C:\ANYworkspaceWork\contact_trackB_dependency_repair_20261013\post-refusal-windows-5-2-root-v1/ROOT_TERMINAL_DISPOSITION.json; evidence preserved. CI1097.563591539787+metadata15.327174219724839=1112.8907657595119/2520s,known cleanup/no survivors/lockrelease;allunused CLOSED,remaining0,no retry.
 
-Independent geometry review recovered the actual rotation term in the legacy swept bound; internal rotation was not omitted as previously suspected. Complete midpoint bounds and endpoint/commit checks remain. This is development verification, not engineering acceptance.
-
-Mistral exact Decimal angular-kernel memo identified37% candidate cost, matched complete contact assemblies exactly at two poses, and passed14kernel/caller/one-patch checks under unchanged120s guard. Root caught missing Decimal flag side effects; same author is repairing them before promotion. Kernel/multi-S3 candidate remains uncommitted. Surface owner found a genuine stationary space/time tangency; pure transverse refinement cannot certify it, so no cap increase or further blind refinement is allowed. Its connected repair remains pending.
-
-Continue official inventory and scoped repairs. Main stays unmerged/unrebased here; Claude owns integration/push/CI. Evidence stays local/unstaged. Definition of done still unmet.
+NEW source-only scope B_CI_OBSERVER_SERIALIZATION_REPAIR_V1 in C:\ANYworkspaceWork\contact_trackB_dependency_repair_20261013\ci-observer-serialization-repair-v1; ROOT_AUTHORITY.json SHA 63238cc9c716ce88a9e3293646eb50661fa40dbf9ccde687c336bef7f5885ef8. Sourcecheckpoint 2026-10-17T12:00:13.929724+00:00,hard 2026-10-17T12:19:13.929724+00:00,overall 2026-10-17T12:39:13.929724+00:00. NEW300checkseconds(initial240/final60reserve),953MiB,onejob; root source review/release BEFORE checks. Repair observer serialization only, unchanged full original primal checks + negative controls decisive. No fullCIretry in repairscope. All product/test/failedcarrier bytes protected,no native/Ubuntu/transient reopening or pushes. Prior checkpoints below are historical and superseded.
 
 ---
 
-# Latest checkpoint update - contact CI restart
+# Live original Windows5/2 CI — 2026-10-17T11:26:09.7595232Z
 
-Main may advance to550c927a and beyond. User expressly prohibits rebasing/merging it here; Claude owns final serial integration, push and CI. Continue contact-on-main unchanged. New local repair29b62b4e: current cold native front and4e7-to8e7 refinement; oracle provenance repair follows. All old failures remain evidence, not repaired qualification.
+Scope B_POST_REFUSAL_WINDOWS_5_2_V1 is RUNNING, unified exec session63410, launch tool03a7cb, native root PID52372, start epoch1792236329.03817. C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/post-refusal-windows-5-2-root-v1/LIVE_HANDLE.json records the actual handle. Poll this same handle; an observation timeout is not terminal and never permits restart. Original46 modules/22+24 groups,2workers/2400inner/2460root/1536MiB/onejob/oneattempt/no retry. Input/product/carrier bytes frozen. Overall12:30:05UTC; metadataused8.757947764243/60,postreview20+close10 protected. After authoritative terminal/cleanup perform existing measured review/close once. No new source/check run, native/Ubuntu/transient reopening or pushes.
 
-Windows official parent1 on immutable205a COMPLETED1179.681s:1985pass/55out-of-scopefail/42skip; CONTACT480pass/29skip/0fail. Windows parent2 now runs immutable29b6. Linux parent0 still running205a; old pair cost/weak-penalty and Gitless-oracle failures mapped to pending/current fixes. Full extent still incomplete.
-
-Root resolved staged4000 pair workflow passes91.543s; weak100 remains explicit non-success regression, same original physical fixture/gap and no measured converged100 solution. Pending test updates replace invalid success expectations prospectively, not old failures. Both-body/strictrestart gates unchanged. Mistral pair-v3 exact receipts confirm .02 is first failed weak staged target; refined4000 control checkpoint remains bit-identical. Production cache/midpoint changes uncommitted pending final checks.
-
-Surface transverse finite-cover supports opposite crossing orientations separated by strictly signed slabs; independent closed-open-closed scalar and double-root refusal checks pass. Linux support/oracle28pass16.469s. Windows savedfront first8pass; second-load bothpolicies still128-panel failure67.530s. Timed-out combined run has partialpasses and missing exactwall receipt: recovery.json preserves uncertainty. Supervisor cleanup fixed and controlled timeout verified. No friction promotion.
-
-Mistral native-pair-kernel-cost-v3 owns normal-angle/curved-work kernel cost plus multi-S3 driver/tests, preserving29b6 bound. Mistral surface-replay-delivery-v3 owns material surface support/history/front/integration/transaction/retained-S3 route. Distinct files, max2 workers, no workers Git/delegation/sibling/shared edits. Prior two-fibre worker stalled on literal scratch/ path: owned process stopped, edits/logs retained, explicit-path continuation verified4cache guards+CLI and two-patch actual91s; one-patch remains120sdeadline. No reliable whole-route speedup claim.
-
-All exact logs, patches and receipts under .development/contact-restart-20261011, neverstage. Definition of done and engineering acceptance remain unmet. No push/PR/Actions/other-chat messages.
+Prior checkpoint follows unchanged.
 
 ---
 
-# Active restart - consolidated contact CI repair, 11 October 2026
+# Original CI release checkpoint — 2026-10-17T11:25:26.6641241Z
 
-Own contact-resume / codex/contact-on-main, base1b45319f. Follow PROGRAMME_RESTART_BRIEF_20261011.md. No push/Actions/other-chat/sibling/shared-file changes. Evidence stays unstaged. Done requires complete official inventory and green contact tests on Windows/Linux; engineering D1/C0-C9 remains unaccepted.
+One original Windows5/2 CI attempt is RELEASED, not yet launched: scope B_POST_REFUSAL_WINDOWS_5_2_V1; release603e32d41cf3c9ebed889d126c70c87f2de574b68efb4fed334e97cfdeae6ecb. Both measured metadata phases passed: preflight4.769479401918943 seconds/271controls; adopt3.988468362324056 seconds; cumulative8.757947764243/60,post30 protected. Known lineage/resource/cleanup/no-survivor records. Fixed original46 modules22+24,2workers/2400inner/2460root,1536MiB,one job/oneattempt/no retry/carry; combined2520maximum and overall2026-10-17T12:30:05.5100788Z unchanged.
 
-- Native/S3 empty-station root-band bound: complete mapped component work and old fallback/minimum, unchanged tolerances/pad/measures/caps. Windows10pass/3exact-inputskips49.975s; Linux10pass/3skips38.798s. New geometry/arc check reuses production derivatives, not an independent derivative oracle.
-- Prospective certified4e7-to8e7 enforcement refinement passes the unchanged2% gate. Earlier1e7-to2e7 and2e7-to4e7 nonpasses remain failures. New4e7 checkpoint is a test input, not acceptance evidence.
-- Supervisor now always pins actual source imports, including standalone scripts. Source-path check passed. Older worker profiles lacking source proof are not whole-route cost evidence.
-- Pair cache and geometry-only midpoint remain uncommitted. Refined4000 coupled/restart checks pass both hosts; weak100 physical-gap/line-search refusal remains open. Independent review attempts exhausted without an assessment. No same-mechanics speedup claim.
-- Surface two-event candidate remains uncommitted and fails128-panel admission. No friction promotion. Mistral owns two-fibre-S3 cost/operation repair, no deadline increase.
-- Official extent: Windows parent0 covered by4subshards at recorded source identities; Linux parent1 complete,4contact failures repaired in focused checks. Full extent remains incomplete. Windows parent1 runs immutable205a without fail-fast;3691tracked route files audited with archive EOL normalization. Initial strict byte audit failure retained.
+Run ONLY the reviewed native root entry in C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/post-refusal-windows-5-2-v1/root_native.py, -I -S -B, exact native cmd.exe caller. Freeze all product/test/input/carrier bytes while live. Observation timeout is not terminal and never permits restart. After true terminal, execute existing metered review20/close10 once; preserve raw failures, unknowns, accounting and unused closure. No optional extractor, fifthnative route, UbuntuU4/transient reopening or pushes.
 
-All receipts/logs/source patches: .development/contact-restart-20261011, never stage. Continue from artefacts without repeating completed checks merely to recreate evidence.
-
----
-## Preserved preceding restart history
-
-Latest verified delta: Linux official parent m1/8 completed1415.63s, contact455pass49skip4fail (three test-harness/schema issues fixed b477ad4c; pressurefixture now2pass on both hosts). Windows m0/s2 completed599.24s, contact78pass11skip2deadline failures; m0/s3 active exec16105 on audited5e35 snapshot. Full inventory not yet covered.
-
-Pressure response: exact clip-topology marginal fixture shifted0.5->0.45 with unchanged partial supports/independent reequilibration tolerances; original0.5 retained as genuine refusal regression. Mistral handoff and guard-nonvacuity evidence inspected. Windows2pass142.03s;Linux2pass83.57s. No production source change.
-
-Native pair: coefficient-only optimization + exact prepared-record reuse remain uncommitted. Root review fixed shorter-first subtraction defect via Mistral; helper/curve parity and new gap-only/cancellation tests pass. Old fullroute still120s deadline (39endpoint/34swept calls). Root uses existing complete geometry certificate at swept midpoints without constructing forces/tangents; unchanged endpoint acceptance. First cold100N/m2 line-penalty case now fails explicit gap limit iteration7 at-50.0703um, not a success. Existing4000N/m2 refined check active55984; no physics/tolerance change or claimed fullroute speedup. Surface replay zero-rate support candidate still fails128cap; all partial edits preserved/uncommitted.
-
-Active Mistral: cold-front-tightening-v1 exec85586 owns native_curved_plane_work.py/localfronttest; two-fibre-s3-repair-v1 exec69290 owns native_multi_s3_static.py/two-fibre test. No overlapping edits or sharedcore scope. Pivot owner complete. Definition of done remains unmet; no programme qualification/release claim.
-
-Continuation note: both Mistral finish jobs exhausted their tool/turn limits without HANDOFF or complete route checks. Useful edits retained. Root takes integration verification and targeted repair after repeated missing final checks/CRLF edit failures (concrete execution reliability reason); no scientific gates, budgets or ownership boundaries relaxed. Native pair source currently requires actual coupled verification. Surface support/event edits remain partial and failed under the unchanged128 support cap. Logs native-pair-final-delta-worker.log/native-surface-final-delta-worker.log retained.
-
-## Current continuation delta � 11 October, source 5e35d8df
-
-Done condition still unmet. Official Windows m0/s2 and Linux m1/8 are running without fail-fast; no full inventory claim. Native two-fibre/S3 one-patch hits the preserved cooperative deadline; two-patch also fails, exact trace retained. Out-of-scope rev8 failures remain visible and untouched.
-
-- Linux changed small-patch caller coverage: 18 nodes passed across probe/current importer receipts. One stale prose assertion failed first, then was updated to the verified half-load prefix claim while retaining installed-package/D1 non-acceptance. Windows eligibility4 pass (4.46s); Linux remaining6 pass (36.20s), earlier importer11 pass and probe1 pass. Full raw receipts retained.
-- Mistral pair owner continues central coefficient optimization and actual coupled route. Root review found shorter-first subtraction sign error; ROOT_REVIEW_DELTA.md requires helper parity and repair. Existing 1120 bound matches/8 tests do not close that edge case or full route. Current exec78210, log native-pair-final-delta-worker.log.
-- Mistral surface owner continues certified two-event history/support/integration, not sampled admission or zeroing pulse work; current exec72275, log native-surface-final-delta-worker.log. No budget/tolerance/profile changes.
-- Cold 8e7 native enforcement remains failed despite seeded pass; provisional fixture/tests uncommitted. Exact 34 refused poses and failed componentwise discriminator retained; no third-selector sweep authorized by this note.
-
-Evidence: .development/contact-restart-20261011 (never stage). No push, Actions, sibling/shared/prepared/submodel/rev8 changes. Old records below remain historical authority/evidence.
+Prior checkpoint follows unchanged.
 
 ---
 
-# Active restart — contact on consolidated main, 11 October 2026
+# Active metadata checkpoint — 2026-10-17T11:23:46.8244749Z
 
-Authority: PROGRAMME_RESTART_BRIEF_20261011.md. Own worktree `.worktrees/contact-resume`, branch `codex/contact-on-main`, base1b45319f, current committed06064df6 before the following handoff commit. No pushes/PRs/Actions, sibling/main/shared/rev8 edits or other-chat messages. Evidence unstaged. Historical authorities/failures/scientific criteria stay intact.
+Windows5/2 metadata ONLY released for scope B_POST_REFUSAL_WINDOWS_5_2_V1; original CI is UNRELEASED. Source review c305f27845c77326ad88477a60b313ef596dbcbe41bcad3df8b61641ae1fbf73 and actual static check passed; exact current41/PINS67e2eef9b08d5a280c75ca15978b1e5a50825c03fa65381fc28edc430347fedd/source packet48b84e1dc3cf4cdda9a5cbafb5ab73fbf9780cf73a8968c06ba852cabf678cef adopted. Metadata release70a4384ef97b67163d5be4dd03d0ee59cf76ac02706d5418c82dcc1508c0f45b; current-source adoption8d57da24c09d7db06610c350878697f5e5879265c805fa3352784fc54eac5316.
 
-**Done condition unmet:** full official portable inventory without fail-fast; current contact tests green Windows/Linux; exact commits, queue disposition and remaining issues; then stop. D1 and C0–C9 engineering acceptance remain incomplete.
+Fresh metadata60 seconds only: preflight15/adopt15/review20/close10,953 MiB,post30 protected,one job,no retry/carry. First actual failure closes; no scientific run until actual preflight/adopt PASS and separate rootCI release. All prior budgets remain closed. Source and runtime criteria unchanged; no pushes.
 
-## Current result and pending work
-
-- Twelve local repair commits through06064df6; details/evidence below. Current Linux probe cleanup2pass; predictor+currentinput-freeworkflow8pass/5exact-inputskips. Windows current identity/archive changes19nodes passed across bounded split runs (one module timed out after5passed nodes, sixth passed independently); complete fullinventory still open.
-- One official Windows subshard m0/s0 completed onf385:198passes,8failures (5contact),5skips; no timeout. Four stale currentprofile identities now repaired. Remaining publicentry failure came from old2x2fixture.
-- Public seed example now uses verified4x4same-physics fixture with load13/anchors1,11. Windows contract2pass wall2.55s and publicentry1pass wall12.32s; admittedseed, requestedhalf-prefixcompleted. Docs-only finalization byRoot after Mistral's narrow finish tool failed onCRLF. No installedverification/same-discretization speedup/D1acceptance claim. Linuxpending.
-- One-record curved-pair lifecycle: Linux foreign capsule differs only three recomputed diagnostic bounds, all physical/history fields exact. Unchanged production codec must refuse before fresh locally signed producer. Actual rollback/cancel/exception node passes Windows42.91s andLinux46.93s; multi-record archive replay untouched. Root smalltest-only reserved contract disposition.
-- Native front kernel/newanalytic5checks +existing20workchecks +unchanged8e7fullrefinementgate pass. Source uncommitted pending corrected independent review. Firstreview erroneously inspected wrongtest; preserved andcorrecting. Representationpad/fullunion/shared64cap/oldpassingpaths retained; no tolerance change.
-- Windows m0/s1 nextofficialsubshard prepared from immutable committed06064snapshot. Sourceaudit required before launch; exact handle in current rootcheckpoint. Do not confuse completedpartialshards with fullcoverage.
-- Mistral native-pair-deadline-repair-v1 owns only contact retained-pair driver +two namedtestmodules; address genuine120s sharedfibre deadline by cost/compatibleintegration repair, not changingdeadline/sharedcore/physics. Earlycheckpoint due10turns; Max65reserve20check+handoff.
-- Other open currentnativefriction replay integration/event failures from frozenLinuxfullCI remain to diagnose. FullCI previous4800stimeouts andwatchdog-correlatedcrash remain evidence, not passes.
-
-All exact receipts/sourcepatches/workerlogs/snapshots under `.development/contact-restart-20261011` (never stage). Continue useful currenttechnicalstate, no historicalqualification replay.
+Prior checkpoint follows unchanged.
 
 ---
-## Preserved preceding restart states and history
 
-# Active restart — consolidated main, 11 October 2026
+# Active source-only checkpoint — 2026-10-17, plan revision 116
 
-Authority: C:/ANYworkspaceWork/consolidation-backup-20261010/PROGRAMME_RESTART_BRIEF_20261011.md.
-Worktree C:/Github/ANYsolver/.worktrees/contact-resume; branch codex/contact-on-main; base1b45319f; latest committed repair de8df26e. Contact files only. No main/old/sibling/shared/prepared/submodel/rev8 edits, other-chat messages, push/PR/Actions. All evidence stays unstaged.
+Current41 Windows5/1 remains CLOSED/accepted as one local raw-green gate. New Windows5/2 source preparation only is active: scope B_POST_REFUSAL_WINDOWS_5_2_V1, authority C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/post-refusal-windows-5-2-v1/ROOT_SOURCE_AUTHORITY.json (SHA 54c72b787bbe7ed8f0711bf33b4708b827d9ce783112decb4a08dbffb17bb57b), source owner ci_memory_successor. Source checkpoint 10/17/2026 11:11:05, target 10/17/2026 11:25:05, hard 10/17/2026 11:35:05; overall 10/17/2026 12:30:05. No numerical job, metadata/CI release or execution handle exists. Fresh prospective2520-second maximum is unreleased, not reused5/1 allowance. Preserve full PLAN.md contracts and all closed native/Ubuntu/transient/C5 boundaries. No pushes.
 
-**Done condition unmet:** complete portable inventory without fail-fast and get contact tests green on Windows and Linux, report exact commits/results/queue dispositions and stop. Ordinary CI repair does not establish engineering acceptance; D1/full C0–C9 remain incomplete. Historical scientific criteria, failures and consumed execution authorities remain binding.
+Prior checkpoint follows unchanged.
 
-## Completed repairs and evidence
-
-- 2eee224c:19 portability/refusal tests; watchdog-correlated crash timer removed, not a mechanics fix.
-- 327708b: strict native/S3 field-binding diagnostics and real-owner refusal/restore regressions; seven focused passes. No hash/identity/schema relaxation.
-- 0f8b360e:20 output/archive tests retain current safety; empty control matrices rank0, dependent/full-constrained controls still refuse; seven source-caller/restart/safety passes.
-- b2995629: complete real-manager state in search fixtures;11 focused passes.
-- b95f4aca: restricted sliding manager compatibility and canonical native fixture LF ingestion;22 focused passes. Mixed projected full trajectory exceeded180s, preserved nonpass.
-- a2a4535f: explicit native temporal-pulse integration-limit refusal,3 focused passes, no new friction admission.
-- de8df26e: six native/archive test readers;60 passes/30 exact-input skips/two native penalty-response nonpasses. Current pressure-scale/nonfinite refusals always active; production checkpoint codecs unchanged.
-
-Linux focused a2a:16 search/pulse/force passes,18 restricted sliding passes,4 native/S3 passes. de8 five-module focused check running. Windows3.13.9/NumPy2.4.3/SciPy1.16.3; supplied Linux3.12.3/SciPy1.18.1 with private optional overlay. Receipts record precise source/patch/environment, process wall, memory and failures.
-
-## Full portable CI and next work
-
-Frozen2eee runs exceeded4800s and had two partitions aborted by ROOT observer json.dumps aliasing. Observer fixed;13 regression checks passed. Frozen0f8 windows-full-ci-03/linux-full-ci-04 currently running; partial phase counts are NOT complete coverage. Preserve all failed/incomplete runs. New portability failures beyond original42 remain assigned by actual failure evidence, not masked by broad skips.
-
-Mistral rigid-portability-v1 owns finite_v2d_rigid_patch test/archive split and always-active null/refusal checks. Mistral smallpatch-resolution-v2 owns scratch-only completion of ONE4x4 linear preflight from useful v1 artifacts. No other worker source ownership. Root owns integration, contracts and Git. Worker exit0 without actual checks/handoff is incomplete.
-
-## Principal numerical questions
-
-Corrected independent coarse-shell origin-linear oracle matches production ~1e-12, finds loaded-point physical gap -122.672um against -50um budget. This diagnoses weak/physical-gap conflict on that coarse fixture; it does NOT prove nonlinear equilibrium nonexistent. ONE4x4 same physical supports, (.6,.6) pointload-.02N, fineQ1pressure, material/target/gap preflight pending. No automatic mesh/load/tolerance sweep or frozen qualification replay.
-
-Native fibre 1e7->2e7 penalty refinement misses retained2% response gate (tip3.011%; other responses pass). Both seeded/unseeded failures preserved; no criterion or physics change adopted. Further enforcement refinement requires explicit current candidate disposition and independent checks, not an archive skip.
-
-Additional observed failures to classify: prefix_half fixture depends on coarse smallpatch; automatic swept lifecycle stale refusal regex; automatic selection variants missing real archive; original workflow external fixture absent; native fibre-pair cooperative120s context deadline under fullCI. Do not loosen deadlines/physics or infer contamination without evidence. Shared/out-of-scope rev8/B2/B3 failures remain visible and unedited.
-
-All receipts, workers, failed attempts and source snapshots: .development/contact-restart-20261011 (never stage). No pass from partial call counts; no acceptance/release or measured speedup claim.
 ---
-## Preserved prior pause record (historical paths and authorities)
-# General contact restart — PAUSED, 10 October 2026
 
-## Controlling state
+# Current contact checkpoint — 2026-10-17, plan revision 115
 
-User requested: "Pause developing. Make a well defined restart point".
-No new development, workers, tests or reviews may start until the user resumes.
-Full C0–C9 remains incomplete; D1 is not independently accepted or released.
-Authoritative worktree: C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
-Branch: codex/contact-main-reconcile-20261001. This record is saved in the local
-pause checkpoint following 3f654669. Preserve 15 unrelated qualification deletions.
-No main/sibling edits, other-chat messages, push, merge or publication.
-Root coordinates Mistral CLI directly; no GPT-Astra agent has any assignment.
+Windows/default 5/1 is CLOSED and accepted as one current41 local CI gate: 439 passed, 10 original skips, 13 original deselections; all 449 selected parents complete, no failures. Root disposition: C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/post-refusal-windows-5-1-root-v1/ROOT_TERMINAL_DISPOSITION.json (SHA 57d9af3b02679e0a3471ee264dc7900d76736c62d70475567da319cb6f4702ec). Measured CI+metadata 1483.7528114726883/2520 seconds, peak CI1012.91796875 MiB; known cleanup/no survivors/lock absent. All unused allowance CLOSED, remaining0; no active numerical job or execution handle.
 
-[Goal](GENERAL_CONTACT_GOAL.md) · [Plan](GENERAL_CONTACT_PLAN.md) ·
-[Full programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md).
+Read .development/contact-portable-replay-20261013/PLAN.md revision115 and normalized ACTIVE_DELIVERY_RUN_20261016.json for the current state. Prior operating records are preserved under the disposition root as *before_revision115*. Full retained C0-C9/D0-D8 contracts remain unchanged. Current candidate41/map has one exact local gate; old source39 credits and the scoped C5 observation do not transfer.
 
-## Preserved candidate and actual evidence
+Next unarmed step: prospective source preparation for original Windows5/2,46 full modules,22+24 original groups. Fresh scoped authority and relevant source/data/runtime/eligibility review are required before execution; do not repeat unchanged helper qualification. Preserve all known scientific failures, the native four-method stop, closed Ubuntu/transient routes and the different-family final gate. No criteria/functionality changes, pushes, publication or sibling/other-chat edits.
 
-The experimental third initializer selection is
-`linearized_kkt_merit_globalization_dev`, numerical revision
-`origin_linearized_kkt_seed_merit_globalization_v2`. It changes bounded QP
-sequencing and permits complete algorithmic-seed merit/path backtracking.
-Physical loads, supports, fine pressure space, 50 um gap, acceptance gates,
-physical commit and default-none/legacy identities remain binding.
+Historical restart record follows byte-for-byte; its running/release states are historical and do not reopen authority.
 
-On the ORIGINAL 16-Q4/32-S3, 300-coordinate, 25-pressure-mode fixture:
-- Legacy QP reaches its 116-iteration cap before geometry. Saved-operator evidence
-  identifies release/clamp cycling while the existing free face is nonstationary.
-- V2 obtains the same-operator optimum in 5 iterations, with unmasked KKT checks.
-  This is a local algorithm result, not a complete-route speedup claim.
-- Attempt 08 passed all four seed-decision/refusal cases. Full seed admitted;
-  actual merit 0.125 -> 0.0781887807266064. No physical commit during seeding.
-- Attempt 09 completed original increment 1 at load factor 0.125 in two Newton
-  iterations. Independent gap lower bound -48.784124147 um meets 50 um;
-  normalized wrench balances are below 1e-6. Test NONPASS is preserved: its
-  `is True` assertion rejected an actual NumPy Boolean true.
-- Latest test edits fix that Boolean assertion, separate the dimensional moment
-  scale, request/capture a producer checkpoint and require its presence.
-  THESE FINAL EDITS HAVE NOT RUN. Attempt 09 requested no checkpoint.
+---
+# General contact restart — plan revision114
 
-Owned product: core.py, initial_contact_seed.py, semismooth_path.py,
-request_identity.py and static_path.py under src/anysolver/general_contact/.
-Owned tests: test_general_contact_original_workflow_{qp_mechanism,seed_decision,
-first_increment}.py. Optional vertex-interval prototype stays UNWIRED/UNVERIFIED.
+Read fresh-start brief, then .development/contact-portable-replay-20261013/PLAN.md and ACTIVE_DELIVERY_RUN_20261016.json. Worktree C:/Github/ANYsolver/.worktrees/contact-portable-replay,branch codex/contact-portable-replay,HEAD59ba6acda0dbd7390487b758678a6f9b2681fdb2,baseline436457c8. Full C0–C9/D0–D8 functionality/criteria remain. No commits/pushes.
 
-## Worker/process state and execution balance
+No live numerical job/shared lock/released execution. E=C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013. Current41 manifest E/ci-portable-refusal-and-consumer-repair-root-v1/CANDIDATE_MANIFEST.proposed.json SHAa2166e3dfb2f1e82e9c5bc714164e239d45edc0e34129a0942e830589d178d25. Portable refusal/consumer repair remains verified development only; its closure/failed evidence unchanged.
 
-Owned CLI handles 11953, 92383, 89897, 9024 and 62842 are no longer live;
-independent Read 99108 is also terminal. They exhausted/interrupted without a
-complete final handoff. The last log ends after the checkpoint assertion edit.
-62842 is absent from the exec session registry. A privileged CIM check found
-no remaining process matching this milestone or the Mistral wrapper. No active
-numerical marker or tenth attempt exists. No new work was launched for this pause.
+Current CI map adopted METADATA ONLY: E/post-refusal-candidate-map-root-v1/ROOT_DISPOSITION.json; current map SHA4f25779f0c45f4993c9fd47b3bb93a54cf7125832afce9b6fe5ccf968b15b23f.1250modules,25targets,32original selectors/all11proof fields. Impact17selectors/34hostgates; retain knownred6/0+6/3 additionally =>19selectors/38minimumhostobligations,plus allother fullprogramme/profile/no-x/installed/public/scientific/different-family gates. No coverage/functionality/criterion reduction. All32contexts changed; current41CIcredit0,oldsource39credits2(1rawgreen)historic only,noC5transfer.
 
-Authoritative ledger:
-../contact_mistral_original_workflow_delivery_20261010/original-workflow-dev600-v1/ledger.json
-Scope D1_ORIGINAL_WORKFLOW_DELIVERY_DEV600_V1 remains OPEN administratively,
-but work is PAUSED: 232.5507088000304 / 600 measured seconds used, 9/10 attempts.
-367.4492911999696 s remain including protected 90 s reserve; usable 277.4492911999696 s.
-One attempt slot remains; named first-increment cap 180 s, 953 MiB, serial,
-immutable-source checks only. No build/install/full-eight-step permission in this
-scope. Read the ledger again on resume; this handoff never renews authority.
-All preceding scopes and their unused balances remain CLOSED.
+Map singleattemptPASS 17.469122840542695/60s,peak90.8984375MiB,unused42.530877159457305CLOSED/remaining0. Known accounting/sourceafter/cleanup/lockrelease/END,no survivors;tailunmeasured. Source-preparation codec failure preserved/fixed/reviewed before that attempt; no mapperretry.
 
-## Exact next actions after explicit resume
+Next SOURCE/DATA ONLY: prepare original Windows5/1 current-source carrier,44modules21+23 including repairedBL5. Reuse unchanged verifiedconsumer/guards, no duplicatehelperqualification. Review source/input/data/runtime/actualargv/ownership/pausedidentity before fresh boundedrelease. No newrunarmed. Historical paused shorthand alias unresolved; native7casefile separatelyheld. Knownblocker rows0/3transient,1/3buckling,7/1C5scope,6/0legacyBL5,6/3native remain.
 
-1. Verify checkpoint, owned dirty state, ledger and no active process. Return the
-   existing DELTA_V6 artifacts to the same Mistral implementation owner; avoid
-   repeating the completed investigation or passed checks.
-2. Finish the already specified first-increment/checkpoint check within the one
-   remaining guard attempt; preserve outcome and obtain a complete handoff.
-3. Close final independent review, default-none/v1/v2 identity, incompatible
-   restart, producer roundtrip and interruption/state checks under applicable
-   authority. Preliminary reviewer R1/R2 findings were repaired, but its missing
-   final report does not establish independent acceptance.
-4. Verify a new installed artifact before attributing prior installed evidence
-   to this candidate. Then address the original complete eight-step trajectory
-   and remaining D1 acceptance gaps. First-increment success is not D1 completion.
+Fournative methods rejected/withdrawn; native/bucklingsourcereads CLOSED UNKNOWN,no provenrepair. No fifthnative attempt/source-loop,oldscientificretry,UbuntuU4 or closedtransientreopening. Mistralcachedunavailable; same-familyreview notdifferent-familyfinalacceptance. Full retainedPLANtail unchanged; priorPLAN112/ACTIVE/restart saved in currentmaproot. No pushes.
 
-## Evidence and retained history
+Active SOURCE-ONLY Windows5/1 carrier: E/post-refusal-windows-5-1-v1/ROOT_SOURCE_AUTHORITY.json SHA264c890c224be2ebba008a6389bbc5eae6d6bedda2ae2eba33452c229961ba90; root-v1. Source checkpoint10:04:37,target10:18:37,hard10:28:37UTC;overall11:23:37. Fresh2520machine maximum (60metadata+2460CI),oneattempt,953/1536MiB asregistered,onejob,oldcarry0. All execution UNRELEASED;no live job. Reuse verifiedconsumer/guards,no unaffected helpercontrols. No repo/product/test edits or oldscience retry.
 
-Milestone root: ../contact_mistral_original_workflow_delivery_20261010/.
-Actual captures: original-workflow-dev600-v1/attempt-08-seed-decision-original-04/temp/
-and attempt-09-first-increment-original-01/temp/.
-Briefs, adopted deltas V2–V6, worker logs and independent-review-v1.log remain there.
-[Owned note](docs/GENERAL_CONTACT_ORIGINAL_WORKFLOW_MISTRAL_WORK_20261010.md).
-[Previous detailed restart](docs/GENERAL_CONTACT_RESTART_HISTORY_20261010_PRE_ORIGINAL_QP_REPAIR.md)
-preserves original source/artifact identities, historical failures, frozen/consumed
-restrictions and broader programme gaps. Existing b9 installed results stay bound
-to their original source/artifact. No engineering acceptance transfers to new code.
+2026-10-17T10:27UTC: ROOT METADATA ONLY RELEASED for B_POST_REFUSAL_WINDOWS_5_1_V1; C/ROOT_METADATA_RELEASE.json SHA2897e2b6a43aa0bf4419e376f5ddc9c71a29c7fe5275a14cab5fa4bb63206baf and current-source adoption SHAc2e87e87d1cde938a004dfcd9dd0d7923a9279f4e5e37b872ef87f4bb62864f4. Final PINS eec7bea0.../packet2bc48604.../review347eb0ee... . Source/static/independentchecks clear;256controls UNRUN. Next one measuredpreflight15s/953MiB; only actualPASS permits measuredadopt15s. Fixed60metadata/pre30/post30reserve unchanged. OriginalCI remainsUNRELEASED;oneattempt/no retry/oldcarry0. Sourcepreparation failuresandblockedpackets preserved; no scientificexecution yet.
 
-## Current repair delta
-Search-fixture repair verified: preparation-reuse and swept-search-owner modules11passed,16.374947s,181936128B peak sampled tree RSS. The __new__ fixtures explicitly supply their admitted Q4-source profile, reference-linear skin and exact literal-position error map; production search/bounds and malformed-target refusal remain real and unchanged. See search-refusal-repair-v2/HANDOFF.md and focused-search-01 receipt. Native friction pulse remains unrepaired. Full candidate0f8 CI runs windows-full-ci-03/linux-full-ci-04 use fixed observer and are ongoing; their source does not include this later test-fixture delta. Neither full-inventory coverage nor final green results established yet.
-Restricted sliding-manager source compatibility and strict native fixture I/O verified: driver-archive-repair-v2/HANDOFF.md records18 patch-sliding checks,3 saved/native restart checks and1 real augmented S3 pressure-basis caller check passed. Production canonical bytes remain final-LF ASCII; only test fixture checkout CRLF is converted to LF. Production decoder/hash/identity unchanged. The first helper implementation failed three checks and remains in receipts; corrected rerun passed. One heavier mixed projected restart node hit180s and remains unverified in this focused slice, not a pass. Partial d1_current_handoff and native_retained_body_pair edits from the earlier exhausted assignment remain unstaged/unverified.
-The independent origin-linearized small-patch discriminator delivered an approximate coupled KKT response, but root found a remaining oracle issue: documentation incorrectly says all source overlap lies in one S3 face, while results include both; whole-Q4 Gauss does not exactly integrate the crossed piecewise P1 target. Its tentative coarse-gap conclusion is not yet promoted. Correct common-refinement integration is the bounded next action; no fixture/load/gap/tolerance change adopted.
-Root aligned the temporal-pulse regression with the current explicit NativeFrictionIntegrationLimit resource refusal (the old historical-contact-envelope ValueError no longer exists in this route). This small edit followed root's reserved refusal-contract adjudication; no source mechanics/caps changed. The test now independently proves open endpoints/closed midtime, requires zero quadrature queries, the exact exhausted interval cap and unresolved-support diagnostic, and unchanged declared history definition. Three focused pulse/support/cap checks passed in5.1779178s; receipt root-temporal-pulse-refusal-01. It establishes conservative non-success, not admission of hidden-pulse friction.
-
-## Restart CI delta — native/archive portability
-Six test-reader/archive repairs reviewed: tracked text checkpoints use canonical producer LF; strict production hash/identity codecs unchanged. Exact missing-input guards retain current checks, including a new always-active pressure-response invalid-input test. Worker receipts: 60 passed, 30 exact-input skips, two preserved native-fibre 2% convergence failures; no acceptance or release claim. Evidence: .development/contact-restart-20261011/remaining-portability-v1/HANDOFF.md. Linux a2a: 16 search/pulse/force passes, 18 restricted sliding passes, four native/S3 passes (127.75 s). Full portable inventory runs remain in progress. Independent corrected coarse-shell linear oracle reproduces production to ~1e-12 and finds -122.672 um physical gap against -50 um budget; one same-load 4x4 spatial preflight pending. Native-fibre refinement 1e7->2e7 has 3.011% tip change against 2%; preserve this failure, investigate enforcement refinement without relaxing gates.
-
-Root reserved CI disposition: Linux saved retained-body fixture matches all authoritative physical fields and identity; only three recomputed diagnostic bounds differ (absolute 1.5e-34 J,2.5e-23 N,6.8e-21 N/m). Production byte-strict replay stays unchanged. Current test verifies exact physical payload, explicit strict refusal when diagnostic bytes differ, then a fresh local authenticated producer/consumer. This does not admit cross-environment byte-exact saved replay. Root implements this small test correction directly because the contract disposition is reserved and both Mistral slots own nonoverlapping active slices; no kernel implementation takeover.
-
-Further CI delta: finite rigid patch exact archive guards retain17 current checks (Windows17 pass/5 absent-input skips), including always-active null checkpoint refusal. Newqueue three-file patch was independently inspected:25 swept lifecycle passes/3 existing input skips, inverse variants pass with real fixture and optional output, historical QP reproducer passes with present inputs and skips when absent; deliberately invalid output still fails. Worker exhausted before final HANDOFF; actual receipts and CHECKPOINT.md inspected, no claim from exit0. Linux de8 five-module check47 pass/28 input skips/one strict diagnostic-byte replay nonpass; corrective test now4 pass/1 existing explicit-solve skip on Linux and its focal node passes Windows. Current physical/reference payload is exact; strict saved replay refusal retained when recomputed diagnostic bytes differ. Evidence .development/contact-restart-20261011/{newqueue-portability-v1,rigid-portability-v1,receipts/linux-local-replay-01,receipts/native-replay-local-producer-01}.
-
-Shell CI mechanics closure: prospective4x4 same pointload/support/material/50um fixture passed all8 current checks (half, full2increments, cutback,2 cancellation,2 exception rollback,restart/tamper), retained old2x2 failure. Supplied Windows3.13.9,180s/job,953MiB; actual walls27.9/77.9/113.3/82.7/103.1s. Worker original source.patch metadata was empty because its cwd-relative Git pathspec ran in scratch. Original receipts preserved; streamed edit, absolute test/PYTHONPATH, unchanged pre-run source mtimes and final exact hashes recovered in SOURCE_IDENTITY_RECOVERY.json/recovered-working.patch. Future scratch harness corrected to repository-root pathspec. This is ordinary CI evidence, not frozen acceptance registration. Eight importer modules require impact checks, plus Linux8-node verification and complete portable inventory.
-
-Further current verification: all8 shell driver/prefix gates pass Linux at89bc0239 (4/2/1/1 nodes, walls90.85/112.94/61.70/74.00s). All18 importer nodes pass Windows, including real seeded half solve; no importer semantics changed. Probe safety correction scopes/restores production hooks and closes log on exception, removes repeating watchdog thread; actual probe and injected exception cleanup pass. Both frozen0f8 full-CI attempts timed out at4800s; LinuxP04 also crashed in old probe (-11), allotherunfinishedpartitions remain unverified. New private observer records full collected nodeids and terminal status for subsequent completion; no shared runner edits/deselections. Native4e7certified_active allmechanicalgates pass buttipchange2.2936%>2%;8e7 rejected at initialfront because tangent bound1.141856e-6>1e-6. Mistral owns conservative conditional sub-band work certification using sameintervalcap/errorlimits; no caps/physics/tolerances loosened. New unrelated/current-contact failures beyondoriginal42 await bounded classification; finaldone condition notmet.
-
-## 2026-10-11 current portability delta (after f3852345)
-- Current projected Q4 profiles now checked against their distinct V2 identities; numerical checks unchanged.
-- Predictor compatibility oracle freezes the independent pre-selector schema (6c0d1931 parent), excluding later default-disabled fields and retaining opt-ins.
-- Five original-workflow archive nodes guard the exact external candidate_fixture.py/force-full.json inputs. Three current input-free production/refusal checks remain active; they do not replace historical archive claims.
-- Windows receipts: nextqueue-portability-v1/receipts: predictor 5 passes; projected Q4 five call-phase passes before bounded timeout plus remaining ordinary-control node separately passed; seed 6 passes; first-increment 2 passes. Missing-input simulation: 3 passes/5 explicit skips. Historical timeout retained. Linux verification still pending for these changes.
-- First official Windows subshard completed, not timed out: 12 +70 +60 +56 passes; 8 failures (5 contact), 5 skips. Four stale profile failures repaired by this delta; public seed example still uses coarse 2x2 geometry and is assigned a bounded 4x4 alignment. Full inventory coverage remains incomplete.
-- Native front candidate passed 5 focused analytic-oracle checks, 20 existing work checks and unchanged 8e7 response/refinement check; independent review pending. Source and evidence not yet promoted.
-
-## Native front certification — source promotion, not programme acceptance
-Independent Mistral review corrected its initial wrong-test scope and found no soundness counterexample. Root verified S3 active budget area includes every uncertain band; bisection retains exactly the same interval union and pad, so prepartition area remains its conservative allocation. New branch only runs after old finite bound rejection, all energy/force/tangent enclosure components remain bounded, children keep physical work maps and the same shared64 cap. Source promoted with 5 analytic/partition/cap checks, 20 existing work/derivative checks, and unchanged8e7 integrated response/wrench/gap/restart check passing onWindows. The new analytic oracle directly checks angular union and energy uncertainty; it does not independently prove force/tangent outputs, so no engineering acceptance is claimed. Full-source directional checks/qualification requirements remain. Linux and current CI refinement fixture disposition still pending. Historical1e7->2e7 and2e7->4e7 response nonpasses are preserved; no retrospective pass or criteria change.
-
-## Current reader isolation and Linux results
-A completed official subshard revealed a test-order defect: the native checkpoint consumer test assumed no native-owner modules had been imported by other tests during collection. It now checks its import delta and separately exercises exact public read/byte-roundtrip in a cold subprocess that must not load mechanics. Production codec unchanged. Windows7focusedpasses (including real-owner collection seam), Linux6consumerpasses within31front/work/reader passes. Linux refined publicentry/contracts3passes, Q4profile6passes across bounded3+3jobs; lifecycle rollback1pass. Linux unchanged seeded8e7comparison1pass. Current unseeded8e7candidate NONPASS: iteration7 geometry certificate refusals, source-case/gates unchanged; not counted as solved. Small prospective finefixture remains uncommitted pending this cold-route question. Native pair deadline measured99% in contact polynomial search, not sharedmaterialcore; sameMistralowner expanded to contact/native_curve_union.py andbeam_curve_pair.py for compatible exact-costrepair, deadline/capsunchanged. Nativefrictionworker owns separate history/support/integrationfiles with boundedtrue2eventpulse repair and checkpointLFingestion; no other files.
+2026-10-17T10:28:47UTC: exactone original Windows5/1 CI attempt RELEASED by C/ROOT_CI_RELEASE.json SHA7241a6e752a9cfad8a1f71151f9d75a4402bda094d6b263795d2a74c9611e117, after preflightPASS256/256,7871bindings,4.697170197134255s and adoptPASS14.788100015604869s. Usedmetadata19.485270212739124/60;40.514729787260876remain,review20/close10protected. Original44modules21+23, --workers2 --timeout2400 --matrix5/8 --subshard1/4, JITon/default/threads1/deadline4/hash0. CIwhole2460/inner2400/audit45/cleanup15/1536MiB,onejob,oneattempt,no retry/carry. ROOT native invocation next; no other science/fifthnative/oldretry/siblingedits authorized. Actual handlewillbe recordedimmediately; do not restart observationtimeout.
