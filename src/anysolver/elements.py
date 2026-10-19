@@ -4300,7 +4300,11 @@ class BeamElement(Element):
                 convergence_tolerance = max(
                     1.0e-8 * max(abs(sy), 1.0), roundoff_tolerance
                 )
-                if abs(residual) <= convergence_tolerance:
+                # Yield entry is tighter than the closure tolerance. A point
+                # admitted as yielding must take a positive return update
+                # before reporting a plastic tangent; otherwise its unchanged
+                # elastic stress has derivative E, not E*H/(E+H).
+                if dgamma > 0.0 and abs(residual) <= convergence_tolerance:
                     converged = True
                     break
                 if residual > 0.0:
@@ -4403,9 +4407,20 @@ class BeamElement(Element):
         B_shear_z[4], B_shear_z[10] = 0.5, 0.5
         B_torsion = np.zeros(12, dtype=float)
         B_torsion[3], B_torsion[9] = -1.0 / L, 1.0 / L
+        # The one-section fiber state resolves constant curvature.  The
+        # remaining elastic curvature/shear compliance must be condensed just
+        # as in _local_linear_stiffness: 1/S_eff = 1/S + L^2/(12*EI).
+        # Using the uncondensed kGA here made merely enabling an unyielded
+        # fiber law change the elastic Timoshenko response (shear locking).
+        # This retains the existing one-section plastic approximation, fiber
+        # strains, return map and history; it adds no distributed yield model.
+        phi_y = 12.0 * E * self._Iz / max(G12 * self._A * self._ky * L**2, _SMALL)
+        phi_z = 12.0 * E * self._Iy / max(G13 * self._A * self._kz * L**2, _SMALL)
+        shear_y = 12.0 * E * self._Iz / (L**2 * (1.0 + phi_y))
+        shear_z = 12.0 * E * self._Iy / (L**2 * (1.0 + phi_z))
         K_aux = L * (
-            G12 * self._A * self._ky * np.outer(B_shear_y, B_shear_y)
-            + G13 * self._A * self._kz * np.outer(B_shear_z, B_shear_z)
+            shear_y * np.outer(B_shear_y, B_shear_y)
+            + shear_z * np.outer(B_shear_z, B_shear_z)
             + GJ * np.outer(B_torsion, B_torsion)
         )
         F_loc += K_aux @ u_loc
@@ -5346,12 +5361,19 @@ class CoupledBeamShellElement(Element):
         material_name: str = "default",
         coupling_stiffness: float = 0.0,
         eccentricity: Optional[np.ndarray] = None,
+        *,
+        rotating_eccentricity: bool = True,
     ):
+        if type(rotating_eccentricity) is not bool:
+            raise TypeError("rotating_eccentricity must be a bool")
         super().__init__(element_id, [beam_node_id, shell_node_id], material_name)
+        self.rotating_eccentricity = rotating_eccentricity
         self.beam_node_id = beam_node_id
         self.shell_node_id = shell_node_id
         self.coupling_stiffness = coupling_stiffness
         self.eccentricity = None if eccentricity is None else np.asarray(eccentricity, dtype=float)
+        if self.eccentricity is not None:
+            self._validate_eccentricity_shape(self.eccentricity)
 
     @property
     def num_nodes(self) -> int:
@@ -5368,11 +5390,26 @@ class CoupledBeamShellElement(Element):
             raise ValueError(f"Coupling element {self.element_id} references a missing node")
         return np.array([beam_node.coords(), shell_node.coords()], dtype=float)
 
+    def _validate_eccentricity_shape(self, eccentricity: np.ndarray) -> np.ndarray:
+        eccentricity = np.asarray(eccentricity, dtype=float)
+        if eccentricity.shape != (3,):
+            raise ValueError(
+                f"Coupling element {self.element_id} eccentricity must have shape (3,), "
+                f"got {eccentricity.shape}"
+            )
+        if not np.all(np.isfinite(eccentricity)):
+            raise ValueError(
+                f"Coupling element {self.element_id} eccentricity contains non-finite values"
+            )
+        return eccentricity
+
     def _eccentricity_vector(self, mesh: "FEMesh") -> np.ndarray:
         if self.eccentricity is not None:
-            return np.asarray(self.eccentricity, dtype=float)
-        coords = self.get_node_coordinates(mesh)
-        return coords[0] - coords[1]
+            r = np.asarray(self.eccentricity, dtype=float)
+        else:
+            coords = self.get_node_coordinates(mesh)
+            r = np.asarray(coords[0] - coords[1], dtype=float)
+        return self._validate_eccentricity_shape(r)
 
     def compute_stiffness_matrix(self, mesh: "FEMesh", material: "Material") -> np.ndarray:
         # Coupling is enforced exactly by assembly.build_constraint_transformation().
@@ -5392,8 +5429,16 @@ class CoupledBeamShellElement(Element):
         """
         beam_node = mesh.get_node(self.beam_node_id)
         shell_node = mesh.get_node(self.shell_node_id)
-        if beam_node is None or shell_node is None:
-            return []
+        if beam_node is None:
+            raise ValueError(
+                f"Coupling element {self.element_id} references missing beam node "
+                f"{self.beam_node_id}"
+            )
+        if shell_node is None:
+            raise ValueError(
+                f"Coupling element {self.element_id} references missing shell node "
+                f"{self.shell_node_id}"
+            )
 
         b = beam_node.dofs
         s = shell_node.dofs
@@ -5423,8 +5468,56 @@ class CoupledBeamShellElement(Element):
             {"slave": b[5], "masters": {s[5]: 1.0}, "value": 0.0, "label": f"beam_shell_ecc_rz_{self.element_id}"},
         ]
 
+    def get_nonlinear_mpc_descriptor(self, mesh: "FEMesh") -> Optional[Dict[str, Any]]:
+        """Return the finite-rotation master-slave descriptor for corotational solves.
+
+        Under finite shell rotation ``theta_s``, the eccentric offset ``r_0``
+        rotates rigidly with the shell node:
+            u_b     = u_s + (R(theta_s) - I) r_0
+            theta_b = theta_s
+        Constructor option ``rotating_eccentricity=False`` disables the finite-
+        rotation lever arm and retains the fixed-reference linearized law.
+        """
+        rotating_eccentricity = getattr(self, "rotating_eccentricity", True)
+        if type(rotating_eccentricity) is not bool:
+            raise TypeError("rotating_eccentricity must be a bool")
+        if not rotating_eccentricity:
+            return None
+        beam_node = mesh.get_node(self.beam_node_id)
+        shell_node = mesh.get_node(self.shell_node_id)
+        if beam_node is None:
+            raise ValueError(
+                f"Coupling element {self.element_id} references missing beam node "
+                f"{self.beam_node_id}"
+            )
+        if shell_node is None:
+            raise ValueError(
+                f"Coupling element {self.element_id} references missing shell node "
+                f"{self.shell_node_id}"
+            )
+        r = np.asarray(self._eccentricity_vector(mesh), dtype=float).copy()
+        if float(np.linalg.norm(r)) == 0.0:
+            return None
+        b = beam_node.dofs
+        s = shell_node.dofs
+        return {
+            "element_id": int(self.element_id),
+            "slave_u_dofs": tuple(int(d) for d in b[:3]),
+            "slave_theta_dofs": tuple(int(d) for d in b[3:6]),
+            "masters": (
+                (
+                    tuple(int(d) for d in s[:3]),
+                    tuple(int(d) for d in s[3:6]),
+                    1.0,
+                ),
+            ),
+            "eccentricity": r,
+            "label_prefix": f"beam_shell_ecc_{self.element_id}",
+        }
+
     def compute_mass_matrix(self, mesh: "FEMesh", material: "Material") -> np.ndarray:
         return np.zeros((self.total_dofs, self.total_dofs), dtype=float)
+
 
 
 def validate_initial_field_state(

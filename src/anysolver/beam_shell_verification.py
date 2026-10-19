@@ -219,7 +219,7 @@ CASE_ROWS: Tuple[Tuple[str, int, str, bool, str], ...] = (
     ("COUP-009", 3, "buckling", True, "Stiffened-panel buckling invariants"),
     ("COUP-010", 2, "coordinates", True, "Stiffener orientation and curved-surface transport"),
     ("COUP-011", 2, "coupling", False, "Nonmatching beam and shell discretisation"),
-    ("COUP-012", 2, "coupling", True, "Actual interpolated-MPC affine-field reproduction"),
+    ("COUP-012", 2, "coupling", True, "Actual eccentric one-to-one MPC affine-field reproduction"),
     ("COUP-013", 2, "coupling", True, "Actual eccentric load-transfer equilibrium"),
     ("COUP-014", 2, "mixed_static", True, "Composite stiffened-strip static benchmark"),
     ("COUP-015", 2, "mixed_modal", True, "Composite stiffened-strip modal benchmark"),

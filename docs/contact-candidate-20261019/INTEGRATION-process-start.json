@@ -1,0 +1,32 @@
+{
+  "command": [
+    "C:\\Users\\AudunArnesenNyhus\\AppData\\Roaming\\uv\\python\\cpython-3.12.13-windows-x86_64-none\\python.exe",
+    "-I",
+    "-S",
+    "-B",
+    "C:\\ANYworkspaceWork\\contact_trackB_dependency_repair_20261013\\candidate-general-contact-20261019-v1\\integration-20261019\\entry.py",
+    "batch",
+    "C:\\ANYworkspaceWork\\contact_trackB_dependency_repair_20261013\\candidate-general-contact-20261019-v1\\integration-20261019\\ARGS.json"
+  ],
+  "cwd": "C:\\Github\\ANYsolver\\.worktrees\\contact-portable-replay",
+  "requested_seconds": 360.0,
+  "effective_timeout_seconds": 360.0,
+  "available_host_bytes": 99192557568,
+  "rss_cap_bytes": 999292928,
+  "rss_measurement": "sampled aggregate supervisor+new child tree; not kernel lifetime peak proof",
+  "environment": {
+    "OMP_NUM_THREADS": "1",
+    "OMP_STACKSIZE": "1G",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_NUM_THREADS": "1",
+    "NUMBA_DISABLE_JIT": "1",
+    "PYTHONHASHSEED": "0",
+    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1"
+  },
+  "status": "STARTING",
+  "input_sha256": {
+    "C:\\ANYworkspaceWork\\contact_trackB_dependency_repair_20261013\\candidate-general-contact-20261019-v1\\integration-20261019\\entry.py": "2c5fe6daacf4c52632d8c86de2e153eaa983233ec5763a45f5a458e8b3d6875b",
+    "C:\\ANYworkspaceWork\\contact_trackB_dependency_repair_20261013\\candidate-general-contact-20261019-v1\\integration-20261019\\ARGS.json": "0e8ad0be20353c9b4fbd14d6540d0e4be8639249932061f5f0022a28beeca31a"
+  }
+}

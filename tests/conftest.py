@@ -18,6 +18,39 @@ os.chdir(_REPOSITORY_ROOT)
 
 import pytest
 
+import sys
+
+if str(_REPOSITORY_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPOSITORY_ROOT))
+
+from scripts import retirement_policy
+
+
+def pytest_configure(config):
+    """Refuse explicit retired selectors before any collection or import.
+
+    pytest 9 does not consult ``pytest_ignore_collect`` for explicit initial
+    paths, and dropping items only in ``pytest_collection_modifyitems``
+    would import the retired modules first.  Scan the invocation selectors
+    here, resolved against the ORIGINAL invocation directory (this conftest
+    normalizes the process working directory to the repository root at
+    import time), and refuse the run before collection starts.  Ordinary
+    directory collection stays with ``pytest_ignore_collect``; retired nodes
+    inside active modules stay with the deselection hook below.
+    """
+    if retirement_policy.opt_in_enabled():
+        return
+    refused = retirement_policy.retired_explicit_selectors(
+        config.args, config.invocation_params.dir
+    )
+    if refused:
+        report = retirement_policy.retirement_report()
+        raise pytest.UsageError(
+            "refusing to run retired programme selector(s): "
+            + ", ".join(refused)
+            + f" (policy {report['policy']}; explicit future-use opt-in: "
+            + f"{report['opt_in_env']}=1)"
+        )
 
 @pytest.fixture(scope="module")
 def f03_q8_sided_faces():
@@ -44,3 +77,51 @@ def f03_q8_sided_faces():
         domains.append(domain)
     assert len(coords) == 484 and not domains[0] & domains[1]
     return coords, *domains
+
+
+def pytest_ignore_collect(config, collection_path):
+    """Keep retired programme modules out of ordinary collection.
+
+    Returning True prevents collection (and therefore import) of the
+    retired experimental stiffened-shell / GE beam-shell programme during
+    default directory collection.  Explicit command-line paths bypass
+    this hook, so pytest_collection_modifyitems below is the second,
+    node-level guard.
+    """
+    if retirement_policy.opt_in_enabled():
+        return None
+    relative = retirement_policy.relative_path(collection_path)
+    if relative is None:
+        return None
+    return retirement_policy.is_retired_module(relative)
+
+
+def pytest_collection_modifyitems(config, items):
+    """Deselect retired programme items collected via explicit paths.
+
+    Retired nodes inside otherwise active modules are removed here with
+    truthful reporting through the pytest deselection hook; their sibling
+    nodes keep running.  Whole retired modules never reach this point:
+    directory collection ignores them before import and explicit selectors
+    are refused in ``pytest_configure``.
+    """
+    if retirement_policy.opt_in_enabled():
+        return
+    kept = []
+    dropped = []
+    for item in items:
+        if retirement_policy.is_retired_collected_node(item.path, item.nodeid):
+            dropped.append(item)
+        else:
+            kept.append(item)
+    if dropped:
+        items[:] = kept
+        config.hook.pytest_deselected(items=dropped)
+        reporter = config.pluginmanager.getplugin("terminalreporter")
+        if reporter is not None:
+            report = retirement_policy.retirement_report()
+            reporter.write_line(
+                f"retired programme: deselected {len(dropped)} collected item(s) "
+                f"(policy {report['policy']}; explicit future-use opt-in: "
+                f"{report['opt_in_env']}=1)"
+            )

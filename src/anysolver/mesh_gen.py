@@ -49,6 +49,15 @@ class MeshConfig:
 
     use_8node_shells: bool = False
     align_mesh_to_stiffeners: bool = False
+    rotating_eccentricity: bool = True
+
+    def __post_init__(self) -> None:
+        _validate_rotating_eccentricity(self.rotating_eccentricity)
+
+
+def _validate_rotating_eccentricity(value: bool) -> None:
+    if type(value) is not bool:
+        raise TypeError("rotating_eccentricity must be a bool")
 
 
 @dataclass
@@ -128,6 +137,12 @@ class PanelGeometry:
             geometry.pressure = anystructure_data.pressure
         return geometry
 
+# Parent-adopted input-admission threshold for coupling shape weights:
+# the weights must form a partition of unity within this absolute
+# dimensionless tolerance (rtol=0).  Weights are never renormalized.
+COUPLING_PARTITION_OF_UNITY_ATOL = 1.0e-10
+
+
 class InterpolatedBeamShellMPCElement:
     """
     Duck-typed MPC-only element for eccentric beam-to-shell coupling.
@@ -137,6 +152,9 @@ class InterpolatedBeamShellMPCElement:
     are evaluated at the projected beam-node location in the shell element.
     """
 
+    # Class default keeps legacy/default V1 checkpoint namespaces unchanged.
+    connection_trace = "linear"
+
     def __init__(
         self,
         element_id: int,
@@ -145,7 +163,18 @@ class InterpolatedBeamShellMPCElement:
         shape_weights: np.ndarray,
         eccentricity: np.ndarray,
         material_name: str = "steel",
+        *,
+        rotating_eccentricity: bool = True,
+        connection_trace: str = "linear",
     ):
+        _validate_rotating_eccentricity(rotating_eccentricity)
+        self.rotating_eccentricity = rotating_eccentricity
+        if connection_trace not in ("linear", "director_integrated"):
+            raise ValueError("connection_trace must be 'linear' or 'director_integrated'")
+        if connection_trace == "director_integrated" and not rotating_eccentricity:
+            raise ValueError("director_integrated requires rotating_eccentricity=True")
+        if connection_trace != "linear":
+            self.connection_trace = connection_trace
         self.element_id = element_id
         self.beam_node_id = beam_node_id
         self.shell_node_ids = list(shell_node_ids)
@@ -155,6 +184,8 @@ class InterpolatedBeamShellMPCElement:
         self.node_ids = [beam_node_id] + self.shell_node_ids
         self._stiffness_matrix = None
         self._mass_matrix = None
+        self._validated_shape_weights()
+        self._validated_eccentricity()
 
     @property
     def num_nodes(self) -> int:
@@ -219,19 +250,91 @@ class InterpolatedBeamShellMPCElement:
     ) -> Dict[str, np.ndarray]:
         return {}
 
+    def _validated_shape_weights(self) -> np.ndarray:
+        """Return the admitted shape weights, revalidated against mutation."""
+        weights = np.asarray(self.shape_weights, dtype=float)
+        if weights.ndim != 1 or weights.size != len(self.shell_node_ids):
+            raise ValueError(
+                f"Interpolated MPC element {self.element_id} requires a 1-D "
+                f"shape-weight array with one weight per shell master node "
+                f"({len(self.shell_node_ids)} expected, got shape {weights.shape})"
+            )
+        if not np.all(np.isfinite(weights)):
+            raise ValueError(
+                f"Interpolated MPC element {self.element_id} shape weights "
+                "contain non-finite values"
+            )
+        # The reduction itself may overflow to +/-inf or NaN for finite
+        # mixed-sign weights; the explicit finiteness check below rejects
+        # that, so the overflow warning is deliberately silenced here.
+        with np.errstate(over="ignore", invalid="ignore"):
+            weight_sum = float(weights.sum())
+        if (
+            not np.isfinite(weight_sum)
+            or abs(weight_sum - 1.0) > COUPLING_PARTITION_OF_UNITY_ATOL
+        ):
+            raise ValueError(
+                f"Interpolated MPC element {self.element_id} shape weights must "
+                f"form a partition of unity within "
+                f"{COUPLING_PARTITION_OF_UNITY_ATOL}; got sum {weight_sum!r}"
+            )
+        return weights
+
+    def _validated_eccentricity(self) -> np.ndarray:
+        """Return the admitted common offset r, revalidated against mutation."""
+        eccentricity = np.asarray(self.eccentricity, dtype=float)
+        if eccentricity.shape != (3,):
+            raise ValueError(
+                f"Interpolated MPC element {self.element_id} eccentricity must "
+                f"have shape (3,), got {eccentricity.shape}"
+            )
+        if not np.all(np.isfinite(eccentricity)):
+            raise ValueError(
+                f"Interpolated MPC element {self.element_id} eccentricity "
+                "contains non-finite values"
+            )
+        return eccentricity
+
     def get_mpc_constraints(self, mesh: "FEMesh") -> List[Dict[str, Any]]:
+        if getattr(self, "connection_trace", "linear") not in ("linear", "director_integrated"):
+            raise ValueError("unsupported connection_trace")
+        if getattr(self, "connection_trace", "linear") == "director_integrated":
+            geometry = self._director_trace_geometry(mesh)
+            if geometry is not None:
+                from ._director_trace import director_trace_state
+                positions, slave, offset, xi, masters = geometry
+                _, B, _ = director_trace_state(positions, slave, offset, xi, np.zeros(12))
+                inputs = [d for n in masters for d in mesh.get_node(n).dofs]
+                return [{"slave": mesh.get_node(self.beam_node_id).dofs[i],
+                         "masters": {d: float(v) for d,v in zip(inputs,B[i]) if v != 0.},
+                         "value": 0., "label": f"director_trace_{self.element_id}_{i}"}
+                        for i in range(6)]
+        # Revalidate the aliased mutable inputs so later corruption cannot
+        # silently bypass admission, and fail closed on any missing
+        # referenced node (including zero-weight masters) before returning
+        # a partial constraint set.
+        shape_weights = self._validated_shape_weights()
+        rx, ry, rz = self._validated_eccentricity()
+
         beam_node = mesh.get_node(self.beam_node_id)
         if beam_node is None:
-            return []
+            raise ValueError(
+                f"Interpolated MPC element {self.element_id} references missing "
+                f"beam node {self.beam_node_id}"
+            )
 
         beam_dofs = beam_node.dofs
-        rx, ry, rz = self.eccentricity
         translational_masters = [{}, {}, {}]
         rotational_masters = [{}, {}, {}]
 
-        for shell_node_id, weight in zip(self.shell_node_ids, self.shape_weights):
+        for shell_node_id, weight in zip(self.shell_node_ids, shape_weights):
             shell_node = mesh.get_node(shell_node_id)
-            if shell_node is None or abs(float(weight)) == 0.0:
+            if shell_node is None:
+                raise ValueError(
+                    f"Interpolated MPC element {self.element_id} references "
+                    f"missing shell master node {shell_node_id}"
+                )
+            if float(weight) == 0.0:
                 continue
             s = shell_node.dofs
             w = float(weight)
@@ -260,6 +363,100 @@ class InterpolatedBeamShellMPCElement:
             {"slave": beam_dofs[4], "masters": rotational_masters[1], "value": 0.0, "label": f"interp_beam_shell_ry_{self.element_id}"},
             {"slave": beam_dofs[5], "masters": rotational_masters[2], "value": 0.0, "label": f"interp_beam_shell_rz_{self.element_id}"},
         ]
+
+    def get_nonlinear_mpc_descriptor(self, mesh: "FEMesh") -> Optional[Dict[str, Any]]:
+        """Return the finite-rotation master-slave descriptor for corotational solves.
+
+        The admitted intrinsic SO(3) mean ``R_bar`` of shell-master rotations
+        satisfies ``sum_i w_i Log(R_bar.T R_i) = 0`` on the supported local
+        branch. The eccentric offset rotates with this frame:
+            u_b     = sum_i w_i u_{s,i} + (R_bar - I) r_0
+            theta_b = Log(R_bar)
+        Constructor option ``rotating_eccentricity=False`` disables the finite-
+        rotation lever arm and retains the fixed-reference linearized law.
+        """
+        rotating_eccentricity = getattr(self, "rotating_eccentricity", True)
+        _validate_rotating_eccentricity(rotating_eccentricity)
+        trace = getattr(self, "connection_trace", "linear")
+        if trace not in ("linear", "director_integrated"):
+            raise ValueError("unsupported connection_trace")
+        geometry = self._director_trace_geometry(mesh) if trace == "director_integrated" else None
+        if not rotating_eccentricity:
+            return None
+        shape_weights = self._validated_shape_weights()
+        r = np.asarray(self._validated_eccentricity(), dtype=float).copy()
+        if float(np.linalg.norm(r)) == 0.0 and geometry is None:
+            return None
+        beam_node = mesh.get_node(self.beam_node_id)
+        if beam_node is None:
+            raise ValueError(
+                f"Interpolated MPC element {self.element_id} references missing "
+                f"beam node {self.beam_node_id}"
+            )
+        merged_weights: Dict[int, float] = {}
+        merged_dofs: Dict[int, Tuple[Tuple[int, ...], Tuple[int, ...]]] = {}
+        for shell_node_id, weight in zip(self.shell_node_ids, shape_weights):
+            shell_node = mesh.get_node(shell_node_id)
+            if shell_node is None:
+                raise ValueError(
+                    f"Interpolated MPC element {self.element_id} references "
+                    f"missing shell master node {shell_node_id}"
+                )
+            w = float(weight)
+            if w == 0.0:
+                continue
+            nid = int(shell_node_id)
+            s = shell_node.dofs
+            merged_weights[nid] = merged_weights.get(nid, 0.0) + w
+            merged_dofs[nid] = (
+                tuple(int(d) for d in s[:3]),
+                tuple(int(d) for d in s[3:6]),
+            )
+        masters = tuple(
+            (merged_dofs[nid][0], merged_dofs[nid][1], float(w))
+            for nid, w in merged_weights.items()
+            if abs(float(w)) > 0.0
+        )
+        beam_dofs = beam_node.dofs
+        return {
+            "element_id": int(self.element_id),
+            "slave_u_dofs": tuple(int(d) for d in beam_dofs[:3]),
+            "slave_theta_dofs": tuple(int(d) for d in beam_dofs[3:6]),
+            "masters": masters,
+            "eccentricity": r,
+            "label_prefix": f"interp_beam_shell_{self.element_id}",
+            "director_trace_geometry": geometry,
+        }
+
+    def _director_trace_geometry(self, mesh):
+        """Admit only a geometry-consistent straight two-master edge or endpoint."""
+        _validate_rotating_eccentricity(getattr(self, "rotating_eccentricity", True))
+        if not getattr(self, "rotating_eccentricity", True):
+            raise ValueError("director_integrated requires rotating_eccentricity=True")
+        weights = self._validated_shape_weights()
+        offset = self._validated_eccentricity().copy()
+        nodes = [mesh.get_node(n) for n in self.shell_node_ids]
+        beam = mesh.get_node(self.beam_node_id)
+        if beam is None or any(n is None for n in nodes):
+            raise ValueError("director_integrated references missing nodes")
+        if len(set(self.shell_node_ids)) != len(nodes) or len(nodes) not in (1,2) or np.any(weights < 0.):
+            raise ValueError("director_integrated requires one or two distinct nonnegative edge masters")
+        positions = np.array([n.coords() for n in nodes],dtype=float)
+        slave = np.array(beam.coords(),dtype=float)
+        if not np.all(np.isfinite(positions)) or not np.all(np.isfinite(slave)):
+            raise ValueError("director_integrated requires finite reference geometry")
+        span = float(np.linalg.norm(positions[-1]-positions[0])) if len(nodes)==2 else 0.
+        scale = max(span,float(np.linalg.norm(offset)),1.)
+        if np.linalg.norm(slave-weights@positions-offset) > 64*np.finfo(float).eps*scale:
+            raise ValueError("director_integrated slave reference position disagrees with edge weights and offset")
+        if len(nodes)==2 and (not np.isfinite(span) or span <= 0.):
+            raise ValueError("director_integrated requires a finite positive edge length")
+        if abs(float(weights.sum())-1.) > 64*np.finfo(float).eps:
+            raise ValueError("director_integrated requires unit weights to reference roundoff")
+        if len(nodes)==1 or np.count_nonzero(weights)==1:
+            return None
+        return positions.copy(),slave.copy(),offset,float(weights[1]),tuple(self.shell_node_ids)
+
 
 
 class RigidLidMPCElement:
@@ -483,7 +680,9 @@ def _install_couplings(
     mesh: NeutralMesh,
     *,
     material_name: str = "steel",
+    rotating_eccentricity: bool = True,
 ) -> None:
+    _validate_rotating_eccentricity(rotating_eccentricity)
     for element_id, coupling in mesh.couplings.items():
         model.add_element(
             int(element_id),
@@ -494,6 +693,7 @@ def _install_couplings(
                 shape_weights=np.asarray(coupling.weights, dtype=float),
                 eccentricity=np.asarray(coupling.eccentricity, dtype=float),
                 material_name=material_name,
+                rotating_eccentricity=rotating_eccentricity,
             ),
         )
 
@@ -586,6 +786,7 @@ def generate_stiffened_panel_mesh(
     from .fe_core import FEModel
 
     config = config or MeshConfig()
+    _validate_rotating_eccentricity(config.rotating_eccentricity)
     if config.use_shared_nodes:
         raise ValueError(
             "use_shared_nodes=True is no longer supported for eccentric stiffeners. "
@@ -598,7 +799,7 @@ def generate_stiffened_panel_mesh(
     _install_nodes(model, neutral)
     _install_shells(model, neutral, thickness=panel.plate_thickness)
     _install_panel_beams(model, neutral, panel)
-    _install_couplings(model, neutral)
+    _install_couplings(model, neutral, rotating_eccentricity=config.rotating_eccentricity)
     _add_panel_boundary_conditions(model, panel, panel_edge_nodes(neutral))
     return model
 
