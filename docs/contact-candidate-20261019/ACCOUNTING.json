@@ -1,0 +1,22 @@
+{
+  "full_records": "evidence/PROCESS_BUDGET.json",
+  "administrative_file_generation": "File/text/hash/copy operations outside numerical process accounting; no hidden numerical import or solver execution",
+  "budget_seconds": 2400,
+  "protected_final_reserve_seconds": 300,
+  "resource_semantics": "Ordinary sampled aggregate supervisor+new process-tree RSS; not kernel lifetime peak or prevention-of-overshoot proof",
+  "ordinary_cap_bytes": 999292928,
+  "charged_seconds": 189.3920825000023,
+  "resolved_tooling_failure_count": 2,
+  "old_lock_and_UNKNOWN": "Preserved; no cleanup or old resource recovery claimed",
+  "remaining_seconds": 2210.6079174999977,
+  "process_invocations": 24,
+  "precise_child_process_wall_seconds": 187.56044920001295,
+  "status": "ALL_NEW_OWNED_PROCESSES_TERMINAL_NO_SURVIVORS",
+  "maximum_sampled_aggregate_rss_bytes": 200433664.0,
+  "tool_context": {
+    "shell": "cmd.exe",
+    "login": false,
+    "sandbox_permissions": "require_escalated"
+  },
+  "final_owned_check": "portable-bundle-smoke, completed/no survivors"
+}

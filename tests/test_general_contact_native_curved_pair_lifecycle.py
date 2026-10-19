@@ -6,6 +6,7 @@ import time
 from pathlib import Path
 from hashlib import sha256
 from dataclasses import replace
+from math import isfinite
 
 import numpy as np
 import pytest
@@ -20,6 +21,66 @@ ROOT=Path(__file__).parents[1]
 EVIDENCE=Path(os.environ.get('CONTACT_NATIVE_CURVED_LIFECYCLE_EVIDENCE',
                             'C:/ANYworkspaceWork/contact_native_fibre_s3_20261005/candidate26'))
 TARGETS=(.05,0.,.05)
+_PRESS_SHA256='a37d8ebe66341e8dc48e83dbc99939153280a8f1a81c3812212c04d4adc6a8ca'
+_PRESS_PROVENANCE_SHA256='a32e0997ab8f5808b0bbd2b95b4dc8114094fa6bf1519b9d2fa2357edff70075'
+_PRESS_RECORD_SHA256='37d6c1c1c136f277957fd0cc4dc8e6f6744740d071cdef14a8da55c135bbd7ff'
+_TEMPLATE_IDENTITIES={}
+_MAX_TEMPLATE_IDENTITIES=8
+
+
+def _template_options_key(options):
+    """Cache only ordinary exact builtin inputs; all other inputs use the old path."""
+    boolean=('physical_fibres','plastic_fibres','gap_step_control',
+             'certify_curved_ownership','reuse_target_trials')
+    scalar=('separation','force','line_stiffness_n_per_m2','gap_tolerance_m','reference_rise_m')
+    if type(options) is not dict or set(options)!=set(boolean+scalar+('targets',)):
+        return None
+    if any(type(options[name]) is not bool for name in boolean):
+        return None
+    if any(type(options[name]) is not float or not isfinite(options[name]) for name in scalar):
+        return None
+    targets=options['targets']
+    if (type(targets) is not tuple or len(targets)>32
+            or any(type(value) is not float or not isfinite(value) for value in targets)):
+        return None
+    return (tuple((name,'bool',options[name]) for name in boolean)
+            +tuple((name,'float',options[name].hex()) for name in scalar)
+            +(('targets','tuple',tuple(('float',value.hex()) for value in targets)),))
+
+
+def _build_owner_with_template_identity(build,options,seed_path):
+    """Reuse only a string, after a successful fresh actual-owner construction.
+
+    Source is frozen for this process. No owner/context/contact/prepared result
+    escapes into this bounded cache; every actual owner retains its own admission,
+    lock, cancellation state, history and construction-to-expiry allowance.
+    """
+    def original_path():
+        template=build(**options)
+        frozen=_load(seed_path.read_text())
+        return build(**options,initial_trial=dict(native_model=template.context.identity,
+                      mechanical=frozen['records'][-1]['mechanical']))
+    option_key=_template_options_key(options)
+    if option_key is None:
+        # Preserve the original validation path for nonstandard or invalid input.
+        return original_path()
+    try:
+        seed_raw=seed_path.read_bytes()
+    except OSError:
+        # A missing/unreadable seed must not precede the original builder's
+        # validation failure merely because cache lookup needs a byte digest.
+        return original_path()
+    key=(option_key,sha256(seed_raw).hexdigest())
+    identity=_TEMPLATE_IDENTITIES.get(key)
+    if identity is None:
+        identity=build(**options).context.identity
+    frozen=_load(seed_raw.decode('ascii'))
+    owner=build(**options,initial_trial=dict(native_model=identity,
+                mechanical=frozen['records'][-1]['mechanical']))
+    # Failed decoding/template/actual construction cannot populate the cache.
+    if type(identity) is str and len(_TEMPLATE_IDENTITIES)<_MAX_TEMPLATE_IDENTITIES:
+        _TEMPLATE_IDENTITIES[key]=identity
+    return owner
 
 
 def _owner(*,reuse_target_trials=True,targets=TARGETS):
@@ -28,11 +89,8 @@ def _owner(*,reuse_target_trials=True,targets=TARGETS):
                  separation=.101,force=-.05,line_stiffness_n_per_m2=8000.,
                  gap_tolerance_m=5e-5,gap_step_control=True,reference_rise_m=.005,
                  certify_curved_ownership=True,reuse_target_trials=reuse_target_trials)
-    template=build(**options)
-    frozen=_load((ROOT/'tests/data/general_contact_native_curved_fibre_pair_seeded_k8_v1.checkpoint').read_text())
-    seed=dict(native_model=template.context.identity,
-              mechanical=frozen['records'][-1]['mechanical'])
-    return build(**options,initial_trial=seed)
+    return _build_owner_with_template_identity(build,options,
+        ROOT/'tests/data/general_contact_native_curved_fibre_pair_seeded_k8_v1.checkpoint')
 
 
 def _prefix(stage):return EVIDENCE/f'lifecycle_stage{stage}.checkpoint'
@@ -40,6 +98,20 @@ def _prefix(stage):return EVIDENCE/f'lifecycle_stage{stage}.checkpoint'
 
 def _press_fixture():
     return ROOT/'tests/data/general_contact_native_curved_pair_lifecycle_press_v1.checkpoint'
+
+
+def _press_fixture_bytes():
+    raw=_press_fixture().read_bytes()
+    provenance_raw=_press_fixture().with_name(
+        'general_contact_native_curved_pair_lifecycle_press_v1_provenance.json').read_bytes()
+    assert sha256(raw).hexdigest()==_PRESS_SHA256
+    assert sha256(provenance_raw).hexdigest()==_PRESS_PROVENANCE_SHA256
+    provenance=json.loads(provenance_raw)
+    assert provenance['provisional'] is True and provenance['coupled_solve_rerun'] is False
+    assert provenance['checkpoint_sha256']==_PRESS_SHA256
+    assert provenance['record_sha256']==_PRESS_RECORD_SHA256
+    assert sha256(canonical(_load(raw.decode('ascii'))['records'][0])).hexdigest()==_PRESS_RECORD_SHA256
+    return raw
 
 
 @pytest.mark.skipif(not os.environ.get('CONTACT_NATIVE_CURVED_LIFECYCLE_STAGE'),
@@ -108,7 +180,14 @@ def test_staged_curved_pair_press_open_recontact():
 
 
 def test_repeated_trial_identity_mutation_and_incompatible_bindings():
-    owner=_owner();raw=_press_fixture().read_bytes()
+    owner=_owner();raw=_press_fixture_bytes()
+    with pytest.raises(ValueError,match='external checkpoint hash mismatch'):
+        owner._restore(raw,'0'*64)
+    tampered=_load(raw.decode('ascii'))
+    tampered['records'][0]['contact']['energy_error_j']=1.
+    tampered_raw=canonical(tampered)
+    with pytest.raises(ValueError,match='definition/settings binding'):
+        owner._restore(tampered_raw,sha256(tampered_raw).hexdigest())
     for value in (1,'yes'):
         owner.reuse_target_trials=value
         with pytest.raises(ValueError,match='setting changed'):owner._guard()
@@ -119,34 +198,23 @@ def test_repeated_trial_identity_mutation_and_incompatible_bindings():
 
 
 def test_curved_owner_rejects_reassigned_program_before_prefix_replay():
-    owner=_owner();raw=_press_fixture().read_bytes()
+    owner=_owner();raw=_press_fixture_bytes()
     owner.program=replace(owner.program,targets=(.05,0.,.06))
     with pytest.raises(ValueError,match='bound program changed'):
         owner._restore(raw,sha256(raw).hexdigest())
 
 
 def test_nonvirgin_rejected_trial_cancellation_and_exception_roll_back(monkeypatch):
-    owner=_owner();raw=_press_fixture().read_bytes()
+    owner=_owner();raw=_press_fixture_bytes()
     archived=_load(raw.decode('ascii'))
-    # This is a one-increment material-origin safety fixture, not a promise
-    # of cross-library byte replay for recomputed numerical error bounds.
+    # Provisional same-pose contact rerecord; every saved field remains exact.
+    # The adjacent pinned provenance does not claim a new coupled trajectory.
     assert archived['completed_targets']==1 and len(archived['records'])==1
     record=archived['records'][0]
     mechanical=owner.context.make(record['mechanical'],decoded=True)
     _,replayed=owner._record(record['target'],mechanical,owner.initial.histories,
                             record['previous_sha256'])
-    diagnostic_keys={'energy_error_j','force_error_n','tangent_error_n_per_m'}
-    physical=lambda row:{**row,'contact':{key:value for key,value in row['contact'].items()
-                                        if key not in diagnostic_keys}}
-    # Exact histories, mechanical state, force/work/gap fields and chain
-    # binding remain mandatory. A physical difference is never rebased.
-    assert canonical(physical(record))==canonical(physical(replayed)), replay_difference_message(physical(record), physical(replayed), 'physical record')
-    if canonical(record)!=canonical(replayed):
-        # Authenticate the foreign capsule with the unchanged production
-        # codec and require its strict refusal before creating a local one.
-        with pytest.raises(ValueError,match='physical replay mismatch'):
-            owner._restore(raw,sha256(raw).hexdigest())
-        raw=owner._checkpoint((replayed,))
+    assert canonical(record)==canonical(replayed), replay_difference_message(record,replayed,'complete saved record')
     expected_records=_load(raw.decode('ascii'))['records']
     actual_record=owner._record
     def traced_record(target,*args,**kwargs):

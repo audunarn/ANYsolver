@@ -1,0 +1,41 @@
+{
+  "status": "SOURCE_RECONCILED_WITH_CURRENT_MAIN_AND_FOCUSED_CHECKS_PASS",
+  "recorded_utc": "2026-10-19T20:05:37.9270437Z",
+  "candidate_commit": "e40298cc5f1fce3bc6a25b803874e32efb45dffd",
+  "main_parent": "eadb2c0735b7d32a1c1bb853be098a9e7ea99a07",
+  "merge_resolution": "Default merge conflicted only in elements.py due preserved CRLF. Git merge -Xignore-space-at-eol retained both contact arithmetic and existing main coupling changes; no manual solver edit.",
+  "tests": {
+    "jit_disabled": true,
+    "executions": 19,
+    "full_qualification": false,
+    "pools": 1,
+    "scope": "13 original candidate contact selectors,3 shared-kernel backstops,3 existing main coupling checks",
+    "failures": 0,
+    "skips": 0
+  },
+  "accounting": {
+    "new_budget_seconds": 600,
+    "reserve_seconds": 120,
+    "original_supervisor_summary_remaining": "Copied supervisor final display used old2400 constant. Actual new600 authority and ledgercharge reconciled here; no run repeated.",
+    "child_wall_seconds": 31.04396700000143,
+    "maximum_sampled_aggregate_mib": 192.42578125,
+    "remaining_authority_seconds": 0,
+    "unused_seconds_closed": 568.9031025999975,
+    "new_owned_survivors": 0,
+    "charged_seconds": 31.09689740000249
+  },
+  "prelaunch_failures": [
+    "cmd quoted-executable syntax: no test launch",
+    "argparse option order: no test launch"
+  ],
+  "artifact_scope": "Original immutable wheel/ZIP unchanged. Merged source is a newer identity with focused19-pass verification; it is not a rebuilt/requalified wheel. Historical exact source bindings, including Q4, do not automatically transfer.",
+  "main_dirty_preservation": {
+    "backup_path": "C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/candidate-general-contact-20261019-v1/integration-20261019/main-dirty-preservation",
+    "policy": "Restore after local main merge; keep outside candidate commit",
+    "stash": "bfcd518fc6f242ee9466ec522ec368e77d7f51a1",
+    "tracked_files": 13
+  },
+  "no_push": true,
+  "full_programme_qualified": false,
+  "evidence_directory": "C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/candidate-general-contact-20261019-v1/integration-20261019"
+}

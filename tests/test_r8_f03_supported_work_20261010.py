@@ -10,13 +10,56 @@ def test_effective_bounded_numerical_runtime():
     import os
     if "NUMBA_DISABLE_JIT" not in os.environ:
         pytest.skip("explicit NUMBA_DISABLE_JIT runtime binding absent")
+    import numba
     import psutil
     from threadpoolctl import threadpool_info
-    assert psutil.Process().cpu_affinity() == [0]
+    requested_jit = os.environ["NUMBA_DISABLE_JIT"]
+    assert requested_jit in ("0", "1")
+    if requested_jit == "1":
+        assert psutil.Process().cpu_affinity() == [0]
     assert all(os.environ.get(key) == "1" for key in
-               ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "NUMBA_NUM_THREADS", "NUMBA_DISABLE_JIT"))
+               ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "NUMBA_NUM_THREADS"))
+    assert int(numba.config.DISABLE_JIT) == int(requested_jit)
+    assert numba.get_num_threads() == 1
     pools = threadpool_info()
     assert pools and all(pool["num_threads"] == 1 for pool in pools)
+
+
+@pytest.mark.parametrize("requested_jit", ("0", "1"))
+@pytest.mark.parametrize("defect", (
+    None, "unknown_mode", "effective_jit", "numba_threads", "pool_threads",
+    "no_pools", "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS",
+    "MKL_NUM_THREADS", "NUMBA_NUM_THREADS", "diagnostic_affinity",
+))
+def test_bounded_runtime_modes_and_refusals(monkeypatch, requested_jit, defect):
+    """Exercise the actual runtime guard, including its diagnostic restrictions."""
+    from types import SimpleNamespace
+    import numba
+    import psutil
+    import threadpoolctl
+
+    for key in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS",
+                "MKL_NUM_THREADS", "NUMBA_NUM_THREADS"):
+        monkeypatch.setenv(key, "2" if defect == key else "1")
+    monkeypatch.setenv("NUMBA_DISABLE_JIT",
+                       "invalid" if defect == "unknown_mode" else requested_jit)
+    effective = 1 - int(requested_jit) if defect == "effective_jit" else int(requested_jit)
+    monkeypatch.setattr(numba.config, "DISABLE_JIT", effective)
+    monkeypatch.setattr(numba, "get_num_threads",
+                        lambda: 2 if defect == "numba_threads" else 1)
+    affinity = [2, 3] if requested_jit == "0" or defect == "diagnostic_affinity" else [0]
+    monkeypatch.setattr(psutil, "Process",
+                        lambda: SimpleNamespace(cpu_affinity=lambda: affinity))
+    pools = [] if defect == "no_pools" else [
+        {"num_threads": 2 if defect == "pool_threads" else 1}]
+    monkeypatch.setattr(threadpoolctl, "threadpool_info", lambda: pools)
+    should_refuse = defect is not None and not (
+        defect == "diagnostic_affinity" and requested_jit == "0")
+    if should_refuse:
+        with pytest.raises(AssertionError):
+            test_effective_bounded_numerical_runtime()
+    else:
+        test_effective_bounded_numerical_runtime()
 
 
 def family(**changes):

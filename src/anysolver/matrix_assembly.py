@@ -2333,6 +2333,14 @@ def _bind_qualified_assembly_runtime_lease(
                 raise ValueError(
                     "qualified assembly node/DOF routing is incompatible"
                 )
+            # Ordinary mixed assembly populates these owned containers after
+            # lease capture.  Establish only missing containers NOW, after
+            # exact mesh/container admission and before binding their identity.
+            # Use the admitted exact namespace directly: no provider/setattr
+            # callback, no cache clearing, and no acceptance of later replacement.
+            for cache_name in ("_sparsity_cache", "_topology_signature_cache"):
+                if dict.get(mesh_namespace, cache_name) is None:
+                    mesh_namespace[cache_name] = {}
             return {
                 "model_namespace": model_namespace,
                 "model_keys": tuple(model_namespace),

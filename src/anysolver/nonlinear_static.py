@@ -1328,7 +1328,9 @@ def _assemble_nonlinear_system_unchecked(
     from .elements import ShellElement
     from .materials import is_isotropic_material
     from .nonlinear_element_evaluation import evaluate_nonlinear_element
-    from .vectorized_nonlinear import batch_shell_nonlinear_response, shell_nonlinear_batch_eligible
+    from .vectorized_nonlinear import (
+        batch_shell_nonlinear_response, shell_nonlinear_batch_eligible,
+    )
 
     groups = {}
     for elem_id, element in mesh.elements.items():
@@ -1457,6 +1459,23 @@ def _assemble_nonlinear_system_unchecked(
                 F_int_batch[idx] += correction @ u_elem_batch[idx]
                 if tangent:
                     K_T_batch[idx] += correction
+                direct_builder = (element._elastic_increment_response
+                                  if type(element) is _QualifiedE4PLShellElement else None)
+                direct_admission = (element._elastic_increment_admitted
+                                    if type(element) is _QualifiedE4PLShellElement else None)
+                if (callable(direct_builder) and callable(direct_admission)
+                        and direct_admission(mesh, material, committed_states.get(elem_id))):
+                    # Prepare both independent baselines inside the guarded
+                    # response, under its original pre-preparation snapshot.
+                    direct = direct_builder(
+                        mesh, material, u_elem_batch[idx],
+                        committed_states.get(elem_id), tangent,
+                        batch_baseline=True,
+                    )
+                    if direct is not None:
+                        F_int_batch[idx] = direct[0]
+                        if tangent:
+                            K_T_batch[idx] = direct[1]
             precomputed_F[elem_id] = F_int_batch[idx]
             if tangent:
                 precomputed_K[elem_id] = K_T_batch[idx]

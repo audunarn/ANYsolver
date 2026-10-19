@@ -451,6 +451,12 @@ def _capture_owned_local_recovery(model, element, *, warm_stress=True, pressure_
     if not all(_plain_numeric_state(value) for value in inputs.values()):
         raise PreparedStaticCapabilityError("local canonical recipe contains nonplain element inputs")
     material = model.get_material(element.material_name)
+    source_q4_policy = None
+    if warm_stress and type(element) is QualifiedE4PLShellElement:
+        # Authenticate the new helper before fetching it from its module. Keep
+        # only its builtin bool, never the original mesh/scalar providers.
+        _require_prepared_q4_authority()
+        source_q4_policy = _prepared_q4._capture_original_q4_policy(element, model.mesh, material)
     def freeze(value):
         if type(value) is np.ndarray:
             return (value.dtype.str, tuple(value.shape), value.tobytes())
@@ -505,7 +511,8 @@ def _capture_owned_local_recovery(model, element, *, warm_stress=True, pressure_
             LoadCase("prepared_owned_pressure_warmup")._consistent_pressure_load(owned_element, owned_mesh, pressure_probe, None)
         if warm_stress:
             _require_prepared_q4_authority()
-            staged, fallback_reason = _prepared_q4.compile_q4_stages(owned_element, owned_mesh, owned_material)
+            staged, fallback_reason = _prepared_q4.compile_q4_stages(
+                owned_element, owned_mesh, owned_material, _source_compensated=source_q4_policy)
             if staged is not None:
                 identity = (identity, staged)
             else:
@@ -534,7 +541,8 @@ def _capture_owned_local_recovery(model, element, *, warm_stress=True, pressure_
             if probe_case is not None:
                 probe_case._consistent_pressure_load(owned_element, owned_mesh, pressure_probe, None)
             if warm_stress:
-                staged, fallback_reason = _prepared_q4.compile_q4_stages(owned_element, owned_mesh, owned_material)
+                staged, fallback_reason = _prepared_q4.compile_q4_stages(
+                    owned_element, owned_mesh, owned_material, _source_compensated=source_q4_policy)
                 if staged is not None:
                     identity = (identity, staged)
                 else:
@@ -569,6 +577,10 @@ def _capture_owned_local_recovery(model, element, *, warm_stress=True, pressure_
         if hasattr(value, "__dict__") and not callable(value) and not isinstance(value, type):
             return size + storage(vars(value))
         return size
+    if source_q4_policy is not None:
+        _require_prepared_q4_authority()
+        if _prepared_q4._capture_original_q4_policy(element, model.mesh, material) is not source_q4_policy:
+            raise PreparedStaticCapabilityError('source Q4 arithmetic policy changed during capture')
     return OwnedLocalRecovery(identity, storage(owner) + storage(identity), owner, staged, fallback_reason)
 
 

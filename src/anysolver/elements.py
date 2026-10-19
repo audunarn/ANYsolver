@@ -71,6 +71,7 @@ import warnings
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Mapping, Optional, Tuple
 
 import numpy as np
+from . import _compensated_contractions as _local_contractions
 
 from .beam_sections import (
     GENERALIZED_BEAM_RESULTANT_ORDER,
@@ -707,6 +708,26 @@ def _in_plane_transform_matrices(angle_rad: float) -> Tuple[np.ndarray, np.ndarr
             local_stress[0, 1],
         )
     return strain_to_material, stress_to_local, axes
+
+
+def _compensated_elastic_zero_tangent(element, mesh, material, post_observation=None):
+    """Scalar zero-state realization, called only after qualified elastic admission.
+
+    Preserve scalar coefficient operations, including reciprocal-compliance
+    drill, independently of the batch coefficient construction. No state/cache
+    or caller eligibility is changed here.
+    """
+    geometry = element._nonlinear_geometry(mesh)
+    membrane, shear, _strain, _stress = _shell_material_matrices(
+        material, element._material_angle(geometry["R0"]), post_observation)
+    modulus = 1.0 / float(_elastic_compliance(material, post_observation)[5, 5])
+    h = element.thickness
+    result = _local_contractions.shell_zero_tangent(
+        geometry, h * membrane, h**3 / 12.0 * membrane,
+        shear * (5.0 / 6.0) * h, modulus * h * element.drilling_stabilization)
+    if post_observation is not None:
+        post_observation()
+    return result
 
 
 def _shell_material_matrices(

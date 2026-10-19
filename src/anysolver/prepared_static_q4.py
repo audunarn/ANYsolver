@@ -10,6 +10,7 @@ import copy
 import types
 import numpy as np
 from . import e4_pl_element as _native
+from . import _compensated_contractions as _contractions
 from .boundary import _callable_authority, _callable_authority_matches
 from .static_batch import _class_state
 from .prepared_static_loads import PreparedStaticCapabilityError
@@ -28,6 +29,7 @@ class PreparedQ4Stages:
     thickness: float
     constants: object
     implementation: str = 'prepared_q4_native_stages_v1'
+    compensated: bool = False
 
 
 def _frozen_layout(value):
@@ -38,8 +40,19 @@ def _frozen_layout(value):
     return np.frombuffer(array.tobytes(order=order), dtype=array.dtype).reshape(array.shape, order=order)
 
 
-def compile_q4_stages(element, mesh, material):
+def _capture_original_q4_policy(element, mesh, material):
+    """Observe native admission before owned geometry normalizes scalar types."""
     require_q4_kernel_authority()
+    policy = _NATIVE_POLICY(element, mesh, material, None)
+    if type(policy) is not bool:
+        raise PreparedStaticCapabilityError('native Q4 arithmetic policy is not builtin bool')
+    return policy
+
+
+def compile_q4_stages(element, mesh, material, *, _source_compensated=None):
+    require_q4_kernel_authority()
+    if _source_compensated is not None and type(_source_compensated) is not bool:
+        raise PreparedStaticCapabilityError('source Q4 arithmetic policy is not builtin bool')
     if type(element) is not _native.QualifiedE4PLShellElement:
         return None, 'not_exact_qualified_q4'
     if element.shell_section is not None:
@@ -54,12 +67,17 @@ def compile_q4_stages(element, mesh, material):
     frame, local, warpage = _native.equation7_frame(coordinates)
     if warpage > element.planar_tolerance:
         return None, 'warped_geometry'
+    compensated = _NATIVE_POLICY(element, mesh, material, None)
+    # A private source witness can only restrict clone admission, never enable it.
+    if _source_compensated is not None:
+        compensated = compensated and _source_compensated
     c = _native._coefficients(local)
     determinants = [c['jc'], *(_native._jacobian(c, r, s)[4] for r, s in _native._GAUSS)]
     if min(determinants) <= 1e-12 * _native._local_jacobian_scale(local):
         raise PreparedStaticCapabilityError('prepared Q4 has a nonpositive native Jacobian')
     constitutive = element._constitutive_and_drill_stiffness(material, frame)[0]
-    stationary, coupling, _gram = _native._stationary_blocks(local, c, constitutive)
+    stationary, coupling, _gram = _native._stationary_blocks(
+        local, c, constitutive, compensated=compensated)
     solution, _certification = _native._solve_stationary_system(stationary, coupling)
     stations = []
     for r, s in _native._GAUSS:
@@ -80,23 +98,35 @@ def compile_q4_stages(element, mesh, material):
     return PreparedQ4Stages(_frozen_layout(_native._global_transform(frame)), _frozen_layout(solution),
         _frozen_layout(stationary), _frozen_layout(coupling), tuple(stations),
         _frozen_layout(membrane), _frozen_layout(curvature), _frozen_layout(shear),
-        float(element.thickness), tuple(constants.items())), ''
+        float(element.thickness), tuple(constants.items()), compensated=compensated), ''
 
 
 def recover_q4_stages(stages, displacements):
-    local = stages.transform.T @ displacements
-    parameters = -stages.solution @ local
+    if stages.compensated:
+        local = _contractions.product(stages.transform.T, displacements)
+        parameters = -_contractions.product(stages.solution, local)
+    else:
+        local = stages.transform.T @ displacements
+        parameters = -stages.solution @ local
     stress_parameters = parameters[:14]
     strain_parameters = parameters[14:]
-    residual = stages.stationary @ parameters + stages.coupling.T @ local
+    residual = (_contractions.sum_arrays((
+        _contractions.product(stages.stationary, parameters),
+        _contractions.product(stages.coupling.T, local))) if stages.compensated else
+        stages.stationary @ parameters + stages.coupling.T @ local)
     physical = np.concatenate(tuple(local[6 * node:6 * node + 5] for node in range(4)))
     compatible = np.zeros((4, 8), dtype=float)
     independent = np.zeros_like(compatible)
     resultants = np.zeros_like(compatible)
     for index, (b, epsilon, sigma) in enumerate(stages.station_fields):
-        compatible[index] = b @ physical
-        independent[index] = epsilon @ strain_parameters
-        resultants[index] = sigma @ stress_parameters
+        if stages.compensated:
+            compatible[index] = _contractions.product(b, physical)
+            independent[index] = _contractions.product(epsilon, strain_parameters)
+            resultants[index] = _contractions.product(sigma, stress_parameters)
+        else:
+            compatible[index] = b @ physical
+            independent[index] = epsilon @ strain_parameters
+            resultants[index] = sigma @ stress_parameters
     for values in (local, parameters, residual, compatible, independent, resultants):
         if not np.all(np.isfinite(values)):
             raise ValueError('prepared Q4 mixed recovery produced nonfinite fields')
@@ -147,8 +177,12 @@ def recover_q4_stage_columns(stages, displacements):
     """
     columns = np.asarray(displacements, dtype=float)
     count = columns.shape[1]
-    local = stages.transform.T @ columns
-    parameters = -stages.solution @ local
+    if stages.compensated:
+        local = _contractions.product(stages.transform.T, columns)
+        parameters = -_contractions.product(stages.solution, local)
+    else:
+        local = stages.transform.T @ columns
+        parameters = -stages.solution @ local
     stress_parameters = parameters[:14]
     strain_parameters = parameters[14:]
     physical = np.concatenate(tuple(local[6 * node:6 * node + 5] for node in range(4)))
@@ -156,10 +190,27 @@ def recover_q4_stage_columns(stages, displacements):
     independent = np.zeros_like(compatible)
     resultants = np.zeros_like(compatible)
     for index, (b, epsilon, sigma) in enumerate(stages.station_fields):
-        compatible[index] = b @ physical
-        independent[index] = epsilon @ strain_parameters
-        resultants[index] = sigma @ stress_parameters
+        if stages.compensated:
+            compatible[index] = _contractions.product(b, physical)
+            independent[index] = _contractions.product(epsilon, strain_parameters)
+            resultants[index] = _contractions.product(sigma, stress_parameters)
+        else:
+            compatible[index] = b @ physical
+            independent[index] = epsilon @ strain_parameters
+            resultants[index] = sigma @ stress_parameters
     def mapped(values):
+        if stages.compensated:
+            # Keep the native per-case director products in their original order.
+            # Materialize the full native C layout before taking its slices;
+            # the trailing probe axis must not change the director BLAS layout.
+            cases = []
+            for i in range(count):
+                case = np.array(values[:, :, i], order='C', copy=True)
+                cases.append(np.column_stack((
+                    case[:, :3] @ stages.membrane_map.T,
+                    case[:, 3:6] @ stages.curvature_map.T,
+                    case[:, 6:] @ stages.shear_map.T)))
+            return np.stack(cases, axis=-1) if count else np.empty_like(values)
         return np.concatenate((np.einsum('ij,sjk->sik', stages.membrane_map, values[:, :3]),
                                np.einsum('ij,sjk->sik', stages.curvature_map, values[:, 3:6]),
                                np.einsum('ij,sjk->sik', stages.shear_map, values[:, 6:])), axis=1)
@@ -193,8 +244,25 @@ def require_q4_kernel_authority():
         if (globals().get(name) is not function or not _callable_authority_matches(function, authority)
                 or any(function.__globals__.get(key) is not value for key, value in bindings)):
             raise PreparedStaticCapabilityError('prepared Q4 kernel executable authority changed')
+    if (vars(_native.QualifiedE4PLShellElement).get('_elastic_increment_admitted') is not _NATIVE_POLICY
+            or not _callable_authority_matches(_NATIVE_POLICY, _NATIVE_POLICY_AUTHORITY)
+            or any(_NATIVE_POLICY.__globals__.get(key) is not value for key, value in _NATIVE_POLICY_BINDINGS)):
+        raise PreparedStaticCapabilityError('prepared Q4 native arithmetic policy authority changed')
+    for name, function, authority, bindings in _CONTRACTION_FACTS:
+        if (vars(_contractions).get(name) is not function
+                or not _callable_authority_matches(function, authority)
+                or any(function.__globals__.get(key) is not value for key, value in bindings)):
+            raise PreparedStaticCapabilityError('prepared Q4 contraction executable authority changed')
 
 _STAGE_CLASS_FACTS = _class_state(PreparedQ4Stages)
+_NATIVE_POLICY = _native.QualifiedE4PLShellElement._elastic_increment_admitted
+_NATIVE_POLICY_AUTHORITY = _callable_authority(_NATIVE_POLICY)
+_NATIVE_POLICY_BINDINGS = tuple((key, _NATIVE_POLICY.__globals__[key])
+    for key in _NATIVE_POLICY.__code__.co_names if key in _NATIVE_POLICY.__globals__)
+_CONTRACTION_FACTS = tuple((name, value, _callable_authority(value),
+    tuple((key, value.__globals__[key]) for key in value.__code__.co_names if key in value.__globals__))
+    for name, value in tuple(vars(_contractions).items()) if type(value) is types.FunctionType
+    and name in {'_product_parts', 'dot', 'product', 'sum_arrays', 'weighted_sum'})
 _KERNEL_FACTS = tuple((name, value, _callable_authority(value),
     tuple((key, value.__globals__[key]) for key in value.__code__.co_names if key in value.__globals__))
     for name, value in tuple(globals().items()) if type(value) is types.FunctionType

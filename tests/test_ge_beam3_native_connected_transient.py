@@ -13,6 +13,30 @@ from examples.native_connected_dynamic_dev import build,velocity
 DT=2.**-12
 
 
+@pytest.mark.parametrize('clamped',(False,True),ids=('free','root-clamped'))
+def test_public_connected_independent_physical_balances(tmp_path,record_property,monkeypatch,capsys,clamped):
+    import sys
+    from examples import native_connected_transient_dev as public
+    destination=tmp_path/('clamped'if clamped else'free')
+    with monkeypatch.context()as patch:
+        patch.setattr(sys,'argv',[public.__file__,'--balance-output',str(destination)]+(['--clamped']if clamped else[]))
+        public.main()
+    printed=json.loads(capsys.readouterr().out)
+    assert printed['engineering_accepted']is False and printed['clamped']is clamped
+    summary=json.loads((destination/'ASSESSMENT.json').read_bytes())
+    assert summary['exact_fresh_split']is True
+    assert summary['base_steps']*summary['base_dt']==8*summary['refinement_dt']==.001
+    assert set(summary['assessments'])=={'full','prefix','resumed','refined'}
+    for assessment in summary['assessments'].values():
+        assert assessment['parity_max']<=1e-10 and assessment['balance_max']<=1e-6
+    # Compact path/hash evidence; full physical histories are durable on disk.
+    record_property('independent_connected_balance',json.dumps(dict(
+        path=str(destination/'ASSESSMENT.json'),sha256=sha256((destination/'ASSESSMENT.json').read_bytes()).hexdigest(),
+        clamped=clamped,base_parity=summary['assessments']['full']['parity_max'],
+        base_balance=summary['assessments']['full']['balance_max'],
+        refined_balance=summary['assessments']['refined']['balance_max'],exact_fresh_split=True),sort_keys=True))
+
+
 def config(owner,steps=4,save_every=2):
     return TransientConfig(dt=DT,t_end=steps*DT,initial_velocity=velocity(owner),save_every=save_every)
 

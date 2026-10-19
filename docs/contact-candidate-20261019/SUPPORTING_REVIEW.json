@@ -1,0 +1,104 @@
+{
+  "status": "SUPPORTING_REVIEW_NO_BLOCKERS_WITHIN_RESTRICTED_MEASURED_CANDIDATE_SCOPE",
+  "recorded_utc": "2026-10-19T19:47:19.6884796Z",
+  "candidate": "C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/candidate-general-contact-20261019-v1",
+  "delivery": "C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/candidate-general-contact-20261019-v1/delivery",
+  "reviewer": "Independent OpenAI same-family Read review; Mistral/local unavailable, final different-family acceptance OPEN",
+  "authority_sha256": "26cf782df85840f97a74127e6f4137e9c6f511a7e58f47a2a3ac01aec5514200",
+  "handoff_sha256": "831d74032bd211742899da62e9916c9d5328e5626db54849a6253465795a06cd",
+  "delivery_identities": {
+    "MANIFEST.json": "91b2c4c70280024136e4370960b7ca223cb28c404f70a5cb8bf982569011fa97",
+    "MEASURED_SUPPORT.json": "c54872074c9f555b927c44dc7990ec281db421e9a502fcc184a66a67b7b3f85c",
+    "SOURCE_AND_ARTIFACT_VERIFICATION.json": "6b28b916fdb0e75089e605f178750f30b16f0cc1f185a228d246635471fc578a",
+    "WORKFLOWS.json": "08d5dd22de38361b8a8c856a53efdb3c21e07add57af14186858e30c14f84ace",
+    "ACCOUNTING.json": "b2403ceb9e40c91af42d6600af22e8469efa3f9ac64d86253220e41f1b74ef3b",
+    "README.md": "287b048b272f6a7ab40f3f03591ca61f16bf2554c95250c19f79a845dfa6e8bd",
+    "ACCURACY.md": "ba21dcc18cf4ab34cdf3c9f36134f9afd9305d1cde55de8543c20733a2a93d54",
+    "KNOWN_LIMITATIONS.md": "ca75312c4a692033b7b38938ec53544f40464e11bb7c5958f640b0a61574e2ac",
+    "requirements-tested.txt": "81f8a8557de129748933e662b98ce899b69404406b91c090a73db03c6a980587"
+  },
+  "solver_wheel": {
+    "file": "wheelhouse/anysolver-0.4.7+contact.candidate.20261019-py3-none-any.whl",
+    "sha256": "67144b2ec56a3fe04d270bab71bdd955695e6522de1022953fead530f2ce4315"
+  },
+  "zip_container": {
+    "path": "C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/candidate-general-contact-20261019-v1/ANYsolver-contact-candidate-20261019.zip",
+    "sha256": "3ad46ce6cf3273f69663836ae7765633afdf0b9e7fdd4aba6b2abf79ad7533bd",
+    "scope": "Convenience container made by root outside frozen delivery; not a new runtime input"
+  },
+  "blockers": [],
+  "resolved_review_items": [
+    "Installed probe includes distribution metadata version, distinct from unchanged module __version__0.4.7. All5 private package origins are installed target.",
+    "Relative public demos and checkout/snapshot-excluded normal/friction/archive smoke supplied; evidence wrappers are not installation prerequisites.",
+    "Declared ANYmesher -> ANYgeometry[planar] -> Shapely>=2 dependency included in final ordinary recipe; unmeasured cold-install/Shapely/meshing scope explicitly disclosed.",
+    "Finite-penalty reference and substantial B3 overclosure caveat explicit; same-host CPU dispatch comparison is not labeled cross-machine qualification."
+  ],
+  "independent_checks": {
+    "delivery_manifest_sha256": "91b2c4c70280024136e4370960b7ca223cb28c404f70a5cb8bf982569011fa97",
+    "payload_files_rehashed": 155,
+    "payload_hash_or_length_mismatches": 0,
+    "five_wheel_hashes_verified": true,
+    "initial_selected_source_test_example_capability_hashes_checked": 18,
+    "changed_selected_hashes": 0,
+    "all10_workflow_maps_checked_against_saved_junit": true,
+    "missing_selected_selector_receipts": 0,
+    "workflow_selector_occurrences": 17,
+    "distinct_selected_selectors": 16,
+    "full_programme_qualified_all_false": true,
+    "process_ledger_rows": 24,
+    "process_ledger_survivors": 0,
+    "owner_source_verification": "908 source files verified;700 solver wheel/installed-source byte matches; root separately inspected wheel/source/legal metadata. Review inspected helper source and origins, not a second broad source audit."
+  },
+  "measured_support": {
+    "test_executions": 37,
+    "source_executions": 14,
+    "installed_executions": 23,
+    "test_failures": 0,
+    "test_errors": 0,
+    "test_skips": 0,
+    "resolved_tooling_failures": 2,
+    "analytical_quantities": 7,
+    "analytical_limit_percent": 0.1,
+    "maximum_analytical_percent_error": 3.4349896516593093E-09,
+    "analytical_pass": true,
+    "same_host_cpu_quantities": 13,
+    "same_host_cpu_pass": true,
+    "cross_machine_measured": false,
+    "active_open_restart": "Zero endpoint displacement difference, exact original history assertions PASS",
+    "friction_normalized_wrench_max": 8.470337467447141E-18,
+    "friction_coupled_equilibrium_max": 1.2353934878122502E-12,
+    "guided_target_node9_uz_m": -1.6686106725745265E-05,
+    "guided_free_equilibrium_error": 5.864238503616071E-09,
+    "installed_bundle_smoke": "Saved PASS for normal/friction/archive, private origins under installed, example origins under delivery/examples, checkout/tests/snapshots excluded"
+  },
+  "accuracy_interpretation": [
+    "Seven analytical checks cover declared force/gap/active-length/uniform-Coulomb outputs for chosen finite-penalty laws and example geometry. They are not hard-contact continuum, mesh/model or universal engineering error estimates.",
+    "B3 chosen gap-0.001m, tolerance0.002m and radius0.01m imply substantial allowed overclosure. Supplemental reference-line force integral is a post-run crosscheck only; reference straight-line measure and no-endcap assumptions were inspected. No new threshold or failure promotion.",
+    "W3 friction target normal/rotations are constrained; target in-plane elasticity is demonstrated. W10 separate normal pair has guided upper actuator and only one free lower normal DOF. Both-body instantaneous residual/virtual work is not path-integrated work.",
+    "Matched independent2% coupled response for guided normal shell pair and crossed beams is UNESTABLISHED, explicitly unclaimed. Equilibrium/restart/wire integrity do not substitute for independent response reference.",
+    "Same-host effectiveSkylakeX/Haswell pools verified in saved outputs. Positive dimensional scales agree with selected inventory; this is arithmetic-profile consistency, not cross-machine/Ubuntu evidence."
+  ],
+  "state_and_claim_integrity": "Saved installed tests include canonical whole-path/material-work, full active/open restart, in-flight exception/cancellation rollback, actual producer/detached archive/corruption refusal and guided normal-pair response. All original selected source/test hashes unchanged; no solver product repair, old assertion/cap/fixture weakening, skip/xfail insertion or admitted/released flag change. Capability remains admitted_for_application=False. Package version changed only in isolated staging.",
+  "packaging": "Five private wheels built locally and installed into fresh target. AnySolver distribution metadata0.4.7+contact.candidate.20261019 and all5private origins match installed; numerical libraries reuse recorded existing environment. Portable recipe includes normal declared dependency closure, but cold new-venv install and Shapely were not executed. Restricted pure-Python mesher is neither native acceleration nor full meshing validation.",
+  "accounting": {
+    "charged_seconds": 189.3920825000023,
+    "precise_child_process_wall_seconds": 187.56044920001295,
+    "budget_seconds": 2400,
+    "remaining_seconds": 2210.6079174999977,
+    "maximum_sampled_aggregate_rss_bytes": 200433664.0,
+    "ordinary_cap_bytes": 999292928,
+    "semantics": "Ordinary sampled supervisor+new owned process-tree RSS, not kernel lifetime peaks or prevention guarantee",
+    "failures": "Missing venv pip and relative pytest input-cwd failures preserved and repaired in owned tooling; no solver-test failure relabeled"
+  },
+  "remaining": [
+    "Independent physically matched coupled-response references and2% validation.",
+    "Actual cross-machine/Ubuntu replay, full mandatory CI/shared-kernel/performance qualification.",
+    "Broader geometry/material/large-deformation/native dynamics/impact and Q4 pressure stability; D1/364 and original selected37 disposition remain unchanged.",
+    "Native/full meshing, sibling/UI applications, C0-C9/D0-D8 programme and final different-family acceptance."
+  ],
+  "limits": [
+    "Reviewer ran no candidate execution, tests, imports, AST, APIs/process/WSL/image queries or worker. Only saved source/text/JSON/XML/file hashes read; unique report sole write.",
+    "This review supports handing off a usable restricted headless candidate, not a generic general-contact or application release. Root owns final acceptance/publication; no push authorized.",
+    "Old native cleanup/lock/UNKNOWN and consumed scopes are preserved. Under the new adopted policy they are not by themselves a prerequisite for separate candidate work, and this evidence does not establish old cleanup or recover old charges."
+  ]
+}

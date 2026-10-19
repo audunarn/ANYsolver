@@ -1,0 +1,100 @@
+{
+  "schema": "ANY_NATIVE_VIBRATION_MEASURED_EXCEPTION_V1",
+  "id": "C7_NATIVE_VIBRATION_COARSE_ENDPOINT2_ENERGY_20261018",
+  "status": "HUMAN_APPROVED_MEASURED_RESULT_ONLY",
+  "recorded_utc": "2026-10-18T10:26:28.069992+00:00",
+  "approval": {
+    "verbatim": "I accept the step-energy defect 1.0967037486e-6",
+    "authority": "Human user in current thread",
+    "interpretation": "Named exception for the exact case and observed coarse endpoint2 result, as proposed immediately before approval"
+  },
+  "original_rule": {
+    "normalized_step_energy_limit": 1e-06,
+    "unchanged_elsewhere": true,
+    "cumulative_energy_limit": 1e-06
+  },
+  "accepted_measurement": {
+    "normalized_step_energy": 1.096703748588467e-06,
+    "normalized_step_energy_hex": "0x1.2664e8617a95bp-20",
+    "not_a_generic_upper_bound": true
+  },
+  "binding": {
+    "label": "coarse",
+    "amplitude": 0.0001,
+    "steps": 4,
+    "epoch": 2,
+    "dt_hex": "0x1.32c10e23e96d1p-3",
+    "time_hex": "0x1.32c10e23e96d1p-2",
+    "energy0_hex": "0x1.d54b975a46b6bp-26",
+    "initial_state_sha256": "2d8ed969f79055b32adcf1327a2774601ad57dde4b625c8e5413a7a7692381a6",
+    "predecessor_state_sha256": "3fd0db992807d6c86a5a6bf2ed6652ec00d06af748a1e925f0f51e863f581ff8",
+    "endpoint_state_sha256": "7d71fba739a1667d9eba5d02700769f10971b37685967103ce09af260a8af772",
+    "context_sha256": "c78cdce22fed16fb4be8ad91c657d249bcd077f746d4899e81cae29288de2014",
+    "definition_sha256": "9e087b9ebf541889a6eb217880c8139990c40a0b0b15bd62fb9805f8414c13ae",
+    "profile_sha256": "feeee50769b637a4c08b5a961dd313341ab4113f41377530723569ac94666454"
+  },
+  "independent_corroboration": {
+    "normalized_physical_step_energy": 1.0967037489518423e-06,
+    "cumulative_reported_energy": 9.718544397309202e-07
+  },
+  "scope": {
+    "host_profile": "Observed Windows/JIT-off/hash0/pools1/default CPU and natural120s/default1e-11 case; no host/profile/source transfer",
+    "product_python_manifest_sha256": "98139b92af8ff1a2a62b68669624c3bcb74b5376c783e0eaa74e1004b24475e9",
+    "binding_policy": "All measured case bindings and energy bits must match before exception. All other step/cumulative/P/H/algebraic/linear/refinement/restart/audit criteria remain unchanged. Mismatch refuses exception; no rounding band or tolerance envelope.",
+    "strict_pass_policy": "All original strict passes remain accepted without exception, including coarse2 or another host. At most one exception; only energy above1e-6 requires exact approved binding/runtime admission."
+  },
+  "original_failure": {
+    "assessment_sha256": "c23628205a04ae19433630dbead58a221b99a6732d86538580a7670fa20f1b36",
+    "closure_sha256": "9d19905aed14b913c4ba51c2a1364aaaccc097066444765d7945c104aac19ab5",
+    "source_packet_sha256": "fee92f51ca9e1578365b66f47aff8c27392cd7eea21fc9c8307e8752938dffde"
+  },
+  "scientific_acceptance": false,
+  "full_C7_acceptance": false,
+  "observed_runtime_profile": {
+    "provenance_closure_sha256": "9d19905aed14b913c4ba51c2a1364aaaccc097066444765d7945c104aac19ab5",
+    "versions": {
+      "python": "3.12.13 (main, Mar 10 2026, 18:15:39) [MSC v.1944 64 bit (AMD64)]",
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "numba": "0.68.0"
+    },
+    "pools": [
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\contact-ci4-env312\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-ed4f167a5330424524f45258e7ca2c8d.dll",
+        "version": "0.3.34.106.0",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      },
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\contact-ci4-env312\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-197ee2fc9b4d071f7e048078cac74115.dll",
+        "version": "0.3.31.dev",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      }
+    ],
+    "platform": "win32",
+    "settings": {
+      "NUMBA_DISABLE_JIT": "1",
+      "NUMBA_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "BLIS_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "PYTHONHASHSEED": "0",
+      "PYTHONNOUSERSITE": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONOPTIMIZE": "0",
+      "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1"
+    }
+  }
+}

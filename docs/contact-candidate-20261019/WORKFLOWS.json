@@ -1,0 +1,153 @@
+[
+  {
+    "actual_receipts": [
+      "evidence/checks/installed-base-junit.xml"
+    ],
+    "test_selectors": [
+      "tests/test_general_contact_s3_plane.py::test_s3_plane_static_reaction_and_gap_use_physical_reference_offset"
+    ],
+    "full_programme_qualified": false,
+    "quantitative_accuracy": "Only listed analytical quantities measured in MEASURED_SUPPORT; not general model accuracy",
+    "workflow": "S3 shell / rigid plane static normal response",
+    "id": "W1",
+    "status": "EXECUTED_INSTALLED_SELECTED_ASSERTIONS_PASS",
+    "source_scope_and_limitations": "e4-pl-s3-v2d elastic S3; physical reference offset; fixed plane; guided translations and rotations; not arbitrary shell contact"
+  },
+  {
+    "actual_receipts": [
+      "evidence/checks/installed-base-junit.xml"
+    ],
+    "test_selectors": [
+      "tests/test_general_contact_triangulated_rigid.py::test_ordinary_force_and_path_restart",
+      "tests/test_general_contact_triangulated_rigid.py::test_complete_penalty_work_and_diagonal"
+    ],
+    "full_programme_qualified": false,
+    "quantitative_accuracy": "No generic2% response bound. Existing assertions/state/integrity/consistency passed; see measured outputs",
+    "workflow": "Finite triangulated rigid tool: ordinary force/path and normal opening/recontact",
+    "id": "W2",
+    "status": "EXECUTED_INSTALLED_SELECTED_ASSERTIONS_PASS",
+    "source_scope_and_limitations": "Finite planar triangulated rigid patch and formulation-owned S3 skin; elastic von-Karman bounded footprint; no generic curved/deforming tool claim"
+  },
+  {
+    "actual_receipts": [
+      "evidence/installed-friction/full-junit.xml",
+      "evidence/checks/installed-base-junit.xml"
+    ],
+    "test_selectors": [
+      "tests/test_general_contact_s3_friction_physical_path.py::test_public_installed_lifecycle_and_restart",
+      "tests/test_general_contact_s3_friction_physical_path.py::test_canonical_material_work_and_whole_path"
+    ],
+    "full_programme_qualified": false,
+    "quantitative_accuracy": "Only listed analytical quantities measured in MEASURED_SUPPORT; not general model accuracy",
+    "workflow": "Physical-side S3 friction lifecycle with in-plane elastic target",
+    "id": "W3",
+    "status": "EXECUTED_INSTALLED_SELECTED_ASSERTIONS_PASS",
+    "source_scope_and_limitations": "Source nodes1..6 uy/rx/ry/rz constrained, source ux/uz actuator-linked. Target nodes7..10 uy/uz/rx/ry/rz constrained; nodes7/10 ux fixed, nodes8/9 ux free. Target normal work is zero by constraint: NO target normal bending or unrestricted two-deformable-normal-body claim."
+  },
+  {
+    "actual_receipts": [
+      "evidence/checks/installed-base-junit.xml"
+    ],
+    "test_selectors": [
+      "tests/test_general_contact_s3_friction_static.py::test_real_static_stick_slip_reversal_opening_and_split_restart"
+    ],
+    "full_programme_qualified": false,
+    "quantitative_accuracy": "No generic2% response bound. Existing assertions/state/integrity/consistency passed; see measured outputs",
+    "workflow": "Coulomb stick/slip/reversal with solved structural tangential response",
+    "id": "W4",
+    "status": "EXECUTED_INSTALLED_SELECTED_ASSERTIONS_PASS",
+    "source_scope_and_limitations": "Simple elastic S3 source, target fully fixed; prescribed contact-path program. Does not establish unconstrained deformable target."
+  },
+  {
+    "actual_receipts": [
+      "evidence/installed-friction/active-prefix-junit.xml",
+      "evidence/installed-friction/active-resume-junit.xml",
+      "evidence/installed-friction/prefix-junit.xml",
+      "evidence/installed-friction/resume-junit.xml"
+    ],
+    "test_selectors": [
+      "tests/test_general_contact_s3_friction_physical_path.py::test_public_installed_lifecycle_and_restart"
+    ],
+    "full_programme_qualified": false,
+    "quantitative_accuracy": "No generic2% response bound. Existing assertions/state/integrity/consistency passed; see measured outputs",
+    "workflow": "Fresh active and open checkpoint restart of physical friction path",
+    "id": "W5",
+    "status": "EXECUTED_INSTALLED_SELECTED_ASSERTIONS_PASS",
+    "source_scope_and_limitations": "Same restricted W3 geometry and constraints; active and opened-state restart both required"
+  },
+  {
+    "actual_receipts": [
+      "evidence/installed-friction/rollback-junit.xml"
+    ],
+    "test_selectors": [
+      "tests/test_general_contact_s3_friction_physical_path.py::test_public_trial_exception_and_inflight_cancellation"
+    ],
+    "full_programme_qualified": false,
+    "quantitative_accuracy": "No generic2% response bound. Existing assertions/state/integrity/consistency passed; see measured outputs",
+    "workflow": "In-flight exception/cancellation rollback and refusal atomicity",
+    "id": "W6",
+    "status": "EXECUTED_INSTALLED_SELECTED_ASSERTIONS_PASS",
+    "source_scope_and_limitations": "Uses injected failure/cancellation in actual public solve path after active-prefix restoration; a safety workflow, not additional response validation"
+  },
+  {
+    "actual_receipts": [
+      "evidence/checks/installed-base-junit.xml"
+    ],
+    "test_selectors": [
+      "tests/test_general_contact_beam_plane.py::test_b3_deformed_curve_runs_through_static_solver",
+      "tests/test_general_contact_beam_plane.py::test_b2_line_contact_runs_through_displacement_solver_and_checkpoint",
+      "tests/test_general_contact_beam_plane.py::test_b2_line_potential_force_tangent_and_gap_certificate"
+    ],
+    "full_programme_qualified": false,
+    "quantitative_accuracy": "Only listed analytical quantities measured in MEASURED_SUPPORT; not general model accuracy",
+    "workflow": "Round B2/B3 beam / rigid plane static response",
+    "id": "W7",
+    "status": "EXECUTED_INSTALLED_SELECTED_ASSERTIONS_PASS",
+    "source_scope_and_limitations": "Declared round tubes; B2/B3 centreline line-penalty profile, specified end-cap ownership; not arbitrary section/contact/friction or C2 acceptance"
+  },
+  {
+    "actual_receipts": [
+      "evidence/checks/installed-base-junit.xml"
+    ],
+    "test_selectors": [
+      "tests/test_general_contact_beam_pair.py::test_pair_force_control_and_split_restart_match_full_path",
+      "tests/test_general_contact_beam_pair.py::test_parallel_pair_has_analytic_line_work_balanced_wrench_and_tangent"
+    ],
+    "full_programme_qualified": false,
+    "quantitative_accuracy": "No generic2% response bound. Existing assertions/state/integrity/consistency passed; see measured outputs",
+    "workflow": "Round B2 beam/beam force control and split checkpoint",
+    "id": "W8",
+    "status": "EXECUTED_INSTALLED_SELECTED_ASSERTIONS_PASS",
+    "source_scope_and_limitations": "Declared round B2 line-contact, guided crossed pair; limited radius/end law and geometry, no arbitrary beam or native dynamics claim"
+  },
+  {
+    "actual_receipts": [
+      "evidence/checks/installed-base-junit.xml"
+    ],
+    "test_selectors": [
+      "tests/test_general_contact_static_results_archive.py::test_actual_static_producer_consumer",
+      "tests/test_general_contact_static_results_archive.py::test_independent_preservation_oracle",
+      "tests/test_general_contact_static_results_archive.py::test_exact_detached_and_refusal"
+    ],
+    "full_programme_qualified": false,
+    "quantitative_accuracy": "No generic2% response bound. Existing assertions/state/integrity/consistency passed; see measured outputs",
+    "workflow": "Installed public static solve -> contact archive -> detached reader",
+    "id": "W9",
+    "status": "EXECUTED_INSTALLED_SELECTED_ASSERTIONS_PASS",
+    "source_scope_and_limitations": "Headless solver and detached result consumer. No application admission/UI integration. A node/example importing anysolver does NOT itself prove wheel installation or installed origin."
+  },
+  {
+    "actual_receipts": [
+      "evidence/installed-orientation/full-plus-junit.xml"
+    ],
+    "test_selectors": [
+      "tests/test_general_contact_s3_physical_orientation.py::test_installed_s3_physical_orientation_stage"
+    ],
+    "full_programme_qualified": false,
+    "quantitative_accuracy": "No generic2% response bound. Existing assertions/state/integrity/consistency passed; see measured outputs",
+    "workflow": "Guided two-shell normal deformation: physical-side automatic S3 pairing",
+    "id": "W10",
+    "status": "EXECUTED_INSTALLED_SELECTED_ASSERTIONS_PASS",
+    "source_scope_and_limitations": "Upper normal travel prescribed and rotations guided; lower node9 normal DOF free, other lower normals supported. Nonzero target normal response and instantaneous virtual/residual work measured in MEASURED_SUPPORT; not unrestricted bending, path-integrated work or independent response accuracy."
+  }
+]

@@ -1,0 +1,641 @@
+{
+  "status": "CANDIDATE_MEASURED_RESTRICTED_SUPPORT",
+  "wheel": [
+    {
+      "file": "anyfileio-0.3.2-py3-none-any.whl",
+      "sha256": "aa3937d6ca39958dcfe70b76b9855088ca039d6ddb47a0ad23eafd85b357dd05"
+    },
+    {
+      "file": "anygeometry-0.4.3-py3-none-any.whl",
+      "sha256": "ac54ca27e5eec70e2cefe56782d5e1b6af03719212ed0ea5dcb8b77d9f3cbfd6"
+    },
+    {
+      "file": "anymaterial-0.2.0-py3-none-any.whl",
+      "sha256": "505f23131f147abd670e5e7d4231ba98f7d661bb4d5431ab2ccd7c04c09a1232"
+    },
+    {
+      "file": "anymesher-0.5.0-py3-none-any.whl",
+      "sha256": "00aac6a04231a569496d7e44289355c8b11c137209c8ade193cdeeaf7ac1dd57"
+    },
+    {
+      "file": "anysolver-0.4.7+contact.candidate.20261019-py3-none-any.whl",
+      "sha256": "67144b2ec56a3fe04d270bab71bdd955695e6522de1022953fead530f2ce4315"
+    }
+  ],
+  "analytical_metrics": [
+    {
+      "case": "S3/plane",
+      "quantity": "normal shell force N",
+      "actual": 0.3,
+      "independent_expected": 0.3,
+      "relative_error": 0.0,
+      "percent_error": 0.0,
+      "limit_relative": 0.001,
+      "pass_accuracy": true
+    },
+    {
+      "case": "S3/plane",
+      "quantity": "rigid normal force N",
+      "actual": -0.3,
+      "independent_expected": -0.3,
+      "relative_error": 0.0,
+      "percent_error": 0.0,
+      "limit_relative": 0.001,
+      "pass_accuracy": true
+    },
+    {
+      "case": "S3/plane",
+      "quantity": "gap m",
+      "actual": -6.000000000033757E-07,
+      "independent_expected": -6E-07,
+      "relative_error": 5.626239886939346E-12,
+      "percent_error": 5.626239886939346E-10,
+      "limit_relative": 0.001,
+      "pass_accuracy": true
+    },
+    {
+      "case": "B3/plane",
+      "quantity": "active line length m",
+      "actual": 0.4082482904638632,
+      "independent_expected": 0.408248290463863,
+      "relative_error": 4.079219866531555E-16,
+      "percent_error": 4.0792198665315554E-14,
+      "limit_relative": 0.001,
+      "pass_accuracy": true
+    },
+    {
+      "case": "B3/plane",
+      "quantity": "gap m",
+      "actual": -0.0010000000000000009,
+      "independent_expected": -0.001,
+      "relative_error": 8.673617379884035E-16,
+      "percent_error": 8.673617379884035E-14,
+      "limit_relative": 0.001,
+      "pass_accuracy": true
+    },
+    {
+      "case": "physical S3 uniform Coulomb slip",
+      "quantity": "source tangential reaction N step3",
+      "actual": 0.00024000000000824398,
+      "independent_expected": 0.00024,
+      "relative_error": 3.434989651659309E-11,
+      "percent_error": 3.4349896516593093E-09,
+      "limit_relative": 0.001,
+      "pass_accuracy": true,
+      "scope": "Uniform prescribed normal-pressure analytical Coulomb resultant only; not an independent structural-displacement reference"
+    },
+    {
+      "case": "physical S3 uniform Coulomb slip",
+      "quantity": "source tangential reaction N step5",
+      "actual": -0.0002399999999931468,
+      "independent_expected": -0.00024,
+      "relative_error": 2.855506178011067E-11,
+      "percent_error": 2.855506178011067E-09,
+      "limit_relative": 0.001,
+      "pass_accuracy": true,
+      "scope": "Uniform prescribed normal-pressure analytical Coulomb resultant only; not an independent structural-displacement reference"
+    }
+  ],
+  "maximum_analytical_percent_error": 3.4349896516593093E-09,
+  "analytical_0_1_percent_pass": true,
+  "same_host_cpu_profile_replay": {
+    "default_pools": [
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\contact-ci4-env312\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-ed4f167a5330424524f45258e7ca2c8d.dll",
+        "version": "0.3.34.106.0",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      },
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\contact-ci4-env312\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-197ee2fc9b4d071f7e048078cac74115.dll",
+        "version": "0.3.31.dev",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      },
+      {
+        "user_api": "openmp",
+        "internal_api": "openmp",
+        "num_threads": 1,
+        "prefix": "vcomp",
+        "filepath": "C:\\Windows\\System32\\vcomp140.dll",
+        "version": null
+      }
+    ],
+    "haswell_pools": [
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\contact-ci4-env312\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-ed4f167a5330424524f45258e7ca2c8d.dll",
+        "version": "0.3.34.106.0",
+        "threading_layer": "pthreads",
+        "architecture": "Haswell"
+      },
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\contact-ci4-env312\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-197ee2fc9b4d071f7e048078cac74115.dll",
+        "version": "0.3.31.dev",
+        "threading_layer": "pthreads",
+        "architecture": "Haswell"
+      },
+      {
+        "user_api": "openmp",
+        "internal_api": "openmp",
+        "num_threads": 1,
+        "prefix": "vcomp",
+        "filepath": "C:\\Windows\\System32\\vcomp140.dll",
+        "version": null
+      }
+    ],
+    "quantities": [
+      {
+        "case": "general_contact_s3_plane",
+        "field": "shell_force_N",
+        "quantity_family": "force_N",
+        "declared_positive_scale": 0.3,
+        "norm_inf_difference": 5.551115123125783E-17,
+        "norm_inf_reference": 0.3,
+        "bound": 3.003E-10,
+        "passed": true
+      },
+      {
+        "case": "general_contact_s3_plane",
+        "field": "plane_force_N",
+        "quantity_family": "force_N",
+        "declared_positive_scale": 0.3,
+        "norm_inf_difference": 5.551115123125783E-17,
+        "norm_inf_reference": 0.3,
+        "bound": 3.003E-10,
+        "passed": true
+      },
+      {
+        "case": "general_contact_s3_plane",
+        "field": "minimum_gap_m",
+        "quantity_family": "gap_m",
+        "declared_positive_scale": 1E-06,
+        "norm_inf_difference": 0.0,
+        "norm_inf_reference": 6.000000000033757E-07,
+        "bound": 6.010000000033757E-16,
+        "passed": true
+      },
+      {
+        "case": "general_contact_round_beam_plane",
+        "field": "beam_force_N",
+        "quantity_family": "force_N",
+        "declared_positive_scale": 10,
+        "norm_inf_difference": 0.0,
+        "norm_inf_reference": 2.721655269759091,
+        "bound": 2.731655269759091E-09,
+        "passed": true
+      },
+      {
+        "case": "general_contact_round_beam_plane",
+        "field": "plane_force_N",
+        "quantity_family": "force_N",
+        "declared_positive_scale": 10,
+        "norm_inf_difference": 0.0,
+        "norm_inf_reference": 2.721655269759091,
+        "bound": 2.731655269759091E-09,
+        "passed": true
+      },
+      {
+        "case": "general_contact_round_beam_plane",
+        "field": "minimum_gap_m",
+        "quantity_family": "gap_m",
+        "declared_positive_scale": 0.01,
+        "norm_inf_difference": 0.0,
+        "norm_inf_reference": 0.0010000000000000009,
+        "bound": 1.010000000000001E-12,
+        "passed": true
+      },
+      {
+        "case": "general_contact_round_beam_plane",
+        "field": "midpoint_displacement_m",
+        "quantity_family": "displacement_m",
+        "declared_positive_scale": 0.01,
+        "norm_inf_difference": 0.0,
+        "norm_inf_reference": 0.006,
+        "bound": 6.0100000000000004E-12,
+        "passed": true
+      },
+      {
+        "case": "general_contact_round_beam_plane",
+        "field": "active_line_length_m",
+        "quantity_family": "length_m",
+        "declared_positive_scale": 1,
+        "norm_inf_difference": 0.0,
+        "norm_inf_reference": 0.4082482904638632,
+        "bound": 4.092482904638632E-10,
+        "passed": true
+      },
+      {
+        "case": "general_contact_round_beam_pair",
+        "field": "beam_a_force_N",
+        "quantity_family": "force_N",
+        "declared_positive_scale": 10,
+        "norm_inf_difference": 1.214306433183765E-17,
+        "norm_inf_reference": 0.310443791452351,
+        "bound": 3.2044379145235106E-10,
+        "passed": true
+      },
+      {
+        "case": "general_contact_round_beam_pair",
+        "field": "beam_b_force_N",
+        "quantity_family": "force_N",
+        "declared_positive_scale": 10,
+        "norm_inf_difference": 5.551115123125783E-17,
+        "norm_inf_reference": 0.310443791452351,
+        "bound": 3.2044379145235106E-10,
+        "passed": true
+      },
+      {
+        "case": "general_contact_round_beam_pair",
+        "field": "minimum_gap_m",
+        "quantity_family": "gap_m",
+        "declared_positive_scale": 0.01,
+        "norm_inf_difference": 0.0,
+        "norm_inf_reference": 0.0025054661878578556,
+        "bound": 2.515466187857856E-12,
+        "passed": true
+      },
+      {
+        "case": "general_contact_round_beam_pair",
+        "field": "tip_displacement_m",
+        "quantity_family": "displacement_m",
+        "declared_positive_scale": 0.01,
+        "norm_inf_difference": 0.0,
+        "norm_inf_reference": 0.025,
+        "bound": 2.5010000000000003E-11,
+        "passed": true
+      },
+      {
+        "case": "general_contact_round_beam_pair",
+        "field": "contact_energy_J",
+        "quantity_family": "energy_J",
+        "declared_positive_scale": 0.005,
+        "norm_inf_difference": 1.0842021724855044E-19,
+        "norm_inf_reference": 0.00031817641175652274,
+        "bound": 3.2317641175652275E-13,
+        "passed": true
+      }
+    ],
+    "passed": true,
+    "cross_machine": false
+  },
+  "active_open_restart": [
+    {
+      "prefix": "active",
+      "norm_inf_difference_m": 0.0,
+      "bound_m": 3.8900000000000005E-10,
+      "scale_m": 1,
+      "passed": true,
+      "history_exact": true
+    },
+    {
+      "prefix": "open",
+      "norm_inf_difference_m": 0.0,
+      "bound_m": 3.8900000000000005E-10,
+      "scale_m": 1,
+      "passed": true,
+      "history_exact": true
+    }
+  ],
+  "friction": {
+    "branches": [
+      [
+        "activation"
+      ],
+      [
+        "stick"
+      ],
+      [
+        "slip"
+      ],
+      [
+        "stick"
+      ],
+      [
+        "slip"
+      ],
+      [
+        "open"
+      ],
+      [
+        "activation"
+      ]
+    ],
+    "reaction_path_N": [
+      [
+        8.703010529592174E-22,
+        -0.0008000000000001932
+      ],
+      [
+        1.5889134833755787E-05,
+        -0.0008000000000002415
+      ],
+      [
+        0.00024000000000824398,
+        -0.0008000000000001719
+      ],
+      [
+        0.00016162517181045143,
+        -0.0008000000000002369
+      ],
+      [
+        -0.0002399999999931468,
+        -0.0008000000000001589
+      ],
+      [
+        1.0639275918600255E-14,
+        0.0
+      ],
+      [
+        1.0639278455155586E-14,
+        -0.0008000000000002115
+      ]
+    ],
+    "dissipation_increment_J": [
+      0.0,
+      0.0,
+      9.359963580817852E-05,
+      0.0,
+      4.792650791549034E-07,
+      0.0,
+      0.0
+    ],
+    "maximum_normalized_wrench": 8.470337467447141E-18,
+    "maximum_coupled_equilibrium_normalized": 1.2353934878122502E-12,
+    "restriction": "Target normal motion/rotations constrained; in-plane elastic response only"
+  },
+  "guided_pair": {
+    "target_node9_uz_m": -1.6686106725745265E-05,
+    "phase_wrench_errors": [
+      {
+        "force": 1.0842025382269964E-17,
+        "moment": 1.6102809260455708E-20
+      },
+      {
+        "force": 1.353592361807912E-20,
+        "moment": 7.666473214954823E-18
+      },
+      {
+        "force": 0.0,
+        "moment": 0.0
+      },
+      {
+        "force": 5.965242681088797E-21,
+        "moment": 1.2121750263166034E-17
+      }
+    ],
+    "free_equilibrium_normalized_error": 5.864238503616071E-09,
+    "both_body_work": {
+      "upper_virtual_work_j": -1.7455903361083795E-09,
+      "lower_virtual_work_j": 1.7455903361083793E-09,
+      "common_translation_normalized_error": 1.0339757656912846E-17,
+      "upper_residual_dot_displacement_j": 2.6192582993306235E-05,
+      "lower_residual_dot_displacement_j": -3.4157316892455584E-09,
+      "interpretation": "instantaneous residual work; not path-integrated work or regularization storage"
+    },
+    "restriction": "Guided upper actuator; lower node9 normal DOF free. Instantaneous residual/virtual work is not path-integrated work. Not unrestricted two-body bending."
+  },
+  "coupled_independent_response_accuracy": "UNESTABLISHED for guided shell-pair normal displacement and crossed-beam response: no independent matched response reference. No generic2% claim.",
+  "archive": {
+    "status": "completed",
+    "steps": 2,
+    "snapshots": 2,
+    "archive_bytes": 75003,
+    "sha256": "05a568825a0db8fe3350b24cf88b9ec34ea818cb5f772bae6f9dd3d0c07b01a4",
+    "full_fields_equal": true,
+    "checkpoint_equal": true,
+    "preservation_oracle": "independent_recursive_producer_fields_and_raw_numeric_bytes",
+    "contact": {
+      "profile": "S3_PLANAR_TRIANGULATED_RIGID_SHARED_PENALTY_STATIC_DEV_V1",
+      "minimum_gap": -4.610748106977895E-06,
+      "sampled_overlap_gap": -4.610748050134476E-06,
+      "penalty_energy": 6.38688713091931E-08,
+      "current_overlap_area": 0.20875000008468642,
+      "reference_overlap_area": 0.20874999999999994,
+      "overlapping_pairs": 2,
+      "integration_force": [
+        -1.0385737064844342E-21,
+        1.1124919830500586E-21,
+        0.1333298011028839
+      ],
+      "target_force": [
+        2.4269731394130106E-22,
+        -7.616951554851133E-22,
+        -0.1333298011028839
+      ],
+      "integration_moment": [
+        0.05499855195430314,
+        -0.06416495853628225,
+        6.495532951803737E-22
+      ],
+      "target_moment": [
+        -0.05499855195430314,
+        0.06416495853628224,
+        -1.3583668346445034E-22
+      ],
+      "gap_tolerance_met": true,
+      "active_pressure_dofs": 2,
+      "source_pressure_node_ids": [
+        1,
+        2,
+        3
+      ],
+      "normalized_weighted_gap_m": [
+        2.694627700918798E-06,
+        -9.580575886711073E-07,
+        -9.580593126289279E-07
+      ],
+      "numerical_pressure_pa": [
+        0.0,
+        0.9580575886711072,
+        0.9580593126289279
+      ],
+      "reference_support_m2": [
+        0.06958333333333333,
+        0.06958333333333334,
+        0.06958333333333333
+      ],
+      "energy_evaluations": 2,
+      "weighted_gap_integration_error_m3": 0.0,
+      "integration_triangles": 0,
+      "area_integration_error_m2": 0.0,
+      "augmented_merit_j": 0.0,
+      "normal_multiplier_estimate_pa": [],
+      "pair_geometry_evaluations": 0,
+      "wrench_origin_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "normal_law": "penalty",
+      "gap_tolerance": 5E-05,
+      "maximum_candidate_pairs": 100000,
+      "swept_trial_cutbacks": 1,
+      "normal_stiffness": 1000000.0
+    }
+  },
+  "test_receipts": [
+    {
+      "path": "checks\\base-junit.xml",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0
+    },
+    {
+      "path": "checks\\installed-base-junit.xml",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0
+    },
+    {
+      "path": "checks\\compatibility-junit.xml",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0
+    },
+    {
+      "path": "friction\\full-junit.xml",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0
+    },
+    {
+      "path": "installed-friction\\active-prefix-junit.xml",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0
+    },
+    {
+      "path": "installed-friction\\active-resume-junit.xml",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0
+    },
+    {
+      "path": "installed-friction\\full-junit.xml",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0
+    },
+    {
+      "path": "installed-friction\\prefix-junit.xml",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0
+    },
+    {
+      "path": "installed-friction\\resume-junit.xml",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0
+    },
+    {
+      "path": "installed-friction\\rollback-junit.xml",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0
+    },
+    {
+      "path": "installed-orientation\\full-plus-junit.xml",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0
+    }
+  ],
+  "solver_product_repairs": 0,
+  "tooling_failures": [
+    {
+      "index": 4,
+      "status": "completed",
+      "exit_code": 1,
+      "command": [
+        "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\contact-ci4-env312\\Scripts\\python.exe",
+        "-I",
+        "-S",
+        "-B",
+        "C:\\ANYworkspaceWork\\contact_trackB_dependency_repair_20261013\\candidate-general-contact-20261019-v1\\package.py",
+        "install"
+      ]
+    },
+    {
+      "index": 7,
+      "status": "completed",
+      "exit_code": 4,
+      "command": [
+        "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\contact-ci4-env312\\Scripts\\python.exe",
+        "-I",
+        "-S",
+        "-B",
+        "C:\\ANYworkspaceWork\\contact_trackB_dependency_repair_20261013\\candidate-general-contact-20261019-v1\\entry.py",
+        "installed-batch",
+        "C:\\ANYworkspaceWork\\contact_trackB_dependency_repair_20261013\\candidate-general-contact-20261019-v1\\INSTALLED_BASE_ARGS.json"
+      ]
+    }
+  ],
+  "budget": {
+    "maximum_sampled_aggregate_rss_bytes": 200433664.0,
+    "authoritative": "ACCOUNTING.json and evidence/PROCESS_BUDGET.json",
+    "charged_seconds": 189.3920825000023,
+    "as_of": "Final ledger including checkout-excluded normal/friction/archive bundled smoke",
+    "remaining_seconds": 2210.6079174999977,
+    "process_wall_seconds": 187.56044920001295,
+    "measurement": "Ordinary sampled aggregate RSS, not kernel lifetime peaks"
+  },
+  "scope_not_claimed": [
+    "cross-machine/Ubuntu",
+    "full mandatory CI/performance programme",
+    "general Q4/D1/pressure stability",
+    "unrestricted geometry/material/large-deformation range",
+    "native dynamics/impact",
+    "native ANYmesher acceleration/performance",
+    "C9 applications/released or admitted flags"
+  ],
+  "supplemental_postrun_B3_force_crosscheck": {
+    "actual_N": 2.721655269759091,
+    "reference_N": 2.7216552697590863,
+    "relative_error": 1.6316879466126223E-15,
+    "derivation": "Reference-line penalty measure: g(x)=-.001+.024*x*x on [-.5,.5]; integrate10000*max(-g,0) over reference x",
+    "supplemental_only": true,
+    "new_acceptance_criterion": false
+  },
+  "portable_bundle_smoke": {
+    "cold_numerical_dependency_install": "NOT_EXECUTED",
+    "warnings": "runpy warnings caused by prior imports for origin inspection retained in stderr; all public workflows completed",
+    "sys_path": "Installed target + existing numerics SITE + delivery + stdlib only; checkout/tests/snapshots explicitly excluded",
+    "actual_example_origins": "All5 under delivery/examples",
+    "evidence": "evidence/BUNDLE_SMOKE.json",
+    "executed": [
+      "normal-pair public module",
+      "friction full public module",
+      "archive actual producer and detached read"
+    ],
+    "status": "completed",
+    "actual_private_origins": "All5 under isolated installed wheel target"
+  }
+}

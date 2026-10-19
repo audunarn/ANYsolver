@@ -1,27 +1,22 @@
 {
-  "status": "completed",
-  "failure": null,
+  "checkpoint_sha256": "e8d599af078d7d5108824d7eced7f0080f0ebda3c168a773fdbdc76d620f452e",
   "completed": 1,
-  "profile": "NATIVE_B3_GE_PHYSICAL_FIBRE_WHOLE_CURVE_PAIR_STATIC_DEV_V1",
-  "targets": [
-    0.05
-  ],
-  "line_stiffness_n_per_m2": 4000.0,
-  "material": {
-    "yielded": 30,
-    "dissipation_j": 1.613306054077594e-07
-  },
-  "gap_lower_m": -1.943226776410486e-05,
-  "checkpoint_sha256": "a1d72a795421b1d7351d9bcbcfb06faa55c7fe1a3a732a204bd92c27de879086",
+  "failure": null,
   "force_a_n": [
-    -1.3863746386554766e-05,
-    -0.0011072854931840584,
+    -1.386374638655218e-05,
+    -0.0011072854931837846,
     0.0
   ],
+  "gap_lower_m": -1.943226776410486e-05,
+  "line_stiffness_n_per_m2": 4000.0,
+  "material": {
+    "dissipation_j": 1.613306054077594e-07,
+    "yielded": 30
+  },
   "moment_a_nm": [
     0.0,
     0.0,
-    -0.0022035251638239154
+    -0.002203525163823369
   ],
   "positions": [
     [
@@ -54,5 +49,75 @@
       0.09634396857176164,
       0.0
     ]
+  ],
+  "profile": "NATIVE_B3_GE_PHYSICAL_FIBRE_WHOLE_CURVE_PAIR_STATIC_DEV_V1",
+  "provenance": {
+    "acceptance_scope": "provisional strict-replay fixture; not a new coupled trajectory, broader portability, qualification or release acceptance",
+    "canonical_root_candidate_source_sha256": {
+      "src/anysolver/general_contact/beam_curve_pair.py": "2e1a87edcf739cd2b83dfdcd3226c0cc2910a0737c1e3fc74d11e08188f5b5fb",
+      "src/anysolver/general_contact/polynomial_roots.py": "99505de9b92631d5d190eea701ad719d67ec8dfe3af23a655158a79148e803ab",
+      "tests/test_general_contact_native_replay_arithmetic.py": "efd7717e830fae283d5e3629b6e3d1ed26da536f8dc002052f3750b2ad2c39c3",
+      "tests/test_general_contact_polynomial_roots.py": "04702c95605d24a15e7e959f72de71249cd93b617d1cbed6edd0696b451fb60f"
+    },
+    "coupled_solve_rerun": false,
+    "four_profile_evidence": [
+      {
+        "attempt": "win-record-03",
+        "receipt_sha256": "302f2c81385066cfd8706bb0edae23496a888f1b5f7d4c3c37ad7675749f604b",
+        "record_artifact_sha256": "eb99cf5f9696ba316e82c22270a2683e3127a85e6ef48f7efa16352bfe27c7f6",
+        "scope": "CONTACT_REPLAY_ROOT_CANDIDATE_DEV600_20261013_V1"
+      },
+      {
+        "attempt": "linux-record-03",
+        "receipt_sha256": "caa58b277dfbacb558fd2dd07f789cdf54527c43c2fd1876efa23bb68c90fc89",
+        "record_artifact_sha256": "eb99cf5f9696ba316e82c22270a2683e3127a85e6ef48f7efa16352bfe27c7f6",
+        "scope": "CONTACT_REPLAY_ROOT_CANDIDATE_DEV600_20261013_V1"
+      },
+      {
+        "attempt": "win-record-haswell-04",
+        "receipt_sha256": "97235901a6bffaf3f479ca3f4ca15eea4744a12594bb2d5d8dc53d611c4d8a23",
+        "record_artifact_sha256": "eb99cf5f9696ba316e82c22270a2683e3127a85e6ef48f7efa16352bfe27c7f6",
+        "scope": "CONTACT_REPLAY_ROOT_CANDIDATE_DEV600_20261013_V1"
+      },
+      {
+        "attempt": "linux-record-haswell-04",
+        "receipt_sha256": "7986298f59e7ab73573d8426fc4e1787969d78d4331ef7de5c7a5b3e0327404a",
+        "record_artifact_sha256": "eb99cf5f9696ba316e82c22270a2683e3127a85e6ef48f7efa16352bfe27c7f6",
+        "scope": "CONTACT_REPLAY_ROOT_CANDIDATE_DEV600_20261013_V1"
+      }
+    ],
+    "kind": "same_accepted_pose_canonical_root_replay",
+    "new_record_artifact_sha256": "eb99cf5f9696ba316e82c22270a2683e3127a85e6ef48f7efa16352bfe27c7f6",
+    "new_record_canonical_sha256": "a48d20d48e914f535f9346cd97d170e3cb4232e87669e78612c7539426dfadf2",
+    "original_checkpoint_sha256": "a1d72a795421b1d7351d9bcbcfb06faa55c7fe1a3a732a204bd92c27de879086",
+    "original_coupled_solve_source_hashes": "not recorded in the original response; no new provenance inferred",
+    "original_record_canonical_sha256": "2cf6e393f2803d0fd68429a05c06c3284d6a98fdc82d6729f4f1fd760c4ab07f",
+    "original_response_sha256": "31f4be483d0a75078db007f607eb9232974a119271132e1b835a7a890d00f296",
+    "prior_arithmetic_replay": {
+      "bindings_artifact_sha256": "fcd6c0691ed28e2d6f1c691a57e955a34d32382eafc879f278e30836eee66f50",
+      "record_artifact_sha256": "fa128e464228120da9359fd790f77c3ba5ba556a6f12d27c3e22099a39bb2019",
+      "scope": "prior same-pose arithmetic replay, not original coupled solve provenance",
+      "source_sha256": {
+        "src/anysolver/general_contact/beam_curve_pair.py": "0999f26c0641ac85007a923e588ea1dd3201e2c36f789f2d18305989a3384f9f",
+        "src/anysolver/general_contact/native_retained_pair_static.py": "9bc967fb016afcabafe4e3af7c439bbd4bb9c988c19c330c1f774fd1570b9f83",
+        "src/anysolver/general_contact/native_retained_whole_pair.py": "fbe8ac1dc19ccea2ebf835f4d99418a174993fddc09ba7258a50ec5e92ebb574"
+      }
+    },
+    "provisional": true,
+    "reason": "deterministic correctly rounded B3 projection roots replace platform-dependent Polynomial.roots; no physical tolerance or input change",
+    "record_gate_scope": "ordinary _record reran unchanged coupled-equilibrium and gap gates on the archived mechanical pose in all four profiles",
+    "replay_input_source_sha256": {
+      "src/anysolver/general_contact/native_retained_whole_pair.py": "fbe8ac1dc19ccea2ebf835f4d99418a174993fddc09ba7258a50ec5e92ebb574",
+      "tests/data/general_contact_native_curved_fibre_pair_v14.checkpoint": "a1d72a795421b1d7351d9bcbcfb06faa55c7fe1a3a732a204bd92c27de879086",
+      "tests/test_general_contact_native_curved_fibre_pair_static.py": "ac0fb051522d704af7173f882371e94ef270a609a3936fb1d853da68597022e5",
+      "tests/test_general_contact_native_curved_static.py": "3c77847e33b492acfd18b4d8087bf9beee5e615befc0e1033e90f481e71b1187",
+      "tests/test_general_contact_native_fibre_pair_static.py": "0bb22bb698dabebf0d8e2ca7be0c6344c5aee9dc28956a05ed80a429439eae0e"
+    },
+    "source_base_commit": "59ba6acda0dbd7390487b758678a6f9b2681fdb2",
+    "status_scope": "status/failure/completed describe the original archived coupled solve; current record is same-pose re-evaluation"
+  },
+  "status": "completed",
+  "targets": [
+    0.05
   ]
 }

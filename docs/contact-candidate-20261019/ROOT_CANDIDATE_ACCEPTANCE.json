@@ -1,0 +1,61 @@
+{
+  "status": "ACCEPTED_USABLE_HEADLESS_CANDIDATE_WITH_SCOPED_MEASURED_SUPPORT",
+  "recorded_utc": "2026-10-19T19:49:47.1122419Z",
+  "version": "0.4.7+contact.candidate.20261019",
+  "full_programme_qualified": false,
+  "publication_authorized": false,
+  "pushes": 0,
+  "worktree": "C:/Github/ANYsolver/.worktrees/contact-portable-replay",
+  "head": "59ba6acda0dbd7390487b758678a6f9b2681fdb2",
+  "solver_product_edits": 0,
+  "zip": "ANYsolver-contact-candidate-20261019.zip",
+  "zip_sha256": "3ad46ce6cf3273f69663836ae7765633afdf0b9e7fdd4aba6b2abf79ad7533bd",
+  "manifest_sha256": "91b2c4c70280024136e4370960b7ca223cb28c404f70a5cb8bf982569011fa97",
+  "solver_wheel_sha256": "67144b2ec56a3fe04d270bab71bdd955695e6522de1022953fead530f2ce4315",
+  "supporting_review": "C:\\ANYworkspaceWork\\contact_trackB_dependency_repair_20261013\\candidate-general-contact-20261019-v1\\review\\supporting-candidate-review-20261019T1947197006639Z.json",
+  "supporting_review_sha256": "c5d93c80d4484e8101b33ef962f507fb5e52a3710bfd55d349b5fff7676d4648",
+  "supporting_review_disposition": "No blockers within restricted measured scope; same-family Read assessment, not different-family full acceptance",
+  "evidence": {
+    "source": 14,
+    "test_executions": 37,
+    "worst_analytical_percent_error": 3.4349896516593093E-09,
+    "analytical_limit_percent": 0.1,
+    "portable_installed_normal_friction_archive_smoke": "PASS; checkout/tests/snapshots excluded",
+    "manifest_payload_files_independently_verified": 155,
+    "same_host_cpu_pass": true,
+    "same_host_cpu_quantities": 13,
+    "failures": 0,
+    "analytical_penalty_law_quantities": 7,
+    "solver_wheel_installed_matches": 700,
+    "installed": 23,
+    "skips": 0,
+    "source_files_verified": 908
+  },
+  "interpretation": "Analytical agreement is with declared finite-penalty law/example geometry, not continuum/model/discretization accuracy. B3 permits 1mm overclosure with 2mm declared tolerance and 10mm radius. Guided shell pair is constrained, not unrestricted two-body bending. No generic coupled 2% response accuracy established.",
+  "remaining": [
+    "Physically matched independent coupled-response references",
+    "Cross-machine/Ubuntu replay and full mandatory CI",
+    "Broader Q4 pressure/native/material/dynamics/impact qualification",
+    "Cold dependency installation and unexercised Shapely closure",
+    "Application admission and full C0-C9/D0-D8; different-family acceptance"
+  ],
+  "repairs": "Two retained tooling failures repaired within allowance: missing pip invocation and relative test paths. No solver/assertion/tolerance/physics/state/capability repair or relaxation.",
+  "accounting": {
+    "new_owned_processes_terminal": true,
+    "status": "CLOSED_UNUSED_FORFEITED",
+    "charged_seconds": 189.3920825000023,
+    "unused_seconds_closed": 2210.6079174999977,
+    "budget_seconds": 2400,
+    "invocations": 24,
+    "remaining_authority_seconds": 0,
+    "precise_child_process_wall_seconds": 187.56044920001295,
+    "resource_semantics": "Sampled aggregate RSS, not kernel lifetime peak",
+    "maximum_sampled_aggregate_rss_bytes": 200433664
+  },
+  "historical_lock": {
+    "sha256": "91a238273ff9c99242cc50be1af9bd6e3ddcbc781c37ced61f818b4d28253bbe",
+    "unchanged": true,
+    "old_cleanup": "UNKNOWN; no signals, removal or resource-recovery claim"
+  },
+  "root_verification": "Inspected actual receipts/origins/metrics, source and dirty baseline, wheel metadata/legal/capability bytes, all155 payload hashes and archive. Preserved staged0/HEAD and existing source; no further execution required."
+}

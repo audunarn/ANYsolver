@@ -10,6 +10,78 @@ from anysolver._ge_beam3_p5.algebra import rotation
 from anysolver.control import CancellationToken
 
 
+def test_independent_connected_physical_reference_polynomial_identities():
+    from examples.native_connected_balance_reference import (
+        REFERENCE_POSITIONS,physical_reference,clamp_reference,case_velocity)
+    velocity_global=np.zeros(78);v=np.array((.01,.02,.03));omega=2.
+    for n in range(5):velocity_global[6*n:6*n+3]=v
+    for k in range(4):velocity_global[30+3*k]=omega
+    state=dict(positions=REFERENCE_POSITIONS.copy(),position_low=np.zeros((5,3)),
+        nodal_frames=np.tile(np.eye(3),(5,1,1)),cell_rotations=np.tile(np.eye(3),(2,2,1,1)),
+        resultants=np.zeros((2,18)),velocity=velocity_global,acceleration=np.zeros(78))
+    ref=physical_reference(state)
+    # Integral length2, density2; four halfcells share nodes but not material.
+    assert abs(ref['kinetic_energy']-(.5*4.*(v@v)+.5*.04*omega**2))<1e-14
+    assert np.linalg.norm(ref['linear_momentum']-4.*v)<1e-14
+    assert np.linalg.norm(ref['angular_momentum']-np.array((.04*omega,0.,0.)))<1e-14
+    assert ref['stored_elastic_energy']==ref['mixed_potential']==0.
+    # All three separated native blocks are populated: the earlier interleaved
+    # diagnostic layout cannot accidentally pass this dot-product control.
+    state['resultants'][0,0]=3.;state['resultants'][0,3]=5.;state['resultants'][0,6]=7.
+    ref=physical_reference(state);expected=.5*.5*((9.+25.)/1e5+(49./3.)/30.)
+    assert abs(ref['stored_elastic_energy']-expected)<1e-15
+    assert abs(ref['mixed_potential']+expected)<1e-15
+    assert abs(ref['compatibility_work_witness']+2.*expected)<1e-15
+    assert abs(ref['independent_p_dot_resultant_residual']+2.*expected)<1e-15
+    assert abs(np.dot(state['resultants'].ravel(),ref['independent_resultant_residual'])-ref['independent_p_dot_resultant_residual'])<1e-15
+    support=clamp_reference(state,.00025,True)
+    assert np.array_equal(support['force_impulse_ns'],np.array((-.00075,0.,0.)))
+    assert support['work_j']==0.
+    # Independent root hand-integration of this fixed two-element initializer.
+    # These are analytic inputs/control values, never observed solver outcomes.
+    for clamped,energy,linear,angular in (
+        (False,.05230416666666667,(.04,.125,0.),(.061,-.012833333333333333,0.)),
+        (True,.0516,(.035,.10,.005),(.061,-.008666666666666666,.020833333333333332))):
+        state['resultants'][:]=0.;state['velocity'][:]=0.
+        physical=tuple(6*n+a for n in range(5)for a in range(3))+tuple(range(30,42))
+        state['velocity'][list(physical)]=case_velocity(clamped)
+        ref=physical_reference(state)
+        assert abs(ref['kinetic_energy']-energy)<1e-14
+        assert np.linalg.norm(ref['linear_momentum']-linear)<1e-14
+        assert np.linalg.norm(ref['angular_momentum']-angular)<1e-14
+
+
+def test_independent_connected_clamp_work_and_case_refusal():
+    from examples.native_connected_balance_reference import (
+        REFERENCE_POSITIONS,elastic_reference,clamp_reference,require_case_definition,_finite_errors)
+    owner=build();before=owner.checkpoint()if owner.current is not None else None
+    require_case_definition(owner,False)
+    with pytest.raises(ValueError):require_case_definition(owner,True)
+    assert owner.current is None and before is None
+    def exp(vector):
+        angle=float(np.linalg.norm(vector));x,y,z=vector
+        cross=np.array(((0.,-z,y),(z,0.,-x),(-y,x,0.)))
+        if angle==0.:return np.eye(3)
+        return np.eye(3)+np.sin(angle)/angle*cross+(1.-np.cos(angle))/angle**2*(cross@cross)
+    state=dict(positions=REFERENCE_POSITIONS.copy(),position_low=np.zeros((5,3)),
+        nodal_frames=np.tile(np.eye(3),(5,1,1)),cell_rotations=np.tile(np.eye(3),(2,2,1,1)),
+        resultants=np.zeros((2,18)),velocity=np.zeros(78),acceleration=np.zeros(78))
+    state['cell_rotations'][0,0]=exp(np.array((.03,-.02,.01)))
+    state['resultants'][0,:3]=(.5,-.3,.2);state['resultants'][0,6:9]=(.7,-.2,.4)
+    support=clamp_reference(state,1.,True)
+    couple=support['moment_impulse_nms']-np.cross(state['positions'][0],support['force_impulse_ns'])
+    direction=np.array((.2,-.3,.4))
+    for h in(1e-5,3e-6):
+        plus={**state,'nodal_frames':state['nodal_frames'].copy()}
+        minus={**state,'nodal_frames':state['nodal_frames'].copy()}
+        plus['nodal_frames'][0]=exp(h*direction);minus['nodal_frames'][0]=exp(-h*direction)
+        fd=(elastic_reference(plus)['mixed_potential']-elastic_reference(minus)['mixed_potential'])/(2*h)
+        assert abs(fd-couple@direction)<=1e-5*np.linalg.norm(couple)*np.linalg.norm(direction)
+    bad={**state,'cell_rotations':state['cell_rotations'].copy()};bad['cell_rotations'][0,0,0,0]=float('nan')
+    with pytest.raises(ValueError):elastic_reference(bad)
+    with pytest.raises(ValueError):_finite_errors({'reported_error':float('nan')})
+
+
 def test_global_shared_map_mass_and_rigid_reference():
     owner=build();state=owner.initialize(physical_velocity=velocity(owner))
     assert owner.size==78 and len(owner.physical)==27

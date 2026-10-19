@@ -1,0 +1,466 @@
+{
+  "adopted_scope_sha256": "52fcc2000191797eff9886bc1caa1648b1173d291e4a1906aa6a922a893ad161",
+  "arithmetic_source_sha256": {
+    "src/anysolver/general_contact/beam_curve_pair.py": "2e1a87edcf739cd2b83dfdcd3226c0cc2910a0737c1e3fc74d11e08188f5b5fb",
+    "src/anysolver/general_contact/polynomial_roots.py": "99505de9b92631d5d190eea701ad719d67ec8dfe3af23a655158a79148e803ab"
+  },
+  "body_sha256": "dc4d9aeaba62dd6eb98e68dc1b81d62e0f5fc9721268da69fc3d50798b450dd8",
+  "campaign_evidence": "C:\\ANYworkspaceWork\\contact_trackB_dependency_repair_20261013\\lifecycle-v3",
+  "capture_driver_sha256": "7bd5be8bb671b20df2ad39d7ba2ff097f1174dcce0bf92aa65be6207e3017daf",
+  "capture_pins_sha256": "74f3f35d5249e2908faffb4dca7275c6acf36bfc4ed965725c2e3577701a6769",
+  "changed_contact_leaves": [
+    {
+      "new": -1.3813270855786228e-05,
+      "new_hex": "-0x1.cf7f17d8dc5efp-17",
+      "new_type": "float",
+      "old": -1.3813270855780865e-05,
+      "old_hex": "-0x1.cf7f17d8db991p-17",
+      "old_type": "float",
+      "path": [
+        "contact",
+        "beam_a_force_n",
+        0
+      ]
+    },
+    {
+      "new": -0.0011061135992286937,
+      "new_hex": "-0x1.21f606eff8f22p-10",
+      "new_type": "float",
+      "old": -0.0011061135992281956,
+      "old_hex": "-0x1.21f606eff8629p-10",
+      "old_type": "float",
+      "path": [
+        "contact",
+        "beam_a_force_n",
+        1
+      ]
+    },
+    {
+      "new": -0.0022041502481482305,
+      "new_hex": "-0x1.20e70276689eap-9",
+      "new_type": "float",
+      "old": -0.0022041502481472373,
+      "old_hex": "-0x1.20e70276680f8p-9",
+      "old_type": "float",
+      "path": [
+        "contact",
+        "beam_a_moment_nm",
+        2
+      ]
+    },
+    {
+      "new": 1.3813270855786228e-05,
+      "new_hex": "0x1.cf7f17d8dc5efp-17",
+      "new_type": "float",
+      "old": 1.3813270855780863e-05,
+      "old_hex": "0x1.cf7f17d8db990p-17",
+      "old_type": "float",
+      "path": [
+        "contact",
+        "beam_b_force_n",
+        0
+      ]
+    },
+    {
+      "new": 0.0011061135992286937,
+      "new_hex": "0x1.21f606eff8f22p-10",
+      "new_type": "float",
+      "old": 0.0011061135992281954,
+      "old_hex": "0x1.21f606eff8628p-10",
+      "old_type": "float",
+      "path": [
+        "contact",
+        "beam_b_force_n",
+        1
+      ]
+    },
+    {
+      "new": 0.00220415024814823,
+      "new_hex": "0x1.20e70276689e9p-9",
+      "new_type": "float",
+      "old": 0.0022041502481472373,
+      "old_hex": "0x1.20e70276680f8p-9",
+      "old_type": "float",
+      "path": [
+        "contact",
+        "beam_b_moment_nm",
+        2
+      ]
+    },
+    {
+      "new": 118,
+      "new_type": "int",
+      "old": 114,
+      "old_type": "int",
+      "path": [
+        "contact",
+        "bounded_omission_cells"
+      ]
+    },
+    {
+      "new": 4.379510889199605e-21,
+      "new_hex": "0x1.4ae80f876662ep-68",
+      "new_type": "float",
+      "old": 1.0840793122350358e-20,
+      "old_hex": "0x1.998db7ba3faddp-67",
+      "old_type": "float",
+      "path": [
+        "contact",
+        "energy_error_j"
+      ]
+    },
+    {
+      "new": 5.355778764866611e-16,
+      "new_hex": "0x1.34bd581a648e4p-51",
+      "new_type": "float",
+      "old": 1.4474710519890742e-15,
+      "old_hex": "0x1.a134831f93ce2p-50",
+      "old_type": "float",
+      "path": [
+        "contact",
+        "force_error_n"
+      ]
+    },
+    {
+      "new": 673,
+      "new_type": "int",
+      "old": 715,
+      "old_type": "int",
+      "path": [
+        "contact",
+        "integration_cells_checked"
+      ]
+    },
+    {
+      "new": 1073,
+      "new_type": "int",
+      "old": 1689,
+      "old_type": "int",
+      "path": [
+        "contact",
+        "integration_evaluations"
+      ]
+    },
+    {
+      "new": 44,
+      "new_type": "int",
+      "old": 70,
+      "old_type": "int",
+      "path": [
+        "contact",
+        "integration_intervals"
+      ]
+    },
+    {
+      "new": 5.0862579020773015e-09,
+      "new_hex": "0x1.5d866531480bap-28",
+      "new_type": "float",
+      "old": 5.086257902072423e-09,
+      "old_hex": "0x1.5d866531469b0p-28",
+      "old_type": "float",
+      "path": [
+        "contact",
+        "potential_j"
+      ]
+    },
+    {
+      "new": 3.8946948057810615e-08,
+      "new_hex": "0x1.4e8d3e9854fbcp-25",
+      "new_type": "float",
+      "old": 3.9863802859464494e-08,
+      "old_hex": "0x1.566d6df682b48p-25",
+      "old_type": "float",
+      "path": [
+        "contact",
+        "tangent_error_n_per_m"
+      ]
+    }
+  ],
+  "checkpoint_sha256": "a37d8ebe66341e8dc48e83dbc99939153280a8f1a81c3812212c04d4adc6a8ca",
+  "comparison_sha256": "2d5294a65bdb815b9edab7457e09a4bf4ef397d7df0b7671ea1d0ee77efb9bc7",
+  "coupled_solve_rerun": false,
+  "fixture_path": "tests/data/general_contact_native_curved_pair_lifecycle_press_v1.checkpoint",
+  "harness_pins_sha256": "435011b98274e391892c1338f76fe28ccf3aad2a3062c23e029f269e5a77adbc",
+  "kind": "same-pose canonical-root contact re-evaluation",
+  "limitations": [
+    "Original completed solve source provenance is unknown.",
+    "Same-pose reevaluation does not establish a new completed coupled trajectory.",
+    "Exclusive first-divergence attribution for every lifecycle leaf is not established.",
+    "Open/recontact stages and their capsules are unchanged and require their existing separate gates.",
+    "Provisional until designated merged-candidate binding reruns and owner review.",
+    "Source integration only; post-integration solver/test execution has not run."
+  ],
+  "original_body_sha256": "e13764c0e7a8f4d483b989a5d72111f57d1a47c74ac34d3d2ca50cb17fbee7e4",
+  "original_checkpoint_sha256": "0c8e0e844da54092b9f9b870cee8817cefa6eb0fca1c0c58b683ad3e387ccbd7",
+  "original_definition": {
+    "completed_targets": 1,
+    "identity": "debc151a8ae240afd21a3262a6e413560c61920e1c4f3596d847cc0b3001b8c5",
+    "profile": "NATIVE_B3_GE_PHYSICAL_FIBRE_WHOLE_CURVE_PAIR_STATIC_DEV_V1",
+    "schema": "NATIVE_PHYSICAL_FIBRE_WHOLE_CURVE_PAIR_CHECKPOINT_DEV_V1"
+  },
+  "original_record_sha256": "2cc38edf043a61944cee8f192049a8a4c17eb5908932a439f10277194cedcabe",
+  "original_solve_provenance": "Unknown; inherited accepted mechanical/history state, not a new coupled solve.",
+  "original_solve_source_identity": null,
+  "profiles": [
+    {
+      "completion_sha256": "3d8abe9f033fa8a38e90a734d6f4dbd6fa8675d28c357e808dc7e6873f170fbf",
+      "dependencies": {
+        "checks": {
+          "actual_base_interpreter_bound": true,
+          "anyfileio_origin_version": true,
+          "anygeometry_origin_version": true,
+          "anymaterial_origin_version": true,
+          "anymesher_origin_version": true,
+          "compiled_mesh_required": true,
+          "raw_environment_exact": true
+        },
+        "manifest_sha256": "e20948345f0645de3426d93695ce80da0f151920a8978add193806487da66571",
+        "native": {
+          "available": true,
+          "file": "C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/native-build-v6/build-01/deployment/src/anymesher/_native.cp312-win_amd64.pyd",
+          "same_extension": true,
+          "sha256": "372fc7ea469d8aa4da53daa43aa156cc609406c00962504fafe906ff3e281571"
+        },
+        "packages": {
+          "anyfileio": {
+            "distribution_version": "0.3.2",
+            "file": "C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/native-build-v6/build-01/deployment/src/anyfileio/__init__.py",
+            "metadata_directory": "C:/Users/AudunArnesenNyhus/AppData/Local/Packages/OpenAI.Codex_2p2nqsd0c76g0/LocalCache/Local/contact-ci4-env312/Lib/site-packages/anyfileio-0.3.2.dist-info",
+            "module_version": "0.3.2",
+            "sha256": "ef3d2ce1ba0f0084ffea77d3e7eee06baf3577c77a6b6601726ed7702e4be5a8"
+          },
+          "anygeometry": {
+            "distribution_version": "0.4.3",
+            "file": "C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/native-build-v6/build-01/deployment/src/anygeometry/__init__.py",
+            "metadata_directory": "C:/Users/AudunArnesenNyhus/AppData/Local/Packages/OpenAI.Codex_2p2nqsd0c76g0/LocalCache/Local/contact-ci4-env312/Lib/site-packages/anygeometry-0.4.3.dist-info",
+            "module_version": "0.4.3",
+            "sha256": "1da8974bdd79270d6d603e27c03cc8910c0312a15437c566ee7d5eced698c015"
+          },
+          "anymaterial": {
+            "distribution_version": "0.2.0",
+            "file": "C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/native-build-v6/build-01/deployment/src/anymaterial/__init__.py",
+            "metadata_directory": "C:/Users/AudunArnesenNyhus/AppData/Local/Packages/OpenAI.Codex_2p2nqsd0c76g0/LocalCache/Local/contact-ci4-env312/Lib/site-packages/anymaterial-0.2.0.dist-info",
+            "module_version": "0.2.0",
+            "sha256": "46d9c80639435e40c8533d78d89364c51f1cef65969b1c418eab4f36a7512900"
+          },
+          "anymesher": {
+            "distribution_version": "0.5.0",
+            "file": "C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/native-build-v6/build-01/deployment/src/anymesher/__init__.py",
+            "metadata_directory": "C:/Users/AudunArnesenNyhus/AppData/Local/Packages/OpenAI.Codex_2p2nqsd0c76g0/LocalCache/Local/contact-ci4-env312/Lib/site-packages/anymesher-0.5.0.dist-info",
+            "module_version": "0.5.0",
+            "sha256": "a1ce3481ab3700ffd4959c657a7c628e616a6e961a251562fc61171c407cdab9"
+          }
+        }
+      },
+      "eligible_complete_capture": true,
+      "host": "windows",
+      "loaded_sources_sha256": "d1f22f9f2cb8a4706270b523145af05546a6db1523eec55cd3332de528096834",
+      "name": "win-default-01",
+      "process_wall_seconds": 114.4755976999877,
+      "profile": "default",
+      "receipt_sha256": "efa5a16376cf4484e4151fa9bf18fdc259772ee84db3a31b5328149e54791b5c",
+      "runtime_after_sha256": "c0a48325bb18d0bf5d2b877c635cdcff7c7378ce675a00f632048d9bf5279832",
+      "runtime_before_sha256": "3aa324048d804f06fb166fa9a1cfb4613017e5ca3330164e2b09ae70769c8128",
+      "strict_saved_fixture_status": "NONPASS",
+      "validation_sha256": "7a543a1854d0e8f86e53dae0aaad27ccaced7e6818dc11777967baa2519420cd"
+    },
+    {
+      "completion_sha256": "e0dda5d45957b1d53f25bcd4ac78232de7376e74852e059221083efee2abf590",
+      "dependencies": {
+        "checks": {
+          "actual_base_interpreter_bound": true,
+          "anyfileio_origin_version": true,
+          "anygeometry_origin_version": true,
+          "anymaterial_origin_version": true,
+          "anymesher_origin_version": true,
+          "compiled_mesh_required": true,
+          "raw_environment_exact": true
+        },
+        "manifest_sha256": "afa25d5882a148d06deb0545a5d53093092c5f0284b7c021d99d236068f3c984",
+        "native": {
+          "available": true,
+          "file": "/home/audunarn/anyci-20261011/venv/lib/python3.12/site-packages/anymesher/_native.cpython-312-x86_64-linux-gnu.so",
+          "same_extension": true,
+          "sha256": "ffc53fb12818bec19ea36f63713d031e0df797bcdca950a91428ae83b2efef5f"
+        },
+        "packages": {
+          "anyfileio": {
+            "distribution_version": "0.3.2",
+            "file": "/home/audunarn/anyci-20261011/venv/lib/python3.12/site-packages/anyfileio/__init__.py",
+            "metadata_directory": "/home/audunarn/anyci-20261011/venv/lib/python3.12/site-packages/anyfileio-0.3.2.dist-info",
+            "module_version": "0.3.2",
+            "sha256": "385f07bf5ecd69c025c082bf4f78866fe4910c33d88fa9767cfaa1de8b084a6b"
+          },
+          "anygeometry": {
+            "distribution_version": "0.4.3",
+            "file": "/home/audunarn/anyci-20261011/venv/lib/python3.12/site-packages/anygeometry/__init__.py",
+            "metadata_directory": "/home/audunarn/anyci-20261011/venv/lib/python3.12/site-packages/anygeometry-0.4.3.dist-info",
+            "module_version": "0.4.3",
+            "sha256": "b73598017b2216bb2a3232c449f0b4194025002998da9028fe0816c6c745c0ff"
+          },
+          "anymaterial": {
+            "distribution_version": "0.2.0",
+            "file": "/home/audunarn/anyci-20261011/venv/lib/python3.12/site-packages/anymaterial/__init__.py",
+            "metadata_directory": "/home/audunarn/anyci-20261011/venv/lib/python3.12/site-packages/anymaterial-0.2.0.dist-info",
+            "module_version": "0.2.0",
+            "sha256": "d0eb7a5c78352cf6b024b83457c1cc77836ca3a623d13dcc9dc85a983883be9e"
+          },
+          "anymesher": {
+            "distribution_version": "0.5.0",
+            "file": "/home/audunarn/anyci-20261011/venv/lib/python3.12/site-packages/anymesher/__init__.py",
+            "metadata_directory": "/home/audunarn/anyci-20261011/venv/lib/python3.12/site-packages/anymesher-0.5.0.dist-info",
+            "module_version": "0.5.0",
+            "sha256": "58d23a985ac9cfb346fae9483f8b4f803579960528ac43653022e5c8a67004b6"
+          }
+        }
+      },
+      "eligible_complete_capture": true,
+      "host": "linux",
+      "loaded_sources_sha256": "c58705de14d059a791f47ba3dfa29f3e347e5be8d169d46684fcdbcb5ca187c6",
+      "name": "linux-default-01",
+      "process_wall_seconds": 101.60783186599997,
+      "profile": "default",
+      "receipt_sha256": "b59f1fe4472b3eb25da909b4bdb9be11ca63b84dad9b74759d9e87be1b66f252",
+      "runtime_after_sha256": "14ca580395039c08694f6aca67d6829f3d8eb96850f71fe627f37ef41463c9bb",
+      "runtime_before_sha256": "0415689e415e7c19857e11607d2b608efe1b56fbce0afc7544421c5d066cbed4",
+      "strict_saved_fixture_status": "NONPASS",
+      "validation_sha256": "d8ed78258d82d796a7ae9a3cb022962d7373c47ef8d5b0e61a8babc6ca6674b1"
+    },
+    {
+      "completion_sha256": "59c765d1eaab01af24632c904a6ff5cf09d14206b9231becedb73190b35e2b0c",
+      "dependencies": {
+        "checks": {
+          "actual_base_interpreter_bound": true,
+          "anyfileio_origin_version": true,
+          "anygeometry_origin_version": true,
+          "anymaterial_origin_version": true,
+          "anymesher_origin_version": true,
+          "compiled_mesh_required": true,
+          "raw_environment_exact": true
+        },
+        "manifest_sha256": "e20948345f0645de3426d93695ce80da0f151920a8978add193806487da66571",
+        "native": {
+          "available": true,
+          "file": "C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/native-build-v6/build-01/deployment/src/anymesher/_native.cp312-win_amd64.pyd",
+          "same_extension": true,
+          "sha256": "372fc7ea469d8aa4da53daa43aa156cc609406c00962504fafe906ff3e281571"
+        },
+        "packages": {
+          "anyfileio": {
+            "distribution_version": "0.3.2",
+            "file": "C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/native-build-v6/build-01/deployment/src/anyfileio/__init__.py",
+            "metadata_directory": "C:/Users/AudunArnesenNyhus/AppData/Local/Packages/OpenAI.Codex_2p2nqsd0c76g0/LocalCache/Local/contact-ci4-env312/Lib/site-packages/anyfileio-0.3.2.dist-info",
+            "module_version": "0.3.2",
+            "sha256": "ef3d2ce1ba0f0084ffea77d3e7eee06baf3577c77a6b6601726ed7702e4be5a8"
+          },
+          "anygeometry": {
+            "distribution_version": "0.4.3",
+            "file": "C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/native-build-v6/build-01/deployment/src/anygeometry/__init__.py",
+            "metadata_directory": "C:/Users/AudunArnesenNyhus/AppData/Local/Packages/OpenAI.Codex_2p2nqsd0c76g0/LocalCache/Local/contact-ci4-env312/Lib/site-packages/anygeometry-0.4.3.dist-info",
+            "module_version": "0.4.3",
+            "sha256": "1da8974bdd79270d6d603e27c03cc8910c0312a15437c566ee7d5eced698c015"
+          },
+          "anymaterial": {
+            "distribution_version": "0.2.0",
+            "file": "C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/native-build-v6/build-01/deployment/src/anymaterial/__init__.py",
+            "metadata_directory": "C:/Users/AudunArnesenNyhus/AppData/Local/Packages/OpenAI.Codex_2p2nqsd0c76g0/LocalCache/Local/contact-ci4-env312/Lib/site-packages/anymaterial-0.2.0.dist-info",
+            "module_version": "0.2.0",
+            "sha256": "46d9c80639435e40c8533d78d89364c51f1cef65969b1c418eab4f36a7512900"
+          },
+          "anymesher": {
+            "distribution_version": "0.5.0",
+            "file": "C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/native-build-v6/build-01/deployment/src/anymesher/__init__.py",
+            "metadata_directory": "C:/Users/AudunArnesenNyhus/AppData/Local/Packages/OpenAI.Codex_2p2nqsd0c76g0/LocalCache/Local/contact-ci4-env312/Lib/site-packages/anymesher-0.5.0.dist-info",
+            "module_version": "0.5.0",
+            "sha256": "a1ce3481ab3700ffd4959c657a7c628e616a6e961a251562fc61171c407cdab9"
+          }
+        }
+      },
+      "eligible_complete_capture": true,
+      "host": "windows",
+      "loaded_sources_sha256": "d1f22f9f2cb8a4706270b523145af05546a6db1523eec55cd3332de528096834",
+      "name": "win-haswell-01",
+      "process_wall_seconds": 117.00008440000238,
+      "profile": "haswell",
+      "receipt_sha256": "eeee4d0f6d7001460a03feec8d601ade77d630028bd9dd8e815b7c4457884c99",
+      "runtime_after_sha256": "d7cb051ec192ab076734d8041d869743cc1fa32a6d27bb8fdf4bdd01540b86f7",
+      "runtime_before_sha256": "aabce2353e208befacf759adb4a19b9610778b4d4dbe4a6dc586cf299a9196a6",
+      "strict_saved_fixture_status": "NONPASS",
+      "validation_sha256": "7a543a1854d0e8f86e53dae0aaad27ccaced7e6818dc11777967baa2519420cd"
+    },
+    {
+      "completion_sha256": "e5911d8704fa0907e8c4fd7ca4bd7102e4c9bb4c6423c248a8bc5f4d4b1455aa",
+      "dependencies": {
+        "checks": {
+          "actual_base_interpreter_bound": true,
+          "anyfileio_origin_version": true,
+          "anygeometry_origin_version": true,
+          "anymaterial_origin_version": true,
+          "anymesher_origin_version": true,
+          "compiled_mesh_required": true,
+          "raw_environment_exact": true
+        },
+        "manifest_sha256": "afa25d5882a148d06deb0545a5d53093092c5f0284b7c021d99d236068f3c984",
+        "native": {
+          "available": true,
+          "file": "/home/audunarn/anyci-20261011/venv/lib/python3.12/site-packages/anymesher/_native.cpython-312-x86_64-linux-gnu.so",
+          "same_extension": true,
+          "sha256": "ffc53fb12818bec19ea36f63713d031e0df797bcdca950a91428ae83b2efef5f"
+        },
+        "packages": {
+          "anyfileio": {
+            "distribution_version": "0.3.2",
+            "file": "/home/audunarn/anyci-20261011/venv/lib/python3.12/site-packages/anyfileio/__init__.py",
+            "metadata_directory": "/home/audunarn/anyci-20261011/venv/lib/python3.12/site-packages/anyfileio-0.3.2.dist-info",
+            "module_version": "0.3.2",
+            "sha256": "385f07bf5ecd69c025c082bf4f78866fe4910c33d88fa9767cfaa1de8b084a6b"
+          },
+          "anygeometry": {
+            "distribution_version": "0.4.3",
+            "file": "/home/audunarn/anyci-20261011/venv/lib/python3.12/site-packages/anygeometry/__init__.py",
+            "metadata_directory": "/home/audunarn/anyci-20261011/venv/lib/python3.12/site-packages/anygeometry-0.4.3.dist-info",
+            "module_version": "0.4.3",
+            "sha256": "b73598017b2216bb2a3232c449f0b4194025002998da9028fe0816c6c745c0ff"
+          },
+          "anymaterial": {
+            "distribution_version": "0.2.0",
+            "file": "/home/audunarn/anyci-20261011/venv/lib/python3.12/site-packages/anymaterial/__init__.py",
+            "metadata_directory": "/home/audunarn/anyci-20261011/venv/lib/python3.12/site-packages/anymaterial-0.2.0.dist-info",
+            "module_version": "0.2.0",
+            "sha256": "d0eb7a5c78352cf6b024b83457c1cc77836ca3a623d13dcc9dc85a983883be9e"
+          },
+          "anymesher": {
+            "distribution_version": "0.5.0",
+            "file": "/home/audunarn/anyci-20261011/venv/lib/python3.12/site-packages/anymesher/__init__.py",
+            "metadata_directory": "/home/audunarn/anyci-20261011/venv/lib/python3.12/site-packages/anymesher-0.5.0.dist-info",
+            "module_version": "0.5.0",
+            "sha256": "58d23a985ac9cfb346fae9483f8b4f803579960528ac43653022e5c8a67004b6"
+          }
+        }
+      },
+      "eligible_complete_capture": true,
+      "host": "linux",
+      "loaded_sources_sha256": "c58705de14d059a791f47ba3dfa29f3e347e5be8d169d46684fcdbcb5ca187c6",
+      "name": "linux-haswell-01",
+      "process_wall_seconds": 103.08121742899993,
+      "profile": "haswell",
+      "receipt_sha256": "bbf8a7fbb6a60fb6b3775325ae34caead8c5a6d3911d22deef34de39b1abb8fd",
+      "runtime_after_sha256": "97e90cfa574f24c2658c2d3a0e7114deb7abb690b300c84d254ed31a8c26f580",
+      "runtime_before_sha256": "bc08400a89c35dbe3a665567f3d1ce35b33f5440b886067cabe05ef93b0006ea",
+      "strict_saved_fixture_status": "NONPASS",
+      "validation_sha256": "d8ed78258d82d796a7ae9a3cb022962d7373c47ef8d5b0e61a8babc6ca6674b1"
+    }
+  ],
+  "provisional": true,
+  "record_sha256": "37d6c1c1c136f277957fd0cc4dc8e6f6744740d071cdef14a8da55c135bbd7ff",
+  "repository_pin_count": 3864,
+  "repository_pins_sha256": "51294a6aff3b579136674de7656345d03e177b23f5dde5f640b6763e29107517",
+  "schema": "PROVISIONAL_NATIVE_CURVED_LIFECYCLE_PRESS_PROVENANCE_V1",
+  "scientifically_accepted": false,
+  "unchanged_record_fields": {
+    "histories": "cae6e62adc07498220a598b0c896e3b515cd67a908eb1b9fca44a122bab0055d",
+    "mechanical": "7f1fb623f6d0b0683d41b0dcc5853dc528b3089911f84806d984d9629ae13370",
+    "previous_sha256": "5bb093c7879f802e1bea68d54e7406dd32f20e5b506412098b94b5388993487a",
+    "target": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+  }
+}

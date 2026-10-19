@@ -49,6 +49,10 @@ Q4_MECHANICS_CANONICALIZATION = (
 )
 
 
+Q4_SOURCE_BINDING = ROOT / 'docs' / 'reference_cases' / 'e4_pl_q4_source_binding_20261016.json'
+Q4_SOURCE_BINDING_SHA256 = 'BE903D0381248BEC56B9C48E8EF90F119B0F15E133F1AEBB9A5B89C341B8AA1B'
+
+
 def _load_generator():
     spec = importlib.util.spec_from_file_location("e4_pl_s3_mixed_mesh_manifest", GENERATOR)
     assert spec is not None and spec.loader is not None
@@ -431,6 +435,72 @@ def test_qualification_contract_is_canonical_and_binds_connectivity() -> None:
     }
 
 
+def _require_prospective_q4_source_binding(
+    record_raw: bytes,
+    source_raw: bytes,
+    actual: dict[str, object],
+    authority: dict[str, object],
+) -> dict[str, object]:
+    assert hashlib.sha256(record_raw).hexdigest().upper() == Q4_SOURCE_BINDING_SHA256
+    record = _strict_json(record_raw)
+    assert record['schema'] == 'anysolver.q4-source-binding-successor-v1'
+    assert record['qualification_boundary'] == 'SOURCE_BINDING_ONLY_NOT_SCIENTIFIC_QUALIFICATION'
+    assert record['source']['path'] == QUALIFIED_Q4_MECHANICS.relative_to(ROOT).as_posix()
+    assert hashlib.sha256(source_raw).hexdigest().upper() == record['source']['sha256']
+    source = source_raw.decode('utf-8')
+    assert actual['roots'] == authority['roots'] == record['mechanics']['roots']
+    assert len(actual['roots']) == 47
+    assert set(authority['symbols']) <= set(actual['symbols'])
+    assert len(authority['symbols']) == 129
+    assert actual == record['mechanics']
+    assert _q4_mechanics_aggregate(actual) == record['mechanics_aggregate_sha256']
+    assert record['historical_current_source_matches'] is False
+    for relative, digest in record['historical_authorities'].items():
+        assert hashlib.sha256((ROOT / relative).read_bytes()).hexdigest().upper() == digest
+    assert set(record['historical_authorities']) == {
+        QUALIFICATION_CONTRACT.relative_to(ROOT).as_posix(),
+        Q4_REPLAY_HOTFIX.relative_to(ROOT).as_posix(),
+        Q4_REPLAY_CANONICALIZATION.relative_to(ROOT).as_posix(),
+    }
+    inventory = _mechanics_nodes(source)
+    expected_external = {
+        '_elastic_increment_module': 'src/anysolver/vectorized_nonlinear.py',
+        '_local_contractions': 'src/anysolver/_compensated_contractions.py',
+        '_elements_module': 'src/anysolver/elements.py',
+    }
+    assert set(record['external_arithmetic_dependencies']) == set(expected_external)
+    for alias, relative in expected_external.items():
+        row = record['external_arithmetic_dependencies'][alias]
+        assert row['path'] == relative and row['changed_this_slice'] is False
+        assert hashlib.sha256((ROOT / relative).read_bytes()).hexdigest().upper() == row['sha256'].upper()
+        used = sorted({
+            node.attr
+            for symbol in actual['symbols']
+            for node in ast.walk(inventory[symbol][0])
+            if isinstance(node, ast.Attribute)
+            and isinstance(node.value, ast.Name) and node.value.id == alias
+        })
+        assert used == row['used_attributes']
+    observed = record['observed_focused_pre_reader_integration']
+    assert observed['status'] == 'PASS'
+    assert observed['case_count'] == 41 and observed['phase_count'] == 123
+    assert set(observed['all_source_symbol_delta']['files']) == {
+        'src/anysolver/e4_pl_element.py',
+        'tests/test_e4_pl_s3_mixed_mesh_manifest.py',
+        'tests/test_general_contact_c5_elastic_increment.py',
+        'tests/test_general_contact_c5_numpy_coordinate_admission.py',
+    }
+    # The later reader-only test edit is independently pinned by its whole-module carrier.
+    for relative in (
+        'tests/test_general_contact_c5_elastic_increment.py',
+        'tests/test_general_contact_c5_numpy_coordinate_admission.py',
+    ):
+        assert hashlib.sha256((ROOT / relative).read_bytes()).hexdigest() == observed[
+            'all_source_symbol_delta'
+        ]['files'][relative]['after_source_sha256']
+    return record
+
+
 def test_qualification_contract_and_replay_hotfix_bind_q4_mechanics_symbols() -> None:
     contract = _strict_json(QUALIFICATION_CONTRACT.read_bytes())
     candidate = contract["candidate"]
@@ -493,10 +563,13 @@ def test_qualification_contract_and_replay_hotfix_bind_q4_mechanics_symbols() ->
         if actual["symbols"][name] != digest
     )
     added = sorted(set(actual["symbols"]) - set(expected))
-    assert changed == successor_correction["cumulative_updated_existing_symbols"]
-    assert added == successor_correction["cumulative_added_symbols"]
-    assert correction["updated_existing_symbols"] == changed
-    assert set(correction["added_symbols"]) < set(added)
+    # The immutable historical chain retains its original correction scope.
+    assert correction["updated_existing_symbols"] == successor_correction[
+        "cumulative_updated_existing_symbols"
+    ]
+    assert set(correction["added_symbols"]) < set(
+        successor_correction["cumulative_added_symbols"]
+    )
     assert authority["aggregate_sha256"] == correction[
         "prior_mechanics_aggregate_sha256"
     ]
@@ -506,10 +579,75 @@ def test_qualification_contract_and_replay_hotfix_bind_q4_mechanics_symbols() ->
     assert hashlib.sha256(Q4_REPLAY_HOTFIX.read_bytes()).hexdigest().upper() == successor[
         "prior_evidence"
     ]["sha256"]
-    assert _q4_mechanics_aggregate(actual) == successor_correction[
+    # Current source genuinely differs from that historical authority; no fallback.
+    assert _q4_mechanics_aggregate(actual) != successor_correction[
         "current_mechanics_aggregate_sha256"
     ]
+    binding = _require_prospective_q4_source_binding(
+        Q4_SOURCE_BINDING.read_bytes(), QUALIFIED_Q4_MECHANICS.read_bytes(), actual, authority
+    )
+    assert binding["historical_difference"] == {
+        "changed_symbols": changed,
+        "added_symbols": added,
+        "removed_symbols": sorted(set(expected) - set(actual["symbols"])),
+    }
 
+
+def test_prospective_q4_source_binding_rejects_unknown_record_and_outside_closure() -> None:
+    authority = _strict_json(QUALIFICATION_CONTRACT.read_bytes())["candidate"][
+        "qualified_q4_mechanics_authority"
+    ]
+    raw = QUALIFIED_Q4_MECHANICS.read_bytes()
+    source = raw.decode("utf-8")
+    actual = _q4_mechanics_authority_payload(
+        source, set(authority["roots"]), schema=authority["schema"],
+        path=authority["path"], required_symbols=set(authority["symbols"]),
+    )
+    record = Q4_SOURCE_BINDING.read_bytes()
+    with pytest.raises(AssertionError):
+        _require_prospective_q4_source_binding(record + b" ", raw, actual, authority)
+    for field in ("roots", "symbols"):
+        refused = _strict_json(json.dumps(actual).encode("utf-8"))
+        if field == "roots":
+            refused[field] = refused[field][1:]
+        else:
+            refused[field].pop(next(iter(authority["symbols"])))
+        with pytest.raises(AssertionError):
+            _require_prospective_q4_source_binding(record, raw, refused, authority)
+    outside = "QualifiedE4PLShellElement._compute_prepared_nonlinear_response"
+    assert outside not in actual["symbols"]
+    definition = "    def _compute_prepared_nonlinear_response("
+    assert source.count(definition) == 1
+    changed = source.replace(definition, definition.replace("response", "response_changed"), 1)
+    unchanged_closure = _q4_mechanics_authority_payload(
+        changed, set(authority["roots"]), schema=authority["schema"],
+        path=authority["path"], required_symbols=set(authority["symbols"]),
+    )
+    assert unchanged_closure == actual
+    with pytest.raises(AssertionError):
+        _require_prospective_q4_source_binding(
+            record, changed.encode("utf-8"), unchanged_closure, authority
+        )
+
+
+def test_prospective_q4_source_binding_rejects_external_dependency_drift(monkeypatch) -> None:
+    authority = _strict_json(QUALIFICATION_CONTRACT.read_bytes())["candidate"][
+        "qualified_q4_mechanics_authority"
+    ]
+    raw = QUALIFIED_Q4_MECHANICS.read_bytes()
+    actual = _q4_mechanics_authority_payload(
+        raw.decode("utf-8"), set(authority["roots"]), schema=authority["schema"],
+        path=authority["path"], required_symbols=set(authority["symbols"]),
+    )
+    record = Q4_SOURCE_BINDING.read_bytes()
+    dependency = ROOT / "src" / "anysolver" / "vectorized_nonlinear.py"
+    original = Path.read_bytes
+    def changed_bytes(path):
+        value = original(path)
+        return value + b"\n# injected source drift\n" if path == dependency else value
+    monkeypatch.setattr(Path, "read_bytes", changed_bytes)
+    with pytest.raises(AssertionError):
+        _require_prospective_q4_source_binding(record, raw, actual, authority)
 
 def test_q4_mechanics_symbol_authority_rejects_missing_duplicate_and_change() -> None:
     contract = _strict_json(QUALIFICATION_CONTRACT.read_bytes())
@@ -532,11 +670,12 @@ def test_q4_mechanics_symbol_authority_rejects_missing_duplicate_and_change() ->
         "def _shape(r: float, s: float, marker: int = 0) -> np.ndarray:",
         1,
     )
+    baseline_hashes = _q4_mechanics_symbol_hashes(source, selected)
     changed_hashes = _q4_mechanics_symbol_hashes(changed, selected)
     assert {
         name
         for name in selected
-        if changed_hashes[name] != authority["symbols"][name]
+        if changed_hashes[name] != baseline_hashes[name]
     } == {"_shape"}
 
 
@@ -572,7 +711,7 @@ def test_q4_mechanics_closure_binds_physical_director_dependency() -> None:
     assert changed == {
         "QualifiedE4PLShellElement._physical_director_context"
     }
-    assert _q4_mechanics_aggregate(actual) != authority["aggregate_sha256"]
+    assert _q4_mechanics_aggregate(actual) != _q4_mechanics_aggregate(baseline)
 
     definition = "    def _physical_director_context("
     assert source.count(definition) == 1

@@ -4,6 +4,63 @@ from typing import Tuple, Optional, Any, Dict
 from .jit_compiler import njit
 from .plasticity import plane_stress_return_map
 from .elements import lobatto_layers, plane_stress_elastic_matrix
+from . import _compensated_contractions as _contractions
+
+
+def compensated_elastic_batch_zero(geometry, E, nu, G_mod, h, drilling):
+    """Batch coefficient realization, independent of scalar compliance/drill."""
+    constitutive = plane_stress_elastic_matrix(E, nu)
+    return _contractions.shell_zero_tangent(
+        geometry, h * constitutive, h**3 / 12.0 * constitutive,
+        G_mod * (5.0 / 6.0) * h * np.eye(2), G_mod * h * drilling)
+
+
+def elastic_shell_nonlinear_increment(u_elem, geometry, E, nu, h, *, tangent=True):
+    """Direct elastic von-Karman increment over the reference linear shell.
+
+    Admission and input lifetime belong to the qualified caller. No state or
+    geometry is retained. Linear bending, shear and drill are supplied by that
+    caller's baseline; the geometric tangent uses the *full* membrane stress.
+    """
+    transform = geometry["T0"]
+    product = _contractions.product
+    total = _contractions.sum_arrays
+    u = product(transform, u_elem)
+    constitutive = h * plane_stress_elastic_matrix(E, nu)
+    force = np.zeros(u.size, dtype=float)
+    material = np.zeros((u.size, u.size), dtype=float)
+    geometric = np.zeros((u.size, u.size), dtype=float)
+    forces, materials, geometrics = [], [], []
+    weights = []
+    for B, G, weight in zip(geometry["B_m_all"], geometry["Gw_all"],
+                            geometry["detw_all"]):
+        theta = product(G, u)
+        eta = np.array((0.5 * theta[0]**2, 0.5 * theta[1]**2,
+                        theta[0] * theta[1]), dtype=float)
+        H = np.vstack((theta[0] * G[0], theta[1] * G[1],
+                       theta[0] * G[1] + theta[1] * G[0]))
+        linear_stress = product(constitutive, product(B, u))
+        nonlinear_stress = product(constitutive, eta)
+        forces.append(total((product(B.T, nonlinear_stress),
+                             product(H.T, linear_stress),
+                             product(H.T, nonlinear_stress))))
+        weights.append(weight)
+        if tangent:
+            materials.append(total((product(product(B.T, constitutive), H),
+                                    product(product(H.T, constitutive), B),
+                                    product(product(H.T, constitutive), H))))
+            stress = total((linear_stress, nonlinear_stress))
+            geometrics.append(total((stress[0] * np.outer(G[0], G[0]),
+                                     stress[1] * np.outer(G[1], G[1]),
+                                     stress[2] * np.outer(G[0], G[1]),
+                                     stress[2] * np.outer(G[1], G[0]))))
+    if forces:
+        force = _contractions.weighted_sum(forces, weights)
+    if tangent and materials:
+        material = _contractions.weighted_sum(materials, weights)
+        geometric = _contractions.weighted_sum(geometrics, weights)
+    return (product(transform.T, force), product(product(transform.T, material), transform),
+            product(product(transform.T, geometric), transform))
 
 
 @njit
