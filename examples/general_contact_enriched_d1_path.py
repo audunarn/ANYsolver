@@ -14,7 +14,7 @@ from anysolver.e4_pl_enriched import EnrichedProfileError
 from anysolver.general_contact.enriched_overlap import QuadraturePolicy
 from anysolver.general_contact.enriched_path import EnrichedPathOwner
 
-INPUT=Path('C:/ANYworkspaceWork/contact-history/contact_d1_current_delivery_20261009/force-full.json')
+INPUT=Path(__file__).resolve().parents[1]/'docs/reference_cases/enriched_d1_registered_inputs_20261019.json'
 
 
 def build(mode='force',*,input_path=INPUT):

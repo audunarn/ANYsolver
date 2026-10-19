@@ -49,8 +49,8 @@ Q4_MECHANICS_CANONICALIZATION = (
 )
 
 
-Q4_SOURCE_BINDING = ROOT / 'docs' / 'reference_cases' / 'e4_pl_q4_source_binding_20261016.json'
-Q4_SOURCE_BINDING_SHA256 = 'BE903D0381248BEC56B9C48E8EF90F119B0F15E133F1AEBB9A5B89C341B8AA1B'
+Q4_SOURCE_BINDING = ROOT / 'docs' / 'reference_cases' / 'e4_pl_q4_source_binding_20261019.json'
+Q4_SOURCE_BINDING_SHA256 = '77577D7945CCA71A10856706E4E4F5CFF0BA3BAEC7E4802FA852FED59C34D57B'
 
 
 def _load_generator():
@@ -445,6 +445,17 @@ def _require_prospective_q4_source_binding(
     record = _strict_json(record_raw)
     assert record['schema'] == 'anysolver.q4-source-binding-successor-v1'
     assert record['qualification_boundary'] == 'SOURCE_BINDING_ONLY_NOT_SCIENTIFIC_QUALIFICATION'
+    predecessor = record['previous_source_binding']
+    assert predecessor['path'] == 'docs/reference_cases/e4_pl_q4_source_binding_20261016.json'
+    assert predecessor['sha256'].upper() == 'BE903D0381248BEC56B9C48E8EF90F119B0F15E133F1AEBB9A5B89C341B8AA1B'
+    assert hashlib.sha256((ROOT / predecessor['path']).read_bytes()).hexdigest() == predecessor['sha256']
+    integration = record['source_binding_integration_review']
+    assert integration['external_carrier_changed_since_predecessor'] is True
+    assert integration['product_edited_in_this_binding_slice'] is False
+    assert all(integration[key] is False for key in ('physical_acceptance_transfer', 'C5_exception_transfer', 'CI_credit'))
+    assert hashlib.sha256((ROOT / integration['review_path']).read_bytes()).hexdigest() == integration['review_sha256']
+    lifecycle = integration['lifecycle_delta']
+    assert hashlib.sha256((ROOT / lifecycle['path']).read_bytes()).hexdigest() == lifecycle['sha256']
     assert record['source']['path'] == QUALIFIED_Q4_MECHANICS.relative_to(ROOT).as_posix()
     assert hashlib.sha256(source_raw).hexdigest().upper() == record['source']['sha256']
     source = source_raw.decode('utf-8')

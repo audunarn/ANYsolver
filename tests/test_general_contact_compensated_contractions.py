@@ -138,7 +138,6 @@ def test_original_snapshot_spans_both_baseline_preparations(boundary):
         return np.eye(24)
     namespace = dict(raw.__globals__,
         _capture_q4_fast_input_snapshot=capture,
-        _q4_fast_input_snapshot_matches=lambda *args: args[-1] == generation[0],
         _elements_module=SimpleNamespace(_compensated_elastic_zero_tangent=lambda *a: baseline("scalar")),
         _elastic_increment_module=SimpleNamespace(
             compensated_elastic_batch_zero=lambda *a: baseline("batch"),
@@ -146,6 +145,7 @@ def test_original_snapshot_spans_both_baseline_preparations(boundary):
     body = FunctionType(raw.__code__, namespace, raw.__name__, raw.__defaults__, raw.__closure__)
     body.__kwdefaults__ = raw.__kwdefaults__
     fake = SimpleNamespace(_elastic_increment_admitted=lambda *a: True,
+        _defining_class_input_snapshot_matches=lambda *args: args[-1] == generation[0],
         _nonlinear_geometry=lambda *a: {}, compute_stiffness_matrix=lambda *a: np.eye(24),
         thickness=.05, drilling_stabilization=.001)
     material = SimpleNamespace(elastic_modulus=1e5, poisson_ratio=.3, shear_modulus=1.)

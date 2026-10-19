@@ -1,0 +1,101 @@
+{
+  "id": "CONTACT-C5-REACTION-DEVIATION-20261016-01",
+  "status": "ACCEPTED_WITH_OWNER_APPROVED_SCOPED_DEVIATION",
+  "approved_utc": "2026-10-16T11:30:09.7778835+00:00",
+  "authority": "Direct human instruction in current chat, 16 October 2026",
+  "human_instruction": "Approve the scoped C5 acceptance deviation. Record it in the plan and acceptance evidence, preserve the original failure, and proceed with the remaining delivery gates. Keep all other criteria and functionality unchanged. No pushes.",
+  "scope": {
+    "worktree": "C:\\Github\\ANYsolver\\.worktrees\\contact-portable-replay",
+    "branch": "codex/contact-portable-replay",
+    "head": "59ba6acda0dbd7390487b758678a6f9b2681fdb2",
+    "candidate_manifest_sha256": "14393c1155751d1896da7922adaa84590016f92a76bbfeaa0645414d7fb7b684",
+    "node": "tests/test_general_contact_d1_two_body_nonlinear_oracle.py::test_saved_slide_matches_independent_current_contact_kkt",
+    "field": "control_reaction_relative_l2_difference",
+    "host": "Windows",
+    "profile": "Haswell",
+    "scope_kind": "Identified observed reaction-comparison result at bound candidate, case, reference and runtime"
+  },
+  "original_criterion": {
+    "relative_l2_limit": 1E-06,
+    "denominator_floor_n": 1E-10,
+    "unchanged_in_source": true
+  },
+  "accepted_observation": {
+    "relative_l2_difference": 1.0312477801088957E-05,
+    "absolute_difference_l2_n": 5.633295002461814E-14,
+    "production_reaction_l2_n": 5.462600852209311E-09,
+    "raw_scientific_outcome": "FAIL",
+    "original_module_passed": 4,
+    "original_module_failed": 1,
+    "original_phases": 15
+  },
+  "rationale": "Owner accepts the specifically observed small absolute discrepancy for delivery disposition. Exact represented evaluation and rounded local stationary-solve corrections did not resolve it; no assertion of known harmless cause or certified global error bound.",
+  "unaffected": {
+    "all_other_assertions_and_tolerances_unchanged": true,
+    "physics_and_functionality_unchanged": true,
+    "full_C0_C9_D0_D8_scope_retained": true,
+    "original_failure_and_raw_evidence_preserved": true,
+    "no_test_skip_xfail_filter_or_threshold_edit": true,
+    "no_global_new_tolerance": true,
+    "no_new_reference_or_fixture": true,
+    "no_push": true
+  },
+  "limits": [
+    "This is acceptance by an explicit exception, not a PASS under the original 1e-6 rule.",
+    "It does not accept the complete C5/D4 capability, CI, portability, installed artifact or programme.",
+    "No numeric envelope for future results or other host/profile measurements is created.",
+    "A changed candidate, physical case, reference, or distinct failing observation requires reassessment; no automatic waiver transfer.",
+    "Other failures, missing evidence, timeouts and resource/cleanup violations remain unaccepted."
+  ],
+  "remaining_delivery_action": "Resume required delivery gates with unchanged criteria, one numerical job and existing resource limits; prepare fresh bounded scopes without reopening closed attempts or optional arithmetic development.",
+  "evidence": {
+    "candidate_manifest": {
+      "path": "C:\\ANYworkspaceWork\\contact_trackB_dependency_repair_20261013\\c5-numpy-coordinate-delivery-v1\\CANDIDATE_SOURCE.json",
+      "sha256": "14393c1155751d1896da7922adaa84590016f92a76bbfeaa0645414d7fb7b684"
+    },
+    "diagnostic_pins": {
+      "path": "C:\\ANYworkspaceWork\\contact_trackB_dependency_repair_20261013\\c5-rounded-system-investigation-v2\\PINS.json",
+      "sha256": "7431d67e8dad40b0949ad4fc9d06bf494fdf5a89fddb1ecf4627ff1e87c68ee5"
+    },
+    "diagnostic_terminal": {
+      "path": "C:\\ANYworkspaceWork\\contact_trackB_dependency_repair_20261013\\c5-rounded-system-investigation-v2\\ROOT_FINAL_ADJUDICATION_20261016.json",
+      "sha256": "6d1cc70f74e50872d92b31f119038e3f5333665e95ae67cc7bb0717d225665fb"
+    },
+    "exact_analysis": {
+      "path": "C:\\ANYworkspaceWork\\contact_trackB_dependency_repair_20261013\\c5-rounded-system-investigation-v2\\runs\\exact_analysis_once\\ANALYSIS.json",
+      "sha256": "fd3c59e1e7666a87c295033d3afb90678600c5280c2363b756062b61277a18c4"
+    },
+    "inherited_runtime_source_pins": {
+      "path": "C:\\ANYworkspaceWork\\contact_trackB_dependency_repair_20261013\\c5-numpy-coordinate-check-driver-v1\\PINS.json",
+      "sha256": "a31398727ea2a6b97fda2ed83bda0cf5a8a46f77a8c2487a7d5ce29f1321a620"
+    },
+    "original_child_reports": {
+      "path": "C:\\ANYworkspaceWork\\contact_trackB_dependency_repair_20261013\\c5-numpy-coordinate-check-driver-v1\\runs\\original_c5_haswell\\CHILD.json",
+      "sha256": "aecf2683c71bca0f3d10e4707c8330952b664e2347c1d0f083669c3443815d2f"
+    },
+    "original_comparator": {
+      "path": "C:\\Github\\ANYsolver\\.worktrees\\contact-portable-replay\\docs\\d1_review_support\\d1_two_body_nonlinear_kkt_compare.py",
+      "sha256": "3ef233227aac669f042e000a80ed3313dab0d5bc3926862aa8543d405b3cdfe9"
+    },
+    "original_failed_result": {
+      "path": "C:\\ANYworkspaceWork\\contact_trackB_dependency_repair_20261013\\c5-numpy-coordinate-check-driver-v1\\runs\\original_c5_haswell\\RESULT.json",
+      "sha256": "33be47358136b597da2e556bfa733412572f54aa38f1bcc1eaa1ef0bc932c50c"
+    },
+    "original_junit": {
+      "path": "C:\\ANYworkspaceWork\\contact_trackB_dependency_repair_20261013\\c5-numpy-coordinate-check-driver-v1\\runs\\original_c5_haswell\\junit.xml",
+      "sha256": "07d129cf1e9232e54c8b7048d767cf970fe0c4429ca808c663a19ad8cbc57c72"
+    },
+    "original_test": {
+      "path": "C:\\Github\\ANYsolver\\.worktrees\\contact-portable-replay\\tests\\test_general_contact_d1_two_body_nonlinear_oracle.py",
+      "sha256": "043d25c46bc598157c74d907b95aee87df98d067719812848a7d703a65bb8acc"
+    },
+    "reproduction_capture": {
+      "path": "C:\\ANYworkspaceWork\\contact_trackB_dependency_repair_20261013\\c5-rounded-system-investigation-v2\\runs\\capture_haswell_once\\CAPTURE.json",
+      "sha256": "55424172c4cb4518cf736a1bdd6758a8b52ddb9692107e598c54f164e892c7ec"
+    },
+    "reproduction_stdout": {
+      "path": "C:\\ANYworkspaceWork\\contact_trackB_dependency_repair_20261013\\c5-rounded-system-investigation-v2\\runs\\capture_haswell_once\\process\\stdout.log",
+      "sha256": "181210809bd650e642515305d0becc701a797ddd93f2abccfa161956d8ea782f"
+    }
+  }
+}

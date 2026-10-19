@@ -18,6 +18,7 @@ checkouts first:
 python -m pip install -e C:\Github\ANYmaterial
 python -m pip install -e C:\Github\ANYmesh
 python -m pip install -e C:\Github\ANYfileIO
+python -m pip install C:\Github\ANYsolver\packages\results
 python -m pip install -e C:\Github\ANYsolver
 ```
 

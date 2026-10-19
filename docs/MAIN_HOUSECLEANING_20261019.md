@@ -69,10 +69,62 @@ These are packaging checks, not an installed/full/native qualification. The fres
 [execution closure](main-housecleaning-20261019/EXECUTION_CLOSURE.json). Full command,
 process-wall, sampled RSS, stdout/stderr and JUnit receipts remain in the task folder.
 
-Publication: user-authorized main push and one current workflow assessment remain
-in progress. Preserve scientific failures if they persist; only integration,
-installation, packaging and CI wiring fixes are in scope. Final remote SHA/run
-status will be recorded at handoff.
+Main was pushed as `4074eb8b163c1d04cd5e1faed742a237680c01fd`; its
+[first Actions run](https://github.com/audunarn/ANYsolver/actions/runs/39327963777)
+confirmed license, resolver, both operating-system wheel smoke, ecosystem
+compatibility and acceleration jobs. That run also exposed integration failures
+and scientific/evidence failures. It is not an all-green acceptance receipt.
+The grouped repair commit containing this update is a follow-up to that source
+commit; consult the [main workflow runs](https://github.com/audunarn/ANYsolver/actions/workflows/ci.yml)
+for its own exact SHA and outcome. No PyPI publication is authorized.
+
+The grouped repairs pass **29 focused checks**: portable saved-cut evidence
+(original raw SHA retained), the exact24-field registered full-path descriptor
+(no saved solution/history used), prospective source-only Q4 binding and its
+refusal controls, workflow/package-document golden expectations, updated fake
+class-admission seam, independent stdlib deepcopy probe, and trusted warmup
+instrumentation. Original Q4 admission/revalidation has real guard cost and is
+separately counted; no overall speedup or guard-free capture is claimed. No
+`src/` file or scientific tolerance changed in this follow-up. See
+[CI repair results](main-housecleaning-20261019/CI_REPAIR_RESULTS.json).
+
+The old Q4 binding record remains unchanged. Its new20261019 successor preserves
+strict whole-file hashes and the original47-root/159-symbol mechanics payload,
+with a separately reviewed disjoint beam/coupling carrier delta and previously
+accepted `fe_core` identity-lifecycle repair. Historical41-case/123-phase evidence
+remains historical; physical acceptance, C5 exception and CI credit do not transfer.
+The [source review](reference_cases/Q4_SOURCE_BINDING_REVIEW_20261019.md) and
+[new exact record](reference_cases/e4_pl_q4_source_binding_20261019.json) state this
+boundary. The fresh200s repair allowance is CLOSED; earlier failed checks are
+retained and unused authority forfeited.
+
+## Remaining CI issues requiring a separate decision or development
+
+- SESTRA development tests depend on five uncommitted ANYfileIO files:
+  `__init__.py`, `sesam/__init__.py`, `sesam/document.py`, `sesam/semantics.py`,
+  `sesam/sif.py`. That owner's committed baseline is still `db73950`. No sibling
+  edits/publication or parser/physics changes were attempted here.
+- C5's strict original reaction assertion still fails at
+  `1.0312477801088957e-5`. The [original scoped acceptance](main-housecleaning-20261019/C5_SCOPED_ACCEPTANCE_20261016.json)
+  accepts a named historical observation, expressly creates no future envelope,
+  forbids skip/xfail/threshold edits and requires reassessment after identity
+  changes. It is not an automatic current-CI waiver; the original FAIL remains.
+- The full enriched seven-gate reference test is a fresh independent solve/work/
+  gap assay, bound to18 files and3896 historical source identities. One of its
+ 18 immediate hashes already differs. Copying one binding JSON is insufficient.
+  A current portable binding and fresh scientific authority need their own scope.
+  The [Read review](main-housecleaning-20261019/ENRICHED_REFERENCE_REVIEW.md) proposes
+  an opt-in/skip route; **that proposal was not adopted**. The existing full test
+  and all seven assertions remain unchanged and failures visible.
+- Native curved checkpoint bit equality and changed-definition replay failures,
+  a connected construction120s lifetime failure, and an unresolved sliding-friction
+  force predictor were observed. Do not rewrite old checkpoint identities, relax
+  lifetime/physics criteria or tune solver behavior merely to obtain green CI.
+  Current public full364 enriched-path execution may reveal further genuine
+  failures once its portable input is available; its criteria are unchanged.
+
+These remaining issues do not alter the already delivered scoped contact bundle.
+They prevent claiming complete CI, full programme qualification or release.
 
 ## Deferred findings: do not silently claim completion
 

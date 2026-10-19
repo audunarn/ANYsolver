@@ -34,7 +34,9 @@ def test_release_archive_contains_only_current_user_documents() -> None:
         for line in manifest
         if line.startswith("include docs/")
     }
-    assert included_docs == gate.RELEASE_DOCS | {"docs/releases/ANYsolver_0.4.7.md"}
+    assert included_docs == gate.RELEASE_DOCS | {
+        "docs/releases/ANYsolver_0.4.7.md", "docs/NATIVE_SOURCE_AUTHORITY.md"
+    }
     assert {
         "prune docs",
         "prune reports",

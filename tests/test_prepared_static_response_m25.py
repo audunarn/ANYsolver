@@ -187,7 +187,37 @@ def _clone_from_traceback(excinfo):
 @pytest.mark.parametrize('kind', ['q4_staged', 'q4_warped', 's3', 'q4_pressure', 's3_pressure'])
 def test_trusted_capture_runs_warmups_on_native_trusted_path(kind):
     model, element, options, staged = _case(kind)
-    recipe, counts = _profiled(lambda: _capture_owned_local_recovery(model, element, **options))
+    # Original-input policy admission precedes the private clone/trusted span,
+    # and final policy revalidation follows it. Account for both real guard
+    # costs separately; every clone warm-up guard is still counted. This does
+    # not claim the complete capture is guard-free.
+    policy_code = recovery._prepared_q4._capture_original_q4_policy.__code__
+    counts, policy_counts = {}, {}
+    policy_depth = policy_calls = 0
+    def observe(frame, event, _arg):
+        nonlocal policy_depth, policy_calls
+        if event == 'call':
+            if frame.f_code is policy_code:
+                policy_depth += 1
+                policy_calls += 1
+            path = frame.f_code.co_filename
+            key = (os.path.normcase(os.path.abspath(path)) if os.path.isabs(path) else path,
+                   frame.f_code.co_name)
+            bucket = policy_counts if policy_depth else counts
+            bucket[key] = bucket.get(key, 0) + 1
+        elif event == 'return' and frame.f_code is policy_code:
+            policy_depth -= 1
+    previous_profile = sys.getprofile()
+    sys.setprofile(observe)
+    try:
+        recipe = _capture_owned_local_recovery(model, element, **options)
+    finally:
+        sys.setprofile(previous_profile)
+    assert sys.getprofile() is previous_profile
+    assert policy_depth == 0
+    assert policy_calls == 2 * int(type(element) is Q4 and options.get('warm_stress', True))
+    if kind == 'q4_staged':
+        assert _calls(policy_counts, 'post_observation_guard') > 0
     assert _calls(counts, 'post_observation_guard') == 0, counts
     assert _calls(counts, 'trusted_post_observation_guard') > 0
     assert (recipe.staged_kernel is not None) is staged

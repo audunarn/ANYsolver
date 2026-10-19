@@ -586,7 +586,7 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         "        run: >-\n"
         '          python -c "import glob, subprocess, sys;\n'
         "          subprocess.check_call([sys.executable, '-m', 'pip', 'install',\n"
-        "          '--target', '.wheel-smoke', '.ecosystem/ANYmaterial',\n"
+        "          '--target', '.wheel-smoke', './packages/results', '.ecosystem/ANYmaterial',\n"
         "          '.ecosystem/ANYgeometry', '.ecosystem/ANYmesh', '.ecosystem/ANYfileIO',\n"
         "          *glob.glob('dist/*.whl')])\"\n"
     )

@@ -194,7 +194,10 @@ def test_ordinary_certified_C0_path_matches_all24_protected_scalar_jets(monkeypa
 
 def _saved():
     path=Path(__file__).parent/'data/enriched_small_cut_v13.json';data=json.loads(path.read_bytes())
-    assert hashlib.sha256(Path(data['provenance_path']).read_bytes()).hexdigest()==data['provenance_sha256']
+    # Keep the original absolute provenance in the frozen case record, but load
+    # its exact byte copy from the checkout on every host.
+    provenance=path.with_name('enriched_small_cut_v13_provenance.json')
+    assert hashlib.sha256(provenance.read_bytes()).hexdigest()==data['provenance_sha256']
     return data,np.array([float.fromhex(x)for x in data['coordinates_hex']]),np.array([float.fromhex(x)for x in data['forces_hex']])
 
 def test_saved_physical_cut_reaches_actual_caller_and_retains_all_modes(monkeypatch,record_property):

@@ -1060,3 +1060,9 @@ examples/native_vibration_canonical_case_envelope_acceptance_20261018.json -text
 
 # Preserve the portable SESTRA test input's original record bytes.
 tests/fixtures/sestra_three_case/*.FEM -text whitespace=-blank-at-eol,cr-at-eol
+tests/data/enriched_small_cut_v13_provenance.json -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+docs/reference_cases/e4_pl_q4_source_binding_20261019.json -text
+docs/reference_cases/Q4_SOURCE_BINDING_REVIEW_20261019.md text eol=lf
+docs/main-housecleaning-20261019/C5_SCOPED_ACCEPTANCE_20261016.json -text
+# New source-only binding includes the already committed fe_core carrier bytes.
+src/anysolver/fe_core.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol

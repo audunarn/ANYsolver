@@ -1,0 +1,10 @@
+{
+  "source_only_and_fixture_repairs": true,
+  "unused_seconds_closed": 119.33149070000218,
+  "authorized_seconds": 200,
+  "remaining_authority_seconds": 0,
+  "status": "CLOSED_GROUPED_CI_REPAIR_CHECKS_COMPLETE",
+  "charged_seconds": 80.66850929999782,
+  "all_new_owned_processes_terminal": true,
+  "scientific_tolerances_unchanged": true
+}

@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 from anysolver import LoadCase, RecoveryConfig, prepare_static_evaluator, prepare_static_response_evaluator
-from anysolver.prepared_static import _MEMO_NONE_IS_A_HIT, _plain_deepcopy
+from anysolver.prepared_static import _plain_deepcopy
 from anysolver.prepared_static_loads import load_packet_storage_bytes
 from anysolver.static_batch import StaticCase
 import prepared_static_response_m16_assessment  # noqa: F401  (adds scripts/ to sys.path)
@@ -16,6 +16,13 @@ from benchmark_static_batches import mixed_free_model
 from test_prepared_static_response_m26 import _grid_model
 
 STRESS = RecoveryConfig(include_displacements=False, include_stresses=True, include_reactions=True)
+
+# Observe the running stdlib independently of the solver's private seams.
+# A future interpreter's product behavior remains unverified until these
+# behavioral comparisons run there; this probe does not certify Python 3.15.
+_memo_probe = [[]]
+_MEMO_NONE_IS_A_HIT = copy.deepcopy(_memo_probe, {id(_memo_probe): None}) is None
+del _memo_probe
 
 
 # --------------------------------------------------------------------------- deepcopy

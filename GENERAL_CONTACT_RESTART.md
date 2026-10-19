@@ -1,4 +1,4 @@
-Current source handoff: docs/GENERAL_CONTACT_CANDIDATE_HANDOFF_20261019.md. Local main integration is explicitly authorized; no push. Historical checkpoint follows.
+Current repository ownership, cleanup, authorized push and CI disposition: docs/MAIN_HOUSECLEANING_20261019.md. Candidate scope/evidence: docs/GENERAL_CONTACT_CANDIDATE_HANDOFF_20261019.md. Historical checkpoint follows; its earlier no-push restriction was superseded for the user-authorized main integration/push.
 
 Current restart — PLAN423
 # General-contact delivery plan — revision 423

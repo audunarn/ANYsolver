@@ -1,5 +1,13 @@
 # General-contact candidate: status and restart handoff
 
+Subsequent main ownership/push/CI update: see
+[MAIN_HOUSECLEANING_20261019.md](MAIN_HOUSECLEANING_20261019.md). The user later
+assigned responsibility for every main edit and explicitly authorized push and
+fixable CI repairs without new development. The earlier no-push and dirty-main
+statements below describe the candidate handoff before that reconciliation.
+All those edits were subsequently committed and main pushed. Historical artifact
+and qualification evidence remains unchanged; this is no new full acceptance.
+
 Updated 2026-10-19. Committed candidate e40298cc5, reconciled source 049a20641, and local main merge a1efb6268 are complete. All 19 affected integration checks passed. The original 37-pass packaged artifact remains unchanged. Main's 13 unrelated dirty edits and untracked inventory were restored outside these commits; do not treat that dirty working tree as the tested source. This is the entry point for the next agent. Read the current
 repository/global AGENTS.md and ECOSYSTEM_GUIDE.md before continuing. The user
 authorized committing and merging this candidate into local main; no push or
