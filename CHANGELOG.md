@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+- Add the standalone public example `examples/beam_shell_coupling.py` for the
+  registered pre-yield S355 beam-shell case with direct or interpolated
+  (default) rotating coupling. Its CLI prints a truthful JSON summary
+  (`status`, `stop_reason`, `requested_load_factor`, `achieved_load_factor`,
+  `probe_displacement`, `accepted_increments`, `constraint_postcheck`,
+  `completed`) and exits 0 only when the solve actually completed to the
+  requested load factor within 1e-8 with passing existing constraints; a
+  cancelled solve reports its accepted increments without claiming success.
+  New focused integration tests cover both couplings, an independent
+  true-elastic control, cancellation with empty and non-empty accepted
+  history, and the CLI JSON/exit-status contract. No solver default,
+  tolerance or material change.
+- Correct the beam-shell connection guide's stale completion claim: the
+  default rotating route has a demonstrated completed S355 displacement-control
+  run to the revised -11/60 m endpoint including the public initial-state
+  restart, while the original -0.20 m target, the director-integrated trace
+  (stopped at -1/6 m) and the analytical accuracy gate remain open. The guide
+  now also explains reading achieved displacements from
+  `result.displacements`, `steps[-1].control_value` under displacement control,
+  and that `result.converged` alone is not completion. No default, tolerance
+  or material change.
 - Speed up nonlinear static solves of models that combine qualified Q4 shells
   with exact S3 V2D triangles. The solver's own cancellation token and the V2D
   elements now use the constant-time trusted lifecycle guard inside the Newton

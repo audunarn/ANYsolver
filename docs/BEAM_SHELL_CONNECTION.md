@@ -92,15 +92,56 @@ It is not a neutral ANYmesher option. Only actual Python booleans are accepted;
 integers, strings, `None` and NumPy booleans are rejected before mesh generation.
 Existing positional constructor and `MeshConfig` arguments retain their order.
 
+## Standalone pre-yield example
+
+`examples/beam_shell_coupling.py` is a self-contained public-API example of the
+registered pre-yield S355 case: the 1 m x 0.24 m, 2x1-shell panel with one
+10x40 mm stiffener at e = +0.04 m, canonical S355 curve, -2000 N uz on every
+shell-tip node, 6 load steps, at most 30 iterations per step, tolerance 1e-8,
+corotational kinematics. `--coupling direct` uses beam nodes on shell edge
+nodes; the default `--coupling interpolated` uses genuinely interpolated
+mid-span beam nodes.
+
+```
+python examples/beam_shell_coupling.py --coupling interpolated
+```
+
+The example writes a JSON summary to stdout (and optionally to `--output`):
+`status`, `stop_reason`, `requested_load_factor`, `achieved_load_factor`,
+`probe_displacement`, `accepted_increments`, `constraint_postcheck` and
+`completed`. `completed` is true only when the solver status is
+`completed`, the achieved load factor is within 1e-8 of the requested one and
+the existing constraint postcheck passed; a cancelled solve reports the
+accepted increments seen so far and never claims completion. The process exit
+status is 0 only for such a valid completion.
+
+## Reading a nonlinear result
+
+`result.status == "completed"` means the solver reached its requested target
+(force load factor or displacement target). Read the achieved response from
+`result.displacements` at the probe node's DOFs. Under displacement control
+the achieved controlled value is `result.steps[-1].control_value`; compare it
+against the requested target. `result.converged` alone is not completion: it
+also covers `stopped_at_limit` results that stopped before the target. A
+Checkpoint continuation requires a terminal `completed` status. A checkpoint
+carrying a stopped terminal state preserves information for inspection but is
+refused for continuation. Retain a completed intermediate target as the prefix
+for a later restart; this is the intended recovery workflow.
+
 ## Evidence and limits
 
 This is a public selection of existing kinematics, not general scientific
-qualification. Plastic coupled displacement-control continuation/restart remains
-incomplete in the current Slice3 evidence; completed target cases have not been
-established. Nonmatching interpolation accuracy and mesh convergence require
-case-specific verification, including comparisons with suitable independent
-references. A nonzero offset and finite rotations can make the two options give
-different physical predictions.
+qualification. On the default rotating route, the registered S355 case has a
+demonstrated completed displacement-control run to the revised -11/60 m
+endpoint, including continuation from an accepted -0.10 m state through the
+public initial-state route; the original -0.20 m target has not been
+completed. The experimental director-integrated trace stops at -1/6 m on the
+same case, and the registered analytical accuracy gate remains open; the
+failing director continuation tests are the record of that. Nonmatching
+interpolation accuracy and mesh convergence require case-specific
+verification, including comparisons with suitable independent references. A
+nonzero offset and finite rotations can make the two options give different
+physical predictions.
 
 Check `result.status == "completed"`, the actual controlled displacement against
 the requested target, equilibrium, constraints and physical reactions for the
