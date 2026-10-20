@@ -2,6 +2,13 @@
 
 ## Slice 9: prescribed multi-face geometry and work
 
+The 2026-10-21 s9 bundle includes a bounded skin-report/CI cleanup repair.
+Face-centre normals use the same arithmetic, with whole-model validation before
+and after the batch. All scientific assertions and execution limits remain
+unchanged. The repaired cold-installed skin CLI passed in 64.4 seconds; the
+current receipt is under
+`C:/ANYworkspaceWork/contact-incremental-delivery-20261020/s9-ci-completion-20261021-v1/`.
+
 From the s9 bundle root, using its pinned Python 3.12, JIT-disabled,
 single-thread installation profile:
 

@@ -270,6 +270,51 @@ def test_spawn_refuses_launch_without_psutil(tmp_path: Path, monkeypatch) -> Non
     assert result["survivors"] == []
 
 
+@pytest.mark.parametrize("survives", (False, True))
+@pytest.mark.parametrize("reason,cap", (("timeout", 0), ("rss_limit", 1)))
+def test_timeout_waits_for_owned_members_and_reports_unknown_cleanup(tmp_path, monkeypatch, survives, reason, cap):
+    from types import SimpleNamespace
+    class Member:
+        pid = 123
+        alive = True
+        def children(self, recursive=True): return []
+        def memory_info(self): return SimpleNamespace(rss=1)
+        def is_running(self): return self.alive
+        def kill(self): pass  # Termination acknowledgement arrives at wait.
+    member = Member()
+    class Child:
+        pid = 123
+        returncode = None
+        def poll(self): return None
+        def wait(self, timeout=None): self.returncode = -9
+    waits=[]
+    def wait_procs(members, timeout):
+        waits.append((members, timeout))
+        member.alive = survives
+        return ([], members) if survives else (members, [])
+    monkeypatch.setattr(check.subprocess, 'Popen', lambda *a, **kw: Child())
+    monkeypatch.setattr(check.psutil, 'Process', lambda *a: member)
+    monkeypatch.setattr(check.psutil, 'wait_procs', wait_procs)
+    result=check.spawn([sys.executable], {'jobfile':'unused'}, 0., {},
+                       tmp_path/'out', tmp_path/'err', cap)
+    assert len(waits)==1 and waits[0][0]==[member]
+    assert 0 <= waits[0][1] <= 5.
+    assert result['termination_reason']==reason
+    assert result['status']==('cleanup_unknown' if survives else reason)
+    assert result['survivors']==([123] if survives else [])
+
+
+def test_real_timeout_reaps_worker_tree(tmp_path):
+    if check.psutil is None:
+        pytest.fail('process cleanup integration requires psutil')
+    code = "import subprocess,sys,time; subprocess.Popen([sys.executable,'-c','import time; time.sleep(30)']); time.sleep(30)"
+    result=check.spawn([sys.executable,'-c',code], {'jobfile':'unused'}, .5,
+                      check.clean_env({}), tmp_path/'out', tmp_path/'err', 0)
+    assert result['status']=='timeout'
+    assert result['termination_reason']=='timeout'
+    assert result['survivors']==[] and result['cleanup_errors']==[]
+
+
 def test_worker_rejects_corrupt_argv_and_unknown_kind(tmp_path: Path) -> None:
     with pytest.raises(SystemExit, match="unknown worker kind"):
         check.run_worker(dict(kind="bogus", inserts=[]))

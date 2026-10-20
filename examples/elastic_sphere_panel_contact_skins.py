@@ -130,11 +130,11 @@ def _face_entries(skin_map, reference_pose, recovered_pose, recovered_label):
     linear/bilinear face geometry, not the rotated element director),
     evaluated with the map's geometry-only normal method for both states.
     """
+    reference_normals = skin_map.face_centre_normals(reference_pose)
+    recovered_normals = skin_map.face_centre_normals(recovered_pose)
     entries = []
     for index, (face, (start, end)) in enumerate(
             zip(skin_map.faces, skin_map.face_slices)):
-        centre = (np.full(3, 1.0 / 3.0) if len(face.node_ids) == 3
-                  else np.zeros(2))
         entries.append({
             "body_id": face.body_id,
             "element_id": face.element_id,
@@ -147,14 +147,12 @@ def _face_entries(skin_map, reference_pose, recovered_pose, recovered_label):
                 [float(v) for v in row]
                 for row in reference_pose.positions[start:end]],
             "reference_geometric_normal": [
-                float(v) for v in skin_map.face_normal(
-                    reference_pose, index, centre)],
+                float(v) for v in reference_normals[index]],
             "recovered_positions_m": [
                 [float(v) for v in row]
                 for row in recovered_pose.positions[start:end]],
             "recovered_geometric_normal": [
-                float(v) for v in skin_map.face_normal(
-                    recovered_pose, index, centre)],
+                float(v) for v in recovered_normals[index]],
             "recovered_geometry": recovered_label,
         })
     return entries

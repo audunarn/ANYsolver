@@ -125,6 +125,59 @@ def panel(prepared):
     return panel_model, panel_map, displacements
 
 
+def test_batched_centre_normals_match_scalar_and_bound_validation(sphere, panel, monkeypatch):
+    for model, skin, q in ((sphere[0], sphere[1], np.zeros(sphere[1].n_dof)), panel):
+        pose = skin.pose(q)
+        expected = np.asarray([skin.face_normal(pose, i,
+            np.full(3, 1./3.) if len(face.node_ids)==3 else np.zeros(2))
+            for i, face in enumerate(skin.faces)])
+        calls = []
+        original = skin._require_bound_geometry
+        with monkeypatch.context() as patch:
+            def check_bound(model):
+                calls.append(True)
+                return original(model)
+            patch.setattr(skin, '_require_bound_geometry', check_bound)
+            actual = skin.face_centre_normals(pose)
+        np.testing.assert_array_equal(actual, expected)
+        assert len(calls)==2  # Fixed admission/exit cost, not one global scan per face.
+
+
+def test_batched_normals_refuse_stale_foreign_and_mutating_geometry(sphere, panel, monkeypatch):
+    model, skin = sphere
+    pose = skin.pose(np.zeros(skin.n_dof))
+    with pytest.raises(CurvedShellSkinError):
+        panel[1].face_centre_normals(pose)
+    node = next(iter(model.mesh.nodes.values()))
+    original_x = node.x
+    try:
+        node.x += .01
+        with pytest.raises(CurvedShellSkinError, match='changed'):
+            skin.face_centre_normals(pose)
+    finally:
+        node.x = original_x
+    original = skin._face_normal
+    try:
+        with monkeypatch.context() as patch:
+            def mutate_after_normal(*args):
+                result = original(*args)
+                node.x = original_x + .01
+                return result
+            patch.setattr(skin, '_face_normal', mutate_after_normal)
+            with pytest.raises(CurvedShellSkinError, match='changed'):
+                skin.face_centre_normals(pose)
+    finally:
+        node.x = original_x
+    for invalid in (np.nan, 0.):
+        saved = pose.positions.copy()
+        try:
+            pose.positions[:3] = invalid
+            with pytest.raises(CurvedShellSkinError, match='degenerate normal'):
+                skin.face_centre_normals(pose)
+        finally:
+            pose.positions[:] = saved
+
+
 def test_actual_model_inventory_and_zero_pose_reference(sphere, panel):
     """Discriminator: exact 320 S3 + 100 Q4 faces and authoritative corners."""
     sphere_model, sphere_map = sphere

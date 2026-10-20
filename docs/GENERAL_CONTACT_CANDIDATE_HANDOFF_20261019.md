@@ -2,6 +2,17 @@
 
 ## Slice 9: multi-face geometry and work component
 
+CI completion repair (2026-10-21): the skin report now validates its bound model
+around a batch of unchanged face-normal calculations, avoiding a global scan for
+every face. Timeout cleanup waits for the observed worker tree within the existing
+five-second cleanup bound; any survivor reports `cleanup_unknown` and stops the
+batch. The scientific assertions and 120-second/600-second CI limits are unchanged.
+All 34 focused checks passed, including exact normal equality, mutation refusal
+and real process-tree cleanup. The cold-installed skin CLI passed in 64.4 seconds.
+Current bundle, CI result and receipt:
+`C:/ANYworkspaceWork/contact-incremental-delivery-20261020/s9-ci-completion-20261021-v1/DELIVERY_RECEIPT.json`.
+The previous timeout evidence and original s9 bundle remain retained.
+
 Run `python -m examples.elastic_sphere_panel_contact_work --output contact-work.json`
 from the s9 bundle root using its pinned Python 3.12 installation profile. The
 example prepares panel gravity once and queries prescribed release/+5 mm/-1 mm

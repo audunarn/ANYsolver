@@ -408,7 +408,26 @@ class CurvedShellSkinMap:
         on a warped or deformed quadrilateral it varies over the face.
         """
         self._require_owned_pose(pose)
-        weights = self.face_shape_weights(face_index, local_coords)
+        self.face_shape_weights(face_index, local_coords)
+        return self._face_normal(pose, face_index, local_coords)
+
+    def face_centre_normals(self, pose: FiniteSkinPose) -> np.ndarray:
+        """All face-centre normals with model/pose validation around the batch.
+
+        No cached admission survives the call. Normal arithmetic is identical
+        to ``face_normal``; bound geometry is checked again before returning.
+        """
+        self._require_owned_pose(pose)
+        result = np.asarray([
+            self._face_normal(pose, i, np.full(3, 1.0 / 3.0)
+                              if len(face.node_ids) == 3 else np.zeros(2))
+            for i, face in enumerate(self.faces)
+        ])
+        self._require_owned_pose(pose)
+        return result
+
+    def _face_normal(self, pose, face_index, local_coords):
+        """Normal arithmetic after the public caller has validated ownership."""
         index = int(face_index)
         face = self.faces[index]
         start, end = self.face_slices[index]

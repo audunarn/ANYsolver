@@ -261,16 +261,25 @@ def spawn(cmd: list[str], job: dict, timeout: float, env: dict,
                 status = "timeout"
                 break
             time.sleep(0.05)
+        termination_reason = status
+        cleanup_errors = []
         if status != "completed" or process.poll() is None:
+            cleanup_deadline = time.monotonic() + 5.0
             for proc in reversed(list(owned.values())):
                 try:
                     proc.kill()
                 except psutil.NoSuchProcess:
                     pass
+                except psutil.Error as exc:
+                    cleanup_errors.append(f"pid {proc.pid}: {exc}")
             try:
-                process.wait(timeout=5)
+                process.wait(timeout=max(0.0, cleanup_deadline-time.monotonic()))
             except subprocess.TimeoutExpired:
-                status = "cleanup_unknown" if status == "completed" else status
+                status = "cleanup_unknown"
+            # Killing is asynchronous, especially on Windows. Reap/wait for
+            # every observed member within the same five-second cleanup bound.
+            psutil.wait_procs(list(owned.values()),
+                              timeout=max(0.0, cleanup_deadline-time.monotonic()))
         else:
             process.wait()
         survivors = []
@@ -281,11 +290,12 @@ def spawn(cmd: list[str], job: dict, timeout: float, env: dict,
             except psutil.NoSuchProcess:
                 pass
         if survivors:
-            status = "cleanup_unknown" if status == "completed" else status
+            status = "cleanup_unknown"
     return dict(status=status, wall_seconds=time.monotonic() - started,
                 exit_code=process.returncode if status == "completed" else None,
                 sampled_peak_aggregate_rss_bytes=peak,
-                survivors=survivors)
+                survivors=survivors, termination_reason=termination_reason,
+                cleanup_errors=cleanup_errors)
 
 
 def junit_counts(path: Path) -> dict:
