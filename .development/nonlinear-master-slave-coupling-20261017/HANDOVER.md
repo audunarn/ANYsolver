@@ -2186,3 +2186,59 @@ contact commit 59f41a324e636e5496c0ff33bd2325350dff25d4; those contact static-pa
 and excluded from our ownership. Verified beam-shell runtime files are unchanged
 from the passing candidate. The pinned installed Python 3.12 bundle remains
 pre-yield only. No rebuild, push, publication, release or extra review here.
+
+### Slice 3 refresh from 6fb907a1c — 2026-10-20
+User explicitly authorises the installed candidate containing Slice 2. Preserve the earlier pre-yield artifact and all its failed installs/checks. Continue OpenAI ownership under cached Mistral execution unreliability; no further independent review. Reuse the remaining Slice 3 ledger: 1639.3484684 seconds, including the protected 300-second final reserve; no authority extension and no historical numerical allowance use. Freeze solver, example and test payload to exact commit 6fb907a1ca9bedf7ea08b8b967dd264447d56437. New isolated build/environment paths, same requested private version but explicit wheel path and distinct source/hash identity; never overwrite the earlier artifact. Include example/guide/tests in sdist, source hashes, runtime recipe and package-origin guard. Verify fresh Windows Python 3.12 with pinned dependencies, JIT off, numerical threads 1, retired selection off. Split one initial installed pass into fast compatibility plus direct and interpolated checkpoint groups (fresh full/prefix/resume processes, no retained solver reference), rather than one long combined run. Bounds: build/install/fast/smoke at most120s each; direct350s and interpolated600s maximum, dynamically bounded by ledger and reserve; final packaging uses the protected verification reserve if needed. One repair pass only for a diagnosed packaging/integration defect; a mechanics/material/continuation failure stops delivery with evidence. No load or mesh sweeps, analytical work, cross-host matrix, qualification campaign, push or release.
+
+### Slice 3 refreshed installed candidate accepted — 2026-10-20
+
+Source is exactly `6fb907a1ca9bedf7ea08b8b967dd264447d56437`; private distribution
+version remains `0.4.7+beam.shell.candidate.20261020.s3`, repository version 0.4.7
+unchanged. The earlier pre-yield-only archive remains byte-identical. The new
+archive uses a distinct source-qualified filename and SHA; install its explicit
+local wheel, not a version-only index selection.
+
+Accepted bundle: `C:\ANYworkspaceWork\beam-shell-incremental-delivery-20261020\build-6fb907a1c-v2\ANYsolver-beam-shell-0.4.7+beam.shell.candidate.20261020.s3-6fb907a1c-verified.zip`
+SHA256: `6b953f7cd99106de1fcfb966022cc219050244191dbcee2dab2a6f25e961aea6`; 8567257 bytes.
+Receipt: `incremental-20261020/slice3/refresh-6fb907a1c-v1/DELIVERY.json`.
+
+Fresh Windows Python 3.12 install, isolated `python -I -m pip` and explicit solver/
+private dependency wheel paths. Immutable dependency wheel hashes matched the
+registered inputs. All 727 installed solver files, wheel and sdist solver contents
+matched the requested committed source; sdist includes the executable example.
+Every loaded solver/private package originated inside the fresh venv. Pinned
+numerical versions, disabled JIT, Numba and effective numerical pools =1, retired
+programme selection=0 were verified at runtime. Full environment inventory and
+exact build/install/test commands, identities, counts and full output are retained.
+
+Installed checks: 69 fast/compatibility/admission tests +4 direct checkpoint tests
++4 interpolated checkpoint tests =77 unique collected/passed, zero failed/skipped.
+Two actual pre-yield CLIs and six separate fresh-model plastic full/prefix/resumed
+CLIs passed against the installed payload. Both modes retain S355, 11/6/5 initial
+increments, max40 iterations and tolerance1e-8. Target error <=1e-8 m, independent
+relative reduced residual <=1e-7, original restart displacement/load/material
+history tolerances, constraints/reaction balance, cancellation/input/file purity,
+rejected-trial isolation and failed-terminal refusal passed without relaxation.
+No old solver-state fixtures were reused for this installed run.
+
+The verified zip includes wheel/sdist, five pinned private wheels, pinned numerical
+recipe, executable source example, guide, manifest hashes, environment inventory,
+test/runtime/origin receipts, child commands/JSON and copied accepted checkpoints.
+Final sealing changed metadata only; tested executables/tests/wheels/sdist stayed
+byte-identical. The frozen source guide's earlier-artifact paragraph is explicitly
+contextualized by the bundle README. Sdist contents were verified; no separate
+source-install matrix. Numerical packages resolve from the index: not offline.
+
+One initial installed pass, split prospectively into bounded batches; no repair
+pass or source mechanics changes required. New refresh process wall:
+567.1188419999671 seconds. Cumulative Slice 3 727.7703735999385/1800 seconds,
+1072.2296264000615 seconds remain, preserving its full 300-second final reserve.
+Earlier failures/ledger entries retained; Slice 2 and historical scientific
+budgets unchanged. No numerical runs remain necessary for these deliverables.
+
+All three incremental DELIVERABLE slices are complete for the declared workflows.
+Historical scientific Slice 3 remains open: original -0.20 m, director continuation
+and analytical accuracy are not cleared. The three director failures remain
+ordinary unchanged repository tests. No full-suite, cross-host qualification,
+publication or release claim. Commit packaging/docs/evidence on main; do not push
+without a separate instruction. No additional independent review was performed.

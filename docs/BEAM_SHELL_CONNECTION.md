@@ -115,13 +115,17 @@ the existing constraint postcheck passed; a cancelled solve reports the
 accepted increments seen so far and never claims completion. The process exit
 status is 0 only for such a valid completion.
 
-The private installed candidate delivers this pre-yield workflow only. Its
-artifact hash, pinned version, Python 3.12 installation evidence and explicit
-omissions are recorded in the
-[delivery receipt](../.development/nonlinear-master-slave-coupling-20261017/incremental-20261020/slice3/DELIVERY.json).
-Use the bundled README's measured runtime recipe: JIT disabled, one effective
-numerical thread and retired-programme selection disabled. The focused installed
-checks do not establish a passing full suite or general scientific qualification.
+The refreshed private Windows Python 3.12 candidate, built from `6fb907a1c`,
+includes both this pre-yield workflow and the completed-prefix checkpoint
+workflow below. Its hashes, pinned dependencies and installed verification are
+recorded in the
+[delivery receipt](../.development/nonlinear-master-slave-coupling-20261017/incremental-20261020/slice3/refresh-6fb907a1c-v1/DELIVERY.json).
+All 77 installed focused tests and eight actual CLI runs passed. Use the bundled
+README's measured runtime recipe: JIT disabled, one effective numerical thread
+and retired-programme selection disabled. The earlier pre-yield-only artifact
+is preserved with the same private version and a different source/hash; install
+the explicit local wheel from the selected bundle. These checks do not establish
+a passing full suite or general scientific qualification.
 
 ## Reading a nonlinear result
 
@@ -172,8 +176,8 @@ failed-terminal checkpoint refusal remain enforced. This workflow introduces
 no checkpoint format or manual-state bypass. The original failed attempt and
 timeout remain preserved in the handover.
 
-This source workflow is newer than the pinned installed candidate described
-above. That unchanged artifact still contains the pre-yield example only.
+This source workflow is included in the refreshed `6fb907a1c` installed candidate.
+The earlier pre-yield-only artifact remains unchanged as historical evidence.
 Neither the original -0.20 m target nor director continuation or analytical
 accuracy is established by the completed-prefix workflow.
 

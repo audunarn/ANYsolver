@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Refresh the private Windows Python 3.12 beam-shell bundle from `6fb907a1c`,
+  including both completed-prefix S355 checkpoint workflows. Verify 77 installed
+  tests, two pre-yield and six fresh-process plastic full/prefix/resume CLIs;
+  check all 727 installed solver files and wheel/sdist contents against the
+  committed source. Preserve the earlier artifact under its original hash.
+  The private version remains `0.4.7+beam.shell.candidate.20261020.s3`; explicit
+  local wheel paths and bundle hashes distinguish the builds. Repository release
+  version, scientific gates and publication status remain unchanged.
+
 - Deliver the source S355 beam-shell completed-prefix checkpoint workflow for
   direct and interpolated default coupling: 11/6/5 initial increments to
   -11/60 m via -0.10 m, with unchanged material, iteration controls and tolerances.

@@ -41,6 +41,7 @@ def main():
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--dependency-wheelhouse", required=True, type=Path)
     parser.add_argument("--source-ref", default="HEAD")
+    parser.add_argument("--installed-test-guard", type=Path)
     args = parser.parse_args()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
@@ -73,6 +74,12 @@ def main():
         helper = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(helper)
         identity = helper.stage_solver(committed, stage, VERSION)
+        for directory in ("examples", "docs", "tests"):
+            shutil.copytree(committed / directory, stage / directory)
+        shutil.copyfile(committed / "CHANGELOG.md", stage / "CHANGELOG.md")
+        (stage / "MANIFEST.in").write_text(
+            "recursive-include examples *.py\nrecursive-include docs *.md\n"
+            "recursive-include tests *.py\ninclude CHANGELOG.md\n", encoding="utf-8")
         wheel = helper.build_wheel(stage, wheelhouse)
         helper_sha = sha(helper_path)
         from setuptools.build_meta import build_sdist
@@ -88,12 +95,14 @@ def main():
         for directory in ("examples", "docs", "tests"):
             shutil.copytree(committed / directory, bundle / directory)
         shutil.copyfile(committed / "CHANGELOG.md", bundle / "CHANGELOG.md")
+    checkpoint_workflow = (bundle / "tests/test_beam_shell_checkpoint_workflow.py").exists()
+    if args.installed_test_guard:
+        shutil.copyfile(args.installed_test_guard, bundle / "tests/conftest.py")
     for filename in PRIVATE:
         shutil.copyfile(args.dependency_wheelhouse / filename, wheelhouse / filename)
     (bundle / "requirements-tested.txt").write_text("\n".join(PINS) + "\n", encoding="utf-8")
-    recipe = ('python -m pip install --find-links wheelhouse -r requirements-tested.txt '
-              f'"ANYsolver=={VERSION}" "ANYsolver-results==2.1.1" "ANYmaterial==0.2.0" '
-              '"ANYgeometry==0.4.3" "ANYmesher==0.5.0" "ANYfileio==0.3.2"')
+    recipe = 'python -I -m pip install -r requirements-tested.txt ' + ' '.join(
+        '"wheelhouse/' + name + '"' for name in [wheel, *PRIVATE])
     environment = dict(NUMBA_DISABLE_JIT="1", NUMBA_NUM_THREADS="1", OMP_NUM_THREADS="1",
         OPENBLAS_NUM_THREADS="1", MKL_NUM_THREADS="1", NUMEXPR_NUM_THREADS="1",
         VECLIB_MAXIMUM_THREADS="1", ANYMESHER_DISABLE_NATIVE="1", ANYMESHER_REQUIRE_NATIVE="0",
@@ -114,11 +123,32 @@ Before starting Python, use the measured profile:
 {powershell}
 ```
 
-Run `python -m examples.beam_shell_coupling --coupling interpolated`.
-See `docs/BEAM_SHELL_CONNECTION.md` for direct coupling and recorded limits.
-Serialized plastic checkpoint delivery is blocked and omitted; this bundle
-delivers the verified pre-yield workflow only. The package release version in
-the repository is unchanged. This bundle is not offline: numerical wheels
+Run both pre-yield modes from this bundle root:
+
+```text
+python -m examples.beam_shell_coupling --coupling direct
+python -m examples.beam_shell_coupling --coupling interpolated
+```
+
+''' + ('''The completed-prefix S355 workflow is included. Run each command in a
+separate process, using the same coupling for all three:
+
+```text
+python -m examples.beam_shell_coupling --case plastic --coupling interpolated --checkpoint-out full.json
+python -m examples.beam_shell_coupling --case plastic --coupling interpolated --stage prefix --checkpoint-out prefix.json
+python -m examples.beam_shell_coupling --case plastic --coupling interpolated --restart prefix.json --checkpoint-out resumed.json
+```
+
+Repeat with `--coupling direct`. Full/prefix/resume retain 11/6/5 initial
+increments, maximum 40 Newton iterations and tolerance 1e-8. Targets are
+-11/60 m and -0.10 m. JSON reports actual completion, target error and constraints.
+Only completed targets replace checkpoint output files. Rejected trials,
+cancellation and refused failed-terminal restarts preserve recovery inputs.
+''' if checkpoint_workflow else '''Serialized plastic checkpoint delivery is
+omitted for this source identity; only the pre-yield workflow is included.
+''') + f'''
+See `docs/BEAM_SHELL_CONNECTION.md` for registered scope and limits. The package
+release version in the repository is unchanged. This bundle is not offline: numerical wheels
 resolve from the configured package index.
 
 This is a bounded development workflow, not a qualification or release.
@@ -128,14 +158,21 @@ director failures remain ordinary tests in the repository. Focused delivery
 checks do not establish a green full suite or accuracy outside the stated case.
 `converged` alone does not establish target completion. Failed-terminal
 checkpoints remain refused for continuation.
+The earlier pre-yield-only artifact has the same private version but a different
+source/hash. Install the explicit local wheel above, not a version-only index
+selection. This artifact is identified by source `{commit}` and its SHA manifest.
 ''', encoding="utf-8")
     files = {str(p.relative_to(bundle)): sha(p) for p in sorted(bundle.rglob("*")) if p.is_file()}
     manifest = dict(status="BUILT_NOT_YET_INSTALLED_VERIFIED", version=VERSION,
                     source_commit=commit, stage_identity=identity, solver_wheel=wheel,
                     sdist=sdist, source_files=sources, files=files,
                     build_script_sha256=sha(Path(__file__)), build_helper_sha256=helper_sha,
-                    delivered_features=["direct/interpolated preyield public workflow", "truthful completion/cancellation reporting"],
-                    omitted_features=["serialized plastic prefix/restart workflow"], runtime_environment=environment,
+                    delivered_features=["direct/interpolated preyield public workflow", "truthful completion/cancellation reporting"] +
+                        (["S355 completed-prefix serialized checkpoint/restart, both default couplings"] if checkpoint_workflow else []),
+                    omitted_features=[] if checkpoint_workflow else ["serialized plastic prefix/restart workflow"],
+                    deferred_scientific_gates=["original -0.20 m target", "director continuation", "analytical accuracy"],
+                    installed_test_guard_sha256=sha(args.installed_test_guard) if args.installed_test_guard else None,
+                    runtime_environment=environment,
                     install_command=recipe)
     (bundle / "MANIFEST.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     zip_path = Path(shutil.make_archive(str(output / ("ANYsolver-beam-shell-"+VERSION)),
