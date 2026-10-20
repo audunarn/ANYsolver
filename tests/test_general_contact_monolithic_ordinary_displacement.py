@@ -268,14 +268,24 @@ def test_ordinary_displacement_contact_and_split_restart():
         )
 
 
-def test_ordinary_displacement_rejects_unphysical_force_scale():
+def test_ordinary_displacement_rejects_unphysical_force_scale(monkeypatch):
     model, definition, settings, control = _case()
+    # The monolithic route keeps the strict predictor default; the spy
+    # observes allow_zero=False while the original refusal is retained.
+    import anysolver.general_contact.static_path as path_driver
+    real = path_driver._elastic_displacement_force_predictor
+    seen = []
+    def spy(*args, **kwargs):
+        seen.append(kwargs.get("allow_zero", False))
+        return real(*args, **kwargs)
+    monkeypatch.setattr(path_driver, "_elastic_displacement_force_predictor", spy)
     with pytest.raises(ValueError, match="exceeds the contact-free elastic"):
         solve_static_nonlinear(
             model, control="displacement", displacement_control=control,
             num_steps=2, contact=definition,
             contact_settings=replace(settings, complementarity_force_scale_n=1.0e9),
         )
+    assert seen == [False]
 
 
 @pytest.mark.parametrize("program", [

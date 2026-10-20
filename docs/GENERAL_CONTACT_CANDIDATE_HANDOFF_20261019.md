@@ -31,6 +31,7 @@ execution receipts live under `C:/ANYworkspaceWork/contact-incremental-delivery-
 | 2 | Same installed candidate on Windows/Ubuntu; normal/friction/restart/archive checks | Delivered; Windows/Ubuntu cold installs, 20 assertions per host, transferred active/open checkpoints and 29 comparison entries pass |
 | 3 | Truthful rejected-trial outcome and exact last-accepted-state recovery | Delivered; 16 focused checks pass; exact retained state and completed-prefix recovery; failed-terminal restart remains refused |
 | 4 | Predictable stop and restart: early entry cancellation, direct checkpoint output, truthful noncompleted reports | Local source/installed checks pass; paired-host CI and final bundle state in the delivery receipt below |
+| 5 | Reliable zero-reaction prediction for the two S3 projected-penalty profiles | Implemented with focused local checks; paired-host CI and final bundle pending in the slice-5 delivery receipt |
 
 Scientific criteria, capability flags, scoped deviations and preserved failures
 remain binding. Full D1/Q4, native material/dynamics, independent coupled-response
@@ -78,15 +79,32 @@ preliminary build is not the final cross-host artifact.
 records Git/CI outcome and the final bundle identity from the single CI artifact
 tested on Windows and Ubuntu.
 
-OPEN predictor limitation: full-CI job `118539271071` failed
-`test_friction_invalid_candidate_and_cancel_restore_context` at the
-predictor's exact `maximum_reaction <= 0` refusal on a contact-free
-rigid-translation fixture whose elastic reaction is zero in exact
-arithmetic; `allow_zero` is restricted to the S3/Q4 profile. The same legacy
-fixture underlies a passing candidate base selector. This is source-confirmed
-possible round-off sensitivity, not a measured frequency; the entry safe
-point fixes cancellation ordering only and does not establish predictor
-stability. Any predictor or profile change is a separate bounded decision.
+Slice 5 (2026-10-20): repaired the zero-reaction predictor sensitivity
+without changing criteria, mechanics, arithmetic, force normalization,
+compatibility/admission flags or checkpoint contracts. The static-path
+caller now admits an exact zero contact-free reporting reaction when the
+route is non-semismooth and the manager profile is the S3 projected-penalty
+or S3/Q4 projected-penalty profile; the helper default, residual, nonfinite,
+dimension and singular refusals and the monolithic force-scale bound are
+unchanged. Focused helper tests cover tiny positive, controlled-null,
+nonfinite, bad-residual and uncontrolled-null behavior; real fixed-material
+friction and physical-side sliding one-step solves verify the allowance
+through a call-through spy on unchanged fixtures; the existing monolithic
+force-scale refusal observes the strict default. Candidate identity is
+`0.4.7+contact.candidate.20261020.s5` with four appended candidate selectors.
+Implemented with local checks; paired-host CI, installed-artifact acceptance
+and Git delivery are pending. Final receipt:
+`C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice5/DELIVERY.json`.
+Zero-reaction predictor status (updated by slice 5): exact zero and
+roundoff-sized contact-free reporting reactions are tested and admitted
+for the non-semismooth S3 projected-penalty and S3/Q4 projected-penalty
+profiles only. For the rigid-translation fixtures, that diagnostic may be exact zero or
+an environment-dependent roundoff-sized value. Genuinely nonzero reactions
+are reported unchanged. Moving-normal friction and every other profile retain
+the existing positive-reaction requirement; no generic engineering-accuracy
+claim is made. The former OPEN
+limitation (full-CI job `118539271071` failing the exact
+`maximum_reaction <= 0` refusal) is retained as historical evidence.
 
 Subsequent main ownership/push/CI update: see
 [MAIN_HOUSECLEANING_20261019.md](MAIN_HOUSECLEANING_20261019.md). The user later

@@ -191,3 +191,32 @@ def test_precancelled_entry_skips_assembly_predictor_and_keeps_context(monkeypat
                 cancellation_token=token)
     assert repr(model) == before
     assert active_contact_manager() is context
+
+
+def test_uncancelled_legacy_friction_reports_zero_reaction_predictor(monkeypatch):
+    # The uncancelled one-step press on the unchanged legacy fixture: the real
+    # helper runs first with the projected-profile zero allowance, its finite
+    # nonnegative result is checked, and the reported diagnostic is the zero
+    # the caller consumes. Step one stays in the expected stick branch.
+    import anysolver.general_contact.static_path as path_driver
+    real = path_driver._elastic_displacement_force_predictor
+    seen = []
+    def spy(*args, **kwargs):
+        seen.append(kwargs.get("allow_zero", False))
+        value = real(*args, **kwargs)
+        assert np.isfinite(value) and value >= 0.
+        return 0.
+    monkeypatch.setattr(path_driver, "_elastic_displacement_force_predictor", spy)
+    model, definition, settings, friction = _case()
+    model.add_boundary_condition(BoundaryCondition("target",(4,5,6,7),
+        {d:0 for d in ("ux","uy","uz","rx","ry","rz")}))
+    model.add_boundary_condition(BoundaryCondition("guide",(1,2,3),
+        {d:0 for d in ("uy","rx","ry","rz")}))
+    program = ContactPathProgram((ContactPathControl.node(1,"ux"),ContactPathControl.node(1,"uz")),
+        ((0,0),(0,-.02)),1)
+    result = solve_static_nonlinear(model,contact=definition,contact_settings=settings,
+        contact_path_program=program,contact_friction=friction)
+    assert seen == [True]
+    assert result.status == "completed", result.info
+    assert result.info["contact_free_elastic_force_predictor_n"] == 0.
+    assert set(result.info["force_displacement_history"][0]["friction"]["branch"]) == {"stick"}

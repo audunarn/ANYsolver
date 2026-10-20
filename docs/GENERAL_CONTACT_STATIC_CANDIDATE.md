@@ -66,14 +66,16 @@ settings.
 Two supported routes:
 
 1. **Current candidate bundle** (recommended for evaluation):
-   `C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice4/ANYsolver-contact-candidate-20261020-s4.zip`.
+   `C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice5/ANYsolver-contact-candidate-20261020-s5.zip`
+   (expected slice-5 bundle; its paired-host CI and final artifact identity are
+   recorded in the slice-5 delivery receipt once published).
    The extracted bundle ROOT contains `examples/` and a `wheelhouse/` with
    the six pure-Python private wheels (ANYsolver, ANYresults, ANYmaterial,
    ANYgeometry, ANYmesher, ANYfileio). From the bundle ROOT, in a fresh
    virtual environment:
 
    ```text
-   python -m pip install --find-links wheelhouse -r requirements-tested.txt "ANYsolver[general-contact]==0.4.7+contact.candidate.20261020.s4" "ANYsolver-results==2.1.1" "ANYmaterial==0.2.0" "ANYgeometry[planar]==0.4.3" "ANYmesher==0.5.0" "ANYfileio==0.3.2"
+   python -m pip install --find-links wheelhouse -r requirements-tested.txt "ANYsolver[general-contact]==0.4.7+contact.candidate.20261020.s5" "ANYsolver-results==2.1.1" "ANYmaterial==0.2.0" "ANYgeometry[planar]==0.4.3" "ANYmesher==0.5.0" "ANYfileio==0.3.2"
    ```
 
    Numeric and Shapely dependencies resolve normally from their usual
@@ -175,7 +177,8 @@ qualification; only the listed workflows have the stated evidence.
 - Agreement claims are for the declared finite-penalty law and chosen
   geometry, not continuum or mesh/model error estimates.
 - The earlier s2 Windows and Ubuntu Python 3.12 cold installs of the same six wheels passed on 2026-10-20: exact package origins, 20 selected assertions per host, normal/friction/archive commands, transferred active/open restart and all 29 cross-host comparison entries. See the handoff for dimensional bounds and measured differences. Full qualification and unrelated full-CI failures remain open.
-- For the current s4 bundle, consult its [delivery receipt](C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice4/DELIVERY.json) for the installed local check, paired-host CI outcome and exact artifact identity. Earlier measurements do not automatically bind new wheel bytes.
+- For the current s5 candidate, consult the slice-5 [delivery receipt](C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice5/DELIVERY.json) for the installed local check, paired-host CI outcome and exact artifact identity once published; until then the s5 changes are implemented with local checks only.
+- The slice-4 bundle and its [delivery receipt](C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice4/DELIVERY.json) remain historical evidence. Earlier measurements do not automatically bind new wheel bytes.
 - The 2026-10-19 measurements remain same-host Windows historical evidence.
 - Capability/released/admitted flags are unchanged; nothing on this page
   admits the candidate into qualified production scope.

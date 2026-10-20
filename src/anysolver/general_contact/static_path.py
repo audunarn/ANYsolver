@@ -354,8 +354,9 @@ def _elastic_displacement_force_predictor(stiffness, transform, row,
     For several controls, use the maximum absolute reaction sum over path
     waypoints. This retains the one-control value and one physical force unit.
     A fully controlled rigid tool can have exactly zero contact-free reaction;
-    the explicit new finite-penalty profile may report that zero without using
-    it as a force normalization. Singular uncontrolled systems still reject.
+    the explicit S3 projected-penalty and S3/Q4 projected-penalty profiles
+    may report that zero without using it as a force normalization. Singular
+    uncontrolled systems still reject.
     """
     reduced = sparse.csr_matrix(transform.T @ stiffness @ transform)
     rows = np.asarray(row, dtype=float)
@@ -991,7 +992,11 @@ def solve_static_contact_path(
                     displacement_force_predictor = (
                         _elastic_displacement_force_predictor(
                             stiffness, T, rows, program.waypoints[1:],
-                            allow_zero=manager.profile == s3_q4_projected_penalty_profile,
+                            allow_zero=(not semismooth
+                                        and manager.profile in {
+                                            s3_projected_penalty_profile,
+                                            s3_q4_projected_penalty_profile,
+                                        }),
                         )
                     )
                     if (semismooth and settings.complementarity_force_scale_n

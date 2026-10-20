@@ -1,3 +1,164 @@
+# Active delivery slice 5: reliable zero-reaction prediction
+
+Status: SOURCE/FUNCTIONAL CHECKS VERIFIED; paired-host delivery tracked in slice5/DELIVERY.json, 2026-10-20. The user adopted the reviewed
+slice-5 plan. Slice 4 and all preceding check allowances remain CLOSED.
+
+Prospective transition under ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1,
+revision 2026-09-24.2: use one connected implementation/check/repair/document
+slice and the existing runners/evidence. Preserve all scientific and release
+criteria, explicit resource limits and historical failed evidence. No new
+qualification or review framework. One Fable medium review is already complete:
+C:/ANYworkspaceWork/contact-incremental-delivery-20261020/zero-reaction-predictor-review-v1/REVIEW.md.
+
+Outcome: exact zero and roundoff-sized reporting reactions are both valid for
+the non-semismooth S3 projected-penalty and existing S3/Q4 projected-penalty
+profiles. The helper default, singular/nonfinite/residual refusals, monolithic
+force-scale bound, arithmetic, physics, capability flags, checkpoint contracts
+and diagnostic values remain unchanged. No floors, snapping or fallback.
+
+Implementation owner: Mistral, connected source/tests/config/docs. Root owns
+contract adoption, final verification/integration, artifact acceptance and Git.
+Owned product repair: static_path.py caller predicate and helper description.
+Add focused helper algebra/refusal and real fixed/sliding caller regression
+coverage using unchanged fixtures, plus monolithic strictness backstop. Append
+selectors to the existing candidate recipe; version s5 consistently. Reuse CI
+for full installed lifecycle/restart checks on both hosts; no duplicate local
+qualification campaign. Keep one main contact handoff current.
+
+Bounds: one working day (8 hours from authority record), NEW 1800 local check
+seconds including 300 reserved, 953 MiB aggregate, one numerical job. One initial
+pass plus one bounded repair total. Worker ceiling 900 of the shared 1800;
+root retains the rest. Existing CI limits unchanged. Stop if the diagnosis is
+wrong, mechanics/criteria must change, or bounds/repair are exhausted. No
+automatic renewal. Final s5 bundle is accepted only after paired-host installed
+candidate checks pass. Preserve s4 and all failures.
+
+Source: isolated codex/contact-zero-reaction at b32e998a5, containing delivered
+contact 121e43e3e. Main has concurrent beam/shell edits outside ownership. Do not
+edit or publish another owner's unapproved work. Exact local/CI/artifact and
+check-budget receipts live at:
+C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice5/.
+
+Implementation checkpoint and results will be appended here by the owner.
+
+### Worker early checkpoint (2026-10-20, slice 5)
+
+Findings confirmed in source: the caller at `static_path.py:994` restricted
+`allow_zero` to `manager.profile == s3_q4_projected_penalty_profile`; the
+legacy S3 projected-penalty profile (used by the fixed-material friction
+wrapper and the physical-side sliding wrapper through profile forwarding)
+fell under the strict `maximum_reaction <= 0` refusal, while the value is
+only a reporting diagnostic on these non-semismooth routes. Edits done:
+helper docstring now names the two explicit S3 projected-penalty profiles,
+and the caller predicate is
+`allow_zero=(not semismooth and manager.profile in {s3_projected_penalty_profile, s3_q4_projected_penalty_profile})`.
+Nothing else in source changed; default `allow_zero=False`, residual,
+nonfinite, dimension, singular-refusal and monolithic force-scale behavior
+are untouched. Edits intended next: focused helper algebra/refusal tests in
+`test_general_contact_s3_q4_static_dev.py`; call-through spy tests on the
+unchanged legacy friction and physical-side sliding fixtures; one
+monolithic strictness observation on the existing force-scale refusal test;
+candidate JSON s5 selectors/version bumps plus tools-test count; handoff and
+candidate-doc wording replacing the OPEN predictor limitation. Remaining:
+implement tests/config/docs, one supervised focused check batch, final
+handoff. No blocker.
+
+### Worker final handoff (2026-10-20, slice 5)
+
+State label: implemented and verified against the assigned focused
+source-level criteria. Root-owned bundle build/verification, packaging
+identity acceptance, candidate CI on both hosts and Git delivery remain
+open. The final external receipt will be
+`C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice5/DELIVERY.json`.
+
+Changed files (all inside the assigned ownership):
+
+- `src/anysolver/general_contact/static_path.py`: helper docstring now names
+  the two explicit S3 projected-penalty profiles; the existing caller passes
+  `allow_zero=(not semismooth and manager.profile in {s3_projected_penalty_profile,
+  s3_q4_projected_penalty_profile})`. Nothing else; default `allow_zero=False`,
+  residual/nonfinite/dimension/singular refusals, monolithic force-scale bound,
+  literal calculated diagnostic, force_reference_method and checkpoint shape
+  unchanged. No floors, snapping, substituted forces, skipped solves or
+  blanket exception catches.
+- `tests/test_general_contact_s3_q4_static_dev.py`: appended
+  `test_zero_predictor_tiny_positive_controlled_null_and_injection_refusals`
+  (tiny positive exact under both allowances, controlled null plus stiff
+  second control keeps the nonzero sum under the strict default, uncontrolled
+  null unavailable under both allowances, nonfinite and zero-vector responses
+  unresolved with allow_zero=True). Existing strict/allowed/uncontrolled test
+  and fixtures untouched.
+- `tests/test_general_contact_s3_friction_static.py`: appended
+  `test_uncancelled_legacy_friction_reports_zero_reaction_predictor` on the
+  unchanged legacy fixture and two-waypoint program; call-through spy runs the
+  real helper first, verifies allow_zero=True and a finite nonnegative value,
+  returns zero; completed status, zero info diagnostic, step-one stick branch.
+- `tests/test_general_contact_s3_friction_physical_path.py`: appended
+  `test_uncancelled_sliding_friction_reports_zero_reaction_predictor`, outside
+  every stage gate, one real step on the unchanged physical-side build_case();
+  same spy/assertions with the step-one contact-activation branch.
+- `tests/test_general_contact_monolithic_ordinary_displacement.py`: the existing
+  `test_ordinary_displacement_rejects_unphysical_force_scale` additionally
+  observes allow_zero=False through a call-through spy; its original refusal is
+  retained unchanged.
+- `scripts/contact_candidate_slice2.json`: s5 identity in candidate_version,
+  private_versions.ANYsolver and wheel_files.ANYsolver; four targeted selectors
+  appended to base_selectors (now 26; all 22 prior entries, stages, scales,
+  criteria, pins, sibling refs and the 29 cross-host entries unchanged); note
+  updated.
+- `tests/test_static_contact_candidate_tools.py`: expected candidate version s5
+  and base selector count 26.
+- `scripts/build_static_contact_candidate.py`: no change needed; the version
+  flows from the config.
+- `docs/GENERAL_CONTACT_CANDIDATE_HANDOFF_20261019.md`: slice-5 table row and
+  paragraph; the OPEN predictor limitation replaced by the tested two-profile
+  support with remaining roundoff-sized reporting variability, explicitly
+  excluding moving-normal/other profiles and generic engineering accuracy.
+- `docs/GENERAL_CONTACT_STATIC_CANDIDATE.md`: expected s5 bundle/install version
+  with pending-CI wording; slice-4 evidence preserved as historical.
+
+Checks actually performed (all through the prepared supervisor
+`C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice5/supervise.py`
+with `entry.py`, base Python cpython-3.12.13, JIT off/one thread, one
+numerical job at a time; receipts under `slice5/checks/`):
+
+1. `focused-initial-s5` (mis-cwd invocation, no tests ran, exit 4, 0.41 s
+   wall): preserved as harness evidence; selectors must be run from the
+   checkout root.
+2. `focused-initial-s5b` (pytest, 600 s cap): the two predictor backstops,
+   the new helper test, the parametrized S3/Q4 exact-zero KKT test, both new
+   friction caller tests, the modified monolithic refusal and the whole tools
+   module. Result: 20 passed, 1 failed, child wall 20.26 s, charged 20.32 s,
+   exit 1. The single failure was the new sliding test expecting the step-one
+   branch `stick`; the fixture reports `activation`. The allowance itself,
+   completed status and zero diagnostic all passed before that assertion.
+   JUnit: `slice5/focused-initial-s5b.xml`.
+3. `repair-s5-sliding` (the single bounded repair pass, pytest of the affected
+   selector only, 300 s cap): 1 passed, child wall 5.48 s, charged 5.56 s,
+   exit 0. The repair changed only the expected branch label in the new test
+   to the fixture-actual `activation`; no product source, fixture or criterion
+   changed. JUnit: `slice5/repair-s5-sliding.xml`.
+
+Budget: 26.37 charged seconds total of the shared 1800 (worker ceiling 900):
+0.49 + 20.32 + 5.56. Supervisor ledger: `slice5/PROCESS_BUDGET.json`
+(1773.63 s remaining); the 300 s reserve was not touched. Repair pass:
+consumed and labeled above; no third approach.
+
+Coverage notes and deliberate limits: no caller nonfinite/residual injection
+or tiny-positive magnitude checks (helper tests cover these, per the adopted
+review); no local rerun of the real stick/slip/reversal, prefix/restart,
+lifecycle, rollback or campaign selectors (unchanged; candidate CI exercises
+the same wheel on both hosts); no installed pipeline or packaging run.
+Identity: `slice5/CANDIDATE_IDENTITY.json` records baseSHA b32e998a5, owned
+file SHA256s, owned diff identity and the exact test arguments.
+
+Remaining root-owned work: build and verify the s5 bundle at
+`C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice5/ANYsolver-contact-candidate-20261020-s5.zip`,
+packaging identity acceptance, candidate CI on both hosts, Git delivery and
+the external DELIVERY.json receipt. Unresolved decisions: none new.
+
+---
+
 # Next delivery slice: predictable stop and restart for static friction
 
 Status: implemented and locally verified. Git/paired-host delivery state is maintained in the delivery receipt below.
@@ -424,3 +585,21 @@ This task record is fixed before publication; that receipt records the ensuing
 CI and packaging disposition. Final shipping wheels must come from the single
 CI bundle tested on both Windows and Ubuntu, not be substituted by this local
 preliminary build. Existing unrelated dirty beam/shell files remain excluded.
+
+### Root integration checkpoint (slice 5)
+
+Root inspected the complete owned diff, actual JUnit failures/passes and
+process receipts. Twenty assertions passed initially; the one new sliding
+assertion failed because first contact is `activation`, and its sole bounded
+repair passed. The earlier wrong-cwd collection failure ran no tests and is
+preserved. Existing assertions/fixtures and all 22 prior recipe selectors,
+scales, stages, pins and comparison entries remain unchanged. Local runtime
+probe confirms source origins in the isolated checkout, Python 3.12.13,
+NumPy 2.5.4/SciPy 1.18.1/Numba 0.68.0, JIT disabled and all reported pools
+at one thread. Root clarified that roundoff-sized reporting variability
+applies to the rigid-translation fixtures, not every nonzero physical reaction.
+This is a contract/documentation clarification, not another repair approach.
+The user explicitly approved publishing existing beam/shell commit b32e998a5
+alongside the contact commit; remaining unrelated working-tree edits remain
+outside this delivery. Final commit, exact CI-built artifact and paired-host
+results are maintained at slice5/DELIVERY.json; no pre-CI artifact is accepted.

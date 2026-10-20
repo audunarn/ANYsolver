@@ -307,3 +307,26 @@ def test_public_trial_exception_and_inflight_cancellation(monkeypatch):
     assert np.all(rejected_owners[0].committed_displacement==0.)
     assert repr(m)==before and active_contact_manager() is context
     save(dict(verified=True,public_restored_active_trial_rollback=reports,unsafe_seed_before_material=True))
+
+
+def test_uncancelled_sliding_friction_reports_zero_reaction_predictor(monkeypatch):
+    # Outside every stage gate: one real step on the unchanged physical-side
+    # build_case() fixture. The call-through spy runs the real helper first,
+    # verifies the projected-profile zero allowance, checks its finite
+    # nonnegative result and returns zero; the solve completes with the zero
+    # reporting diagnostic and the expected step-one contact-activation branch.
+    import anysolver.general_contact.static_path as path_driver
+    real = path_driver._elastic_displacement_force_predictor
+    seen = []
+    def spy(*args, **kwargs):
+        seen.append(kwargs.get("allow_zero", False))
+        value = real(*args, **kwargs)
+        assert np.isfinite(value) and value >= 0.
+        return 0.
+    monkeypatch.setattr(path_driver, "_elastic_displacement_force_predictor", spy)
+    case = build_case()
+    result = solve_case(case, through_step=1)
+    assert seen == [True]
+    assert result.status == 'completed', result.info
+    assert result.info['contact_free_elastic_force_predictor_n'] == 0.
+    assert set(result.info['force_displacement_history'][0]['friction']['branch']) == {'activation'}

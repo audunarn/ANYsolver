@@ -232,3 +232,38 @@ def test_zero_predictor_keeps_legacy_and_uncontrolled_mechanism_rejection():
     assert _elastic_displacement_force_predictor(stiffness,transform,row,target,allow_zero=True)==0.
     with pytest.raises(ValueError,match='unavailable'):
         _elastic_displacement_force_predictor(sparse.csr_matrix((2,2)),transform,row,target,allow_zero=True)
+
+
+def test_zero_predictor_tiny_positive_controlled_null_and_injection_refusals(monkeypatch):
+    from types import SimpleNamespace
+    from scipy import sparse
+    import anysolver.general_contact.static_path as path_driver
+    from anysolver.general_contact.static_path import _elastic_displacement_force_predictor
+    transform=sparse.eye(2,format='csr');row=np.array(((1.,0.),));target=np.array(((.5,),))
+    # A tiny positive diagonal reaction stays positive and exact under both
+    # allowance values; no floor or snapping replaces it.
+    tiny=sparse.diags((2.**-30,2.**-30),format='csr')
+    for allow in (False,True):
+        assert _elastic_displacement_force_predictor(
+            tiny,transform,row,target,allow_zero=allow)==2.**-31
+    # A controlled null mode beside a stiff second control keeps its nonzero
+    # reaction sum under the strict default.
+    mixed=sparse.diags((0.,2.),format='csr')
+    assert _elastic_displacement_force_predictor(mixed,transform,
+        np.array(((1.,0.),(0.,1.))),np.array(((.1,.25),)))==.5
+    # An uncontrolled null mode stays unavailable under both allowance values.
+    for allow in (False,True):
+        with pytest.raises(ValueError,match='unavailable'):
+            _elastic_displacement_force_predictor(
+                sparse.csr_matrix((2,2)),transform,row,target,allow_zero=allow)
+    # Nonfinite and zero-vector responses stay unresolved even with the zero
+    # allowance; the finiteness and residual checks run before it.
+    stiff=sparse.diags((2.,2.),format='csr')
+    monkeypatch.setattr(path_driver,'factorize',lambda *a,**k: SimpleNamespace(
+        solve=lambda rhs: np.full(np.asarray(rhs).shape,np.nan)))
+    with pytest.raises(ValueError,match='unresolved'):
+        _elastic_displacement_force_predictor(stiff,transform,row,target,allow_zero=True)
+    monkeypatch.setattr(path_driver,'factorize',lambda *a,**k: SimpleNamespace(
+        solve=lambda rhs: np.zeros_like(np.asarray(rhs,dtype=float))))
+    with pytest.raises(ValueError,match='unresolved'):
+        _elastic_displacement_force_predictor(stiff,transform,row,target,allow_zero=True)

@@ -22,8 +22,8 @@ CONFIG = json.loads((ROOT / "scripts" / "contact_candidate_slice2.json")
 
 
 def test_config_recipe_is_complete_and_matches_the_checkout() -> None:
-    assert CONFIG["candidate_version"] == "0.4.7+contact.candidate.20261020.s4"
-    assert len(CONFIG["base_selectors"]) == 22
+    assert CONFIG["candidate_version"] == "0.4.7+contact.candidate.20261020.s5"
+    assert len(CONFIG["base_selectors"]) == 26
     for selector in CONFIG["base_selectors"]:
         path, node = selector.split("::")
         assert (ROOT / path).is_file(), path
