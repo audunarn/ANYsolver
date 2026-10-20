@@ -325,3 +325,40 @@ hit its 120-second process limit. Those same assertions are now partitioned
 into 26 static and nine initial-state selectors. The existing named-batch
 runner retains every assertion and the unchanged 120-second case, 600-second
 host and 953 MiB limits. Failed run 39435678124 is preserved in the s7 evidence.
+
+## Slice 8: gravity-preloaded panel continuation
+
+The s8 candidate adds `examples.elastic_sphere_panel_continuation.py`:
+
+```console
+python -m examples.elastic_sphere_panel_continuation --output panel-continuation.json
+```
+
+It continues the actual accepted gravity state through a 1,000 N downward
+centre-node load and unload, retaining the rotating work-conjugate beam-shell
+ties and constant gravity. It compares the peak with a fresh uninterrupted
+gravity-then-probe program and the unloaded state with original gravity, using
+the existing `rtol=1e-8, atol=1e-10` bound. It retains mass, force/moment balance,
+reaction-agreement and skin-reconstruction criteria, and checks exact input/model
+nonmutation. Status is `gravity_probe_completed`; the output is a result report,
+not a checkpoint. This proves ordinary structural continuation, not preload
+integration into the contact driver or contact-force accuracy.
+
+Acceptance is **local Windows numerical evidence only**; paired-host continuation
+verification remains pending. Existing installed-candidate CI selectors/limits
+are unchanged and do not exercise this new continuation. The s8 bundle, tested
+source, local measurements and actual installed runtime/origins are identified by
+`C:/ANYworkspaceWork/contact-incremental-delivery-20261020/panel-continuation-s8-v1/DELIVERY_RECEIPT.json`.
+The retained s7 bundle remains the paired-host measured geometry candidate.
+
+Local verification: 24 focused checks passed, and the cold-installed complete
+CLI passed on Python 3.12.13 with the pinned dependencies, JIT disabled and one
+thread. Centre sag was 0.598370542 mm under gravity and 1.068632977 mm at peak;
+unloading returned to the gravity state within the unchanged comparison bound.
+Maximum full-vector comparison differences were `3.7115173e-13` at peak and
+`1.1541515e-12` on unloading. Both force imbalances were below `6.8e-7 N`.
+
+Next work remains curved multi-face contact enforcement with accounted-for skin
+coverage, integration of gravity/preload and rotating ties into that contact
+solve, and deformable-body dynamics for the full 10 m drop. Select the next
+bounded mechanics slice explicitly; do not restart the qualification backlog.

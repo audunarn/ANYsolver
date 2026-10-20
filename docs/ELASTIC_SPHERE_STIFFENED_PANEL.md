@@ -203,3 +203,52 @@ hit its 120-second process limit. Those same assertions are now partitioned
 into 26 static and nine initial-state selectors. The existing named-batch
 runner retains every assertion and the unchanged 120-second case, 600-second
 host and 953 MiB limits. Failed run 39435678124 is preserved in the s7 evidence.
+
+## Slice 8: elastic panel continuation
+
+Run the development example from the s8 bundle root after installing its wheels
+with the pinned Python 3.12, JIT-disabled, single-thread profile:
+
+```console
+python -m examples.elastic_sphere_panel_continuation --output panel-continuation.json
+```
+
+It prepares the same panel gravity equilibrium once, then applies a 1,000 N
+downward global-Z force at centre plate node 61 over two increments and removes
+it over two increments. Gravity remains applied throughout. The ordinary public
+nonlinear solver receives copies of each accepted displacement and element state,
+using corotational kinematics and the work-conjugate rotating beam-shell ties.
+Reference coordinates, mass, supports, stiffeners and elastic properties stay
+unchanged. The sphere remains unsolved; its exported skin uses body-reference
+coordinates. Its 10 m release and impact remain subsequent targets.
+
+The example also solves a fresh gravity-then-probe load program. Peak versus
+fresh displacements and unloaded versus original gravity displacements use the
+existing componentwise `1e-10 + 1e-8 * abs(reference)` comparison bound. Existing
+mass, force/moment balance and reaction-agreement bounds apply. It checks exact
+input/model nonmutation and independently reconstructs the accepted panel skins
+with the existing `1e-13 m` geometry tolerance. This is a structural continuation
+check using the same solver, not an independent mechanical accuracy reference.
+
+Successful output reports `gravity_probe_completed`, per-leg accepted histories,
+centre displacements, force balance, comparisons and recovered skins. The JSON is
+a result report and cannot restart a solve. Sphere-panel contact response and
+impact remain unsupported; this example does not integrate preload into the
+contact driver.
+
+The s8 numerical acceptance scope is **local Windows only**. Paired-host
+continuation verification is pending. Existing candidate CI selectors and time
+limits remain unchanged; their results cover the retained static workflows.
+The final tested source, measurements, checks, installed origins and bundle are
+recorded in
+`C:/ANYworkspaceWork/contact-incremental-delivery-20261020/panel-continuation-s8-v1/DELIVERY_RECEIPT.json`.
+
+The local s8 run measured centre vertical displacement of
+`-0.0005983705419914141 m` under gravity, `-0.00106863297724715 m` at peak,
+and `-0.0005983705422591824 m` after unloading. Maximum full-vector differences
+were `3.7115173e-13` (peak versus uninterrupted) and `1.1541515e-12`
+(unloaded versus original gravity), within the componentwise bounds above.
+Both endpoint force imbalances were below `6.8e-7 N`; recovered support
+resultants agreed with the solver. Twenty-four focused local checks passed,
+followed by the cold-installed complete CLI. These measurements apply to this
+fixed elastic probe and do not establish general contact or impact accuracy.
