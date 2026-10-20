@@ -1,10 +1,10 @@
 {
   "status": "SLICE2_PRE_EXECUTION_FIXED_CASES_SCALES_AND_RECIPE",
-  "note": "Frozen slice-2 recipe: exact existing selectors/stages/scales; no new criteria",
-  "candidate_version": "0.4.7+contact.candidate.20261020.s2",
+  "note": "Frozen slice-4 recipe: slice-2 stages/scales/criteria unchanged; direct checkpoint example commands and added cancellation/CLI selectors; no new scientific criteria",
+  "candidate_version": "0.4.7+contact.candidate.20261020.s4",
   "repo_version": "0.4.7",
   "private_versions": {
-    "ANYsolver": "0.4.7+contact.candidate.20261020.s2",
+    "ANYsolver": "0.4.7+contact.candidate.20261020.s4",
     "anysolver-results": "2.1.1",
     "ANYmaterial": "0.2.0",
     "ANYgeometry": "0.4.3",
@@ -12,7 +12,7 @@
     "ANYfileio": "0.3.2"
   },
   "wheel_files": {
-    "ANYsolver": "anysolver-0.4.7+contact.candidate.20261020.s2-py3-none-any.whl",
+    "ANYsolver": "anysolver-0.4.7+contact.candidate.20261020.s4-py3-none-any.whl",
     "anysolver-results": "anysolver_results-2.1.1-py3-none-any.whl",
     "ANYmaterial": "anymaterial-0.2.0-py3-none-any.whl",
     "ANYgeometry": "anygeometry-0.4.3-py3-none-any.whl",
@@ -54,7 +54,16 @@
     "tests/test_general_contact_static_results_archive.py::test_exact_detached_and_refusal",
     "tests/test_general_contact_static_results_archive.py::test_independent_preservation_oracle",
     "tests/test_general_contact_triangulated_rigid.py::test_complete_penalty_work_and_diagonal",
-    "tests/test_general_contact_triangulated_rigid.py::test_ordinary_force_and_path_restart"
+    "tests/test_general_contact_triangulated_rigid.py::test_ordinary_force_and_path_restart",
+    "tests/test_general_contact_s3_friction_static.py::test_friction_invalid_candidate_and_cancel_restore_context",
+    "tests/test_general_contact_s3_friction_static.py::test_precancelled_entry_skips_assembly_predictor_and_keeps_context",
+    "tests/test_general_contact_s3_friction_cli.py::test_completed_direct_checkpoint_and_legacy_invocation_match",
+    "tests/test_general_contact_s3_friction_cli.py::test_noncompleted_writes_truthful_json_and_exits_nonzero",
+    "tests/test_general_contact_s3_friction_cli.py::test_path_collisions_refused_before_solving",
+    "tests/test_general_contact_s3_friction_cli.py::test_cancelled_and_refused_input_write_no_output",
+    "tests/test_general_contact_s3_friction_cli.py::test_hardlinked_existing_paths_refused_before_solving",
+    "tests/test_general_contact_s3_friction_cli.py::test_replacement_failure_after_temp_preserves_old_bytes",
+    "tests/test_general_contact_s3_friction_cli.py::test_checkpoint_write_failure_reports_published_output"
   ],
   "friction_stages": ["full", "active-prefix", "prefix", "active-resume", "resume", "rollback"],
   "friction_lifecycle_node": "tests/test_general_contact_s3_friction_physical_path.py::test_public_installed_lifecycle_and_restart",
@@ -76,8 +85,7 @@
     "normal": ["examples.general_contact_s3_physical_orientation"],
     "friction": ["examples.general_contact_s3_friction_physical_path", "--output", "examples/friction.json"],
     "archive": ["examples.general_contact_static_results_archive"],
-    "restart-partial": ["examples.general_contact_s3_friction_physical_path", "--through-step", "3", "--output", "examples/restart-partial.json"],
-    "restart-extract": ["extract-checkpoint", "examples/restart-partial.json", "examples/restart-checkpoint.json"],
+    "restart-partial": ["examples.general_contact_s3_friction_physical_path", "--through-step", "3", "--output", "examples/restart-partial.json", "--checkpoint-output", "examples/restart-checkpoint.json"],
     "restart": ["examples.general_contact_s3_friction_physical_path", "--through-step", "7", "--restart", "examples/restart-checkpoint.json", "--output", "examples/restart.json"]
   },
   "timeouts": {

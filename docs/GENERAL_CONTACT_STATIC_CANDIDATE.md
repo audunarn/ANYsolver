@@ -66,14 +66,14 @@ settings.
 Two supported routes:
 
 1. **Current candidate bundle** (recommended for evaluation):
-   `C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice3/ANYsolver-contact-candidate-20261020-s3.zip`.
+   `C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice4/ANYsolver-contact-candidate-20261020-s4.zip`.
    The extracted bundle ROOT contains `examples/` and a `wheelhouse/` with
    the six pure-Python private wheels (ANYsolver, ANYresults, ANYmaterial,
    ANYgeometry, ANYmesher, ANYfileio). From the bundle ROOT, in a fresh
    virtual environment:
 
    ```text
-   python -m pip install --find-links wheelhouse -r requirements-tested.txt "ANYsolver[general-contact]==0.4.7+contact.candidate.20261020.s2" "ANYsolver-results==2.1.1" "ANYmaterial==0.2.0" "ANYgeometry[planar]==0.4.3" "ANYmesher==0.5.0" "ANYfileio==0.3.2"
+   python -m pip install --find-links wheelhouse -r requirements-tested.txt "ANYsolver[general-contact]==0.4.7+contact.candidate.20261020.s4" "ANYsolver-results==2.1.1" "ANYmaterial==0.2.0" "ANYgeometry[planar]==0.4.3" "ANYmesher==0.5.0" "ANYfileio==0.3.2"
    ```
 
    Numeric and Shapely dependencies resolve normally from their usual
@@ -125,15 +125,22 @@ From the repository root, or the extracted bundle ROOT containing
 - Automatic physical-side shell pair:
   `python -m examples.general_contact_automatic_s3_pair` and
   `python -m examples.general_contact_s3_physical_orientation`.
-- Friction with restart and rollback. A partial run writes a restart
-  checkpoint inside its output JSON; the restart recipe is (each command on
-  its own line):
+- Friction with restart and rollback. A completed partial run writes a restart
+  checkpoint inside its output JSON and, with `--checkpoint-output`, the same
+  canonical checkpoint bytes directly to a separate file; the restart recipe
+  is (each command on its own line):
 
   ```text
-  python -m examples.general_contact_s3_friction_physical_path --through-step 3 --output partial.json
-  python -c "import json; from pathlib import Path; Path('checkpoint.json').write_text(json.dumps(json.loads(Path('partial.json').read_text())['checkpoint']))"
+  python -m examples.general_contact_s3_friction_physical_path --through-step 3 --output partial.json --checkpoint-output checkpoint.json
   python -m examples.general_contact_s3_friction_physical_path --through-step 7 --restart checkpoint.json --output completed.json
   ```
+
+  A run that does not complete writes its result JSON with `checkpoint: null`
+  and the actual `failure_reason`, prints one concise status/reason/path
+  summary and exits nonzero; it never writes a direct checkpoint file. The
+  restart input, result output and checkpoint output paths must be distinct
+  files; the input checkpoint is never overwritten, and a failed write never
+  leaves a partially written destination file.
 - Static result archive (export and detached read):
   `python -m examples.general_contact_static_results_archive`.
 
@@ -167,7 +174,8 @@ qualification; only the listed workflows have the stated evidence.
 
 - Agreement claims are for the declared finite-penalty law and chosen
   geometry, not continuum or mesh/model error estimates.
-- Windows and Ubuntu Python 3.12 cold installs of the same six wheels passed on 2026-10-20: exact package origins, 20 selected assertions per host, normal/friction/archive commands, transferred active/open restart and all 29 cross-host comparison entries. See the handoff for dimensional bounds and measured differences. Full qualification and unrelated full-CI failures remain open.
+- The earlier s2 Windows and Ubuntu Python 3.12 cold installs of the same six wheels passed on 2026-10-20: exact package origins, 20 selected assertions per host, normal/friction/archive commands, transferred active/open restart and all 29 cross-host comparison entries. See the handoff for dimensional bounds and measured differences. Full qualification and unrelated full-CI failures remain open.
+- For the current s4 bundle, consult its [delivery receipt](C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice4/DELIVERY.json) for the installed local check, paired-host CI outcome and exact artifact identity. Earlier measurements do not automatically bind new wheel bytes.
 - The 2026-10-19 measurements remain same-host Windows historical evidence.
 - Capability/released/admitted flags are unchanged; nothing on this page
   admits the candidate into qualified production scope.

@@ -847,6 +847,11 @@ def solve_static_contact_path(
 
     def operation(_lease):
         def run():
+            # Entry safe point: a pre-cancelled token must be observed
+            # before contact scope, boundary conditions, assembly and the
+            # displacement force predictor, so cancellation never depends
+            # on predictor admission.
+            cancellation_safe_point(cancellation_token, "contact_path.entry")
             with contact_scope(model, definition, settings,
                                allow_augmented=augmented,
                                analysis_control="contact_path") as manager:

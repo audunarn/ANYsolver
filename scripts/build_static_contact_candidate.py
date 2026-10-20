@@ -75,7 +75,7 @@ def stage_solver(checkout: Path, stage: Path, candidate_version: str) -> dict:
 
 def write_guide(bundle: Path, config: dict) -> None:
     version = config["candidate_version"]
-    bundle.joinpath("README.md").write_text(f"""# ANYsolver static-contact candidate (slice 2)
+    bundle.joinpath("README.md").write_text(f"""# ANYsolver static-contact candidate
 
 Private candidate wheels for the supported static-contact workflows.
 Version: `{version}` (stage version change only; solver sources identical to
@@ -128,8 +128,17 @@ python -m examples.general_contact_s3_friction_physical_path --output friction.j
 python -m examples.general_contact_static_results_archive
 ```
 
-Restart: run the friction example with `--through-step 3`, extract the
-`checkpoint` field, then rerun with `--restart checkpoint.json`.
+Save and resume a completed prefix directly:
+
+```
+python -m examples.general_contact_s3_friction_physical_path --through-step 3 --output partial.json --checkpoint-output checkpoint.json
+python -m examples.general_contact_s3_friction_physical_path --through-step 7 --restart checkpoint.json --output completed.json
+```
+
+Completion exits zero. A noncompleted solve writes its actual status/reason with
+`checkpoint: null` and exits nonzero; it cannot produce a restart checkpoint.
+Keep completed-prefix checkpoints for recovery. Restart input and output paths
+must differ. The embedded checkpoint in completed result JSON is retained.
 Scope and limitations: see docs/GENERAL_CONTACT_STATIC_CANDIDATE.md in the
 repository. This is a development candidate, not a qualified release.
 """, encoding="utf-8")

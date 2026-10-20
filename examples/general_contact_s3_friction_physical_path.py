@@ -5,6 +5,9 @@ normal motion is constrained; this example does not demonstrate target bending.
 """
 import argparse
 import json
+import os
+import sys
+import tempfile
 from pathlib import Path
 
 from anysolver import BoundaryCondition, FEModel, create_shell_element, solve_static_nonlinear
@@ -72,19 +75,80 @@ def solve_case(case, *, through_step=7, restart=None):
         restart_checkpoint=restart)
 
 
+def _atomic_write_bytes(path, data):
+    """Publish one file by ordinary temporary-file replacement.
+
+    A failed write never leaves a partially written destination file; only
+    this function's own temporary is cleaned up on failure.
+    """
+    handle, temporary = tempfile.mkstemp(dir=str(path.parent), prefix=path.name+'.',
+                                         suffix='.tmp')
+    try:
+        with os.fdopen(handle, 'wb') as stream:
+            stream.write(data)
+        os.replace(temporary, path)
+    except BaseException:
+        try:
+            os.unlink(temporary)
+        except OSError:
+            pass
+        raise
+
+
+def _refuse_path_collisions(restart, output, checkpoint_output):
+    """Refuse resolved-path or existing-file collisions before solving.
+
+    The restart input checkpoint must never be overwritten by either output.
+    """
+    labelled = (('restart input', restart), ('result output', output),
+                ('checkpoint output', checkpoint_output))
+    resolved = [(label, path.resolve()) for label, path in labelled
+                if path is not None]
+    for first in range(len(resolved)):
+        for second in range(first+1, len(resolved)):
+            first_label, first_path = resolved[first]
+            second_label, second_path = resolved[second]
+            same = first_path == second_path
+            if not same and first_path.exists() and second_path.exists():
+                try:
+                    same = os.path.samefile(first_path, second_path)
+                except OSError:
+                    same = False
+            if same:
+                raise SystemExit(f'{first_label} and {second_label} must be '
+                                 f'different files: {first_path}')
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--through-step',type=int,default=7,choices=range(1,8))
     parser.add_argument('--restart',type=Path)
     parser.add_argument('--output',type=Path,required=True)
+    parser.add_argument('--checkpoint-output',type=Path)
     args=parser.parse_args()
+    _refuse_path_collisions(args.restart,args.output,args.checkpoint_output)
     restart=json.loads(args.restart.read_text()) if args.restart else None
     result=solve_case(build_case(),through_step=args.through_step,restart=restart)
-    args.output.write_text(json.dumps(dict(status=result.status,
+    completed=result.status=='completed'
+    document=dict(status=result.status,
         physical_scope='translating_source_normal_constrained_elastic_target',
         phases=result.info.get('force_displacement_history'),
-        checkpoint=result.to_restart_checkpoint()),default=lambda x:x.tolist() if hasattr(x,'tolist') else x.item(),indent=2))
-    if result.status!='completed':raise RuntimeError(result.info)
+        checkpoint=result.to_restart_checkpoint() if completed else None)
+    if not completed:document['failure_reason']=result.failure_reason
+    _atomic_write_bytes(args.output,json.dumps(document,
+        default=lambda x:x.tolist() if hasattr(x,'tolist') else x.item(),indent=2).encode())
+    if not completed:
+        print(f'status={result.status} failure_reason={result.failure_reason} '
+              f'output={args.output}',file=sys.stderr)
+        raise SystemExit(1)
+    if args.checkpoint_output is not None:
+        try:
+            _atomic_write_bytes(args.checkpoint_output,
+                                result.restart_checkpoint_bytes())
+        except OSError as error:
+            raise SystemExit(f'checkpoint output {args.checkpoint_output} failed '
+                             f'after the result output {args.output} was '
+                             f'published: {error}')
 
 
 if __name__=='__main__':main()

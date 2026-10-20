@@ -30,6 +30,7 @@ execution receipts live under `C:/ANYworkspaceWork/contact-incremental-delivery-
 | 1 | Public friction settings, clear supported examples and guide | Delivered; five focused checks and installed normal/friction/restart/archive commands pass |
 | 2 | Same installed candidate on Windows/Ubuntu; normal/friction/restart/archive checks | Delivered; Windows/Ubuntu cold installs, 20 assertions per host, transferred active/open checkpoints and 29 comparison entries pass |
 | 3 | Truthful rejected-trial outcome and exact last-accepted-state recovery | Delivered; 16 focused checks pass; exact retained state and completed-prefix recovery; failed-terminal restart remains refused |
+| 4 | Predictable stop and restart: early entry cancellation, direct checkpoint output, truthful noncompleted reports | Local source/installed checks pass; paired-host CI and final bundle state in the delivery receipt below |
 
 Scientific criteria, capability flags, scoped deviations and preserved failures
 remain binding. Full D1/Q4, native material/dynamics, independent coupled-response
@@ -55,7 +56,37 @@ failed pip temporary-directory preparation and all process receipts are retained
 
 Slice 2: [current handoff](contact-incremental-20261020/SLICE2_HANDOFF.md) and [artifact receipt](contact-incremental-20261020/SLICE2_DELIVERY.json). No product arithmetic changed. [Dedicated CI](https://github.com/audunarn/ANYsolver/actions/runs/39392303063) passed all three jobs. Both hosts tested the exact same six wheels. Maximum cross-host differences: displacement 2.948e-19 m, force 1.415e-15 N, energy 5.421e-19 J and normalized diagnostics 1.935e-13, all inside the adopted dimensional bound. These measure selected-case repeatability, not continuum accuracy.
 
-Latest bundle: `C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice3/ANYsolver-contact-candidate-20261020-s3.zip`. See the [slice 3 handoff](contact-incremental-20261020/SLICE3_HANDOFF.md) and [artifact receipt](contact-incremental-20261020/SLICE3_DELIVERY.json). Sixteen focused checks pass. The six wheel payloads are exactly the slice-2 wheels tested on both hosts; package version remains `0.4.7+contact.candidate.20261020.s2` because slice 3 changes tests and instructions only. Retain completed-prefix checkpoints for restart. No further local numerical work is scheduled.
+Previous bundle (slice 3): `C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice3/ANYsolver-contact-candidate-20261020-s3.zip`. See the [slice 3 handoff](contact-incremental-20261020/SLICE3_HANDOFF.md) and [artifact receipt](contact-incremental-20261020/SLICE3_DELIVERY.json). Sixteen focused checks pass. The six wheel payloads are exactly the slice-2 wheels tested on both hosts; package version remains `0.4.7+contact.candidate.20261020.s2` because slice 3 changes tests and instructions only. Its allowance is closed. Retain completed-prefix checkpoints for restart.
+Slice 4 (2026-10-20): implemented the reviewed next slice. An entry
+cancellation safe point in the static contact path observes a pre-cancelled
+token before contact scope, boundary conditions, assembly and the
+displacement force predictor. The friction example gained an optional
+`--checkpoint-output` that writes the canonical checkpoint bytes directly
+(the embedded checkpoint and all legacy JSON keys are retained), truthful
+noncompleted result JSON (`checkpoint: null` plus the actual
+`failure_reason`, one concise summary, nonzero exit) replacing the previous
+unreachable secondary error, resolved-path collision refusal and atomic
+per-file writes. Candidate identity is
+`0.4.7+contact.candidate.20261020.s4`. Current bundle:
+`C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice4/ANYsolver-contact-candidate-20261020-s4.zip`.
+Local source/CLI/tool checks: 43 executions of 24 unique assertions, zero
+failures/errors/skips. Installed direct-versus-extracted resume: checkpoint
+contents and histories exact, displacement difference zero; effective
+JIT-off/one-thread Python3.12.13 and installed origins verified. The local
+preliminary build is not the final cross-host artifact.
+[Delivery receipt](C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice4/DELIVERY.json)
+records Git/CI outcome and the final bundle identity from the single CI artifact
+tested on Windows and Ubuntu.
+
+OPEN predictor limitation: full-CI job `118539271071` failed
+`test_friction_invalid_candidate_and_cancel_restore_context` at the
+predictor's exact `maximum_reaction <= 0` refusal on a contact-free
+rigid-translation fixture whose elastic reaction is zero in exact
+arithmetic; `allow_zero` is restricted to the S3/Q4 profile. The same legacy
+fixture underlies a passing candidate base selector. This is source-confirmed
+possible round-off sensitivity, not a measured frequency; the entry safe
+point fixes cancellation ordering only and does not establish predictor
+stability. Any predictor or profile change is a separate bounded decision.
 
 Subsequent main ownership/push/CI update: see
 [MAIN_HOUSECLEANING_20261019.md](MAIN_HOUSECLEANING_20261019.md). The user later

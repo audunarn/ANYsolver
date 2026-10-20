@@ -161,3 +161,33 @@ def test_friction_rejects_cut_face_even_with_interior_quadrature():
     with pytest.raises(ValueError,match="whole source facet"):
         manager.prepare_commit(.25*_mode(model,(1,2,3),0))
     assert manager.checkpoint_state() == old
+
+
+def test_precancelled_entry_skips_assembly_predictor_and_keeps_context(monkeypatch):
+    from anysolver.control import CancellationToken, SolveCancelled
+    from anysolver.general_contact.runtime import active_contact_manager
+    import anysolver.general_contact.static_path as path_driver
+    import anysolver.nonlinear_static as driver
+    model, definition, settings, friction = _case()
+    model.add_boundary_condition(BoundaryCondition("target",(4,5,6,7),
+        {d:0 for d in ("ux","uy","uz","rx","ry","rz")}))
+    model.add_boundary_condition(BoundaryCondition("guide",(1,2,3),
+        {d:0 for d in ("uy","rx","ry","rz")}))
+    program = ContactPathProgram((ContactPathControl.node(1,"ux"),ContactPathControl.node(1,"uz")),
+        ((0,0),(0,-.02)),1)
+    token = CancellationToken()
+    token.cancel("entry precancel")
+    def sentinel(*args, **kwargs):
+        raise AssertionError("assembly or predictor reached before entry cancellation")
+    before = repr(model)
+    context = active_contact_manager()
+    with monkeypatch.context() as patch:
+        patch.setattr(path_driver, "assemble_stiffness_matrix", sentinel)
+        patch.setattr(path_driver, "_elastic_displacement_force_predictor", sentinel)
+        patch.setattr(driver, "_assemble_nonlinear_system", sentinel)
+        with pytest.raises(SolveCancelled):
+            solve_static_nonlinear(model,contact=definition,contact_settings=settings,
+                contact_path_program=program,contact_friction=friction,
+                cancellation_token=token)
+    assert repr(model) == before
+    assert active_contact_manager() is context

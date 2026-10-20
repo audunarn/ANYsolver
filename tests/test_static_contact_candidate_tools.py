@@ -22,8 +22,8 @@ CONFIG = json.loads((ROOT / "scripts" / "contact_candidate_slice2.json")
 
 
 def test_config_recipe_is_complete_and_matches_the_checkout() -> None:
-    assert CONFIG["candidate_version"] == "0.4.7+contact.candidate.20261020.s2"
-    assert len(CONFIG["base_selectors"]) == 13
+    assert CONFIG["candidate_version"] == "0.4.7+contact.candidate.20261020.s4"
+    assert len(CONFIG["base_selectors"]) == 22
     for selector in CONFIG["base_selectors"]:
         path, node = selector.split("::")
         assert (ROOT / path).is_file(), path
@@ -69,8 +69,7 @@ def test_build_cases_order_env_and_unique_outputs(tmp_path: Path) -> None:
     assert names[1:7] == [f"friction-{s}" for s in CONFIG["friction_stages"]]
     assert names[7] == "orientation-full-plus"
     assert names[8:11] == ["example-normal", "example-friction", "example-archive"]
-    assert names[11:] == ["example-restart-partial", "example-restart-extract",
-                          "example-restart"]
+    assert names[11:] == ["example-restart-partial", "example-restart"]
     outputs = [(case["name"], str(case.get("junit")), str(case["env"]))
                for case in cases]
     assert len(set(outputs)) == len(outputs)
@@ -242,10 +241,10 @@ def test_example_commands_rebase_onto_transferred_evidence(tmp_path: Path) -> No
     friction = by_name["example-friction"]
     assert friction["argv"] == ["examples.general_contact_s3_friction_physical_path",
                                "--output", str(evidence / "examples" / "friction.json")]
-    extract = by_name["example-restart-extract"]
-    assert extract["kind"] == "extract"
-    assert extract["argv"] == [str(evidence / "examples" / "restart-partial.json"),
-                               str(evidence / "examples" / "restart-checkpoint.json")]
+    partial = by_name["example-restart-partial"]
+    checkpoint = partial["argv"][partial["argv"].index("--checkpoint-output") + 1]
+    assert checkpoint == str(evidence / "examples" / "restart-checkpoint.json")
+    assert "example-restart-extract" not in by_name
     restart = by_name["example-restart"]
     assert restart["argv"][restart["argv"].index("--restart") + 1] == \
         str(evidence / "examples" / "restart-checkpoint.json")
