@@ -205,3 +205,10 @@ solver behavior, criteria, scales or cross-host quantities, and claims no
 contact response for the sphere-panel case; the previously measured s2/s6
 evidence is unchanged. See the elastic sphere-panel guide for the geometry
 service contract and its honest limitations.
+
+CI scheduling note: the first s7 Windows run completed all thirteen new skin
+checks and the new installed CLI, but the combined older 35-assertion batch
+hit its 120-second process limit. Those same assertions are now partitioned
+into 26 static and nine initial-state selectors. The existing named-batch
+runner retains every assertion and the unchanged 120-second case, 600-second
+host and 953 MiB limits. Failed run 39435678124 is preserved in the s7 evidence.

@@ -298,8 +298,7 @@ offset skins are not claimed watertight. Local supervised evidence is in
 `C:/ANYworkspaceWork/contact-incremental-delivery-20261020/curved-skins-s7-v1/`
 (discriminator, full component checks and the module-mode example output).
 The fixed installed workflow includes a separate thirteen-selector
-`curved-skins` batch and the new report CLI, keeping the original 35-selector
-batch and all existing case/host/resource limits. The final delivery state,
+`curved-skins` batch and the new report CLI, keeping the original 35 assertions as 26 static and nine initial-state selectors and all existing case/host/resource limits. The final delivery state,
 tested source, paired-host CI and wheel hashes are recorded in
 `C:/ANYworkspaceWork/contact-incremental-delivery-20261020/curved-skins-s7-v1/DELIVERY_RECEIPT.json`.
 The installable bundle is
@@ -319,3 +318,10 @@ beam-shell MPC; and spatial deformable-body dynamics for the actual 10 m drop.
 The geometry component supplies work maps and normals for that work, while
 contact equilibrium and impact remain unsupported. No broader qualification
 campaign follows automatically.
+
+CI scheduling note: the first s7 Windows run completed all thirteen new skin
+checks and the new installed CLI, but the combined older 35-assertion batch
+hit its 120-second process limit. Those same assertions are now partitioned
+into 26 static and nine initial-state selectors. The existing named-batch
+runner retains every assertion and the unchanged 120-second case, 600-second
+host and 953 MiB limits. Failed run 39435678124 is preserved in the s7 evidence.

@@ -1,6 +1,6 @@
 {
   "status": "SLICE2_PRE_EXECUTION_FIXED_CASES_SCALES_AND_RECIPE",
-  "note": "Frozen slice-7 recipe: slice-2 stages/scales/criteria unchanged; slice-4/5/6 selectors preserved; appended focused curved shell skin geometry selectors, the elastic sphere panel contact-skins example and the s7 candidate version; no new scientific criteria",
+  "note": "Frozen slice-7 recipe: slice-2 stages/scales/criteria unchanged; slice-4/5/6 selectors preserved; appended focused curved shell skin geometry selectors, the elastic sphere panel contact-skins example and the s7 candidate version; no new scientific criteria; original35 assertions partitioned into26 static +9 initial-state selectors under unchanged120s case and600s host caps; no omitted assertions or scientific change",
   "candidate_version": "0.4.7+contact.candidate.20261020.s7",
   "repo_version": "0.4.7",
   "private_versions": {
@@ -67,16 +67,7 @@
     "tests/test_general_contact_s3_q4_static_dev.py::test_zero_predictor_tiny_positive_controlled_null_and_injection_refusals",
     "tests/test_general_contact_s3_friction_static.py::test_uncancelled_legacy_friction_reports_zero_reaction_predictor",
     "tests/test_general_contact_s3_friction_physical_path.py::test_uncancelled_sliding_friction_reports_zero_reaction_predictor",
-    "tests/test_general_contact_monolithic_ordinary_displacement.py::test_ordinary_displacement_rejects_unphysical_force_scale",
-    "tests/test_elastic_sphere_stiffened_panel.py::test_fixed_sphere_case_data_topology",
-    "tests/test_elastic_sphere_stiffened_panel.py::test_initial_state_document_metadata",
-    "tests/test_elastic_sphere_stiffened_panel.py::test_exported_mesh_matches_model_geometry",
-    "tests/test_elastic_sphere_stiffened_panel.py::test_sphere_masses_match_faceted_reference",
-    "tests/test_elastic_sphere_stiffened_panel.py::test_panel_masses_match_declared_target",
-    "tests/test_elastic_sphere_stiffened_panel.py::test_panel_gravity_solve_completed",
-    "tests/test_elastic_sphere_stiffened_panel.py::test_global_equilibrium_balance_within_tolerances",
-    "tests/test_elastic_sphere_stiffened_panel.py::test_sphere_pose_and_placement",
-    "tests/test_elastic_sphere_stiffened_panel.py::test_impact_request_is_refused"
+    "tests/test_general_contact_monolithic_ordinary_displacement.py::test_ordinary_displacement_rejects_unphysical_force_scale"
   ],
   "additional_selector_batches": {
     "curved-skins": [
@@ -93,6 +84,17 @@
       "tests/test_general_contact_curved_shell_skin.py::test_wrong_map_pose_and_shape_refusals",
       "tests/test_general_contact_curved_shell_skin.py::test_bound_identity_refuses_thickness_and_director_changes",
       "tests/test_general_contact_curved_shell_skin.py::test_face_interpolation_and_normals"
+    ],
+    "elastic-initial-state": [
+      "tests/test_elastic_sphere_stiffened_panel.py::test_fixed_sphere_case_data_topology",
+      "tests/test_elastic_sphere_stiffened_panel.py::test_initial_state_document_metadata",
+      "tests/test_elastic_sphere_stiffened_panel.py::test_exported_mesh_matches_model_geometry",
+      "tests/test_elastic_sphere_stiffened_panel.py::test_sphere_masses_match_faceted_reference",
+      "tests/test_elastic_sphere_stiffened_panel.py::test_panel_masses_match_declared_target",
+      "tests/test_elastic_sphere_stiffened_panel.py::test_panel_gravity_solve_completed",
+      "tests/test_elastic_sphere_stiffened_panel.py::test_global_equilibrium_balance_within_tolerances",
+      "tests/test_elastic_sphere_stiffened_panel.py::test_sphere_pose_and_placement",
+      "tests/test_elastic_sphere_stiffened_panel.py::test_impact_request_is_refused"
     ]
   },
   "friction_stages": [

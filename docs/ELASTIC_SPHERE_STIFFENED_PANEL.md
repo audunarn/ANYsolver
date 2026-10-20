@@ -178,7 +178,7 @@ contact gap or force history is reported. Focused coverage lives in
 `tests/test_general_contact_curved_shell_skin.py` (candidate selectors in
 the separate named `curved-skins` batch of
 `scripts/contact_candidate_slice2.json`, run by the check adapter after the
-unchanged original base batch); the s7 candidate version is
+static base batch and nine-assertion initial-state batch); the s7 candidate version is
 `0.4.7+contact.candidate.20261020.s7`.
 
 
@@ -196,3 +196,10 @@ is 10.0000767534 m against the nominal 10 m placement. No skin stitching or
 mass scaling was applied. The final s7 receipt binds the installed results,
 source and bundle at
 `C:/ANYworkspaceWork/contact-incremental-delivery-20261020/curved-skins-s7-v1/DELIVERY_RECEIPT.json`.
+
+CI scheduling note: the first s7 Windows run completed all thirteen new skin
+checks and the new installed CLI, but the combined older 35-assertion batch
+hit its 120-second process limit. Those same assertions are now partitioned
+into 26 static and nine initial-state selectors. The existing named-batch
+runner retains every assertion and the unchanged 120-second case, 600-second
+host and 953 MiB limits. Failed run 39435678124 is preserved in the s7 evidence.

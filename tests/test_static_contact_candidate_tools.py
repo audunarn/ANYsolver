@@ -26,7 +26,7 @@ def test_config_recipe_is_complete_and_matches_the_checkout() -> None:
     assert CONFIG["private_versions"]["ANYsolver"] == CONFIG["candidate_version"]
     assert CONFIG["wheel_files"]["ANYsolver"] == (
         "anysolver-" + CONFIG["candidate_version"] + "-py3-none-any.whl")
-    assert len(CONFIG["base_selectors"]) == 35
+    assert len(CONFIG["base_selectors"]) == 26
     assert "elastic_sphere_panel_contact_skins" in CONFIG["bundle_examples"]
     assert CONFIG["example_commands"]["contact-skins"] == [
         "examples.elastic_sphere_panel_contact_skins", "--output",
@@ -34,11 +34,17 @@ def test_config_recipe_is_complete_and_matches_the_checkout() -> None:
     # The s7 curved-skins regressions live in their own named additional
     # selector batch, never in the unchanged original base batch.
     batches = CONFIG["additional_selector_batches"]
-    assert set(batches) == {"curved-skins"}
+    assert set(batches) == {"curved-skins", "elastic-initial-state"}
     curved = batches["curved-skins"]
+    initial = batches["elastic-initial-state"]
+    assert len(initial) == 9
+    assert all(s.startswith("tests/test_elastic_sphere_stiffened_panel.py::")
+               for s in initial)
+    assert not set(initial) & set(CONFIG["base_selectors"])
+    assert len(set(initial + CONFIG["base_selectors"])) == 35
     assert len(curved) == 13
     assert not set(curved) & set(CONFIG["base_selectors"])
-    for selector in curved:
+    for selector in curved + initial:
         path_, node = selector.split("::")
         assert (ROOT / path_).is_file(), path_
         assert f"def {node}(" in (ROOT / path_).read_text(encoding="utf-8"), selector
@@ -121,6 +127,12 @@ def test_build_cases_order_env_and_unique_outputs(tmp_path: Path) -> None:
         str(ROOT / s) for s in CONFIG["additional_selector_batches"]["curved-skins"]]
     assert batch_case["junit"].name == "curved-skins-junit.xml"
     assert batch_case["env"] == {}
+    initial_case = cases[2]
+    assert initial_case["name"] == "elastic-initial-state-batch"
+    assert initial_case["kind"] == "pytest"
+    assert initial_case["argv"][3:] == [str(ROOT / s) for s in CONFIG["additional_selector_batches"]["elastic-initial-state"]]
+    assert initial_case["junit"].name == "elastic-initial-state-junit.xml"
+    assert initial_case["env"] == {}
 
 
 def test_junit_counts_classifies_failures_errors_and_skips(tmp_path: Path) -> None:
