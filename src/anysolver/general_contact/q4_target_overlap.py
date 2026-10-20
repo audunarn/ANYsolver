@@ -33,7 +33,8 @@ class Q4TargetOverlapIntegrals:
 def q4_target_overlap_integrals(source: PlanarFace, target_positions: np.ndarray,
                                 *, reference_area_ratio: float,
                                 weighted_gap_tolerance: float,
-                                maximum_triangles: int
+                                maximum_triangles: int,
+                                exact_clipping: bool = True
                                 ) -> Q4TargetOverlapIntegrals:
     if len(source.corners) != 3:
         raise ValueError("Q4 target overlap needs triangular S3 source")
@@ -55,7 +56,8 @@ def q4_target_overlap_integrals(source: PlanarFace, target_positions: np.ndarray
     origin = source.corners[0]
     projected = target - ((target-origin)@normal)[:, None]*normal
     projected_face = PlanarFace((2, 1), projected)
-    overlap = planar_projected_overlap(source, projected_face)
+    overlap = planar_projected_overlap(source, projected_face,
+                                       exact_clipping=exact_clipping)
     support = np.zeros(3)
     weighted = np.zeros(3)
     gram = np.zeros((3, 3))
@@ -109,8 +111,9 @@ def q4_target_overlap_integrals(source: PlanarFace, target_positions: np.ndarray
         gap = float((point-shape_b@target)@normal)
         return shape_a*gap, gap
 
-    def rule(triangle):
-        area = _triangle_area(triangle)
+    def rule(triangle, inherited_area=None):
+        area = (_triangle_area(triangle) if inherited_area is None
+                else inherited_area)
         total = np.zeros(3)
         minimum = float("inf")
         for point, weight in _triangle_samples(tuple(triangle), area):
@@ -124,12 +127,18 @@ def q4_target_overlap_integrals(source: PlanarFace, target_positions: np.ndarray
     measured_error = 0.0
     minimum_sampled = min(sample(point)[1] for point in overlap.polygon)
 
-    def integrate(triangle, budget):
+    def integrate(triangle, budget, inherited_area=None):
         nonlocal leaves, visited, measured_error, minimum_sampled
         visited += 1
         if visited > maximum_triangles:
             raise MemoryError("Q4 target contact integration triangle budget exhausted")
-        coarse, coarse_min = rule(triangle)
+        # Retain the represented parent's area on the zero-tolerance path.
+        # A midpoint child has precisely one quarter of that area; computing
+        # another cross product can lose a real, extremely thin seam sliver.
+        if exact_clipping and inherited_area is None:
+            inherited_area = _triangle_area(triangle)
+        coarse, coarse_min = rule(triangle, inherited_area)
+        child_area = None if inherited_area is None else inherited_area/4.0
         a, b, c = triangle
         ab, bc, ca = (a+b)/2.0, (b+c)/2.0, (c+a)/2.0
         children = (
@@ -141,7 +150,7 @@ def q4_target_overlap_integrals(source: PlanarFace, target_positions: np.ndarray
         refined = np.zeros(3)
         child_minimum = coarse_min
         for child in children:
-            value, sampled_min = rule(child)
+            value, sampled_min = rule(child, child_area)
             refined += value
             child_minimum = min(child_minimum, sampled_min)
         minimum_sampled = min(minimum_sampled, child_minimum)
@@ -156,7 +165,7 @@ def q4_target_overlap_integrals(source: PlanarFace, target_positions: np.ndarray
             raise MemoryError("Q4 target contact integration triangle budget exhausted")
         values = np.zeros(3)
         for child in children:
-            values += integrate(child, budget/4.0)
+            values += integrate(child, budget/4.0, child_area)
         return values
 
     for index in range(1, len(overlap.polygon)-1):

@@ -36,6 +36,26 @@ class S3Q4OverlapDerivatives:
     absolute_reference_support: np.ndarray
 
 
+@dataclass(frozen=True)
+class _S3Q4FirstOrderWork:
+    """Work-query values/gradients only; no unique Hessian is exposed."""
+    reference_support: np.ndarray
+    reference_weighted_gap: np.ndarray
+    support_gradient: np.ndarray
+    weighted_gap_gradient: np.ndarray
+    overlap_area: float
+    reference_overlap_area: float
+    overlap_area_resolution_m2: float
+    branch_signature: tuple
+    integration_triangles: int
+    measured_errors: tuple
+    projection_residual_m: float
+    natural_coordinate_bound: float
+    absolute_reference_support: np.ndarray
+    seam_events: tuple
+    derivative_order: int = 1
+
+
 def _p1(point, corners):
     a, b, p = _sub(corners[1], corners[0]), _sub(corners[2], corners[0]), _sub(point, corners[0])
     determinant = _cross2(a, b)
@@ -48,6 +68,39 @@ def s3_q4_overlap_derivatives(reference_source, current_source, current_target, 
         support_gradient_tolerance, weighted_gap_gradient_tolerance,
         support_hessian_tolerance, weighted_gap_hessian_tolerance,
         maximum_triangles, relative_branch_tolerance=1e-10):
+    """Strict full-Hessian profile; seam refusal remains the default."""
+    return _calculate(reference_source, current_source, current_target,
+        support_tolerance=support_tolerance, weighted_gap_tolerance=weighted_gap_tolerance,
+        support_gradient_tolerance=support_gradient_tolerance,
+        weighted_gap_gradient_tolerance=weighted_gap_gradient_tolerance,
+        support_hessian_tolerance=support_hessian_tolerance,
+        weighted_gap_hessian_tolerance=weighted_gap_hessian_tolerance,
+        maximum_triangles=maximum_triangles,
+        relative_branch_tolerance=relative_branch_tolerance)
+
+
+def _s3_q4_first_order_work(reference_source, current_source, current_target, **controls):
+    """Private s9 work profile; retain all six quadrature controls.
+
+    Branch Hessians are used internally for the same refinement checks, but
+    are never returned as a unique seam derivative or contact tangent.
+    """
+    events = []
+    result = _calculate(reference_source, current_source, current_target,
+                        _work_events=events, **controls)
+    fields = ("reference_support", "reference_weighted_gap", "support_gradient",
+              "weighted_gap_gradient", "overlap_area", "reference_overlap_area",
+              "overlap_area_resolution_m2", "branch_signature", "integration_triangles",
+              "measured_errors", "projection_residual_m", "natural_coordinate_bound",
+              "absolute_reference_support")
+    return _S3Q4FirstOrderWork(*(getattr(result, field) for field in fields), tuple(events))
+
+
+def _calculate(reference_source, current_source, current_target, *,
+        support_tolerance, weighted_gap_tolerance,
+        support_gradient_tolerance, weighted_gap_gradient_tolerance,
+        support_hessian_tolerance, weighted_gap_hessian_tolerance,
+        maximum_triangles, relative_branch_tolerance=1e-10, _work_events=None):
     controls = np.array((support_tolerance, weighted_gap_tolerance,
         support_gradient_tolerance, weighted_gap_gradient_tolerance,
         support_hessian_tolerance, weighted_gap_hessian_tolerance), dtype=float)
@@ -87,8 +140,21 @@ def s3_q4_overlap_derivatives(reference_source, current_source, current_target, 
         b = [_sum(ds[i]*target_xy[i][k] for i in range(4)) for k in range(2)]
         if _cross2(a, b).value <= threshold:
             raise UnsupportedQ4S3Branch("projected Q4 Jacobian is degenerate or reversed")
-    polygon, vertex_errors, signature = _clip(source_xy, target_xy,
-        relative_branch_tolerance*span, edge_count=4)
+    if _work_events is None:
+        polygon, vertex_errors, signature = _clip(source_xy, target_xy,
+            relative_branch_tolerance*span, edge_count=4)
+    else:
+        polygon, vertex_errors, signature = _clip(source_xy, target_xy,
+            relative_branch_tolerance*span, edge_count=4, _work_events=_work_events)
+        if _work_events and polygon:
+            # Preserve every fan triangle. Put the shortest boundary edge at
+            # the fan origin to avoid subtracting nearly equal long vectors
+            # when a represented point is extremely close to the seam.
+            first = min(range(len(polygon)), key=lambda i: sum(
+                (polygon[(i+1) % len(polygon)][k].value - polygon[i][k].value)**2
+                for k in range(2)))
+            polygon = polygon[first:] + polygon[:first]
+            vertex_errors = vertex_errors[first:] + vertex_errors[:first]
     if len(polygon) < 3 or _signed_area(polygon).value <= threshold:
         raise UnsupportedQ4S3Branch("no resolved positive S3/Q4 overlap")
     area = _signed_area(polygon)
@@ -102,9 +168,10 @@ def s3_q4_overlap_derivatives(reference_source, current_source, current_target, 
     absolute_shape_bound = np.zeros(3)
     projected_values = np.array([[x.value for x in corner] for corner in target_xy])
 
-    def rule(triangle):
+    def rule(triangle, inherited_area=None):
         nonlocal projection_residual, natural_bound, absolute_shape_bound
-        a = _cross2(_sub(triangle[1], triangle[0]), _sub(triangle[2], triangle[0]))*.5
+        a = (inherited_area if inherited_area is not None else
+             _cross2(_sub(triangle[1], triangle[0]), _sub(triangle[2], triangle[0]))*.5)
         if a.value <= 0:
             raise UnsupportedQ4S3Branch("degenerate integration triangle")
         support, weighted = [_zero() for _ in range(3)], [_zero() for _ in range(3)]
@@ -142,17 +209,24 @@ def s3_q4_overlap_derivatives(reference_source, current_source, current_target, 
 
     support, weighted = [_zero() for _ in range(3)], [_zero() for _ in range(3)]
     measured = np.zeros(6); evaluations = 0
-    pending = [(tuple(polygon[index] for index in (0, i, i+1)), 1/(len(polygon)-2))
+    pending = [(tuple(polygon[index] for index in (0, i, i+1)), 1/(len(polygon)-2), None)
                for i in range(1, len(polygon)-1)]
     while pending:
-        triangle, fraction = pending.pop()
+        triangle, fraction, inherited_area = pending.pop()
         if evaluations+5 > maximum_triangles:
             raise RuntimeError("S3/Q4 derivative integration triangle budget exhausted")
-        coarse = rule(triangle)
+        # Midpoint subdivision has exactly one quarter of the parent area.
+        # Carry its jet on the C1 path: re-subtracting rounded midpoint
+        # coordinates can erase an extremely thin, positive seam triangle.
+        if _work_events is not None and inherited_area is None:
+            inherited_area = _cross2(_sub(triangle[1], triangle[0]),
+                                     _sub(triangle[2], triangle[0]))*.5
+        coarse = rule(triangle, inherited_area)
+        child_area = None if inherited_area is None else inherited_area*.25
         subdivided = children(triangle)
         fine = [[_zero() for _ in range(3)], [_zero() for _ in range(3)]]
         for child in subdivided:
-            candidate = rule(child)
+            candidate = rule(child, child_area)
             for field in range(2):
                 for node in range(3):
                     fine[field][node] = fine[field][node]+candidate[field][node]
@@ -163,7 +237,7 @@ def s3_q4_overlap_derivatives(reference_source, current_source, current_target, 
         if not np.all(np.isfinite(errors)):
             raise UnsupportedQ4S3Branch("nonfinite S3/Q4 derivative integration error")
         if np.any(errors > fraction*controls):
-            pending.extend((child, fraction*.25) for child in subdivided)
+            pending.extend((child, fraction*.25, child_area) for child in subdivided)
             continue
         measured += errors
         for node in range(3):

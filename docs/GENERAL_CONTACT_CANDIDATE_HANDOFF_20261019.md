@@ -1,5 +1,37 @@
 # General-contact candidate: status and restart handoff
 
+## Slice 9: multi-face geometry and work component
+
+Run `python -m examples.elastic_sphere_panel_contact_work --output contact-work.json`
+from the s9 bundle root using its pinned Python 3.12 installation profile. The
+example prepares panel gravity once and queries prescribed release/+5 mm/-1 mm
+poses on the fixed six-facet lower cap. It retains all 320 S3/100 Q4 identities,
+per-facet support partitions, signed gaps and separate coordinate/spatial-spin
+work. The 1 Pa integrated-gap probe is not a predicted pressure or reaction.
+Original bilinear interpolation, facet offsets, mass, materials and ties remain.
+
+`contact_geometry_prepared` provides geometry and first-order work, not contact
+equilibrium, a seam Hessian/contact tangent, impact or a restart checkpoint.
+Other unresolved branches remain refused. The faceted sphere is not watertight.
+Independent scalar/derivative and rational-moment checks retain all criteria.
+Historical failures and the accepted s8 bundle remain preserved.
+
+Measured locally: 53 unique kernel checks and 15 actual-model checks passed,
+followed by the complete cold-installed s9 example. The six-facet covered
+reference area is 0.0599124624454 m2. Integrated signed gap decreases from
+0.00125945516687 m3 at the near pose to 0.000894174761162 m3 at overclosure;
+positive total gap does not imply that every corner is separated. Net virtual
+force/moment residuals are below 3.1e-14 N / 2.1e-15 Nm across all three poses.
+These are geometry/work results, not an independent contact-accuracy reference.
+
+Acceptance is local Windows only; paired-host s9 numerics remain pending.
+Retained candidate CI is a regression gate for its selected static workflows.
+Current results, runtime/origins and the delivery receipt are in
+`C:/ANYworkspaceWork/contact-incremental-delivery-20261020/s9-clipping-reconciliation-v1`.
+Next: combined body DOFs/preload/rotating constraints with an explicit contact
+law, indentation/unloading, then elastic dynamics and low-height impact before
+the full 10 m drop. No broader qualification follows automatically.
+
 ## Current incremental delivery — 2026-10-20
 
 The owner approved three bounded improvements from main `36a5d5d8c`:

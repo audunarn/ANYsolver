@@ -196,14 +196,19 @@ def _clip_convex(subject: np.ndarray, clip: np.ndarray,
 
 
 def planar_projected_overlap(integration: PlanarFace, target: PlanarFace,
-                             *, relative_tolerance: float = 1.0e-12
+                             *, relative_tolerance: float = 1.0e-12,
+                             exact_clipping: bool = False
                              ) -> ProjectedOverlap | None:
-    """Return the exact projected common polygon for two planar convex faces.
+    """Return the projected common polygon for two planar convex faces.
 
     Physical normal gap and contact-side ownership are decided by the calling
-    formulation.  An empty or zero-area overlap returns ``None``.
+    formulation. An empty or zero-area overlap returns ``None``. Internal
+    ``exact_clipping`` uses zero clipping tolerances in floating-point arithmetic;
+    it neither pads the inside region nor merges distinct nearby vertices.
     """
 
+    if type(exact_clipping) is not bool:
+        raise ValueError("exact_clipping must be boolean")
     if not np.isfinite(relative_tolerance) or relative_tolerance <= 0.0:
         raise ValueError("relative_tolerance must be finite and positive")
     corners = integration.corners
@@ -223,7 +228,8 @@ def planar_projected_overlap(integration: PlanarFace, target: PlanarFace,
     )
     length_tolerance = relative_tolerance * span
     clipped = _clip_convex(integration_xy, target_xy,
-                           length_tolerance * span, length_tolerance)
+                           0.0 if exact_clipping else length_tolerance * span,
+                           0.0 if exact_clipping else length_tolerance)
     area = abs(_signed_area(clipped))
     if len(clipped) < 3 or area <= length_tolerance * length_tolerance:
         return None

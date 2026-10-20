@@ -413,12 +413,78 @@ def _area_resolution(poly, errors):
     )
 
 
-def _clip(subject, target, coordinate_error, *, edge_count=3):
+def _isolated_work_vertex(polygon, subject, target, coordinate_error, edge_index):
+    """Resolve only an isolated original-vertex C1 event for a work query.
+
+    The existing error envelope identifies candidates, not their sign. Exact
+    predicates on the represented projected coordinates select the branch.
+    At an exact vertex tie the two branch integrals differ by O(delta**2),
+    so values and first derivatives agree, but Hessians need not agree.
+    Generated vertices, target corners and edge ties remain unsupported.
+    """
+    from fractions import Fraction
+
+    def distances(point, error, edge):
+        start = target[edge]
+        line = _sub(target[(edge + 1) % len(target)], start)
+        relative = _sub(point, start)
+        d = _cross2(line, relative)
+        bound = _cross_resolution(line, relative, 2 * coordinate_error,
+                                  error + coordinate_error)
+        return d, bound
+
+    values = [distances(point, error, edge_index) for point, error in polygon]
+    near = [i for i, (d, error) in enumerate(values) if abs(d.value) <= error]
+    if not near:
+        return {}, None
+    if len(near) != 1:
+        raise UnsupportedQ4S3Branch("vertex lies on a clipping boundary")
+    i = near[0]
+    point, error = polygon[i]
+    corner = next((k for k, item in enumerate(subject) if item is point), None)
+    if corner is None:
+        raise UnsupportedQ4S3Branch("generated vertex lies on a clipping boundary")
+    for edge in range(len(target)):
+        if edge != edge_index:
+            d, bound = distances(point, error, edge)
+            if abs(d.value) <= bound:
+                raise UnsupportedQ4S3Branch("vertex lies on multiple clipping boundaries")
+    # Use the endpoint coordinates themselves, not an already rounded cross
+    # product or the width of the ambiguity band, for this represented sign.
+    f = lambda value: Fraction.from_float(float(value.value))
+    a, b = target[edge_index], target[(edge_index + 1) % len(target)]
+    exact = ((f(b[0]) - f(a[0])) * (f(point[1]) - f(a[1]))
+             - (f(b[1]) - f(a[1])) * (f(point[0]) - f(a[0])))
+    sign = (exact > 0) - (exact < 0)
+    if sign:
+        inside = sign > 0
+    else:
+        inside = (values[(i - 1) % len(values)][0].value > 0
+                  and values[(i + 1) % len(values)][0].value > 0)
+    event = dict(kind="isolated_source_vertex_c1", source_corner=corner,
+                 clipping_edge=edge_index, represented_sign=sign,
+                 distance=float(values[i][0].value),
+                 distance_error=float(values[i][1]), hessian_unique=False)
+    return {id(point): bool(inside)}, event
+
+
+def _clip(subject, target, coordinate_error, *, edge_count=3,
+          _work_events=None):
     polygon = [(point, coordinate_error) for point in subject]
     signature = []
     for edge_index in range(edge_count):
         if not polygon:
             raise UnsupportedQ4S3Branch("zero projected overlap")
+        work_classes = {}
+        if _work_events is not None:
+            work_classes, event = _isolated_work_vertex(
+                polygon, subject, target, coordinate_error, edge_index)
+            if event is not None:
+                _work_events.append(event)
+                # A negative marker cannot be confused with the strict
+                # polygon-length / binary-inside signature entries.
+                signature.extend((-71, edge_index, event["source_corner"],
+                                  event["represented_sign"]))
         start = target[edge_index]
         edge = _sub(target[(edge_index+1) % edge_count], start)
         old, old_coordinate_error = polygon[-1]
@@ -439,9 +505,10 @@ def _clip(subject, target, coordinate_error, *, edge_count=3):
             )
             if (abs(old_distance.value) <= old_error
                     or abs(distance.value) <= error):
-                raise UnsupportedQ4S3Branch("vertex lies on a clipping boundary")
-            old_inside = old_distance.value > 0
-            inside = distance.value > 0
+                if _work_events is None:
+                    raise UnsupportedQ4S3Branch("vertex lies on a clipping boundary")
+            old_inside = work_classes.get(id(old), old_distance.value > 0)
+            inside = work_classes.get(id(point), distance.value > 0)
             signature.append(int(inside))
             if old_inside != inside:
                 denominator = old_distance-distance

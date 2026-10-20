@@ -1,5 +1,46 @@
 # Elastic sphere stiffened-panel initial state (2026-10-20)
 
+## Slice 9: prescribed multi-face geometry and work
+
+From the s9 bundle root, using its pinned Python 3.12, JIT-disabled,
+single-thread installation profile:
+
+```console
+python -m examples.elastic_sphere_panel_contact_work --output contact-work.json
+```
+
+The example prepares panel gravity once and reports all 320 S3 sphere and 100
+original bilinear Q4 panel faces. It queries the fixed six-facet lower cap within
+20 mm of the lowest reference physical corner against every panel face. Release,
++5 mm separation and -1 mm vertical overclosure are prescribed kinematic probes;
+vertical clearance differs from the signed normal gap. Positive gap means
+separation, negative means overclosure.
+
+The declared 1 Pa probe differentiates reference-area integrated signed gap.
+Separate coordinate and spatial-spin work vectors map to actual structural DOFs.
+These are virtual-work probes, not predicted reactions or an adopted pressure law.
+Physical offsets and distinct facet directors remain separate; the exterior is
+not a watertight smooth sphere. Structural mass, materials and ties are unchanged.
+
+An isolated source-vertex seam permits values and first derivatives only. Strict
+Hessian requests still refuse it. Scalar values use independent zero-tolerance
+floating-point clipping; the existing mortar law retains its prior clipping path.
+No positive sliver is discarded. Successful status is `contact_geometry_prepared`;
+the JSON is a report, not a checkpoint. Contact equilibrium and impact remain
+unsupported. New numerical acceptance is local Windows only; retained candidate
+CI does not establish paired-host s9 evidence.
+
+Local verification passed 53 unique kernel checks, 15 actual-model checks and the
+complete cold-installed CLI. The queried reference area is 0.0599124624454 m2;
+integrated signed gap is 0.00125945516687 m3 at the near pose and
+0.000894174761162 m3 at overclosure. A negative corner gap can coexist with a
+positive integrated gap. Full results and runtime/origins are retained in
+`C:/ANYworkspaceWork/contact-incremental-delivery-20261020/s9-clipping-reconciliation-v1/DELIVERY_RECEIPT.json`.
+
+Remaining milestones: combine body DOFs, accepted preload and rotating constraints
+with a declared contact law; demonstrate indentation/unloading; add elastic
+dynamics and low-height impact before the full 10 m drop.
+
 Declared benchmark case and delivered initial state for candidate
 `0.4.7+contact.candidate.20261020.s6`. The authoritative case and acceptance
 criteria live in the active living note

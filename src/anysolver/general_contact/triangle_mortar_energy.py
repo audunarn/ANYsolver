@@ -122,6 +122,7 @@ class MovingS3PrimalMortarPenalty:
                 source, target_positions, reference_area_ratio=ratio,
                 weighted_gap_tolerance=self.q4_weighted_gap_tolerance,
                 maximum_triangles=self.maximum_q4_integration_triangles,
+                exact_clipping=False,
             )
             support = integrals.support
             weighted_gap = integrals.weighted_gap
