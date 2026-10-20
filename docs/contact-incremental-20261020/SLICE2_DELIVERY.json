@@ -1,5 +1,5 @@
 {
-  "status": "LOCALLY_VERIFIED_CROSS_HOST_PENDING",
+  "status": "DELIVERED_WINDOWS_UBUNTU",
   "bundle": "C:\\ANYworkspaceWork\\contact-incremental-delivery-20261020\\slice2\\ANYsolver-contact-candidate-20261020-s2.zip",
   "sha256": "a293864078b0e9f5ba32eb346c1faefcdc962589289e8e3c3cae2747ef949f31",
   "bytes": 4777599,
@@ -23,5 +23,103 @@
     "transfer_cases": 4,
     "tool_tests": 14,
     "mechanics_unchanged": true
+  },
+  "local_bundle_preserved": true,
+  "portable_bundle": {
+    "path": "C:\\ANYworkspaceWork\\contact-incremental-delivery-20261020\\slice2\\ANYsolver-contact-candidate-20261020-s2-portable.zip",
+    "sha256": "766ac4d5f37ffa908cafc6e002a8425809c51b74c9c0b475b3b7cfaf41089560",
+    "bytes": 4758484,
+    "source_commit": "9694d54f5ecb07f4fbbb85b6a435e30e945d960b",
+    "same_six_wheels_tested_on_both_hosts": true
+  },
+  "portability_evidence": {
+    "status": "PASS",
+    "ci_url": "https://github.com/audunarn/ANYsolver/actions/runs/39392303063",
+    "source_commit": "9694d54f5ecb07f4fbbb85b6a435e30e945d960b",
+    "both_hosts_same_six_wheels": [
+      {
+        "package": "ANYfileio",
+        "file": "anyfileio-0.3.2-py3-none-any.whl",
+        "sha256": "71077c84afb51950965f56640150927c7b9adbd9c33dadfad82fa370480b24a0",
+        "origin": "built:/home/runner/work/ANYsolver/ANYsolver/.ecosystem/ANYfileIO"
+      },
+      {
+        "package": "ANYgeometry",
+        "file": "anygeometry-0.4.3-py3-none-any.whl",
+        "sha256": "f952114ed29fd25f0fedee9bfd6b24716ab7895d8be26a99821337b781f8ad77",
+        "origin": "built:/home/runner/work/ANYsolver/ANYsolver/.ecosystem/ANYgeometry"
+      },
+      {
+        "package": "ANYmaterial",
+        "file": "anymaterial-0.2.0-py3-none-any.whl",
+        "sha256": "1d12125ed0d84de0b992812b7b54ca8d0225e03c61981de4e89fd1801e90af4e",
+        "origin": "built:/home/runner/work/ANYsolver/ANYsolver/.ecosystem/ANYmaterial"
+      },
+      {
+        "package": "ANYmesher",
+        "file": "anymesher-0.5.0-py3-none-any.whl",
+        "sha256": "4445b4f126c0f633d9c7b1a43e635275e91be46e5ec0bfa9935f5f9cfa19a8ed",
+        "origin": "built:/home/runner/work/ANYsolver/ANYsolver/.ecosystem/ANYmesh"
+      },
+      {
+        "package": "ANYsolver",
+        "file": "anysolver-0.4.7+contact.candidate.20261020.s2-py3-none-any.whl",
+        "sha256": "9d6a76bd8024371cfdfb3456e2e59b21dd3e3e2b3ab9bc5a604c526075a254b4",
+        "origin": "built:current-checkout-staged"
+      },
+      {
+        "package": "anysolver-results",
+        "file": "anysolver_results-2.1.1-py3-none-any.whl",
+        "sha256": "5a7f1028ba01bd2dd2cf097f5edc894d13fc4e1c8ae587d5fd973eed09b85ce1",
+        "origin": "built:/home/runner/work/ANYsolver/ANYsolver/packages/results"
+      }
+    ],
+    "cases": {
+      "windows": {
+        "status": "PASS",
+        "admitted": 14,
+        "executed": 14,
+        "skipped": 0,
+        "failed": 0,
+        "budget_seconds_used": 204.031
+      },
+      "ubuntu": {
+        "status": "PASS",
+        "admitted": 14,
+        "executed": 14,
+        "skipped": 0,
+        "failed": 0,
+        "budget_seconds_used": 137.19094195299994
+      },
+      "transferred": {
+        "status": "PASS",
+        "admitted": 4,
+        "executed": 4,
+        "skipped": 0,
+        "failed": 0,
+        "budget_seconds_used": 151.5820681849999
+      }
+    },
+    "comparison_entries": 29,
+    "metrics": {
+      "displacement_m": {
+        "max_absolute_delta": 2.947674656444965e-19,
+        "maximum_bound_fraction": 2.899296682570004e-07
+      },
+      "force_N": {
+        "max_absolute_delta": 1.4145856794961498e-15,
+        "maximum_bound_fraction": 0.005440714151706155
+      },
+      "energy_J": {
+        "max_absolute_delta": 5.421010862427522e-19,
+        "maximum_bound_fraction": 4.772031902973113e-06
+      },
+      "dimensionless": {
+        "max_absolute_delta": 1.934450456807582e-13,
+        "maximum_bound_fraction": 0.1934450454724915
+      }
+    },
+    "bound": "maxabs(delta) <= 1e-9*maxabs(reference) + 1e-12*scale per declared quantity; exact non-numeric fields",
+    "interpretation": "Cross-host numerical repeatability for these cases, not engineering/continuum accuracy or full qualification."
   }
 }

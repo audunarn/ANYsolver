@@ -1,6 +1,6 @@
 # Slice 2: portable installed static candidate
 
-Implemented, locally verified on Windows; Ubuntu and transferred Windows-to-Ubuntu evidence pending the Contact candidate workflow. Do not claim cross-host delivery before that workflow passes.
+Delivered: [Contact candidate CI 39392303063](https://github.com/audunarn/ANYsolver/actions/runs/39392303063) passed build, Windows and Ubuntu. The portable bundle in SLICE2_DELIVERY.json contains the exact six wheels tested on both hosts. The earlier local ZIP and its receipts remain preserved separately.
 
 Mistral implemented the ordinary build/check adapters, exact W1-W10 selectors and CI workflow. Root completed fixed-artifact/CI acceptance integration after repeated turn-limit exits without verification or a final handoff. The original worker record and all failed attempts remain under `C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice2/`.
 
@@ -12,4 +12,8 @@ Checks: 14 adapter cases passed, covering 20 pytest assertions and six example/e
 
 Artifact/version/hash: see `SLICE2_DELIVERY.json`. Current evidence: `cold-native/summary.json`, `RESTART_PARITY.json`, `transferred-local/summary.json`, `LOCAL_VERIFICATION.json`, individual JUnit/stdout/stderr and `PROCESS_BUDGET.json` under the slice evidence folder. Same-host self-comparison checks inventory only; it does not prove portability.
 
-Next action: inspect the single Contact candidate CI run for this commit. Build once; cold install the same wheel bytes on Windows then Ubuntu; run original selected assertions, transferred active/open checkpoint recovery and cross-host primary-quantity comparison. Download all evidence, including comparison report. Known unrelated full-CI failures remain outside this delivery.
+Both-host evidence is downloaded under `ci-windows`, `ci-ubuntu`, `ci-transferred`, `ci-comparison`, `ci-bundle` and `CI_COMPLETE.json`. Windows ran 14 cases in204.031s; Ubuntu ran14 in137.190942s and completed transferred-checkpoint work within151.582069s cumulative. Twenty pytest assertions per host and all module commands executed with zero skips. Active/open transfers passed. All29 comparison entries passed; maximum used fraction of a numerical bound was0.193446. Max cross-host displacement delta2.948e-19m, force1.415e-15N, energy5.421e-19J and normalized-diagnostic delta1.935e-13. These are case repeatability measurements, not engineering accuracy estimates.
+
+Local scope is closed after packaging; unused allowance is forfeited. The one sampled-resource unknown worker attempt belongs to slice3, not this slice. Broader CI remains red: preserve the existing native/material/D1/Q4/source-binding/parser/runtime backlog; also retain the newly observed Windows3.14 exact zero-state tangent mismatch (one of576 entries, relative1.339e-16) without accepting it or changing its criterion. The only changed solver source since36a5d5d8c is the lazy public export; no tangent arithmetic changed.
+
+Next action: complete the independent failure/recovery slice, then choose future mechanics work from a concrete user case. No further portability qualification campaign is scheduled.

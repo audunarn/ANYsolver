@@ -28,12 +28,20 @@ execution receipts live under `C:/ANYworkspaceWork/contact-incremental-delivery-
 | Slice | Deliverable | Current state |
 |---|---|---|
 | 1 | Public friction settings, clear supported examples and guide | Delivered; five focused checks and installed normal/friction/restart/archive commands pass |
-| 2 | Same installed candidate on Windows/Ubuntu; normal/friction/restart/archive checks | Implemented; Windows cold install, 20 selected assertions, examples and active/open replay pass; Ubuntu CI pending |
-| 3 | Truthful rejected-trial outcome and exact last-accepted-state recovery | Test-contract repair implemented; focused verification in progress |
+| 2 | Same installed candidate on Windows/Ubuntu; normal/friction/restart/archive checks | Delivered; Windows/Ubuntu cold installs, 20 assertions per host, transferred active/open checkpoints and 29 comparison entries pass |
+| 3 | Truthful rejected-trial outcome and exact last-accepted-state recovery | Delivered; 16 focused checks pass; exact retained state and completed-prefix recovery; failed-terminal restart remains refused |
 
 Scientific criteria, capability flags, scoped deviations and preserved failures
 remain binding. Full D1/Q4, native material/dynamics, independent coupled-response
 accuracy and application admission remain future milestones.
+
+| Supported workflow | Boundary and current evidence |
+|---|---|
+| S3 rigid tools and guided shell pairing | Elastic static/quasistatic finite-penalty examples; selected Windows/Ubuntu checks pass; unrestricted two-body bending is not established |
+| Coulomb friction | Guided material-anchor stick/slip, reversal and opening/recontact; target normal motion fixed in the example; transferred active/open restart passes |
+| Static result archive | Public export/readback, integrity and corruption refusal pass on both hosts |
+| Rejection and recovery | Three connection routes retain accepted state exactly; completed-prefix restart passes; failed-terminal checkpoints remain noncontinuable |
+| Native material and dynamics | Retained experimental backlog; no new qualification, admission or generic engineering-accuracy claim |
 
 Slice 1 candidate: `0.4.7+contact.candidate.20261020.s1`, bundle
 `C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice1/ANYsolver-contact-candidate-20261020-s1.zip`.
@@ -45,7 +53,9 @@ This is a fresh-target install with existing numerical dependencies, not a
 cold-environment or cross-host claim. The local 1,800-second scope is closed;
 failed pip temporary-directory preparation and all process receipts are retained.
 
-Slice 2: [current handoff](contact-incremental-20261020/SLICE2_HANDOFF.md) and [artifact receipt](contact-incremental-20261020/SLICE2_DELIVERY.json). No product arithmetic changed; cross-host delivery remains pending the dedicated CI result.
+Slice 2: [current handoff](contact-incremental-20261020/SLICE2_HANDOFF.md) and [artifact receipt](contact-incremental-20261020/SLICE2_DELIVERY.json). No product arithmetic changed. [Dedicated CI](https://github.com/audunarn/ANYsolver/actions/runs/39392303063) passed all three jobs. Both hosts tested the exact same six wheels. Maximum cross-host differences: displacement 2.948e-19 m, force 1.415e-15 N, energy 5.421e-19 J and normalized diagnostics 1.935e-13, all inside the adopted dimensional bound. These measure selected-case repeatability, not continuum accuracy.
+
+Latest bundle: `C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice3/ANYsolver-contact-candidate-20261020-s3.zip`. See the [slice 3 handoff](contact-incremental-20261020/SLICE3_HANDOFF.md) and [artifact receipt](contact-incremental-20261020/SLICE3_DELIVERY.json). Sixteen focused checks pass. The six wheel payloads are exactly the slice-2 wheels tested on both hosts; package version remains `0.4.7+contact.candidate.20261020.s2` because slice 3 changes tests and instructions only. Retain completed-prefix checkpoints for restart. No further local numerical work is scheduled.
 
 Subsequent main ownership/push/CI update: see
 [MAIN_HOUSECLEANING_20261019.md](MAIN_HOUSECLEANING_20261019.md). The user later

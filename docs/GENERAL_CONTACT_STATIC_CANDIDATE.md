@@ -66,7 +66,7 @@ settings.
 Two supported routes:
 
 1. **Current candidate bundle** (recommended for evaluation):
-   `C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice2/ANYsolver-contact-candidate-20261020-s2.zip`.
+   `C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice3/ANYsolver-contact-candidate-20261020-s3.zip`.
    The extracted bundle ROOT contains `examples/` and a `wheelhouse/` with
    the six pure-Python private wheels (ANYsolver, ANYresults, ANYmaterial,
    ANYgeometry, ANYmesher, ANYfileio). From the bundle ROOT, in a fresh
@@ -110,6 +110,21 @@ From the repository root, or the extracted bundle ROOT containing
 - Static result archive (export and detached read):
   `python -m examples.general_contact_static_results_archive`.
 
+## Failure, retained state and restart
+
+Use `result.status == "completed"` to decide whether the requested target
+finished. Gap rejection reports `contact_gap_exceeded`; exhausted stepping
+after acceptance reports `stopped_at_limit`. Failure and iteration-level
+reasons describe the actual cause. A retained step may have `converged=True`
+while the overall target remains incomplete.
+
+Rejected trials retain the last accepted displacement and material history.
+Cancellation discards trial state and permits a fresh solve on the same
+model. Checkpoint continuation requires a **completed prefix target**: keep
+that checkpoint before further loading. A checkpoint from a terminally failed
+solve preserves state for inspection but is refused for direct continuation.
+This existing restriction is unchanged; the commands above use a completed prefix.
+
 ## Measured settings strings
 
 The candidate was measured with exactly these settings strings and values:
@@ -125,7 +140,7 @@ qualification; only the listed workflows have the stated evidence.
 
 - Agreement claims are for the declared finite-penalty law and chosen
   geometry, not continuum or mesh/model error estimates.
-- Cross-machine/Ubuntu replay and full required CI evidence remain open until the Contact candidate workflow completes. Windows cold installation with pinned dependencies, package origins, normal/friction/archive and active/open restart passed on 2026-10-20. Historical evidence below does not establish Ubuntu portability.
+- Windows and Ubuntu Python 3.12 cold installs of the same six wheels passed on 2026-10-20: exact package origins, 20 selected assertions per host, normal/friction/archive commands, transferred active/open restart and all 29 cross-host comparison entries. See the handoff for dimensional bounds and measured differences. Full qualification and unrelated full-CI failures remain open.
 - The 2026-10-19 measurements remain same-host Windows historical evidence.
 - Capability/released/admitted flags are unchanged; nothing on this page
   admits the candidate into qualified production scope.

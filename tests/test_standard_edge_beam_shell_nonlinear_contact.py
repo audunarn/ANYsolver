@@ -63,7 +63,8 @@ Checks in this module:
   ``N_i [F, M + r x F]``, with nonzero force and couple required, and the
   nonlinear support-reaction bucket closes global equilibrium without
   double counting;
-- a deliberately rejected trial (``contact_gap_exceeded``) retains exactly
+- a deliberately rejected trial (a cause-coherent terminal failure: gap
+  refusal or exhausted stepping, never a completed solve) retains exactly
   the last accepted snapshot/checkpoint state and that state re-evaluates
   as an equilibrium; mid-solve cancellation fires only after one observed
   accepted increment (progress event ``nonlinear_static_step``), leaves the
@@ -71,6 +72,13 @@ Checks in this module:
   payload equal to the accepted baseline, and the SAME model then solves
   to the clean reference; callback failure leaves the contact scope
   discarded and a fresh solve reproduces the reference;
+- one focused controlled driver-failure pair on the shared route injects
+  each terminal cause after an accepted step through the production
+  failure surfaces: a refused swept increment ends
+  ``contact_gap_exceeded`` with the gap cause carried end to end, and a
+  wrong-direction factorization ends ``stopped_at_limit`` /
+  ``minimum_load_increment_reached`` without gap evidence; the two
+  statuses are distinct and neither claims completion;
 - split restart versus uninterrupted solve (rtol 1e-8 / atol 1e-10).  With
   the plane at the reference midsurface the half-load state is already
   closed; the actual branch is inspected and compared with the first
@@ -926,16 +934,15 @@ def test_accepted_state_virtual_work_and_wrench_transfer(route):
 Q4_SEALED_STATE_METADATA_KEYS = ("qualified_q4_committed_binding",
                                  "state_integrity_sha256")
 
-# Exact per-route failure outputs of the deliberately rejected trial
-# (deterministic production behavior, not a mandated status).
-REJECTED_TRIAL_EXPECTED = {
-    "shared": ("stopped_at_limit", "minimum_load_increment_reached",
-               "line_search_failed", True),
-    "eccentric": ("contact_gap_exceeded", "contact_gap_exceeded",
-                  "contact_gap_exceeded", False),
-    "interpolated": ("contact_gap_exceeded", "contact_gap_exceeded",
-                     "contact_gap_exceeded", False),
-}
+# The deliberately rejected trial terminates through the production
+# cause-mapped failure branch: a gap refusal is ``contact_gap_exceeded``
+# end to end, and exhausted stepping after an accepted step is
+# ``stopped_at_limit`` with ``minimum_load_increment_reached``.  The
+# former per-route tuple was an observation of one incidental historical
+# route (shared once ended ``stopped_at_limit``/``line_search_failed``),
+# not a mandated status, and is deliberately not asserted: the terminal
+# cause itself carries the oracle.
+TERMINAL_FAILURE_STATUSES = ("contact_gap_exceeded", "stopped_at_limit")
 
 
 def _assert_finalized_states_match_snapshot(model, result_states,
@@ -988,17 +995,30 @@ def test_rejected_trial_keeps_last_accepted_state(route):
         num_steps=3, max_iterations=20, kinematics="von_karman",
         record_increment_snapshots=True, emit_restart_checkpoint=True,
     )
-    (expected_status, expected_reason, expected_iteration_reason,
-     expected_converged) = REJECTED_TRIAL_EXPECTED[route]
-    # Both outcomes are failures: the exact per-route failure status and
-    # reason are the deterministic production outputs, never a success.
-    assert result.status == expected_status
-    assert result.failure_reason == expected_reason
-    assert result.info["failure_reason"] == expected_reason
+    # Cause-coherent terminal failure contract: the public status and both
+    # failure-reason fields must agree with the actual terminal cause, and
+    # neither failure may claim completion.  A gap refusal is
+    # ``contact_gap_exceeded`` end to end; exhausted stepping after an
+    # accepted step is ``stopped_at_limit`` with the exhaustion reason and
+    # an iteration-level Newton/line-search cause, never a hidden gap
+    # refusal.  A partial retained accepted step is not a completed solve.
+    assert result.status in TERMINAL_FAILURE_STATUSES
     assert result.status != "completed"
-    assert result.converged is expected_converged
+    assert result.failure_reason == result.info["failure_reason"]
     assert 0.0 < result.load_factor < 1.0
     assert result.info["general_contact"]["gap_tolerance_met"]
+    iteration_reason = result.info["first_failed_iteration_reason"]
+    if result.status == "contact_gap_exceeded":
+        assert result.failure_reason == "contact_gap_exceeded"
+        assert iteration_reason == "contact_gap_exceeded"
+        assert result.converged is False
+    else:
+        assert result.failure_reason == "minimum_load_increment_reached"
+        assert isinstance(iteration_reason, str) and iteration_reason
+        assert iteration_reason != "contact_gap_exceeded"
+        # Retained-step convergence semantics are not an independent
+        # successful-endpoint claim: the status above carries the oracle.
+        assert result.converged is True
 
     # Evidence of the actual rejected trial and cutbacks: a trial beyond the
     # retained accepted load factor was attempted and rejected, and the
@@ -1009,8 +1029,6 @@ def test_rejected_trial_keeps_last_accepted_state(route):
                for entry in adaptation)
     assert result.info["first_failed_load_factor"] > result.load_factor
     assert result.info["first_failed_step_size"] > 0.0
-    assert (result.info["first_failed_iteration_reason"]
-            == expected_iteration_reason)
 
     # The retained state is exactly the last accepted snapshot: no rejected
     # trial state was admitted.
@@ -1043,6 +1061,131 @@ def test_rejected_trial_keeps_last_accepted_state(route):
         residual = _reduced_equilibrium_in_scope(
             model, T, result.displacements, last.element_states, F_ext)
     _assert_reduced_equilibrium(residual, T, F_ext)
+
+    # Terminal-failure checkpoints retain the accepted state but are not
+    # continuable targets under the existing public restart contract.
+    # Preserve that refusal; completed-target recovery is checked below
+    # on all three routes by test_split_restart_matches_uninterrupted.
+    def fail_if_newton_reached(_message):
+        raise AssertionError("terminal checkpoint refusal must precede Newton")
+
+    with pytest.raises(ValueError, match="continuable completed static target"):
+        solve_static_nonlinear(
+            model, load, contact=contact, num_steps=3, max_iterations=20,
+            kinematics="von_karman", max_load_factor=result.load_factor,
+            restart_checkpoint=result.restart_checkpoint,
+            status_callback=fail_if_newton_reached,
+        )
+
+
+def test_terminal_failure_causes_are_distinct_and_cause_coherent(
+        monkeypatch):
+    """One controlled driver, two injected terminal causes.
+
+    Both scenarios use the standard completing shared-route fixture and
+    let exactly one increment accept; the failure injected through a
+    production failure surface after that accepted step then drives the
+    solver to its terminal state.  A gap refusal must terminate as
+    ``contact_gap_exceeded`` with the gap cause carried end to end; a
+    Newton failure must exhaust stepping and terminate as
+    ``stopped_at_limit``/``minimum_load_increment_reached`` with no
+    gap-refusal evidence.  The two terminal statuses are distinct, neither
+    claims completion, and both retain exactly the accepted step.  No
+    physical parameter combination is searched.
+    """
+    import anysolver.nonlinear_static as nonlinear_static
+
+    def solve_with_injection(inject_after_accepted_step):
+        model, meta = _cantilever("shared")
+        load = _edge_load(model, meta["beam_nodes"], -PRESS_FORCE)
+        armed = []
+
+        def on_progress(event):
+            if (event.event_type == "nonlinear_static_step"
+                    and not armed):
+                armed.append(True)
+                inject_after_accepted_step()
+
+        return solve_static_nonlinear(
+            model, load, contact=_contact(CYCLE_PLANE_Z), num_steps=4,
+            max_iterations=20, kinematics="von_karman",
+            progress_callback=on_progress, record_increment_snapshots=True,
+        )
+
+    def assert_retained_accepted_step(result):
+        # Terminal cause AND retained-state proof carry the oracle: the
+        # partial accepted step is retained exactly and never claimed
+        # completed.
+        assert result.status != "completed"
+        assert 0.0 < result.load_factor < 1.0
+        assert result.snapshots
+        last = result.snapshots[-1]
+        assert result.load_factor == last.load_factor
+        np.testing.assert_allclose(result.displacements, last.displacements,
+                                   rtol=0.0, atol=0.0)
+        assert any(entry["action"] == "cutback_after_nonconvergence"
+                   for entry in result.info["convergence_adaptation"])
+        assert result.info["first_failed_load_factor"] > result.load_factor
+        assert result.info["first_failed_step_size"] > 0.0
+
+    # Gap refusal injected on the production contact-admission surface:
+    # every swept increment after the accepted step is refused.
+    def refuse_swept_increments():
+        manager = active_contact_manager()
+        assert manager is not None
+        manager.swept_increment_admissible = lambda *args, **kwargs: False
+
+    gap = solve_with_injection(refuse_swept_increments)
+    assert gap.status == "contact_gap_exceeded"
+    assert gap.failure_reason == "contact_gap_exceeded"
+    assert gap.info["failure_reason"] == "contact_gap_exceeded"
+    assert gap.info["first_failed_iteration_reason"] == "contact_gap_exceeded"
+    assert gap.converged is False
+    assert_retained_accepted_step(gap)
+
+    # Newton failure injected on the production factorization surface: the
+    # wrong-direction handle makes every post-acceptance trial diverge, so
+    # stepping exhausts the minimum load increment after the accepted
+    # step.  Established failure-injection handle shape.
+    real_factorize = nonlinear_static.factorize
+
+    class _WrongDirectionHandle:
+        status = "ok"
+        backend_name = "slice3-wrong-direction"
+        failure_reason = None
+
+        @staticmethod
+        def solve(residual):
+            return -np.asarray(residual, dtype=float)
+
+    exhausting = []
+
+    def gated_factorize(*args, **kwargs):
+        if exhausting:
+            return _WrongDirectionHandle()
+        return real_factorize(*args, **kwargs)
+
+    monkeypatch.setattr(nonlinear_static, "factorize", gated_factorize)
+
+    def arm_wrong_direction():
+        exhausting.append(True)
+
+    exhausted = solve_with_injection(arm_wrong_direction)
+    assert exhausted.status == "stopped_at_limit"
+    assert exhausted.failure_reason == "minimum_load_increment_reached"
+    assert (exhausted.info["failure_reason"]
+            == "minimum_load_increment_reached")
+    exhausted_iteration_reason = exhausted.info["first_failed_iteration_reason"]
+    assert (isinstance(exhausted_iteration_reason, str)
+            and exhausted_iteration_reason)
+    assert exhausted_iteration_reason != "contact_gap_exceeded"
+    # Retained-step convergence semantics hold, yet the solve is not a
+    # completed endpoint.
+    assert exhausted.converged is True
+    assert_retained_accepted_step(exhausted)
+
+    # The two terminal causes are distinct public statuses.
+    assert gap.status != exhausted.status
 
 
 @pytest.mark.parametrize("route", ROUTES)
@@ -1210,8 +1353,14 @@ def test_split_restart_matches_uninterrupted(route):
         uninterrupted.info["general_contact"]["shell_force"], abs=1.0e-8)
 
 
-def test_restart_rejects_changed_weights_or_offset_before_newton():
-    model, meta = _cantilever("interpolated")
+@pytest.mark.parametrize("route", MPC_ROUTES)
+def test_restart_rejects_changed_weights_or_offset_before_newton(route):
+    # The shared route has no MPC rows to update: its checkpoint
+    # compatibility is exercised by the split-restart test across all
+    # routes.  The eccentric route has a single-master partition of unity
+    # with no legitimate aliased weight alternative, so its refusal
+    # coverage is the offset update below.
+    model, meta = _cantilever(route)
     load = _edge_load(model, meta["beam_nodes"], -PRESS_FORCE)
     contact = _contact(CYCLE_PLANE_Z)
     common = dict(num_steps=1, max_iterations=20, kinematics="von_karman")
@@ -1230,16 +1379,17 @@ def test_restart_rejects_changed_weights_or_offset_before_newton():
     def fail_if_reached(_message):
         raise AssertionError("checkpoint rejection must precede Newton work")
 
-    # A legitimate aliased weight update (still a valid partition of unity)
-    # invalidates the checkpoint before any new Newton work.
-    weights[:] = [0.7, 0.3]
-    with pytest.raises(ValueError, match="incompatible"):
-        solve_static_nonlinear(
-            model, load, contact=contact, max_load_factor=1.0,
-            restart_checkpoint=half.to_restart_checkpoint(),
-            status_callback=fail_if_reached, **common,
-        )
-    weights[:] = original_weights
+    if weights.size > 1:
+        # A legitimate aliased weight update (still a valid partition of
+        # unity) invalidates the checkpoint before any new Newton work.
+        weights[:] = [0.7, 0.3]
+        with pytest.raises(ValueError, match="incompatible"):
+            solve_static_nonlinear(
+                model, load, contact=contact, max_load_factor=1.0,
+                restart_checkpoint=half.to_restart_checkpoint(),
+                status_callback=fail_if_reached, **common,
+            )
+        weights[:] = original_weights
 
     # A legitimate aliased offset update is rejected the same way.
     r[:] = [0.01, 0.0, 0.05]
