@@ -1,10 +1,10 @@
 {
   "status": "SLICE2_PRE_EXECUTION_FIXED_CASES_SCALES_AND_RECIPE",
-  "note": "Frozen slice-5 recipe: slice-2 stages/scales/criteria unchanged; slice-4 selectors preserved; added zero-reaction predictor selectors; no new scientific criteria",
-  "candidate_version": "0.4.7+contact.candidate.20261020.s5",
+  "note": "Frozen slice-6 recipe: slice-2 stages/scales/criteria unchanged; slice-4/5 selectors preserved; appended focused elastic sphere stiffened-panel initial-state selectors and bundle modules; no new scientific criteria",
+  "candidate_version": "0.4.7+contact.candidate.20261020.s6",
   "repo_version": "0.4.7",
   "private_versions": {
-    "ANYsolver": "0.4.7+contact.candidate.20261020.s5",
+    "ANYsolver": "0.4.7+contact.candidate.20261020.s6",
     "anysolver-results": "2.1.1",
     "ANYmaterial": "0.2.0",
     "ANYgeometry": "0.4.3",
@@ -12,7 +12,7 @@
     "ANYfileio": "0.3.2"
   },
   "wheel_files": {
-    "ANYsolver": "anysolver-0.4.7+contact.candidate.20261020.s5-py3-none-any.whl",
+    "ANYsolver": "anysolver-0.4.7+contact.candidate.20261020.s6-py3-none-any.whl",
     "anysolver-results": "anysolver_results-2.1.1-py3-none-any.whl",
     "ANYmaterial": "anymaterial-0.2.0-py3-none-any.whl",
     "ANYgeometry": "anygeometry-0.4.3-py3-none-any.whl",
@@ -67,7 +67,16 @@
     "tests/test_general_contact_s3_q4_static_dev.py::test_zero_predictor_tiny_positive_controlled_null_and_injection_refusals",
     "tests/test_general_contact_s3_friction_static.py::test_uncancelled_legacy_friction_reports_zero_reaction_predictor",
     "tests/test_general_contact_s3_friction_physical_path.py::test_uncancelled_sliding_friction_reports_zero_reaction_predictor",
-    "tests/test_general_contact_monolithic_ordinary_displacement.py::test_ordinary_displacement_rejects_unphysical_force_scale"
+    "tests/test_general_contact_monolithic_ordinary_displacement.py::test_ordinary_displacement_rejects_unphysical_force_scale",
+    "tests/test_elastic_sphere_stiffened_panel.py::test_fixed_sphere_case_data_topology",
+    "tests/test_elastic_sphere_stiffened_panel.py::test_initial_state_document_metadata",
+    "tests/test_elastic_sphere_stiffened_panel.py::test_exported_mesh_matches_model_geometry",
+    "tests/test_elastic_sphere_stiffened_panel.py::test_sphere_masses_match_faceted_reference",
+    "tests/test_elastic_sphere_stiffened_panel.py::test_panel_masses_match_declared_target",
+    "tests/test_elastic_sphere_stiffened_panel.py::test_panel_gravity_solve_completed",
+    "tests/test_elastic_sphere_stiffened_panel.py::test_global_equilibrium_balance_within_tolerances",
+    "tests/test_elastic_sphere_stiffened_panel.py::test_sphere_pose_and_placement",
+    "tests/test_elastic_sphere_stiffened_panel.py::test_impact_request_is_refused"
   ],
   "friction_stages": ["full", "active-prefix", "prefix", "active-resume", "resume", "rollback"],
   "friction_lifecycle_node": "tests/test_general_contact_s3_friction_physical_path.py::test_public_installed_lifecycle_and_restart",
@@ -82,9 +91,11 @@
     "general_contact_s3_physical_orientation",
     "general_contact_s3_plane",
     "general_contact_static_results_archive",
-    "general_contact_triangulated_rigid"
+    "general_contact_triangulated_rigid",
+    "elastic_sphere_stiffened_panel",
+    "elastic_sphere_stiffened_panel_mesh"
   ],
-  "bundle_examples_note": "Exactly the eight previously delivered public examples plus the examples package marker; no experimental examples enter the bundle",
+  "bundle_examples_note": "Exactly the previously delivered public examples plus the elastic sphere stiffened-panel initial-state example and its fixed case-data module, plus the examples package marker; no experimental examples enter the bundle",
   "example_commands": {
     "normal": ["examples.general_contact_s3_physical_orientation"],
     "friction": ["examples.general_contact_s3_friction_physical_path", "--output", "examples/friction.json"],

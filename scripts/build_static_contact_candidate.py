@@ -126,7 +126,14 @@ Other runtime configurations are outside this candidate's cross-host measurement
 python -m examples.general_contact_s3_physical_orientation
 python -m examples.general_contact_s3_friction_physical_path --output friction.json
 python -m examples.general_contact_static_results_archive
+python -m examples.elastic_sphere_stiffened_panel --output sphere-initial-state.json
 ```
+
+The elastic sphere stiffened-panel example writes the verified initial state
+(status=initial_state_prepared, impact_status=unsupported) and exits zero.
+Requesting the impact with `--impact` is refused: it prints the refusal
+document, writes no output file and exits 3; no impact history, transient
+checkpoint or restart exists or is implied.
 
 Save and resume a completed prefix directly:
 
@@ -147,9 +154,9 @@ repository. This is a development candidate, not a qualified release.
 def copy_delivered_examples(checkout: Path, bundle: Path, config: dict) -> list[str]:
     """Copy exactly the delivered public examples into the bundle.
 
-    Only the eight delivered example modules (plus the examples package
-    marker when present) enter the bundle; no experimental checkout
-    examples are delivered.
+    Only the delivered example modules named by the recipe's bundle_examples
+    (plus the examples package marker when present) enter the bundle; no
+    experimental checkout examples are delivered.
     """
     source, target = checkout / "examples", bundle / "examples"
     target.mkdir()

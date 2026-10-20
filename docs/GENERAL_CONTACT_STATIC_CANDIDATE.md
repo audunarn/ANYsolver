@@ -145,6 +145,13 @@ From the repository root, or the extracted bundle ROOT containing
   leaves a partially written destination file.
 - Static result archive (export and detached read):
   `python -m examples.general_contact_static_results_archive`.
+- Elastic sphere stiffened-panel initial state (separate bounded case, not
+  part of the measured S3 rigid-tool claim):
+  `python -m examples.elastic_sphere_stiffened_panel --output sphere-initial-state.json`.
+  It writes the verified initial state
+  (`status=initial_state_prepared`, `impact_status=unsupported`) and exits
+  zero; `--impact` is refused with exit 3 and no output file. See
+  `docs/ELASTIC_SPHERE_STIFFENED_PANEL.md`.
 
 ## Failure, retained state and restart
 
