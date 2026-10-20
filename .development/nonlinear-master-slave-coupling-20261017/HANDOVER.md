@@ -1,5 +1,50 @@
 # Handover / restart — Nonlinear master–slave beam–shell coupling (Path 1)
 
+## Latest incremental delivery — 2026-10-20
+
+**Delivered:** Slice 1 public pre-yield example and truthful JSON/completion
+reporting; Slice 3 private installable candidate containing that verified scope.
+**Blocked, not delivered:** Slice 2 serialized plastic completed-prefix workflow.
+The checkpoint attempt stopped at its first bounded verification; no mechanics,
+material, checkpoint guard or continuation algorithm was changed to obtain a pass.
+
+Source slice commit: `20da7d698`. Blocker/evidence commit: `ab407246a`.
+The bundle freezes committed source `ab407246af081352531b4100e0902bccf3f5a010`,
+including the packaging helper from that same commit, and excludes concurrent
+dirty/contact changes. Its private version is
+`0.4.7+beam.shell.candidate.20261020.s3`; the repository release version is unchanged.
+Final artifact and SHA256: `incremental-20261020/slice3/DELIVERY.json`.
+
+Installed Windows Python 3.12 verification: **65 unique focused tests pass and
+both real CLI modes pass**. All **727 installed solver payload files** match the
+built candidate; all private package origins are inside the fresh environment.
+JIT is disabled, Numba and every numerical pool use one thread, and retired
+selection is disabled. The 65 results reconcile 64 initial passes with the one
+system-temp fixture error rerun in task-owned storage under unchanged payload
+hashes. The source-leaked first install and initial temporary-directory failure
+remain retained. No full-suite or scientific-clearance claim follows.
+
+Slice 2 evidence: the direct full-target command was refused during checkpoint
+creation (`checkpoint state for element 1 is incompatible`); the interpolated
+child timed out at 120 seconds without a terminal result. The initial batch had
+14 passes and 8 fixture-dependent errors. The unshipped example/tests and all
+raw outputs are archived under `incremental-20261020/slice2/blocked-candidate/`.
+The model-bound corotational state-frame/checkpoint lifecycle is a separately
+bounded future milestone; failed-terminal checkpoint refusal remains intact.
+
+New slice process-wall usage: 68.981465 / 221.653846 / 160.651532 seconds,
+each within its separate 1800-second allowance with its 300-second reserve
+remaining. The historical budget is byte-identical to its pre-transition hash.
+The one Fable/medium plan review is retained and was not repeated. Mistral owned
+Slice 1; repeated inspection-only work and missing terminal handoffs led to the
+documented OpenAI fallback for the remaining implementation/delivery work.
+
+Earlier director continuation failures and the analytical accuracy gate remain
+open. Their tests, criteria and evidence were not weakened. No further numerical
+work is scheduled in these slices. Scoped commits are local; no push or release
+is part of this delivery. The earlier chronological entries below retain their
+original candidate and verification identities.
+
 ## Latest verified state — 2026-10-19 terminal checkpoint
 
 Integration authority: the user accepted this current state and requested merging
@@ -2034,3 +2079,5 @@ Slice1 committed as20da7d698. Root independently inspected portable runtime: col
 Slice2 ownership transition: initial80-turn Mistral run delivered inspection-only checkpoint and no code. Focused code-first continuation repeated settled inspections beyond its first-edit deadline and still produced no edit or numericalrun. Root intentionally stopped only that owned worker tree, retained logs/checkpoint and switched prospectively to OpenAI fallback for execution unreliability. This is not a mechanics reservation or failed scientific solve. Slice2 budget remains0/1800,300reserved. No repeated availability probe or independent review will be run.
 
 Slice2 BLOCKED, notdelivered. Initialverification14PASS/8ERROR,221.6538463s/1800. Directfull CLI returned refusal checkpoint state for element1 incompatible after73.836s; interpolatedfull child timedout at120s withno terminalresult. Subsequent8fixture-dependent cases couldnotrun; they are notscientificpasses. Staticlocalization: genericcorotational Q4 finalizer doesnotseal current-tangent checkpointstate; checkpointvalidator enforcesqualifiedstate binding. No solver/source/stateguard changes or speculative mechanicaladapter adopted; supporting this needs a separate bounded state-frame/lifecycle integration task. Full candidate/source/tests archived in incremental-20261020/slice2/blocked-candidate with hashes in BLOCKED.json; existing failedrawlogs retained. Restored example/guide/changelog to verifiedSlice1commit20da7d698 before updating documentedlimits; no unshipped plasticCLI is exposed. Historicalbudget untouched. Slice3 packages the committed preyield workflow only, with completed-prefix plastic delivery explicitlyomitted.
+
+Slice3 prospective delivery: OpenAI fallback remains owner after documented Mistral execution unreliability; no repeated probe/review. Package frozen committed sourceab407246a, not concurrent dirty contact files/build helpers. New scriptbuild_beam_shell_candidate.py reuses the packaging helper and configuration extracted from that samecommit; builds wheel+sdist in isolated staging and reuses five immutable pinned privatewheels. Packageversion0.4.7+beam.shell.candidate.20261020.s3; repositoryreleaseunchanged. Installedscope is Slice1preyield only; plasticcheckpoint explicitlyomitted. Fresh WindowsPython3.12 venv/JIToff/thread1/retired0 origin+payload checks planned; no crosshost/qualification work. Slice3 fresh1800s/300reserve ledger applies.

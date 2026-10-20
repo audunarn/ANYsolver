@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Deliver a private Windows Python 3.12 beam-shell pre-yield candidate, version
+  `0.4.7+beam.shell.candidate.20261020.s3`, with wheel, sdist, pinned dependencies
+  and recorded installed verification (65 focused tests and both CLI modes).
+  Serialized plastic checkpoint delivery remains blocked by state validation;
+  its failed candidate is preserved without changing solver guards or mechanics.
+  Director continuation and analytical accuracy remain open.
+
 - Add the standalone public example `examples/beam_shell_coupling.py` for the
   registered pre-yield S355 beam-shell case with direct or interpolated
   (default) rotating coupling. Its CLI prints a truthful JSON summary

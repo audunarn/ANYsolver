@@ -115,6 +115,14 @@ the existing constraint postcheck passed; a cancelled solve reports the
 accepted increments seen so far and never claims completion. The process exit
 status is 0 only for such a valid completion.
 
+The private installed candidate delivers this pre-yield workflow only. Its
+artifact hash, pinned version, Python 3.12 installation evidence and explicit
+omissions are recorded in the
+[delivery receipt](../.development/nonlinear-master-slave-coupling-20261017/incremental-20261020/slice3/DELIVERY.json).
+Use the bundled README's measured runtime recipe: JIT disabled, one effective
+numerical thread and retired-programme selection disabled. The focused installed
+checks do not establish a passing full suite or general scientific qualification.
+
 ## Reading a nonlinear result
 
 `result.status == "completed"` means the solver reached its requested target

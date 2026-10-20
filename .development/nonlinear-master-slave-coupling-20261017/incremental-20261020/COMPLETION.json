@@ -1,0 +1,17 @@
+{
+  "status": "DELIVERED_WITH_EXPLICIT_BLOCKED_SLICE",
+  "source_slice_commit": "20da7d698",
+  "checkpoint_blocker_commit": "ab407246a",
+  "artifact_source_commit": "ab407246af081352531b4100e0902bccf3f5a010",
+  "bundle": "C:\\ANYworkspaceWork\\beam-shell-incremental-delivery-20261020\\build-v1\\ANYsolver-beam-shell-0.4.7+beam.shell.candidate.20261020.s3-verified.zip",
+  "sha256": "44608bcd66cb33c3d21ece049c3252af58d26d68d434cf2557912dbbb1af2958",
+  "installed_focused_unique_passed": 65,
+  "installed_real_cli_passed": 2,
+  "historical_budget_unchanged": true,
+  "director_failure_tests_unchanged": true,
+  "core_solver_edits_by_this_delivery": false,
+  "verification_reserves_remaining": true,
+  "one_fable_review_reused": true,
+  "push_or_release": false,
+  "concurrent_contact_edits_excluded": true
+}

@@ -1,6 +1,55 @@
 {
   "allowance_seconds": 1800.0,
   "final_verification_reserve_seconds": 300.0,
-  "used_seconds": 0.0,
-  "attempts": []
+  "used_seconds": 160.65153159997135,
+  "attempts": [
+    {
+      "name": "build-candidate",
+      "status": "EXIT",
+      "wall_seconds": 12.006691699978546,
+      "cumulative_used": 12.006691699978546,
+      "remaining": 1787.9933083000215,
+      "started_utc": "2026-10-20T09:53:36.133932+00:00"
+    },
+    {
+      "name": "fresh-python312-install",
+      "status": "EXIT",
+      "wall_seconds": 67.38188439999067,
+      "cumulative_used": 79.38857609996921,
+      "remaining": 1720.6114239000308,
+      "started_utc": "2026-10-20T09:55:34.567856+00:00"
+    },
+    {
+      "name": "isolated-python312-install-repair",
+      "status": "EXIT",
+      "wall_seconds": 47.259946100006346,
+      "cumulative_used": 126.64852219997556,
+      "remaining": 1673.3514778000244,
+      "started_utc": "2026-10-20T09:57:28.130497+00:00"
+    },
+    {
+      "name": "installed-final-verification",
+      "status": "EXIT_1",
+      "wall_seconds": 28.170058199990308,
+      "cumulative_used": 154.81858039996587,
+      "remaining": 1645.1814196000341,
+      "started_utc": "2026-10-20T09:59:00.315685+00:00"
+    },
+    {
+      "name": "installed-temp-fixture-finish",
+      "status": "EXIT",
+      "wall_seconds": 3.7286445000063395,
+      "cumulative_used": 158.5472248999722,
+      "remaining": 1641.4527751000278,
+      "started_utc": "2026-10-20T10:00:49.653803+00:00"
+    },
+    {
+      "name": "finalize-verified-candidate",
+      "status": "EXIT",
+      "wall_seconds": 2.1043066999991424,
+      "cumulative_used": 160.65153159997135,
+      "remaining": 1639.3484684000287,
+      "started_utc": "2026-10-20T10:02:21.095635+00:00"
+    }
+  ]
 }
