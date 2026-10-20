@@ -32,6 +32,7 @@ execution receipts live under `C:/ANYworkspaceWork/contact-incremental-delivery-
 | 3 | Truthful rejected-trial outcome and exact last-accepted-state recovery | Delivered; 16 focused checks pass; exact retained state and completed-prefix recovery; failed-terminal restart remains refused |
 | 4 | Predictable stop and restart: early entry cancellation, direct checkpoint output, truthful noncompleted reports | Local source/installed checks pass; paired-host CI and final bundle state in the delivery receipt below |
 | 5 | Reliable zero-reaction prediction for the two S3 projected-penalty profiles | Implemented with focused local checks; paired-host CI and final bundle pending in the slice-5 delivery receipt |
+| 6 | Elastic sphere onto a stiffened panel: reproducible case and verified initial state (new example + fixed sphere case data, focused tests, recipe s6) | Nine case checks and 14 tools checks pass locally; impact remains unsupported and refused; installed CI and final bundle status in the slice-6 delivery receipt; see `docs/ELASTIC_SPHERE_STIFFENED_PANEL.md` |
 
 Scientific criteria, capability flags, scoped deviations and preserved failures
 remain binding. Full D1/Q4, native material/dynamics, independent coupled-response
@@ -260,3 +261,27 @@ All full evidence lives under
 `C:/ANYworkspaceWork/contact_trackB_dependency_repair_20261013/`; do not discard
 it during disk cleanup. Main's unrelated dirty work must remain outside the
 contact commit and be preserved through integration. No push is authorized.
+
+## Slice 6 delivery receipt: elastic sphere-panel initial state
+
+Candidate version: `0.4.7+contact.candidate.20261020.s6`.
+Run `python -m examples.elastic_sphere_stiffened_panel --output initial-state.json`
+from the extracted candidate bundle root after installation. Detailed case,
+measurements and limitations: [elastic sphere-panel guide](ELASTIC_SPHERE_STIFFENED_PANEL.md).
+Panel mass 2198 kg; faceted sphere mass 237.142896 kg (smooth-shell reference
+241.707384 kg, no rescaling); centre panel self-weight displacement -0.598371 mm.
+The panel reaches completed equilibrium and the free sphere is placed at rest
+with 10 m outside-surface clearance. Full impact is unsupported and refused.
+
+Final paired-host CI, artifact hashes, local runtime/accounting and retained
+failures are in
+`C:/ANYworkspaceWork/contact-incremental-delivery-20261020/elastic-sphere-panel-initial-v1/DELIVERY_RECEIPT.json`.
+The usable bundle is
+`C:/ANYworkspaceWork/contact-incremental-delivery-20261020/elastic-sphere-panel-initial-v1/ANYsolver-contact-candidate-20261020-s6.zip`.
+Treat that receipt's installed-test state as authoritative; local success alone
+is not paired-host delivery acceptance. The earlier s5 bundle remains retained.
+
+Next useful slice: bounded curved deformable sphere/panel contact response on
+this physical case, then the missing spatial large-motion dynamics needed for
+the actual 10 m drop through first impact and rebound. No rigid-sphere substitute,
+plasticity, new numerical tolerance or automatic qualification campaign is adopted.
