@@ -148,3 +148,51 @@ The s6 bundle uses the existing Contact candidate workflow to cold-install the
 same wheel bytes on Windows and Ubuntu. Installed results and final bundle
 identity are recorded in the slice-6 delivery receipt referenced by the contact
 handoff. No broader qualification follows this slice automatically.
+
+
+## Slice-7 curved contact-skin geometry (development-only)
+
+The s7 slice adds a development-only face-local curved shell skin geometry
+service (`anysolver.general_contact.curved_shell_skin`) and the example
+`examples/elastic_sphere_panel_contact_skins.py`. Skin points are keyed
+(body, element, local corner) and preserve each element's own physical
+reference director and offset, so a shared sphere node keeps one distinct
+exterior corner per incident triangle; the sparse coordinate/spin work maps
+pull forces and moments back onto the shared authoritative structural DOFs.
+The kinematics reuse the existing corotational Exp(theta) director field,
+`director_jets`/`director_value_error` and the existing 1.2 rad
+total-rotation bound; triangles stay linear and Q4s bilinear; no contact
+law, solver admission or existing finite map behavior changed.
+
+The example reuses the single existing gravity/model preparation once
+(`prepare_case_models`), reports the 320 S3 sphere top exterior faces and
+the 100 original Q4 panel top faces with reference and recovered physical
+geometry (panel at the accepted gravity-preloaded state, sphere at its
+zero-pose reference and at the declared placement, a prescribed
+rigid-translation probe), and measures shared-edge offset-facet separations,
+the offset-corner radius range and nominal versus measured centre-referenced
+vertical clearance honestly.
+The status is `skin_geometry_prepared` with `contact_response=unsupported`;
+the offset facets are not claimed to form a watertight exterior and no
+contact gap or force history is reported. Focused coverage lives in
+`tests/test_general_contact_curved_shell_skin.py` (candidate selectors in
+the separate named `curved-skins` batch of
+`scripts/contact_candidate_slice2.json`, run by the check adapter after the
+unchanged original base batch); the s7 candidate version is
+`0.4.7+contact.candidate.20261020.s7`.
+
+
+Run the prepared geometry report from the installed candidate bundle:
+
+```console
+python -m examples.elastic_sphere_panel_contact_skins --output contact-skins.json
+```
+
+The local s7 report measured corner radii of 0.4999121147 to 0.4999395352 m
+and a maximum separation of 0.0009158812 m between offset copies of shared
+sphere corners. These are facet-skin measurements, not whole-face radial
+extrema or contact-gap accuracy. The centre-referenced vertical clearance
+is 10.0000767534 m against the nominal 10 m placement. No skin stitching or
+mass scaling was applied. The final s7 receipt binds the installed results,
+source and bundle at
+`C:/ANYworkspaceWork/contact-incremental-delivery-20261020/curved-skins-s7-v1/DELIVERY_RECEIPT.json`.

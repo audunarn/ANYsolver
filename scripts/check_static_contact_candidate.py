@@ -321,6 +321,21 @@ def build_cases(config: dict, tests_root: Path, evidence: Path, results: Path,
                   argv=["-q", "--tb=short", f"--junitxml={out / 'base-junit.xml'}"]
                   + [str(tests_root / s) for s in config["base_selectors"]],
                   env={"CONTACT_APP_RESULT_RECORD": str(out / "archive-report.json")})]
+    # Named additional selector batches (e.g. the s7 curved-skins regressions)
+    # run as their own fixed pytest cases right after the unchanged original
+    # base batch and before the lifecycle cases: the original Windows base
+    # batch already fills most of the unchanged per-case seconds cap, so the
+    # new selectors must not join it.  Same kind, JUnit, origins, per-case
+    # timeout, RSS cap and budget accounting as every other case; no new
+    # runner or harness.
+    for batch_name, selectors in config.get("additional_selector_batches",
+                                           {}).items():
+        junit = out / f"{batch_name}-junit.xml"
+        cases.append(dict(name=f"{batch_name}-batch", kind="pytest",
+                          junit=junit,
+                          argv=["-q", "--tb=short", f"--junitxml={junit}"]
+                          + [str(tests_root / s) for s in selectors],
+                          env={}))
     for stage in [s for s in config["friction_stages"] if s in stages]:
         node = (config["friction_rollback_node"] if stage == "rollback"
                 else config["friction_lifecycle_node"])

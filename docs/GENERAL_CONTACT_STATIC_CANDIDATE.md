@@ -189,3 +189,19 @@ qualification; only the listed workflows have the stated evidence.
 - The 2026-10-19 measurements remain same-host Windows historical evidence.
 - Capability/released/admitted flags are unchanged; nothing on this page
   admits the candidate into qualified production scope.
+
+
+## Slice-7 development-only skin geometry addition
+
+The s7 candidate (`0.4.7+contact.candidate.20261020.s7`) appends only the
+development-only curved shell skin geometry service, its thirteen
+focused selectors and the `elastic_sphere_panel_contact_skins` example to
+the installed workflow and bundle. The new selectors run as a separate
+named `curved-skins` pytest batch appended after the unchanged original
+35-selector base batch (the Windows base batch already fills most of the
+unchanged per-case seconds cap), with the same origins, per-case timeout,
+RSS cap and budget accounting and no new runner or harness. It admits no contact solve, changes no
+solver behavior, criteria, scales or cross-host quantities, and claims no
+contact response for the sphere-panel case; the previously measured s2/s6
+evidence is unchanged. See the elastic sphere-panel guide for the geometry
+service contract and its honest limitations.

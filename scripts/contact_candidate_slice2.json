@@ -1,10 +1,10 @@
 {
   "status": "SLICE2_PRE_EXECUTION_FIXED_CASES_SCALES_AND_RECIPE",
-  "note": "Frozen slice-6 recipe: slice-2 stages/scales/criteria unchanged; slice-4/5 selectors preserved; appended focused elastic sphere stiffened-panel initial-state selectors and bundle modules; no new scientific criteria",
-  "candidate_version": "0.4.7+contact.candidate.20261020.s6",
+  "note": "Frozen slice-7 recipe: slice-2 stages/scales/criteria unchanged; slice-4/5/6 selectors preserved; appended focused curved shell skin geometry selectors, the elastic sphere panel contact-skins example and the s7 candidate version; no new scientific criteria",
+  "candidate_version": "0.4.7+contact.candidate.20261020.s7",
   "repo_version": "0.4.7",
   "private_versions": {
-    "ANYsolver": "0.4.7+contact.candidate.20261020.s6",
+    "ANYsolver": "0.4.7+contact.candidate.20261020.s7",
     "anysolver-results": "2.1.1",
     "ANYmaterial": "0.2.0",
     "ANYgeometry": "0.4.3",
@@ -12,7 +12,7 @@
     "ANYfileio": "0.3.2"
   },
   "wheel_files": {
-    "ANYsolver": "anysolver-0.4.7+contact.candidate.20261020.s6-py3-none-any.whl",
+    "ANYsolver": "anysolver-0.4.7+contact.candidate.20261020.s7-py3-none-any.whl",
     "anysolver-results": "anysolver_results-2.1.1-py3-none-any.whl",
     "ANYmaterial": "anymaterial-0.2.0-py3-none-any.whl",
     "ANYgeometry": "anygeometry-0.4.3-py3-none-any.whl",
@@ -78,10 +78,36 @@
     "tests/test_elastic_sphere_stiffened_panel.py::test_sphere_pose_and_placement",
     "tests/test_elastic_sphere_stiffened_panel.py::test_impact_request_is_refused"
   ],
-  "friction_stages": ["full", "active-prefix", "prefix", "active-resume", "resume", "rollback"],
+  "additional_selector_batches": {
+    "curved-skins": [
+      "tests/test_general_contact_curved_shell_skin.py::test_actual_model_inventory_and_zero_pose_reference",
+      "tests/test_general_contact_curved_shell_skin.py::test_gravity_preloaded_panel_skin_recovery",
+      "tests/test_general_contact_curved_shell_skin.py::test_shared_node_work_accumulation",
+      "tests/test_general_contact_curved_shell_skin.py::test_shared_sphere_corner_distinctness",
+      "tests/test_general_contact_curved_shell_skin.py::test_rigid_translation_of_each_body",
+      "tests/test_general_contact_curved_shell_skin.py::test_rigid_rotation_virtual_work_of_each_body",
+      "tests/test_general_contact_curved_shell_skin.py::test_local_deformation_probe_of_each_body",
+      "tests/test_general_contact_curved_shell_skin.py::test_fixed_spatial_force_pullback_derivative",
+      "tests/test_general_contact_curved_shell_skin.py::test_physical_offsets_and_authoritative_dofs",
+      "tests/test_general_contact_curved_shell_skin.py::test_refusals_and_nonmutation",
+      "tests/test_general_contact_curved_shell_skin.py::test_wrong_map_pose_and_shape_refusals",
+      "tests/test_general_contact_curved_shell_skin.py::test_bound_identity_refuses_thickness_and_director_changes",
+      "tests/test_general_contact_curved_shell_skin.py::test_face_interpolation_and_normals"
+    ]
+  },
+  "friction_stages": [
+    "full",
+    "active-prefix",
+    "prefix",
+    "active-resume",
+    "resume",
+    "rollback"
+  ],
   "friction_lifecycle_node": "tests/test_general_contact_s3_friction_physical_path.py::test_public_installed_lifecycle_and_restart",
   "friction_rollback_node": "tests/test_general_contact_s3_friction_physical_path.py::test_public_trial_exception_and_inflight_cancellation",
-  "orientation_stages": ["full-plus"],
+  "orientation_stages": [
+    "full-plus"
+  ],
   "orientation_node": "tests/test_general_contact_s3_physical_orientation.py::test_installed_s3_physical_orientation_stage",
   "bundle_examples": [
     "general_contact_automatic_s3_pair",
@@ -93,15 +119,45 @@
     "general_contact_static_results_archive",
     "general_contact_triangulated_rigid",
     "elastic_sphere_stiffened_panel",
-    "elastic_sphere_stiffened_panel_mesh"
+    "elastic_sphere_stiffened_panel_mesh",
+    "elastic_sphere_panel_contact_skins"
   ],
-  "bundle_examples_note": "Exactly the previously delivered public examples plus the elastic sphere stiffened-panel initial-state example and its fixed case-data module, plus the examples package marker; no experimental examples enter the bundle",
+  "bundle_examples_note": "Exactly the previously delivered public examples plus the elastic sphere stiffened-panel initial-state example, its fixed case-data module and the development-only curved contact-skins geometry example, plus the examples package marker; no experimental examples enter the bundle",
   "example_commands": {
-    "normal": ["examples.general_contact_s3_physical_orientation"],
-    "friction": ["examples.general_contact_s3_friction_physical_path", "--output", "examples/friction.json"],
-    "archive": ["examples.general_contact_static_results_archive"],
-    "restart-partial": ["examples.general_contact_s3_friction_physical_path", "--through-step", "3", "--output", "examples/restart-partial.json", "--checkpoint-output", "examples/restart-checkpoint.json"],
-    "restart": ["examples.general_contact_s3_friction_physical_path", "--through-step", "7", "--restart", "examples/restart-checkpoint.json", "--output", "examples/restart.json"]
+    "normal": [
+      "examples.general_contact_s3_physical_orientation"
+    ],
+    "friction": [
+      "examples.general_contact_s3_friction_physical_path",
+      "--output",
+      "examples/friction.json"
+    ],
+    "archive": [
+      "examples.general_contact_static_results_archive"
+    ],
+    "restart-partial": [
+      "examples.general_contact_s3_friction_physical_path",
+      "--through-step",
+      "3",
+      "--output",
+      "examples/restart-partial.json",
+      "--checkpoint-output",
+      "examples/restart-checkpoint.json"
+    ],
+    "restart": [
+      "examples.general_contact_s3_friction_physical_path",
+      "--through-step",
+      "7",
+      "--restart",
+      "examples/restart-checkpoint.json",
+      "--output",
+      "examples/restart.json"
+    ],
+    "contact-skins": [
+      "examples.elastic_sphere_panel_contact_skins",
+      "--output",
+      "examples/contact-skins.json"
+    ]
   },
   "timeouts": {
     "case_seconds": 120,
@@ -115,37 +171,152 @@
     "example_friction": "examples/friction.json"
   },
   "cross_host_quantities": [
-    ["friction_full", "displacements", "displacement_m", 1.0],
-    ["friction_full", "info.force_displacement_history[*].reaction_generalized[0]", "force_N", 0.02],
-    ["friction_full", "info.force_displacement_history[*].reaction_generalized[1]", "force_N", 0.02],
-    ["friction_full", "info.force_displacement_history[*].friction.dissipation_increment_j", "energy_J", 0.02],
-    ["friction_full", "poses[*].complete_contact_wrench.force", "dimensionless", 1.0],
-    ["friction_full", "poses[*].complete_contact_wrench.moment", "dimensionless", 1.0],
-    ["friction_full", "poses[*].coupled_equilibrium_normalized", "dimensionless", 1.0],
-    ["orientation_full", "target_node9_uz_m", "displacement_m", 1.0],
-    ["orientation_full", "upper_actuator_ux_m", "displacement_m", 1.0],
-    ["orientation_full", "phase_wrench_errors[*].force", "dimensionless", 1.0],
-    ["orientation_full", "phase_wrench_errors[*].moment", "dimensionless", 1.0],
-    ["orientation_full", "all_free_equilibrium_normalized_error", "dimensionless", 1.0],
-    ["example_friction", "phases[*].reaction_generalized[0]", "force_N", 0.02],
-    ["example_friction", "phases[*].friction.dissipation_increment_j", "energy_J", 0.02]
+    [
+      "friction_full",
+      "displacements",
+      "displacement_m",
+      1.0
+    ],
+    [
+      "friction_full",
+      "info.force_displacement_history[*].reaction_generalized[0]",
+      "force_N",
+      0.02
+    ],
+    [
+      "friction_full",
+      "info.force_displacement_history[*].reaction_generalized[1]",
+      "force_N",
+      0.02
+    ],
+    [
+      "friction_full",
+      "info.force_displacement_history[*].friction.dissipation_increment_j",
+      "energy_J",
+      0.02
+    ],
+    [
+      "friction_full",
+      "poses[*].complete_contact_wrench.force",
+      "dimensionless",
+      1.0
+    ],
+    [
+      "friction_full",
+      "poses[*].complete_contact_wrench.moment",
+      "dimensionless",
+      1.0
+    ],
+    [
+      "friction_full",
+      "poses[*].coupled_equilibrium_normalized",
+      "dimensionless",
+      1.0
+    ],
+    [
+      "orientation_full",
+      "target_node9_uz_m",
+      "displacement_m",
+      1.0
+    ],
+    [
+      "orientation_full",
+      "upper_actuator_ux_m",
+      "displacement_m",
+      1.0
+    ],
+    [
+      "orientation_full",
+      "phase_wrench_errors[*].force",
+      "dimensionless",
+      1.0
+    ],
+    [
+      "orientation_full",
+      "phase_wrench_errors[*].moment",
+      "dimensionless",
+      1.0
+    ],
+    [
+      "orientation_full",
+      "all_free_equilibrium_normalized_error",
+      "dimensionless",
+      1.0
+    ],
+    [
+      "example_friction",
+      "phases[*].reaction_generalized[0]",
+      "force_N",
+      0.02
+    ],
+    [
+      "example_friction",
+      "phases[*].friction.dissipation_increment_j",
+      "energy_J",
+      0.02
+    ]
   ],
   "cross_host_exact": [
-    ["friction_full", "status"],
-    ["friction_full", "snapshot_inventory"],
-    ["friction_full", "verified"],
-    ["friction_full", "info.force_displacement_history[*].friction.branch"],
-    ["orientation_full", "status"],
-    ["orientation_full", "stage"],
-    ["orientation_full", "identity"],
-    ["orientation_full", "selections"],
-    ["orientation_full", "settings"],
-    ["orientation_full", "criteria"],
-    ["orientation_full", "physical_inputs"],
-    ["orientation_full", "verified"],
-    ["orientation_full", "opening_verified"],
-    ["example_friction", "status"],
-    ["example_friction", "physical_scope"]
+    [
+      "friction_full",
+      "status"
+    ],
+    [
+      "friction_full",
+      "snapshot_inventory"
+    ],
+    [
+      "friction_full",
+      "verified"
+    ],
+    [
+      "friction_full",
+      "info.force_displacement_history[*].friction.branch"
+    ],
+    [
+      "orientation_full",
+      "status"
+    ],
+    [
+      "orientation_full",
+      "stage"
+    ],
+    [
+      "orientation_full",
+      "identity"
+    ],
+    [
+      "orientation_full",
+      "selections"
+    ],
+    [
+      "orientation_full",
+      "settings"
+    ],
+    [
+      "orientation_full",
+      "criteria"
+    ],
+    [
+      "orientation_full",
+      "physical_inputs"
+    ],
+    [
+      "orientation_full",
+      "verified"
+    ],
+    [
+      "orientation_full",
+      "opening_verified"
+    ],
+    [
+      "example_friction",
+      "status"
+    ],
+    [
+      "example_friction",
+      "physical_scope"
+    ]
   ],
   "scale_provenance": "CASE_FREEZE.json W3_W4_W5_W6_W10 group (displacement_m 1, force_N 0.02, length_m 1, energy_J 0.02); dimensionless normalized diagnostics use scale 1"
 }

@@ -659,24 +659,35 @@ def _verify_initial_state(payload: dict) -> None:
         raise RuntimeError("global moment balance exceeds the declared tolerance")
 
 
-def prepare_initial_state() -> dict:
-    """Build the case, solve the panel-only gravity state and verify it."""
-    panel_model = build_panel_model()
-    sphere_model, sphere_geometry = build_sphere_model()
+def case_acceptance(panel_model: FEModel, sphere_model: FEModel,
+                    sphere_geometry: dict, load_case: LoadCase,
+                    result, displacements: np.ndarray) -> dict:
+    """The one fixed mass/reaction/global-balance acceptance of the case.
 
-    _verify_materials(panel_model)
-    _verify_materials(sphere_model)
-
+    Computes the acceptance measurements from the single accepted gravity
+    solve and fails closed on every fixed criterion (never weakened): raw
+    assembled translation masses against the faceted sphere mass and the
+    declared panel target, recovered support resultants against the
+    solver-recorded resultants, and the global force and moment balance.
+    Both the initial-state workflow and the curved-skin geometry workflow
+    invoke this same acceptance; no second gravity solve is performed.
+    """
     panel_masses = translation_masses(panel_model)
     sphere_masses = translation_masses(sphere_model)
 
-    load_case, result = solve_panel_gravity(panel_model)
-    if result.status != "completed":
-        raise RuntimeError(
-            f"panel gravity equilibrium did not complete: {result.status!r}; "
-            f"failure_reason={result.failure_reason!r}"
-        )
-    displacements = np.asarray(result.displacements, dtype=float)
+    faceted_mass = DENSITY * SPHERE_THICKNESS * sphere_geometry["faceted_area_m2"]
+    for axis, mass in enumerate(sphere_masses):
+        if abs(mass - faceted_mass) > RELATIVE_MASS_TOLERANCE * faceted_mass:
+            raise RuntimeError(
+                f"sphere translation mass axis {axis}: {mass!r} disagrees with "
+                f"rho*t*faceted_area {faceted_mass!r}"
+            )
+    for axis, mass in enumerate(panel_masses):
+        if abs(mass - TARGET_PANEL_MASS) > RELATIVE_MASS_TOLERANCE * TARGET_PANEL_MASS:
+            raise RuntimeError(
+                f"panel translation mass axis {axis}: {mass!r} disagrees with "
+                f"target {TARGET_PANEL_MASS!r}"
+            )
 
     recovery = support_reaction_recovery(panel_model, load_case, displacements)
     balance = _global_balance(panel_model, recovery)
@@ -722,6 +733,60 @@ def prepare_initial_state() -> dict:
         "max_relative_component_deviation": float(max_resultant_deviation),
         "agreement_tolerance": REACTION_AGREEMENT_TOLERANCE,
     }
+    if balance["force_balance_norm_N"] > FORCE_BALANCE_TOLERANCE:
+        raise RuntimeError("global force balance exceeds the declared tolerance")
+    if balance["moment_balance_norm_Nm"] > MOMENT_BALANCE_TOLERANCE:
+        raise RuntimeError("global moment balance exceeds the declared tolerance")
+    return {
+        "panel_masses_kg": panel_masses,
+        "sphere_masses_kg": sphere_masses,
+        "sphere_faceted_mass_kg": faceted_mass,
+        "reaction_check": reaction_check,
+        "equilibrium": balance,
+    }
+
+
+def prepare_case_models():
+    """Build both delivered models and solve the panel gravity state once.
+
+    This is the single existing gravity/model preparation shared by the
+    initial-state example and the curved-skin geometry example: it builds the
+    clamped stiffened panel and the unconstrained elastic sphere, verifies
+    the declared elastic material on both, solves the panel-only gravity
+    equilibrium with the qualified nonlinear static caller and returns the
+    models with the accepted displacement, retaining the reference
+    coordinates.  The sphere is never solved.
+    """
+    panel_model = build_panel_model()
+    sphere_model, sphere_geometry = build_sphere_model()
+
+    _verify_materials(panel_model)
+    _verify_materials(sphere_model)
+
+    load_case, result = solve_panel_gravity(panel_model)
+    if result.status != "completed":
+        raise RuntimeError(
+            f"panel gravity equilibrium did not complete: {result.status!r}; "
+            f"failure_reason={result.failure_reason!r}"
+        )
+    displacements = np.asarray(result.displacements, dtype=float)
+    return panel_model, sphere_model, sphere_geometry, load_case, result, displacements
+
+
+def prepare_initial_state() -> dict:
+    """Build the case, solve the panel-only gravity state and verify it."""
+    panel_model, sphere_model, sphere_geometry, load_case, result, displacements = (
+        prepare_case_models()
+    )
+
+    acceptance = case_acceptance(
+        panel_model, sphere_model, sphere_geometry, load_case, result,
+        displacements)
+    panel_masses = acceptance["panel_masses_kg"]
+    sphere_masses = acceptance["sphere_masses_kg"]
+    balance = acceptance["equilibrium"]
+    reaction_check = acceptance["reaction_check"]
+    solver_resultants = reaction_check["solver_recorded_named_resultants"]
 
     inventory = _panel_inventory(panel_model)
     centre_node = min(

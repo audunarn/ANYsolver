@@ -285,3 +285,37 @@ Next useful slice: bounded curved deformable sphere/panel contact response on
 this physical case, then the missing spatial large-motion dynamics needed for
 the actual 10 m drop through first impact and rebound. No rigid-sphere substitute,
 plasticity, new numerical tolerance or automatic qualification campaign is adopted.
+
+
+## Slice 7 delivery note: curved contact-skin geometry (development-only)
+
+Candidate version: `0.4.7+contact.candidate.20261020.s7`. The slice adds the
+face-local curved shell skin geometry/work mapping service
+(`anysolver.general_contact.curved_shell_skin`), the
+`examples.elastic_sphere_panel_contact_skins.py` report and thirteen
+focused selectors, all development-only: no contact solve is admitted, and the
+offset skins are not claimed watertight. Local supervised evidence is in
+`C:/ANYworkspaceWork/contact-incremental-delivery-20261020/curved-skins-s7-v1/`
+(discriminator, full component checks and the module-mode example output).
+The fixed installed workflow includes a separate thirteen-selector
+`curved-skins` batch and the new report CLI, keeping the original 35-selector
+batch and all existing case/host/resource limits. The final delivery state,
+tested source, paired-host CI and wheel hashes are recorded in
+`C:/ANYworkspaceWork/contact-incremental-delivery-20261020/curved-skins-s7-v1/DELIVERY_RECEIPT.json`.
+The installable bundle is
+`C:/ANYworkspaceWork/contact-incremental-delivery-20261020/curved-skins-s7-v1/ANYsolver-contact-candidate-20261020-s7.zip`.
+Consult that receipt's installed-test state for acceptance; s6 and its evidence
+remain retained.
+
+Run `python -m examples.elastic_sphere_panel_contact_skins --output contact-skins.json`.
+The local measured maximum separation between offset copies of shared sphere
+corners is 0.9158812 mm; the corner radius range is
+0.4999121147--0.4999395352 m. No closed smooth exterior or contact coverage is
+claimed from these separate facets.
+
+Remaining: multi-face curved S3/Q4 contact enforcement with accounted-for skin
+coverage; gravity/preload continuation through the work-conjugate rotating
+beam-shell MPC; and spatial deformable-body dynamics for the actual 10 m drop.
+The geometry component supplies work maps and normals for that work, while
+contact equilibrium and impact remain unsupported. No broader qualification
+campaign follows automatically.

@@ -127,7 +127,15 @@ python -m examples.general_contact_s3_physical_orientation
 python -m examples.general_contact_s3_friction_physical_path --output friction.json
 python -m examples.general_contact_static_results_archive
 python -m examples.elastic_sphere_stiffened_panel --output sphere-initial-state.json
+python -m examples.elastic_sphere_panel_contact_skins --output sphere-contact-skins.json
 ```
+
+The elastic sphere panel contact-skins example maps the actual 320 S3 sphere
+and 100 Q4 panel top exterior skins of the delivered initial state
+(status=skin_geometry_prepared, contact_response=unsupported). It is a
+development-only geometry report with clearly labelled prescribed kinematic
+probes; no contact solve, gap history or force history is claimed, and the
+per-element offset facets are not claimed to form a watertight exterior.
 
 The elastic sphere stiffened-panel example writes the verified initial state
 (status=initial_state_prepared, impact_status=unsupported) and exits zero.

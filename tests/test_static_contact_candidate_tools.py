@@ -22,8 +22,26 @@ CONFIG = json.loads((ROOT / "scripts" / "contact_candidate_slice2.json")
 
 
 def test_config_recipe_is_complete_and_matches_the_checkout() -> None:
-    assert CONFIG["candidate_version"] == "0.4.7+contact.candidate.20261020.s6"
+    assert CONFIG["candidate_version"] == "0.4.7+contact.candidate.20261020.s7"
+    assert CONFIG["private_versions"]["ANYsolver"] == CONFIG["candidate_version"]
+    assert CONFIG["wheel_files"]["ANYsolver"] == (
+        "anysolver-" + CONFIG["candidate_version"] + "-py3-none-any.whl")
     assert len(CONFIG["base_selectors"]) == 35
+    assert "elastic_sphere_panel_contact_skins" in CONFIG["bundle_examples"]
+    assert CONFIG["example_commands"]["contact-skins"] == [
+        "examples.elastic_sphere_panel_contact_skins", "--output",
+        "examples/contact-skins.json"]
+    # The s7 curved-skins regressions live in their own named additional
+    # selector batch, never in the unchanged original base batch.
+    batches = CONFIG["additional_selector_batches"]
+    assert set(batches) == {"curved-skins"}
+    curved = batches["curved-skins"]
+    assert len(curved) == 13
+    assert not set(curved) & set(CONFIG["base_selectors"])
+    for selector in curved:
+        path_, node = selector.split("::")
+        assert (ROOT / path_).is_file(), path_
+        assert f"def {node}(" in (ROOT / path_).read_text(encoding="utf-8"), selector
     for selector in CONFIG["base_selectors"]:
         path, node = selector.split("::")
         assert (ROOT / path).is_file(), path
@@ -65,11 +83,22 @@ def test_build_cases_order_env_and_unique_outputs(tmp_path: Path) -> None:
                               CONFIG["friction_stages"] + CONFIG["orientation_stages"],
                               True)
     names = [case["name"] for case in cases]
+    batches = [f"{name}-batch" for name in CONFIG["additional_selector_batches"]]
     assert names[0] == "base-batch"
-    assert names[1:7] == [f"friction-{s}" for s in CONFIG["friction_stages"]]
-    assert names[7] == "orientation-full-plus"
-    assert names[8:11] == ["example-normal", "example-friction", "example-archive"]
-    assert names[11:] == ["example-restart-partial", "example-restart"]
+    assert names[1:1 + len(batches)] == batches
+    offset = 1 + len(batches)
+    assert names[offset:offset + 6] == [
+        f"friction-{s}" for s in CONFIG["friction_stages"]]
+    assert names[offset + 6] == "orientation-full-plus"
+    assert names[offset + 7:offset + 10] == [
+        "example-normal", "example-friction", "example-archive"]
+    assert names[offset + 10:] == [
+        "example-restart-partial", "example-restart", "example-contact-skins"]
+    skin = next(c for c in cases if c["name"] == "example-contact-skins")
+    assert skin["kind"] == "module"
+    assert skin["argv"] == [
+        "examples.elastic_sphere_panel_contact_skins", "--output",
+        str(tmp_path / "evidence" / "examples" / "contact-skins.json")]
     outputs = [(case["name"], str(case.get("junit")), str(case["env"]))
                for case in cases]
     assert len(set(outputs)) == len(outputs)
@@ -84,6 +113,14 @@ def test_build_cases_order_env_and_unique_outputs(tmp_path: Path) -> None:
     assert orientation["env"]["S3_PHYSICAL_ORIENTATION_STAGE"] == "full-plus"
     base = cases[0]
     assert len(base["argv"]) >= 14 and "CONTACT_APP_RESULT_RECORD" in base["env"]
+    batch_case = cases[1]
+    assert batch_case["name"] == "curved-skins-batch"
+    assert batch_case["kind"] == "pytest"
+    assert batch_case["argv"][2] == f"--junitxml={batch_case['junit']}"
+    assert batch_case["argv"][3:] == [
+        str(ROOT / s) for s in CONFIG["additional_selector_batches"]["curved-skins"]]
+    assert batch_case["junit"].name == "curved-skins-junit.xml"
+    assert batch_case["env"] == {}
 
 
 def test_junit_counts_classifies_failures_errors_and_skips(tmp_path: Path) -> None:
