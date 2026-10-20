@@ -1,0 +1,128 @@
+{
+  "status": "SLICE2_PRE_EXECUTION_FIXED_CASES_SCALES_AND_RECIPE",
+  "note": "Frozen slice-2 recipe: exact existing selectors/stages/scales; no new criteria",
+  "candidate_version": "0.4.7+contact.candidate.20261020.s2",
+  "repo_version": "0.4.7",
+  "private_versions": {
+    "ANYsolver": "0.4.7+contact.candidate.20261020.s2",
+    "anysolver-results": "2.1.1",
+    "ANYmaterial": "0.2.0",
+    "ANYgeometry": "0.4.3",
+    "ANYmesher": "0.5.0",
+    "ANYfileio": "0.3.2"
+  },
+  "wheel_files": {
+    "ANYsolver": "anysolver-0.4.7+contact.candidate.20261020.s2-py3-none-any.whl",
+    "anysolver-results": "anysolver_results-2.1.1-py3-none-any.whl",
+    "ANYmaterial": "anymaterial-0.2.0-py3-none-any.whl",
+    "ANYgeometry": "anygeometry-0.4.3-py3-none-any.whl",
+    "ANYmesher": "anymesher-0.5.0-py3-none-any.whl",
+    "ANYfileio": "anyfileio-0.3.2-py3-none-any.whl"
+  },
+  "sibling_dirs": {
+    "ANYmaterial": "ANYmaterial",
+    "ANYgeometry": "ANYgeometry",
+    "ANYmesher": "ANYmesh",
+    "ANYfileio": "ANYfileIO"
+  },
+  "sibling_refs": {
+    "ANYmaterial": "d8a233ef4c5e38d25dbba0eb20e6cfa8d44ec5a2",
+    "ANYgeometry": "91846898b03fa02b029abde82508eddb981efdc0",
+    "ANYmesher": "2ccef378c3efb4ba3a9957b9ab896ac8fc454b9d",
+    "ANYfileio": "db73950018e1c87dab0ca618c25c965030ba08ce"
+  },
+  "numerical_pins": [
+    "numpy==2.5.4",
+    "scipy==1.18.1",
+    "threadpoolctl==3.7.0",
+    "numba==0.68.0",
+    "shapely==2.2.0",
+    "pytest>=8",
+    "psutil>=5.9"
+  ],
+  "numerical_pins_note": "numpy/scipy/threadpoolctl/numba are the versions from docs/contact-candidate-20261019/requirements-tested.txt (that historical file stays immutable). shapely==2.2.0 is pinned prospectively for the new cold runtime from the observed baseline CI install in ci-positive-binding-shard.log (successful 2026-10-19 job, shapely-2.2.0 wheel); the historical numerical environment never imported Shapely, so no historical Shapely testing is claimed. pytest/psutil are ordinary check tooling.",
+  "base_selectors": [
+    "tests/test_general_contact_beam_pair.py::test_pair_force_control_and_split_restart_match_full_path",
+    "tests/test_general_contact_beam_pair.py::test_parallel_pair_has_analytic_line_work_balanced_wrench_and_tangent",
+    "tests/test_general_contact_beam_plane.py::test_b2_line_contact_runs_through_displacement_solver_and_checkpoint",
+    "tests/test_general_contact_beam_plane.py::test_b2_line_potential_force_tangent_and_gap_certificate",
+    "tests/test_general_contact_beam_plane.py::test_b3_deformed_curve_runs_through_static_solver",
+    "tests/test_general_contact_s3_friction_physical_path.py::test_canonical_material_work_and_whole_path",
+    "tests/test_general_contact_s3_friction_static.py::test_real_static_stick_slip_reversal_opening_and_split_restart",
+    "tests/test_general_contact_s3_plane.py::test_s3_plane_static_reaction_and_gap_use_physical_reference_offset",
+    "tests/test_general_contact_static_results_archive.py::test_actual_static_producer_consumer",
+    "tests/test_general_contact_static_results_archive.py::test_exact_detached_and_refusal",
+    "tests/test_general_contact_static_results_archive.py::test_independent_preservation_oracle",
+    "tests/test_general_contact_triangulated_rigid.py::test_complete_penalty_work_and_diagonal",
+    "tests/test_general_contact_triangulated_rigid.py::test_ordinary_force_and_path_restart"
+  ],
+  "friction_stages": ["full", "active-prefix", "prefix", "active-resume", "resume", "rollback"],
+  "friction_lifecycle_node": "tests/test_general_contact_s3_friction_physical_path.py::test_public_installed_lifecycle_and_restart",
+  "friction_rollback_node": "tests/test_general_contact_s3_friction_physical_path.py::test_public_trial_exception_and_inflight_cancellation",
+  "orientation_stages": ["full-plus"],
+  "orientation_node": "tests/test_general_contact_s3_physical_orientation.py::test_installed_s3_physical_orientation_stage",
+  "bundle_examples": [
+    "general_contact_automatic_s3_pair",
+    "general_contact_round_beam_pair",
+    "general_contact_round_beam_plane",
+    "general_contact_s3_friction_physical_path",
+    "general_contact_s3_physical_orientation",
+    "general_contact_s3_plane",
+    "general_contact_static_results_archive",
+    "general_contact_triangulated_rigid"
+  ],
+  "bundle_examples_note": "Exactly the eight previously delivered public examples plus the examples package marker; no experimental examples enter the bundle",
+  "example_commands": {
+    "normal": ["examples.general_contact_s3_physical_orientation"],
+    "friction": ["examples.general_contact_s3_friction_physical_path", "--output", "examples/friction.json"],
+    "archive": ["examples.general_contact_static_results_archive"],
+    "restart-partial": ["examples.general_contact_s3_friction_physical_path", "--through-step", "3", "--output", "examples/restart-partial.json"],
+    "restart-extract": ["extract-checkpoint", "examples/restart-partial.json", "examples/restart-checkpoint.json"],
+    "restart": ["examples.general_contact_s3_friction_physical_path", "--through-step", "7", "--restart", "examples/restart-checkpoint.json", "--output", "examples/restart.json"]
+  },
+  "timeouts": {
+    "case_seconds": 120,
+    "host_numerical_seconds": 600,
+    "rss_limit_mib": 953
+  },
+  "cross_host_bound": "maxabs(delta) <= 1e-9*maxabs(reference) + 1e-12*scale per declared quantity; exact non-numeric fields",
+  "cross_host_files": {
+    "friction_full": "friction/full.json",
+    "orientation_full": "orientation/full-plus.json",
+    "example_friction": "examples/friction.json"
+  },
+  "cross_host_quantities": [
+    ["friction_full", "displacements", "displacement_m", 1.0],
+    ["friction_full", "info.force_displacement_history[*].reaction_generalized[0]", "force_N", 0.02],
+    ["friction_full", "info.force_displacement_history[*].reaction_generalized[1]", "force_N", 0.02],
+    ["friction_full", "info.force_displacement_history[*].friction.dissipation_increment_j", "energy_J", 0.02],
+    ["friction_full", "poses[*].complete_contact_wrench.force", "dimensionless", 1.0],
+    ["friction_full", "poses[*].complete_contact_wrench.moment", "dimensionless", 1.0],
+    ["friction_full", "poses[*].coupled_equilibrium_normalized", "dimensionless", 1.0],
+    ["orientation_full", "target_node9_uz_m", "displacement_m", 1.0],
+    ["orientation_full", "upper_actuator_ux_m", "displacement_m", 1.0],
+    ["orientation_full", "phase_wrench_errors[*].force", "dimensionless", 1.0],
+    ["orientation_full", "phase_wrench_errors[*].moment", "dimensionless", 1.0],
+    ["orientation_full", "all_free_equilibrium_normalized_error", "dimensionless", 1.0],
+    ["example_friction", "phases[*].reaction_generalized[0]", "force_N", 0.02],
+    ["example_friction", "phases[*].friction.dissipation_increment_j", "energy_J", 0.02]
+  ],
+  "cross_host_exact": [
+    ["friction_full", "status"],
+    ["friction_full", "snapshot_inventory"],
+    ["friction_full", "verified"],
+    ["friction_full", "info.force_displacement_history[*].friction.branch"],
+    ["orientation_full", "status"],
+    ["orientation_full", "stage"],
+    ["orientation_full", "identity"],
+    ["orientation_full", "selections"],
+    ["orientation_full", "settings"],
+    ["orientation_full", "criteria"],
+    ["orientation_full", "physical_inputs"],
+    ["orientation_full", "verified"],
+    ["orientation_full", "opening_verified"],
+    ["example_friction", "status"],
+    ["example_friction", "physical_scope"]
+  ],
+  "scale_provenance": "CASE_FREEZE.json W3_W4_W5_W6_W10 group (displacement_m 1, force_N 0.02, length_m 1, energy_J 0.02); dimensionless normalized diagnostics use scale 1"
+}

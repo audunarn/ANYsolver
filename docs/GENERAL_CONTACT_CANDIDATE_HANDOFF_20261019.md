@@ -21,15 +21,15 @@ bootstrapper is authorized by this transition.
 The one-time independent planning review used Claude CLI Fable at medium
 effort, read-only: 80 successful file-tool calls, no tests or edits. It is
 retained at `C:/ANYworkspaceWork/main-housecleaning-20261019/contact-incremental-review-20261020-v1/`.
-Mistral is now available and owns slice 1 implementation; the integrating
+Mistral is available and owns the bounded implementation slices; the integrating
 owner retains contracts, artifact verification and Git delivery. Current
 execution receipts live under `C:/ANYworkspaceWork/contact-incremental-delivery-20261020/`.
 
 | Slice | Deliverable | Current state |
 |---|---|---|
 | 1 | Public friction settings, clear supported examples and guide | Delivered; five focused checks and installed normal/friction/restart/archive commands pass |
-| 2 | Same installed candidate on Windows/Ubuntu; normal/friction/restart/archive checks | Not started; old CI skips staged friction checks |
-| 3 | Truthful rejected-trial outcome and exact last-accepted-state recovery | Not started |
+| 2 | Same installed candidate on Windows/Ubuntu; normal/friction/restart/archive checks | Implemented; Windows cold install, 20 selected assertions, examples and active/open replay pass; Ubuntu CI pending |
+| 3 | Truthful rejected-trial outcome and exact last-accepted-state recovery | Test-contract repair implemented; focused verification in progress |
 
 Scientific criteria, capability flags, scoped deviations and preserved failures
 remain binding. Full D1/Q4, native material/dynamics, independent coupled-response
@@ -44,6 +44,8 @@ restart endpoint difference was zero and friction history matched exactly.
 This is a fresh-target install with existing numerical dependencies, not a
 cold-environment or cross-host claim. The local 1,800-second scope is closed;
 failed pip temporary-directory preparation and all process receipts are retained.
+
+Slice 2: [current handoff](contact-incremental-20261020/SLICE2_HANDOFF.md) and [artifact receipt](contact-incremental-20261020/SLICE2_DELIVERY.json). No product arithmetic changed; cross-host delivery remains pending the dedicated CI result.
 
 Subsequent main ownership/push/CI update: see
 [MAIN_HOUSECLEANING_20261019.md](MAIN_HOUSECLEANING_20261019.md). The user later

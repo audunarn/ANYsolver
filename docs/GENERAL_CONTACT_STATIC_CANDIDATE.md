@@ -66,14 +66,14 @@ settings.
 Two supported routes:
 
 1. **Current candidate bundle** (recommended for evaluation):
-   `C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice1/ANYsolver-contact-candidate-20261020-s1.zip`.
+   `C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice2/ANYsolver-contact-candidate-20261020-s2.zip`.
    The extracted bundle ROOT contains `examples/` and a `wheelhouse/` with
    the six pure-Python private wheels (ANYsolver, ANYresults, ANYmaterial,
    ANYgeometry, ANYmesher, ANYfileio). From the bundle ROOT, in a fresh
    virtual environment:
 
    ```text
-   python -m pip install --find-links wheelhouse -r requirements-tested.txt "ANYsolver[general-contact]==0.4.7+contact.candidate.20261020.s1" "ANYsolver-results==2.1.1" "ANYmaterial==0.2.0" "ANYgeometry[planar]==0.4.3" "ANYmesher==0.5.0" "ANYfileio==0.3.2"
+   python -m pip install --find-links wheelhouse -r requirements-tested.txt "ANYsolver[general-contact]==0.4.7+contact.candidate.20261020.s2" "ANYsolver-results==2.1.1" "ANYmaterial==0.2.0" "ANYgeometry[planar]==0.4.3" "ANYmesher==0.5.0" "ANYfileio==0.3.2"
    ```
 
    Numeric and Shapely dependencies resolve normally from their usual
@@ -125,8 +125,7 @@ qualification; only the listed workflows have the stated evidence.
 
 - Agreement claims are for the declared finite-penalty law and chosen
   geometry, not continuum or mesh/model error estimates.
-- Cross-machine/Ubuntu replay, cold new-environment dependency installation
-  and full required CI evidence for the merged tree remain open items in the
-  handoff; the 2026-10-19 measurements are same-host Windows evidence.
+- Cross-machine/Ubuntu replay and full required CI evidence remain open until the Contact candidate workflow completes. Windows cold installation with pinned dependencies, package origins, normal/friction/archive and active/open restart passed on 2026-10-20. Historical evidence below does not establish Ubuntu portability.
+- The 2026-10-19 measurements remain same-host Windows historical evidence.
 - Capability/released/admitted flags are unchanged; nothing on this page
   admits the candidate into qualified production scope.

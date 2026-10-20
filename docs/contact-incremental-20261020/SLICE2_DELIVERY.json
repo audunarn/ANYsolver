@@ -1,0 +1,27 @@
+{
+  "status": "LOCALLY_VERIFIED_CROSS_HOST_PENDING",
+  "bundle": "C:\\ANYworkspaceWork\\contact-incremental-delivery-20261020\\slice2\\ANYsolver-contact-candidate-20261020-s2.zip",
+  "sha256": "a293864078b0e9f5ba32eb346c1faefcdc962589289e8e3c3cae2747ef949f31",
+  "bytes": 4777599,
+  "version": "0.4.7+contact.candidate.20261020.s2",
+  "source_parent": "faea8caddef53973d12300d91e5095a23e5e4744",
+  "local_verification": {
+    "status": "PASS",
+    "solver_files_exact": 727,
+    "six_wheels": [
+      "aa3937d6ca39958dcfe70b76b9855088ca039d6ddb47a0ad23eafd85b357dd05",
+      "ac54ca27e5eec70e2cefe56782d5e1b6af03719212ed0ea5dcb8b77d9f3cbfd6",
+      "505f23131f147abd670e5e7d4231ba98f7d661bb4d5431ab2ccd7c04c09a1232",
+      "00aac6a04231a569496d7e44289355c8b11c137209c8ade193cdeeaf7ac1dd57",
+      "ade5ed8548a9d536fa9a85595c97003e4a84045cbc97cab53f44e72b8a1ceb13",
+      "c2ab7a457b6a19266a1ac9fe5a71313fc9abb5d43d876c9b07542b41f845656a"
+    ],
+    "cold_host": "Windows Python3.12.13",
+    "ubuntu": "PENDING CI",
+    "same_host_cases": 14,
+    "pytest_assertions": 20,
+    "transfer_cases": 4,
+    "tool_tests": 14,
+    "mechanics_unchanged": true
+  }
+}

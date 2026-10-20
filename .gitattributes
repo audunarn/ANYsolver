@@ -1066,3 +1066,6 @@ docs/reference_cases/Q4_SOURCE_BINDING_REVIEW_20261019.md text eol=lf
 docs/main-housecleaning-20261019/C5_SCOPED_ACCEPTANCE_20261016.json -text
 # New source-only binding includes the already committed fe_core carrier bytes.
 src/anysolver/fe_core.py -text whitespace=blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+
+# One exact candidate configuration is shared by both host checkouts.
+scripts/contact_candidate_slice2.json text eol=lf
