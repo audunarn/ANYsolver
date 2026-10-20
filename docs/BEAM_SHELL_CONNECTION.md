@@ -128,6 +128,15 @@ carrying a stopped terminal state preserves information for inspection but is
 refused for continuation. Retain a completed intermediate target as the prefix
 for a later restart; this is the intended recovery workflow.
 
+The registered plastic beam-shell case has not yet demonstrated that file-based
+workflow. Its direct full-target attempt was refused during checkpoint creation
+(`checkpoint state for element 1 is incompatible`), while the interpolated
+attempt reached its 120-second process bound without a terminal result. The
+unshipped checkpoint example and failed evidence are retained in the task
+handover. The delivered standalone example therefore supports pre-yield force
+control only. The earlier demonstrated plastic restart uses accepted in-memory
+state and must not be represented as a demonstrated serialized checkpoint route.
+
 ## Evidence and limits
 
 This is a public selection of existing kinematics, not general scientific
