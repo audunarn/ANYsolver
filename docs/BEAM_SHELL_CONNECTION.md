@@ -130,20 +130,52 @@ checks do not establish a passing full suite or general scientific qualification
 `result.displacements` at the probe node's DOFs. Under displacement control
 the achieved controlled value is `result.steps[-1].control_value`; compare it
 against the requested target. `result.converged` alone is not completion: it
-also covers `stopped_at_limit` results that stopped before the target. A
+also covers `stopped_at_limit` results that stopped before the target.
 Checkpoint continuation requires a terminal `completed` status. A checkpoint
 carrying a stopped terminal state preserves information for inspection but is
 refused for continuation. Retain a completed intermediate target as the prefix
 for a later restart; this is the intended recovery workflow.
 
-The registered plastic beam-shell case has not yet demonstrated that file-based
-workflow. Its direct full-target attempt was refused during checkpoint creation
-(`checkpoint state for element 1 is incompatible`), while the interpolated
-attempt reached its 120-second process bound without a terminal result. The
-unshipped checkpoint example and failed evidence are retained in the task
-handover. The delivered standalone example therefore supports pre-yield force
-control only. The earlier demonstrated plastic restart uses accepted in-memory
-state and must not be represented as a demonstrated serialized checkpoint route.
+## Completed-prefix plastic checkpoint workflow
+
+The source workflow passes 12 checkpoint tests and 113 shared-contract and
+compatibility tests. The four default-continuation checks left unfinished by
+the combined run's timeout subsequently passed unchanged. Their comparison
+reference reuses the completed, hash-verified uninterrupted path; prefixes and
+resumes run fresh. This establishes the registered workflow, not general
+scientific qualification. See the task handover for the retained evidence.
+
+The source example's `--case plastic` uses the same S355 model with tip
+displacement control. The full target is the case-specific revised endpoint
+-11/60 m with 11 initial increments. A completed -0.10 m prefix uses 6 initial
+increments; restarting it uses 5. All retain at most 40 Newton iterations and
+tolerance 1e-8. Adaptive subdivision can add accepted increments.
+Run each command in its own process, with the same coupling selection:
+
+```text
+python examples/beam_shell_coupling.py --case plastic --coupling interpolated --checkpoint-out full.json
+python examples/beam_shell_coupling.py --case plastic --coupling interpolated --stage prefix --checkpoint-out prefix.json
+python examples/beam_shell_coupling.py --case plastic --coupling interpolated --restart prefix.json --checkpoint-out resumed.json
+```
+
+Use `--coupling direct` for the matching two-element beam; `interpolated` uses
+three beam elements. JSON reports `requested_control`, `achieved_control`,
+`control_error`, achieved load factor and constraint outcome. Exit 0 requires
+completed status, displacement error at most 1e-8 m and passing constraints.
+`accepted_increments` includes the restored prefix on a completed restart;
+on cancellation it counts new increments observed in the current process.
+
+Checkpoints use the existing `restart_checkpoint_bytes()` API and are replaced
+atomically only on successful completion. Refusal, incomplete solves and
+cancellation preserve existing recovery files. Model/settings validation and
+failed-terminal checkpoint refusal remain enforced. This workflow introduces
+no checkpoint format or manual-state bypass. The original failed attempt and
+timeout remain preserved in the handover.
+
+This source workflow is newer than the pinned installed candidate described
+above. That unchanged artifact still contains the pre-yield example only.
+Neither the original -0.20 m target nor director continuation or analytical
+accuracy is established by the completed-prefix workflow.
 
 ## Evidence and limits
 

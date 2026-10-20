@@ -19,17 +19,39 @@ interpolated mid-span beam nodes to weighted shell masters.
 Command line::
 
     python examples/beam_shell_coupling.py [--coupling direct|interpolated]
+                                          [--case preyield|plastic]
+                                          [--stage full|prefix]
+                                          [--restart CHECKPOINT_PATH]
+                                          [--checkpoint-out CHECKPOINT_PATH]
                                           [--output results.json]
+
+The registered plastic case (``--case plastic``) solves the same model with
+public displacement control on the tip probe node ``uz``: the full target
+-11/60 m in 11 increments, or a completed prefix of -0.10 m in 6
+increments (``--stage prefix``), each with at most 40 iterations per
+increment and tolerance 1e-8. A prefix checkpoint written with
+``--checkpoint-out`` can finish the remaining 5 increments to -11/60 m in
+a later process with ``--restart PATH``. The restart checkpoint is saved
+through ``result.restart_checkpoint_bytes()`` only when the solver
+actually completed the requested target; cancellation, failure and
+refused restarts never write or overwrite a checkpoint file. A restart
+checkpoint that does not end at a continuable completed target is
+refused by the solver and reported truthfully with a nonzero exit
+status.
 
 The JSON summary is always written to stdout; with ``--output`` the same
 document is also written to the given path. Exit status 0 means valid
-completion only.
+completion only; incompatible flag combinations are rejected with exit
+status 2 before any solve runs.
 """
 from __future__ import annotations
 
 import argparse
 import json
+import os
+import tempfile
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Callable, Optional
 
 import numpy as np
@@ -38,6 +60,7 @@ from anysolver import (
     BoundaryCondition,
     CoupledBeamShellElement,
     CancellationToken,
+    DisplacementControl,
     FEModel,
     InterpolatedBeamShellMPCElement,
     LoadCase,
@@ -72,6 +95,21 @@ COMPLETION_LOAD_FACTOR_TOL = 1.0e-8
 
 COUPLINGS = ("direct", "interpolated")
 DEFAULT_COUPLING = "interpolated"
+
+# Registered plastic displacement-control case (Slice 3 continuation
+# fixture): tip probe uz to -11/60 m in 11 increments, or a completed
+# prefix of -0.10 m in 6 increments resumed with 5 increments, at most 40
+# iterations per increment, tolerance 1e-8.
+DC_TARGET = -11.0 / 60.0
+DC_FULL_STEPS = 11
+DC_PREFIX_TARGET = -0.10
+DC_PREFIX_STEPS = 6
+DC_RESUME_STEPS = 5
+DC_MAX_ITERATIONS = 40
+DC_TOLERANCE = 1.0e-8
+COMPLETION_CONTROL_TOL = 1.0e-8
+CASES = ("preyield", "plastic")
+STAGES = ("full", "prefix")
 
 
 @dataclass
@@ -205,6 +243,7 @@ class _AcceptedHistory:
     def __init__(self, observer: Optional[Callable[[Any], None]] = None) -> None:
         self.accepted_increments = 0
         self.last_accepted_load_factor: Optional[float] = None
+        self.last_control_value: Optional[float] = None
         self._observer = observer
 
     def __call__(self, event: Any) -> None:
@@ -213,6 +252,8 @@ class _AcceptedHistory:
             load_factor = event.get("load_factor")
             if load_factor is not None:
                 self.last_accepted_load_factor = float(load_factor)
+            if event.get("control_value") is not None:
+                self.last_control_value = float(event["control_value"])
         if self._observer is not None:
             self._observer(event)
 
@@ -286,6 +327,92 @@ def run(
     }
 
 
+def run_plastic(
+    coupling: str = DEFAULT_COUPLING,
+    *,
+    stage: str = "full",
+    restart_checkpoint=None,
+    checkpoint_out=None,
+    case: Optional[BeamShellCase] = None,
+    cancellation_token: Optional[CancellationToken] = None,
+    progress_callback: Optional[Callable[[Any], None]] = None,
+) -> dict:
+    """Continue from a completed prefix through the existing checkpoint API.
+
+    A failed or cancelled solve never replaces ``checkpoint_out``. The solver
+    remains responsible for validating the checkpoint and refusing incomplete
+    terminal states; this example does not reconstruct initial material state.
+    """
+    if stage not in ("full", "prefix"):
+        raise ValueError("stage must be full or prefix")
+    if restart_checkpoint is not None and stage != "full":
+        raise ValueError("restart requires the full plastic stage")
+    if case is None:
+        case = build_model(coupling)
+    target = DC_PREFIX_TARGET if stage == "prefix" else DC_TARGET
+    increments = (DC_PREFIX_STEPS if stage == "prefix" else
+                  DC_RESUME_STEPS if restart_checkpoint is not None else DC_FULL_STEPS)
+    history = _AcceptedHistory(progress_callback)
+    payload = {
+        "case": "plastic", "coupling": case.coupling,
+        "requested_control": target, "achieved_control": None,
+        "control_error": None, "probe_displacement": None,
+        "achieved_load_factor": None, "accepted_increments": 0,
+        "constraint_postcheck": None, "completed": False,
+        "checkpoint_written": False,
+    }
+    try:
+        result = solve_static_nonlinear(
+            case.model, case.load, control="displacement",
+            displacement_control=DisplacementControl(
+                node_id=case.probe_node_id, dof="uz", target_displacement=target),
+            kinematics="corotational", num_steps=increments,
+            max_iterations=DC_MAX_ITERATIONS, tolerance=DC_TOLERANCE,
+            record_increment_snapshots=True, emit_restart_checkpoint=True,
+            restart_checkpoint=restart_checkpoint,
+            cancellation_token=cancellation_token, progress_callback=history,
+        )
+    except SolveCancelled as exc:
+        payload.update(status="cancelled", stop_reason=exc.reason,
+                       achieved_control=history.last_control_value,
+                       probe_displacement=history.last_control_value,
+                       achieved_load_factor=history.last_accepted_load_factor,
+                       accepted_increments=history.accepted_increments)
+        return payload
+    except ValueError as exc:
+        payload.update(status="refused", stop_reason=str(exc))
+        return payload
+    achieved = _probe_uz(case, result.displacements)
+    postcheck = result.info.get("constraint_postcheck")
+    error = abs(achieved - target)
+    completed = bool(result.status == "completed" and error <= 1e-8
+                     and isinstance(postcheck, dict) and postcheck.get("status") == "passed")
+    payload.update(status=result.status, stop_reason=result.stop_reason,
+                   achieved_control=achieved, probe_displacement=achieved,
+                   control_error=error, achieved_load_factor=float(result.load_factor),
+                   accepted_increments=len(result.steps), constraint_postcheck=postcheck,
+                   completed=completed)
+    if completed and checkpoint_out is not None:
+        # Serialize before opening a file, and replace atomically only after the
+        # complete checkpoint has been flushed. Existing recovery files survive
+        # solver refusal, cancellation and serialization/write failure.
+        data = result.restart_checkpoint_bytes()
+        destination = Path(checkpoint_out)
+        temporary = None
+        try:
+            with tempfile.NamedTemporaryFile(dir=destination.parent, delete=False) as stream:
+                temporary = Path(stream.name)
+                stream.write(data)
+                stream.flush()
+                os.fsync(stream.fileno())
+            temporary.replace(destination)
+            payload["checkpoint_written"] = True
+        finally:
+            if temporary is not None:
+                temporary.unlink(missing_ok=True)
+    return payload
+
+
 def main(argv: Optional[list] = None) -> int:
     parser = argparse.ArgumentParser(
         description="Registered pre-yield beam-shell coupling example"
@@ -298,9 +425,22 @@ def main(argv: Optional[list] = None) -> int:
         "--output", default=None,
         help="optional path that additionally receives the JSON document",
     )
+    parser.add_argument("--case", choices=("preyield", "plastic"), default="preyield")
+    parser.add_argument("--stage", choices=("full", "prefix"), default="full")
+    parser.add_argument("--restart", type=Path)
+    parser.add_argument("--checkpoint-out", type=Path)
     args = parser.parse_args(argv)
-    payload = run(args.coupling)
-    document = json.dumps(payload, indent=2)
+    if args.case == "preyield" and (args.stage != "full" or args.restart or args.checkpoint_out):
+        parser.error("stage/restart/checkpoint options require --case plastic")
+    if args.restart and args.stage != "full":
+        parser.error("--restart requires --stage full")
+    if args.case == "plastic":
+        restart = args.restart.read_bytes() if args.restart else None
+        payload = run_plastic(args.coupling, stage=args.stage,
+                              restart_checkpoint=restart, checkpoint_out=args.checkpoint_out)
+    else:
+        payload = run(args.coupling)
+    document = json.dumps(payload, indent=2, allow_nan=False)
     print(document)
     if args.output is not None:
         with open(args.output, "w", encoding="utf-8") as stream:

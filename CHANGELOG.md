@@ -2,11 +2,25 @@
 
 ## Unreleased
 
+- Deliver the source S355 beam-shell completed-prefix checkpoint workflow for
+  direct and interpolated default coupling: 11/6/5 initial increments to
+  -11/60 m via -0.10 m, with unchanged material, iteration controls and tolerances.
+  Bind corotational Q4 checkpoint records at their constitutive reference
+  deformation in emission, validation and restart preflight. Retain existing
+  schema, integrity checks, failed-terminal refusal and `.converged` semantics.
+  Cancellation and rejected trials preserve caller inputs and recovery files.
+  The previously pinned installed artifact remains pre-yield only.
+  Twelve checkpoint and 113 shared/compatibility tests pass. The four remaining
+  default regressions also pass, using a retained completed comparison fixture
+  with fresh production prefixes/resumes and unchanged assertions. The earlier
+  timed-out selection remains preserved; no full-suite or scientific-gate claim.
+
 - Deliver a private Windows Python 3.12 beam-shell pre-yield candidate, version
   `0.4.7+beam.shell.candidate.20261020.s3`, with wheel, sdist, pinned dependencies
   and recorded installed verification (65 focused tests and both CLI modes).
-  Serialized plastic checkpoint delivery remains blocked by state validation;
-  its failed candidate is preserved without changing solver guards or mechanics.
+  That artifact omits serialized plastic checkpoints, which were blocked at its
+  source identity; the failed candidate remains preserved. The newer source
+  workflow above is not included in that unchanged artifact.
   Director continuation and analytical accuracy remain open.
 
 - Add the standalone public example `examples/beam_shell_coupling.py` for the

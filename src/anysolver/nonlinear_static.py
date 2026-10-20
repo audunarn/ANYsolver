@@ -2148,6 +2148,7 @@ def _prepare_qualified_q4_states_for_nonlinear_solve(
     *,
     supplied_element_ids: Sequence[int],
     ordinary_restart: bool,
+    kinematics: str = "von_karman",
     allow_explicit_initial_material_states: bool = False,
     expected_deleted_element_ids: Sequence[int] = (),
     deletion_records: Sequence[Any] = (),
@@ -2156,8 +2157,9 @@ def _prepare_qualified_q4_states_for_nonlinear_solve(
 ) -> Dict[int, Any]:
     """Validate supplied Q4 seals, then remove them from an owned copy.
 
-    A Q4 seal binds a *committed* constitutive payload to one exact global
-    displacement/configuration.  It must therefore be checked before the
+    A Q4 seal binds a *committed* constitutive payload to one exact owner
+    displacement/configuration (reference deformation for corotational Q4).
+    It must therefore be checked before the
     first nonlinear element evaluation, but it must not travel through the
     packed trial-state machinery.  Historical Q4 states that predate the seal
     are accepted only on the ordinary restart path where an exact committed
@@ -2229,6 +2231,11 @@ def _prepare_qualified_q4_states_for_nonlinear_solve(
                 f"qualified Q4 element {element_id} must map exactly 24 DOFs"
             )
         local_u = np.asarray(full[dofs], dtype=np.float64)
+        if has_binding and kinematics == "corotational":
+            from .corotational import _corotational_cache, _corotational_deformation_state
+
+            reference = _corotational_cache(model)[element_id]
+            local_u, _, _ = _corotational_deformation_state(reference, element, local_u)
         if has_disposition:
             if not has_binding or element_id not in expected_deleted:
                 raise ValueError(
@@ -2473,12 +2480,17 @@ def _seal_final_qualified_q4_states(
     info: Optional[Dict[str, Any]] = None,
     *,
     kinematics: str = "von_karman",
+    seal_corotational_checkpoint: bool = False,
     deleted_element_ids: Sequence[int] = (),
     deleted_dispositions: Optional[Mapping[int, Any]] = None,
     deletion_records: Sequence[Any] = (),
     residual_stiffness_fraction: Optional[float] = None,
 ) -> Dict[int, Any]:
-    """Materialize and seal every finalized additive-von-Karman Q4 state."""
+    """Seal finalized Q4 states in their constitutive owner's coordinates.
+
+    Corotational sealing is opt-in at the displacement checkpoint boundary;
+    ordinary returned histories retain their established lifecycle.
+    """
 
     states = dict(element_states)
     normalized_kinematics = str(kinematics)
@@ -2489,7 +2501,10 @@ def _seal_final_qualified_q4_states(
         )
         for element in model.mesh.elements.values()
     )
-    if normalized_kinematics != "von_karman" and not has_solver_integrated_s3:
+    corotational_checkpoint = (
+        normalized_kinematics == "corotational" and seal_corotational_checkpoint
+    )
+    if normalized_kinematics != "von_karman" and not has_solver_integrated_s3 and not corotational_checkpoint:
         return states
     full = np.asarray(displacements, dtype=np.float64)
     if (
@@ -2517,7 +2532,7 @@ def _seal_final_qualified_q4_states(
     for raw_element_id, element in sorted(
         model.mesh.elements.items(), key=lambda item: int(item[0])
     ):
-        if normalized_kinematics != "von_karman":
+        if normalized_kinematics != "von_karman" and not corotational_checkpoint:
             break
         hooks = _qualified_q4_committed_state_hooks(element)
         if hooks is None:
@@ -2529,6 +2544,11 @@ def _seal_final_qualified_q4_states(
                 f"qualified Q4 element {element_id} must map exactly 24 DOFs"
             )
         local_u = np.asarray(full[dofs], dtype=np.float64)
+        if corotational_checkpoint:
+            from .corotational import _corotational_cache, _corotational_deformation_state
+
+            reference = _corotational_cache(model)[element_id]
+            local_u, _, _ = _corotational_deformation_state(reference, element, local_u)
         state = states.get(element_id)
         if element_id in deleted:
             if state is None or element_id not in disposition_by_id:
@@ -5035,6 +5055,12 @@ def _solve_static_displacement_control(
     ).to_dict()
     restart_payload = None
     if restart_analysis_contract is not None:
+        # Seal the accepted constitutive record at the same reference
+        # deformational coordinates used by assembly, before validation.
+        committed_states = _seal_final_qualified_q4_states(
+            model, u_final, committed_states, num_layers, info,
+            kinematics=kinematics, seal_corotational_checkpoint=True,
+        )
         restart_payload = create_nonlinear_checkpoint(
             analysis_kind="static",
             model=model,
@@ -6573,6 +6599,7 @@ def _solve_static_nonlinear_under_lease(
         num_layers,
         info,
         supplied_element_ids=supplied_state_ids,
+        kinematics=kinematics,
         ordinary_restart=bool(
             initial_element_states is not None
             and initial_displacements is not None
@@ -7064,6 +7091,7 @@ def _solve_static_nonlinear_under_lease(
                 info,
                 supplied_element_ids=tuple(sorted(int(value) for value in committed_states)),
                 ordinary_restart=True,
+                kinematics=kinematics,
             )
             info["load_program_preload"] = {
                 "status": preload_result.status,

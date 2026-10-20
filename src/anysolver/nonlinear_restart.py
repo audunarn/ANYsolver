@@ -1469,6 +1469,15 @@ def validate_nonlinear_checkpoint(
                     if finite_local_states:
                         from .general_contact.finite_rotation_state import owner_local_coordinates
                         local_u = owner_local_coordinates(model, element, local_u)
+                    elif (str(analysis_kind) == "static"
+                          and normalized_analysis_contract.get("schema") == "ANYSOLVER_STATIC_RESTART_CONTRACT_V1"
+                          and normalized_analysis_contract.get("kinematics") == "corotational"):
+                        # V1 already fingerprints kinematics. Its Q4 histories
+                        # belong to the generic owner's reference deformation,
+                        # while the outer checkpoint stores global coordinates.
+                        from .corotational import _corotational_cache, _corotational_deformation_state
+                        reference = _corotational_cache(model)[element_id]
+                        local_u, _, _ = _corotational_deformation_state(reference, element, local_u)
                     QualifiedE4PLShellElement.validate_committed_current_tangent_state(
                         element,
                         model.mesh,

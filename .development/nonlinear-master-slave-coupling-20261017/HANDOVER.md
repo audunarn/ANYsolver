@@ -2081,3 +2081,108 @@ Slice2 ownership transition: initial80-turn Mistral run delivered inspection-onl
 Slice2 BLOCKED, notdelivered. Initialverification14PASS/8ERROR,221.6538463s/1800. Directfull CLI returned refusal checkpoint state for element1 incompatible after73.836s; interpolatedfull child timedout at120s withno terminalresult. Subsequent8fixture-dependent cases couldnotrun; they are notscientificpasses. Staticlocalization: genericcorotational Q4 finalizer doesnotseal current-tangent checkpointstate; checkpointvalidator enforcesqualifiedstate binding. No solver/source/stateguard changes or speculative mechanicaladapter adopted; supporting this needs a separate bounded state-frame/lifecycle integration task. Full candidate/source/tests archived in incremental-20261020/slice2/blocked-candidate with hashes in BLOCKED.json; existing failedrawlogs retained. Restored example/guide/changelog to verifiedSlice1commit20da7d698 before updating documentedlimits; no unshipped plasticCLI is exposed. Historicalbudget untouched. Slice3 packages the committed preyield workflow only, with completed-prefix plastic delivery explicitlyomitted.
 
 Slice3 prospective delivery: OpenAI fallback remains owner after documented Mistral execution unreliability; no repeated probe/review. Package frozen committed sourceab407246a, not concurrent dirty contact files/build helpers. New scriptbuild_beam_shell_candidate.py reuses the packaging helper and configuration extracted from that samecommit; builds wheel+sdist in isolated staging and reuses five immutable pinned privatewheels. Packageversion0.4.7+beam.shell.candidate.20261020.s3; repositoryreleaseunchanged. Installedscope is Slice1preyield only; plasticcheckpoint explicitlyomitted. Fresh WindowsPython3.12 venv/JIToff/thread1/retired0 origin+payload checks planned; no crosshost/qualification work. Slice3 fresh1800s/300reserve ledger applies.
+
+### Slice 2 one retry — 2026-10-20
+User authorises one retry. Continue OpenAI ownership because the prior Mistral execution was unreliable; preserve that failed handoff. Use the existing remaining 1578.3461537 seconds, including the 300-second protected reserve; no renewed historical authority. First discriminate missing sealing versus wrong state coordinates on the unchanged completed direct prefix, retaining checkpoint arguments and exception causes. Only a checkpoint integration repair is authorised; no material, mechanics, continuation-control or tolerance changes. If repair is supported, give interpolated children up to 240 seconds and retain timeout receipts in finally. One repair/verification pass, required affected shared regressions, then stop with exact evidence.
+
+Retry checkpoint: unchanged direct prefix discriminant confirmed missing binding; correct 5-layer replay seals/validates both Q4 states only at generic corotational deformational coordinates and preserves original states. The first exploratory discriminant mistakenly used 3 layers; its full failed trace remains in evidence/retry-prefix-discriminant/stdout.txt. Corrected fixed-state replay used contract num_layers=5, no new solve. Candidate emission/validation now writes completed direct full and prefix checkpoints (49.6523422 and 42.9772064 seconds). Resume identifies the second seam: generic initial-state preflight validates the local-bound seal against global coordinates. Adopt the same pullback there, with no bypass or changed contract fingerprint. Also correct the archived test oracle's missing coupling field. Complete current batch before mutating its inputs; one repair pass remains.
+
+The single repair pass passed all 12 checkpoint workflow tests in 199.54617410000355 seconds process wall (exact receipt retained). Both modes' full/prefix processes are retained from the first retry batch; only the new bound-state preflight branch changed, which those virgin-state runs never enter. The final pass copies their immutable checkpoint bytes and records per-file hashes, then runs fresh-process resumed solves and all affected material/equilibrium/cancellation/rejection assertions. No scientific tolerance changed. Proceed to final integrated restart/state-lifecycle/default-continuation regression, maximum 600 seconds, with 1008.7 seconds remaining and the 300-second reserve still protected.
+
+
+### Slice 2 one-retry handoff — implementation retained, acceptance incomplete
+
+OpenAI fallback completed a narrow checkpoint integration candidate. Q4 states
+are sealed, validated and admitted at the generic corotational owner's reference
+deformational coordinates, not global displacements. No constitutive mechanics,
+material transitions, continuation algorithm, controls, tolerances, checkpoint
+schema or public `.converged` meaning changed. Solver guards and failed-terminal
+refusal remain enforced. The source example now exposes full/prefix/file restart;
+documentation explicitly labels it an uncommitted candidate.
+
+Measured evidence (all failures and prior blocked candidate retained):
+- `slice2/evidence/retry-repaired-checkpoint-workflow`: 12 passed, exact process
+  wall 199.54617410000355 s. Both couplings' resumed displacement/load/material
+  histories match uninterrupted continuation, with target error <=1e-8 m,
+  independent relative residual <=1e-7, unchanged constraint/wrench checks,
+  accepted-history/cancellation/input/file preservation and failed-terminal refusal.
+- `slice2/evidence/retry-final-isolated-shared-contracts`: 113 collected/passed,
+  zero failures, shared restart/Q4 lifecycle/storage and connection/director-trace
+  compatibility modules. Effective source origins, JIT disabled and numerical
+  thread count 1 verified in preflight AND terminal runtime record; retired
+  programme selection disabled.
+- Earlier pre-yield workflow: 10 passed in the first retry batch; that batch also
+  retained 8 fixture errors from the diagnosed second preflight seam. Those
+  failures were repaired in the single repair pass, not discarded or relabelled.
+- `slice2/evidence/retry-final-shared-regression-execution`: exit 124, runner
+  timeout 580 s; measured parent process wall 582.2147248999827 s. 71 pass-progress
+  markers, no terminal pytest summary, so no fabricated full-selection count.
+  Completed direct/interpolated full-target accepted and terminal arrays remain
+  in its portable-run basetemp. Four existing default checks remain unfinished:
+  interpolated in-memory resume comparison, rejected restart admission, cancelled
+  resume/reuse, and rejected-increment snapshots. The first was running at timeout.
+- `slice2/evidence/retry-collection-identities/stdout.txt`: 152 exact collected
+  identities in the union; collection is not passing execution.
+
+Candidate source snapshot: `incremental-20261020/slice2/retry-candidate-v1/`.
+Identity manifest and `slice2/RETRY_DELIVERY.json` bind base main b32e998a5 and
+all six changed/new source/test/example/documentation files. Candidate identity:
+`a1b371868901f62a4d307714b34f6877b8d0cafd52414c450cc0ae3742328a93`.
+
+Final independent Slice 2 ledger: 1420.5299719000031/1800 s used;
+379.47002809999685 s remain, including the protected 300-second reserve. The
+historical numerical ledger and all three director-failure tests retain their
+previous SHA256 identities. No further numerical checks or repair attempts are
+launched under this one retry. The remaining default verification does not fit
+its non-reserve remainder; no extension or scientific waiver is inferred.
+
+Status: **implemented and focused-verified, final verification incomplete**.
+Slice 2 is NOT accepted. Leave the reviewable candidate uncommitted in the working
+tree; main's committed identity, existing installable pre-yield bundle and all
+historical scientific gates remain unchanged. No commit, push, release, extra
+review or qualification campaign. Continue only after a new user scope decision.
+
+### Second Slice 2 retry — reuse completed reference, 2026-10-20
+User explicitly resumes the unfinished verification. No new numerical allowance is inferred: 379.4700281 seconds remain. This is final verification, so the existing 300-second reserve is allocated to its intended use, leaving all historical authority untouched. Continue OpenAI ownership under cached Mistral unreliability; no new review. Reuse only the completed interpolated uninterrupted reference from the timeout run, with exact source/test/input hashes, all 15 original accepted snapshot records, actual terminal status and displacement/material histories. Rebuild step plastic maxima from saved physical alpha arrays; check recorded control/load/step identities exactly and rerun all original independent per-snapshot assertions. This is immutable comparison preparation, never failed-state recovery or a new restart format. Original four test functions/assertions and solver controls are unchanged. Run fresh prefix/resume/refusal/cancellation/rejected-state solves together in one portable process, 330-second child/350-second parent bounds. At most this one focused invocation; no repeated whole-module run or mechanics changes.
+
+### Slice 2 accepted source workflow — 2026-10-20
+
+All four unfinished original default checks passed unchanged: interpolated
+restart/history comparison, rejected restart admission, cancelled resume/reuse,
+and rejected-trial snapshot exclusion. Receipt:
+`slice2/evidence/smart-retry-remaining-default-execution`: 4 collected, 4 passed,
+zero failed; process wall 242.6636845999892 seconds. Terminal
+runtime verifies selected-source imports, disabled JIT, one numerical thread,
+no runtime errors and disabled retired-programme selection.
+
+Only the prior COMPLETED interpolated uninterrupted comparison was cached: its
+actual terminal arrays/status, 15 accepted snapshots, and recorded step/control/
+load history. Step plastic maxima derive from original physical alpha arrays.
+Source/test/input identities match; all original per-snapshot independent
+equilibrium, constraint, reaction and material assertions ran again. Prefixes,
+resumes, cancellation/reuse, refusal and rejected-state production solves ran
+fresh. Retained input files stayed byte-identical. No failed-state recovery,
+new restart format, reference fitting, tolerance or assertion change. The first
+preparation attempt failed before any tests ran on a manifest metadata key;
+its exact input and full logs remain preserved, charged 7.987604000009014 s.
+
+Acceptance combines 12 public checkpoint passes, 113 shared/compatibility passes,
+the earlier 10 pre-yield passes, and 17 default regressions across the retained
+13 pass-progress identities plus these 4 terminal passes. The 152-identity union
+is recorded in `slice2/SMART_RETRY_DELIVERY.json`. The interrupted combined run
+remains exit124; no successful full-suite claim. Scientific gates remain open;
+all three director failures and their source hashes are unchanged.
+
+Final independent Slice 2 ledger: 1671.1812605000014/1800 s used;
+128.81873949999863 s remain. The 300-second reserve was protected until this explicit
+final-verification-only continuation, then used for its intended purpose.
+No extension occurred. Historical numerical allowance/reserve remain unchanged.
+
+The narrow checkpoint repair and executable S355 full/prefix/serialized-resume
+source workflow are accepted. Candidate identity:
+`243d0878350030811177b6d7494a1d1fce3d08bfbafd85dda8c9e9976c4da979`. The scoped Git commit containing this
+record identifies the accepted source. Main advanced concurrently to separate
+contact commit 59f41a324e636e5496c0ff33bd2325350dff25d4; those contact static-path/reporting changes are retained
+and excluded from our ownership. Verified beam-shell runtime files are unchanged
+from the passing candidate. The pinned installed Python 3.12 bundle remains
+pre-yield only. No rebuild, push, publication, release or extra review here.

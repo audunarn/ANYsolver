@@ -1,5 +1,5 @@
 {
-  "status": "DELIVERED_WITH_EXPLICIT_BLOCKED_SLICE",
+  "status": "DELIVERED_SOURCE_CHECKPOINT_WITH_PRIOR_PREYIELD_ARTIFACT",
   "source_slice_commit": "20da7d698",
   "checkpoint_blocker_commit": "ab407246a",
   "artifact_source_commit": "ab407246af081352531b4100e0902bccf3f5a010",
@@ -9,9 +9,20 @@
   "installed_real_cli_passed": 2,
   "historical_budget_unchanged": true,
   "director_failure_tests_unchanged": true,
-  "core_solver_edits_by_this_delivery": false,
-  "verification_reserves_remaining": true,
+  "core_solver_edits_by_this_delivery": true,
+  "verification_reserves_remaining": {
+    "slice1": true,
+    "slice2": "used for final verification as intended",
+    "slice3": true,
+    "historical": true
+  },
   "one_fable_review_reused": true,
   "push_or_release": false,
-  "concurrent_contact_edits_excluded": true
+  "concurrent_contact_edits_excluded": true,
+  "latest_slice2_retry": {
+    "status": "ACCEPTED_REGISTERED_SOURCE_WORKFLOW",
+    "accepted": true,
+    "receipt": "slice2/SMART_RETRY_DELIVERY.json",
+    "candidate_identity_sha256": "243d0878350030811177b6d7494a1d1fce3d08bfbafd85dda8c9e9976c4da979"
+  }
 }
