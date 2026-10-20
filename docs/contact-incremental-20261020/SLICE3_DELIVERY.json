@@ -1,8 +1,8 @@
 {
   "status": "DELIVERED_CANDIDATE_NOT_FULL_QUALIFICATION",
   "bundle": "C:\\ANYworkspaceWork\\contact-incremental-delivery-20261020\\slice3\\ANYsolver-contact-candidate-20261020-s3.zip",
-  "sha256": "25a58234d161743fbe726da4241aee028d882ba65123998bab12c77bf9b42e0a",
-  "bytes": 4775241,
+  "sha256": "dd16392381c941b52fa182dc04eb0c273087bb09e6a0616d3e505cf2821237af",
+  "bytes": 4775845,
   "package_version": "0.4.7+contact.candidate.20261020.s2",
   "exact_same_six_wheels_as_both_host_ci": 39392303063,
   "focused_checks": 16,
@@ -11,5 +11,5 @@
   "direct_failed_terminal_checkpoint_restart": "not supported; refusal preserved",
   "evidence": "C:\\ANYworkspaceWork\\contact-incremental-delivery-20261020\\slice3\\VERIFICATION.json",
   "prior_packaging_artifact_preserved": "C:\\ANYworkspaceWork\\contact-incremental-delivery-20261020\\slice3\\s3-before-document-encoding-fix.zip",
-  "packaging_repair": "UTF-8/LF documents; exact wheel payloads unchanged"
+  "packaging_repair": "UTF-8/LF and explicit measured JIT/thread recipes; wheel payloads unchanged"
 }

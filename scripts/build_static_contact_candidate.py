@@ -93,6 +93,33 @@ python -m pip install --no-cache-dir --no-index --find-links wheelhouse "ANYsolv
 python -m pip check
 ```
 
+## Use the measured runtime
+
+After activating the Python 3.12 environment, set these values before running
+any example. The verified profile uses JIT off and one numerical thread.
+
+PowerShell:
+
+```powershell
+$env:NUMBA_DISABLE_JIT = "1"
+$env:NUMBA_NUM_THREADS = "1"
+$env:OMP_NUM_THREADS = "1"
+$env:OPENBLAS_NUM_THREADS = "1"
+$env:MKL_NUM_THREADS = "1"
+$env:NUMEXPR_NUM_THREADS = "1"
+$env:VECLIB_MAXIMUM_THREADS = "1"
+$env:ANYMESHER_DISABLE_NATIVE = "1"
+$env:ANYMESHER_REQUIRE_NATIVE = "0"
+```
+
+Ubuntu shell:
+
+```bash
+export NUMBA_DISABLE_JIT=1 NUMBA_NUM_THREADS=1 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1 ANYMESHER_DISABLE_NATIVE=1 ANYMESHER_REQUIRE_NATIVE=0
+```
+
+Other runtime configurations are outside this candidate's cross-host measurement.
+
 ## Run the public module-form examples from this bundle root
 
 ```
