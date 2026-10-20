@@ -121,7 +121,7 @@ and release gates.
 | Continuation | Bounded Crisfield-style spherical arc-length tracing through a first limit point and a guarded descending branch, including current-area follower pressure and its load tangent. |
 | Dynamics | Newmark or HHT-alpha implicit transient response, Rayleigh damping, prescribed shell pressure patches, selected/envelope history storage, and memory preflight. |
 | Impact/contact | One rigid sphere with frictionless penalty contact against shells and opt-in beam-axis segments; event substepping, Aitken relaxation, nonlinear material response, and engineering damage/erosion options. |
-| General-contact development | Opt-in shell and declared round classical-beam static contact profiles, with exact admission and documented limits; see the [capability ledger](docs/GENERAL_CONTACT_CAPABILITIES.md), [C0 shell plane](docs/GENERAL_CONTACT_C0.md), [C2 beam plane](docs/GENERAL_CONTACT_C2_BEAM_PLANE.md), [C2 beam pair](docs/GENERAL_CONTACT_C2_BEAM_PAIR.md), and [C2 radial obstacle](docs/GENERAL_CONTACT_C2_BEAM_RADIAL.md). Engineering acceptance remains open. |
+| General-contact development | Opt-in shell and declared round classical-beam static contact profiles, with exact admission and documented limits; see the [capability ledger](docs/GENERAL_CONTACT_CAPABILITIES.md), [C0 shell plane](docs/GENERAL_CONTACT_C0.md), [C2 beam plane](docs/GENERAL_CONTACT_C2_BEAM_PLANE.md), [C2 beam pair](docs/GENERAL_CONTACT_C2_BEAM_PAIR.md), and [C2 radial obstacle](docs/GENERAL_CONTACT_C2_BEAM_RADIAL.md). A measured opt-in guided static candidate additionally supports deformable shell-pair normal contact, material-anchor Coulomb stick/slip friction, checkpoint restart and detached result archives; see [the static candidate guide](docs/GENERAL_CONTACT_STATIC_CANDIDATE.md). Engineering acceptance remains open. |
 | Imperfections | Stress-free eigenmode, member-bow, plate-wave, flange-twist, explicit, and composite imperfection fields. |
 | Initial fields | Element-local shell membrane/bending stress or membrane/curvature prestrain, arbitrary configured beam-fiber stress/prestrain distributions, zero-external-load equilibration, admissibility checks, and provenance kept separate from geometric imperfections. |
 | Workflows | Normalized generated geometry to static/prestress/buckling; traceable static-to-buckling-to-imperfect nonlinear-capacity workflow. |
@@ -215,7 +215,7 @@ Important limits:
   remains the default. Linear buckling rejects a constrained nonsymmetric
   follower-pressure pencil because general complex nonconservative
   eigenanalysis is not implemented;
-- no general shell-shell, body-body, frictional, rolling, or self-contact;
+- no general shell-shell, body-body, rolling, or self-contact; deformable shell-pair normal contact and frictional contact exist only as the measured opt-in guided static candidate scope (guided shell pairs against rigid tools or each other, material-anchor Coulomb stick/slip) with the documented limits in [the static candidate guide](docs/GENERAL_CONTACT_STATIC_CANDIDATE.md);
 - no fluid-structure interaction, cavitation, or water-entry model;
 - no cohesive cracks, remeshing, material separation, or fracture-mechanics
   claim—the erosion models are engineering screens;

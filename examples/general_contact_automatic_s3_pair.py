@@ -44,6 +44,7 @@ def build_s3_pair(*,director_z=-1,resolve_domain=True):
         AutomaticContactParticipant(ContactSurface('upper',(1,2,3,4),'top' if director_z==-1 else 'bottom'),'upper-body'),
         AutomaticContactParticipant(ContactSurface('lower',(5,6),'bottom' if director_z==-1 else 'top'),'lower-body')),
         AutomaticContactDefaults(1000.,5e-5,normal_law='projected_penalty'),maximum_pairs=1)
+    # Measured candidate settings; _dev suffixes mark unmeasured routes.
     settings=ContactSolverSettings(pair_motion='general',normal_discretization='primal_mortar',
         general_s3_differentiation='jet2_s3_dev',general_s3_difference_step=2e-5,
         q4_source_gap_certificate='whole_face',augmentation_support_resolution='exact',

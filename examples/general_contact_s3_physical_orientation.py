@@ -6,6 +6,7 @@ from anysolver.general_contact import resolve_automatic_contact_domain
 
 def build_orientation_pair(*,director_z=1,orientation='physical_sides_dev',resolve_domain=True):
     model,domain,settings,_,path=build_s3_pair(director_z=director_z,resolve_domain=False)
+    # Measured candidate orientation string; _dev suffixes mark unmeasured routes.
     settings=replace(settings,shell_pair_orientation=orientation)
     resolution=(resolve_automatic_contact_domain(model,domain,settings,analysis_control='contact_path')
                 if resolve_domain else None)

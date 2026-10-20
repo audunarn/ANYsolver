@@ -1,5 +1,50 @@
 # General-contact candidate: status and restart handoff
 
+## Current incremental delivery — 2026-10-20
+
+The owner approved three bounded improvements from main `36a5d5d8c`:
+public static-contact usability, installed Windows/Ubuntu portability and
+restart, then truthful rejection/rollback behavior. Each successful slice
+ends with a candidate bundle, focused verification and a main commit/push.
+The original candidate and full-programme backlog below remain historical
+evidence; their allowances are closed and their claims do not transfer to
+new source automatically.
+
+Each slice has one working day, a fresh 1,800-second local check allowance
+including 300 seconds reserved, the existing 953 MiB cap and one numerical
+job at a time. One initial/check pass plus one bounded repair pass is
+permitted. Use existing runners and impact-based checks; unrelated full-CI
+failures do not block these scoped candidate deliveries. A relevant new
+regression does. No automatic third approach, qualification sweep or new
+bootstrapper is authorized by this transition.
+
+The one-time independent planning review used Claude CLI Fable at medium
+effort, read-only: 80 successful file-tool calls, no tests or edits. It is
+retained at `C:/ANYworkspaceWork/main-housecleaning-20261019/contact-incremental-review-20261020-v1/`.
+Mistral is now available and owns slice 1 implementation; the integrating
+owner retains contracts, artifact verification and Git delivery. Current
+execution receipts live under `C:/ANYworkspaceWork/contact-incremental-delivery-20261020/`.
+
+| Slice | Deliverable | Current state |
+|---|---|---|
+| 1 | Public friction settings, clear supported examples and guide | Delivered; five focused checks and installed normal/friction/restart/archive commands pass |
+| 2 | Same installed candidate on Windows/Ubuntu; normal/friction/restart/archive checks | Not started; old CI skips staged friction checks |
+| 3 | Truthful rejected-trial outcome and exact last-accepted-state recovery | Not started |
+
+Scientific criteria, capability flags, scoped deviations and preserved failures
+remain binding. Full D1/Q4, native material/dynamics, independent coupled-response
+accuracy and application admission remain future milestones.
+
+Slice 1 candidate: `0.4.7+contact.candidate.20261020.s1`, bundle
+`C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice1/ANYsolver-contact-candidate-20261020-s1.zip`.
+The [current static-contact guide](GENERAL_CONTACT_STATIC_CANDIDATE.md) provides
+the installation and executable module/restart commands. Root verified all
+727 solver files against both the wheel and installed target. Full and active
+restart endpoint difference was zero and friction history matched exactly.
+This is a fresh-target install with existing numerical dependencies, not a
+cold-environment or cross-host claim. The local 1,800-second scope is closed;
+failed pip temporary-directory preparation and all process receipts are retained.
+
 Subsequent main ownership/push/CI update: see
 [MAIN_HOUSECLEANING_20261019.md](MAIN_HOUSECLEANING_20261019.md). The user later
 assigned responsibility for every main edit and explicitly authorized push and

@@ -1,0 +1,132 @@
+# General-contact static candidate: supported entrypoints and run guide
+
+Updated 2026-10-20. This page describes the **measured opt-in guided static
+contact candidate** delivered on 2026-10-19 and its supported public
+entrypoints, examples and restart/archive workflows. It is a usability guide,
+not a qualification claim: full C0-C9/D0-D8 qualification, capability
+admission and released/admitted flags remain unchanged and false. Start with
+[the durable status/restart handoff](GENERAL_CONTACT_CANDIDATE_HANDOFF_20261019.md)
+for the measured evidence, artifact hashes and consumed allowances.
+
+## Scope
+
+Supported, measured opt-in routes (the W1-W10 delivery workflows):
+
+- elastic S3 normal contact against rigid tools: the S3 plane and finite
+  planar triangulated rigid tools (round beam profiles remain a separate
+  route and are not part of this measured claim);
+- guided deformable shell-pair normal contact with explicit physical sides,
+  including the automatic physical-side pair;
+- material-anchor Coulomb stick/slip friction with reversal, press/open/
+  recontact, checkpoint restart and rollback;
+- detached public static result archives with integrity checks and corruption
+  refusal.
+
+Not supported outside that guided scope: general/automatic shell-shell,
+body-body, rolling or self-contact, target bending in the friction example,
+finite-rotation contact, swept friction, and any admission claim. The
+rigid-sphere frictionless impact route documented on the README impact/contact
+line is a distinct route and remains frictionless.
+
+## Public entrypoints
+
+All entrypoints live in the `anysolver.general_contact` package and load
+lazily; ordinary no-contact solves never import the contact kernel.
+
+```python
+from anysolver.general_contact import (
+    ContactDefinition, ContactInteraction, ContactSurface,
+    ContactSolverSettings, ContactPathControl, ContactPathProgram,
+    S3SlidingFrictionSettings,
+    solve_static_contact_path,
+    read_static_contact_results,
+)
+```
+
+`S3SlidingFrictionSettings` is the base friction settings class (its
+specialized subclasses remain exported too). Construct it with keywords:
+
+```python
+friction = S3SlidingFrictionSettings(
+    friction_coefficient=0.3,
+    tangential_stiffness_Pa_per_m=1000.0,
+    steps_by_dof=(2e-7,) * model.mesh.dof_manager.total_dofs,
+    maximum_candidate_evaluations=145,
+)
+```
+
+`steps_by_dof` needs exactly one positive finite-difference step per model
+DOF; take the vector length from `model.mesh.dof_manager.total_dofs`. The
+measured candidate used the 2e-7 probe step and the 145 evaluation cap shown
+above; changing them is allowed by validation but departs from the measured
+settings.
+
+## Installation
+
+Two supported routes:
+
+1. **Current candidate bundle** (recommended for evaluation):
+   `C:/ANYworkspaceWork/contact-incremental-delivery-20261020/slice1/ANYsolver-contact-candidate-20261020-s1.zip`.
+   The extracted bundle ROOT contains `examples/` and a `wheelhouse/` with
+   the six pure-Python private wheels (ANYsolver, ANYresults, ANYmaterial,
+   ANYgeometry, ANYmesher, ANYfileio). From the bundle ROOT, in a fresh
+   virtual environment:
+
+   ```text
+   python -m pip install --find-links wheelhouse -r requirements-tested.txt "ANYsolver[general-contact]==0.4.7+contact.candidate.20261020.s1" "ANYsolver-results==2.1.1" "ANYmaterial==0.2.0" "ANYgeometry[planar]==0.4.3" "ANYmesher==0.5.0" "ANYfileio==0.3.2"
+   ```
+
+   Numeric and Shapely dependencies resolve normally from their usual
+   indexes; the bundle is not offline unless separately provided. The
+   original 2026-10-19 bundle remains an immutable historical artifact whose
+   claims apply to it alone; for evaluation it is superseded by the bundle
+   above.
+2. **Repository source** (development): install this repository's source
+   package with its declared dependency closure and run the `examples/`
+   scripts below from the repository root.
+
+## Run guide
+
+From the repository root, or the extracted bundle ROOT containing
+`examples/`:
+
+- Normal rigid-tool contact:
+  `python -m examples.general_contact_s3_plane`,
+  `python -m examples.general_contact_triangulated_rigid`.
+- Round beam profile (separate route, not part of the measured S3
+  rigid-tool claim): `python -m examples.general_contact_round_beam_plane`.
+- Automatic physical-side shell pair:
+  `python -m examples.general_contact_automatic_s3_pair` and
+  `python -m examples.general_contact_s3_physical_orientation`.
+- Friction with restart and rollback. A partial run writes a restart
+  checkpoint inside its output JSON; the restart recipe is (each command on
+  its own line):
+
+  ```text
+  python -m examples.general_contact_s3_friction_physical_path --through-step 3 --output partial.json
+  python -c "import json; from pathlib import Path; Path('checkpoint.json').write_text(json.dumps(json.loads(Path('partial.json').read_text())['checkpoint']))"
+  python -m examples.general_contact_s3_friction_physical_path --through-step 7 --restart checkpoint.json --output completed.json
+  ```
+- Static result archive (export and detached read):
+  `python -m examples.general_contact_static_results_archive`.
+
+## Measured settings strings
+
+The candidate was measured with exactly these settings strings and values:
+`general_s3_differentiation='jet2_s3_dev'` with difference step 2e-5,
+`path_predictor='control_projection_dev'`,
+`shell_pair_orientation='physical_sides_dev'`, projected-penalty normal law
+with penalty 1000. and gap limit 5e-5, and the friction settings above.
+These historical development-profile names are used by the selected measured
+examples. The suffix alone establishes neither measured coverage nor
+qualification; only the listed workflows have the stated evidence.
+
+## Limitations
+
+- Agreement claims are for the declared finite-penalty law and chosen
+  geometry, not continuum or mesh/model error estimates.
+- Cross-machine/Ubuntu replay, cold new-environment dependency installation
+  and full required CI evidence for the merged tree remain open items in the
+  handoff; the 2026-10-19 measurements are same-host Windows evidence.
+- Capability/released/admitted flags are unchanged; nothing on this page
+  admits the candidate into qualified production scope.

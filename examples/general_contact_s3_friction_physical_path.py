@@ -9,8 +9,8 @@ from pathlib import Path
 
 from anysolver import BoundaryCondition, FEModel, create_shell_element, solve_static_nonlinear
 from anysolver.general_contact import (ContactDefinition, ContactInteraction,
-    ContactSurface, ContactSolverSettings, ContactPathControl, ContactPathProgram)
-from anysolver.general_contact.s3_sliding_friction import S3SlidingFrictionSettings
+    ContactSurface, ContactSolverSettings, ContactPathControl, ContactPathProgram,
+    S3SlidingFrictionSettings)
 
 
 def build_case(source_polarity=1, target_polarity=1):
@@ -52,7 +52,11 @@ def build_case(source_polarity=1, target_polarity=1):
         q4_source_weighted_gap_gradient_tolerance=1e-5,q4_source_weighted_gap_hessian_tolerance=1e-5,
         maximum_q4_source_integration_triangles=128,
         shell_pair_orientation='physical_sides_dev',path_predictor='control_projection_dev')
-    friction=S3SlidingFrictionSettings(.3,1000.,(2e-7,)*60,145)
+    # steps_by_dof needs one positive finite-difference step per model DOF.
+    friction=S3SlidingFrictionSettings(friction_coefficient=.3,
+        tangential_stiffness_Pa_per_m=1000.,
+        steps_by_dof=(2e-7,)*model.mesh.dof_manager.total_dofs,
+        maximum_candidate_evaluations=145)
     program=ContactPathProgram((ContactPathControl.node(1,'ux'),ContactPathControl.node(1,'uz')),
         ((0.,0.),(0.,-.015005),(1e-7,-.015005),(.39,-.015005),
          (.3899995,-.015005),(.388,-.015005),(.388,0.),(.388,-.015005)),1)

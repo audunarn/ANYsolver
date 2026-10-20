@@ -54,7 +54,7 @@ _AUTOMATIC_EXPORTS = frozenset({
 
 
 def __getattr__(name: str):
-    if name in {"S3MovingNormalFrictionSettings", "S3MeshMovingNormalFrictionSettings", "S3MeshWeakPressureFrictionSettings", "S3MeshWholeChordGapFrictionSettings", "S3MeshHistoryPathFrictionSettings"}:
+    if name in {"S3SlidingFrictionSettings", "S3MovingNormalFrictionSettings", "S3MeshMovingNormalFrictionSettings", "S3MeshWeakPressureFrictionSettings", "S3MeshWholeChordGapFrictionSettings", "S3MeshHistoryPathFrictionSettings"}:
         module = "s3_sliding_friction"
     elif name == "TriangulatedRigidContactBody":
         module = "triangulated_rigid"
@@ -103,6 +103,7 @@ def __dir__():
     return sorted(set(globals()) | set(__all__))
 
 __all__ = [
+    "S3SlidingFrictionSettings",
     "S3MovingNormalFrictionSettings",
     "S3MeshMovingNormalFrictionSettings",
     "S3MeshWeakPressureFrictionSettings",

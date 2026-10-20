@@ -1,0 +1,30 @@
+{
+  "status": "DELIVERED_CANDIDATE_SCOPED",
+  "version": "0.4.7+contact.candidate.20261020.s1",
+  "bundle": "C:\\ANYworkspaceWork\\contact-incremental-delivery-20261020\\slice1\\ANYsolver-contact-candidate-20261020-s1.zip",
+  "bundle_sha256": "CFC261BC01A4A108AB6EC0D04BDD3DB31566875854655D6C831B6AC149F13B16",
+  "solver_wheel": {
+    "file": "anysolver-0.4.7+contact.candidate.20261020.s1-py3-none-any.whl",
+    "sha256": "b857db8fd1325c59d1731763ef03f068a2de47ec81bb94a9797fe39fb7bdf0ea"
+  },
+  "source_focused_checks": 5,
+  "installed_normal_friction_active_restart_archive": "PASS",
+  "exact_source_wheel_installed_files": 727,
+  "closure": {
+    "status": "CLOSED",
+    "authorized_seconds": 1800,
+    "reserve_seconds": 300,
+    "charged_seconds": 79.08391579998715,
+    "unused_seconds_forfeited": 1720.9160842000128,
+    "owned_survivors": [],
+    "source_focused_passed": 5,
+    "installed_command_checks": "normal,full friction,prefix,checkpoint extraction,resume,archive PASS",
+    "all727solverfiles": "source/wheel/installed bytes equal",
+    "failed_preparation": "pip temp ACL failure preserved; corrected to task-owned temp",
+    "no_physics_or_tolerance_changes": true
+  },
+  "cross_host": "not yet measured",
+  "full_qualification": false,
+  "capability_flags_changed": false,
+  "independent_review": "one-time planning Fable medium; not scientific acceptance"
+}
