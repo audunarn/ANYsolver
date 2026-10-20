@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from importlib import import_module
 from numbers import Integral
+from types import GetSetDescriptorType
 from typing import Any, Dict, Mapping, Optional, Tuple
 
 import numpy as np
@@ -252,30 +253,7 @@ def describe_result_quantities(result: Any) -> Tuple[ResultQuantity, ...]:
         getattr(result, "element_stresses", None)
     )
     if stress_payload is not None:
-        _stress_data, stress_bases, excluded_element_ids = stress_payload
-        stress_components = tuple(sorted(stress_bases))
-        quantities.append(
-            ResultQuantity(
-                "stress",
-                "Physical stress",
-                "element",
-                stress_components,
-                "Pa",
-                basis="component_specific",
-                data_path="element_stresses[physical_stress_components]",
-                recovery="recovered_physical_stress_filter",
-                metadata={
-                    "component_basis": {
-                        component: stress_bases[component]
-                        for component in stress_components
-                    },
-                    "component_units": {
-                        component: "Pa" for component in stress_components
-                    },
-                    "excluded_nonphysical_element_ids": excluded_element_ids,
-                },
-            )
-        )
+        quantities.append(_stress_frame_descriptor(stress_payload))
     stress_history = getattr(result, "stress_history", None)
     history_payload = _physical_stress_history(stress_history)
     if history_payload is not None:
@@ -593,6 +571,98 @@ def _physical_stress_frame(
         component_bases,
         tuple(sorted(excluded)),
     )
+
+
+def _stress_frame_descriptor(payload: Any) -> ResultQuantity:
+    _data, bases, excluded = payload
+    components = tuple(sorted(bases))
+    return ResultQuantity(
+        "stress", "Physical stress", "element", components, "Pa",
+        basis="component_specific",
+        data_path="element_stresses[physical_stress_components]",
+        recovery="recovered_physical_stress_filter",
+        metadata={
+            "component_basis": {component: bases[component] for component in components},
+            "component_units": {component: "Pa" for component in components},
+            "excluded_nonphysical_element_ids": excluded,
+        },
+    )
+
+
+def _native_stress_frame_eligible(result: Any) -> bool:
+    """Admit only inert native carriers to single-pass selected resolution.
+
+    Duck-typed results, mapping/array subclasses and callback-bearing physical
+    values keep the general resolver's repeated reads and validation semantics.
+    Eligibility checks types only; the complete physical-frame validator still
+    checks every identifier, exclusion, component and current numeric value.
+    """
+    if not _is_exact_result_type(result, "recovery", "StressRecoveryResult"):
+        return False
+    class_fields = vars(type(result))
+    if (
+        "__getattribute__" in class_fields
+        or "__getattr__" in class_fields
+        or type(class_fields.get("__dict__")) is not GetSetDescriptorType
+    ):
+        return False
+    field_definitions = class_fields.get("__dataclass_fields__")
+    if type(field_definitions) is not dict or any(
+        type(name) is not str for name in field_definitions
+    ):
+        return False
+    expected = frozenset({
+        "element_stresses", "provenance", "committed_element_states",
+        "execution_report", "nodal_stresses",
+    })
+    if field_definitions.keys() != expected:
+        return False
+    if any(name in class_fields and class_fields[name] is not None for name in expected):
+        return False
+    # New class inputs can execute during the general inventory (including
+    # energy/history probes). Keep extended native layouts on that route.
+    allowed_class_names = expected | {
+        "get_element_stress", "history_aware", "provenance_dict"
+    }
+    if any(
+        not name.startswith("__") and name not in allowed_class_names
+        for name in class_fields
+    ):
+        return False
+    native_fields = vars(result)
+    # Even an exact dataclass can carry a replacement __dict__ or an injected
+    # __dataclass_fields__. Inspect neither through caller-defined protocols.
+    if type(native_fields) is not dict or any(
+        type(name) is not str for name in native_fields
+    ):
+        return False
+    if not expected <= native_fields.keys() or not native_fields.keys() <= expected:
+        return False
+    if type(result.committed_element_states) is not dict or result.committed_element_states:
+        return False
+    value = result.element_stresses
+    if type(value) is not dict:
+        return False
+    for element_id, record in value.items():
+        if type(element_id) not in (int, str) or type(record) is not dict:
+            return False
+        for component, data in record.items():
+            if type(component) is not str:
+                return False
+            if component in {
+                "physical_stress_available", "generalized_stress_scope", "recovery_scope"
+            }:
+                if type(data) not in (str, bool, int, float, type(None)):
+                    return False
+            elif _physical_stress_component_basis(component) is not None:
+                if type(data) not in (
+                    np.ndarray, int, float, bool,
+                    np.int8, np.int16, np.int32, np.int64,
+                    np.uint8, np.uint16, np.uint32, np.uint64,
+                    np.float16, np.float32, np.float64, np.longdouble,
+                ):
+                    return False
+    return True
 
 
 def _physical_stress_history(
@@ -1187,6 +1257,16 @@ def resolve_result_quantity(result: Any, quantity_id: str) -> ResolvedResultQuan
             data_path="load_impulse",
         )
         return _resolved(descriptor, value)
+
+    if key == "stress" and _native_stress_frame_eligible(result):
+        # Query-local reuse: the same admitted payload supplies both metadata
+        # and returned data. Nothing survives this call or bypasses validation.
+        payload = _physical_stress_frame(result.element_stresses)
+        if payload is None:
+            raise QuantityUnavailableError(
+                f"{type(result).__name__} carries no result quantity {key!r}"
+            )
+        return _resolved(_stress_frame_descriptor(payload), payload[0])
 
     descriptors = {
         descriptor.quantity_id: descriptor
