@@ -1,5 +1,29 @@
 # Elastic sphere stiffened-panel initial state (2026-10-20)
 
+## Slice 10: structural-state bridge
+
+Run `python -m examples.elastic_sphere_panel_state_bridge --output state-bridge.json`
+from the s10 bundle. The output reports `structural_state_bridge_prepared`:
+972 unrestrained sphere DOFs, 990 panel DOFs and 486 independent panel coordinates,
+using the original supports and rotating beam-shell ties. Gravity is prepared
+once; the accepted displacement and material history remain separate from trial
+copies. The existing constraint Jacobian pulls both bodies' work into the combined
+reduced space. Failure and cancellation leave the accepted copy unchanged.
+
+The report includes authoritative body/node/DOF ownership, full and reduced
+diagnostic work, reconstruction error, virtual-work differences, gravity checks
+and actual runtime identity. It is not a restart checkpoint. The supplied 1 Pa
+integrated-gap work and unit-norm generalized probe do not predict contact forces.
+Local Windows checks cover state mapping, constraint derivatives and rollback;
+new paired-host s10 numerical evidence is pending. No contact law, equilibrium
+iteration, physical approximation or tolerance change is introduced.
+
+See the current handoff and
+`C:/ANYworkspaceWork/contact-incremental-delivery-20261020/state-bridge-s10-v1/DELIVERY_RECEIPT.json`
+for bundle identity, installed measurements and retained candidate CI results.
+Coupled indentation/unloading needs an explicitly adopted contact law and loading
+contract; low-height elastic dynamics and the full 10 m drop remain later targets.
+
 ## Slice 9: prescribed multi-face geometry and work
 
 The 2026-10-21 s9 bundle includes a bounded skin-report/CI cleanup repair.

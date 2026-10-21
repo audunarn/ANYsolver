@@ -1,5 +1,38 @@
 # General-contact candidate: status and restart handoff
 
+## Slice 10: two-body structural-state bridge
+
+Run `python -m examples.elastic_sphere_panel_state_bridge --output state-bridge.json`
+from the s10 bundle using the existing pinned Python 3.12 profile. This prepares
+gravity once, binds the actual sphere and panel models, and maps their separate
+full vectors into a combined coordinate space. The sphere retains all 972 free
+DOFs; the panel's 990 full DOFs map to 486 reduced DOFs through its existing
+supports and nonlinear rotating beam-shell constraints. No restraint or stiffness
+is added to the sphere. Element mechanics, physical skins and mass are unchanged.
+
+The development-only adapter reuses the rotating-MPC Jacobian and adjoint. It
+copies the accepted displacement/history and gives each trial a disposable copy.
+There is no commit operation: a completed equilibrium solve and an acceptance
+decision are still required before a later component can advance accepted state.
+Failure, cancellation and normal trial exit all leave the accepted copy intact.
+
+Nine actual-model checks passed, including fixed-step Jacobian differences,
+virtual work, exact state restoration and stale/foreign/nonfinite input refusal.
+Constraint reconstruction and both reported virtual-work differences were zero
+in the local source check. Runtime, installed results, bundle and current CI
+disposition are recorded in
+`C:/ANYworkspaceWork/contact-incremental-delivery-20261020/state-bridge-s10-v1/DELIVERY_RECEIPT.json`.
+New s10 numerical acceptance is local Windows only; retained candidate CI is a
+regression gate for its existing selected workflows.
+
+Status is `structural_state_bridge_prepared`. This is a state/work adapter, not
+a contact solve, structural residual assembler, pressure law, contact tangent,
+restart checkpoint or impact calculation. The 1 Pa s9 work vector remains a
+diagnostic. Next: explicitly adopt the normal-contact law, pressure representation
+and loading controls for a bounded coupled indentation/unloading solve. Preserve
+the s9 seam restrictions. Elastic low-height dynamics precede the full 10 m drop.
+Historical failures and prior candidate bundles remain retained.
+
 ## Slice 9: multi-face geometry and work component
 
 CI completion repair (2026-10-21): the skin report now validates its bound model
