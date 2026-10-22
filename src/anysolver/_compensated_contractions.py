@@ -7,7 +7,12 @@ can lose at most one minimum subnormal per product, and fsum has its documented
 platform double-rounding limitation. Exact cancellation/empty sums give +0.
 Nonfinite inputs and overflowing individual products or sums are refused,
 even when a wider exact accumulator could cancel an intermediate overflow.
-There is no precision option, native backend, persistent cache or fallback.
+There is no precision option, persistent result cache or fallback that changes
+a value. Optional compiled kernels (``_compensated_native``, Numba) execute the
+same arithmetic bit for bit; they are enabled only when Numba is present and a
+known-answer self-check at import reproduces the numpy path bitwise (it guards
+against fused multiply-add contraction). Any refusal replays the numpy path so
+the reference exception is raised.
 """
 from math import frexp as _frexp, fsum as _fsum, isfinite as _isfinite, ldexp as _ldexp
 
@@ -198,3 +203,28 @@ def shell_zero_tangent(geometry, membrane, bending, shear, drill):
     local = weighted_sum(terms, weights)
     transform = geometry["T0"]
     return product(product(transform.T, local), transform)
+
+
+def _native_known_answers_match():
+    """Disable the compiled kernels unless they reproduce the numpy path bitwise."""
+    global _USE_NATIVE
+    if not _USE_NATIVE:
+        return
+    rng = np.random.default_rng(20261022)
+    a = rng.standard_normal((7, 9)) * 2.0 ** rng.integers(-40, 40, (7, 9))
+    b = rng.standard_normal((9, 6)) * 2.0 ** rng.integers(-40, 40, (9, 6))
+    stack = rng.standard_normal((5, 11)) * 2.0 ** rng.integers(-40, 40, (5, 11)) * 1e8
+    stack[1] = -stack[0] * (1.0 + 2.0 ** -40)
+    weights = rng.standard_normal(5)
+    results = []
+    for use in (True, False):
+        _USE_NATIVE = use
+        try:
+            results.append((product(a, b).tobytes(), sum_arrays(list(stack)).tobytes(),
+                            weighted_sum(list(stack), weights).tobytes()))
+        except Exception:  # noqa: BLE001 - any failure disables the kernels
+            results.append(None)
+    _USE_NATIVE = results[0] is not None and results[0] == results[1]
+
+
+_native_known_answers_match()
