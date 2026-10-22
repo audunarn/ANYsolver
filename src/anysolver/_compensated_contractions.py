@@ -37,16 +37,55 @@ def _product_parts(a, b):
     return product, _ldexp(low, ex + ey)
 
 
+_SPLIT = 134217729.0
+
+
+def _vector_parts(a, b):
+    """Elementwise ``_product_parts`` for finite broadcastable arrays.
+
+    Same IEEE operations in the same order as the scalar routine, so the
+    (product, residual) pairs are bitwise identical. Refuses nonfinite inputs
+    and overflowing products with the scalar routine's exceptions.
+    """
+    with np.errstate(all="ignore"):
+        product = a * b
+        if not (np.all(np.isfinite(a)) and np.all(np.isfinite(b))
+                and np.all(np.isfinite(product))):
+            # Rare error path: reproduce the scalar first-failure semantics.
+            for x, y in zip(np.broadcast_to(a, product.shape).ravel().tolist(),
+                            np.broadcast_to(b, product.shape).ravel().tolist()):
+                _product_parts(x, y)
+        x, ex = np.frexp(a)
+        y, ey = np.frexp(b)
+        cx, cy = _SPLIT * x, _SPLIT * y
+        xh, yh = cx - (cx - x), cy - (cy - y)
+        xl, yl = x - xh, y - yh
+        high = x * y
+        low = ((xh * yh - high) + xh * yl + xl * yh) + xl * yl
+        low = np.ldexp(low, ex + ey)
+        low = np.where((a == 0.0) | (b == 0.0), 0.0, low)
+    return product, low
+
+
+def _interleave_sum(product, low):
+    """fsum of ``[p0, l0, p1, l1, ...]`` along the last axis, as the scalar dot."""
+    parts = np.stack((product, low), axis=-1).reshape(product.shape[:-1] + (-1,))
+    rows = parts.reshape(-1, parts.shape[-1]).tolist()
+    values = np.fromiter((_fsum(row) for row in rows), dtype=float, count=len(rows))
+    if not np.all(np.isfinite(values)):
+        raise OverflowError("compensated sum overflow")
+    return values.reshape(parts.shape[:-1])
+
+
 def dot(left, right):
     if len(left) != len(right):
         raise ValueError("compensated dot shape mismatch")
-    parts = []
-    for a, b in zip(left, right):
-        parts.extend(_product_parts(float(a), float(b)))
-    result = _fsum(parts)
-    if not _isfinite(result):
-        raise OverflowError("compensated sum overflow")
-    return result
+    a = np.array([float(v) for v in left], dtype=float)
+    b = np.array([float(v) for v in right], dtype=float)
+    if a.size == 0:
+        return 0.0
+    product, low = _vector_parts(a, b)
+    return float(_interleave_sum(product, low))
 
 
 def product(left, right):
@@ -58,10 +97,16 @@ def product(left, right):
         raise ValueError("compensated product requires finite inputs")
     vector = b.ndim == 1
     columns = b.reshape((-1, 1)) if vector else b
-    result = np.empty((a.shape[0], columns.shape[1]), dtype=float)
-    for i in range(a.shape[0]):
-        for j in range(columns.shape[1]):
-            result[i, j] = dot(a[i], columns[:, j])
+    result = np.zeros((a.shape[0], columns.shape[1]), dtype=float)
+    # Terms with an all-zero operand slice are exact zeros in every dot and
+    # cannot change an exactly rounded sum.
+    keep = np.any(a != 0.0, axis=0) & np.any(columns != 0.0, axis=1)
+    # Overflow in a pruned term would still be refused by the scalar policy
+    # only if both factors were nonzero, so pruning never hides an error.
+    if keep.any():
+        a, columns = a[:, keep], columns[keep]
+        prod, low = _vector_parts(a[:, None, :], columns.T[None, :, :])
+        result = _interleave_sum(prod, low)
     return result[:, 0] if vector else result
 
 
@@ -72,9 +117,10 @@ def sum_arrays(terms):
         raise ValueError("compensated array sum requires equal nonempty shapes")
     if any(not np.all(np.isfinite(a)) for a in arrays):
         raise ValueError("compensated array sum requires finite inputs")
-    result = np.empty_like(arrays[0])
-    for index in np.ndindex(result.shape):
-        result[index] = _fsum(float(a[index]) for a in arrays)
+    shape = arrays[0].shape
+    rows = np.stack(arrays).reshape(len(arrays), -1).T.tolist()
+    result = np.fromiter((_fsum(row) for row in rows), dtype=float, count=len(rows))
+    result = result.reshape(shape)
     if not np.all(np.isfinite(result)):
         raise OverflowError("compensated array sum overflow")
     return result
@@ -85,10 +131,11 @@ def weighted_sum(terms, weights):
     arrays = [np.asarray(term, dtype=float) for term in terms]
     if not arrays or len(arrays) != len(weights) or any(a.shape != arrays[0].shape for a in arrays):
         raise ValueError("compensated weighted sum shape mismatch")
-    result = np.empty_like(arrays[0])
-    for index in np.ndindex(result.shape):
-        result[index] = dot([a[index] for a in arrays], weights)
-    return result
+    shape = arrays[0].shape
+    stacked = np.stack(arrays).reshape(len(arrays), -1).T
+    w = np.array([float(v) for v in weights], dtype=float)
+    prod, low = _vector_parts(stacked, w[None, :])
+    return _interleave_sum(prod, low).reshape(shape)
 
 
 def shell_zero_tangent(geometry, membrane, bending, shear, drill):
