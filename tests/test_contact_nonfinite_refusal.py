@@ -35,3 +35,13 @@ def test_sphere_refuses_nonfinite_vectors(field):
 def test_contact_config_refuses_nonfinite(field, value):
     with pytest.raises(ValueError):
         fs.SphereContactConfig(**{field: value})
+
+
+@pytest.mark.parametrize("field", [
+    "penetration_tolerance", "force_tolerance", "signed_surface_offset",
+    "target_penetration_fraction", "auto_penalty_safety_factor",
+    "max_sphere_travel_fraction", "load_patch_radius_factor", "post_separation_time"])
+@pytest.mark.parametrize("value", [NAN, INF])
+def test_contact_config_refuses_remaining_nonfinite_fields(field, value):
+    with pytest.raises(ValueError):
+        fs.SphereContactConfig(**{field: value})

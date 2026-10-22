@@ -159,3 +159,13 @@ def test_refusals_match(fn, args):
         ref(*args)
     with pytest.raises(expected.type):
         getattr(fast, fn)(*args)
+
+
+def test_weighted_sum_first_failure_type_matches_scalar_policy():
+    terms = [np.array([1.797e308, 0.0]), np.array([-0.0, 1e-310]),
+             np.array([-1.797e308, 2.2e-162]), np.array([3.0, np.nan])]
+    weights = [0.3148, -1.0, -1.0, -0.0]
+    with pytest.raises(Exception) as expected:
+        reference_weighted_sum(terms, weights)
+    with pytest.raises(expected.type):
+        fast.weighted_sum(terms, weights)

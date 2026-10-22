@@ -142,6 +142,12 @@ class SphereContactConfig:
             raise ValueError("contact_damping must be non-negative and finite")
         if not (np.isfinite(self.search_margin) and self.search_margin >= 0.0):
             raise ValueError("search_margin must be non-negative and finite")
+        for name in ("penetration_tolerance", "force_tolerance", "signed_surface_offset",
+                     "target_penetration_fraction", "auto_penalty_safety_factor",
+                     "max_sphere_travel_fraction", "load_patch_radius_factor",
+                     "post_separation_time"):
+            if not np.isfinite(getattr(self, name)):
+                raise ValueError(f"{name} must be finite")
         if self.max_contact_iterations <= 0:
             raise ValueError("max_contact_iterations must be positive")
         if self.penetration_tolerance <= 0.0:

@@ -134,10 +134,28 @@ def weighted_sum(terms, weights):
     if not arrays or len(arrays) != len(weights) or any(a.shape != arrays[0].shape for a in arrays):
         raise ValueError("compensated weighted sum shape mismatch")
     shape = arrays[0].shape
-    stacked = np.stack(arrays).reshape(len(arrays), -1).T
-    w = np.array([float(v) for v in weights], dtype=float)
-    prod, low = _vector_parts(stacked, w[None, :])
-    return _interleave_sum(prod, low).reshape(shape)
+    try:
+        stacked = np.stack(arrays).reshape(len(arrays), -1).T
+        w = np.array([float(v) for v in weights], dtype=float)
+        prod, low = _vector_parts(stacked, w[None, :])
+        return _interleave_sum(prod, low).reshape(shape)
+    except (ValueError, OverflowError):
+        # Refused input: replay index by index so the first failure (and its
+        # exception type) is the one the scalar policy reports.
+        result = np.empty(shape, dtype=float)
+        for index in np.ndindex(shape):
+            result[index] = _scalar_dot([a[index] for a in arrays], weights)
+        return result
+
+
+def _scalar_dot(left, right):
+    parts = []
+    for a, b in zip(left, right):
+        parts.extend(_product_parts(float(a), float(b)))
+    result = _fsum(parts)
+    if not _isfinite(result):
+        raise OverflowError("compensated sum overflow")
+    return result
 
 
 def shell_zero_tangent(geometry, membrane, bending, shear, drill):

@@ -262,7 +262,7 @@ _NATIVE_POLICY_BINDINGS = tuple((key, _NATIVE_POLICY.__globals__[key])
 _CONTRACTION_FACTS = tuple((name, value, _callable_authority(value),
     tuple((key, value.__globals__[key]) for key in value.__code__.co_names if key in value.__globals__))
     for name, value in tuple(vars(_contractions).items()) if type(value) is types.FunctionType
-    and name in {'_product_parts', 'dot', 'product', 'sum_arrays', 'weighted_sum'})
+    and name in {'_product_parts', '_vector_parts', '_interleave_sum', '_scalar_dot', 'dot', 'product', 'sum_arrays', 'weighted_sum'})
 _KERNEL_FACTS = tuple((name, value, _callable_authority(value),
     tuple((key, value.__globals__[key]) for key in value.__code__.co_names if key in value.__globals__))
     for name, value in tuple(globals().items()) if type(value) is types.FunctionType
