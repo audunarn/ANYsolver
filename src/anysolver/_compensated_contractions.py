@@ -69,12 +69,15 @@ def _vector_parts(a, b):
 
 def _interleave_sum(product, low):
     """fsum of ``[p0, l0, p1, l1, ...]`` along the last axis, as the scalar dot."""
-    parts = np.stack((product, low), axis=-1).reshape(product.shape[:-1] + (-1,))
-    rows = parts.reshape(-1, parts.shape[-1]).tolist()
-    values = np.fromiter((_fsum(row) for row in rows), dtype=float, count=len(rows))
+    lead = product.shape[:-1]
+    count = product.shape[-1]
+    parts = np.empty((product.size // max(count, 1), 2 * count), dtype=float)
+    parts[:, 0::2] = product.reshape(-1, count)
+    parts[:, 1::2] = low.reshape(-1, count)
+    values = np.array(list(map(_fsum, parts.tolist())), dtype=float)
     if not np.all(np.isfinite(values)):
         raise OverflowError("compensated sum overflow")
-    return values.reshape(parts.shape[:-1])
+    return values.reshape(lead)
 
 
 def dot(left, right):
@@ -119,8 +122,7 @@ def sum_arrays(terms):
         raise ValueError("compensated array sum requires finite inputs")
     shape = arrays[0].shape
     rows = np.stack(arrays).reshape(len(arrays), -1).T.tolist()
-    result = np.fromiter((_fsum(row) for row in rows), dtype=float, count=len(rows))
-    result = result.reshape(shape)
+    result = np.array(list(map(_fsum, rows)), dtype=float).reshape(shape)
     if not np.all(np.isfinite(result)):
         raise OverflowError("compensated array sum overflow")
     return result
