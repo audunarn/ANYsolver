@@ -432,7 +432,7 @@ class NonlinearConvergenceSettings:
     """
 
     profile: str = "auto"
-    line_search: str = "auto"
+    line_search: str = "rescue"
     fast_iterations: int = 4
     slow_iterations: int = 9
     growth_factor: float = 1.5

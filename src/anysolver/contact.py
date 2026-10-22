@@ -74,16 +74,19 @@ class RigidSphereImpact:
     t_start: float = 0.0
 
     def __post_init__(self) -> None:
-        if self.radius <= 0.0:
-            raise ValueError("sphere radius must be positive")
-        if self.mass <= 0.0:
-            raise ValueError("sphere mass must be positive")
-        if self.speed < 0.0:
-            raise ValueError("sphere speed must be non-negative")
-        if self.t_start < 0.0:
-            raise ValueError("sphere t_start must be non-negative")
+        # Comparisons with NaN are false, so finiteness is checked explicitly.
+        if not (np.isfinite(self.radius) and self.radius > 0.0):
+            raise ValueError("sphere radius must be positive and finite")
+        if not (np.isfinite(self.mass) and self.mass > 0.0):
+            raise ValueError("sphere mass must be positive and finite")
+        if not (np.isfinite(self.speed) and self.speed >= 0.0):
+            raise ValueError("sphere speed must be non-negative and finite")
+        if not (np.isfinite(self.t_start) and self.t_start >= 0.0):
+            raise ValueError("sphere t_start must be non-negative and finite")
         start = np.asarray(self.start_point, dtype=float).reshape(-1)
         direction = np.asarray(self.travel_direction, dtype=float).reshape(-1)
+        if not (np.all(np.isfinite(start)) and np.all(np.isfinite(direction))):
+            raise ValueError("sphere start_point and travel_direction must be finite")
         if start.shape != (3,):
             raise ValueError("sphere start_point must contain three coordinates")
         if direction.shape != (3,):
@@ -132,12 +135,13 @@ class SphereContactConfig:
     beam_contact: bool = False
 
     def __post_init__(self) -> None:
-        if self.penalty_stiffness is not None and self.penalty_stiffness <= 0.0:
-            raise ValueError("penalty_stiffness must be positive")
-        if self.contact_damping < 0.0:
-            raise ValueError("contact_damping must be non-negative")
-        if self.search_margin < 0.0:
-            raise ValueError("search_margin must be non-negative")
+        if self.penalty_stiffness is not None and not (
+                np.isfinite(self.penalty_stiffness) and self.penalty_stiffness > 0.0):
+            raise ValueError("penalty_stiffness must be positive and finite")
+        if not (np.isfinite(self.contact_damping) and self.contact_damping >= 0.0):
+            raise ValueError("contact_damping must be non-negative and finite")
+        if not (np.isfinite(self.search_margin) and self.search_margin >= 0.0):
+            raise ValueError("search_margin must be non-negative and finite")
         if self.max_contact_iterations <= 0:
             raise ValueError("max_contact_iterations must be positive")
         if self.penetration_tolerance <= 0.0:
