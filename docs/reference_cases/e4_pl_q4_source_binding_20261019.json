@@ -22,7 +22,7 @@
     "_local_contractions": {
       "changed_this_slice": false,
       "path": "src/anysolver/_compensated_contractions.py",
-      "sha256": "abed2ce18536e4854896c762c6c9745fcce63568a87f327f79821cb94d1d37bc",
+      "sha256": "885311e774f7c8dc689151fe49f26b912d38196cbcca25876d8341d268cb9f76",
       "used_attributes": [
         "product",
         "sum_arrays",
