@@ -16,9 +16,18 @@ from .jit_compiler import JIT_ENABLED, njit
 AVAILABLE = bool(JIT_ENABLED)
 
 POW2 = np.array([math.ldexp(1.0, e) if e <= 1023 else float("inf") for e in range(-1100, 1100)])
+POW2.flags.writeable = False
 
 
-@njit
+def _kernel(function):
+    """njit with the disk cache; without a writable cache location compile uncached."""
+    try:
+        return njit(function)
+    except Exception:  # noqa: BLE001 - numba raises RuntimeError when no cache locator exists
+        return njit(cache=False)(function)
+
+
+@_kernel
 def _fsum_buf(buf, n, partials):
     """math.fsum(buf[:n]); status 1 on intermediate overflow."""
     m = 0
@@ -67,7 +76,7 @@ def _fsum_buf(buf, n, partials):
     return hi, 0
 
 
-@njit
+@_kernel
 def _prep(a, xm, xh, xl, ex):
     """Mantissa, Dekker halves and exponent of every operand; False on nonfinite."""
     split = 134217729.0
@@ -91,7 +100,7 @@ def _prep(a, xm, xh, xl, ex):
     return True
 
 
-@njit
+@_kernel
 def _residual(x, xh, xl, ex, y, yh, yl, ey, pow2):
     high = x * y
     low = ((xh * yh - high) + xh * yl + xl * yh) + xl * yl
@@ -105,7 +114,7 @@ def _residual(x, xh, xl, ex, y, yh, yl, ey, pow2):
     return math.ldexp(low, e)
 
 
-@njit
+@_kernel
 def contract_product(a, b, out, pow2):
     m, k = a.shape
     n = b.shape[1]
@@ -142,7 +151,7 @@ def contract_product(a, b, out, pow2):
     return 0
 
 
-@njit
+@_kernel
 def contract_weighted(stack, w, out, pow2):
     """out[c] = compensated dot(stack[:, c], w): terms (left) times weights (right)."""
     t, n = stack.shape
@@ -178,7 +187,7 @@ def contract_weighted(stack, w, out, pow2):
     return 0
 
 
-@njit
+@_kernel
 def contract_sum(stack, out):
     t, n = stack.shape
     buf = np.empty(t)

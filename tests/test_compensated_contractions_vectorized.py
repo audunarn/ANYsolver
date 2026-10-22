@@ -190,11 +190,20 @@ def test_prepared_q4_authority_covers_native_kernels(backend):
     assert {row[0] for row in q._NATIVE_KERNEL_FACTS} >= {"contract_product", "contract_sum", "contract_weighted"}
     q.require_q4_kernel_authority()
     kernels = fast._native
+    assert not kernels.POW2.flags.writeable
+    kernels.POW2.flags.writeable = True
+    try:
+        with pytest.raises(Exception, match="kernel authority"):
+            q.require_q4_kernel_authority()
+    finally:
+        kernels.POW2.flags.writeable = False
     original = kernels.POW2[1100]
+    kernels.POW2.flags.writeable = True
     try:
         kernels.POW2[1100] = 2.0
         with pytest.raises(Exception, match="kernel authority"):
             q.require_q4_kernel_authority()
     finally:
         kernels.POW2[1100] = original
+        kernels.POW2.flags.writeable = False
     q.require_q4_kernel_authority()

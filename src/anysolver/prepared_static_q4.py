@@ -255,10 +255,15 @@ def require_q4_kernel_authority():
                 or any(function.__globals__.get(key) is not value for key, value in bindings)):
             raise PreparedStaticCapabilityError('prepared Q4 contraction executable authority changed')
     if (_contraction_kernels.POW2 is not _POW2_FACT[0]
-            or _contraction_kernels.POW2.tobytes() != _POW2_FACT[1]):
+            or _contraction_kernels.POW2.tobytes() != _POW2_FACT[1]
+            or _contraction_kernels.POW2.dtype != _POW2_FACT[2]
+            or _contraction_kernels.POW2.shape != _POW2_FACT[3]
+            or _contraction_kernels.POW2.strides != _POW2_FACT[4]
+            or _contraction_kernels.POW2.flags.writeable != _POW2_FACT[5]):
         raise PreparedStaticCapabilityError('prepared Q4 contraction kernel authority changed')
-    for name, dispatcher, function, authority, bindings in _NATIVE_KERNEL_FACTS:
-        if (vars(_contraction_kernels).get(name) is not dispatcher
+    for name, dispatcher, function, options, authority, bindings in _NATIVE_KERNEL_FACTS:
+        if (dict(getattr(dispatcher, 'targetoptions', {})) != options
+                or vars(_contraction_kernels).get(name) is not dispatcher
                 or not _callable_authority_matches(function, authority)
                 or any(function.__globals__.get(key) is not value for key, value in bindings)):
             raise PreparedStaticCapabilityError('prepared Q4 contraction kernel authority changed')
@@ -272,8 +277,10 @@ _CONTRACTION_FACTS = tuple((name, value, _callable_authority(value),
     tuple((key, value.__globals__[key]) for key in value.__code__.co_names if key in value.__globals__))
     for name, value in tuple(vars(_contractions).items()) if type(value) is types.FunctionType
     and name in {'_product_parts', '_vector_parts', '_interleave_sum', '_scalar_dot', 'dot', 'product', 'sum_arrays', 'weighted_sum'})
-_POW2_FACT = (_contraction_kernels.POW2, _contraction_kernels.POW2.tobytes())
-_NATIVE_KERNEL_FACTS = tuple((name, value, getattr(value, 'py_func', value),
+_POW2_FACT = (_contraction_kernels.POW2, _contraction_kernels.POW2.tobytes(),
+    _contraction_kernels.POW2.dtype, _contraction_kernels.POW2.shape, _contraction_kernels.POW2.strides,
+    _contraction_kernels.POW2.flags.writeable)
+_NATIVE_KERNEL_FACTS = tuple((name, value, getattr(value, 'py_func', value), dict(getattr(value, 'targetoptions', {})),
     _callable_authority(getattr(value, 'py_func', value)),
     tuple((key, getattr(value, 'py_func', value).__globals__[key])
           for key in getattr(value, 'py_func', value).__code__.co_names
