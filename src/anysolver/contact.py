@@ -21,7 +21,7 @@ from .boundary import BoundaryCondition, LoadCase
 from .cases import make_result_case
 from .constraint_audit import constraint_residual_summary
 from .contact_performance import ContactWorkBuffer, ContactWorkCounters
-from .control import CancellationToken, ProgressCallback, cancellation_safe_point, emit_progress
+from .control import CancellationToken, ProgressCallback, SolveCancelled, cancellation_safe_point, emit_progress
 from .damage_matrix_performance import (
     DamageMatrixPlan,
     DamageMatrixPlanFallback,
@@ -225,8 +225,14 @@ class NonlinearTransientConfig:
     # instead of applying it as a sudden step (which rings the structure at
     # its axial period through the whole impact).
     equilibrate_base_load: bool = True
+    # Opt-in multisecant or small-system numerical-contact Newton iteration;
+    # contact_relaxation='none'
+    # takes precedence. The default retains the legacy staggered iteration.
+    coupled_contact_acceleration: str = "none"
 
     def __post_init__(self) -> None:
+        if self.coupled_contact_acceleration not in {"none", "anderson", "contact_newton"}:
+            raise ValueError("coupled_contact_acceleration must be 'none', 'anderson' or 'contact_newton'")
         if str(self.kinematics).lower() not in {"von_karman", "corotational"}:
             raise ValueError("NonlinearTransientConfig.kinematics must be 'von_karman' or 'corotational'")
         object.__setattr__(self, "kinematics", str(self.kinematics).lower())
@@ -268,6 +274,7 @@ class NonlinearTransientConfig:
             "kinematics": self.kinematics,
             "stagnation_energy_tolerance": float(self.stagnation_energy_tolerance),
             "equilibrate_base_load": bool(self.equilibrate_base_load),
+            "coupled_contact_acceleration": self.coupled_contact_acceleration,
         }
 
 
@@ -2797,6 +2804,26 @@ def _solve_transient_sphere_impact_nonlinear(
     nonlinear_failure_summary: Dict[str, Any] = {}
     alpha_h, beta, gamma = transient_config.integration_parameters()
     one_plus_alpha = 1.0 + alpha_h
+    coupling_fallback = None
+    if nl.coupled_contact_acceleration == "none":
+        coupling_fallback = "not_requested"
+    elif config.contact_relaxation == "none":
+        coupling_fallback = "contact_relaxation_disabled"
+    elif native_contact_state:
+        coupling_fallback = "native_rotations"
+    elif descriptor_reduction is not None:
+        coupling_fallback = "descriptor_coordinates"
+    elif T[np.asarray([dof for node_id in model.mesh.nodes
+                        for dof in model.mesh.get_node(node_id).dofs[3:6]], dtype=np.intp), :].nnz:
+        coupling_fallback = "rotational_coordinates"
+    coupled_active = coupling_fallback is None
+    coupled_safeguard_count = 0
+    coupling_method = nl.coupled_contact_acceleration if coupled_active else "none"
+    if coupling_method == "contact_newton" and q_red.size + 3 > 64:
+        coupling_method = "anderson"
+        coupling_fallback = "coupled_dimension_exceeds_64"
+    contact_newton_active = coupling_method == "contact_newton"
+    contact_jacobian_evaluation_count = 0
     separation_elapsed = 0.0
     separation_stop_time = float(config.post_separation_time)
 
@@ -2888,6 +2915,12 @@ def _solve_transient_sphere_impact_nonlinear(
         factor_diagnostics: Dict[str, Any] = {}
         convergence_reason = "standard"
         max_newton_corrections = int(nl.max_iterations)
+        from ._impact_coupling import ImpactCoupledIteration, numerical_contact_jacobian
+        coupled_iteration = ImpactCoupledIteration() if coupling_method == "anderson" else None
+        coupled_signature = None
+        sphere_x_pred = sphere_position + dt * sphere_velocity + dt**2 * (0.5 - beta) * sphere_acceleration
+        sphere_v_pred = sphere_velocity + dt * (1.0 - gamma) * sphere_acceleration
+        sphere_x_iterate = sphere_x_pred.copy()
         for iteration in range(1, max_newton_corrections + 2):
             cancellation_safe_point(
                 cancellation_token,
@@ -2897,6 +2930,9 @@ def _solve_transient_sphere_impact_nonlinear(
                 status_callback(f"\r  Time {sub_time:.4f} s, Iteration {iteration}: Res {residual_norm:.2e}")
             full_u = reconstruct_full_solution(T, q_trial, u0)
             refresh_tangent, refresh_reasons = tangent_reuse.refresh_decision()
+            if contact_newton_active:
+                refresh_tangent = True
+                refresh_reasons = tuple(refresh_reasons) + ("coupled_contact_jacobian",)
             if impact_reduced_assembly.active:
                 F_int_red, K_T_red, trial_states = impact_reduced_assembly.assemble(
                     full_u,
@@ -3029,9 +3065,10 @@ def _solve_transient_sphere_impact_nonlinear(
                 a_next = np.asarray(a_trial, dtype=float).copy()
                 # The accepted acceleration is conjugate to the contact
                 # force evaluated at the accepted sphere configuration.
-                sphere_a_next = np.asarray(
-                    sphere_force / float(sphere.mass), dtype=float
-                ).copy()
+                if not coupled_active:
+                    sphere_a_next = np.asarray(
+                        sphere_force / float(sphere.mass), dtype=float
+                    ).copy()
                 if standard_converged:
                     convergence_reason = "standard"
                 elif contact_stall_converged:
@@ -3049,6 +3086,8 @@ def _solve_transient_sphere_impact_nonlinear(
                 # configured limit counts Newton corrections, not a hidden
                 # unevaluated candidate beyond that limit.
                 break
+            use_contact_newton = contact_newton_active and iteration > 1
+            sphere_delta = None
             try:
                 if refresh_tangent:
                     if impact_reduced_assembly.active:
@@ -3089,10 +3128,40 @@ def _solve_transient_sphere_impact_nonlinear(
                                 @ K_eff
                                 @ descriptor_partition_operator
                             ).tocsr()
+                    if use_contact_newton:
+                        def evaluate_contact_coordinates(coordinates):
+                            nonlocal contact_jacobian_evaluation_count
+                            q_probe, x_probe = coordinates[:-3], coordinates[-3:]
+                            a_probe = a0 * (q_probe - q_red) - a2 * v_red - a3 * a_red
+                            v_probe = v_red + dt * ((1.0 - gamma) * a_red + gamma * a_probe)
+                            sphere_v_probe = sphere_v_pred + a1 * (x_probe - sphere_x_pred)
+                            # Fresh scratch storage: probes never alter the actual
+                            # iterate's work buffer, sticky IDs or material trial.
+                            work = _assemble_sphere_contact_work_buffer(
+                                model, sphere, config, x_probe, sphere_v_probe,
+                                structural_displacement=reconstruct_full_solution(T, q_probe, u0),
+                                structural_velocity=np.asarray(T @ v_probe, dtype=float).reshape(-1),
+                                deleted_element_ids=tuple(deleted_element_ids),
+                                contact_scale_by_element=damage_scale_by_element,
+                                preferred_element_ids=sticky_contact_ids,
+                            )
+                            contact_jacobian_evaluation_count += 1
+                            return np.concatenate((np.asarray(T.T @ work.load).reshape(-1), work.sphere_force))
+                        contact_jacobian = numerical_contact_jacobian(
+                            evaluate_contact_coordinates,
+                            np.concatenate((q_trial, sphere_x_iterate)), float(sphere.radius),
+                            safe_point=lambda: cancellation_safe_point(
+                                cancellation_token, "sphere_impact.nonlinear.contact_jacobian"),
+                        )
+                        n_q = q_trial.size
+                        # Negative derivative of the two physical residuals.
+                        contact_jacobian[:n_q, :] *= one_plus_alpha
+                        base_operator = sparse.block_diag((K_eff, float(sphere.mass) * a0 * sparse.eye(3)))
+                        K_eff = (base_operator - sparse.csr_matrix(contact_jacobian)).tocsr()
                     tangent_reuse.record_tangent_assembly(refresh_reasons)
                     handle = factorize(
                         K_eff,
-                        MatrixClass.SYMMETRIC_INDEFINITE,
+                        MatrixClass.GENERAL if use_contact_newton else MatrixClass.SYMMETRIC_INDEFINITE,
                         signature=(
                             f"sphere_impact.nl.effective:{dt:.16g}:{iteration}:"
                             f"descriptor={descriptor_reduction is not None}"
@@ -3108,9 +3177,15 @@ def _solve_transient_sphere_impact_nonlinear(
                     if descriptor_reduction is not None
                     else residual
                 )
+                if use_contact_newton:
+                    solve_rhs = np.concatenate((solve_rhs,
+                        sphere_force - float(sphere.mass) * a0 * (sphere_x_iterate - sphere_x_pred)))
                 solved_delta = np.asarray(
                     handle.solve(solve_rhs), dtype=float
                 ).reshape(-1)
+                if use_contact_newton:
+                    sphere_delta = solved_delta[-3:]
+                    solved_delta = solved_delta[:-3]
                 delta = (
                     descriptor_reduction.reconstruct_partition_state(
                         solved_delta[: descriptor_reduction.physical_dimension],
@@ -3125,11 +3200,13 @@ def _solve_transient_sphere_impact_nonlinear(
                 else:
                     tangent_reuse.record_reuse()
                 solve_count += 1
+            except SolveCancelled:
+                raise
             except Exception:
                 status = "nonlinear_tangent_failed"
                 stop_reason = "nonlinear_tangent_factorization_failed"
                 break
-            if np.any(~np.isfinite(delta)):
+            if np.any(~np.isfinite(delta)) or (sphere_delta is not None and np.any(~np.isfinite(sphere_delta))):
                 status = "nonlinear_iteration_failed"
                 stop_reason = "nonfinite_nonlinear_increment"
                 break
@@ -3140,15 +3217,42 @@ def _solve_transient_sphere_impact_nonlinear(
                     factor *= 0.5
             tangent_reuse.observe_line_search(factor)
             q_next = q_trial + factor * delta
-            displacement_increment = float(np.linalg.norm(factor * delta))
-            residual_energy_increment = abs(float(np.dot(factor * delta, residual)))
-            a_next = a0 * (q_next - q_red) - a2 * v_red - a3 * a_red
-            v_next = v_red + dt * ((1.0 - gamma) * a_red + gamma * a_next)
-            sphere_x_pred = sphere_position + dt * sphere_velocity + dt**2 * (0.5 - beta) * sphere_acceleration
-            sphere_v_pred = sphere_velocity + dt * (1.0 - gamma) * sphere_acceleration
             sphere_a_next = sphere_force / float(sphere.mass)
             sphere_x_next = sphere_x_pred + beta * dt**2 * sphere_a_next
+            if sphere_delta is not None:
+                sphere_x_next = sphere_x_iterate + factor * sphere_delta
             sphere_v_next = sphere_v_pred + gamma * dt * sphere_a_next
+            displacement_increment = float(np.linalg.norm(factor * delta))
+            residual_energy_increment = abs(float(np.dot(factor * delta, residual)))
+            if coupled_iteration is not None:
+                # The first map uses the legacy zero contact-load initialization,
+                # not a physical residual at x_pred: never store its secant.
+                if iteration > 1:
+                    previous_safeguards = coupled_iteration.globalization_count
+                    coupled_next = coupled_iteration.update(
+                        np.concatenate((q_trial, sphere_x_iterate)),
+                        np.concatenate((q_next, sphere_x_next)),
+                        signature=tuple(zip(last_contact_work.active_element_ids,
+                                            last_contact_work.active_classifications)),
+                    )
+                    coupled_safeguard_count += coupled_iteration.globalization_count - previous_safeguards
+                    if not np.all(np.isfinite(coupled_next)):
+                        status = "nonlinear_iteration_failed"
+                        stop_reason = "nonfinite_nonlinear_increment"
+                        break
+                    q_next = coupled_next[:-3]
+                    sphere_x_next = coupled_next[-3:]
+                actual_delta = q_next - q_trial
+                # A tiny extrapolated update must never make a physical Newton
+                # correction pass a displacement/energy stagnation criterion.
+                displacement_increment = max(displacement_increment, float(np.linalg.norm(actual_delta)))
+                residual_energy_increment = max(residual_energy_increment, abs(float(np.dot(actual_delta, residual))))
+            if coupled_active:
+                sphere_a_next = a0 * (sphere_x_next - sphere_x_pred)
+                sphere_v_next = sphere_v_pred + gamma * dt * sphere_a_next
+                sphere_x_iterate = sphere_x_next.copy()
+            a_next = a0 * (q_next - q_red) - a2 * v_red - a3 * a_red
+            v_next = v_red + dt * ((1.0 - gamma) * a_red + gamma * a_next)
             full_u_next = reconstruct_full_solution(T, q_next, u0)
             full_v_next = np.asarray(T @ v_next, dtype=float).reshape(-1)
             try:
@@ -3186,7 +3290,14 @@ def _solve_transient_sphere_impact_nonlinear(
             if last_contact_work.selected_indices.size:
                 sticky_contact_ids = last_contact_work.active_element_ids
             contact_scale = max(float(np.linalg.norm(last_contact_work.sphere_force)), 1.0)
-            contact_change = float(np.linalg.norm(last_contact_work.sphere_force - sphere_force))
+            contact_change = float(np.linalg.norm(last_contact_work.sphere_force -
+                (float(sphere.mass) * sphere_a_next if coupled_active else sphere_force)))
+            if coupled_iteration is not None:
+                next_signature = tuple(zip(last_contact_work.active_element_ids, last_contact_work.active_classifications))
+                if next_signature and coupled_signature and next_signature != coupled_signature:
+                    coupled_iteration = ImpactCoupledIteration()
+                if next_signature:
+                    coupled_signature = next_signature
             np.copyto(contact_load, last_contact_work.load)
             np.copyto(sphere_force, last_contact_work.sphere_force)
             tangent_reuse.observe_contact_signature(
@@ -3534,6 +3645,11 @@ def _solve_transient_sphere_impact_nonlinear(
     )
     public_committed_states = materialize_state_mapping(committed_states)
     diagnostics = {
+        "coupled_contact_acceleration": {"requested": nl.coupled_contact_acceleration,
+            "active": coupled_active, "method": coupling_method,
+            "fallback_reason": coupling_fallback, "depth": 4,
+            "scalar_bracket_safeguards": coupled_safeguard_count,
+            "contact_jacobian_force_evaluations": contact_jacobian_evaluation_count},
         "method": "nonlinear_newmark_sphere_penalty_contact",
         "solution_control": "implicit_newmark_time_domain",
         "arc_length_applicability": "not_applicable_to_dynamic_impact",
@@ -3691,19 +3807,21 @@ def solve_transient_sphere_impact(
         codes = ", ".join(issue.code for issue in validation.errors)
         raise ValueError(f"Invalid sphere contact configuration: {codes}")
     if nonlinear_enabled:
-        return _solve_transient_sphere_impact_nonlinear(
-            model,
-            transient_config,
-            sphere,
-            config,
-            validation,
-            base_load_case=base_load_case,
-            nonlinear_config=nonlinear_config,
-            plastic_damage_config=plastic_damage_config,
-            progress_callback=progress_callback,
-            status_callback=status_callback,
-            cancellation_token=cancellation_token,
-        )
+        from .e4_pl_element import _elastic_batch_baseline_scope
+        with _elastic_batch_baseline_scope():
+            return _solve_transient_sphere_impact_nonlinear(
+                model,
+                transient_config,
+                sphere,
+                config,
+                validation,
+                base_load_case=base_load_case,
+                nonlinear_config=nonlinear_config,
+                plastic_damage_config=plastic_damage_config,
+                progress_callback=progress_callback,
+                status_callback=status_callback,
+                cancellation_token=cancellation_token,
+            )
     model.apply_boundary_conditions()
     K, stiffness_info = assemble_stiffness_matrix(model)
     M, mass_info = assemble_mass_matrix(model)

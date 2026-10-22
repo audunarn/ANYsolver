@@ -1215,6 +1215,7 @@ def _element_recovery_context(
     *,
     kinematics: str,
     return_global: bool,
+    stable_shell_rotation: bool = False,
 ) -> Tuple[Dict[str, Any], np.ndarray, np.ndarray]:
     """Elastic component recovery and frame using the solved kinematics."""
 
@@ -1255,6 +1256,7 @@ def _element_recovery_context(
             reference,
             element,
             np.asarray(displacements, dtype=float)[dof_mapping],
+            stable_shell_rotation=stable_shell_rotation,
         )
     )
     element_displacements = np.zeros_like(np.asarray(displacements, dtype=float))
@@ -2102,6 +2104,7 @@ def _recover_one_committed_state(
     displacements: np.ndarray,
     kinematics: str,
     return_global: bool,
+    stable_shell_rotation: bool = False,
 ) -> Tuple[Optional[Dict[str, Any]], str, str, Dict[str, str]]:
     element = model.mesh.elements.get(int(element_id))
     if element is None:
@@ -2146,6 +2149,7 @@ def _recover_one_committed_state(
             displacements,
             kinematics=kinematics,
             return_global=False,
+            stable_shell_rotation=stable_shell_rotation,
         )
         if str(kinematics) == "corotational"
         else (
@@ -3191,6 +3195,12 @@ def _recover_stress_result_after_selection(
         nonlinear_result,
         kinematics,
     )
+    result_info = getattr(nonlinear_result, "info", {})
+    stable_shell_rotation = (result_info.get("corotational_shell_rotation_stable", False)
+                             if isinstance(result_info, Mapping) else False)
+    if type(stable_shell_rotation) is not bool:
+        raise ValueError("invalid corotational shell rotation precision provenance")
+    analysis_context["corotational_shell_rotation_stable"] = stable_shell_rotation
     selected_set = set(selected_ids)
     selected_state_ids = tuple(
         sorted(
@@ -3336,6 +3346,7 @@ def _recover_stress_result_after_selection(
                 displacement_values,
                 kinematics=resolved_kinematics,
                 return_global=bool(return_global or patch_config is not None),
+                stable_shell_rotation=stable_shell_rotation,
             )
             contextual["_recovery_coordinates"] = np.asarray(
                 current_coords, dtype=float
@@ -3373,6 +3384,7 @@ def _recover_stress_result_after_selection(
                         elastic,
                         displacements=displacement_values,
                         kinematics=resolved_kinematics,
+                        stable_shell_rotation=stable_shell_rotation,
                         return_global=bool(
                             return_global or patch_config is not None
                         ),

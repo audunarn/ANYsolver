@@ -862,6 +862,100 @@ _prepare_q4_correction_payload, _lookup_prepared_q4_correction = (
     _make_prepared_q4_correction_provenance())
 
 
+def _make_elastic_batch_baseline_preparation():
+    active = ContextVar("qualified_q4_batch_baselines", default=None)
+
+    owners = weakref.WeakKeyDictionary()
+
+    class Scope:
+        __slots__ = ("__weakref__",)
+
+    @contextmanager
+    def scope():
+        # A solve owns its bindings, including mesh graphs. Nested solves have
+        # separate dictionaries; exit/cancellation releases all preparation.
+        owned = Scope()
+        records = {}
+        owners[owned] = records
+        token = active.set(owned)
+        try:
+            yield
+        finally:
+            owners.pop(owned, None)
+            records.clear()
+            active.reset(token)
+
+    def prepare(element, mesh, material, snapshot, post_observation):
+        owned = active.get()
+        records = owners.get(owned) if type(owned) is Scope else None
+        if records is None:
+            return None
+        _require_exact_q4_runtime_authority(
+            element, context="qualified Q4 batch baseline preparation")
+        # The factory obtains authoritative inputs itself; callers cannot
+        # publish arbitrary matrices or geometry through a preparation token.
+        geometry = element._nonlinear_geometry(mesh)
+        qualified = np.asarray(element.compute_stiffness_matrix(mesh, material), dtype=float)
+        if not element._defining_class_input_snapshot_matches(mesh, material, snapshot):
+            raise RuntimeError("qualified Q4 elastic increment inputs changed during preparation")
+        key = id(element)
+        guard = element._qualified_component_guard
+
+        def valid(binding):
+            return (binding[0] is element and binding[1] is mesh
+                    and binding[2] is material and binding[3] is guard
+                    and binding[5] is geometry
+                    and element._qualified_component_guard is guard
+                    and element._defining_class_input_snapshot_matches(
+                        mesh, material, binding[4])
+                    and element._defining_class_input_snapshot_matches(
+                        mesh, material, snapshot))
+
+        def observation():
+            if post_observation is not None:
+                post_observation()
+            _require_exact_q4_runtime_authority(
+                element, context="qualified Q4 batch baseline observation")
+            if not element._defining_class_input_snapshot_matches(mesh, material, snapshot):
+                raise RuntimeError("qualified Q4 elastic baseline inputs changed during observation")
+            element._validate_qualified_component_guard()
+
+        binding = records.pop(key, None)
+        if binding is None or not valid(binding):
+            batch = _elastic_increment_module.compensated_elastic_batch_zero(
+                geometry, float(material.elastic_modulus), float(material.poisson_ratio),
+                float(material.shear_modulus), element.thickness,
+                element.drilling_stabilization)
+            element._hourglass_stiffness_matrix = None
+            scalar = _elements_module._compensated_elastic_zero_tangent(
+                element, mesh, material, observation)
+            observation()
+            offset = _local_contractions.sum_arrays((batch, -scalar))
+            baseline = _local_contractions.sum_arrays((qualified, offset))
+            binding = (element, mesh, material, guard, snapshot, geometry,
+                       np.ascontiguousarray(baseline, dtype=float).tobytes())
+        else:
+            element._hourglass_stiffness_matrix = None
+
+        def publish():
+            # No arbitrary-payload registrar: only this call's internally
+            # computed immutable bytes can be published, after final guards.
+            observation()
+            if not valid(binding):
+                raise RuntimeError("qualified Q4 elastic baseline preparation is stale")
+            if (records is not None and owners.get(owned) is records
+                    and active.get() is owned):
+                records[key] = binding
+
+        return np.frombuffer(binding[6], dtype=float).reshape(24, 24), publish
+
+    return prepare, scope
+
+
+_prepare_elastic_batch_baseline, _elastic_batch_baseline_scope = (
+    _make_elastic_batch_baseline_preparation())
+
+
 class _Q4FastCacheRecord(NamedTuple):
     reference: Any
     components: Any
@@ -5975,7 +6069,7 @@ class QualifiedE4PLShellElement(
         """Replace cancelled elastic output sums, preserving the batch offset.
 
         The caller first runs its existing state/constitutive path. Preparation
-        is local to this call and never survives an input mutation. The batch
+        reuses immutable batch baselines only while original input bindings hold. The batch
         baseline is not presumed identical to the inherited scalar tangent.
         """
         # Keep the ORIGINAL call input binding across admission and every
@@ -5989,7 +6083,16 @@ class QualifiedE4PLShellElement(
         if not self._defining_class_input_snapshot_matches(mesh, material, snapshot):
             raise RuntimeError("qualified Q4 elastic increment inputs changed during preparation")
         baseline = qualified
-        if batch_baseline:
+        publish_baseline = None
+        prepared_batch = (batch_baseline and batch_linear is None
+                          and type(snapshot) is _Q4FastInputSnapshot)
+        if prepared_batch:
+            prepared = _prepare_elastic_batch_baseline(
+                self, mesh, material, snapshot, _qualified_runtime_post_observation)
+            prepared_batch = prepared is not None
+            if prepared_batch:
+                baseline, publish_baseline = prepared
+        if batch_baseline and not prepared_batch:
             if batch_linear is not None:
                 raise ValueError("ambiguous qualified Q4 batch baseline")
             batch_linear = _elastic_increment_module.compensated_elastic_batch_zero(
@@ -6019,6 +6122,8 @@ class QualifiedE4PLShellElement(
             raise RuntimeError("qualified Q4 elastic increment inputs changed")
         self._validate_qualified_component_guard(
             post_observation=_qualified_runtime_post_observation)
+        if publish_baseline is not None:
+            publish_baseline()
         return force, total, material_tangent, geometric
 
     def _prepare_nonlinear_linear_correction(

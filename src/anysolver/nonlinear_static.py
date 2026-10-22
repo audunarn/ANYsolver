@@ -26,6 +26,8 @@ loads or imperfection loads can be held while the proportional part ramps.
 
 from __future__ import annotations
 
+import math
+
 import copy
 import os
 import threading
@@ -1279,6 +1281,7 @@ def _assemble_nonlinear_system_unchecked(
     kinematics: str = "von_karman",
     corotational_tangent: str = "rotated",
     require_full_coordinates: bool = False,
+    stable_shell_rotation: bool = False,
 ) -> Tuple[np.ndarray, Any, Dict[int, Any]]:
     """Assemble F_int (and the tangent K_T when requested) at a state.
 
@@ -1535,6 +1538,7 @@ def _assemble_nonlinear_system_unchecked(
                     committed_state=committed_states.get(elem_id),
                     num_layers=num_layers,
                     tangent_mode=corotational_tangent,
+                    stable_shell_rotation=stable_shell_rotation,
                 )
                 if f_elem is not None and cr_trial_state is not None:
                     trial_states[elem_id] = cr_trial_state
@@ -1633,6 +1637,7 @@ def _assemble_nonlinear_system(
     kinematics: str = "von_karman",
     corotational_tangent: str = "rotated",
     require_full_coordinates: bool = False,
+    stable_shell_rotation: bool = False,
 ) -> Tuple[np.ndarray, Any, Dict[int, Any]]:
     """Run one reference assembly as an all-or-nothing state evaluation.
 
@@ -1655,6 +1660,7 @@ def _assemble_nonlinear_system(
             kinematics=kinematics,
             corotational_tangent=corotational_tangent,
             require_full_coordinates=require_full_coordinates,
+            stable_shell_rotation=stable_shell_rotation,
         )
         from .general_contact.runtime import active_contact_manager
 
@@ -5115,6 +5121,23 @@ class _NonlinearStaticOperationConfig:
     emit_restart_checkpoint: bool
 
 
+_NONLINEAR_CONFIG_BUILTIN_CONVERTERS = (bool, int, float, str)
+_NONLINEAR_CONFIG_INERT_TYPES = (bool, int, float, str, bytes, type(None))
+_NONLINEAR_CONFIG_STRING_TYPE = str
+
+
+def _inert_nonlinear_config_scalar(value: Any) -> bool:
+    """Exact builtin scalar conversion cannot invoke caller-defined methods.
+
+    Use identity, not isinstance or type equality: subclasses (including NumPy
+    scalars) and custom metaclasses must retain the hostile-observation guard.
+    """
+    value_type = type(value)
+    return any(
+        value_type is builtin for builtin in _NONLINEAR_CONFIG_INERT_TYPES
+    )
+
+
 def _owned_nonlinear_static_operation_config(
     model: "FEModel",
     *,
@@ -5135,8 +5158,12 @@ def _owned_nonlinear_static_operation_config(
     """Own scalar nonlinear policy before model/capability observation."""
 
     def converted(value: Any, converter: Any, name: str) -> Any:
+        inert = _inert_nonlinear_config_scalar(value) and any(
+            converter is builtin for builtin in _NONLINEAR_CONFIG_BUILTIN_CONVERTERS
+        )
         made = converter(value)
-        _exact_guard(model, context=f"nonlinear static {name} conversion")
+        if not inert:
+            _exact_guard(model, context=f"nonlinear static {name} conversion")
         return made
 
     def canonical_int(value: Any, name: str) -> int:
@@ -5146,6 +5173,16 @@ def _owned_nonlinear_static_operation_config(
         ):
             raise ValueError(f"{name} must be an integer")
         return converted(value, int, name)
+
+    def normalized_string(value: Any, name: str) -> str:
+        text = converted(value, str, name)
+        # __str__ can return a str subclass whose lower() runs caller code.
+        # Guard that second observation before converting any later option.
+        inert = type(text) is _NONLINEAR_CONFIG_STRING_TYPE
+        lowered = text.lower()
+        if not inert:
+            _exact_guard(model, context=f"nonlinear static {name} normalization")
+        return lowered
 
     owned_equilibrate = (
         None
@@ -5171,8 +5208,8 @@ def _owned_nonlinear_static_operation_config(
             float,
             "min_step_fraction",
         ),
-        control=converted(control, str, "control").lower(),
-        kinematics=converted(kinematics, str, "kinematics").lower(),
+        control=normalized_string(control, "control"),
+        kinematics=normalized_string(kinematics, "kinematics"),
         corotational_tangent=converted(
             corotational_tangent,
             str,
@@ -5624,6 +5661,9 @@ def _solve_static_nonlinear_under_lease(
     restart_checkpoint: Optional[Any] = None,
     emit_restart_checkpoint: bool = False,
     _qualified_runtime_guard: Any = None,
+    stability_control: Optional[str] = None,
+    _plate_stability_binding: Any = None,
+    _plate_stability_authority: Any = None,
 ) -> NonlinearStaticResult:
     """Incremental nonlinear static solve with adaptive load stepping.
 
@@ -5660,6 +5700,11 @@ def _solve_static_nonlinear_under_lease(
         context: str,
     ) -> Dict[str, Any]:
         result = raw_exact_guard(observed_model, context=context)
+        if stability_control is not None:
+            _plate_stability_authority()
+            from ._plate_stability_continuation import admit
+            if admit(observed_model) != _plate_stability_binding:
+                raise ValueError("plate_energy admitted model changed during solve")
         # Imperfection handling may replace ``model`` with a solver-owned
         # copy.  The non-renewable lease remains bound to the caller's model
         # and global authority generation, while the exact lifecycle guard
@@ -6107,6 +6152,20 @@ def _solve_static_nonlinear_under_lease(
     from .general_contact.runtime import active_contact_manager
 
     active_manager = active_contact_manager()
+    # Numerical evaluation policy only: retain legacy owner/checkpoint arithmetic.
+    stable_shell_rotation = bool(
+        kinematics == "corotational" and resolved_corotational_tangent == "work_conjugate"
+        and control_name == "force" and active_manager is None
+        and initial_element_states is None and initial_displacements is None
+        and initial_fields is None and imperfection is None
+        and restart_checkpoint is None and not emit_restart_checkpoint
+        and fracture_config is None and bool(model.mesh.elements)
+        and all(type(element) is _QualifiedE4PLShellElement
+                and element.shell_section is None
+                and model.get_material(element.material_name).yield_stress == 0.
+                and model.get_material(element.material_name).hardening_curve is None
+                for element in model.mesh.elements.values())
+    )
     augmented_contact_manager = (
         active_manager if getattr(active_manager, "augmented", False) else None
     )
@@ -6249,6 +6308,20 @@ def _solve_static_nonlinear_under_lease(
         "resource_config": None if resource_config is None else resource_config.to_dict(),
         "thread_policy": thread_policy_diagnostics(resource_config),
     }
+    info["corotational_shell_rotation_stable"] = stable_shell_rotation
+    info["corotational_shell_rotation_policy"] = (
+        "cancellation_safe_virgin_force_q4" if stable_shell_rotation
+        else "historical_owner_policy"
+    )
+    if stability_control is not None:
+        info["stability_control"] = {
+            "method": "plate_energy", "max_free_coordinates": 512,
+            "initial_radius_over_edge": .1, "maximum_radius_over_edge": 1.,
+            "acceptance_ratio": .1, "shrink": .25, "growth": 2.,
+            "curvature_rule": "lambda_min > 100*eps*n*norm_inf(scaled_K)",
+            "eigensolves": 0, "energy_proposals": 0, "rejected_proposals": 0,
+            "accepted_curvatures": [], "attempts": [],
+        }
     if validated_restart is not None:
         info["restart"] = {
             "schema": validated_restart.payload["schema"],
@@ -6716,6 +6789,7 @@ def _solve_static_nonlinear_under_lease(
                     tangent=True,
                     kinematics=kinematics,
                     corotational_tangent=resolved_corotational_tangent,
+                    stable_shell_rotation=stable_shell_rotation,
                 )
             )
             internal_guard(
@@ -7402,6 +7476,8 @@ def _solve_static_nonlinear_under_lease(
                for e in model.mesh.elements.values()):
             from ._ge_beam3_native_line_program import assemble_at
             return assemble_at(path_factor, *args, **kwargs)
+        if stable_shell_rotation:
+            kwargs["stable_shell_rotation"] = True
         return _assemble_nonlinear_system(*args, **kwargs)
 
     last_contact_equilibrium_tangent = None
@@ -7926,7 +8002,86 @@ def _solve_static_nonlinear_under_lease(
             None,
         )
 
+    def plate_energy_increment(q_start, path_factor, reference, line_search_mode, **unused):
+        from ._plate_stability_continuation import segment_work, solve_increment
+        nonlocal total_iterations, last_contact_equilibrium_tangent
+        diagnostics = info["stability_control"]
+        length = _plate_stability_binding[1]
+        scale = np.ones(len(q_start))
+        # With admitted simple prescribed DOFs, T is a coordinate selection.
+        rotation_dofs = {node.dofs[j] for node in model.mesh.nodes.values() for j in (3,4,5)}
+        for j, dof in enumerate(independent_dofs):
+            if int(dof) in rotation_dofs: scale[j] = 1. / length
+        def checkpoint():
+            cancellation_checkpoint("nonlinear_static.plate_energy",
+                context="plate energy continuation cancellation")
+        def evaluate(candidate):
+            checkpoint()
+            u = full_displacement(candidate, path_factor)
+            force, tangent, states = assemble_force_system(
+                path_factor, model, u, committed_states, num_layers,
+                kinematics=kinematics, corotational_tangent=resolved_corotational_tangent)
+            internal_guard(model, context="plate energy trial assembly")
+            residual = -_reduce_internal_force(u, force)
+            if status_callback is not None:
+                status_callback(f"Plate energy trial | load factor {path_factor:.6g} | residual {np.linalg.norm(residual):.3e}")
+                exact_guard(model, context="plate energy status callback")
+                checkpoint()
+            return residual, _reduce_equilibrium_tangent(u, tangent, force, None), (force,tangent,states)
+        def work(a,b):
+            return segment_work(model,full_displacement(a,path_factor),
+                full_displacement(b,path_factor),checkpoint,num_layers)
+        def small_step_work(a,b):
+            # Fixed prescribed coordinates: only free-coordinate work contributes.
+            # Quadrature agreement is an error indicator, not a rigorous bound.
+            delta = b-a
+            estimates = []
+            absolute = []
+            for order in (3,5):
+                points, weights = np.polynomial.legendre.leggauss(order)
+                terms = []
+                for point, weight in zip(points,weights):
+                    checkpoint()
+                    u = full_displacement(a+.5*(point+1)*delta,path_factor)
+                    virgin = {}
+                    try:
+                        force, _, _ = assemble_force_system(
+                            path_factor,model,u,virgin,num_layers,tangent=False,
+                            kinematics=kinematics,corotational_tangent=resolved_corotational_tangent)
+                        internal_guard(model,context="plate energy work assembly")
+                        terms.append(.5*weight*float(_reduce_internal_force(u,force)@delta))
+                        diagnostics["global_work_probes"] = diagnostics.get("global_work_probes",0)+1
+                        checkpoint()
+                    finally:
+                        _discard_nonlinear_state_candidate(virgin)
+                estimates.append(math.fsum(terms))
+                absolute.append(math.fsum(abs(term) for term in terms))
+            screen = abs(estimates[1]-estimates[0])+64*np.finfo(float).eps*sum(absolute)
+            if not np.isfinite(estimates[1]+screen):
+                raise ValueError("nonfinite plate energy quadrature")
+            return estimates[1],screen
+        def discard():
+            _discard_nonlinear_state_candidate(committed_states)
+        try:
+            success, q_result, payload, residual_norm, iterations, reason = solve_increment(
+                q_start,evaluate,work,checkpoint,discard,scale,length,tolerance,
+                reference,max_iterations,diagnostics,small_step_work=small_step_work)
+            total_iterations += iterations
+            diagnostics["attempts"].append({"factor":float(path_factor),"success":bool(success),
+                "iterations":iterations,"reason":reason})
+            if success:
+                force,tangent,states = payload
+                last_contact_equilibrium_tangent = tangent
+                return True,q_result,states,residual_norm,iterations,None,force
+            discard()
+            return False,q_start,committed_states,residual_norm,iterations,reason,None
+        except BaseException:
+            discard()
+            raise
+
     def newton_increment(*args, **kwargs):
+        if stability_control is not None:
+            return plate_energy_increment(*args, **kwargs)
         # Only the opt-in contributor owns disposable load seeds. Restore its
         # physical-origin pose on every rejected increment or exception, not
         # just on an exception during the initial force evaluation.
@@ -8800,8 +8955,29 @@ def solve_static_nonlinear(
     contact_settings: Optional[Any] = None,
     contact_path_program: Optional[Any] = None,
     contact_friction: Optional[Any] = None,
+    stability_control: Optional[str] = None,
 ) -> NonlinearStaticResult:
     """Run nonlinear static analysis under one non-renewable family lease."""
+
+    plate_stability_binding = None
+    plate_stability_authority = None
+    if stability_control is not None:
+        if type(stability_control) is not str or stability_control != "plate_energy":
+            raise ValueError("unknown stability_control")
+        if (control != "force" or kinematics != "corotational"
+                or corotational_tangent != "work_conjugate"
+                or emit_restart_checkpoint or equilibrate_initial_state is not None
+                or any(value is not None for value in (
+                    load_case, constant_load_case, imperfection, load_program,
+                    displacement_control, initial_element_states, initial_fields,
+                    initial_displacements, fracture_config, restart_checkpoint,
+                    contact, contact_settings, contact_path_program, contact_friction,
+                    convergence_settings))):
+            raise ValueError("plate_energy requires virgin unloaded work_conjugate force control")
+        from ._plate_stability_continuation import admit, require_authority
+        plate_stability_authority = require_authority
+        plate_stability_authority()
+        plate_stability_binding = admit(model)
 
     if contact_friction is not None and contact_path_program is None:
         raise ValueError("development shell friction requires an explicit contact path program")
@@ -9081,6 +9257,9 @@ def solve_static_nonlinear(
                 restart_checkpoint=restart_checkpoint,
                 emit_restart_checkpoint=emit_restart_checkpoint,
                 _qualified_runtime_guard=lease,
+                stability_control=stability_control,
+                _plate_stability_binding=plate_stability_binding,
+                _plate_stability_authority=plate_stability_authority,
             )
 
         if contact is not None:

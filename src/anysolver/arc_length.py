@@ -96,6 +96,52 @@ if TYPE_CHECKING:
 _SMALL = 1.0e-14
 
 
+def _arc_predictor_reuse_exclusion(
+    *, model, load_cases, contact, follower_active, kinematics, cancellation_token,
+    initial_state_supplied=False,
+):
+    """Keep retry retention out of mutable contributor/callback lifecycles."""
+    if contact is not None:
+        return "contact_contributor"
+    if follower_active:
+        return "follower_load"
+    if kinematics != "von_karman":
+        return "kinematics"
+    if cancellation_token is not None:
+        # Tokens may override raise_if_cancelled and mutate unversioned input.
+        return "cancellation_callback"
+    from .boundary import LoadCase
+    from .e4_pl_element import QualifiedE4PLShellElement
+    from .fe_core import Material
+
+    if any(case is not None and type(case) is not LoadCase for case in load_cases):
+        return "custom_load_case"
+    if initial_state_supplied:
+        return "initial_material_history"
+    # This exact class is covered by the full lifecycle guard. Generic
+    # element hooks may intentionally depend on observations beyond q/state.
+    if not model.mesh.elements or any(
+        type(element) is not QualifiedE4PLShellElement
+        for element in model.mesh.elements.values()
+    ):
+        return "unqualified_element_lifecycle"
+    # Do not invoke custom constitutive accessors during acceleration admission.
+    # Existing runtime guards still validate the exact model/material lifecycle.
+    if not isinstance(model.materials, dict):
+        return "custom_material_mapping"
+    for element in model.mesh.elements.values():
+        material = dict.get(model.materials, element.material_name)
+        if type(material) is not Material:
+            return "noncanonical_elastic_material"
+        fields = object.__getattribute__(material, "__dict__")
+        yield_stress = dict.get(fields, "yield_stress")
+        if (dict.get(fields, "hardening_curve") is not None
+                or (type(yield_stress) is not int and type(yield_stress) is not float)
+                or yield_stress != 0.0):
+            return "plastic_material"
+    return None
+
+
 @dataclass(frozen=True)
 class ArcLengthControl:
     """Controls for bounded spherical arc-length continuation.
@@ -1715,6 +1761,17 @@ def _solve_static_arc_length_under_lease(
         context="arc-length support-reaction plan observation",
     )
     corrector_rhs = np.empty((n_red, 2), dtype=float)
+    predictor_reuse_exclusion = _arc_predictor_reuse_exclusion(
+        model=working_model, load_cases=(load_case, constant_load_case),
+        contact=_arc_contact, follower_active=follower_active,
+        kinematics=kinematics, cancellation_token=cancellation_token,
+        initial_state_supplied=(
+            initial_element_states is not None or parsed_restart_checkpoint is not None
+        ),
+    )
+    exact_guard(working_model, context="arc-length predictor eligibility observation")
+    predictor_reuse_count = 0
+    predictor_solve_count = 0
 
     step_index_offset = len(steps)
     for local_step_index in range(1, settings.max_steps + 1):
@@ -1736,6 +1793,9 @@ def _solve_static_arc_length_under_lease(
         )
         accepted = False
         step_failure = "unknown"
+        # The committed base is fixed across radius retries, but never across
+        # accepted steps. Retain values, not a backend handle or trial state.
+        retry_predictor = None
 
         for retry in range(settings.max_retries_per_step + 1):
             cancellation_safe_point(
@@ -1747,59 +1807,75 @@ def _solve_static_arc_length_under_lease(
                 context="arc-length retry cancellation",
             )
             total_retries += int(retry > 0)
-            u_base = full_displacement(q_base, lambda_base)
-            F_base, K_base, _ = _assemble_nonlinear_system(
-                working_model,
-                u_base,
-                states_base,
-                num_layers,
-                tangent=True,
-                kinematics=kinematics,
-                corotational_tangent=resolved_corotational_tangent,
+            predictor_revision = (
+                working_model.revision_signature()
+                if predictor_reuse_exclusion is None else None
             )
-            exact_guard(working_model, context="arc-length predictor assembly")
-            F_const_base, K_const_base, F_prop_base, K_prop_base = external_system(
-                u_base,
-                lambda_base,
-                tangent=True,
-            )
-            exact_guard(working_model, context="arc-length predictor load")
-            K_base_red = (
-                (T.T @ K_base @ T)
-                - (T.T @ K_const_base @ T)
-                - lambda_base * (T.T @ K_prop_base @ T)
-            ).tocsr()
-            if prescribed_path_active:
-                K_base_effective = (
-                    K_base - K_const_base - lambda_base * K_prop_base
-                )
-                path_direction_base_red = np.asarray(
-                    T.T @ (F_prop_base - K_base_effective @ prescribed_offset),
-                    dtype=float,
-                ).reshape(-1)
-            else:
-                path_direction_base_red = np.asarray(
-                    T.T @ F_prop_base, dtype=float
-                ).reshape(-1)
-            try:
-                load_direction = _factorized_solve(
-                    K_base_red,
-                    path_direction_base_red,
-                    f"arc_length.predictor:{step_index}:{retry}",
-                    matrix_class=(
-                        MatrixClass.GENERAL
-                        if general_tangent
-                        else MatrixClass.SYMMETRIC_INDEFINITE
-                    ),
-                )
-            except Exception:
-                step_failure = "singular_predictor_tangent"
+            if predictor_reuse_exclusion is None:
+                exact_guard(working_model, context="arc-length predictor revision observation")
+            if (retry_predictor is not None
+                    and retry_predictor[0] == predictor_revision):
                 _discard_nonlinear_state_candidate(committed_states)
-                radius *= settings.cutback_factor
-                if radius < min_radius:
-                    break
-                continue
-
+                load_direction, direction_norm = retry_predictor[1:]
+                # Keep lifecycle observations at the same retry boundaries.
+                exact_guard(working_model, context="arc-length predictor assembly")
+                exact_guard(working_model, context="arc-length predictor load")
+                predictor_reuse_count += 1
+            else:
+                retry_predictor = None
+                u_base = full_displacement(q_base, lambda_base)
+                F_base, K_base, _ = _assemble_nonlinear_system(
+                    working_model,
+                    u_base,
+                    states_base,
+                    num_layers,
+                    tangent=True,
+                    kinematics=kinematics,
+                    corotational_tangent=resolved_corotational_tangent,
+                )
+                exact_guard(working_model, context="arc-length predictor assembly")
+                F_const_base, K_const_base, F_prop_base, K_prop_base = external_system(
+                    u_base,
+                    lambda_base,
+                    tangent=True,
+                )
+                exact_guard(working_model, context="arc-length predictor load")
+                K_base_red = (
+                    (T.T @ K_base @ T)
+                    - (T.T @ K_const_base @ T)
+                    - lambda_base * (T.T @ K_prop_base @ T)
+                ).tocsr()
+                if prescribed_path_active:
+                    K_base_effective = (
+                        K_base - K_const_base - lambda_base * K_prop_base
+                    )
+                    path_direction_base_red = np.asarray(
+                        T.T @ (F_prop_base - K_base_effective @ prescribed_offset),
+                        dtype=float,
+                    ).reshape(-1)
+                else:
+                    path_direction_base_red = np.asarray(
+                        T.T @ F_prop_base, dtype=float
+                    ).reshape(-1)
+                try:
+                    predictor_solve_count += 1
+                    load_direction = _factorized_solve(
+                        K_base_red,
+                        path_direction_base_red,
+                        f"arc_length.predictor:{step_index}:{retry}",
+                        matrix_class=(
+                            MatrixClass.GENERAL
+                            if general_tangent
+                            else MatrixClass.SYMMETRIC_INDEFINITE
+                        ),
+                    )
+                except Exception:
+                    step_failure = "singular_predictor_tangent"
+                    _discard_nonlinear_state_candidate(committed_states)
+                    radius *= settings.cutback_factor
+                    if radius < min_radius:
+                        break
+                    continue
             sign = 1.0
             if previous_dq is not None and previous_dlambda is not None:
                 orientation = path_metric_dot(
@@ -1810,16 +1886,21 @@ def _solve_static_arc_length_under_lease(
                 )
                 sign = 1.0 if orientation >= 0.0 else -1.0
 
-            direction_norm = float(
-                np.sqrt(
-                    max(
-                        path_metric_dot(
-                            load_direction, 1.0, load_direction, 1.0
-                        ),
-                        0.0,
+            if retry_predictor is None:
+                direction_norm = float(
+                    np.sqrt(
+                        max(
+                            path_metric_dot(
+                                load_direction, 1.0, load_direction, 1.0
+                            ),
+                            0.0,
+                        )
                     )
                 )
-            )
+                if predictor_reuse_exclusion is None:
+                    retry_predictor = (
+                        predictor_revision, load_direction.copy(), direction_norm,
+                    )
             if direction_norm <= _SMALL:
                 step_failure = "zero_predictor_direction"
                 _discard_nonlinear_state_candidate(committed_states)
@@ -2293,6 +2374,11 @@ def _solve_static_arc_length_under_lease(
     info["preload"] = preload_info
     info["total_newton_iterations"] = int(total_iterations)
     info["total_retries"] = int(total_retries)
+    info["predictor_reuse"] = {
+        "reuse_count": predictor_reuse_count,
+        "solve_count": predictor_solve_count,
+        "exclusion_reason": predictor_reuse_exclusion,
+    }
     info["corrector_solve_many_count"] = int(corrector_solve_many_count)
     info["corrector_tangent_projection_count"] = int(
         corrector_tangent_projection_count
