@@ -4,6 +4,18 @@ import pytest
 
 from anysolver import _compensated_contractions as fast
 
+@pytest.fixture(autouse=True, params=["native", "numpy"])
+def backend(request, monkeypatch):
+    """Every comparison runs on the compiled kernels and on the numpy path."""
+    if request.param == "native":
+        if not fast._native.AVAILABLE:
+            pytest.skip("numba not installed")
+        monkeypatch.setattr(fast, "_USE_NATIVE", True)
+    else:
+        monkeypatch.setattr(fast, "_USE_NATIVE", False)
+    return request.param
+
+
 # --- frozen scalar reference (the original implementation, verbatim) ---
 import numpy as np
 from math import frexp as _frexp, fsum as _fsum, isfinite as _isfinite, ldexp as _ldexp
@@ -169,3 +181,20 @@ def test_weighted_sum_first_failure_type_matches_scalar_policy():
         reference_weighted_sum(terms, weights)
     with pytest.raises(expected.type):
         fast.weighted_sum(terms, weights)
+
+
+def test_prepared_q4_authority_covers_native_kernels(backend):
+    if backend != "native":
+        pytest.skip("the authority guard deliberately refuses a flipped backend flag")
+    from anysolver import prepared_static_q4 as q
+    assert {row[0] for row in q._NATIVE_KERNEL_FACTS} >= {"contract_product", "contract_sum", "contract_weighted"}
+    q.require_q4_kernel_authority()
+    kernels = fast._native
+    original = kernels.POW2[1100]
+    try:
+        kernels.POW2[1100] = 2.0
+        with pytest.raises(Exception, match="kernel authority"):
+            q.require_q4_kernel_authority()
+    finally:
+        kernels.POW2[1100] = original
+    q.require_q4_kernel_authority()

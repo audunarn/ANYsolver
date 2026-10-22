@@ -11,7 +11,16 @@ There is no precision option, native backend, persistent cache or fallback.
 """
 from math import frexp as _frexp, fsum as _fsum, isfinite as _isfinite, ldexp as _ldexp
 
+import os
+
 import numpy as np
+
+from . import _compensated_native as _native
+
+# Compiled kernels run the identical arithmetic (see _compensated_native); a
+# nonzero kernel status replays the vectorised path, which raises the reference
+# exception. ANYSOLVER_NATIVE_CONTRACTIONS=0 forces the numpy path.
+_USE_NATIVE = _native.AVAILABLE and os.environ.get("ANYSOLVER_NATIVE_CONTRACTIONS", "1") != "0"
 
 
 def _product_parts(a, b):
@@ -100,6 +109,11 @@ def product(left, right):
         raise ValueError("compensated product requires finite inputs")
     vector = b.ndim == 1
     columns = b.reshape((-1, 1)) if vector else b
+    if _USE_NATIVE:
+        native = np.empty((a.shape[0], columns.shape[1]), dtype=float)
+        if _native.contract_product(np.ascontiguousarray(a), np.ascontiguousarray(columns),
+                                    native, _native.POW2) == 0:
+            return native[:, 0] if vector else native
     result = np.zeros((a.shape[0], columns.shape[1]), dtype=float)
     # Terms with an all-zero operand slice are exact zeros in every dot and
     # cannot change an exactly rounded sum.
@@ -121,6 +135,11 @@ def sum_arrays(terms):
     if any(not np.all(np.isfinite(a)) for a in arrays):
         raise ValueError("compensated array sum requires finite inputs")
     shape = arrays[0].shape
+    if _USE_NATIVE:
+        stack = np.ascontiguousarray(np.stack(arrays).reshape(len(arrays), -1))
+        native = np.empty(stack.shape[1], dtype=float)
+        if _native.contract_sum(stack, native) == 0:
+            return native.reshape(shape)
     rows = np.stack(arrays).reshape(len(arrays), -1).T.tolist()
     result = np.array(list(map(_fsum, rows)), dtype=float).reshape(shape)
     if not np.all(np.isfinite(result)):
@@ -135,6 +154,12 @@ def weighted_sum(terms, weights):
         raise ValueError("compensated weighted sum shape mismatch")
     shape = arrays[0].shape
     try:
+        if _USE_NATIVE:
+            flat = np.ascontiguousarray(np.stack(arrays).reshape(len(arrays), -1))
+            w = np.array([float(v) for v in weights], dtype=float)
+            native = np.empty(flat.shape[1], dtype=float)
+            if _native.contract_weighted(flat, w, native, _native.POW2) == 0:
+                return native.reshape(shape)
         stacked = np.stack(arrays).reshape(len(arrays), -1).T
         w = np.array([float(v) for v in weights], dtype=float)
         prod, low = _vector_parts(stacked, w[None, :])

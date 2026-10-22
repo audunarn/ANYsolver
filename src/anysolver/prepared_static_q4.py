@@ -11,6 +11,7 @@ import types
 import numpy as np
 from . import e4_pl_element as _native
 from . import _compensated_contractions as _contractions
+from . import _compensated_native as _contraction_kernels
 from .boundary import _callable_authority, _callable_authority_matches
 from .static_batch import _class_state
 from .prepared_static_loads import PreparedStaticCapabilityError
@@ -253,6 +254,14 @@ def require_q4_kernel_authority():
                 or not _callable_authority_matches(function, authority)
                 or any(function.__globals__.get(key) is not value for key, value in bindings)):
             raise PreparedStaticCapabilityError('prepared Q4 contraction executable authority changed')
+    if (_contraction_kernels.POW2 is not _POW2_FACT[0]
+            or _contraction_kernels.POW2.tobytes() != _POW2_FACT[1]):
+        raise PreparedStaticCapabilityError('prepared Q4 contraction kernel authority changed')
+    for name, dispatcher, function, authority, bindings in _NATIVE_KERNEL_FACTS:
+        if (vars(_contraction_kernels).get(name) is not dispatcher
+                or not _callable_authority_matches(function, authority)
+                or any(function.__globals__.get(key) is not value for key, value in bindings)):
+            raise PreparedStaticCapabilityError('prepared Q4 contraction kernel authority changed')
 
 _STAGE_CLASS_FACTS = _class_state(PreparedQ4Stages)
 _NATIVE_POLICY = _native.QualifiedE4PLShellElement._elastic_increment_admitted
@@ -263,6 +272,15 @@ _CONTRACTION_FACTS = tuple((name, value, _callable_authority(value),
     tuple((key, value.__globals__[key]) for key in value.__code__.co_names if key in value.__globals__))
     for name, value in tuple(vars(_contractions).items()) if type(value) is types.FunctionType
     and name in {'_product_parts', '_vector_parts', '_interleave_sum', '_scalar_dot', 'dot', 'product', 'sum_arrays', 'weighted_sum'})
+_POW2_FACT = (_contraction_kernels.POW2, _contraction_kernels.POW2.tobytes())
+_NATIVE_KERNEL_FACTS = tuple((name, value, getattr(value, 'py_func', value),
+    _callable_authority(getattr(value, 'py_func', value)),
+    tuple((key, getattr(value, 'py_func', value).__globals__[key])
+          for key in getattr(value, 'py_func', value).__code__.co_names
+          if key in getattr(value, 'py_func', value).__globals__))
+    for name, value in tuple(vars(_contraction_kernels).items())
+    if type(getattr(value, 'py_func', value)) is types.FunctionType
+    and getattr(value, '__module__', None) == _contraction_kernels.__name__)
 _KERNEL_FACTS = tuple((name, value, _callable_authority(value),
     tuple((key, value.__globals__[key]) for key in value.__code__.co_names if key in value.__globals__))
     for name, value in tuple(globals().items()) if type(value) is types.FunctionType
