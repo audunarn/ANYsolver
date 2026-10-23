@@ -77,6 +77,14 @@ CS = {
 }
 TIP_LOAD_PER_NODE = -2000.0
 DC_TARGET = -11.0 / 60.0
+# Displacement-seed fixture (re-seeded 2026-10-22).  The secant-plane seed
+# only runs when the accepted load factor magnitude decreases along an
+# unchanged control direction.  The -0.10 -> -11/60 resume used to soften only
+# because the qualified Q4 plastic correction made the shells unstable; with
+# the plastic-deficit fix that path hardens monotonically and never seeds.
+# Elastic unloading -0.10 -> -0.07 decreases |lambda| on every increment and
+# exercises the seed on both the historical and the fixed formulation.
+DC_SEED_TARGET = -0.07
 DC_STEPS = 11
 CHECKPOINT_STEPS = 6
 RESUME_STEPS = 5
@@ -270,8 +278,8 @@ def _full_case(coupling: str) -> dict:
     return _cached(("full", coupling), lambda: _dc_case(coupling, DC_TARGET, DC_STEPS))
 
 
-def _resume_case(coupling: str, **extra) -> dict:
-    """Resume -0.10 -> -11/60 from copied state on the original control grid."""
+def _resume_case(coupling: str, target: float = DC_TARGET, **extra) -> dict:
+    """Resume -0.10 -> target (default -11/60) from copied state."""
     half = _half_case(coupling)
     model, load, probe, grid = _build_ep_model(coupling)
     _add_tip_load(model, load, grid)
@@ -280,7 +288,7 @@ def _resume_case(coupling: str, **extra) -> dict:
     u_snapshot = np.array(u_input, copy=True)
     states_snapshot = copy.deepcopy(states_input)
     control = DisplacementControl(
-        node_id=probe, dof="uz", target_displacement=DC_TARGET
+        node_id=probe, dof="uz", target_displacement=target
     )
     result = solve_static_nonlinear(
         model, load, control="displacement", displacement_control=control,
@@ -302,6 +310,13 @@ def _resume_case(coupling: str, **extra) -> dict:
 
 def _resumed_case(coupling: str) -> dict:
     return _cached(("resume", coupling), lambda: _resume_case(coupling))
+
+
+def _seed_resumed_case(coupling: str) -> dict:
+    return _cached(
+        ("seed_resume", coupling),
+        lambda: _resume_case(coupling, target=DC_SEED_TARGET),
+    )
 
 
 def _assert_states_equal(left, right) -> None:
@@ -514,7 +529,9 @@ def _independent_equilibrium(
     }
 
 
-def _assert_completed_dc_case(case: dict, target: float) -> None:
+def _assert_completed_dc_case(
+    case: dict, target: float, control_direction: int = -1
+) -> None:
     result = case["result"]
     _assert_material_schema(case, result.element_states)
     assert result.converged
@@ -529,7 +546,12 @@ def _assert_completed_dc_case(case: dict, target: float) -> None:
         s.control_value for s in result.steps
     ]
     control_values = [s.control_value for s in result.steps]
-    assert all(later < earlier for earlier, later in zip(control_values, control_values[1:]))
+    # Loading runs move the probe downward; the re-seeded unloading fixture
+    # (DC_SEED_TARGET) moves it upward.  Either way the control is monotone.
+    assert all(
+        control_direction * (later - earlier) > 0.0
+        for earlier, later in zip(control_values, control_values[1:])
+    )
     equilibrium = _independent_equilibrium(case)
     assert equilibrium["relative_residual"] <= 1.0e-7
     applied_norm = float(np.linalg.norm(equilibrium["applied_wrench"]))
@@ -706,11 +728,21 @@ def test_preyield_plastic_matches_distinct_linear_elastic_material(coupling: str
             v = geometry["T0"] @ ud
             zs, _ = lobatto_layers(5, shell.thickness)
             C = 2.1e11/(1-.3**2)*np.array([[1., .3, 0.], [.3, 1., 0.], [0., 0., (1-.3)/2]])
+            # A plastic-capable qualified Q4 evaluates its layers at the hybrid
+            # assumed strain (compatible strain + dE u); its elastic stress is
+            # C times that strain.  The oracle uses the same kinematics.
+            from anysolver import _q4_assumed_strain_plasticity as assumed_strain
+            pshell = plastic["model"].mesh.elements[eid]
+            pmaterial = plastic["model"].get_material("steel")
+            offsets = (assumed_strain.offset_operator(pshell, plastic["model"].mesh, pmaterial)
+                       if assumed_strain.supported(pshell, plastic["model"].mesh, pmaterial)
+                       else np.zeros((len(geometry["gp"]), 6, 24)))
             layers = []
-            for gp in geometry["gp"]:
+            for index, gp in enumerate(geometry["gp"]):
                 theta = gp["Gw"] @ v
-                membrane = gp["B_m"] @ v + [.5*theta[0]**2, .5*theta[1]**2, theta[0]*theta[1]]
-                layers.extend((membrane + zs[:, None]*(gp["B_b"]@v)) @ C.T)
+                offset = offsets[index] @ v
+                membrane = gp["B_m"] @ v + [.5*theta[0]**2, .5*theta[1]**2, theta[0]*theta[1]] + offset[:3]
+                layers.extend((membrane + zs[:, None]*(gp["B_b"]@v + offset[3:])) @ C.T)
             expected = np.asarray(layers)
             actual = np.asarray(plastic["result"].element_states[eid]["layer_stress"])
             assert actual.shape == expected.shape == (len(geometry["gp"])*5, 3)
@@ -835,7 +867,7 @@ def test_dc_seed_cancellation_preserves_restart_inputs(stage):
     token = SeedToken()
     with pytest.raises(SolveCancelled, match='cancel inside uncommitted seed'):
         solve_static_nonlinear(model, load, control='displacement',
-            displacement_control=DisplacementControl(node_id=probe, dof='uz', target_displacement=DC_TARGET),
+            displacement_control=DisplacementControl(node_id=probe, dof='uz', target_displacement=DC_SEED_TARGET),
             num_steps=RESUME_STEPS, max_iterations=DC_MAX_ITER, tolerance=DC_TOL, kinematics='corotational',
             initial_displacements=u, initial_element_states=states, equilibrate_initial_state=False,
             emit_restart_checkpoint=False, cancellation_token=token)
@@ -844,14 +876,14 @@ def test_dc_seed_cancellation_preserves_restart_inputs(stage):
     # Reuse the SAME model and caller objects after cancellation inside the
     # private seed, then compare against a clean uninterrupted public route.
     reused = solve_static_nonlinear(model, load, control='displacement',
-        displacement_control=DisplacementControl(node_id=probe, dof='uz', target_displacement=DC_TARGET),
+        displacement_control=DisplacementControl(node_id=probe, dof='uz', target_displacement=DC_SEED_TARGET),
         num_steps=RESUME_STEPS, max_iterations=DC_MAX_ITER, tolerance=DC_TOL, kinematics='corotational',
         initial_displacements=u, initial_element_states=states, equilibrate_initial_state=False,
         emit_restart_checkpoint=False, record_increment_snapshots=True)
     reused_case = dict(model=model, load=load, probe=probe, grid=grid, result=reused, coupling='direct')
-    _assert_completed_dc_case(reused_case, DC_TARGET)
-    reference = _resumed_case('direct')
-    _assert_completed_dc_case(reference, DC_TARGET)
+    _assert_completed_dc_case(reused_case, DC_SEED_TARGET, control_direction=1)
+    reference = _seed_resumed_case('direct')
+    _assert_completed_dc_case(reference, DC_SEED_TARGET, control_direction=1)
     np.testing.assert_allclose(reused.displacements, reference['result'].displacements, rtol=1e-6, atol=1e-9)
     assert abs(reused.load_factor-reference['result'].load_factor) <= 1e-6*max(abs(reference['result'].load_factor), 1.)
     _assert_states_allclose(dict(reused.element_states), dict(reference['result'].element_states), physical=True)
@@ -872,7 +904,7 @@ def test_dc_seed_unrelated_linear_error_propagates_and_preserves_inputs(monkeypa
     monkeypatch.setattr(driver, 'factorize', broken_provider)
     with pytest.raises(ValueError, match='unrelated seed provider defect'):
         solve_static_nonlinear(model, load, control='displacement',
-            displacement_control=DisplacementControl(node_id=probe, dof='uz', target_displacement=DC_TARGET),
+            displacement_control=DisplacementControl(node_id=probe, dof='uz', target_displacement=DC_SEED_TARGET),
             num_steps=RESUME_STEPS, max_iterations=DC_MAX_ITER, tolerance=DC_TOL, kinematics='corotational',
             initial_displacements=u, initial_element_states=states, equilibrate_initial_state=False,
             emit_restart_checkpoint=False)

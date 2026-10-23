@@ -1,0 +1,265 @@
+"""Qualified Q4 plastic shells: assumed-strain layered plasticity.
+
+The historical qualified route added the constant elastic hybrid delta
+``Cr = K_hybrid - K_compatible`` to a compatible-strain plastic kernel.  ``Cr``
+is indefinite, so once the layers yield the element tangent became negative
+along in-plane bending/hourglass modes and the clamped plastic plate
+converged to spurious mechanisms (+203 mm at n=8, wrong sign at n=16, against
+about 35-39 mm from the legacy element and CalculiX).  The route under test
+evaluates the return map at the hybrid's assumed strain; see
+``anysolver._q4_assumed_strain_plasticity``.
+"""
+
+from __future__ import annotations
+
+import os
+import warnings
+
+import numpy as np
+import pytest
+
+import anysolver as fs
+from anysolver import _q4_assumed_strain_plasticity as AS
+from anysolver.boundary import FixedSupport, LoadCase
+from anysolver.elements import create_shell_element
+from anysolver.material_curves import DNVC208MaterialCurve
+from anysolver.nonlinear_performance import NonlinearAssemblyPlan
+from anysolver.nonlinear_static import _assemble_nonlinear_system
+from anysolver.plasticity import plane_stress_elastic_matrix
+
+
+def _curve():
+    return DNVC208MaterialCurve(
+        sigma_prop=3e7, sigma_yield=3.2e7, sigma_yield_2=3.4e7,
+        eps_p_y1=0.005, eps_p_y2=0.01, K=4e8, n=0.2,
+    )
+
+
+def _single(nodes=((0, 0), (0.125, 0), (0.125, 0.125), (0, 0.125)), *, plastic=True,
+            form=None, thickness=0.003):
+    model = fs.FEModel("q4")
+    model.add_material(
+        "mat", 210e9, 0.3, density=7850.0,
+        yield_stress=3e7 if plastic else 0.0,
+        hardening_curve=_curve() if plastic else None,
+    )
+    for index, (x, y) in enumerate(nodes):
+        model.add_node(index + 1, float(x), float(y), 0.0)
+    kwargs = {} if form is None else {"formulation": form}
+    model.add_element(1, create_shell_element(1, [1, 2, 3, 4], "mat", thickness=thickness, **kwargs))
+    return model, model.mesh.elements[1], model.get_material("mat")
+
+
+def _field(nodes, kind, amplitude):
+    u = np.zeros(24)
+    a = max(float(np.ptp([p[0] for p in nodes])), 1e-12)
+    for i, (x, y) in enumerate(nodes):
+        if kind == "hourglass":
+            u[6 * i] = amplitude * 8.0 * (x - a / 2) * (y - a / 2) / a
+        elif kind == "stretch":
+            u[6 * i] = amplitude * x
+        elif kind == "bend":
+            u[6 * i + 2] = amplitude * x * x / a
+            u[6 * i + 4] = -2.0 * amplitude * x / a
+        elif kind == "twist":
+            u[6 * i + 3] = amplitude * x / a
+            u[6 * i + 4] = -amplitude * y / a
+    return u
+
+
+SQUARE = ((0, 0), (0.125, 0), (0.125, 0.125), (0, 0.125))
+SKEW = ((0, 0), (0.13, 0.02), (0.15, 0.11), (-0.01, 0.12))
+
+
+@pytest.mark.parametrize("nodes", [SQUARE, SKEW], ids=["square", "skew"])
+def test_offset_operator_patch_test_and_hybrid_orthogonality(nodes):
+    model, element, material = _single(nodes)
+    assert AS.supported(element, model.mesh, material)
+    offsets = AS.offset_operator(element, model.mesh, material)
+    cache = element._nonlinear_geometry(model.mesh)
+    B = np.concatenate((cache["B_m_all"], cache["B_b_all"]), axis=1)
+    detw = np.asarray(cache["detw_all"])
+    h = element.thickness
+    C = plane_stress_elastic_matrix(material.elastic_modulus, material.poisson_ratio)
+    D = np.zeros((6, 6))
+    D[:3, :3] = h * C
+    D[3:, 3:] = h ** 3 / 12.0 * C
+    E_hat = B + offsets
+    orth = np.einsum("g,gki,kl,glj->ij", detw, E_hat, D, offsets)
+    scale = np.abs(np.einsum("g,gki,kl,glj->ij", detw, E_hat, D, E_hat)).max()
+    # Exact in exact arithmetic; the bound reflects the certified 35x35
+    # stationary solve on distorted facets (square: ~1e-16, skew: ~6e-9).
+    assert np.abs(orth).max() <= 1e-7 * scale
+    # The qualified stiffness minus its assumed-strain membrane/bending energy
+    # (hybrid transverse shear plus PL/hourglass stabilisation) stays positive
+    # semidefinite, so a vanishing layered tangent cannot make the element
+    # tangent negative; the constant delta Cr itself is indefinite.
+    T0 = np.asarray(cache["T0"])
+    qualified = np.asarray(element.compute_stiffness_matrix(model.mesh, material))
+    membrane_bending = T0.T @ np.einsum("g,gki,kl,glj->ij", detw, E_hat, D, E_hat) @ T0
+    rest = qualified - membrane_bending
+    assert np.linalg.eigvalsh(0.5 * (rest + rest.T))[0] >= -1e-8 * np.abs(qualified).max()
+    correction = element._qualified_linear_correction(model.mesh, material, 5)
+    assert np.linalg.eigvalsh(0.5 * (correction + correction.T))[0] < -1e6
+
+
+def _response(element, model, material, u, state, tangent=True):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        return element.compute_nonlinear_response(model.mesh, material, u, state, 5, tangent)
+
+
+def _fd_error(element, model, material, u, state, K, h=1e-6, seed=0):
+    rng = np.random.default_rng(seed)
+    worst = 0.0
+    for _ in range(3):
+        d = rng.standard_normal(24)
+        d *= 1e-3 / np.abs(d).max()
+        fp = np.asarray(_response(element, model, material, u + h * d, state, False)[0])
+        fm = np.asarray(_response(element, model, material, u - h * d, state, False)[0])
+        exact = K @ d
+        worst = max(worst, np.linalg.norm((fp - fm) / (2 * h) - exact) / np.linalg.norm(exact))
+    return worst
+
+
+def test_tangent_is_symmetric_and_fd_exact_on_load_unload_reverse_path():
+    model, element, material = _single(SKEW)
+    path = [_field(SKEW, "hourglass", a) + _field(SKEW, "bend", 5 * a) + _field(SKEW, "stretch", 0.5 * a)
+            + _field(SKEW, "twist", 2 * a)
+            for a in (1e-3, 2e-3, 3e-3, 1.5e-3, 0.0, -2e-3, -3e-3, 0.0)]
+    state = None
+    alphas = []
+    for u in path:
+        force, K, trial = _response(element, model, material, u, state)
+        K = np.asarray(K)
+        assert np.abs(K - K.T).max() <= 1e-12 * np.abs(K).max()
+        assert _fd_error(element, model, material, u, state, K) <= 1e-7
+        alphas.append(float(np.max(trial["alpha"])))
+        state = trial
+    assert alphas[0] > 0.0 and alphas[-1] > alphas[2]  # yielded, reversed plastic flow
+
+
+def test_plastic_hourglass_mode_keeps_positive_stiffness():
+    """Main's route: secant f.v/amp = -4.6e6 N/m (negative stiffness)."""
+
+    model, element, material = _single(SQUARE)
+    legacy_model, legacy, _ = _single(SQUARE, form="legacy")
+    v = _field(SQUARE, "hourglass", 1.0)
+    for amplitude in (0.01, 0.1):
+        force, K, trial = _response(element, model, material, amplitude * v, None)
+        assert float(np.max(trial["alpha"])) > 0.0
+        secant = float(np.asarray(force) @ v) / amplitude
+        assert secant > 0.0
+        lam = np.linalg.eigvalsh(0.5 * (np.asarray(K) + np.asarray(K).T))[0]
+        _f, K_legacy, _t = _response(legacy, legacy_model, material, amplitude * v, None)
+        lam_legacy = np.linalg.eigvalsh(0.5 * (np.asarray(K_legacy) + np.asarray(K_legacy).T))[0]
+        assert lam >= min(lam_legacy, 0.0) - 1e-6 * np.abs(np.asarray(K)).max()
+
+
+def test_force_is_continuous_across_first_yield():
+    model, element, material = _single(SQUARE)
+    amplitudes = np.linspace(0.4e-4, 1.4e-4, 201)
+    forces, first = [], None
+    for a in amplitudes:
+        u = _field(SQUARE, "stretch", a) + _field(SQUARE, "hourglass", 0.3 * a)
+        f, _k, trial = _response(element, model, material, u, None, False)
+        forces.append(np.asarray(f))
+        if first is None and np.any(trial["plastic_strain"]):
+            first = a
+    assert first is not None and amplitudes[0] < first < amplitudes[-1]
+    steps = np.linalg.norm(np.diff(forces, axis=0), axis=1)
+    # Linear elastic steps are equal; yielding only lowers the slope (a kink),
+    # a force jump at first yield would exceed the elastic step.
+    assert steps.max() <= (1.0 + 1e-9) * steps[0]
+
+
+def test_elastic_material_does_not_enter_the_route():
+    model, element, material = _single(SQUARE, plastic=False)
+    assert not AS.supported(element, model.mesh, material)
+    legacy_model, legacy, legacy_material = _single(SQUARE, form="legacy")
+    assert not AS.supported(legacy, legacy_model.mesh, legacy_material)
+
+
+def _plate(n, thickness, pressure, *, form=None):
+    model = fs.FEModel("plate")
+    model.add_material("mat", 210e9, 0.3, density=7850.0, yield_stress=3e7, hardening_curve=_curve())
+    for j in range(n + 1):
+        for i in range(n + 1):
+            model.add_node(1 + j * (n + 1) + i, i / n, j / n, 0.0)
+    kwargs = {} if form is None else {"formulation": form}
+    for j in range(n):
+        for i in range(n):
+            v = 1 + j * (n + 1) + i
+            e = 1 + j * n + i
+            model.add_element(e, create_shell_element(e, [v, v + 1, v + n + 2, v + n + 1], "mat",
+                                                      thickness=thickness, **kwargs))
+    edge = [1 + j * (n + 1) + i for j in range(n + 1) for i in range(n + 1) if i in (0, n) or j in (0, n)]
+    model.add_boundary_condition(FixedSupport("clamp", edge))
+    load = LoadCase("p")
+    for e in model.mesh.elements:
+        load.add_pressure_load(e, pressure)
+    model.apply_boundary_conditions()
+    return model, load
+
+
+def test_reference_plan_and_scalar_paths_agree_on_plastic_patch():
+    model, load = _plate(2, 0.003, 5e4)
+    rng = np.random.default_rng(4)
+    u = np.zeros(model.mesh.dof_manager.total_dofs)
+    centre = 4
+    u[6 * centre + 2] = 0.03
+    u += 2e-4 * rng.standard_normal(u.size)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        f_ref, K_ref, states = _assemble_nonlinear_system(
+            model, u, {}, 5, tangent=True, require_full_coordinates=True)
+        plan = NonlinearAssemblyPlan.build(model, 5)
+        assert any(batch.key[0] == "isotropic_q4_assumed_strain_plastic" for batch in plan.shell_batches)
+        f_plan, K_plan, _ = plan.assemble(u, {}, tangent=True)
+    assert any(np.any(s["plastic_strain"]) for s in states.values())
+    K_ref = K_ref.toarray()
+    K_plan = K_plan.toarray()
+    material = model.get_material("mat")
+    F_sc = np.zeros_like(f_ref)
+    for eid, element in model.mesh.elements.items():
+        dm = np.asarray(element.get_dof_mapping(model.mesh))
+        f, _k, _s = _response(element, model, material, u[dm], None)
+        F_sc[dm] += np.asarray(f)
+    scale = np.abs(f_ref).max()
+    assert np.abs(f_plan - f_ref).max() <= 1e-12 * scale
+    assert np.abs(F_sc - f_ref).max() <= 1e-12 * scale
+    assert np.abs(K_plan - K_ref).max() <= 1e-12 * np.abs(K_ref).max()
+
+
+# Owner case C1: clamped 1 x 1 m plate, t = 3 mm, 50 kPa, von Karman.
+# Legacy element (oracle), 1 step: n=8 38.974 mm, n=16 36.380 mm; CalculiX S4
+# n=64 35.37 mm.  Main returned +203.1 mm (n=8) and -42.8 mm (n=16).
+LEGACY_C1 = {8: 0.038974, 16: 0.036380}
+
+
+def _centre_deflection(n, steps):
+    model, load = _plate(n, 0.003, 5e4)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        result = fs.solve_static_nonlinear(
+            model, load, num_steps=steps, max_iterations=25, kinematics="von_karman")
+    u = np.asarray(result.displacements, dtype=float)
+    centre = (n // 2) * (n + 1) + n // 2
+    return result, float(u.reshape(-1, 6)[centre, 2])
+
+
+@pytest.mark.parametrize("n", [8, 16])
+def test_owner_case_c1_completes_near_legacy_oracle(n):
+    result, w_centre = _centre_deflection(n, 1)
+    assert result.status == "completed" and abs(float(result.load_factor) - 1.0) <= 1e-12
+    assert abs(w_centre - LEGACY_C1[n]) <= 0.05 * LEGACY_C1[n]
+
+
+@pytest.mark.skipif(os.environ.get("ANYSOLVER_RUN_SLOW_TESTS") != "1",
+                    reason="slow: set ANYSOLVER_RUN_SLOW_TESTS=1")
+@pytest.mark.parametrize("n,steps", [(8, 5), (8, 20), (16, 5), (32, 5)])
+def test_owner_case_c1_step_and_mesh_sweep(n, steps):
+    legacy = {8: 0.038974, 16: 0.036378, 32: 0.035177}
+    result, w_centre = _centre_deflection(n, steps)
+    assert result.status == "completed"
+    assert abs(w_centre - legacy[n]) <= 0.05 * legacy[n]
