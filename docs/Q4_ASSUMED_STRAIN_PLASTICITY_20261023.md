@@ -84,9 +84,27 @@ t = 3 mm / 10 kPa is within 0.44 % of legacy and 0.1-1.1 % below main at n >= 8.
 
 ## Contract changes
 
-* Elastic materials: untouched and bit-identical (displacement hashes of five
-  elastic von-Karman/corotational cases unchanged).
-* Plastic-capable Q4 before yield (hardening curve present, never yielded):
+* **Single elastic law (owner decision 2026-10-23).** Planar isotropic qualified
+  Q4 elements WITHOUT a hardening curve also run the assumed-strain kernel, with
+  the return map skipped. Elastic initial fields enter as the same constant layer
+  offset as in the inherited kernel. The compensated direct elastic increment
+  route and the batch-B elastic fast path are retired for these elements; they
+  remain in use for legacy shells. The owner waived elastic bit-identity for
+  qualified-Q4 NONLINEAR elastic results. Measured on the clamped C1 plate,
+  elastic (t = 3 mm, 50 kPa, 20 steps; ccx elastic 11.78-11.81 mm):
+  * von Karman: n = 4 / 8 / 16 / 32: 15.114695 -> 15.114311, 12.078385 ->
+    12.067263, 11.879723 -> 11.878586, 11.835173 -> 11.834981 mm
+    (-2.5e-5 / -9.2e-4 / -9.6e-5 / -1.6e-5, toward ccx);
+  * corotational: n = 8 / 16: 12.085591 -> 12.093734, 11.884699 -> 11.886467 mm
+    (+6.7e-4 / +1.5e-4, slightly away from ccx).
+  Linear analyses (stiffness matrices and linear static solves) are bit-identical,
+  as are all non-qualified-Q4 elements (beams, legacy shells, S3).
+  Curve and no-curve elements agree to 5e-16 before yield. A mixed mesh equals
+  the pure meshes to 1e-9 in both kinematics, so the earlier two-law interface
+  effect is gone.
+  Cost against main, elastic C1, 20 steps, wall time per process: von Karman
+  n = 8 1.62 -> 1.85 s, n = 16 4.50 -> 5.93 s; corotational n = 8 30.2 -> 22.1 s,
+  n = 16 115.4 -> 85.8 s.* Plastic-capable Q4 before yield (hardening curve present, never yielded):
   the response changes by the von-Karman cross terms
   `dE_m' A eps_nl + B_nl' A dE_m u`. At a fixed displacement these terms are
   the whole force difference against main (to 1e-14). The size depends on the
@@ -103,11 +121,10 @@ t = 3 mm / 10 kPa is within 0.44 % of legacy and 0.1-1.1 % below main at n >= 8.
   * t = 3 mm / 10 kPa n = 16: 2.9e-4; t = 10 mm / 25 kPa: 2.5e-5; t = 20 mm /
     100 kPa: 1.7e-6.
 
-  Elastic materials without a hardening curve keep the historical response
-  bit for bit. A plastic-capable element before yield is therefore no longer
-  identical to the same element with an elastic material in large-rotation
-  von-Karman analyses. Dropping the cross terms is not an option: the plastic
-  tangent then loses positivity.
+  With the single elastic law (above) the same shift applies to elastic
+  materials, so a plastic-capable element before yield is identical to the
+  same element with an elastic material. Dropping the cross terms is not an
+  option: the plastic tangent then loses positivity.
 
   **Accepted exception A4, owner approval 2026-10-23,** for the measured size:
   up to about 1e-3 in the centre deflection and about 5e-3 in the in-plane
@@ -118,15 +135,6 @@ t = 3 mm / 10 kPa is within 0.44 % of legacy and 0.1-1.1 % below main at n >= 8.
   Side observation: main's 1-step solve of the never-yielding n = 32 case
   returned w = 115 mm with alpha = 1.4e5 (a spurious state); the branch gives
   11.9 mm.
-* Mixed meshes (accepted, owner decision 2026-10-23): where yield-capable and
-  plain qualified Q4 elements share a model, the two elastic laws meet at the
-  interface. Half the C1 plate with a never-yielding curve, half without
-  (20 steps): the centre deflection lies between the two pure answers at
-  n = 8 / 16 / 32 (at n = 4 it is above both, +7.7e-5). The in-plane max |u|
-  lies outside both pure answers by +4.5 / +0.9 / +0.3 / +0.07 % at
-  n = 4 / 8 / 16 / 32, shrinking with refinement. Main's mixed mesh agrees with
-  its pure answers to 1e-13, so this is a new difference that appears only where
-  yield-capable and plain Q4 elements share a model.
 * `layer_strain` / `layer_stress` of plastic Q4 states hold the assumed-strain
   values (consistent with the qualified element's mixed stress recovery);
   `kinematic_layer_strain` (scalar route) keeps the compatible kinematics.
@@ -171,10 +179,10 @@ counts and the same centre deflection to 2e-16.
   unsealed by the time they reach that point, so the two laws cannot be told
   apart without a persisted plastic-law version tag. A tag needs changes to the
   packed state store (`ShellStateBatch` sidecars), the compact-state key
-  whitelist and the sealed/checkpointed state digests. It is an open HIGH
-  follow-up.
-* Mixed meshes of yield-capable and plain qualified Q4 elements use two
-  elastic laws (see Contract changes).
+  whitelist and the sealed/checkpointed state digests. A law-version tag is the
+  proper fix. It is an open HIGH follow-up.
+* Orthotropic elastic and generalized-section qualified Q4 elements keep the
+  historical elastic law (the kernel is isotropic only).
 * Hill48/orthotropic plasticity, active initial fields and generalized sections
   with hardening are refused rather than supported.
 ## Open items

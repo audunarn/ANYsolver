@@ -9,7 +9,7 @@
   (+203 mm at n = 8, wrong sign at n = 16). The new route has an exact symmetric
   tangent and completes at n = 4..32, within 2.2 % of the legacy element at
   n >= 8 and moving toward CalculiX (-0.7 % at n = 32). Elastic materials without
-  a hardening curve are bit-identical.
+  a hardening curve are bit-identical in linear analyses.
   Hill48/orthotropic plasticity (with or without a curve), generalized sections
   with hardening, warped facets and active initial fields are refused with
   `UnsupportedQ4PlasticRouteError` instead of the unstable form. Plastic
@@ -21,14 +21,21 @@
     centre deflection (about 5e-3 in-plane max |du|) on large-deflection thin
     plates. There is no growth under refinement, and the values move slightly
     toward the elastic CalculiX answer.
-  - In mixed meshes of yield-capable and plain Q4 elements, the two elastic laws
-    meet at the interface: in-plane max |u| is up to 4.5 % / 0.9 % / 0.3 % /
-    0.07 % outside both pure answers at n = 4 / 8 / 16 / 32.
+  - Single elastic law: qualified Q4 elements without a hardening curve run the
+    same kernel (return map skipped), so von Karman and corotational nonlinear
+    elastic results of planar isotropic qualified Q4 change. Owner waived
+    bit-identity. C1 elastic n = 8/16: von Karman -9.2e-4 / -9.6e-5 (toward
+    CalculiX), corotational +6.7e-4 / +1.5e-4. Mixed curve/no-curve meshes now
+    equal the pure meshes to 1e-9. The compensated direct elastic route and the
+    batch-B elastic fast path are retired for these elements. Linear analyses and
+    non-qualified-Q4 elements are bit-identical.
   Known limitations:
   - Historical compatible-law plastic histories restored through restarts, seeds
     or a mixed persistent store are not detected. Codex rates this a
-    high-severity restart correctness risk; it is an open HIGH follow-up and
-    needs a persisted plastic-law version tag.
+    high-severity restart correctness risk; a law-version tag is the proper fix.
+    R4's own unsealed restart states also reach the migration point, so a refusal
+    there was withdrawn. Open HIGH follow-up.
+
 - Refresh the private Windows Python 3.12 beam-shell bundle from `6fb907a1c`,
   including both completed-prefix S355 checkpoint workflows. Verify 77 installed
   tests, two pre-yield and six fresh-process plastic full/prefix/resume CLIs;

@@ -1,4 +1,4 @@
-# Single elastic law for qualified Q4 (implementation target, 2026-10-23)
+# Single elastic law for qualified Q4 (implementation target, implemented on the R4 line, 2026-10-23)
 
 Owner decision 2026-10-23: full replacement. Qualified Q4 elements without a
 hardening curve use the same assumed-strain kernel as R4 (return map skipped,
@@ -43,25 +43,21 @@ Not done:
   withdrawn: R4's own restart states reach the migration point unsealed;
   documented HIGH).
 
-## Tests that pin elastic bits or the bypassed routes (single law vs R4, same 133 files)
+## Tests that pinned the old elastic law or the retired routes (retargeted)
 
-R4 baseline was partial (shards 5 and 10 not finished; resume command below).
+Decision (owner, 2026-10-23): option (b), one code path. Each change keeps the
+test's intent and keeps or strengthens its oracle. No tolerance was weakened.
 
-| test | what it pins | kind of change |
-|---|---|---|
-| test_general_contact_c5_elastic_increment.py:45 test_actual_batch_assembly_uses_direct_offset_response | qualified Q4 uses the compensated direct elastic route | real: route no longer used for qualified Q4 |
-| ...:103 test_scalar_direct_matches_inherited_law_and_components[+-1] | force == old law (inherited + Cr u) to 2e-12 | real: new law adds cross terms (0.7 % here) |
-| ...:117 test_unsupported_routes_do_not_admit_direct_increment[custom_mapping, initial_field, yielding] | admission predicate of the direct route | real: direct route is now never admitted for qualified Q4 |
-| test_general_contact_c5_numpy_coordinate_admission.py:60 test_original_builder_cold_direct_activation[batch, scalar] | direct route activates | real: same as above |
-| test_nonlinear_performance_batch_b.py:70 / :90 / :129 / :217 (reuses plan buffers, recovered stress, releases work arrays, one constitutive matrix) | batch-B elastic fast path used for qualified Q4 | real: fast path excluded for qualified Q4 |
-
-No test failed because of a pure hash re-baseline. Every failure is a route or
-law assertion.
-
+| test | pinned | retarget and reason | oracle | commit |
+|---|---|---|---|---|
+| c5_elastic_increment::test_scalar_direct_matches_inherited_law_and_components[0, +1, -1] | old law F = kernel + Cr u | new law F = kernel + Cr u + von Karman cross terms, same tolerances | independent `single_law_expected` (cross terms from the certified offset operator and the element's own Gauss data) | 739c78ac8 |
+| c5_elastic_increment::test_actual_batch_assembly_uses_direct_offset_response -> test_actual_batch_assembly_uses_single_law_kernel | batch route = compensated direct route | batch assembly equals the single-law oracle; elastic route asserted | same oracle | 739c78ac8 |
+| c5_elastic_increment::test_unsupported_routes_do_not_admit_direct_increment[custom_mapping, initial_field, yielding] (warped unchanged) | fallback = old law (exact) | direct-route admission assertions unchanged; fallback checked against the oracle (historical law on warped facets) | same oracle, 2e-12 | 739c78ac8 |
+| c5_numpy_coordinate_admission::test_original_builder_cold_direct_activation[scalar, batch] | direct route activates for the original C5 builder inputs | the same inputs reach the single-law kernel (1 call for 1 element / 1 call for 4 elements); no direct-route call | profile hook on the actual kernel body, no replacement | 739c78ac8 |
+| batch_b::test_batch_b_reuses_plan_buffers, ::test_elastic_batch_releases_history_work_arrays, ::test_isotropic_batch_build_reuses_one_constitutive_matrix, ::test_elastic_batch_does_not_overwrite_recovered_stress_with_zero | batch-B elastic fast path for qualified Q4 | same assertions on legacy shells (formulation='legacy'), which keep that path; new test asserts qualified Q4 uses the single-law batch kind, not batch-B | unchanged assertions | aa11a1cc3 |
 ## Remaining implementation steps (one line each)
 
-1. Design choice (owner): either (a) keep the compensated direct route and the batch-B elastic fast path and ADD the cross terms there (`e4_pl_element.py:6484` `_elastic_increment_response`; `nonlinear_performance_batch_b.py` elastic kernel), preserving their precision and speed; or (b) accept the bypass and rewrite the 12 tests to assert the new routing.
-2. If (b): rewrite the 12 tests listed above with stated reasons; no weakened tolerances.
+1. DONE: option (b) chosen. Tests retargeted (table above). Cost within 1.5x of main (Cost section in the assumed-strain doc).
 3. Merge the single-law commits into `claude/plastic-repair-20261023` (cherry-pick 0c2c48e41, 0ce738657 and the test/handover commit).
 4. Re-run: C1 elastic regime n=4/8/16/32 (von Karman and corotational) against ccx 11.79 mm. Scratch scripts: `mixed3.py` and `mixed3_drive.py` in `C:\Users\AUDUNA~1\AppData\Local\Temp\claude\C--Github\c394618d-7d19-4caf-91f9-544fa9e83efd\scratchpad\pr`.
 5. Re-run the hashes: five elastic cases (`hashes.py`, will now change), linear static (`linproof.py`), beams/non-Q4 shells (add a case), and the ANYfem barge (`barge.ps1`, linear: expect 5513c61fb259).
