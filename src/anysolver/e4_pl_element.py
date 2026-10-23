@@ -2554,6 +2554,15 @@ def _solve_stationary_system(
     }
 
 
+
+def _initial_offsets_or_none(element, state, cache, layers, material):
+    offsets = _q4_assumed_strain.layer_offsets(
+        state, len(cache["gp"]), int(layers), float(element.thickness),
+        _plasticity_module.plane_stress_elastic_matrix(
+            float(material.elastic_modulus), float(material.poisson_ratio)),
+    )
+    return None if offsets is None else offsets[None]
+
 class QualifiedE4PLShellElement(
     ShellElement,
     metaclass=AuthorityEpochMeta,
@@ -4356,9 +4365,7 @@ class QualifiedE4PLShellElement(
 
         if _q4_assumed_strain.require_supported(self, mesh, material):
             _q4_assumed_strain.require_state_supported(self, state)
-        elif not _q4_assumed_strain.elastic_route(self, mesh, material) or (
-            _q4_assumed_strain.state_has_active_initial_fields(state)
-        ):
+        elif not _q4_assumed_strain.elastic_route(self, mesh, material):
             return None
         cache = self._nonlinear_geometry(mesh)
         points = len(cache["gp"]) * int(layers)
@@ -4403,6 +4410,11 @@ class QualifiedE4PLShellElement(
                 int(layers),
                 offsets[None],
                 return_geometric=bool(return_components and tangent),
+                initial_layer_offsets=(
+                    None
+                    if material.hardening_curve is not None
+                    else _initial_offsets_or_none(self, state, cache, layers, material)
+                ),
             )
         )
         trial_state = {
@@ -6469,9 +6481,8 @@ class QualifiedE4PLShellElement(
             ),
             "qualified_linear_material_correction": correction.copy(),
         }
-        direct = None if (
-            _q4_assumed_strain.elastic_route(self, mesh, material)
-            and not _q4_assumed_strain.state_has_active_initial_fields(committed_state)
+        direct = None if _q4_assumed_strain.elastic_route(
+            self, mesh, material
         ) else self._elastic_increment_response(
             mesh, material, displacement, committed_state, True)
         if direct is not None:

@@ -300,6 +300,29 @@ def _certify_patch(offsets, B_m, B_b, T0, coordinates) -> None:
                 )
 
 
+def layer_offsets(state: Any, n_gp: int, num_layers: int, thickness: float, C: np.ndarray) -> Optional[np.ndarray]:
+    """Local layer strain offset of prescribed initial stress/prestrain.
+
+    Same definition as the inherited kernel: ``C^-1 sigma_0 - eps_pre`` with
+    ``sigma_0 = N0 + 2 z / h M0`` and ``eps_pre = e0 + z k0``.
+    """
+
+    names = (
+        "initial_membrane_stress",
+        "initial_bending_stress",
+        "initial_membrane_prestrain",
+        "initial_curvature_prestrain",
+    )
+    if state is None or not any(name in state for name in names):
+        return None
+    z, _w = lobatto_layers(int(num_layers), float(thickness))
+    zero_rows = np.zeros((n_gp, 3), dtype=float)
+    rows = [_elements._shell_field_rows(state.get(name, zero_rows), n_gp, name) for name in names]
+    initial_stress = rows[0][:, None, :] + (2.0 * z[None, :, None] / float(thickness)) * rows[1][:, None, :]
+    eigenstrain = rows[2][:, None, :] + z[None, :, None] * rows[3][:, None, :]
+    offset = np.einsum("ij,glj->gli", np.linalg.inv(np.asarray(C, dtype=float)), initial_stress) - eigenstrain
+    return offset.reshape(n_gp * int(num_layers), 3)
+
 def _geometric(detw, Gw, N):
     Gx = Gw[:, :, 0]
     Gy = Gw[:, :, 1]
@@ -338,6 +361,7 @@ def kernel_batch(
     offsets: np.ndarray,
     *,
     return_geometric: bool = False,
+    initial_layer_offsets: Optional[np.ndarray] = None,
 ) -> Tuple[np.ndarray, Optional[np.ndarray], np.ndarray, np.ndarray, np.ndarray, Dict[str, Any]]:
     """Assumed-strain replacement of ``batch_shell_nonlinear_response``.
 
@@ -400,6 +424,19 @@ def kernel_batch(
         + d6[:, :, None, :3]
         + z[None, None, :, None] * d6[:, :, None, 3:]
     )
+    N_initial = np.zeros((n_elem, n_gp, 3), dtype=float)
+    if initial_layer_offsets is not None:
+        if curve is not None:
+            raise ValueError("initial layer offsets are supported on the elastic route only")
+        initial = np.asarray(initial_layer_offsets, dtype=float).reshape(n_elem, n_gp, L, 3)
+        layers = layers + initial
+        stress_0 = initial @ C.T
+        N_initial = np.einsum("l,egli->egi", w, stress_0)
+        M_initial = np.einsum("l,l,egli->egi", w, z, stress_0)
+        B_all = np.concatenate((B_m + B_nl, B_b), axis=2) + offsets
+        F_loc += np.einsum("egki,egk->ei", B_all * detw[:, :, None, None], np.concatenate((N_initial, M_initial), axis=2))
+        if tangent:
+            K_loc += _geometric(detw, Gw, N_initial)
     layer_strain = layers.reshape(n_elem * points, 3)
     if curve is None:
         # Single-law prototype: elastic material, no return map.
@@ -460,6 +497,6 @@ def kernel_batch(
         K_loc = 0.5 * (K_loc + _transpose_last(K_loc))
         K += T0t @ K_loc @ T0
         if return_geometric:
-            membrane = (np.einsum("egki,ei->egk", B_m, u_loc) + eps_nl) @ A.T + N_offset - N_p
+            membrane = (np.einsum("egki,ei->egk", B_m, u_loc) + eps_nl) @ A.T + N_offset + N_initial - N_p
             extras["geometric"] = T0t @ _geometric(detw, Gw, membrane) @ T0
     return F, K, ep_new, alpha_new, layer_strain, extras
