@@ -1,1 +1,2 @@
 - 2026-10-23 16:19 cost job (single-law vs main, elastic C1 nocurve n=8/16, 20 steps, VK and corotational; 2 processes): powershell -File C:\Users\AUDUNA~1\AppData\Local\Temp\claude\C--Github\c394618d-7d19-4caf-91f9-544fa9e83efd\scratchpad\pr\cost.ps1 -> C:\Users\AUDUNA~1\AppData\Local\Temp\claude\C--Github\c394618d-7d19-4caf-91f9-544fa9e83efd\scratchpad\pr\cost_*.log; ETA ~15 min
+- 2026-10-23 16:32 OPEN-LOW recorded in docs/Q4_SINGLE_ELASTIC_LAW_PLAN_20261023.md: stale governed manifest pins (already red at base); two lifecycle tests still on the retired direct helper.

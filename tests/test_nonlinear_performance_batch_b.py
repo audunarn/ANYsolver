@@ -80,7 +80,34 @@ def test_planar_qualified_q4_uses_single_law_batch_not_batch_b() -> None:
         assert batch.key[0] == "isotropic_q4_assumed_strain_plastic"
         assert batch.has_plasticity is False
         assert getattr(batch, "_batch_b_elastic", False) is False
+    # Execution check: the single-law batch kernel body runs, and its result is
+    # what the plan assembles (equal to the scalar element responses).
+    import sys
+    from anysolver import _q4_assumed_strain_plasticity as assumed
 
+    rng = np.random.default_rng(7)
+    displacement = 1e-3 * rng.standard_normal(model.mesh.dof_manager.total_dofs)
+    calls = []
+    code = assumed.kernel_batch.__code__
+
+    def observe(frame, event, value):
+        if event == "return" and frame.f_code is code:
+            calls.append(int(np.asarray(frame.f_locals["u_elem_batch"]).shape[0]))
+
+    previous = sys.getprofile()
+    sys.setprofile(observe)
+    try:
+        force, _tangent, _states = plan.assemble(displacement, {}, tangent=True)
+    finally:
+        sys.setprofile(previous)
+    assert calls == [model.mesh.num_elements]
+    scalar = np.zeros_like(force)
+    for element in model.mesh.elements.values():
+        dofs = np.asarray(element.get_dof_mapping(model.mesh))
+        material = model.get_material(element.material_name)
+        scalar[dofs] += np.asarray(element.compute_nonlinear_response(
+            model.mesh, material, displacement[dofs], None, 5, False)[0])
+    np.testing.assert_allclose(force, scalar, rtol=0.0, atol=1e-12 * np.abs(scalar).max())
 
 def test_batch_b_is_active() -> None:
     status = nonlinear_performance_status()

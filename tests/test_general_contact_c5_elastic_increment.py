@@ -155,8 +155,9 @@ def test_actual_batch_assembly_uses_single_law_kernel():
         model, u, {}, 5, tangent=True, require_full_coordinates=True)
     expected_force, expected_tangent = single_law_expected(
         element, model.mesh, material, u, None)
-    np.testing.assert_allclose(force, expected_force, rtol=2e-12, atol=2e-12)
-    np.testing.assert_allclose(tangent.toarray(), expected_tangent, rtol=0., atol=1e-10)
+    # Measured agreement with the oracle: force 4.4e-16, tangent 1.8e-15 (absolute).
+    np.testing.assert_allclose(force, expected_force, rtol=0., atol=1e-15)
+    np.testing.assert_allclose(tangent.toarray(), expected_tangent, rtol=0., atol=1e-12)
     assert 1 in states
 
 
@@ -180,8 +181,14 @@ def test_unsupported_routes_do_not_admit_direct_increment(kind):
         element, model.mesh, material, pose(), state)
     force, tangent, _ = element.compute_nonlinear_response(
         model.mesh, material, pose(), state, 5, True)
-    np.testing.assert_allclose(force, expected_force, rtol=2e-12, atol=2e-12)
-    np.testing.assert_allclose(tangent, expected_tangent, rtol=2e-12, atol=2e-10)
+    if kind == "warped":
+        # Warped facets keep the historical law: exact equality as before.
+        np.testing.assert_array_equal(force, expected_force)
+        np.testing.assert_array_equal(tangent, expected_tangent)
+    else:
+        # Measured agreement: force 4.4e-16, tangent <= 4.5e-13 (absolute).
+        np.testing.assert_allclose(force, expected_force, rtol=0., atol=1e-15)
+        np.testing.assert_allclose(tangent, expected_tangent, rtol=0., atol=1e-12)
 
 
 def test_geometry_mutation_recomputes_one_call_preparation():
@@ -249,3 +256,51 @@ def test_actual_vector_observation_mutation_cannot_publish():
     with pytest.raises((RuntimeError, ValueError), match="changed|incompatible"):
         element._elastic_increment_response(
             model.mesh, material, MutatingVector(), None, True)
+
+
+def test_single_law_cross_terms_are_independent_of_the_offset_operator():
+    """Operator-independent check of the single-law cross terms.
+
+    The parasitic strain dE u is taken from the element's mixed stress recovery
+    (``_recover_planar_mixed_fields``: its own stationary solve and field
+    evaluation, not ``offset_operator``) as independent minus compatible
+    membrane strain at the Gauss points. The cross terms are the gradient of
+    W(u) = sum_g w_g (dE u)' A eps_nl(u). That gradient is formed here by central
+    finite differences and compared with the production response minus the
+    historical law (kernel + Cr u). W is cubic, so the FD error is O(h^2);
+    the tolerance is set from it.
+    """
+
+    model, element, material = case()
+    u = pose()
+    natural = [(-1 / np.sqrt(3), -1 / np.sqrt(3)), (1 / np.sqrt(3), -1 / np.sqrt(3)),
+               (-1 / np.sqrt(3), 1 / np.sqrt(3)), (1 / np.sqrt(3), 1 / np.sqrt(3))]
+    cache = element._nonlinear_geometry(model.mesh)
+    T0 = np.asarray(cache["T0"])
+    Gw = np.asarray(cache["Gw_all"])
+    detw = np.asarray(cache["detw_all"])
+    nu = material.poisson_ratio
+    A = element.thickness * material.elastic_modulus / (1 - nu ** 2) * np.array(
+        ((1, nu, 0), (nu, 1, 0), (0, 0, (1 - nu) / 2)))
+
+    def energy(v):
+        recovered = element._recover_planar_mixed_fields(model.mesh, v, material, natural)
+        parasitic = recovered["independent"][:, :3] - recovered["compatible"][:, :3]
+        local = T0 @ v
+        total = 0.0
+        for g in range(4):
+            th = Gw[g] @ local
+            eps_nl = np.array((0.5 * th[0] ** 2, 0.5 * th[1] ** 2, th[0] * th[1]))
+            total += detw[g] * parasitic[g] @ (A @ eps_nl)
+        return total
+
+    h = 1e-6
+    gradient = np.array([(energy(u + h * e) - energy(u - h * e)) / (2 * h) for e in np.eye(24)])
+    correction = element._qualified_linear_correction(model.mesh, material, 5)
+    element._hourglass_stiffness_matrix = None
+    old_force, _old_tangent, _ = qualified._QUALIFIED_Q4_BASE_NONLINEAR_KERNEL(
+        element, model.mesh, material, u, None, 5, True)
+    force, _tangent, _ = element.compute_nonlinear_response(model.mesh, material, u, None, 5, True)
+    cross = np.asarray(force) - (old_force + correction @ u)
+    assert np.abs(cross).max() > 1e-6 * np.abs(force).max()  # the cross terms are not trivial here
+    np.testing.assert_allclose(cross, gradient, rtol=0., atol=1e-7 * np.abs(cross).max())
