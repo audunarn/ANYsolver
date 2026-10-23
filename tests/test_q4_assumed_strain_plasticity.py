@@ -503,3 +503,49 @@ def test_preyield_layer_stress_matches_independent_mixed_recovery():
     legacy_model, legacy, _ = _single(SQUARE, form="legacy")
     _f, _K, legacy_state = _response(legacy, legacy_model, material, u, None)
     assert np.abs(np.asarray(legacy_state["layer_stress"]) - actual).max() > 1e-3 * np.abs(actual).max()
+
+
+def _mixed_plate(n, mode):
+    """Clamped C1 plate (t = 3 mm, 50 kPa) whose hardening curve never yields."""
+
+    strong = DNVC208MaterialCurve(sigma_prop=3e9, sigma_yield=3.2e9, sigma_yield_2=3.4e9,
+                                  eps_p_y1=0.005, eps_p_y2=0.01, K=4e10, n=0.2)
+    model = fs.FEModel("mixed")
+    model.add_material("curve", 210e9, 0.3, density=7850.0, yield_stress=3e9, hardening_curve=strong)
+    model.add_material("plain", 210e9, 0.3, density=7850.0)
+    for j in range(n + 1):
+        for i in range(n + 1):
+            model.add_node(1 + j * (n + 1) + i, i / n, j / n, 0.0)
+    for j in range(n):
+        for i in range(n):
+            v = 1 + j * (n + 1) + i
+            e = 1 + j * n + i
+            name = {"curve": "curve", "plain": "plain", "mixed": "curve" if i < n // 2 else "plain"}[mode]
+            model.add_element(e, create_shell_element(e, [v, v + 1, v + n + 2, v + n + 1], name, thickness=0.003))
+    edge = [1 + j * (n + 1) + i for j in range(n + 1) for i in range(n + 1) if i in (0, n) or j in (0, n)]
+    model.add_boundary_condition(FixedSupport("clamp", edge))
+    load = LoadCase("p")
+    for e in model.mesh.elements:
+        load.add_pressure_load(e, 5e4)
+    model.apply_boundary_conditions()
+    return model, load
+
+
+@pytest.mark.parametrize("kinematics", ["von_karman", "corotational"])
+def test_single_elastic_law_mixed_mesh_matches_pure_meshes(kinematics):
+    """Yield-capable (never yielding) and plain qualified Q4 share one elastic law."""
+
+    answers = {}
+    for mode in ("curve", "plain", "mixed"):
+        model, load = _mixed_plate(4, mode)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            result = fs.solve_static_nonlinear(model, load, num_steps=5, max_iterations=40,
+                                               kinematics=kinematics)
+        assert result.status == "completed"
+        assert max(float(np.max(s["alpha"])) for s in result.element_states.values()
+                   if isinstance(s, dict) and "alpha" in s) == 0.0
+        answers[mode] = np.asarray(result.displacements, float)
+    scale = np.abs(answers["plain"]).max()
+    for mode in ("curve", "mixed"):
+        assert np.abs(answers[mode] - answers["plain"]).max() <= 1e-9 * scale, mode
