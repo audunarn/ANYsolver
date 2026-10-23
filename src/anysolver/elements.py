@@ -71,6 +71,7 @@ import warnings
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Mapping, Optional, Tuple
 
 import numpy as np
+from anymaterial import IsotropicMaterial as _RecoveryIsotropicMaterial
 from . import _compensated_contractions as _local_contractions
 
 from .beam_sections import (
@@ -3488,9 +3489,15 @@ class ShellElement(Element):
             tri3_B_s, _ = self._tri3_assumed_shear_b_matrix(coords, R_center)
             tri3_u_local = self._local_dof_transform(R_center) @ u_elem_global
 
+        from .recovery_shell_frames import native_recovery_frames
+
+        frames = native_recovery_frames(self, coords, recovery_points, material)
         for idx, (xi, eta) in enumerate(recovery_points):
-            N, dN_dxi, dN_deta = self.compute_shape_functions(float(xi), float(eta))
-            R, dN_dx, dN_dy, _ = self._local_frame_and_derivatives(coords, dN_dxi, dN_deta)
+            if frames is None:
+                N, dN_dxi, dN_deta = self.compute_shape_functions(float(xi), float(eta))
+                R, dN_dx, dN_dy, _ = self._local_frame_and_derivatives(coords, dN_dxi, dN_deta)
+            else:
+                N, R, dN_dx, dN_dy = frames[idx]
             Q_local, G_local, _strain_to_material, stress_to_local = _shell_material_matrices(
                 material,
                 self._material_angle(R),
@@ -3711,6 +3718,17 @@ def _install_strict_flat_s3_v2_legacy_dispatch_guards() -> None:
 
 _install_strict_flat_s3_v2_legacy_dispatch_guards()
 del _install_strict_flat_s3_v2_legacy_dispatch_guards
+
+# Exact dispatch surface for the recovery-only quadrature frame optimization.
+# Subclasses and instance/class overrides retain their scalar dispatch.
+_SHELL_RECOVERY_FRAME_METHODS = tuple(vars(ShellElement).items())
+_SHELL_RECOVERY_BASE_METHODS = tuple(vars(Element).items())
+_SHELL_RECOVERY_MATERIAL_METHODS = tuple(vars(_RecoveryIsotropicMaterial).items())
+_SHELL_RECOVERY_FRAME_HELPERS = tuple((name, globals()[name]) for name in (
+    "_cross3", "_inv2", "_shell_material_matrices", "_elastic_symmetry",
+    "_canonical_material_symmetry", "_guarded_observe_attribute", "_guarded_float",
+    "_jit_compute_8node_shape_functions",
+))
 
 
 class BeamElement(Element):
