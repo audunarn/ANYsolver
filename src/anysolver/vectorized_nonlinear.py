@@ -26,15 +26,7 @@ def elastic_shell_nonlinear_increment(u_elem, geometry, E, nu, h, *, tangent=Tru
     well-formed float64 input one fused compiled call evaluates it bit for bit,
     and any refusal or unexpected layout runs the reference (and its exceptions).
     """
-    try:
-        constitutive = h * plane_stress_elastic_matrix(E, nu)
-    except Exception:  # noqa: BLE001 - the reference reports it in its own order
-        constitutive = None
-    if constitutive is not None:
-        fused = _contractions.fused_elastic_increment(u_elem, geometry, constitutive, tangent)
-        if fused is not None:
-            return fused
-    return _contractions.elastic_increment_reference(
+    return _contractions.elastic_increment(
         u_elem, geometry, lambda: h * plane_stress_elastic_matrix(E, nu), tangent)
 
 

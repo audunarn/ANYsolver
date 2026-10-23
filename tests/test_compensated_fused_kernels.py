@@ -15,7 +15,11 @@ import pytest
 from anysolver import _compensated_contractions as cc
 from anysolver import vectorized_nonlinear as vn
 
-pytestmark = pytest.mark.skipif(not cc._USE_FUSED, reason="fused compiled kernels unavailable")
+# Skipped only when the compiled kernels are really unavailable (or explicitly opted out);
+# a fused path that was disabled at import by a failed self-check must make these tests fail.
+pytestmark = pytest.mark.skipif(
+    not cc._native.AVAILABLE or os.environ.get("ANYSOLVER_NATIVE_CONTRACTIONS", "1") == "0",
+    reason="compiled contraction kernels unavailable or opted out")
 
 CASES = int(os.environ.get("ANYSOLVER_FUSED_CASES", "1500"))
 TINY = 5e-324
@@ -375,3 +379,131 @@ def test_self_check_flags_a_fast_math_variant_if_it_contracts():
             outs.append((f.tobytes(), m.tobytes(), g.tobytes()))
         differs = differs or outs[0] != outs[1]
     assert fast_ok == (not differs)
+
+
+# --- review round 2 regressions -------------------------------------------------
+class _Lying(np.ndarray):
+    """ndarray subclass whose indexing returns different (ordinary) data than its buffer."""
+
+    def __getitem__(self, index):
+        return np.asarray(np.ndarray.__getitem__(self, index)) * 2.0 + 1.0
+
+
+class _LyingArray(np.ndarray):
+    def __array__(self, dtype=None, copy=None):
+        return np.zeros(self.shape)
+
+
+def _as(subclass, value):
+    return np.asarray(value, dtype=float).view(subclass)
+
+
+@pytest.mark.parametrize("subclass", [_Lying, _LyingArray])
+@pytest.mark.parametrize("argument", ["membrane", "bending", "shear", "T0", "B_m_all", "detw_all"])
+def test_ndarray_subclasses_never_enter_the_fused_zero_tangent(subclass, argument):
+    rng = np.random.default_rng(13)
+    geometry = _geometry(rng, 6, 2, 2, 1)
+    coefficients = {"membrane": rng.standard_normal((3, 3)), "bending": rng.standard_normal((3, 3)),
+                    "shear": rng.standard_normal((2, 2))}
+    if argument in coefficients:
+        coefficients[argument] = _as(subclass, coefficients[argument])
+    else:
+        geometry[argument] = _as(subclass, geometry[argument])
+    args = (geometry, coefficients["membrane"], coefficients["bending"], coefficients["shear"], 0.3)
+    assert _outcome(cc.shell_zero_tangent, *args) == _outcome(cc._shell_zero_tangent_reference, *args)
+
+
+@pytest.mark.parametrize("subclass", [_Lying, _LyingArray])
+@pytest.mark.parametrize("argument", ["constitutive", "u_elem", "T0", "Gw_all"])
+def test_ndarray_subclasses_never_enter_the_fused_increment(subclass, argument):
+    rng = np.random.default_rng(14)
+    geometry = _geometry(rng, 6, 2, 0, 1)
+    constitutive, u = rng.standard_normal((3, 3)) * 1e3, rng.standard_normal(6) * 1e-2
+    if argument == "constitutive":
+        constitutive = _as(subclass, constitutive)
+    elif argument == "u_elem":
+        u = _as(subclass, u)
+    else:
+        geometry[argument] = _as(subclass, geometry[argument])
+    want = _outcome(cc.elastic_increment_reference, u, geometry, lambda: constitutive, True)
+    assert _outcome(cc.elastic_increment, u, geometry, lambda: constitutive, True) == want
+    assert (_outcome(cc.fused_elastic_increment, u, geometry, constitutive, True) in (("ok",) + want[1:], ("ok", None))
+            or cc.fused_elastic_increment(u, geometry, constitutive, True) is None)
+
+
+def _callback_log(policy):
+    log = []
+    np.seterrcall(lambda kind, flag: log.append((kind, flag)))
+    return log
+
+
+@pytest.mark.parametrize("policy", [dict(), dict(all="ignore"), dict(all="warn"), dict(all="raise"),
+                                    dict(all="call"), dict(over="call"), dict(all="print"), dict(all="log"),
+                                    dict(under="warn"), dict(invalid="raise")])
+@pytest.mark.parametrize("case", ["nonfinite_u", "overflow_coefficients", "ordinary", "extreme_geometry"])
+def test_coefficient_evaluation_order_count_and_side_effects_match_the_reference(policy, case):
+    rng = np.random.default_rng(21)
+    geometry = _geometry(rng, 6, 2, 0, 1)
+    u = rng.standard_normal(6) * 1e-2
+    E, nu, h = 2.1e11, 0.3, 0.01
+    if case == "nonfinite_u":
+        u[2] = np.nan
+        E, nu, h = 2.0, 0.0, 1e308
+    elif case == "overflow_coefficients":
+        E, nu, h = 2.0, 0.0, 1e308
+    elif case == "extreme_geometry":
+        geometry["B_m_all"] = geometry["B_m_all"] * 2.0 ** 480
+        geometry["Gw_all"] = geometry["Gw_all"] * 2.0 ** 480
+    evaluations = []
+
+    def factory():
+        evaluations.append(1)
+        return h * vn.plane_stress_elastic_matrix(E, nu)
+
+    def observe(function):
+        evaluations.clear()
+        log = []
+        np.seterrcall(lambda kind, flag: log.append((kind, flag)))
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            with np.errstate(**policy):
+                outcome = _outcome(function)
+        return outcome, log, [str(w.message) for w in caught], len(evaluations)
+
+    old_call = np.seterrcall(None)
+    try:
+        want = observe(lambda: cc.elastic_increment_reference(u, geometry, factory, True))
+        got = observe(lambda: cc.elastic_increment(u, geometry, factory, True))
+    finally:
+        np.seterrcall(old_call)
+    assert got == want
+    assert want[3] <= 1 and got[3] == want[3]
+
+
+def test_public_increment_evaluates_the_coefficients_once(monkeypatch):
+    calls = []
+    real = vn.plane_stress_elastic_matrix
+    monkeypatch.setattr(vn, "plane_stress_elastic_matrix", lambda *a: calls.append(a) or real(*a))
+    rng = np.random.default_rng(22)
+    geometry = _geometry(rng, 6, 2, 0, 2)  # extreme magnitudes: the kernel may refuse
+    for _ in range(20):
+        calls.clear()
+        _outcome(vn.elastic_shell_nonlinear_increment, rng.standard_normal(6), geometry, 2.1e11, 0.3, 0.01)
+        assert len(calls) == 1
+
+
+def test_frozen_geometry_mappingproxy_is_served_by_the_kernel(monkeypatch):
+    """The qualified route passes mappingproxy geometry; it must reach the compiled kernel."""
+    from types import MappingProxyType
+    counts = _count_kernel(monkeypatch, "fused_elastic_increment")
+    zero = _count_kernel(monkeypatch, "fused_shell_zero_tangent")
+    rng = np.random.default_rng(31)
+    geometry = _geometry(rng, 6, 2, 2, 1)
+    frozen = MappingProxyType(geometry)
+    u, C = rng.standard_normal(6) * 1e-2, rng.standard_normal((3, 3)) * 1e3
+    assert (_outcome(cc.elastic_increment, u, frozen, lambda: C, True)
+            == _outcome(cc.elastic_increment_reference, u, geometry, lambda: C, True))
+    args = (np.eye(3), np.eye(3), np.eye(2), 0.3)
+    assert (_outcome(cc.shell_zero_tangent, frozen, *args)
+            == _outcome(cc._shell_zero_tangent_reference, geometry, *args))
+    assert counts[0] == 1 and zero[0] == 1

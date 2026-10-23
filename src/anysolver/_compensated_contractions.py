@@ -17,6 +17,7 @@ the reference exception is raised.
 from math import frexp as _frexp, fsum as _fsum, isfinite as _isfinite, ldexp as _ldexp
 
 import os
+from types import MappingProxyType as _MappingProxyType
 
 import numpy as np
 
@@ -264,6 +265,19 @@ def _fused_array(value, shape_tail):
     return np.array(value, dtype=np.float64, order="C")
 
 
+# Exact mapping types the qualified route supplies (frozen geometry is a mappingproxy).
+_GEOMETRY_TYPES = (dict, _MappingProxyType)
+
+
+def _fused_matrix(value, shape):
+    """Writable C float64 copy-or-view of an exact ndarray with exactly ``shape``, or ``None``."""
+    if type(value) is not np.ndarray or value.dtype != np.float64 or value.shape != shape:
+        return None
+    if value.flags.c_contiguous and value.flags.writeable:
+        return value
+    return np.array(value, dtype=np.float64, order="C")
+
+
 def _fused_scalar(value):
     if type(value) in (float, np.float64):
         return float(value)
@@ -271,18 +285,26 @@ def _fused_scalar(value):
 
 
 def _fused_policy_allows():
-    """Fused kernels are used only where numpy would not act on a float underflow.
+    """Fused kernels run only under numpy's default-or-ignore floating-point policy.
 
-    The reference performs a few plain numpy multiplies (e.g. ``drill * bd``)
-    whose underflow numpy may warn on or raise for; the compiled multiplies
-    cannot, so any non-default underflow policy runs the reference.
+    The reference performs plain numpy multiplies (e.g. ``drill * bd``) for which
+    numpy may warn, raise or call back on underflow; the compiled multiplies
+    cannot. Overflow/invalid always make the kernel refuse (the nonfinite value
+    reaches a compensated product or sum), so the reference replays and reports
+    them itself. Any other policy runs the reference.
     """
-    return _USE_NATIVE and _USE_FUSED and np.geterr()["under"] == "ignore"
+    if not (_USE_NATIVE and _USE_FUSED):
+        return False
+    policy = np.geterr()
+    return (policy["under"] == "ignore"
+            and all(policy[kind] in ("ignore", "warn") for kind in ("over", "divide", "invalid")))
 
 
 def _zero_tangent_args(geometry, membrane, bending, shear, drill):
     """Kernel arguments for ``shell_zero_tangent``, or ``None`` for any non-conforming input."""
     try:
+        if type(geometry) not in _GEOMETRY_TYPES:
+            return None
         t0 = geometry["T0"]
         n = t0.shape[0] if type(t0) is np.ndarray and t0.ndim == 2 else -1
         if n <= 0:
@@ -290,15 +312,15 @@ def _zero_tangent_args(geometry, membrane, bending, shear, drill):
         arrays = (_fused_array(geometry["B_m_all"], (3, n)), _fused_array(geometry["B_b_all"], (3, n)),
                   _fused_array(geometry["B_d_all"], (1, n)), _fused_array(geometry["detw_all"], ()),
                   _fused_array(geometry["B_s_all"], (2, n)), _fused_array(geometry["detw_shear_all"], ()),
-                  _fused_array(t0[None], (n, n)), _fused_array(membrane[None], (3, 3)),
-                  _fused_array(bending[None], (3, 3)), _fused_array(shear[None], (2, 2)))
+                  _fused_matrix(t0, (n, n)), _fused_matrix(membrane, (3, 3)),
+                  _fused_matrix(bending, (3, 3)), _fused_matrix(shear, (2, 2)))
         drill_value = _fused_scalar(drill)
         if (drill_value is None or any(a is None for a in arrays)
                 or not len(arrays[0]) == len(arrays[1]) == len(arrays[2]) == len(arrays[3])
                 or len(arrays[4]) != len(arrays[5]) or len(arrays[0]) + len(arrays[4]) == 0):
             return None
         return (arrays[0], arrays[1], arrays[2], arrays[3], arrays[4], arrays[5],
-                arrays[6][0], arrays[7][0], arrays[8][0], arrays[9][0], drill_value)
+                arrays[6], arrays[7], arrays[8], arrays[9], drill_value)
     except Exception:  # noqa: BLE001 - anything unexpected is the reference's to report
         return None
 
@@ -329,12 +351,14 @@ def shell_zero_tangent(geometry, membrane, bending, shear, drill):
 
 def _increment_fused(u_elem, geometry, constitutive, tangent):
     try:
+        if type(geometry) not in _GEOMETRY_TYPES:
+            return None
         t0 = geometry["T0"]
         n = t0.shape[0] if type(t0) is np.ndarray and t0.ndim == 2 else -1
-        if n <= 0 or type(tangent) is not bool or type(u_elem) is not np.ndarray or u_elem.ndim != 1:
+        if n <= 0 or type(tangent) is not bool:
             return None
-        arrays = (_fused_array(t0[None], (n, n)), _fused_array(u_elem[None], (n,)),
-                  _fused_array(constitutive[None], (3, 3)), _fused_array(geometry["B_m_all"], (3, n)),
+        arrays = (_fused_matrix(t0, (n, n)), _fused_matrix(u_elem, (n,)),
+                  _fused_matrix(constitutive, (3, 3)), _fused_array(geometry["B_m_all"], (3, n)),
                   _fused_array(geometry["Gw_all"], (2, n)), _fused_array(geometry["detw_all"], ()))
         if (any(a is None for a in arrays)
                 or not len(arrays[3]) == len(arrays[4]) == len(arrays[5]) > 0):
@@ -345,7 +369,7 @@ def _increment_fused(u_elem, geometry, constitutive, tangent):
     material = np.zeros((n, n), dtype=np.float64)
     geometric = np.zeros((n, n), dtype=np.float64)
     if _native.fused_elastic_increment(
-            arrays[0][0], arrays[1][0], arrays[2][0], arrays[3], arrays[4], arrays[5], tangent,
+            arrays[0], arrays[1], arrays[2], arrays[3], arrays[4], arrays[5], tangent,
             force, material, geometric, _native.POW2, 2.0) != 0:
         return None
     return force, material, geometric
@@ -362,6 +386,26 @@ def fused_elastic_increment(u_elem, geometry, constitutive, tangent):
     if not _fused_policy_allows():
         return None
     return _increment_fused(u_elem, geometry, constitutive, tangent)
+
+
+def elastic_increment(u_elem, geometry, constitutive_factory, tangent):
+    """Elastic von-Karman increment: fused kernel in the reference's evaluation order.
+
+    The reference validates the transformed displacement first, then evaluates
+    the coefficients (once), then loops. The fused route does exactly that: the
+    same first compensated product, one call of ``constitutive_factory``, then
+    the kernel; a refusal replays the reference with the already evaluated
+    coefficients, so side effects and their count never change.
+    """
+    transform = geometry["T0"] if type(geometry) in _GEOMETRY_TYPES and "T0" in geometry else None
+    if (_fused_policy_allows() and type(transform) is np.ndarray and type(u_elem) is np.ndarray):
+        product(transform, u_elem)  # the reference's first step (same validation, same exceptions)
+        constitutive = constitutive_factory()
+        fused = _increment_fused(u_elem, geometry, constitutive, tangent)
+        if fused is not None:
+            return fused
+        return elastic_increment_reference(u_elem, geometry, lambda: constitutive, tangent)
+    return elastic_increment_reference(u_elem, geometry, constitutive_factory, tangent)
 
 
 def _native_known_answers_match():
