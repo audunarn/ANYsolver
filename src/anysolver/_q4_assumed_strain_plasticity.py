@@ -290,10 +290,10 @@ def _geometric(detw, Gw, N):
     Gx = Gw[:, :, 0]
     Gy = Gw[:, :, 1]
     return (
-        np.einsum("eg,egi,egj->eij", detw * N[:, :, 0], Gx, Gx)
-        + np.einsum("eg,egi,egj->eij", detw * N[:, :, 1], Gy, Gy)
-        + np.einsum("eg,egi,egj->eij", detw * N[:, :, 2], Gx, Gy)
-        + np.einsum("eg,egi,egj->eij", detw * N[:, :, 2], Gy, Gx)
+        np.einsum("egi,egj->eij", (detw * N[:, :, 0])[:, :, None] * Gx, Gx)
+        + np.einsum("egi,egj->eij", (detw * N[:, :, 1])[:, :, None] * Gy, Gy)
+        + np.einsum("egi,egj->eij", (detw * N[:, :, 2])[:, :, None] * Gx, Gy)
+        + np.einsum("egi,egj->eij", (detw * N[:, :, 2])[:, :, None] * Gy, Gx)
     )
 
 
@@ -379,7 +379,7 @@ def kernel_batch(
     )
     K_loc = None
     if tangent:
-        cross = np.einsum("eg,egki,kl,eglj->eij", detw, dE_m, A, B_nl)
+        cross = np.einsum("egki,egkj->eij", dE_m * detw[:, :, None, None], A @ B_nl)
         K_loc = cross + _transpose_last(cross) + _geometric(detw, Gw, N_offset)
 
     compatible = np.asarray(compatible_layers, dtype=float).reshape(n_elem, n_gp, L, 3)
@@ -427,7 +427,7 @@ def kernel_batch(
             Dp[:, :, :3, 3:] = D1
             Dp[:, :, 3:, :3] = D1
             Dp[:, :, 3:, 3:] = D2
-            K_loc[active] -= np.einsum("eg,egki,egkl,eglj->eij", detw[active], B_hat, Dp, B_hat)
+            K_loc[active] -= np.einsum("egki,egkj->eij", B_hat * detw[active][:, :, None, None], Dp @ B_hat)
             K_loc[active] -= _geometric(detw[active], Gw[active], N_p[active])
     T0t = _transpose_last(T0)
     F += np.einsum("eij,ej->ei", T0t, F_loc)
