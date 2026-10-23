@@ -1573,6 +1573,11 @@ def _assemble_nonlinear_system_unchecked(
                     else None
                 )
                 if callable(deleted_operator):
+                    deleted_mode = (
+                        {"von_karman": kinematics == "von_karman"}
+                        if type(element) is _NativeParityE4PLS3V2DShellElement
+                        else {}
+                    )
                     f_elem, k_elem = deleted_operator(
                         mesh,
                         material,
@@ -1580,6 +1585,7 @@ def _assemble_nonlinear_system_unchecked(
                         committed_states.get(elem_id),
                         int(num_layers),
                         tangent=bool(tangent),
+                        **deleted_mode,
                     )
                     evaluated_deleted_noncurrent = True
                 else:
@@ -1594,6 +1600,7 @@ def _assemble_nonlinear_system_unchecked(
                         committed_states=committed_states,
                         state_token=state_token,
                         element_id=elem_id,
+                        kinematics=kinematics,
                     )
                     if trial_state is not None:
                         trial_states[elem_id] = trial_state
@@ -2735,6 +2742,16 @@ def _seal_final_qualified_q4_states(
         local_u = np.asarray(full[dofs], dtype=np.float64)
         state = states.get(element_id)
         material = model.get_material(element.material_name)
+        if (
+            state is None
+            and element_id not in deleted
+            and normalized_kinematics == "von_karman"
+            and type(element) is _NativeParityE4PLS3V2DShellElement
+        ):
+            _force, _tangent, state = element.compute_nonlinear_response(
+                model.mesh, material, local_u, None, int(num_layers), True,
+                von_karman=True,
+            )
         if element_id in deleted:
             if state is None or element_id not in disposition_by_id:
                 raise ValueError(

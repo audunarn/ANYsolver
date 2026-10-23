@@ -16,7 +16,10 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-GITHUB_ROOT = ROOT.parents[2]
+GITHUB_ROOT = Path(os.environ["ANY_ECOSYSTEM_ROOT"]) if "ANY_ECOSYSTEM_ROOT" in os.environ else next(
+    (parent for parent in ROOT.parents if (parent / "ANYgeometry" / "src").is_dir()),
+    ROOT.parent,
+)
 RUNNER_PATH = (
     ROOT
     / "docs"

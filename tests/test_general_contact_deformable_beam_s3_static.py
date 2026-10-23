@@ -106,11 +106,15 @@ def test_coupled_deforming_target_independent_contact_equilibrium_and_split_rest
     r,_,_=manager.evaluate(full.displacements)
     oracle=independent_contact_gradient(x)
     np.testing.assert_allclose(r[inds],oracle,rtol=1.e-9,atol=1.e-12)
-    # Structural stiffness belongs to the existing solver. This is an independent
-    # contact oracle with an explicitly bounded linearized structural comparison,
-    # not a new independent qualification of the beam or shell element.
+    # Keep the independent contact oracle and add the adopted S3 VK membrane
+    # term to the existing linear structural comparison. All in-plane DOFs are
+    # fixed: area=4.5, dw/dy=w5/3, eps_yy=w5**2/18, so differentiating membrane
+    # energy gives area*E*t*w5**3/(162*(1-nu**2)). Constants are fixture inputs.
+    # This remains a bounded oracle, not independent beam/shell qualification.
     K,_=assemble_stiffness_matrix(m);K2=K[inds][:,inds].toarray();f=np.array((-.001,0.))
-    reference=root(lambda y:K2@y+independent_contact_gradient(y)-f,x,tol=1.e-11)
+    cubic_coefficient=4.5*1.e5*.02/(162*(1.-.3**2))
+    reference=root(lambda y:K2@y+np.array((0.,cubic_coefficient*y[1]**3))
+                   +independent_contact_gradient(y)-f,x,tol=1.e-11)
     assert reference.success
     assert np.linalg.norm(reference.x-x)/np.linalg.norm(reference.x)<1.e-3
     half=solve_static_nonlinear(m,load,max_load_factor=.5,emit_restart_checkpoint=True,**kwargs)
@@ -123,7 +127,7 @@ def test_coupled_deforming_target_independent_contact_equilibrium_and_split_rest
         solve_static_nonlinear(m,load,restart_checkpoint=checkpoint,
               **dict(kwargs,contact_settings=replace(s,beam_shell_maximum_swept_intervals=127)))
     print('DEFORMABLE_BEAM_S3_RESPONSE '+json.dumps({'coordinates':x.tolist(),
-          'linearized_reference':reference.x.tolist(),'contact':contact},sort_keys=True))
+          'von_karman_reference':reference.x.tolist(),'contact':contact},sort_keys=True))
 
 
 

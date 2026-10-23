@@ -229,7 +229,8 @@ def validate_v2d_state(
     if not isinstance(state, Mapping):
         raise V2DStateError("V2D committed state must be a mapping")
     made = copy.deepcopy(dict(state))
-    if set(made) != _REQUIRED_KEYS:
+    optional_keys = {"experimental_von_karman_law"}
+    if set(made) - optional_keys != _REQUIRED_KEYS:
         missing = sorted(_REQUIRED_KEYS - set(made))
         extra = sorted(set(made) - _REQUIRED_KEYS)
         raise V2DStateError(f"V2D state keys mismatch; missing={missing}, extra={extra}")
@@ -296,6 +297,11 @@ def validate_v2d_state(
         raise V2DStateError("V2D alpha must be nonnegative")
     if made["solver_kinematics"] not in SOLVER_KINEMATICS:
         raise V2DStateError("V2D solver_kinematics is incompatible")
+    if made["solver_kinematics"] == "VON_KARMAN":
+        if made.get("experimental_von_karman_law") != "S3_V2D_VK_R1":
+            raise V2DStateError("V2D historical or unknown von Karman law cannot be restarted")
+    elif "experimental_von_karman_law" in made:
+        raise V2DStateError("V2D experimental von Karman history cannot change kinematics")
     disposition = made[ACTIVITY_DISPOSITION_KEY]
     if disposition is not None and not isinstance(disposition, Mapping):
         raise V2DStateError("V2D activity disposition is malformed")

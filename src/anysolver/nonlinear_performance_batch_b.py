@@ -1007,6 +1007,7 @@ def _batch_b_plan_assemble(
                 committed_states=committed_states,
                 state_token=state_token,
                 element_id=record.element_id,
+                kinematics="von_karman",
             )
             self.force_values[record.force_positions] = np.asarray(
                 f_element, dtype=float
