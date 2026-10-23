@@ -450,3 +450,40 @@ def test_module_substitution_during_evaluation_is_refused(monkeypatch):
     monkeypatch.setattr(AS, "plane_stress_return_map", swap_once)
     with pytest.raises(ValueError, match="authority"):
         _response(element, model, material, u, None)
+
+
+def test_preyield_layer_stress_matches_independent_mixed_recovery():
+    """Independent oracle for the pre-yield assumed-strain layer stress.
+
+    The qualified element's mixed stress recovery (separate stationary solve
+    and field evaluation, ``_recover_planar_mixed_fields``) supplies the hybrid
+    membrane strain and curvature at the Gauss points; adding the von-Karman
+    strain of the same displacement and multiplying by C must give the layer
+    stress the assumed-strain kernel stores.  The compatible legacy element
+    differs exactly by the hybrid relief.
+    """
+
+    from anysolver.plasticity import lobatto_layers
+
+    model, element, material = _single(SQUARE)
+    u = (_field(SQUARE, "hourglass", 2e-5) + _field(SQUARE, "stretch", 3e-5)
+         + _field(SQUARE, "bend", 2e-4) + _field(SQUARE, "twist", 1e-4))
+    _f, _K, trial = _response(element, model, material, u, None)
+    assert not np.any(trial["plastic_strain"])
+    recovered = element._recover_planar_mixed_fields(model.mesh, u, material, AS._GP_KERNEL)
+    cache = element._nonlinear_geometry(model.mesh)
+    u_loc = np.asarray(cache["T0"]) @ u
+    z, _w = lobatto_layers(5, element.thickness)
+    C = plane_stress_elastic_matrix(material.elastic_modulus, material.poisson_ratio)
+    expected = []
+    for g, Gw in enumerate(np.asarray(cache["Gw_all"])):
+        theta = Gw @ u_loc
+        membrane = recovered["independent"][g][:3] + np.array(
+            [0.5 * theta[0] ** 2, 0.5 * theta[1] ** 2, theta[0] * theta[1]])
+        expected.extend((membrane + z[:, None] * recovered["independent"][g][3:6]) @ C.T)
+    expected = np.asarray(expected)
+    actual = np.asarray(trial["layer_stress"])
+    assert np.abs(actual - expected).max() <= 1e-9 * np.abs(expected).max()
+    legacy_model, legacy, _ = _single(SQUARE, form="legacy")
+    _f, _K, legacy_state = _response(legacy, legacy_model, material, u, None)
+    assert np.abs(np.asarray(legacy_state["layer_stress"]) - actual).max() > 1e-3 * np.abs(actual).max()

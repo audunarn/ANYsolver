@@ -54,7 +54,8 @@ independently, as it physically should.
   element route and the committed current-tangent replay.
 * Refused with `UnsupportedQ4PlasticRouteError` (typed, no silent fallback to
   the historical compatible-strain plastic route): Hill48/orthotropic
-  plasticity, generalized sections with a hardening curve, warped facets,
+  plasticity (with or without a hardening curve; the inherited kernel is
+  perfectly plastic for Hill48 without a curve), generalized sections with a hardening curve, warped facets,
   reduced integration, and states with an *active* initial field. "Active" uses
   the shared predicate `initial_field_state.state_has_active_initial_fields`,
   which also selects the scalar initial-field override in the assembly plans.
@@ -102,12 +103,17 @@ t = 3 mm / 10 kPa is within 0.44 % of legacy and 0.1-1.1 % below main at n >= 8.
   * t = 3 mm / 10 kPa n = 16: 2.9e-4; t = 10 mm / 25 kPa: 2.5e-5; t = 20 mm /
     100 kPa: 1.7e-6.
 
-  Elastic materials keep the historical response, so a plastic-capable element
-  before yield is no longer identical to the same element with an elastic
-  material in large-rotation von-Karman analyses. Owner decision pending:
-  (a) accept; (b) also route elastic qualified Q4 through the consistent
-  assumed-strain kinematics (breaks elastic bit identity); (c) drop the cross
-  terms (not viable: the plastic tangent then loses positivity).
+  Elastic materials without a hardening curve keep the historical response
+  bit for bit. A plastic-capable element before yield is therefore no longer
+  identical to the same element with an elastic material in large-rotation
+  von-Karman analyses. Dropping the cross terms is not an option: the plastic
+  tangent then loses positivity.
+
+  **Accepted exception A4, owner approval 2026-10-23.** The approval was
+  given on the basis of the independent verifier's examples (about 4.6e-11 at
+  n = 4, 1 step and 6.5e-8 at n = 16, 20 steps). The true measured range above
+  is wider: up to 9.2e-4 in the centre deflection and 5.1e-3 in max |du| for
+  large-deflection thin plates. It does not grow with refinement.
   Side observation: main's 1-step solve of that never-yielding n = 32 case
   returned w = 115 mm with alpha = 1.4e5 (a spurious state); the branch gives
   11.9 mm.
@@ -117,6 +123,30 @@ t = 3 mm / 10 kPa is within 0.44 % of legacy and 0.1-1.1 % below main at n >= 8.
   The state schema is otherwise unchanged.
 * Hill48/orthotropic plastic Q4, generalized sections with hardening and
   active initial fields now refuse instead of running the unstable form.
+
+## Membrane-plastic case t = 3 mm / 10 kPa (C4), centre deflection [mm]
+
+| n | steps | new | legacy | main | ccx S4 n32 / n64 | ccx S8R-4L n48 / S8R-8L n32 |
+|---|---|---|---|---|---|---|
+| 8 | 1 / 5 / 20 | 8.558 / 8.562 / 8.555 | 8.596 / 8.598 / 8.591 | 8.654 / 8.659 / 8.650 | 8.587 / 8.731 | 8.344 / 8.205 |
+| 16 | 1 / 5 | 8.542 / 8.542 | 8.565 / 8.566 | 8.574 / 8.575 | | |
+| 32 | 5 | 8.598 | 8.609 | 8.607 | | |
+
+The new route lies within 0.44 % of legacy at n >= 8 and 1.1 % below main at
+n = 8. The reference band (S8R 8.21-8.34 mm to S4 8.59-8.73 mm) contains all
+three formulations. Main is closer to S4 n64; the new route sits between S4
+and S8R. All three converge to about 8.60 mm at n = 32.
+
+## Cost
+
+C1 n = 16, 1 step, profiled to load factor 0.6 (300 Newton iterations each):
+new 59.1 s against legacy 12.3 s. In the new route, 35.8 s are in multi-operand
+`np.einsum` contractions of `kernel_batch` (mainly
+`B_hat' Dp B_hat` and the cross-term tangent), 3.1 s in the geometric terms,
+and 2.4 s in the return map (same as legacy). Staging these contractions as
+matrix products measured 19x / 9x faster on the same shapes (67.8 -> 3.6 ms,
+19.4 -> 2.1 ms per call) but changes rounding (1e-15 relative). It is not
+applied, because the rule for this change is that results stay bit-identical.
 
 ## Open items
 

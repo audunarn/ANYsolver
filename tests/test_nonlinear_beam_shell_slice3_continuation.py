@@ -1205,3 +1205,67 @@ def test_dc_stopped_resume_snapshots_exclude_rejected_history() -> None:
             "model": model, "load": load, "probe": probe, "grid": grid,
             "result": result, "coupling": "direct"})
         assert checked["relative_residual"] <= 1.0e-7
+
+
+# Reverse plastic flow keeps the secant-plane seed engaged: from -0.10 to
+# -0.03 the probe unloads elastically, then the shells/beams yield in reverse
+# while the seed strategy stays engaged.  This exercises cancellation inside a
+# seed whose increment is actively yielding (the -0.07 fixture above only
+# covers elastic unloading).
+DC_REVERSE_YIELD_TARGET = -0.03
+
+
+def _reverse_yield_case() -> dict:
+    return _cached(("reverse_yield", "direct"),
+                   lambda: _resume_case("direct", target=DC_REVERSE_YIELD_TARGET))
+
+
+def _first_yielding_seed(case: dict) -> int:
+    result = case["result"]
+    seeds = result.info["displacement_control_adaptation"]["uncommitted_seeds"]
+    controls = [s.control_value for s in result.steps]
+    strains = [s.max_equivalent_plastic_strain for s in result.steps]
+    for index, seed in enumerate(seeds):
+        if seed["accepted_control"] not in controls:
+            continue
+        step = controls.index(seed["accepted_control"])
+        if step > 0 and strains[step] > strains[step - 1]:
+            return index
+    raise AssertionError("no seeded increment with active plastic flow")
+
+
+@pytest.mark.parametrize('stage', ('probe', 'solve', 'complete'))
+def test_dc_seed_cancellation_during_actively_yielding_increment(stage):
+    reference = _reverse_yield_case()
+    assert reference["result"].status == "completed"
+    target_seed = _first_yielding_seed(reference)
+    half = _half_case('direct')
+    model, load, probe, grid = _build_ep_model('direct'); _add_tip_load(model, load, grid)
+    u = half['result'].displacements.copy(); states = copy.deepcopy(dict(half['result'].element_states))
+    before_u, before_states = u.copy(), copy.deepcopy(states)
+
+    class YieldingSeedToken(CancellationToken):
+        completed = 0
+        hits = 0
+
+        def raise_if_cancelled(self, location=''):
+            if location == 'nonlinear_static.displacement.seed.complete' and self.hits == 0:
+                if self.completed == target_seed and stage == 'complete':
+                    self.hits += 1
+                    self.cancel('cancel inside a yielding seed')
+                self.completed += 1
+            elif (location == 'nonlinear_static.displacement.seed.' + stage
+                  and self.completed == target_seed and self.hits == 0):
+                self.hits += 1
+                self.cancel('cancel inside a yielding seed')
+            super().raise_if_cancelled(location)
+
+    token = YieldingSeedToken()
+    with pytest.raises(SolveCancelled, match='cancel inside a yielding seed'):
+        solve_static_nonlinear(model, load, control='displacement',
+            displacement_control=DisplacementControl(node_id=probe, dof='uz', target_displacement=DC_REVERSE_YIELD_TARGET),
+            num_steps=RESUME_STEPS, max_iterations=DC_MAX_ITER, tolerance=DC_TOL, kinematics='corotational',
+            initial_displacements=u, initial_element_states=states, equilibrate_initial_state=False,
+            emit_restart_checkpoint=False, cancellation_token=token)
+    assert token.hits == 1
+    np.testing.assert_array_equal(u, before_u); _assert_states_equal(states, before_states)
