@@ -433,23 +433,39 @@ def test_module_substitution_before_evaluation_is_refused(monkeypatch):
         _response(element, model, material, u, None)
 
 
-def test_module_substitution_during_evaluation_is_refused(monkeypatch):
+def test_module_substitution_during_evaluation_is_refused():
+    """The swap happens inside the evaluation (from the return map's read of the
+    hardening curve), after the entry guard has passed; the refusal must come
+    from the in-evaluation authority check and the hook must have run."""
+
     model, element, material = _single(SQUARE)
     u = _field(SQUARE, "stretch", 2e-3)
-    _response(element, model, material, u, None)
+    base = material.hardening_curve
+    hook = {"armed": False, "calls": 0, "swapped": False}
     original = AS.offset_operator
-    calls = []
 
-    def swap_once(*a, **k):
-        if not calls:
-            calls.append(1)
-            monkeypatch.setattr(AS, "offset_operator", lambda *x, **y: original(*x, **y))
-        return original_flow(*a, **k)
+    class ObservingCurve(type(base)):
+        @property
+        def sigma_prop(self):
+            if hook["armed"]:
+                hook["calls"] += 1
+                if not hook["swapped"]:
+                    hook["swapped"] = True
+                    AS.offset_operator = lambda *a, **k: original(*a, **k)
+            return self.__dict__["_observed_sigma_prop"]
 
-    original_flow = AS.plane_stress_return_map
-    monkeypatch.setattr(AS, "plane_stress_return_map", swap_once)
-    with pytest.raises(ValueError, match="authority"):
-        _response(element, model, material, u, None)
+    observed = ObservingCurve.__new__(ObservingCurve)
+    observed.__dict__.update(base.__dict__)
+    observed.__dict__["_observed_sigma_prop"] = base.sigma_prop
+    material.hardening_curve = observed
+    try:
+        _response(element, model, material, u, None)  # entry and evaluation pass unarmed
+        hook["armed"] = True
+        with pytest.raises(ValueError, match="authority changed: .*offset_operator"):
+            _response(element, model, material, u, None)
+        assert hook["swapped"] and hook["calls"] >= 1
+    finally:
+        AS.offset_operator = original
 
 
 def test_preyield_layer_stress_matches_independent_mixed_recovery():

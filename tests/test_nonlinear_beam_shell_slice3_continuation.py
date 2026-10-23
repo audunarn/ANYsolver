@@ -1228,8 +1228,10 @@ def _first_yielding_seed(case: dict) -> int:
     for index, seed in enumerate(seeds):
         if seed["accepted_control"] not in controls:
             continue
+        # accepted_control is the seed's starting state; the seeded (and later
+        # cancelled) increment is the next accepted step, which must yield.
         step = controls.index(seed["accepted_control"])
-        if step > 0 and strains[step] > strains[step - 1]:
+        if step + 1 < len(strains) and strains[step + 1] > strains[step]:
             return index
     raise AssertionError("no seeded increment with active plastic flow")
 

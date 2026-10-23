@@ -64,7 +64,7 @@ independently, as it physically should.
   `formulation='legacy'` for these elements, or an elastic material.
 * Not covered: a plastic-law version tag on persisted plastic states. Historical
   plastic Q4 histories (compatible-strain law) restored through checkpoints or
-  `initial_element_states` are consumed without detection; see Open items.
+  `initial_element_states` are consumed without detection; see Known limitations.
 
 ## Validation (C1 = clamped plate above; ccx = CalculiX 2.23 S4 n = 64)
 
@@ -109,14 +109,24 @@ t = 3 mm / 10 kPa is within 0.44 % of legacy and 0.1-1.1 % below main at n >= 8.
   von-Karman analyses. Dropping the cross terms is not an option: the plastic
   tangent then loses positivity.
 
-  **Accepted exception A4, owner approval 2026-10-23.** The approval was
-  given on the basis of the independent verifier's examples (about 4.6e-11 at
-  n = 4, 1 step and 6.5e-8 at n = 16, 20 steps). The true measured range above
-  is wider: up to 9.2e-4 in the centre deflection and 5.1e-3 in max |du| for
-  large-deflection thin plates. It does not grow with refinement.
-  Side observation: main's 1-step solve of that never-yielding n = 32 case
+  **Accepted exception A4, owner approval 2026-10-23,** for the measured size:
+  up to about 1e-3 in the centre deflection and about 5e-3 in the in-plane
+  max |du|. Against the elastic CalculiX answer for this plate (11.78-11.81 mm),
+  the shifted value moves slightly *toward* the reference at every mesh
+  (n = 4/8/16/32: 15.114695 -> 15.114311, 12.078385 -> 12.067263,
+  11.879723 -> 11.878586, 11.835173 -> 11.834981 mm; 20 steps, alpha = 0).
+  Side observation: main's 1-step solve of the never-yielding n = 32 case
   returned w = 115 mm with alpha = 1.4e5 (a spurious state); the branch gives
   11.9 mm.
+* Mixed meshes (accepted, owner decision 2026-10-23): where yield-capable and
+  plain qualified Q4 elements share a model, the two elastic laws meet at the
+  interface. Half the C1 plate with a never-yielding curve, half without
+  (20 steps): the centre deflection lies between the two pure answers at
+  n = 8 / 16 / 32 (at n = 4 it is above both, +7.7e-5). The in-plane max |u|
+  lies outside both pure answers by +4.5 / +0.9 / +0.3 / +0.07 % at
+  n = 4 / 8 / 16 / 32, shrinking with refinement. Main's mixed mesh agrees with
+  its pure answers to 1e-13, so this is a new difference that appears only where
+  yield-capable and plain Q4 elements share a model.
 * `layer_strain` / `layer_stress` of plastic Q4 states hold the assumed-strain
   values (consistent with the qualified element's mixed stress recovery);
   `kinematic_layer_strain` (scalar route) keeps the compatible kinematics.
@@ -140,21 +150,37 @@ and S8R. All three converge to about 8.60 mm at n = 32.
 ## Cost
 
 C1 n = 16, 1 step, profiled to load factor 0.6 (300 Newton iterations each):
-new 59.1 s against legacy 12.3 s. In the new route, 35.8 s are in multi-operand
-`np.einsum` contractions of `kernel_batch` (mainly
-`B_hat' Dp B_hat` and the cross-term tangent), 3.1 s in the geometric terms,
-and 2.4 s in the return map (same as legacy). Staging these contractions as
-matrix products measured 19x / 9x faster on the same shapes (67.8 -> 3.6 ms,
-19.4 -> 2.1 ms per call) but changes rounding (1e-15 relative). It is not
-applied, because the rule for this change is that results stay bit-identical.
+the committed assumed-strain route took 59.1 s against legacy 12.3 s, 35.8 s of
+it in multi-operand `np.einsum` contractions (`B_hat' Dp B_hat`, the cross-term
+tangent, the geometric terms). These are now staged as matrix products (owner
+approval 2026-10-23; rounding differs from the first assumed-strain commit at
+about 1e-15 relative). Measured with other jobs running: 57.7 -> 25.5 s to load
+factor 0.6 and 69.1 -> 30.8 s to load factor 1, with the same Newton iteration
+counts and the same centre deflection to 2e-16.
 
+## Known limitations
+
+* **Historical plastic histories are not detected.** Plastic Q4 states
+  written by the historical compatible-strain law and restored through
+  `initial_element_states` (ordinary restart, explicit seeds, arc-length seeds)
+  or through a mixed persistent state store are consumed without detection and
+  reinterpreted by the assumed-strain law. Codex rates this a high-severity
+  restart correctness risk. A single refusal point at ordinary-restart migration
+  was tried and withdrawn: plastic result states written by this version
+  (for example the displacement-control beam-shell resume fixtures) are also
+  unsealed by the time they reach that point, so the two laws cannot be told
+  apart without a persisted plastic-law version tag. A tag needs changes to the
+  packed state store (`ShellStateBatch` sidecars), the compact-state key
+  whitelist and the sealed/checkpointed state digests. It is an open HIGH
+  follow-up.
+* Mixed meshes of yield-capable and plain qualified Q4 elements use two
+  elastic laws (see Contract changes).
+* Hill48/orthotropic plasticity, active initial fields and generalized sections
+  with hardening are refused rather than supported.
 ## Open items
 
-* No plastic-law version tag on persisted Q4 plastic states. A tag plus one
-  refusal point needs changes to the packed state store
-  (`ShellStateBatch` sidecars are kept only from seeds), the compact-state key
-  whitelist and the sealed/checkpointed state digests. That is more than a few
-  lines, so it is deferred to an owner decision.
+* Plastic-law version tag and refusal of historical plastic histories (HIGH,
+  see Known limitations).
 * Extending the route to Hill48 (material-frame return map at `eps_hat`) and to
   active initial fields (constant layer offset; the derivation holds) is
   possible but not built or verified.
