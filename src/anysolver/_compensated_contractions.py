@@ -26,6 +26,9 @@ from . import _compensated_native as _native
 # nonzero kernel status replays the vectorised path, which raises the reference
 # exception. ANYSOLVER_NATIVE_CONTRACTIONS=0 forces the numpy path.
 _USE_NATIVE = _native.AVAILABLE and os.environ.get("ANYSOLVER_NATIVE_CONTRACTIONS", "1") != "0"
+# The fused element kernels additionally need their own known-answer match
+# (checked at import below); ANYSOLVER_NATIVE_CONTRACTIONS=0 disables both.
+_USE_FUSED = _USE_NATIVE
 
 
 def _product_parts(a, b):
@@ -193,7 +196,7 @@ def _scalar_dot(left, right):
     return result
 
 
-def shell_zero_tangent(geometry, membrane, bending, shear, drill):
+def _shell_zero_tangent_reference(geometry, membrane, bending, shear, drill):
     """Contract independently supplied elastic coefficients on frozen geometry."""
     terms, weights = [], []
     for bm, bb, bd, weight in zip(geometry["B_m_all"], geometry["B_b_all"],
@@ -208,6 +211,125 @@ def shell_zero_tangent(geometry, membrane, bending, shear, drill):
     local = weighted_sum(terms, weights)
     transform = geometry["T0"]
     return product(product(transform.T, local), transform)
+
+
+def elastic_increment_reference(u_elem, geometry, constitutive_factory, tangent):
+    """Reference (numpy-level) elastic von-Karman increment; see vectorized_nonlinear."""
+    transform = geometry["T0"]
+    u = product(transform, u_elem)
+    constitutive = constitutive_factory()
+    force = np.zeros(u.size, dtype=float)
+    material = np.zeros((u.size, u.size), dtype=float)
+    geometric = np.zeros((u.size, u.size), dtype=float)
+    forces, materials, geometrics = [], [], []
+    weights = []
+    for B, G, weight in zip(geometry["B_m_all"], geometry["Gw_all"],
+                            geometry["detw_all"]):
+        theta = product(G, u)
+        eta = np.array((0.5 * theta[0]**2, 0.5 * theta[1]**2,
+                        theta[0] * theta[1]), dtype=float)
+        H = np.vstack((theta[0] * G[0], theta[1] * G[1],
+                       theta[0] * G[1] + theta[1] * G[0]))
+        linear_stress = product(constitutive, product(B, u))
+        nonlinear_stress = product(constitutive, eta)
+        forces.append(sum_arrays((product(B.T, nonlinear_stress),
+                                  product(H.T, linear_stress),
+                                  product(H.T, nonlinear_stress))))
+        weights.append(weight)
+        if tangent:
+            materials.append(sum_arrays((product(product(B.T, constitutive), H),
+                                         product(product(H.T, constitutive), B),
+                                         product(product(H.T, constitutive), H))))
+            stress = sum_arrays((linear_stress, nonlinear_stress))
+            geometrics.append(sum_arrays((stress[0] * np.outer(G[0], G[0]),
+                                          stress[1] * np.outer(G[1], G[1]),
+                                          stress[2] * np.outer(G[0], G[1]),
+                                          stress[2] * np.outer(G[1], G[0]))))
+    if forces:
+        force = weighted_sum(forces, weights)
+    if tangent and materials:
+        material = weighted_sum(materials, weights)
+        geometric = weighted_sum(geometrics, weights)
+    return (product(transform.T, force), product(product(transform.T, material), transform),
+            product(product(transform.T, geometric), transform))
+
+
+def _fused_array(value, shape_tail):
+    """Writable C float64 array with the expected trailing shape, or ``None``."""
+    if type(value) is not np.ndarray or value.dtype != np.float64 or value.shape[1:] != shape_tail:
+        return None
+    if value.flags.c_contiguous and value.flags.writeable:
+        return value
+    return np.array(value, dtype=np.float64, order="C")
+
+
+def _fused_scalar(value):
+    if type(value) in (float, np.float64):
+        return float(value)
+    return None
+
+
+def shell_zero_tangent(geometry, membrane, bending, shear, drill):
+    """Contract independently supplied elastic coefficients on frozen geometry.
+
+    One compiled call per element when the inputs have the expected float64
+    layout; anything else, or any refusal, runs the reference implementation.
+    """
+    if _USE_NATIVE and _USE_FUSED:
+        try:
+            bm, bb = geometry["B_m_all"], geometry["B_b_all"]
+            bd, bs = geometry["B_d_all"], geometry["B_s_all"]
+            detw, detws, t0 = geometry["detw_all"], geometry["detw_shear_all"], geometry["T0"]
+            n = t0.shape[0] if type(t0) is np.ndarray and t0.ndim == 2 else -1
+            arrays = (_fused_array(bm, (3, n)), _fused_array(bb, (3, n)), _fused_array(bd, (1, n)),
+                      _fused_array(detw, ()), _fused_array(bs, (2, n)), _fused_array(detws, ()),
+                      _fused_array(t0[None], (n, n)) if n > 0 else None,
+                      _fused_array(membrane[None], (3, 3)), _fused_array(bending[None], (3, 3)),
+                      _fused_array(shear[None], (2, 2)))
+            drill_value = _fused_scalar(drill)
+            if (n > 0 and drill_value is not None and all(a is not None for a in arrays)
+                    and len(arrays[0]) == len(arrays[1]) == len(arrays[2]) == len(arrays[3])
+                    and len(arrays[4]) == len(arrays[5]) and len(arrays[0]) + len(arrays[4]) > 0):
+                out = np.empty((n, n), dtype=np.float64)
+                if _native.fused_shell_zero_tangent(
+                        arrays[0], arrays[1], arrays[2], arrays[3], arrays[4], arrays[5],
+                        arrays[6][0], arrays[7][0], arrays[8][0], arrays[9][0], drill_value,
+                        out, _native.POW2) == 0:
+                    return out
+        except (TypeError, AttributeError, KeyError, IndexError):
+            pass
+    return _shell_zero_tangent_reference(geometry, membrane, bending, shear, drill)
+
+
+def fused_elastic_increment(u_elem, geometry, constitutive, tangent):
+    """Fused ``elastic_shell_nonlinear_increment`` body, or ``None`` to run the reference.
+
+    ``constitutive`` is ``h * plane_stress_elastic_matrix(E, nu)`` as the
+    reference builds it. ``None`` is returned for unexpected layouts and for any
+    kernel refusal, so the caller's reference path raises the reference error.
+    """
+    if not (_USE_NATIVE and _USE_FUSED) or type(tangent) is not bool:
+        return None
+    try:
+        t0 = geometry["T0"]
+        n = t0.shape[0] if type(t0) is np.ndarray and t0.ndim == 2 else -1
+        arrays = (_fused_array(t0[None], (n, n)) if n > 0 else None,
+                  _fused_array(u_elem[None], (n,)) if type(u_elem) is np.ndarray and u_elem.ndim == 1 else None,
+                  _fused_array(constitutive[None], (3, 3)) if type(constitutive) is np.ndarray else None,
+                  _fused_array(geometry["B_m_all"], (3, n)), _fused_array(geometry["Gw_all"], (2, n)),
+                  _fused_array(geometry["detw_all"], ()))
+    except (TypeError, AttributeError, KeyError, IndexError):
+        return None
+    if (any(a is None for a in arrays) or not len(arrays[3]) == len(arrays[4]) == len(arrays[5]) > 0):
+        return None
+    force = np.empty(n, dtype=np.float64)
+    material = np.zeros((n, n), dtype=np.float64)
+    geometric = np.zeros((n, n), dtype=np.float64)
+    if _native.fused_elastic_increment(
+            arrays[0][0], arrays[1][0], arrays[2][0], arrays[3], arrays[4], arrays[5], tangent,
+            force, material, geometric, _native.POW2, 2.0) != 0:
+        return None
+    return force, material, geometric
 
 
 def _native_known_answers_match():
@@ -233,3 +355,41 @@ def _native_known_answers_match():
 
 
 _native_known_answers_match()
+
+
+def _fused_known_answers_match():
+    """Disable the fused element kernels unless they reproduce the reference bitwise."""
+    global _USE_FUSED
+    if not _USE_FUSED:
+        return
+    try:
+        rng = np.random.default_rng(20261023)
+        ok = True
+        for case in range(3):
+            n, ng, ns = 24, 4, 4
+            scale = (1.0, 2.0 ** 20, 2.0 ** -30)[case]
+
+            def rnd(*shape):
+                return (rng.standard_normal(shape) * 2.0 ** rng.integers(-3, 4, shape) * scale)
+
+            geometry = {"B_m_all": rnd(ng, 3, n), "B_b_all": rnd(ng, 3, n), "B_d_all": rnd(ng, 1, n),
+                        "Gw_all": rnd(ng, 2, n), "B_s_all": rnd(ns, 2, n), "T0": rnd(n, n),
+                        "detw_all": np.abs(rnd(ng)) + 0.1, "detw_shear_all": np.abs(rnd(ns)) + 0.1}
+            membrane, bending, shear = rnd(3, 3), rnd(3, 3), rnd(2, 2)
+            drill = float(rnd(1)[0])
+            u_elem = rnd(n) * 1e-2
+            constitutive = rnd(3, 3) * 1e3
+            fused = shell_zero_tangent(geometry, membrane, bending, shear, drill)
+            ok = ok and fused.tobytes() == _shell_zero_tangent_reference(
+                geometry, membrane, bending, shear, drill).tobytes()
+            for tangent in (True, False):
+                got = fused_elastic_increment(u_elem, geometry, constitutive, tangent)
+                ref = elastic_increment_reference(u_elem, geometry, lambda: constitutive, tangent)
+                ok = ok and got is not None and all(
+                    x.tobytes() == y.tobytes() for x, y in zip(got, ref))
+    except Exception:  # noqa: BLE001 - any failure disables the fused kernels
+        ok = False
+    _USE_FUSED = bool(ok)
+
+
+_fused_known_answers_match()

@@ -200,3 +200,241 @@ def contract_sum(stack, out):
             return 1
         out[c] = v
     return 0
+
+
+# ---------------------------------------------------------------------------
+# Fused element kernels.  Each runs the *same sequence* of compensated products
+# and sums as the numpy-level routines in ``_compensated_contractions`` /
+# ``vectorized_nonlinear`` (every step calls ``contract_product`` /
+# ``contract_sum`` / ``contract_weighted``), plus the single IEEE multiplies and
+# adds that numpy performs as separate array operations.  Any refusal returns
+# status 1 and the caller replays the reference implementation, which raises the
+# reference exception.  The scalar squares use ``pow`` with a run-time exponent
+# because numpy's float64 scalar ``**`` is libm ``pow`` and is not always equal
+# to ``x * x``; LLVM would rewrite ``pow(x, 2.0)`` to ``x * x``.
+# ---------------------------------------------------------------------------
+@_kernel
+def _mm(a, b, pow2):
+    out = np.empty((a.shape[0], b.shape[1]))
+    st = contract_product(a, b, out, pow2)
+    return out, st
+
+
+@_kernel
+def _tc(a):
+    return np.ascontiguousarray(a.T)
+
+
+@_kernel
+def fused_shell_zero_tangent(bm_all, bb_all, bd_all, detw, bs_all, detw_shear, t0,
+                             membrane, bending, shear, drill, out, pow2):
+    """Fused ``shell_zero_tangent``: all gauss-point terms, weighted sum and transform."""
+    ng = bm_all.shape[0]
+    ns = bs_all.shape[0]
+    n = bm_all.shape[2]
+    nn = n * n
+    nt = ng + ns
+    terms = np.empty((nt, nn))
+    weights = np.empty(nt)
+    stack = np.empty((3, nn))
+    for g in range(ng):
+        bm = bm_all[g]
+        bb = bb_all[g]
+        bd = bd_all[g]
+        x, s = _mm(_tc(bm), membrane, pow2)
+        if s != 0:
+            return 1
+        p1, s = _mm(x, bm, pow2)
+        if s != 0:
+            return 1
+        x, s = _mm(_tc(bb), bending, pow2)
+        if s != 0:
+            return 1
+        p2, s = _mm(x, bb, pow2)
+        if s != 0:
+            return 1
+        scaled = drill * bd
+        p3, s = _mm(_tc(bd), scaled, pow2)
+        if s != 0:
+            return 1
+        for i in range(n):
+            for j in range(n):
+                stack[0, i * n + j] = p1[i, j]
+                stack[1, i * n + j] = p2[i, j]
+                stack[2, i * n + j] = p3[i, j]
+        if contract_sum(stack, terms[g]) != 0:
+            return 1
+        weights[g] = detw[g]
+    for g in range(ns):
+        bs = bs_all[g]
+        x, s = _mm(_tc(bs), shear, pow2)
+        if s != 0:
+            return 1
+        p1, s = _mm(x, bs, pow2)
+        if s != 0:
+            return 1
+        for i in range(n):
+            for j in range(n):
+                terms[ng + g, i * n + j] = p1[i, j]
+        weights[ng + g] = detw_shear[g]
+    local_flat = np.empty(nn)
+    if contract_weighted(terms, weights, local_flat, pow2) != 0:
+        return 1
+    local = local_flat.reshape((n, n))
+    x, s = _mm(_tc(t0), local, pow2)
+    if s != 0:
+        return 1
+    res, s = _mm(x, t0, pow2)
+    if s != 0:
+        return 1
+    for i in range(n):
+        for j in range(n):
+            out[i, j] = res[i, j]
+    return 0
+
+
+@_kernel
+def fused_elastic_increment(t0, u_elem, constitutive, bm_all, gw_all, detw, tangent,
+                            f_out, m_out, g_out, pow2, two):
+    """Fused ``elastic_shell_nonlinear_increment`` (needs at least one gauss point)."""
+    n = t0.shape[0]
+    ng = bm_all.shape[0]
+    nn = n * n
+    ucol0 = np.empty((n, 1))
+    for i in range(n):
+        ucol0[i, 0] = u_elem[i]
+    u, s = _mm(t0, ucol0, pow2)
+    if s != 0:
+        return 1
+    forces = np.empty((ng, n))
+    materials = np.empty((ng, nn))
+    geometrics = np.empty((ng, nn))
+    weights = np.empty(ng)
+    fstack = np.empty((3, n))
+    mstack = np.empty((3, nn))
+    gstack = np.empty((4, nn))
+    sstack = np.empty((2, 3))
+    h = np.empty((3, n))
+    eta = np.empty((3, 1))
+    for g in range(ng):
+        b = bm_all[g]
+        gg = gw_all[g]
+        theta, s = _mm(gg, u, pow2)
+        if s != 0:
+            return 1
+        th0 = theta[0, 0]
+        th1 = theta[1, 0]
+        eta[0, 0] = 0.5 * (th0 ** two)
+        eta[1, 0] = 0.5 * (th1 ** two)
+        eta[2, 0] = th0 * th1
+        for i in range(n):
+            h[0, i] = th0 * gg[0, i]
+            h[1, i] = th1 * gg[1, i]
+            h[2, i] = th0 * gg[1, i] + th1 * gg[0, i]
+        bu, s = _mm(b, u, pow2)
+        if s != 0:
+            return 1
+        linear_stress, s = _mm(constitutive, bu, pow2)
+        if s != 0:
+            return 1
+        nonlinear_stress, s = _mm(constitutive, eta, pow2)
+        if s != 0:
+            return 1
+        bt = _tc(b)
+        ht = _tc(h)
+        f1, s = _mm(bt, nonlinear_stress, pow2)
+        if s != 0:
+            return 1
+        f2, s = _mm(ht, linear_stress, pow2)
+        if s != 0:
+            return 1
+        f3, s = _mm(ht, nonlinear_stress, pow2)
+        if s != 0:
+            return 1
+        for i in range(n):
+            fstack[0, i] = f1[i, 0]
+            fstack[1, i] = f2[i, 0]
+            fstack[2, i] = f3[i, 0]
+        if contract_sum(fstack, forces[g]) != 0:
+            return 1
+        weights[g] = detw[g]
+        if tangent:
+            x, s = _mm(bt, constitutive, pow2)
+            if s != 0:
+                return 1
+            m1, s = _mm(x, h, pow2)
+            if s != 0:
+                return 1
+            x, s = _mm(ht, constitutive, pow2)
+            if s != 0:
+                return 1
+            m2, s = _mm(x, b, pow2)
+            if s != 0:
+                return 1
+            m3, s = _mm(x, h, pow2)
+            if s != 0:
+                return 1
+            for i in range(n):
+                for j in range(n):
+                    mstack[0, i * n + j] = m1[i, j]
+                    mstack[1, i * n + j] = m2[i, j]
+                    mstack[2, i * n + j] = m3[i, j]
+            if contract_sum(mstack, materials[g]) != 0:
+                return 1
+            for c in range(3):
+                sstack[0, c] = linear_stress[c, 0]
+                sstack[1, c] = nonlinear_stress[c, 0]
+            stress = np.empty(3)
+            if contract_sum(sstack, stress) != 0:
+                return 1
+            for i in range(n):
+                for j in range(n):
+                    k = i * n + j
+                    gstack[0, k] = stress[0] * (gg[0, i] * gg[0, j])
+                    gstack[1, k] = stress[1] * (gg[1, i] * gg[1, j])
+                    gstack[2, k] = stress[2] * (gg[0, i] * gg[1, j])
+                    gstack[3, k] = stress[2] * (gg[1, i] * gg[0, j])
+            for k in range(nn):
+                for r in range(4):
+                    if not math.isfinite(gstack[r, k]):
+                        return 1
+            if contract_sum(gstack, geometrics[g]) != 0:
+                return 1
+    force = np.empty(n)
+    if contract_weighted(forces, weights, force, pow2) != 0:
+        return 1
+    fcol = np.empty((n, 1))
+    for i in range(n):
+        fcol[i, 0] = force[i]
+    tt = _tc(t0)
+    fres, s = _mm(tt, fcol, pow2)
+    if s != 0:
+        return 1
+    for i in range(n):
+        f_out[i] = fres[i, 0]
+    if tangent:
+        mat_flat = np.empty(nn)
+        geo_flat = np.empty(nn)
+        if contract_weighted(materials, weights, mat_flat, pow2) != 0:
+            return 1
+        if contract_weighted(geometrics, weights, geo_flat, pow2) != 0:
+            return 1
+        mat = mat_flat.reshape((n, n))
+        geo = geo_flat.reshape((n, n))
+        x, s = _mm(tt, mat, pow2)
+        if s != 0:
+            return 1
+        mres, s = _mm(x, t0, pow2)
+        if s != 0:
+            return 1
+        x, s = _mm(tt, geo, pow2)
+        if s != 0:
+            return 1
+        gres, s = _mm(x, t0, pow2)
+        if s != 0:
+            return 1
+        for i in range(n):
+            for j in range(n):
+                m_out[i, j] = mres[i, j]
+                g_out[i, j] = gres[i, j]
+    return 0

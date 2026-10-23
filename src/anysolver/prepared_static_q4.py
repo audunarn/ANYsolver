@@ -276,7 +276,9 @@ _NATIVE_POLICY_BINDINGS = tuple((key, _NATIVE_POLICY.__globals__[key])
 _CONTRACTION_FACTS = tuple((name, value, _callable_authority(value),
     tuple((key, value.__globals__[key]) for key in value.__code__.co_names if key in value.__globals__))
     for name, value in tuple(vars(_contractions).items()) if type(value) is types.FunctionType
-    and name in {'_product_parts', '_vector_parts', '_interleave_sum', '_scalar_dot', 'dot', 'product', 'sum_arrays', 'weighted_sum'})
+    and name in {'_product_parts', '_vector_parts', '_interleave_sum', '_scalar_dot', 'dot', 'product', 'sum_arrays', 'weighted_sum',
+                'shell_zero_tangent', '_shell_zero_tangent_reference', 'fused_elastic_increment',
+                'elastic_increment_reference', '_fused_array', '_fused_scalar'})
 _POW2_FACT = (_contraction_kernels.POW2, _contraction_kernels.POW2.tobytes(),
     _contraction_kernels.POW2.dtype, _contraction_kernels.POW2.shape, _contraction_kernels.POW2.strides,
     _contraction_kernels.POW2.flags.writeable)

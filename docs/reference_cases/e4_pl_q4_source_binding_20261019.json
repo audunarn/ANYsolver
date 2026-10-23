@@ -5,7 +5,7 @@
     "_elastic_increment_module": {
       "changed_this_slice": false,
       "path": "src/anysolver/vectorized_nonlinear.py",
-      "sha256": "0510b93c71353c1631c642cc044dd93007fc16041a17c3543e752dc1e1264649",
+      "sha256": "ab95c7108c81153037a0dada7e78ab5255e2aeff0eac4d0865e07fe486423010",
       "used_attributes": [
         "compensated_elastic_batch_zero",
         "elastic_shell_nonlinear_increment"
@@ -22,7 +22,7 @@
     "_local_contractions": {
       "changed_this_slice": false,
       "path": "src/anysolver/_compensated_contractions.py",
-      "sha256": "885311e774f7c8dc689151fe49f26b912d38196cbcca25876d8341d268cb9f76",
+      "sha256": "80bb7389278a8449a3d24a2f939f8bec12d2ea5a17759efdd7cef0a30e5b0336",
       "used_attributes": [
         "product",
         "sum_arrays",

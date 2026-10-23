@@ -21,46 +21,21 @@ def elastic_shell_nonlinear_increment(u_elem, geometry, E, nu, h, *, tangent=Tru
     Admission and input lifetime belong to the qualified caller. No state or
     geometry is retained. Linear bending, shear and drill are supplied by that
     caller's baseline; the geometric tangent uses the *full* membrane stress.
+
+    The arithmetic is the reference loop in ``_compensated_contractions``; for
+    well-formed float64 input one fused compiled call evaluates it bit for bit,
+    and any refusal or unexpected layout runs the reference (and its exceptions).
     """
-    transform = geometry["T0"]
-    product = _contractions.product
-    total = _contractions.sum_arrays
-    u = product(transform, u_elem)
-    constitutive = h * plane_stress_elastic_matrix(E, nu)
-    force = np.zeros(u.size, dtype=float)
-    material = np.zeros((u.size, u.size), dtype=float)
-    geometric = np.zeros((u.size, u.size), dtype=float)
-    forces, materials, geometrics = [], [], []
-    weights = []
-    for B, G, weight in zip(geometry["B_m_all"], geometry["Gw_all"],
-                            geometry["detw_all"]):
-        theta = product(G, u)
-        eta = np.array((0.5 * theta[0]**2, 0.5 * theta[1]**2,
-                        theta[0] * theta[1]), dtype=float)
-        H = np.vstack((theta[0] * G[0], theta[1] * G[1],
-                       theta[0] * G[1] + theta[1] * G[0]))
-        linear_stress = product(constitutive, product(B, u))
-        nonlinear_stress = product(constitutive, eta)
-        forces.append(total((product(B.T, nonlinear_stress),
-                             product(H.T, linear_stress),
-                             product(H.T, nonlinear_stress))))
-        weights.append(weight)
-        if tangent:
-            materials.append(total((product(product(B.T, constitutive), H),
-                                    product(product(H.T, constitutive), B),
-                                    product(product(H.T, constitutive), H))))
-            stress = total((linear_stress, nonlinear_stress))
-            geometrics.append(total((stress[0] * np.outer(G[0], G[0]),
-                                     stress[1] * np.outer(G[1], G[1]),
-                                     stress[2] * np.outer(G[0], G[1]),
-                                     stress[2] * np.outer(G[1], G[0]))))
-    if forces:
-        force = _contractions.weighted_sum(forces, weights)
-    if tangent and materials:
-        material = _contractions.weighted_sum(materials, weights)
-        geometric = _contractions.weighted_sum(geometrics, weights)
-    return (product(transform.T, force), product(product(transform.T, material), transform),
-            product(product(transform.T, geometric), transform))
+    try:
+        constitutive = h * plane_stress_elastic_matrix(E, nu)
+    except Exception:  # noqa: BLE001 - the reference reports it in its own order
+        constitutive = None
+    if constitutive is not None:
+        fused = _contractions.fused_elastic_increment(u_elem, geometry, constitutive, tangent)
+        if fused is not None:
+            return fused
+    return _contractions.elastic_increment_reference(
+        u_elem, geometry, lambda: h * plane_stress_elastic_matrix(E, nu), tangent)
 
 
 @njit
