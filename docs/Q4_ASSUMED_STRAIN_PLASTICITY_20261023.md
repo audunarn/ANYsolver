@@ -85,8 +85,32 @@ t = 3 mm / 10 kPa is within 0.44 % of legacy and 0.1-1.1 % below main at n >= 8.
 
 * Elastic materials: untouched and bit-identical (displacement hashes of five
   elastic von-Karman/corotational cases unchanged).
-* Plastic-capable Q4 before yield: changes by the von-Karman cross terms,
-  about 1e-10 to 2e-9 relative in the checked cases (zero for linear kinematics).
+* Plastic-capable Q4 before yield (hardening curve present, never yielded):
+  the response changes by the von-Karman cross terms
+  `dE_m' A eps_nl + B_nl' A dE_m u`. At a fixed displacement these terms are
+  the whole force difference against main (to 1e-14). The size depends on the
+  rotations:
+  * small rotations: about 1e-10 to 2e-9 relative (n = 4, t = 10 mm, p = 1-2 kPa;
+    corotational);
+  * large deflection, clamped plate t = 3 mm at 50 kPa (w about 12-15 mm; curve
+    scaled by 100 so it never yields): change in centre deflection 2.5e-5 /
+    9.2e-4 / 9.6e-5 / 1.6e-5 at n = 4 / 8 / 16 / 32, max |du| / max |u| 6e-5 /
+    5.1e-3 / 2.0e-3 / 4.3e-4 (the largest share is in-plane). It is the same
+    for 1 and 20 steps and does not grow with refinement (peak at n = 8).
+    At n = 8 it is small against the discretisation error vs CalculiX
+    (+2.2 %);
+  * t = 3 mm / 10 kPa n = 16: 2.9e-4; t = 10 mm / 25 kPa: 2.5e-5; t = 20 mm /
+    100 kPa: 1.7e-6.
+
+  Elastic materials keep the historical response, so a plastic-capable element
+  before yield is no longer identical to the same element with an elastic
+  material in large-rotation von-Karman analyses. Owner decision pending:
+  (a) accept; (b) also route elastic qualified Q4 through the consistent
+  assumed-strain kinematics (breaks elastic bit identity); (c) drop the cross
+  terms (not viable: the plastic tangent then loses positivity).
+  Side observation: main's 1-step solve of that never-yielding n = 32 case
+  returned w = 115 mm with alpha = 1.4e5 (a spurious state); the branch gives
+  11.9 mm.
 * `layer_strain` / `layer_stress` of plastic Q4 states hold the assumed-strain
   values (consistent with the qualified element's mixed stress recovery);
   `kinematic_layer_strain` (scalar route) keeps the compatible kinematics.

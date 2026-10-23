@@ -9,8 +9,10 @@
   (+203 mm at n = 8, wrong sign at n = 16). The new route has an exact symmetric
   tangent and completes at n = 4..32, within 2.2 % of the legacy element at n >= 8
   and moving toward CalculiX (-0.7 % at n = 32). Elastic materials are
-  bit-identical. Plastic-capable elements before yield change by about
-  1e-10..2e-9 relative. Plastic `layer_strain`/`layer_stress` now hold
+  bit-identical. Plastic-capable elements before yield change through the
+  von-Karman cross terms: 1e-10..2e-9 relative for small rotations, and up to
+  9.2e-4 in the centre deflection (5.1e-3 in max |du|) for large-deflection
+  thin plates, with no growth under refinement. Plastic `layer_strain`/`layer_stress` now hold
   assumed-strain values. Hill48/orthotropic plasticity, generalized sections with
   hardening, warped facets and active initial fields are refused with
   `UnsupportedQ4PlasticRouteError` instead of the unstable form. See
