@@ -727,9 +727,16 @@ def _orthotropic_plastic() -> OrthotropicMaterial:
 
 
 @pytest.mark.parametrize("initial_field", (False, True))
-def test_isotropic_initial_field_and_orthotropic_hill_updates_retain_exact_tangent(
+def test_isotropic_initial_field_and_orthotropic_hill_plastic_updates_are_refused(
     initial_field: bool,
 ) -> None:
+    """Owner decision 2026-10-23: no silent compatible-strain plastic route.
+
+    Active initial fields and Hill48/orthotropic plasticity have no stable
+    qualified Q4 plastic route (assumed-strain route scope), so the element
+    refuses them with a typed error instead of the historical unstable form.
+    """
+
     nodes = np.asarray(
         ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0)),
         dtype=np.float64,
@@ -751,21 +758,9 @@ def test_isotropic_initial_field_and_orthotropic_hill_updates_retain_exact_tange
         ).copy()
     displacement = np.zeros(24, dtype=np.float64)
     displacement[6] = displacement[12] = 0.004
-    accepted_force, accepted_tangent, trial = element.compute_nonlinear_response(
-        mesh, material, displacement, parent, 3, True
-    )
-    assert accepted_tangent is not None
-    assert isinstance(trial, dict)
-    assert np.max(np.asarray(trial["alpha"], dtype=np.float64)) > 0.0
-    sealed = element.seal_committed_current_tangent_state(
-        mesh, material, displacement, trial, 3
-    )
-    components = element.compute_committed_current_tangent_components(
-        mesh, material, displacement, sealed, 3
-    )
-    np.testing.assert_array_equal(components["force"], accepted_force)
-    np.testing.assert_array_equal(components["total"], accepted_tangent)
-
+    match = "active initial" if initial_field else "orthotropic/Hill48"
+    with pytest.raises(_q4_assumed_strain.UnsupportedQ4PlasticRouteError, match=match):
+        element.compute_nonlinear_response(mesh, material, displacement, parent, 3, True)
 
 def test_residual_only_plastic_candidate_cannot_masquerade_as_accepted_tangent() -> None:
     nodes = np.asarray(

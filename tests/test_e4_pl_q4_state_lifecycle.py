@@ -1014,19 +1014,19 @@ def test_arc_initial_equilibrium_failure_is_owned_but_never_active(
 def test_fully_constrained_plastic_q4_with_initial_field_keeps_true_origin() -> None:
     model, _load = _loaded_q4_model()
     model.add_boundary_condition(FixedSupport("all-extra", [1, 2, 3, 4]))
-    result = nonlinear_static.solve_static_nonlinear(
-        model,
-        num_steps=1,
-        num_layers=3,
-        initial_fields={
-            1: ShellInitialField(membrane_stress=[5.0e7, 0.0, 0.0])
-        },
-    )
-    assert result.status == "empty_reduced_system"
-    state = result.element_states[1]
-    assert "qualified_q4_algorithmic_origin" in state
-    assert "initial_membrane_stress" in state
-    _assert_q4_state_is_exactly_bound(model, result)
+    # Owner decision 2026-10-23: plastic qualified Q4 outside the assumed-strain
+    # route scope is refused (the compatible-strain plastic route with the
+    # qualified correction is unstable once layers yield).
+    from anysolver._q4_assumed_strain_plasticity import UnsupportedQ4PlasticRouteError
+    with pytest.raises(UnsupportedQ4PlasticRouteError, match="active initial"):
+        nonlinear_static.solve_static_nonlinear(
+            model,
+            num_steps=1,
+            num_layers=3,
+            initial_fields={
+                1: ShellInitialField(membrane_stress=[5.0e7, 0.0, 0.0])
+            },
+        )
 
 
 def test_q4_static_fixed_affine_restart_checkpoint_restores_exact_base() -> None:

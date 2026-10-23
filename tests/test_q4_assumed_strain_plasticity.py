@@ -263,3 +263,190 @@ def test_owner_case_c1_step_and_mesh_sweep(n, steps):
     result, w_centre = _centre_deflection(n, steps)
     assert result.status == "completed"
     assert abs(w_centre - legacy[n]) <= 0.05 * legacy[n]
+
+
+# ---------------------------------------------------------------------------
+# Scope: typed refusal instead of the historical unstable plastic route
+# ---------------------------------------------------------------------------
+
+def _hill_material(with_curve=True):
+    from anysolver.materials import Hill48Yield, OrthotropicMaterial
+
+    shear = 3e7 / np.sqrt(3.0)
+    return OrthotropicMaterial(
+        name="hill", elastic_modulus_1=150e9, elastic_modulus_2=12e9, elastic_modulus_3=10e9,
+        poisson_ratio_12=0.25, poisson_ratio_13=0.2, poisson_ratio_23=0.3,
+        shear_modulus_12=5e9, shear_modulus_13=4e9, shear_modulus_23=3.8e9, density=1600.0,
+        hill_yield=Hill48Yield(3e7, 3e7, 3e7, shear, shear, shear),
+        hardening_curve=_curve() if with_curve else None,
+    )
+
+
+@pytest.mark.parametrize("with_curve", [True, False], ids=["curve", "perfectly_plastic"])
+def test_hill48_plastic_q4_is_refused_with_typed_error(with_curve):
+    from anysolver.e4_pl_element import QualifiedE4PLShellElement
+    from anysolver.fe_core import FEMesh
+
+    mesh = FEMesh()
+    for index, (x, y) in enumerate(SQUARE):
+        mesh.add_node(index + 1, float(x), float(y), 0.0)
+    material = _hill_material(with_curve)
+    element = QualifiedE4PLShellElement(1, [1, 2, 3, 4], material.name, thickness=0.003,
+                                        material_direction=(1.0, 0.0, 0.0))
+    with pytest.raises(AS.UnsupportedQ4PlasticRouteError, match="orthotropic/Hill48"):
+        _response(element, type("M", (), {"mesh": mesh})(), material, _field(SQUARE, "stretch", 1e-3), None)
+
+
+def test_warped_plastic_q4_is_refused_with_typed_error():
+    nodes = ((0, 0), (0.125, 0), (0.125, 0.125), (0, 0.125))
+    model, element, material = _single(nodes)
+    model.mesh.nodes[3].z = 0.01  # warp one corner
+    element._nonlinear_geometry_cache = None
+    with pytest.raises(AS.UnsupportedQ4PlasticRouteError, match="warped"):
+        AS.require_supported(element, model.mesh, material)
+
+
+def _zero_field_state(element):
+    state = element.init_nonlinear_state(5)
+    state["initial_membrane_prestrain"] = np.zeros((4, 3))
+    return state
+
+
+def test_initial_fields_one_predicate_for_scalar_and_batch():
+    model, load = _plate(2, 0.003, 5e4)
+    material = model.get_material("mat")
+    u = np.zeros(model.mesh.dof_manager.total_dofs)
+    u[6 * 4 + 2] = 0.03
+    u += 2e-4 * np.random.default_rng(5).standard_normal(u.size)
+    # Inactive (all-zero) field: scalar == reference batch == plan == no field.
+    inactive = {eid: _zero_field_state(e) for eid, e in model.mesh.elements.items()}
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        f_none, K_none, _ = _assemble_nonlinear_system(model, u, {}, 5, tangent=True, require_full_coordinates=True)
+        f_ref, K_ref, _ = _assemble_nonlinear_system(model, u, inactive, 5, tangent=True, require_full_coordinates=True)
+        f_plan, K_plan, _ = NonlinearAssemblyPlan.build(model, 5).assemble(u, inactive, tangent=True)
+    F_sc = np.zeros_like(f_ref)
+    for eid, element in model.mesh.elements.items():
+        dm = np.asarray(element.get_dof_mapping(model.mesh))
+        F_sc[dm] += np.asarray(_response(element, model, material, u[dm], inactive[eid])[0])
+    scale = np.abs(f_none).max()
+    for f in (f_ref, f_plan, F_sc):
+        assert np.abs(f - f_none).max() <= 1e-12 * scale
+    for K in (K_ref, K_plan):
+        assert np.abs(K.toarray() - K_none.toarray()).max() <= 1e-12 * np.abs(K_none.toarray()).max()
+    # Active field: refused by the scalar route and by both batch routes.
+    active = {eid: _zero_field_state(e) for eid, e in model.mesh.elements.items()}
+    active[1]["initial_membrane_prestrain"][0, 0] = 1e-4
+    element = model.mesh.elements[1]
+    dm = np.asarray(element.get_dof_mapping(model.mesh))
+    with pytest.raises(AS.UnsupportedQ4PlasticRouteError, match="active initial"):
+        _response(element, model, material, u[dm], active[1])
+    with pytest.raises(AS.UnsupportedQ4PlasticRouteError, match="active initial"):
+        _assemble_nonlinear_system(model, u, active, 5, tangent=True, require_full_coordinates=True)
+    with pytest.raises(AS.UnsupportedQ4PlasticRouteError, match="active initial"):
+        NonlinearAssemblyPlan.build(model, 5).assemble(u, active, tangent=True)
+
+
+# ---------------------------------------------------------------------------
+# Reversal: plastic strain back at exactly zero on the plastic branch
+# ---------------------------------------------------------------------------
+
+def test_tangent_correction_follows_algorithmic_branch_not_plastic_strain_value(monkeypatch):
+    """A point may return to eps_p == 0 with C_t != C (reversed flow).
+
+    The force correction vanishes there but its derivative does not.  The
+    return map is wrapped to report eps_p == 0 exactly while keeping its
+    algorithmic tangent; the tangent must still carry the plastic term.
+    """
+
+    model, element, material = _single(SQUARE)
+    cache = element._nonlinear_geometry(model.mesh)
+    one = lambda name: np.asarray(cache[name], float)[None]
+    offsets = AS.offset_operator(element, model.mesh, material)
+    u = _field(SQUARE, "hourglass", 0.01) + _field(SQUARE, "stretch", 2e-3)
+    args = (u[None], one("T0"), one("B_m_all"), one("B_b_all"), one("B_d_all"), one("Gw_all"),
+            one("detw_all"), one("B_s_all"), one("detw_shear_all"), material.elastic_modulus,
+            material.poisson_ratio, material.shear_modulus, element.thickness,
+            element.drilling_stabilization, True, material.hardening_curve,
+            np.zeros((1, 20, 3)), np.zeros((1, 20)), 5, offsets[None])
+    real = AS.plane_stress_return_map
+    _f, K_real, ep, *_ = AS.kernel_batch(*args)
+    assert np.any(ep != 0.0)
+
+    def zero_plastic_strain(*a, **k):
+        sigma, C_t, ep_new, alpha_new = real(*a, **k)
+        return sigma, C_t, np.zeros_like(ep_new), alpha_new
+
+    monkeypatch.setattr(AS, "plane_stress_return_map", zero_plastic_strain)
+    _f, K_zero, ep0, *_ = AS.kernel_batch(*args)
+    assert not np.any(ep0)
+    # Same algorithmic tangent -> same plastic tangent term.  With in-plane
+    # motion (theta = 0) only the w-w block holds the geometric N_p term,
+    # which legitimately vanishes with eps_p.
+    keep = np.ones(24, bool)
+    keep[2::6] = False
+    block = np.ix_(keep, keep)
+    assert np.abs(K_zero[0][block] - K_real[0][block]).max() <= 1e-12 * np.abs(K_real[0]).max()
+
+
+def test_fd_tangent_close_to_reversal_through_zero_plastic_strain():
+    model, element, material = _single(SQUARE)
+    v = _field(SQUARE, "stretch", 1.0) + _field(SQUARE, "hourglass", 0.2)
+    _f, _K, loaded = _response(element, model, material, 2e-3 * v, None)
+    assert np.any(loaded["plastic_strain"])
+    # Reverse past the elastic range into reverse plastic flow.
+    for amplitude in (-0.5e-3, -1.0e-3, -1.5e-3):
+        f, K, trial = _response(element, model, material, amplitude * v, loaded)
+        assert _fd_error(element, model, material, amplitude * v, loaded, np.asarray(K)) <= 1e-7
+
+
+# ---------------------------------------------------------------------------
+# Runtime authority of the new module
+# ---------------------------------------------------------------------------
+
+def test_module_numpy_usage_is_inside_the_frozen_runtime_authority():
+    import ast
+    import inspect
+    from anysolver import e4_pl_s3_state
+
+    tree = ast.parse(inspect.getsource(AS))
+    root, linalg = set(), set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "np":
+            root.add(node.attr)
+        if (isinstance(node, ast.Attribute) and isinstance(node.value, ast.Attribute)
+                and isinstance(node.value.value, ast.Name) and node.value.value.id == "np"
+                and node.value.attr == "linalg"):
+            linalg.add(node.attr)
+    root.discard("linalg")
+    assert root <= set(e4_pl_s3_state._NUMPY_RUNTIME_ROOT_NAMES), root - set(e4_pl_s3_state._NUMPY_RUNTIME_ROOT_NAMES)
+    assert linalg <= set(e4_pl_s3_state._NUMPY_RUNTIME_LINALG_NAMES)
+
+
+def test_module_substitution_before_evaluation_is_refused(monkeypatch):
+    model, element, material = _single(SQUARE)
+    u = _field(SQUARE, "stretch", 2e-3)
+    _response(element, model, material, u, None)  # bind the authority
+    original = AS.kernel_batch
+    monkeypatch.setattr(AS, "kernel_batch", lambda *a, **k: original(*a, **k))
+    with pytest.raises(ValueError, match="authority"):
+        _response(element, model, material, u, None)
+
+
+def test_module_substitution_during_evaluation_is_refused(monkeypatch):
+    model, element, material = _single(SQUARE)
+    u = _field(SQUARE, "stretch", 2e-3)
+    _response(element, model, material, u, None)
+    original = AS.offset_operator
+    calls = []
+
+    def swap_once(*a, **k):
+        if not calls:
+            calls.append(1)
+            monkeypatch.setattr(AS, "offset_operator", lambda *x, **y: original(*x, **y))
+        return original_flow(*a, **k)
+
+    original_flow = AS.plane_stress_return_map
+    monkeypatch.setattr(AS, "plane_stress_return_map", swap_once)
+    with pytest.raises(ValueError, match="authority"):
+        _response(element, model, material, u, None)

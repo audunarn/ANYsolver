@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- Qualified Q4 plastic shells evaluate layered plasticity at the hybrid assumed
+  strain (`_q4_assumed_strain_plasticity`). The historical compatible-strain
+  route with the constant qualified correction had an indefinite tangent once
+  layers yielded and converged to spurious mechanisms on a clamped plastic plate
+  (+203 mm at n = 8, wrong sign at n = 16). The new route has an exact symmetric
+  tangent and completes at n = 4..32, within 2.2 % of the legacy element at n >= 8
+  and moving toward CalculiX (-0.7 % at n = 32). Elastic materials are
+  bit-identical. Plastic-capable elements before yield change by about
+  1e-10..2e-9 relative. Plastic `layer_strain`/`layer_stress` now hold
+  assumed-strain values. Hill48/orthotropic plasticity, generalized sections with
+  hardening, warped facets and active initial fields are refused with
+  `UnsupportedQ4PlasticRouteError` instead of the unstable form. See
+  `docs/Q4_ASSUMED_STRAIN_PLASTICITY_20261023.md`.
+
 - Refresh the private Windows Python 3.12 beam-shell bundle from `6fb907a1c`,
   including both completed-prefix S355 checkpoint workflows. Verify 77 installed
   tests, two pre-yield and six fresh-process plastic full/prefix/resume CLIs;

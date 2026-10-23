@@ -488,7 +488,7 @@ class _ShellBatchPlan:
             alpha_work=np.zeros((n_elem, n_gp * num_layers), dtype=float),
         )
         if key and key[0] == _Q4_ASSUMED_STRAIN_SHELL_KIND:
-            offsets = np.stack([
+            offsets = np.asarray([
                 _q4_assumed_strain.offset_operator(element, model.mesh, material)
                 for element in elements
             ])
@@ -1041,7 +1041,7 @@ class NonlinearAssemblyPlan:
                         else "isotropic"
                     )
                 )
-                if shell_kind == "isotropic" and _q4_assumed_strain.supported(
+                if shell_kind == "isotropic" and _q4_assumed_strain.require_supported(
                     element, mesh, material
                 ):
                     shell_kind = _Q4_ASSUMED_STRAIN_SHELL_KIND

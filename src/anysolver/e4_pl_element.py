@@ -4354,10 +4354,9 @@ class QualifiedE4PLShellElement(
         added by the caller exactly as on the historical route.
         """
 
-        if not _q4_assumed_strain.supported(self, mesh, material):
+        if not _q4_assumed_strain.require_supported(self, mesh, material):
             return None
-        if state is not None and any(key in state for key in _Q4_INITIAL_STATE_KEYS):
-            return None
+        _q4_assumed_strain.require_state_supported(self, state)
         cache = self._nonlinear_geometry(mesh)
         points = len(cache["gp"]) * int(layers)
         if state is None:
@@ -4411,6 +4410,12 @@ class QualifiedE4PLShellElement(
             "kinematic_layer_strain": extras["kinematic_layer_strain"][0].copy(),
             "layer_stress": extras["layer_stress"][0].copy(),
         }
+        if state is not None:
+            # Inactive (all-zero, provenance-free) initial fields are carried
+            # unchanged, exactly as the inherited kernel carries them.
+            for key in _Q4_INITIAL_STATE_KEYS:
+                if key in state:
+                    trial_state[key] = copy.deepcopy(state[key])
         total = None if not tangent else np.asarray(stiffness[0], dtype=np.float64)
         if not return_components:
             return np.asarray(force[0], dtype=np.float64), total, trial_state
@@ -7627,6 +7632,7 @@ def _bind_q4_exact_quadrature_boundary(method: Any) -> Any:
             _elastic_increment_module,
             _local_contractions,
             _local_contractions._native,
+            _q4_assumed_strain,
         )
     )
     expected_class = QualifiedE4PLShellElement

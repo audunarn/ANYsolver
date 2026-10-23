@@ -105,6 +105,7 @@ def _global_hill_shell() -> tuple[FEModel, LoadCase]:
             [1, 2, 3, 4],
             "lamina",
             thickness=0.02,
+            formulation="legacy",  # Hill48: no stable qualified Q4 route
             material_direction=(1.0, 0.0, 1.0),
             material_angle_deg=90.0,
         ),

@@ -549,32 +549,14 @@ def test_shell_initial_field_survives_plastic_commit_and_unloading():
     )
     loading = np.zeros(element.total_dofs)
     loading[6] = loading[12] = 0.002
-    _force, _tangent, loaded = element.compute_nonlinear_response(
-        model.mesh,
-        material,
-        loading,
-        states[1],
-        num_layers=3,
-        tangent=True,
-    )
-    assert np.max(loaded["alpha"]) > 0.0
-
-    unloading = np.zeros(element.total_dofs)
-    unloading[6] = unloading[12] = 0.001
-    _force, _tangent, unloaded = element.compute_nonlinear_response(
-        model.mesh,
-        material,
-        unloading,
-        loaded,
-        num_layers=3,
-        tangent=True,
-    )
-    assert np.max(unloaded["alpha"]) == pytest.approx(np.max(loaded["alpha"]))
-    np.testing.assert_allclose(
-        unloaded["initial_membrane_stress"],
-        loaded["initial_membrane_stress"],
-    )
-    assert unloaded["initial_field_provenance"] == loaded["initial_field_provenance"]
+    # Owner decision 2026-10-23: plastic qualified Q4 outside the assumed-strain
+    # route scope is refused (the compatible-strain plastic route with the
+    # qualified correction is unstable once layers yield).
+    from anysolver._q4_assumed_strain_plasticity import UnsupportedQ4PlasticRouteError
+    with pytest.raises(UnsupportedQ4PlasticRouteError, match="active initial"):
+        element.compute_nonlinear_response(
+            model.mesh, material, loading, states[1], num_layers=3, tangent=True
+        )
 
 
 def test_adaptive_force_control_commits_every_stage_boundary():

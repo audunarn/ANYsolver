@@ -1357,7 +1357,7 @@ def _assemble_nonlinear_system_unchecked(
                 element.reduced_integration,
                 element.hourglass_stabilization,
                 element.material_name,
-                _q4_assumed_strain.supported(
+                _q4_assumed_strain.require_supported(
                     element, mesh, model.get_material(element.material_name)
                 ),
             )
@@ -1426,7 +1426,7 @@ def _assemble_nonlinear_system_unchecked(
         # hybrid assumed strain (see _q4_assumed_strain_plasticity).
         batch_kernel = batch_shell_nonlinear_response
         if assumed_strain_group:
-            offsets = np.stack([
+            offsets = np.asarray([
                 _q4_assumed_strain.offset_operator(element, mesh, material)
                 for _elem_id, element in elem_list
             ])

@@ -37,9 +37,16 @@ force of the assumed-strain layered shell ``sum_g w_g (B_eff + dE)' N_hat``
 (plus the unchanged shear/drilling/stabilisation parts), so the tangent is
 the exact, symmetric
 
-    K = sum_g w_g (B_eff + dE)' D_t (B_eff + dE) + K_geo(N_hat) + K_rest,
+    K = sum_g w_g (B_eff + dE)' D_t (B_eff + dE) + K_geo(N_hat) + K_rest.
 
-positive wherever the layered algorithmic tangent is.  Elastic limits:
+Stability: positive semidefiniteness of (qualified elastic Hessian - this
+model's elastic Hessian) - here the remainder ``K_rest`` (hybrid transverse
+shear plus stabilisation) - is a *sufficient* condition for the elastic relief
+not to destabilise yielded layers.  It is not a necessary condition, and the
+geometric (compressive) stiffness ``K_geo`` can destabilise the response
+independently, as it physically should.
+
+Elastic limits:
 
 * elastic materials never enter this route (bit-identical);
 * for a plastic-capable material before yield the force differs from the
@@ -48,6 +55,13 @@ positive wherever the layered algorithmic tangent is.  Elastic limits:
 * the plastic state keeps its schema (``plastic_strain``, ``alpha``,
   ``layer_strain`` per Gauss point and layer); ``layer_strain`` now holds the
   assumed layer strain at which the return map was evaluated.
+
+Scope: isotropic von Mises layered plasticity on planar facets without active
+initial fields.  Every other plastic-capable qualified Q4 configuration
+(Hill48/orthotropic plasticity, active initial fields, generalized sections
+with a hardening curve, warped facets) is refused with
+:class:`UnsupportedQ4PlasticRouteError`; there is no fallback to the
+historical compatible-strain plastic route.
 """
 
 from __future__ import annotations
@@ -57,23 +71,37 @@ from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 
+from . import elements as _elements
+from .initial_field_state import state_has_active_initial_fields
 from .plasticity import lobatto_layers, plane_stress_elastic_matrix, plane_stress_return_map
 
 __all__ = [
     "ROUTE_ID",
+    "UnsupportedQ4PlasticRouteError",
+    "plastic_capable",
     "supported",
+    "require_supported",
+    "require_state_supported",
     "offset_operator",
     "kernel_batch",
 ]
 
 ROUTE_ID = "Q4_ASSUMED_STRAIN_LAYERED_PLASTICITY_V1"
 
-_GP_KERNEL = np.asarray(
-    ((-1.0, -1.0), (1.0, -1.0), (-1.0, 1.0), (1.0, 1.0)), dtype=float
-) / np.sqrt(3.0)
+_SQRT3_INVERSE = 0.57735026918962576451
+_GP_KERNEL = (
+    (-_SQRT3_INVERSE, -_SQRT3_INVERSE),
+    (_SQRT3_INVERSE, -_SQRT3_INVERSE),
+    (-_SQRT3_INVERSE, _SQRT3_INVERSE),
+    (_SQRT3_INVERSE, _SQRT3_INVERSE),
+)
 _PATCH_TOLERANCE = 1.0e-9
-_CACHE: "OrderedDict[Tuple[Any, ...], np.ndarray]" = OrderedDict()
 _CACHE_LIMIT = 65536
+_offset_cache: "OrderedDict[Tuple[Any, ...], np.ndarray]" = OrderedDict()
+
+
+class UnsupportedQ4PlasticRouteError(ValueError):
+    """A plastic qualified Q4 configuration has no stable plastic route."""
 
 
 def _qualified_type() -> Any:
@@ -82,28 +110,82 @@ def _qualified_type() -> Any:
     return QualifiedE4PLShellElement
 
 
-def supported(element: Any, mesh: Any, material: Any) -> bool:
-    """Return whether ``element`` uses the assumed-strain plastic route."""
+def plastic_capable(element: Any, material: Any) -> bool:
+    """Qualified Q4 whose layered kernel would run a plastic return map.
+
+    Same criterion as the inherited kernel: a hardening curve, or an
+    orthotropic material with a Hill48 yield criterion (perfectly plastic
+    without a curve).
+    """
 
     if type(element) is not _qualified_type():
         return False
-    if getattr(material, "hardening_curve", None) is None:
-        return False
-    if getattr(material, "hill_yield", None) is not None:
-        return False
-    symmetry = str(getattr(material, "symmetry", "isotropic") or "isotropic").lower()
-    if symmetry != "isotropic":
-        return False
+    if getattr(material, "hardening_curve", None) is not None:
+        return True
+    return bool(
+        getattr(material, "hill_yield", None) is not None
+        and _elements._elastic_symmetry(material, None) == "orthotropic"
+    )
+
+
+def _unsupported_reason(element: Any, mesh: Any, material: Any) -> Optional[str]:
     if getattr(element, "shell_section", None) is not None:
-        return False
+        return "generalized shell section with a hardening curve"
+    if _elements._elastic_symmetry(material, None) != "isotropic":
+        return "orthotropic/Hill48 plasticity"
     if bool(getattr(element, "reduced_integration", False)):
-        return False
+        return "reduced integration"
     if int(getattr(element, "num_nodes", 0)) != 4:
-        return False
+        return "not a four-node element"
     from .e4_pl_element import equation7_frame
 
     _frame, _local, warpage = equation7_frame(element.get_node_coordinates(mesh))
-    return bool(warpage <= float(element.planar_tolerance))
+    if warpage > float(element.planar_tolerance):
+        return "warped facet"
+    return None
+
+
+def _refusal(element: Any, reason: str) -> UnsupportedQ4PlasticRouteError:
+    return UnsupportedQ4PlasticRouteError(
+        f"qualified Q4 element {getattr(element, 'element_id', '?')}: plastic analysis with "
+        f"{reason} is not supported (the compatible-strain route with the qualified hybrid "
+        "correction is unstable once layers yield); use formulation='legacy' for this "
+        "element or an elastic material"
+    )
+
+
+def supported(element: Any, mesh: Any, material: Any) -> bool:
+    """Element/material admits the assumed-strain route (state not considered)."""
+
+    return plastic_capable(element, material) and _unsupported_reason(element, mesh, material) is None
+
+
+def require_supported(element: Any, mesh: Any, material: Any) -> bool:
+    """True for the assumed-strain route, False when not plastic-capable.
+
+    A plastic-capable qualified Q4 outside the supported scope raises
+    :class:`UnsupportedQ4PlasticRouteError` (fail closed).
+    """
+
+    if not plastic_capable(element, material):
+        return False
+    reason = _unsupported_reason(element, mesh, material)
+    if reason is not None:
+        raise _refusal(element, reason)
+    return True
+
+
+def require_state_supported(element: Any, state: Any) -> None:
+    """Refuse an active initial field on the assumed-strain route.
+
+    The same predicate (:func:`state_has_active_initial_fields`) selects the
+    scalar initial-field override in the assembly plans, so scalar and batch
+    evaluation agree: inactive (all-zero, provenance-free) fields are ignored
+    by both and active fields are refused by both.
+    """
+
+    if state_has_active_initial_fields(state):
+        raise _refusal(element, "an active initial stress/prestrain field")
 
 
 def _voigt_rotation(R: np.ndarray) -> np.ndarray:
@@ -150,9 +232,9 @@ def offset_operator(element: Any, mesh: Any, material: Any) -> np.ndarray:
         B_m.tobytes(),
         B_b.tobytes(),
     )
-    hit = _CACHE.get(key)
+    hit = _offset_cache.get(key)
     if hit is not None:
-        _CACHE.move_to_end(key)
+        _offset_cache.move_to_end(key)
         return hit
     c = E4._coefficients(local)
     stationary, coupling, _gram = E4._stationary_blocks(local, c, constitutive)
@@ -160,7 +242,7 @@ def offset_operator(element: Any, mesh: Any, material: Any) -> np.ndarray:
     alpha = solution[14:]
     transform = E4._global_transform(frame)
     # Hybrid frame axes are the columns of ``frame`` (u_glob = T u_hybrid);
-    # kernel axes are the rows of ``R0`` (u_kernel = T0 u_glob).
+    # kernel axes are the rows of the T0 node block (u_kernel = T0 u_glob).
     relative = T0[:3, :3] @ np.asarray(frame, dtype=float)
     if not (abs(relative[2, 2] - 1.0) <= 1.0e-10 and np.allclose(relative[:2, 2], 0.0, atol=1.0e-10)
             and np.allclose(relative[2, :2], 0.0, atol=1.0e-10)):
@@ -177,9 +259,9 @@ def offset_operator(element: Any, mesh: Any, material: Any) -> np.ndarray:
         offsets[g, 3:] = e_hat[3:] - B_b[g]
     _certify_patch(offsets, B_m, B_b, T0, coordinates)
     offsets.setflags(write=False)
-    _CACHE[key] = offsets
-    while len(_CACHE) > _CACHE_LIMIT:
-        _CACHE.popitem(last=False)
+    _offset_cache[key] = offsets
+    while len(_offset_cache) > _CACHE_LIMIT:
+        _offset_cache.popitem(last=False)
     return offsets
 
 
@@ -213,6 +295,10 @@ def _geometric(detw, Gw, N):
         + np.einsum("eg,egi,egj->eij", detw * N[:, :, 2], Gx, Gy)
         + np.einsum("eg,egi,egj->eij", detw * N[:, :, 2], Gy, Gx)
     )
+
+
+def _transpose_last(matrix: np.ndarray) -> np.ndarray:
+    return np.swapaxes(matrix, -1, -2)
 
 
 def kernel_batch(
@@ -267,6 +353,8 @@ def kernel_batch(
     K = np.array(K, dtype=float, copy=True) if tangent else None
     offsets = np.asarray(offsets, dtype=float)
     T0 = np.asarray(T0, dtype=float)
+    B_m = np.asarray(B_m, dtype=float)
+    B_b = np.asarray(B_b, dtype=float)
     Gw = np.asarray(Gw, dtype=float)
     detw = np.asarray(detw, dtype=float)
     u_loc = np.einsum("eij,ej->ei", T0, u_elem_batch)
@@ -275,18 +363,14 @@ def kernel_batch(
     A = float(h) * C
 
     theta = np.einsum("egki,ei->egk", Gw, u_loc)
-    B_nl = np.stack(
-        (
-            theta[:, :, 0, None] * Gw[:, :, 0, :],
-            theta[:, :, 1, None] * Gw[:, :, 1, :],
-            theta[:, :, 0, None] * Gw[:, :, 1, :] + theta[:, :, 1, None] * Gw[:, :, 0, :],
-        ),
-        axis=2,
-    )
-    eps_nl = np.stack(
-        (0.5 * theta[:, :, 0] ** 2, 0.5 * theta[:, :, 1] ** 2, theta[:, :, 0] * theta[:, :, 1]),
-        axis=2,
-    )
+    B_nl = np.empty((n_elem, n_gp, 3, n_dof), dtype=float)
+    B_nl[:, :, 0, :] = theta[:, :, 0, None] * Gw[:, :, 0, :]
+    B_nl[:, :, 1, :] = theta[:, :, 1, None] * Gw[:, :, 1, :]
+    B_nl[:, :, 2, :] = theta[:, :, 0, None] * Gw[:, :, 1, :] + theta[:, :, 1, None] * Gw[:, :, 0, :]
+    eps_nl = np.empty((n_elem, n_gp, 3), dtype=float)
+    eps_nl[:, :, 0] = 0.5 * theta[:, :, 0] ** 2
+    eps_nl[:, :, 1] = 0.5 * theta[:, :, 1] ** 2
+    eps_nl[:, :, 2] = theta[:, :, 0] * theta[:, :, 1]
     d6 = np.einsum("egki,ei->egk", offsets, u_loc)
     N_offset = d6[:, :, :3] @ A.T
     dE_m = offsets[:, :, :3, :]
@@ -296,10 +380,11 @@ def kernel_batch(
     K_loc = None
     if tangent:
         cross = np.einsum("eg,egki,kl,eglj->eij", detw, dE_m, A, B_nl)
-        K_loc = cross + np.transpose(cross, (0, 2, 1)) + _geometric(detw, Gw, N_offset)
+        K_loc = cross + _transpose_last(cross) + _geometric(detw, Gw, N_offset)
 
+    compatible = np.asarray(compatible_layers, dtype=float).reshape(n_elem, n_gp, L, 3)
     layers = (
-        np.asarray(compatible_layers, dtype=float).reshape(n_elem, n_gp, L, 3)
+        compatible
         + d6[:, :, None, :3]
         + z[None, None, :, None] * d6[:, :, None, 3:]
     )
@@ -315,7 +400,15 @@ def kernel_batch(
     )
     ep_new = np.asarray(ep_new, dtype=float).reshape(n_elem, points, 3)
     alpha_new = np.asarray(alpha_new, dtype=float).reshape(n_elem, points)
-    active = np.flatnonzero(np.any(ep_new.reshape(n_elem, -1) != 0.0, axis=1))
+    # The force correction is driven by the plastic strain and its derivative
+    # by the algorithmic tangent.  Reversed flow can return a point to
+    # eps_p == 0 on the plastic branch (C_t != C), so either criterion makes
+    # an element active.
+    active_rows = np.any(ep_new.reshape(n_elem, -1) != 0.0, axis=1)
+    if tangent:
+        C_t = np.asarray(C_t, dtype=float).reshape(n_elem, n_gp, L, 3, 3)
+        active_rows = active_rows | np.any((C_t != C).reshape(n_elem, -1), axis=1)
+    active = np.flatnonzero(active_rows)
     N_p = np.zeros((n_elem, n_gp, 3), dtype=float)
     if active.size:
         stress_p = ep_new[active].reshape(active.size, n_gp, L, 3) @ C.T
@@ -325,8 +418,7 @@ def kernel_batch(
         B_hat = np.concatenate((B_m[active] + B_nl[active], B_b[active]), axis=2) + offsets[active]
         F_loc[active] -= np.einsum("eg,egki,egk->ei", detw[active], B_hat, gen)
         if tangent:
-            C_t = np.asarray(C_t, dtype=float).reshape(n_elem, n_gp, L, 3, 3)[active]
-            dC = C[None, None, None] - C_t
+            dC = C[None, None, None] - C_t[active]
             D0 = np.einsum("l,eglij->egij", w, dC)
             D1 = np.einsum("l,l,eglij->egij", w, z, dC)
             D2 = np.einsum("l,l,l,eglij->egij", w, z, z, dC)
@@ -337,19 +429,17 @@ def kernel_batch(
             Dp[:, :, 3:, 3:] = D2
             K_loc[active] -= np.einsum("eg,egki,egkl,eglj->eij", detw[active], B_hat, Dp, B_hat)
             K_loc[active] -= _geometric(detw[active], Gw[active], N_p[active])
-    T0t = np.transpose(T0, (0, 2, 1))
+    T0t = _transpose_last(T0)
     F += np.einsum("eij,ej->ei", T0t, F_loc)
     extras: Dict[str, Any] = {
-        "kinematic_layer_strain": np.asarray(compatible_layers, dtype=float).reshape(n_elem, points, 3),
+        "kinematic_layer_strain": compatible.reshape(n_elem, points, 3),
         "layer_stress": np.asarray(sigma, dtype=float).reshape(n_elem, points, 3),
         "geometric": None,
     }
     if tangent:
-        K_loc = 0.5 * (K_loc + np.transpose(K_loc, (0, 2, 1)))
+        K_loc = 0.5 * (K_loc + _transpose_last(K_loc))
         K += T0t @ K_loc @ T0
         if return_geometric:
-            membrane = (
-                np.einsum("egki,ei->egk", np.asarray(B_m, dtype=float), u_loc) + eps_nl
-            ) @ A.T + N_offset - N_p
+            membrane = (np.einsum("egki,ei->egk", B_m, u_loc) + eps_nl) @ A.T + N_offset - N_p
             extras["geometric"] = T0t @ _geometric(detw, Gw, membrane) @ T0
     return F, K, ep_new, alpha_new, layer_strain, extras

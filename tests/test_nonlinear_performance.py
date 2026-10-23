@@ -409,30 +409,18 @@ def test_deleted_q4_initial_field_override_is_scaled_and_frozen_exactly() -> Non
         "deleted_element_ids": (1,),
         "residual_stiffness_fraction": 0.2,
     }
-    force_reference, tangent_reference, states_reference = legacy(
-        model,
-        displacement,
-        committed,
-        3,
-        **arguments,
-    )
+    # Owner decision 2026-10-23: plastic qualified Q4 outside the assumed-strain
+    # route scope is refused (the compatible-strain plastic route with the
+    # qualified correction is unstable once layers yield).
+    import pytest
+    from anysolver._q4_assumed_strain_plasticity import UnsupportedQ4PlasticRouteError
+    with pytest.raises(UnsupportedQ4PlasticRouteError, match="active initial"):
+        legacy(model, displacement, committed, 3, **arguments)
     nonlinear_performance.clear_nonlinear_assembly_cache(model)
-    force_fast, tangent_fast, states_fast = (
+    with pytest.raises(UnsupportedQ4PlasticRouteError, match="active initial"):
         nonlinear_performance._optimized_assemble_nonlinear_system(
-            model,
-            displacement,
-            committed,
-            3,
-            **arguments,
+            model, displacement, committed, 3, **arguments
         )
-    )
-
-    np.testing.assert_array_equal(force_fast, force_reference)
-    np.testing.assert_array_equal(
-        tangent_fast.toarray(), tangent_reference.toarray()
-    )
-    assert states_reference[1] is committed[1]
-    assert states_fast[1] is committed[1]
 
 
 def test_q8r_uses_scalar_nonlinear_path_with_hourglass_parity() -> None:
