@@ -21,6 +21,23 @@ from anysolver.materials import Hill48Yield, OrthotropicMaterial
 from anysolver.nonlinear_state import ShellStateBatch, ShellStateLayout
 from anysolver.shell_sections import GeneralizedShellSection
 from anysolver.vectorized_nonlinear import batch_shell_nonlinear_response
+from anysolver import _q4_assumed_strain_plasticity as _q4_assumed_strain
+
+
+def _production_q4_kernel(element, mesh, material):
+    """Batch kernel the assembly plans use for this element and material."""
+
+    if not _q4_assumed_strain.supported(element, mesh, material):
+        return batch_shell_nonlinear_response
+    offsets = _q4_assumed_strain.offset_operator(element, mesh, material)
+
+    def kernel(*arguments):
+        count = np.asarray(arguments[0]).shape[0]
+        return _q4_assumed_strain.kernel_batch(
+            *arguments, np.broadcast_to(offsets, (count,) + offsets.shape)
+        )[:5]
+
+    return kernel
 
 
 D4 = (
@@ -710,9 +727,16 @@ def _orthotropic_plastic() -> OrthotropicMaterial:
 
 
 @pytest.mark.parametrize("initial_field", (False, True))
-def test_isotropic_initial_field_and_orthotropic_hill_updates_retain_exact_tangent(
+def test_isotropic_initial_field_and_orthotropic_hill_plastic_updates_are_refused(
     initial_field: bool,
 ) -> None:
+    """Owner decision 2026-10-23: no silent compatible-strain plastic route.
+
+    Active initial fields and Hill48/orthotropic plasticity have no stable
+    qualified Q4 plastic route (assumed-strain route scope), so the element
+    refuses them with a typed error instead of the historical unstable form.
+    """
+
     nodes = np.asarray(
         ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0)),
         dtype=np.float64,
@@ -734,21 +758,9 @@ def test_isotropic_initial_field_and_orthotropic_hill_updates_retain_exact_tange
         ).copy()
     displacement = np.zeros(24, dtype=np.float64)
     displacement[6] = displacement[12] = 0.004
-    accepted_force, accepted_tangent, trial = element.compute_nonlinear_response(
-        mesh, material, displacement, parent, 3, True
-    )
-    assert accepted_tangent is not None
-    assert isinstance(trial, dict)
-    assert np.max(np.asarray(trial["alpha"], dtype=np.float64)) > 0.0
-    sealed = element.seal_committed_current_tangent_state(
-        mesh, material, displacement, trial, 3
-    )
-    components = element.compute_committed_current_tangent_components(
-        mesh, material, displacement, sealed, 3
-    )
-    np.testing.assert_array_equal(components["force"], accepted_force)
-    np.testing.assert_array_equal(components["total"], accepted_tangent)
-
+    match = "active initial" if initial_field else "orthotropic/Hill48"
+    with pytest.raises(_q4_assumed_strain.UnsupportedQ4PlasticRouteError, match=match):
+        element.compute_nonlinear_response(mesh, material, displacement, parent, 3, True)
 
 def test_residual_only_plastic_candidate_cannot_masquerade_as_accepted_tangent() -> None:
     nodes = np.asarray(
@@ -950,7 +962,7 @@ def test_vectorized_q4_accepted_tangent_matches_sealed_scalar_replay_exactly() -
     cache = element._nonlinear_geometry(mesh)
     parent = element.init_nonlinear_state(3)
     force, tangent, plastic, alpha, layer_strain = (
-        batch_shell_nonlinear_response(
+        _production_q4_kernel(element, mesh, material)(
             displacement[None, :],
             np.asarray(cache["T0"])[None, :, :],
             np.asarray(cache["B_m_all"])[None, :, :, :],
@@ -1035,7 +1047,8 @@ def test_distorted_vectorized_q4_plastic_history_replays_after_multiple_incremen
         displacement[:, 12] = 0.0043 * element_scales
         displacement[:, 8] = 4.0e-4 * element_scales
         displacement[:, 14] = 7.0e-4 * element_scales
-        force, tangent, plastic, alpha, layer_strain = batch_shell_nonlinear_response(
+        production_kernel = _production_q4_kernel(element, mesh, material)
+        force, tangent, plastic, alpha, layer_strain = production_kernel(
             displacement,
             np.broadcast_to(np.asarray(cache["T0"]), (batch_size, 24, 24)),
             np.broadcast_to(np.asarray(cache["B_m_all"]), (batch_size, 4, 3, 24)),
@@ -1056,7 +1069,7 @@ def test_distorted_vectorized_q4_plastic_history_replays_after_multiple_incremen
             np.asarray([state["alpha"] for state in committed]),
             3,
         )
-        single = batch_shell_nonlinear_response(
+        single = production_kernel(
             displacement[target : target + 1],
             np.asarray(cache["T0"])[None, :, :],
             np.asarray(cache["B_m_all"])[None, :, :, :],

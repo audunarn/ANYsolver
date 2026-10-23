@@ -128,6 +128,9 @@ def _orthotropic_model(
                 thickness=0.02,
                 material_direction=(1.0, 0.0, 1.0),
                 material_angle_deg=90.0,
+                # Hill48 plasticity has no stable qualified Q4 route (typed
+                # refusal); Hill shell physics runs on the legacy element.
+                **({"formulation": "legacy"} if hill else {}),
             ),
         )
     return model

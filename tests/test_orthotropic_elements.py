@@ -119,6 +119,9 @@ def _square_shell(
         thickness=0.01,
         material_direction=direction,
         material_angle_deg=angle,
+        # Hill48 plasticity has no stable qualified Q4 route (typed refusal);
+        # the Hill shell physics is exercised on the legacy compatible element.
+        **({"formulation": "legacy"} if material.hill_yield is not None else {}),
     )
     model.add_element(1, element)
     return model, element

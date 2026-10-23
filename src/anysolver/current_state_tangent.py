@@ -19,6 +19,7 @@ import anymaterial.curves as _anymaterial_curves_module
 import anymaterial.yield_criteria as _anymaterial_yield_module
 
 from . import _native_rotation_state as _native_rotation_state_module
+from . import _q4_assumed_strain_plasticity as _q4_assumed_strain_module
 from . import corotational as _corotational_module
 from . import e4_pl_s3_initial_fields as _s3_initial_fields_module
 from . import e4_pl_s3_state as _s3_state_module
@@ -249,6 +250,7 @@ _Q4_DEPENDENCY_MODULE_AUTHORITY = tuple(
     _capture_dependency_module_authority(module)
     for module in (
         _elements_module,
+        _q4_assumed_strain_module,
         _plasticity_module,
         _shell_sections_module,
         _materials_module,

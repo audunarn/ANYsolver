@@ -90,6 +90,7 @@ from .nonlinear_analysis_diagnostics import (
     record_nonlinear_solver_event,
 )
 from .plasticity import PlaneStressConvergenceError
+from . import _q4_assumed_strain_plasticity as _q4_assumed_strain
 from .nonlinear_state import (
     _register_nonlinear_state_cleanup,
     _run_with_nonlinear_state_cleanup,
@@ -1356,6 +1357,9 @@ def _assemble_nonlinear_system_unchecked(
                 element.reduced_integration,
                 element.hourglass_stabilization,
                 element.material_name,
+                _q4_assumed_strain.route(
+                    element, mesh, model.get_material(element.material_name)
+                ),
             )
             if key not in groups:
                 groups[key] = []
@@ -1365,7 +1369,8 @@ def _assemble_nonlinear_system_unchecked(
     precomputed_K = {}
 
     for key, elem_list in groups.items():
-        num_nodes, thickness, drilling_stabilization, _reduced_integration, _hourglass_stabilization, material_name = key
+        (num_nodes, thickness, drilling_stabilization, _reduced_integration,
+         _hourglass_stabilization, material_name, assumed_strain_group) = key
         material = model.get_material(material_name)
         E = float(material.elastic_modulus)
         nu = float(material.poisson_ratio)
@@ -1417,7 +1422,19 @@ def _assemble_nonlinear_system_unchecked(
             plastic_strain_batch[idx] = state["plastic_strain"]
             alpha_batch[idx] = state["alpha"]
 
-        F_int_batch, K_T_batch, ep_new, alpha_new, layer_strain_batch = batch_shell_nonlinear_response(
+        # Qualified plastic Q4 shells evaluate the layered return map at the
+        # hybrid assumed strain (see _q4_assumed_strain_plasticity).
+        batch_kernel = batch_shell_nonlinear_response
+        if assumed_strain_group:
+            offsets = np.asarray([
+                _q4_assumed_strain.offset_operator(element, mesh, material)
+                for _elem_id, element in elem_list
+            ])
+
+            def batch_kernel(*arguments):
+                return _q4_assumed_strain.kernel_batch(*arguments, offsets)[:5]
+
+        F_int_batch, K_T_batch, ep_new, alpha_new, layer_strain_batch = batch_kernel(
             u_elem_batch,
             T0_batch,
             B_m_all_batch,
@@ -1467,6 +1484,7 @@ def _assemble_nonlinear_system_unchecked(
                 direct_admission = (element._elastic_increment_admitted
                                     if type(element) is _QualifiedE4PLShellElement else None)
                 if (callable(direct_builder) and callable(direct_admission)
+                        and not assumed_strain_group
                         and direct_admission(mesh, material, committed_states.get(elem_id))):
                     # Prepare both independent baselines inside the guarded
                     # response, under its original pre-preparation snapshot.

@@ -40,6 +40,75 @@ def _tilted_shell_model() -> FEModel:
     return model
 
 
+def _legacy_tilted_shell_model() -> FEModel:
+    """Tilted shell on the legacy element (batch-B elastic path; see _legacy_panel)."""
+
+    model = _tilted_shell_model()
+    element = model.mesh.elements[1]
+    from anysolver.elements import create_shell_element
+
+    model.mesh.elements[1] = create_shell_element(
+        1, list(element.node_ids), element.material_name, thickness=element.thickness,
+        formulation="legacy")
+    return model
+
+
+def _legacy_panel(*args, **kwargs) -> FEModel:
+    """Panel on the legacy compatible shell, which keeps the batch-B elastic path.
+
+    Single elastic law (owner decision 2026-10-23): planar isotropic qualified
+    Q4 elements run the assumed-strain kernel and no longer use the batch-B
+    elastic fast path, so its coverage is exercised on legacy shells.
+    """
+
+    from anysolver.elements import create_shell_element
+
+    model = generate_simple_panel_mesh(*args, **kwargs)
+    for element_id, element in list(model.mesh.elements.items()):
+        model.mesh.elements[element_id] = create_shell_element(
+            element_id, list(element.node_ids), element.material_name,
+            thickness=element.thickness, formulation="legacy")
+    return model
+
+
+def test_planar_qualified_q4_uses_single_law_batch_not_batch_b() -> None:
+    model = generate_simple_panel_mesh(1.0, 0.6, 0.01, num_divisions_x=2, num_divisions_y=1)
+    clear_nonlinear_assembly_cache(model)
+    plan = get_nonlinear_assembly_plan(model, 5)
+    assert plan.shell_batches
+    for batch in plan.shell_batches:
+        assert batch.key[0] == "isotropic_q4_assumed_strain_plastic"
+        assert batch.has_plasticity is False
+        assert getattr(batch, "_batch_b_elastic", False) is False
+    # Execution check: the single-law batch kernel body runs, and its result is
+    # what the plan assembles (equal to the scalar element responses).
+    import sys
+    from anysolver import _q4_assumed_strain_plasticity as assumed
+
+    rng = np.random.default_rng(7)
+    displacement = 1e-3 * rng.standard_normal(model.mesh.dof_manager.total_dofs)
+    calls = []
+    code = assumed.kernel_batch.__code__
+
+    def observe(frame, event, value):
+        if event == "return" and frame.f_code is code:
+            calls.append(int(np.asarray(frame.f_locals["u_elem_batch"]).shape[0]))
+
+    previous = sys.getprofile()
+    sys.setprofile(observe)
+    try:
+        force, _tangent, _states = plan.assemble(displacement, {}, tangent=True)
+    finally:
+        sys.setprofile(previous)
+    assert calls == [model.mesh.num_elements]
+    scalar = np.zeros_like(force)
+    for element in model.mesh.elements.values():
+        dofs = np.asarray(element.get_dof_mapping(model.mesh))
+        material = model.get_material(element.material_name)
+        scalar[dofs] += np.asarray(element.compute_nonlinear_response(
+            model.mesh, material, displacement[dofs], None, 5, False)[0])
+    np.testing.assert_allclose(force, scalar, rtol=0.0, atol=1e-12 * np.abs(scalar).max())
+
 def test_batch_b_is_active() -> None:
     status = nonlinear_performance_status()
     assert status["installed"] is True
@@ -68,7 +137,7 @@ def test_tilted_elastic_shell_matches_legacy() -> None:
 
 
 def test_elastic_batch_releases_history_work_arrays() -> None:
-    model = generate_simple_panel_mesh(
+    model = _legacy_panel(
         1.2, 0.8, 0.01, num_divisions_x=2, num_divisions_y=2
     )
     clear_nonlinear_assembly_cache(model)
@@ -92,7 +161,7 @@ def test_isotropic_batch_build_reuses_one_constitutive_matrix(
 ) -> None:
     import anysolver.nonlinear_performance_batch_b as batch_b
 
-    model = generate_simple_panel_mesh(
+    model = _legacy_panel(
         1.2, 0.8, 0.01, num_divisions_x=4, num_divisions_y=2
     )
     calls = 0
@@ -127,7 +196,7 @@ def test_isotropic_batch_build_reuses_one_constitutive_matrix(
 
 
 def test_elastic_batch_does_not_overwrite_recovered_stress_with_zero() -> None:
-    model = _tilted_shell_model()
+    model = _legacy_tilted_shell_model()
     displacement = np.zeros(model.mesh.dof_manager.total_dofs, dtype=float)
     displacement[model.mesh.get_node(2).dofs[0]] = 2.0e-4
     _force, _tangent, states = nonlinear_static._assemble_nonlinear_system(
@@ -215,7 +284,7 @@ def test_final_result_recovers_elastic_layer_state_once() -> None:
 
 
 def test_batch_b_reuses_plan_buffers() -> None:
-    model = generate_simple_panel_mesh(
+    model = _legacy_panel(
         1.0, 0.6, 0.01, num_divisions_x=2, num_divisions_y=1
     )
     plan = get_nonlinear_assembly_plan(model, 5)

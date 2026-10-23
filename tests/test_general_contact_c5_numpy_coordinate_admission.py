@@ -56,15 +56,46 @@ def observe_direct_returns():
         sys.setprofile(previous)
 
 
+@contextmanager
+def observe_single_law_and_direct_returns():
+    """Observe the single-law kernel and the retired direct body (no replacement)."""
+    from anysolver import _q4_assumed_strain_plasticity as assumed
+
+    kernel_code = assumed.kernel_batch.__code__
+    direct_code = inspect.getclosurevars(
+        qualified.QualifiedE4PLShellElement._elastic_increment_response
+    ).nonlocals["method"].__code__
+    direct_rows, kernel_rows = [], []
+    previous = sys.getprofile()
+    assert previous is None
+
+    def observe(frame, event, value):
+        if event != "return":
+            return
+        if frame.f_code is kernel_code:
+            kernel_rows.append(int(np.asarray(frame.f_locals["u_elem_batch"]).shape[0]))
+        elif frame.f_code is direct_code:
+            direct_rows.append(id(frame.f_locals["self"]))
+    sys.setprofile(observe)
+    try:
+        yield direct_rows, kernel_rows
+    finally:
+        sys.setprofile(previous)
+
+
 @pytest.mark.parametrize("route", ["scalar", "batch"], ids=["scalar", "batch"])
 def test_original_builder_cold_direct_activation(route):
+    # Retargeted 2026-10-23 (single elastic law): the original C5 builder inputs
+    # now reach the single-law kernel (one batched call for all four elements,
+    # one scalar call for one element); the retired direct elastic route must
+    # not run for qualified Q4.
     model, elements, material = production_case()
     before = coordinate_records(model, elements)
     assert all(type(values[1]) is np.float64 and type(values[2]) is np.float64
                for _, values in before)
     assert all(vars(e)["_qualified_components"] is None for e in elements)
     displacement = np.linspace(-1e-5, 1e-5, model.mesh.dof_manager.total_dofs)
-    with observe_direct_returns() as rows:
+    with observe_single_law_and_direct_returns() as (rows, kernel_rows):
         if route == "scalar":
             element = elements[0]
             mapping = element.get_dof_mapping(model.mesh)
@@ -75,10 +106,8 @@ def test_original_builder_cold_direct_activation(route):
                 force, tangent, _states = _assemble_nonlinear_system(
                     model, displacement, {}, 5, tangent=True,
                     kinematics="von_karman", require_full_coordinates=True)
-    expected = {id(elements[0])} if route == "scalar" else {id(e) for e in elements}
-    assert {row[0] for row in rows} == expected
-    assert len(rows) == len(expected)
-    assert all(nonnull and batch == (route == "batch") for _, nonnull, batch in rows)
+    assert rows == []
+    assert kernel_rows == ([1] if route == "scalar" else [len(elements)])
     assert np.all(np.isfinite(force))
     assert tangent.shape[0] == force.size
     unchanged_coordinates(model, before)
@@ -240,3 +269,41 @@ def test_defining_class_cell_change_refuses_and_restores():
     finally:
         cell.cell_contents = original
     assert raw(element, model.mesh, material, snapshot)
+
+# Single elastic law (owner decision 2026-10-23): the production route for a
+# planar qualified Q4 is the assumed-strain kernel; the two lifecycle checks
+# above (which exercise the retained, guarded direct helper) are repeated on the
+# public production route, which must fail closed in the same way.
+def test_numpy_node_mutation_during_single_law_response_cannot_publish():
+    model, elements, material = production_case()
+    element = elements[0]
+    node = model.mesh.nodes[element.node_ids[0]]
+    state = element.init_nonlinear_state(5)
+    saved = copy.deepcopy(state)
+    element.compute_nonlinear_response(model.mesh, material, np.zeros(24), state, 5, True)
+    class MutatingVector:
+        def __array__(self, dtype=None, copy=None):
+            node.y = node.y + np.float64(.001)
+            return np.zeros(24, dtype=dtype)
+    with pytest.raises((RuntimeError, ValueError), match="changed|incompatible|authority"):
+        element.compute_nonlinear_response(model.mesh, material, MutatingVector(), state, 5, True)
+    for key in saved:
+        np.testing.assert_array_equal(state[key], saved[key])
+
+
+def test_numpy_coordinate_cancelled_single_law_observation_keeps_state():
+    model, elements, material = production_case()
+    element = elements[0]
+    before = coordinate_records(model, elements)
+    state = element.init_nonlinear_state(5)
+    saved = copy.deepcopy(state)
+    class Cancelled(BaseException):
+        pass
+    class CancelledVector:
+        def __array__(self, dtype=None, copy=None):
+            raise Cancelled()
+    with pytest.raises(Cancelled):
+        element.compute_nonlinear_response(model.mesh, material, CancelledVector(), state, 5, True)
+    for key in saved:
+        np.testing.assert_array_equal(state[key], saved[key])
+    unchanged_coordinates(model, before)

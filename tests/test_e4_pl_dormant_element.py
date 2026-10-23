@@ -657,17 +657,18 @@ def test_orthotropic_elastic_and_plastic_state_paths_keep_qualified_tangent() ->
     displacement = np.zeros(24)
     displacement[6] = 0.004
     displacement[12] = 0.004
-    candidate_force, candidate_tangent, candidate_state = candidate.compute_nonlinear_response(
-        mesh, material, displacement, num_layers=3, tangent=True
-    )
+    # Owner decision 2026-10-23: plastic qualified Q4 outside the assumed-strain
+    # route scope is refused (the compatible-strain plastic route with the
+    # qualified correction is unstable once layers yield).
+    from anysolver._q4_assumed_strain_plasticity import UnsupportedQ4PlasticRouteError
+    with pytest.raises(UnsupportedQ4PlasticRouteError, match="orthotropic/Hill48"):
+        candidate.compute_nonlinear_response(
+            mesh, material, displacement, num_layers=3, tangent=True
+        )
     legacy_force, legacy_tangent, legacy_state = legacy.compute_nonlinear_response(
         mesh, material, displacement, num_layers=3, tangent=True
     )
-    assert candidate_tangent is not None and legacy_tangent is not None
-    assert np.all(np.isfinite(candidate_force))
-    assert np.all(np.isfinite(candidate_tangent))
-    assert np.array_equal(candidate_state["alpha"], legacy_state["alpha"])
-    assert np.array_equal(candidate_state["plastic_strain"], legacy_state["plastic_strain"])
-    correction = candidate._qualified_linear_correction(mesh, material, 3)
-    assert np.allclose(candidate_force - legacy_force, correction @ displacement)
-    assert np.allclose(candidate_tangent - legacy_tangent, correction)
+    assert legacy_tangent is not None and np.all(np.isfinite(legacy_force))
+    assert np.max(legacy_state["alpha"]) > 0.0
+
+

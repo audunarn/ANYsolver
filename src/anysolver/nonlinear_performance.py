@@ -40,6 +40,7 @@ import numpy as np
 from scipy import sparse
 
 from .jit_compiler import njit
+from . import _q4_assumed_strain_plasticity as _q4_assumed_strain
 from .initial_field_state import state_has_active_initial_fields
 from .nonlinear_analysis_diagnostics import record_nonlinear_assembly_execution
 from .nonlinear_element_evaluation import (
@@ -62,6 +63,9 @@ from .nonlinear_state import (
 # Keeping the flag here prevents the legacy/vectorized constitutive kernel from
 # receiving orthotropic or pre-integrated sections when Numba is unavailable.
 _EXTENDED_ELASTIC_S4_BATCHES = False
+
+# Batch kind of qualified plastic Q4 shells on the assumed-strain route.
+_Q4_ASSUMED_STRAIN_SHELL_KIND = "isotropic_q4_assumed_strain_plastic"
 
 if TYPE_CHECKING:
     from .fe_core import FEModel, FEMesh
@@ -363,6 +367,27 @@ class _ShellBatchPlan:
     def has_plasticity(self) -> bool:
         return getattr(self.material, "hardening_curve", None) is not None
 
+    def _shell_kernel(self) -> Any:
+        """Return the batch kernel for this plan's constitutive route.
+
+        Qualified plastic Q4 batches evaluate the layered return map at the
+        hybrid assumed strain (:mod:`anysolver._q4_assumed_strain_plasticity`);
+        every other batch keeps the ordinary compatible kernel.
+        """
+
+        from .vectorized_nonlinear import batch_shell_nonlinear_response
+
+        if not self.key or self.key[0] != _Q4_ASSUMED_STRAIN_SHELL_KIND:
+            return batch_shell_nonlinear_response
+        offsets = self.__dict__.get("_q4_assumed_strain_offsets")
+        if offsets is None:
+            raise RuntimeError("qualified Q4 assumed-strain batch lacks its offsets")
+
+        def kernel(*arguments: Any) -> Any:
+            return _q4_assumed_strain.kernel_batch(*arguments, offsets)[:5]
+
+        return kernel
+
     @classmethod
     def build(
         cls,
@@ -431,7 +456,7 @@ class _ShellBatchPlan:
                 linear_corrections[batch_index] = correction
 
         material = model.get_material(first.material_name)
-        return cls(
+        plan = cls(
             key=key,
             element_ids=element_ids,
             elements=tuple(elements),
@@ -462,6 +487,14 @@ class _ShellBatchPlan:
             plastic_work=np.zeros((n_elem, n_gp * num_layers, 3), dtype=float),
             alpha_work=np.zeros((n_elem, n_gp * num_layers), dtype=float),
         )
+        if key and key[0] == _Q4_ASSUMED_STRAIN_SHELL_KIND:
+            offsets = np.asarray([
+                _q4_assumed_strain.offset_operator(element, model.mesh, material)
+                for element in elements
+            ])
+            offsets.setflags(write=False)
+            plan.__dict__["_q4_assumed_strain_offsets"] = offsets
+        return plan
 
     def evaluate(
         self,
@@ -488,7 +521,7 @@ class _ShellBatchPlan:
                 self.plastic_work[index] = np.asarray(state["plastic_strain"], dtype=float)
                 self.alpha_work[index] = np.asarray(state["alpha"], dtype=float)
 
-        F_batch, K_batch, ep_new, alpha_new, layer_strain = batch_shell_nonlinear_response(
+        F_batch, K_batch, ep_new, alpha_new, layer_strain = self._shell_kernel()(
             self.u_work,
             self.T0,
             self.B_m,
@@ -639,7 +672,7 @@ class _ShellBatchPlan:
         committed = state_batch.committed_arrays()
         self.u_work[:] = np.asarray(displacements, dtype=float)[self.dof_mappings]
         F_batch, K_batch, ep_new, alpha_new, layer_strain = (
-            batch_shell_nonlinear_response(
+            self._shell_kernel()(
                 self.u_work,
                 self.T0,
                 self.B_m,
@@ -1008,6 +1041,10 @@ class NonlinearAssemblyPlan:
                         else "isotropic"
                     )
                 )
+                if shell_kind == "isotropic" and _q4_assumed_strain.route(
+                    element, mesh, material
+                ):
+                    shell_kind = _Q4_ASSUMED_STRAIN_SHELL_KIND
                 section = getattr(element, "shell_section", None)
                 section_key = (
                     None

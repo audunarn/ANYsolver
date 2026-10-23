@@ -37,6 +37,7 @@ from . import plasticity as _plasticity_module
 from . import shell_sections as _shell_sections_module
 from . import vectorized_nonlinear as _elastic_increment_module
 from . import _compensated_contractions as _local_contractions
+from . import _q4_assumed_strain_plasticity as _q4_assumed_strain
 from ._qualified_authority_epoch import (
     AuthorityEpochMeta,
     make_authority_epoch_manager,
@@ -2553,6 +2554,15 @@ def _solve_stationary_system(
     }
 
 
+
+def _initial_offsets_or_none(element, state, cache, layers, material):
+    offsets = _q4_assumed_strain.layer_offsets(
+        state, len(cache["gp"]), int(layers), float(element.thickness),
+        _plasticity_module.plane_stress_elastic_matrix(
+            float(material.elastic_modulus), float(material.poisson_ratio)),
+    )
+    return None if offsets is None else offsets[None]
+
 class QualifiedE4PLShellElement(
     ShellElement,
     metaclass=AuthorityEpochMeta,
@@ -4333,6 +4343,108 @@ class QualifiedE4PLShellElement(
             and getattr(material, "hill_yield", None) is None
         )
 
+    def _assumed_strain_kernel(
+        self,
+        mesh: Any,
+        material: Any,
+        vector: np.ndarray,
+        state: Optional[Mapping[str, Any]],
+        layers: int,
+        tangent: bool,
+        *,
+        return_components: bool = False,
+    ) -> Any:
+        """Assumed-strain layered plastic kernel, or ``None`` when not applicable.
+
+        Supported plastic elements (see :mod:`._q4_assumed_strain_plasticity`)
+        replace the inherited compatible kernel by the same batch kernel the
+        assembly plans use, so scalar, reference and planned evaluations share
+        one floating-point implementation.  The qualified ``Cr`` delta is
+        added by the caller exactly as on the historical route.
+        """
+
+        if _q4_assumed_strain.require_supported(self, mesh, material):
+            _q4_assumed_strain.require_state_supported(self, state)
+        elif not _q4_assumed_strain.elastic_route(self, mesh, material):
+            return None
+        cache = self._nonlinear_geometry(mesh)
+        points = len(cache["gp"]) * int(layers)
+        if state is None:
+            plastic = np.zeros((points, 3), dtype=np.float64)
+            alpha = np.zeros(points, dtype=np.float64)
+        else:
+            plastic = np.asarray(state["plastic_strain"], dtype=np.float64)
+            alpha = np.asarray(state["alpha"], dtype=np.float64)
+        if (
+            plastic.shape != (points, 3)
+            or alpha.shape != (points,)
+            or not np.all(np.isfinite(plastic))
+            or not np.all(np.isfinite(alpha))
+        ):
+            raise ValueError("qualified Q4 plastic state arrays are incompatible")
+        offsets = _q4_assumed_strain.offset_operator(self, mesh, material)
+
+        def one(name: str) -> np.ndarray:
+            return np.asarray(cache[name], dtype=np.float64)[None]
+
+        force, stiffness, plastic_new, alpha_new, layer_strain, extras = (
+            _q4_assumed_strain.kernel_batch(
+                np.asarray(vector, dtype=np.float64).reshape(1, self.total_dofs),
+                one("T0"),
+                one("B_m_all"),
+                one("B_b_all"),
+                one("B_d_all"),
+                one("Gw_all"),
+                one("detw_all"),
+                one("B_s_all"),
+                one("detw_shear_all"),
+                float(material.elastic_modulus),
+                float(material.poisson_ratio),
+                float(material.shear_modulus),
+                float(self.thickness),
+                float(self.drilling_stabilization),
+                bool(tangent),
+                material.hardening_curve,
+                plastic[None],
+                alpha[None],
+                int(layers),
+                offsets[None],
+                return_geometric=bool(return_components and tangent),
+                initial_layer_offsets=(
+                    None
+                    if material.hardening_curve is not None
+                    else _initial_offsets_or_none(self, state, cache, layers, material)
+                ),
+            )
+        )
+        trial_state = {
+            "plastic_strain": plastic_new[0].copy(),
+            "alpha": alpha_new[0].copy(),
+            "layer_strain": np.asarray(layer_strain, dtype=np.float64).copy(),
+            "layer_strain_material": np.asarray(layer_strain, dtype=np.float64).copy(),
+            "kinematic_layer_strain": extras["kinematic_layer_strain"][0].copy(),
+            "layer_stress": extras["layer_stress"][0].copy(),
+        }
+        if state is not None:
+            # Inactive (all-zero, provenance-free) initial fields are carried
+            # unchanged, exactly as the inherited kernel carries them.
+            for key in _Q4_INITIAL_STATE_KEYS:
+                if key in state:
+                    trial_state[key] = copy.deepcopy(state[key])
+        total = None if not tangent else np.asarray(stiffness[0], dtype=np.float64)
+        if not return_components:
+            return np.asarray(force[0], dtype=np.float64), total, trial_state
+        if total is None:
+            raise RuntimeError("qualified Q4 components require a tangent")
+        geometric = np.asarray(extras["geometric"][0], dtype=np.float64)
+        geometric = 0.5 * (geometric + geometric.T)
+        return (
+            np.asarray(force[0], dtype=np.float64),
+            total,
+            trial_state,
+            {"material": total - geometric, "geometric": geometric},
+        )
+
     def _replay_accepted_algorithmic_response(
         self,
         mesh: Any,
@@ -4365,16 +4477,26 @@ class QualifiedE4PLShellElement(
         # without that qualified cache; the exact baseline delta is applied
         # below by the Q4 wrapper, just as in ordinary Newton evaluation.
         self._hourglass_stiffness_matrix = None
-        inherited = ShellElement.compute_nonlinear_response(
-            self,
+        inherited = self._assumed_strain_kernel(
             mesh,
             material,
             np.asarray(committed_u_elem, dtype=np.float64),
             evaluation_state,
             layers,
             True,
-            _return_tangent_components=return_components,
+            return_components=return_components,
         )
+        if inherited is None:
+            inherited = ShellElement.compute_nonlinear_response(
+                self,
+                mesh,
+                material,
+                np.asarray(committed_u_elem, dtype=np.float64),
+                evaluation_state,
+                layers,
+                True,
+                _return_tangent_components=return_components,
+            )
         candidate = inherited[2]
         if parent is not None:
             if not isinstance(candidate, Mapping):
@@ -6185,9 +6307,16 @@ class QualifiedE4PLShellElement(
 
         _validate_q4_quadrature_authority(self)
         layers = _qualified_q4_layer_count(num_layers)
+        coordinates_before = np.array(self.get_node_coordinates(mesh), dtype=float, copy=True)
         observed_vector = np.asarray(u_elem, dtype=float)
         if _qualified_runtime_post_observation is not None:
             _qualified_runtime_post_observation()
+        if not np.array_equal(
+            np.asarray(self.get_node_coordinates(mesh), dtype=float), coordinates_before
+        ):
+            raise RuntimeError(
+                "qualified Q4 node coordinates changed during input observation"
+            )
         vector = observed_vector.reshape(self.total_dofs)
         direct_state_admissible = state is None or type(state) is dict
         if state is not None:
@@ -6199,19 +6328,25 @@ class QualifiedE4PLShellElement(
                 post_observation=_qualified_runtime_post_observation,
             )
         self._hourglass_stiffness_matrix = None
-        inherited = _QUALIFIED_Q4_BASE_NONLINEAR_KERNEL(
-            self,
-            mesh,
-            material,
-            vector,
-            state,
-            layers,
-            tangent,
-            _return_tangent_components=_return_tangent_components,
-            _qualified_runtime_post_observation=(
-                _qualified_runtime_post_observation
-            ),
+        inherited = self._assumed_strain_kernel(
+            mesh, material, vector, state, layers, tangent,
+            return_components=_return_tangent_components,
         )
+        assumed_route = inherited is not None
+        if inherited is None:
+            inherited = _QUALIFIED_Q4_BASE_NONLINEAR_KERNEL(
+                self,
+                mesh,
+                material,
+                vector,
+                state,
+                layers,
+                tangent,
+                _return_tangent_components=_return_tangent_components,
+                _qualified_runtime_post_observation=(
+                    _qualified_runtime_post_observation
+                ),
+            )
         if _return_tangent_components:
             force, inherited_tangent, trial_state, inherited_components = inherited
         else:
@@ -6233,7 +6368,7 @@ class QualifiedE4PLShellElement(
         )
         direct = (self._elastic_increment_response(
             mesh, material, vector, state, tangent,
-        ) if direct_state_admissible else None)
+        ) if direct_state_admissible and not assumed_route else None)
         force = (np.asarray(force, dtype=float) + correction @ vector
                  if direct is None else direct[0])
         if not tangent:
@@ -6353,7 +6488,9 @@ class QualifiedE4PLShellElement(
             ),
             "qualified_linear_material_correction": correction.copy(),
         }
-        direct = self._elastic_increment_response(
+        direct = None if _q4_assumed_strain.elastic_route(
+            self, mesh, material
+        ) else self._elastic_increment_response(
             mesh, material, displacement, committed_state, True)
         if direct is not None:
             force, actual_total, components["material"], components["geometric"] = direct
@@ -7520,6 +7657,7 @@ def _bind_q4_exact_quadrature_boundary(method: Any) -> Any:
             _elastic_increment_module,
             _local_contractions,
             _local_contractions._native,
+            _q4_assumed_strain,
         )
     )
     expected_class = QualifiedE4PLShellElement
