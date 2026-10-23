@@ -82,15 +82,14 @@ Resume command for the unfinished R4 baseline shards:
 
 ## OPEN-LOW items (Codex static review of 01cef1443, coordinator triage 2026-10-23)
 
-* tests/test_e4_pl_s3_mixed_mesh_manifest.py (~509): the governed manifest was
+* EXCEPTION (granted by coordinator 2026-10-23): tests/test_e4_pl_s3_mixed_mesh_manifest.py (~509): the governed manifest was
   already red at base (the binding record bytes no longer match
   Q4_SOURCE_BINDING_SHA256). Its two pins on the retargeted C5 test files are
   now also stale. The predecessor binding is kept unchanged as history; a
   successor record is owed with the next full source rebinding (not a
   mechanical one-line change).
-* tests/test_general_contact_c5_numpy_coordinate_admission.py (~177,
-  mutation/cancellation) and tests/test_general_contact_compensated_contractions.py
-  (~115, compensated dependency) still call the retired
-  `_elastic_increment_response` helper directly. The helper still exists and is
-  guarded, so the checks are valid for it. They are not yet retargeted through
-  the single-law production route.
+* RESOLVED: the two lifecycle checks are repeated on the single-law production
+  route: node mutation during input observation (now refused by a coordinate guard
+  in the element core, which was fail-open on the new route), cancelled observation,
+  and compensated-dependency substitution. The original direct-helper tests stay
+  for the retained helper.

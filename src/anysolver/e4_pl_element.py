@@ -6307,9 +6307,16 @@ class QualifiedE4PLShellElement(
 
         _validate_q4_quadrature_authority(self)
         layers = _qualified_q4_layer_count(num_layers)
+        coordinates_before = np.array(self.get_node_coordinates(mesh), dtype=float, copy=True)
         observed_vector = np.asarray(u_elem, dtype=float)
         if _qualified_runtime_post_observation is not None:
             _qualified_runtime_post_observation()
+        if not np.array_equal(
+            np.asarray(self.get_node_coordinates(mesh), dtype=float), coordinates_before
+        ):
+            raise RuntimeError(
+                "qualified Q4 node coordinates changed during input observation"
+            )
         vector = observed_vector.reshape(self.total_dofs)
         direct_state_admissible = state is None or type(state) is dict
         if state is not None:

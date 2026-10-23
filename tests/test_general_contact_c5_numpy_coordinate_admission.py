@@ -269,3 +269,41 @@ def test_defining_class_cell_change_refuses_and_restores():
     finally:
         cell.cell_contents = original
     assert raw(element, model.mesh, material, snapshot)
+
+# Single elastic law (owner decision 2026-10-23): the production route for a
+# planar qualified Q4 is the assumed-strain kernel; the two lifecycle checks
+# above (which exercise the retained, guarded direct helper) are repeated on the
+# public production route, which must fail closed in the same way.
+def test_numpy_node_mutation_during_single_law_response_cannot_publish():
+    model, elements, material = production_case()
+    element = elements[0]
+    node = model.mesh.nodes[element.node_ids[0]]
+    state = element.init_nonlinear_state(5)
+    saved = copy.deepcopy(state)
+    element.compute_nonlinear_response(model.mesh, material, np.zeros(24), state, 5, True)
+    class MutatingVector:
+        def __array__(self, dtype=None, copy=None):
+            node.y = node.y + np.float64(.001)
+            return np.zeros(24, dtype=dtype)
+    with pytest.raises((RuntimeError, ValueError), match="changed|incompatible|authority"):
+        element.compute_nonlinear_response(model.mesh, material, MutatingVector(), state, 5, True)
+    for key in saved:
+        np.testing.assert_array_equal(state[key], saved[key])
+
+
+def test_numpy_coordinate_cancelled_single_law_observation_keeps_state():
+    model, elements, material = production_case()
+    element = elements[0]
+    before = coordinate_records(model, elements)
+    state = element.init_nonlinear_state(5)
+    saved = copy.deepcopy(state)
+    class Cancelled(BaseException):
+        pass
+    class CancelledVector:
+        def __array__(self, dtype=None, copy=None):
+            raise Cancelled()
+    with pytest.raises(Cancelled):
+        element.compute_nonlinear_response(model.mesh, material, CancelledVector(), state, 5, True)
+    for key in saved:
+        np.testing.assert_array_equal(state[key], saved[key])
+    unchanged_coordinates(model, before)

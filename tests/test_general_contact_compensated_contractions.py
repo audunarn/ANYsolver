@@ -183,3 +183,18 @@ def test_cancelled_vector_observation_does_not_commit_state():
     for key in state:
         np.testing.assert_array_equal(state[key], saved[key])
     assert element.compute_nonlinear_response(model.mesh, material, pose(), state)[1].shape == (24, 24)
+
+
+@pytest.mark.parametrize("dependency", ["primitive", "scalar"], ids=["primitive", "scalar"])
+def test_changed_compensated_dependency_refuses_single_law_route(monkeypatch, dependency):
+    """Single elastic law (owner decision 2026-10-23): the public production
+    route of a planar qualified Q4 must refuse the same dependency substitution
+    as the retained direct helper above (fail closed)."""
+
+    model, element, material = case()
+    element.compute_nonlinear_response(model.mesh, material, pose(), None, 5, True)
+    module, name = ((arithmetic, "dot") if dependency == "primitive" else
+                    (elements, "_compensated_elastic_zero_tangent"))
+    with pytest.raises((ValueError, RuntimeError, TypeError)):
+        monkeypatch.setattr(module, name, lambda *args, **kwargs: None)
+        element.compute_nonlinear_response(model.mesh, material, pose(), None, 5, True)
