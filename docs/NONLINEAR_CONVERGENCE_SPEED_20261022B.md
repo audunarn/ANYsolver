@@ -27,3 +27,24 @@ Harness: small plates (2x2..8x8), cantilever beams, shallow curved panels; each 
   (same rotation matrix); translations identical. Output normalisation candidate.
 - Corotational/qualified shell evaluation cost is dominated by the pure-Python-contract contractions (~19 ms/element evaluation).
 - Hard impact line search (contact.py) still caps corrections rather than a coupled merit search (prior note).
+
+## Overnight outcome (2026-10-22/23)
+- Items 1-3 above (native contractions, line_search default `rescue`, NaN/inf refusal) are on local main (b7494ed66).
+- Plastic-plate stall: ROOT CAUSE FOUND. The default Q4 shell added an indefinite constant elastic correction
+  `Cr = K_hybrid - K_legacy` that stayed elastic under plastic flow, so the element stiffness went negative and the
+  converged states on main were spurious in-plane plastic mechanisms (1-step 0.131 / 2-step 0.382 / 20-step 0.190 were
+  all wrong). Fix (branch claude/plastic-stall-20261022, NOT merged: last Codex round still OPEN, see
+  docs/OVERNIGHT_20261022_STATUS.md on that branch): apply Cr to the elastic displacement part only,
+  `F_c = Cr(u - u_p)`, exact nonsymmetric tangent; all step counts 1..100 complete, centre deflection 0.04358 -> 0.04310 m
+  (1.1 % spread, 0.25 % for >= 2 steps). Cost: plastic state identity (old plastic states refused), general matrix class,
+  flagged symmetrised views for buckling/modal. Eight Codex rounds each found one more route by which a legacy plastic
+  state could enter a solve; stopped at the retry limit.
+- Corotational speed (claude/t34-merge-20261022): authority-guard overhead, not arithmetic, dominates. Exact-type
+  float/ndarray recheck skips and a pre-screen hoist are bit-identical; a plain-attribute fast path was REMOVED after
+  Codex found 4 P1 integrity holes. Fused Numba shell kernel (bitwise identical, FMA/pow-guarded self-check):
+  corot 8x8 14.3 -> 10.4 s, arc-length panel 2.64 -> 2.26 s.
+- 2*pi rotation offsets: reproduced (simply supported 4x4, t = 1 mm, 1 step); NOT normalised: DOFs are updated
+  additively, so wrapping changes later increments (5e-2 for a 0.05 step), restarts and post-processing. Compare with
+  `rotation_matrix_from_vector`.
+- Remaining cost is the authority guards (21-60 % of every case; e4_pl_s3_state.signature, formulation_class_guard,
+  lifecycle API checks): algorithmic memoisation inside authority code, owner decision.
