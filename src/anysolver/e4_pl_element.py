@@ -7519,6 +7519,7 @@ def _bind_q4_exact_quadrature_boundary(method: Any) -> Any:
             _shell_sections_module,
             _elastic_increment_module,
             _local_contractions,
+            _local_contractions._native,
         )
     )
     expected_class = QualifiedE4PLShellElement

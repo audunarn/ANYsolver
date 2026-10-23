@@ -68,7 +68,22 @@ def _run(function, *args):
     return ("ok", np.asarray(result).tobytes())
 
 
-def test_randomized_zero_tangent_matches_reference():
+def _count_kernel(monkeypatch, name):
+    """Count kernel calls by status; a reference fallback can never move the success count."""
+    real = getattr(cc._native, name)
+    counts = {0: 0, 1: 0}
+
+    def counted(*args):
+        status = real(*args)
+        counts[status] += 1
+        return status
+
+    monkeypatch.setattr(cc._native, name, counted)
+    return counts
+
+
+def test_randomized_zero_tangent_matches_reference(monkeypatch):
+    counts = _count_kernel(monkeypatch, "fused_shell_zero_tangent")
     rng = np.random.default_rng(20261023)
     fused_ok = 0
     for case in range(CASES):
@@ -82,14 +97,18 @@ def test_randomized_zero_tangent_matches_reference():
         if case % 9 == 4:
             _poison(rng, [*geometry.values(), membrane, bending, shear])
         want = _run(cc._shell_zero_tangent_reference, geometry, membrane, bending, shear, drill)
+        before = counts[0]
         got = _run(cc.shell_zero_tangent, geometry, membrane, bending, shear, drill)
         assert got == want, (case, mode, n, ng, ns)
-        fused_ok += want[0] == "ok"
+        served = counts[0] - before
+        assert served == (1 if want[0] == "ok" else 0) or (mode == 2 and served == 0), (case, mode)
+        fused_ok += served
     if CASES >= 1000:
         assert fused_ok > CASES // 5
 
 
-def test_randomized_elastic_increment_matches_reference():
+def test_randomized_elastic_increment_matches_reference(monkeypatch):
+    counts = _count_kernel(monkeypatch, "fused_elastic_increment")
     rng = np.random.default_rng(20261024)
     fused_ok = 0
     for case in range(CASES):
@@ -110,9 +129,16 @@ def test_randomized_elastic_increment_matches_reference():
                 return fused
             return cc.elastic_increment_reference(u_elem, geometry, lambda: constitutive, tangent)
 
+        before = counts[0]
         got = _run(routed)
         assert got == want, (case, mode, n, ng, tangent)
-        fused_ok += want[0] == "ok"
+        served = counts[0] - before
+        # Every case the reference can evaluate (with a gauss point) must be served by the
+        # kernel itself; only extreme-magnitude cases may be refused where the reference's
+        # own native step also refused and its numpy replay succeeded.
+        expected = 1 if want[0] == "ok" and ng > 0 else 0
+        assert served == expected or (mode == 2 and served == 0), (case, mode)
+        fused_ok += served
     if CASES >= 1000:
         assert fused_ok > CASES // 5
 
@@ -203,3 +229,149 @@ def test_fused_backend_flag_is_authority_guarded():
     finally:
         cc._USE_FUSED = True
     q.require_q4_kernel_authority()
+
+
+# --- review round 1 regressions -------------------------------------------------
+def _outcome(function, *args, **kwargs):
+    """Result bytes or exception identity, without touching the numpy error policy."""
+    try:
+        result = function(*args, **kwargs)
+    except Exception as exc:  # noqa: BLE001 - exception identity is compared
+        return ("error", type(exc), str(exc))
+    if isinstance(result, tuple):
+        return ("ok",) + tuple(np.asarray(r).tobytes() for r in result)
+    return ("ok", np.asarray(result).tobytes())
+
+
+@pytest.mark.parametrize("kernel", ["fused_elastic_increment", "fused_shell_zero_tangent"])
+def test_substituted_native_kernel_is_refused_by_the_e4_lifecycle(monkeypatch, kernel):
+    from test_general_contact_c5_elastic_increment import case, pose
+    model, element, material = case()
+    run = lambda: element._elastic_increment_response(  # noqa: E731
+        model.mesh, material, pose(), None, True, batch_baseline=True)
+    genuine = run()  # the genuine kernels are admitted
+    called = []
+
+    def fabricate(*args):
+        called.append(True)
+        for array in [a for a in args if isinstance(a, np.ndarray) and a.size and a.flags.writeable][-3:]:
+            array[...] = 1.0
+        return 0
+
+    monkeypatch.setattr(cc._native, kernel, fabricate)
+    with pytest.raises((ValueError, RuntimeError, TypeError)):
+        run()
+    assert not called, "the fabricating kernel must be refused before it can produce output"
+    monkeypatch.undo()
+    assert all(np.array_equal(x, y) for x, y in zip(run(), genuine))
+
+
+@pytest.mark.parametrize("name", ["_USE_FUSED", "shell_zero_tangent", "fused_elastic_increment",
+                                  "elastic_increment_reference", "_shell_zero_tangent_reference"])
+def test_substituted_wrapper_or_flag_is_refused_by_the_e4_lifecycle(monkeypatch, name):
+    from test_general_contact_c5_elastic_increment import case, pose
+    model, element, material = case()
+    monkeypatch.setattr(cc, name, False if name == "_USE_FUSED" else (lambda *a, **k: None))
+    with pytest.raises((ValueError, RuntimeError, TypeError)):
+        element._elastic_increment_response(model.mesh, material, pose(), None, True,
+                                            batch_baseline=True)
+
+
+def _conforming(rng=None):
+    rng = rng or np.random.default_rng(5)
+    return _geometry(rng, 6, 2, 2, 1)
+
+
+@pytest.mark.parametrize("field,value", [
+    ("detw_all", np.array(1.0)), ("detw_all", np.ones((2, 1))), ("detw_all", [1.0, 1.0]),
+    ("detw_all", np.ones(2, dtype=object)), ("detw_all", np.ones(3)),
+    ("B_m_all", np.ones((2, 3, 6), dtype=np.float32)), ("B_m_all", np.ones((2, 3, 5))),
+    ("Gw_all", np.ones((2, 6))), ("T0", np.eye(6)[None]), ("T0", np.ones((6, 5))),
+    ("detw_shear_all", np.array(2.0)), ("B_d_all", np.ones((2, 6)))])
+def test_malformed_geometry_goes_to_the_reference_in_reference_order(field, value):
+    geometry = _conforming()
+    geometry[field] = value
+    nan_u = np.zeros(6)
+    nan_u[2] = np.nan
+    for u in (nan_u, np.ones(6) * 1e-3):
+        assert (_outcome(vn.elastic_shell_nonlinear_increment, u, geometry, 2.1e11, 0.3, 0.01)
+                == _outcome(cc.elastic_increment_reference, u, geometry,
+                            lambda: 0.01 * vn.plane_stress_elastic_matrix(2.1e11, 0.3), True))
+    args = (geometry, np.eye(3), np.eye(3), np.eye(2), 0.3)
+    assert _outcome(cc.shell_zero_tangent, *args) == _outcome(cc._shell_zero_tangent_reference, *args)
+
+
+@pytest.mark.parametrize("under", ["raise", "warn", "print"])
+def test_numpy_underflow_policy_is_respected(under):
+    geometry = _conforming()
+    geometry["B_d_all"] = geometry["B_d_all"] * 0 + 1e-200
+    args = (geometry, np.eye(3), np.eye(3), np.eye(2), 1e-200)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        with np.errstate(under=under):
+            want = _outcome(cc._shell_zero_tangent_reference, *args)
+            got = _outcome(cc.shell_zero_tangent, *args)
+    assert got == want
+    if under == "raise":
+        assert want[0] == "error" and want[1] is FloatingPointError
+
+
+def _mutated(kernel, replacements, fastmath=False):
+    """Compile a source-mutated copy of a fused kernel in the native module's namespace."""
+    import inspect
+    import textwrap
+    source = textwrap.dedent(inspect.getsource(kernel.py_func))
+    source = chr(10).join(line for line in source.splitlines() if not line.startswith("@"))
+    for old, new in replacements:
+        assert old in source
+        source = source.replace(old, new)
+    namespace = dict(vars(cc._native))
+    exec(compile(source, "<mutated>", "exec"), namespace)  # noqa: S102 - test-only mutation
+    function = namespace[kernel.py_func.__name__]
+    return cc._native.njit(fastmath=True, cache=False)(function) if fastmath else cc._native.njit(cache=False)(function)
+
+
+def test_self_check_accepts_the_genuine_kernels():
+    assert cc._fused_check(cc._native.fused_shell_zero_tangent, cc._native.fused_elastic_increment)
+
+
+def test_self_check_fails_for_an_always_refusing_kernel():
+    refuse = lambda *args: 1  # noqa: E731
+    assert not cc._fused_check(refuse, cc._native.fused_elastic_increment)
+    assert not cc._fused_check(cc._native.fused_shell_zero_tangent, refuse)
+
+
+def test_self_check_fails_when_the_square_is_x_times_x():
+    bad = [x for x in np.random.default_rng(7).uniform(1.0, 2.0, 60000) if np.float64(x) ** 2 != x * x]
+    if not bad:
+        pytest.skip("this libm squares exactly: pow(x, 2) == x * x for all sampled x")
+    mutated = _mutated(cc._native.fused_elastic_increment,
+                       [("th0 ** two", "th0 * th0"), ("th1 ** two", "th1 * th1")])
+    assert not cc._fused_check(cc._native.fused_shell_zero_tangent, mutated)
+
+
+def test_self_check_fails_for_a_wrong_sign():
+    mutated = _mutated(cc._native.fused_elastic_increment,
+                       [("th0 * gg[1, i] + th1 * gg[0, i]", "th0 * gg[1, i] - th1 * gg[0, i]")])
+    assert not cc._fused_check(cc._native.fused_shell_zero_tangent, mutated)
+
+
+def test_self_check_flags_a_fast_math_variant_if_it_contracts():
+    """fastmath lets LLVM contract multiply-adds into FMA; the check must notice any change."""
+    mutated = _mutated(cc._native.fused_elastic_increment, [], fastmath=True)
+    plain = _mutated(cc._native.fused_elastic_increment, [])
+    assert cc._fused_check(cc._native.fused_shell_zero_tangent, plain)
+    fast_ok = cc._fused_check(cc._native.fused_shell_zero_tangent, mutated)
+    # Contraction is target dependent: when it happens the check must fail; when the
+    # compiler does not contract, the variant is arithmetically identical and passes.
+    differs = False
+    for geometry, _m, _b, _s, _d, u_elem, constitutive in cc._fused_cases():
+        n = geometry["T0"].shape[0]
+        outs = []
+        for kernel in (plain, mutated):
+            f, m, g = np.empty(n), np.zeros((n, n)), np.zeros((n, n))
+            kernel(geometry["T0"], u_elem, constitutive, geometry["B_m_all"], geometry["Gw_all"],
+                   geometry["detw_all"], True, f, m, g, cc._native.POW2, 2.0)
+            outs.append((f.tobytes(), m.tobytes(), g.tobytes()))
+        differs = differs or outs[0] != outs[1]
+    assert fast_ok == (not differs)
