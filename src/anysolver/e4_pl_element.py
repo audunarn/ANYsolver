@@ -4354,9 +4354,12 @@ class QualifiedE4PLShellElement(
         added by the caller exactly as on the historical route.
         """
 
-        if not _q4_assumed_strain.require_supported(self, mesh, material):
+        if _q4_assumed_strain.require_supported(self, mesh, material):
+            _q4_assumed_strain.require_state_supported(self, state)
+        elif not _q4_assumed_strain.elastic_route(self, mesh, material) or (
+            _q4_assumed_strain.state_has_active_initial_fields(state)
+        ):
             return None
-        _q4_assumed_strain.require_state_supported(self, state)
         cache = self._nonlinear_geometry(mesh)
         points = len(cache["gp"]) * int(layers)
         if state is None:
@@ -6310,6 +6313,7 @@ class QualifiedE4PLShellElement(
             mesh, material, vector, state, layers, tangent,
             return_components=_return_tangent_components,
         )
+        assumed_route = inherited is not None
         if inherited is None:
             inherited = _QUALIFIED_Q4_BASE_NONLINEAR_KERNEL(
                 self,
@@ -6345,7 +6349,7 @@ class QualifiedE4PLShellElement(
         )
         direct = (self._elastic_increment_response(
             mesh, material, vector, state, tangent,
-        ) if direct_state_admissible else None)
+        ) if direct_state_admissible and not assumed_route else None)
         force = (np.asarray(force, dtype=float) + correction @ vector
                  if direct is None else direct[0])
         if not tangent:
@@ -6465,7 +6469,10 @@ class QualifiedE4PLShellElement(
             ),
             "qualified_linear_material_correction": correction.copy(),
         }
-        direct = self._elastic_increment_response(
+        direct = None if (
+            _q4_assumed_strain.elastic_route(self, mesh, material)
+            and not _q4_assumed_strain.state_has_active_initial_fields(committed_state)
+        ) else self._elastic_increment_response(
             mesh, material, displacement, committed_state, True)
         if direct is not None:
             force, actual_total, components["material"], components["geometric"] = direct

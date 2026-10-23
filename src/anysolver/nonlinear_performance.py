@@ -1041,7 +1041,7 @@ class NonlinearAssemblyPlan:
                         else "isotropic"
                     )
                 )
-                if shell_kind == "isotropic" and _q4_assumed_strain.require_supported(
+                if shell_kind == "isotropic" and _q4_assumed_strain.route(
                     element, mesh, material
                 ):
                     shell_kind = _Q4_ASSUMED_STRAIN_SHELL_KIND

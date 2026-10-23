@@ -1357,7 +1357,7 @@ def _assemble_nonlinear_system_unchecked(
                 element.reduced_integration,
                 element.hourglass_stabilization,
                 element.material_name,
-                _q4_assumed_strain.require_supported(
+                _q4_assumed_strain.route(
                     element, mesh, model.get_material(element.material_name)
                 ),
             )
@@ -1484,6 +1484,7 @@ def _assemble_nonlinear_system_unchecked(
                 direct_admission = (element._elastic_increment_admitted
                                     if type(element) is _QualifiedE4PLShellElement else None)
                 if (callable(direct_builder) and callable(direct_admission)
+                        and not assumed_strain_group
                         and direct_admission(mesh, material, committed_states.get(elem_id))):
                     # Prepare both independent baselines inside the guarded
                     # response, under its original pre-preparation snapshot.

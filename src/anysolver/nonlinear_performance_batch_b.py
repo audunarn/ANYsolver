@@ -518,7 +518,7 @@ def _batch_b_shell_build(
     num_layers,
 ):
     batch = _ORIGINAL_BATCH_BUILD(cls, model, key, items, num_layers)
-    if batch.has_plasticity:
+    if batch.has_plasticity or (key and key[0] == "isotropic_q4_assumed_strain_plastic"):
         batch._batch_b_elastic = False
         return batch
 

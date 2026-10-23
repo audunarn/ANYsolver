@@ -154,6 +154,20 @@ def _refusal(element: Any, reason: str) -> UnsupportedQ4PlasticRouteError:
     )
 
 
+def elastic_route(element: Any, mesh: Any, material: Any) -> bool:
+    """SINGLE-LAW PROTOTYPE: curve-less isotropic qualified Q4 on the same kernel."""
+
+    if type(element) is not _qualified_type() or plastic_capable(element, material):
+        return False
+    return _unsupported_reason(element, mesh, material) is None
+
+
+def route(element: Any, mesh: Any, material: Any) -> bool:
+    """Assumed-strain kernel applies (plastic, refusing out of scope, or elastic)."""
+
+    return require_supported(element, mesh, material) or elastic_route(element, mesh, material)
+
+
 def supported(element: Any, mesh: Any, material: Any) -> bool:
     """Element/material admits the assumed-strain route (state not considered)."""
 
@@ -335,8 +349,6 @@ def kernel_batch(
 
     from .vectorized_nonlinear import batch_shell_nonlinear_response
 
-    if curve is None:
-        raise ValueError("assumed-strain plastic route requires a hardening curve")
     u_elem_batch = np.asarray(u_elem_batch, dtype=float)
     n_elem, n_dof = u_elem_batch.shape
     L = int(num_layers)
@@ -389,15 +401,23 @@ def kernel_batch(
         + z[None, None, :, None] * d6[:, :, None, 3:]
     )
     layer_strain = layers.reshape(n_elem * points, 3)
-    sigma, C_t, ep_new, alpha_new = plane_stress_return_map(
-        layer_strain,
-        committed_plastic.reshape(n_elem * points, 3),
-        committed_alpha.reshape(n_elem * points),
-        float(E),
-        float(nu),
-        curve,
-        compute_tangent=bool(tangent),
-    )
+    if curve is None:
+        # Single-law prototype: elastic material, no return map.
+        sigma = layer_strain @ C.T
+        C_t = None
+        ep_new, alpha_new = committed_plastic.copy(), committed_alpha.copy()
+        tangent_gate = False
+    else:
+        sigma, C_t, ep_new, alpha_new = plane_stress_return_map(
+            layer_strain,
+            committed_plastic.reshape(n_elem * points, 3),
+            committed_alpha.reshape(n_elem * points),
+            float(E),
+            float(nu),
+            curve,
+            compute_tangent=bool(tangent),
+        )
+        tangent_gate = bool(tangent)
     ep_new = np.asarray(ep_new, dtype=float).reshape(n_elem, points, 3)
     alpha_new = np.asarray(alpha_new, dtype=float).reshape(n_elem, points)
     # The force correction is driven by the plastic strain and its derivative
@@ -405,7 +425,7 @@ def kernel_batch(
     # eps_p == 0 on the plastic branch (C_t != C), so either criterion makes
     # an element active.
     active_rows = np.any(ep_new.reshape(n_elem, -1) != 0.0, axis=1)
-    if tangent:
+    if tangent_gate:
         C_t = np.asarray(C_t, dtype=float).reshape(n_elem, n_gp, L, 3, 3)
         active_rows = active_rows | np.any((C_t != C).reshape(n_elem, -1), axis=1)
     active = np.flatnonzero(active_rows)
