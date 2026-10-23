@@ -110,15 +110,17 @@ def product(left, right):
     a, b = np.asarray(left, dtype=float), np.asarray(right, dtype=float)
     if a.ndim != 2 or b.ndim not in (1, 2) or a.shape[1] != b.shape[0]:
         raise ValueError("compensated product shape mismatch")
-    if not np.all(np.isfinite(a)) or not np.all(np.isfinite(b)):
-        raise ValueError("compensated product requires finite inputs")
     vector = b.ndim == 1
     columns = b.reshape((-1, 1)) if vector else b
     if _USE_NATIVE:
+        # The kernel refuses nonfinite input itself; any refusal falls through
+        # to the checks below, which raise the reference exception.
         native = np.empty((a.shape[0], columns.shape[1]), dtype=float)
         if _native.contract_product(np.ascontiguousarray(a), np.ascontiguousarray(columns),
                                     native, _native.POW2) == 0:
             return native[:, 0] if vector else native
+    if not np.all(np.isfinite(a)) or not np.all(np.isfinite(b)):
+        raise ValueError("compensated product requires finite inputs")
     result = np.zeros((a.shape[0], columns.shape[1]), dtype=float)
     # Terms with an all-zero operand slice are exact zeros in every dot and
     # cannot change an exactly rounded sum.
@@ -137,14 +139,17 @@ def sum_arrays(terms):
     arrays = [np.asarray(term, dtype=float) for term in terms]
     if not arrays or any(a.shape != arrays[0].shape for a in arrays):
         raise ValueError("compensated array sum requires equal nonempty shapes")
-    if any(not np.all(np.isfinite(a)) for a in arrays):
-        raise ValueError("compensated array sum requires finite inputs")
     shape = arrays[0].shape
     if _USE_NATIVE:
+        # contract_sum refuses overflow only; nonfinite input is screened here
+        # on the single stacked array instead of once per term.
         stack = np.ascontiguousarray(np.stack(arrays).reshape(len(arrays), -1))
-        native = np.empty(stack.shape[1], dtype=float)
-        if _native.contract_sum(stack, native) == 0:
-            return native.reshape(shape)
+        if np.isfinite(stack).all():
+            native = np.empty(stack.shape[1], dtype=float)
+            if _native.contract_sum(stack, native) == 0:
+                return native.reshape(shape)
+    if any(not np.all(np.isfinite(a)) for a in arrays):
+        raise ValueError("compensated array sum requires finite inputs")
     rows = np.stack(arrays).reshape(len(arrays), -1).T.tolist()
     result = np.array(list(map(_fsum, rows)), dtype=float).reshape(shape)
     if not np.all(np.isfinite(result)):

@@ -163,7 +163,8 @@ def _guarded_float(
     post_observation: Optional[Callable[[], None]] = None,
 ) -> float:
     made = float(value)
-    _run_post_observation_guard(post_observation)
+    if type(value) is not float:
+        _run_post_observation_guard(post_observation)
     return made
 
 
@@ -174,9 +175,13 @@ def _guarded_array(
     post_observation: Optional[Callable[[], None]] = None,
 ) -> np.ndarray:
     made = np.asarray(value, dtype=dtype)
-    _run_post_observation_guard(post_observation)
+    # Converting an exact numeric ndarray runs no foreign code.
+    pure = type(value) is np.ndarray and value.dtype.kind in "fiub"
+    if not pure:
+        _run_post_observation_guard(post_observation)
     owned = np.array(made, dtype=dtype, order="C", copy=True)
-    _run_post_observation_guard(post_observation)
+    if not pure:
+        _run_post_observation_guard(post_observation)
     return owned
 
 
