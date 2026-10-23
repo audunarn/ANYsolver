@@ -127,34 +127,6 @@ def _run_post_observation_guard(
         post_observation()
 
 
-def _plain_instance_attribute(owner: Any, name: str) -> Any:
-    """Return ``owner.name`` only when reading it provably runs no foreign code.
-
-    The value must live in the instance ``__dict__`` of an owner whose class
-    uses the default attribute lookup, whose metaclass is exactly ``type`` and
-    in which no class of the MRO defines ``name`` (so no descriptor, property
-    or ``__getattr__`` hook can take part).  Anything else returns the missing
-    sentinel and the caller takes the fully guarded route.
-    """
-
-    owner_type = type(owner)
-    if (
-        type(owner_type) is not type
-        or owner_type.__getattribute__ is not object.__getattribute__
-    ):
-        return _OBSERVATION_MISSING
-    try:
-        namespace = object.__getattribute__(owner, "__dict__")
-    except AttributeError:
-        return _OBSERVATION_MISSING
-    if type(namespace) is not dict:
-        return _OBSERVATION_MISSING
-    for klass in owner_type.__mro__:
-        if name in type.__getattribute__(klass, "__dict__"):
-            return _OBSERVATION_MISSING
-    return dict.get(namespace, name, _OBSERVATION_MISSING)
-
-
 def _guarded_observe_attribute(
     owner: Any,
     name: str,
@@ -164,13 +136,6 @@ def _guarded_observe_attribute(
 ) -> Any:
     """Read one external attribute and recheck before consuming its value."""
 
-    if post_observation is not None:
-        plain = _plain_instance_attribute(owner, name)
-        if plain is not _OBSERVATION_MISSING:
-            # Reading a plain instance-dict value of an exact-type owner runs
-            # no foreign code, so no authority can have changed since the
-            # previous guarded point; the recheck would be a pure repeat.
-            return plain
     if default is _NO_ATTRIBUTE_DEFAULT:
         value = getattr(owner, name)
     else:

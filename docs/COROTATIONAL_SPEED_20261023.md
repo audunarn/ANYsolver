@@ -13,24 +13,26 @@ evaluation, 4 component re-binds per evaluation, 8 material fingerprints.
 
 ## Changes (values bit-identical)
 
-1. `elements._plain_instance_attribute` / `_guarded_observe_attribute`: a read of
-   a plain instance-dict attribute of an exact-type owner (metaclass `type`,
-   default `__getattribute__`, name defined in no class of the MRO, exact dict
-   namespace) runs no foreign code, so the recheck is skipped. Properties,
-   slots, `__getattr__`/`__getattribute__` hooks, class attributes and missing
-   names take the fully guarded route as before.
-2. `_guarded_float`: no recheck after `float()` of an exact `float`.
-3. `_guarded_array`: no rechecks after converting an exact numeric ndarray
+Review round 1 (Codex) found the plain-instance-attribute shortcut unsound
+(a property `__dict__`, a spoofed `__getattribute__` descriptor, non-str dict
+keys whose `__eq__` runs on lookup, non-atomic MRO/dict reads). It was REMOVED:
+attribute reads are rechecked after every observation again, as before.
+Regression tests `test_attribute_reads_are_always_rechecked[...]` fail on
+71853cb58 and pass now. Kept (no findings):
+
+1. `_guarded_float`: no recheck after `float()` of an exact `float`.
+2. `_guarded_array`: no rechecks after converting an exact numeric ndarray
    (`dtype.kind in "fiub"`).
-4. `_compensated_contractions.product` / `sum_arrays`: with the compiled kernels
+3. `_compensated_contractions.product` / `sum_arrays`: with the compiled kernels
    the Python finiteness screens run only after a kernel refusal (the kernels
    refuse nonfinite input; the reference exception is still raised).
 
-Full boundary guards per element evaluation: 17.2 -> 5.0.
-Material fingerprint rechecks: 7 -> 2 (the symmetry declaration and the
-`shear_modulus` property can run foreign code).
+Full boundary guards per element evaluation: 17.2 -> 11.1.
+Measured (best of 3): corot 4x4 3.18 -> 2.65 s, 8x8 14.11 -> 11.7 s,
+4x4 plastic 8.63 -> 7.96 s (about 17 %, 17 %, 8 %). The first version reached
+17-24 % but relied on the removed shortcut.
 
-## Not done (options)
+## Not done (options; all remain owner decisions)
 
 * `_qualified_linear_correction` re-runs the legacy zero-state kernel and a
   second component re-bind every evaluation although the result is constant for

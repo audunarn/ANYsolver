@@ -36,81 +36,67 @@ class _Plain:
         self.value = 1.5
 
 
-class _WithProperty:
+class _DictProperty:
+    """``__dict__`` is a property: reading it runs foreign code."""
+
     def __init__(self) -> None:
-        self.__dict__["value"] = 1.0
+        self.value = 1.0
 
     @property
-    def other(self) -> float:
-        return 2.0
+    def __dict__(self):  # type: ignore[override]
+        return {"value": 2.0}
 
 
-class _ClassAttribute:
-    value = 3.0
+class _SpoofedGetattribute:
+    """Class access shows object.__getattribute__, instance access another one."""
 
+    class _Spoof:
+        def __get__(self, instance, owner=None):
+            if instance is None:
+                return object.__getattribute__
+            return lambda name: 3.0
 
-class _ShadowedByClass:
-    value = 3.0
-
-    def __init__(self) -> None:
-        self.value = 4.0  # instance value, but a class attribute exists too
-
-
-class _GetAttrHook:
-    def __init__(self) -> None:
-        self.value = 1.0
-
-    def __getattr__(self, name: str):  # only used for missing names
-        return 7.0
-
-
-class _GetAttributeHook:
-    def __init__(self) -> None:
-        self.value = 1.0
-
-    def __getattribute__(self, name: str):
-        return object.__getattribute__(self, name)
-
-
-class _Slotted:
-    __slots__ = ("value",)
+    __getattribute__ = _Spoof()  # type: ignore[assignment]
 
     def __init__(self) -> None:
-        self.value = 1.0
+        object.__setattr__(self, "value", 1.0)
 
 
-def test_plain_instance_attribute_is_recognised_only_when_provably_pure():
-    missing = el._OBSERVATION_MISSING
-    assert el._plain_instance_attribute(_Plain(), "value") == 1.5
-    # absent names, class attributes, shadowed names, hooks and slots all take
-    # the fully guarded route
-    assert el._plain_instance_attribute(_Plain(), "absent") is missing
-    assert el._plain_instance_attribute(_WithProperty(), "other") is missing
-    assert el._plain_instance_attribute(_ClassAttribute(), "value") is missing
-    assert el._plain_instance_attribute(_ShadowedByClass(), "value") is missing
-    assert el._plain_instance_attribute(_GetAttributeHook(), "value") is missing
-    assert el._plain_instance_attribute(_Slotted(), "value") is missing
-    assert el._plain_instance_attribute(3.0, "real") is missing
-    # a __getattr__ hook never runs for a found instance attribute
-    assert el._plain_instance_attribute(_GetAttrHook(), "value") == 1.0
+class _EqKey:
+    """Non-str key with the hash of ``value``; its __eq__ is foreign code."""
+
+    def __init__(self, log) -> None:
+        self.log = log
+
+    def __hash__(self) -> int:
+        return hash("value")
+
+    def __eq__(self, other) -> bool:
+        self.log.append("eq")
+        return False
 
 
-def test_guarded_observe_attribute_skips_recheck_only_for_pure_reads():
+def _owner_with_eq_key(log):
+    owner = _Plain()
+    owner.__dict__[_EqKey(log)] = 0.0
+    return owner
+
+
+@pytest.mark.parametrize(
+    "make",
+    [
+        _Plain,
+        _DictProperty,
+        _SpoofedGetattribute,
+        lambda: _owner_with_eq_key([]),
+    ],
+    ids=["plain", "dict-property", "spoofed-getattribute", "eq-key-collision"],
+)
+def test_attribute_reads_are_always_rechecked(make):
+    """Every external attribute read is followed by a recheck (no purity shortcut)."""
+
     recorder = _Recorder()
-    assert el._guarded_observe_attribute(_Plain(), "value", post_observation=recorder) == 1.5
-    assert recorder.calls == 0
-    recorder = _Recorder()
-    assert el._guarded_observe_attribute(
-        _WithProperty(), "other", post_observation=recorder
-    ) == 2.0
-    assert recorder.calls == 1
-    recorder = _Recorder()
-    assert el._guarded_observe_attribute(
-        _Plain(), "absent", default=9.0, post_observation=recorder
-    ) == 9.0
-    assert recorder.calls == 1
-    recorder = _Recorder()
-    assert el._guarded_observe_attribute(_Slotted(), "value", post_observation=recorder) == 1.0
+    el._guarded_observe_attribute(make(), "value", post_observation=recorder)
     assert recorder.calls == 1
 
 
@@ -150,13 +136,11 @@ def test_guarded_float_and_array_recheck_when_conversion_can_run_foreign_code():
     assert recorder.calls == 2
 
 
-def test_isotropic_material_fingerprint_recheck_count_is_bounded():
+def test_isotropic_material_fingerprint_rechecks_after_every_read():
     material = IsotropicMaterial(name="steel", elastic_modulus=210e9, poisson_ratio=0.3)
     recorder = _Recorder()
     first = el._shell_elastic_material_cache_fingerprint(material, recorder)
-    # Only the symmetry declaration and the derived shear modulus property can
-    # run foreign code; the old code rechecked after every read (7 calls).
-    assert recorder.calls <= 2
+    assert recorder.calls >= 4  # symmetry + three attribute reads; exact floats skip
     assert first == el._shell_elastic_material_cache_fingerprint(material, None)
 
 
