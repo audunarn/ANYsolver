@@ -279,7 +279,7 @@ _CONTRACTION_FACTS = tuple((name, value, _callable_authority(value),
     and name in {'_product_parts', '_vector_parts', '_interleave_sum', '_scalar_dot', 'dot', 'product', 'sum_arrays', 'weighted_sum',
                 'shell_zero_tangent', '_shell_zero_tangent_reference', 'fused_elastic_increment',
                 'elastic_increment_reference', '_fused_array', '_fused_scalar',
-                '_fused_policy_allows', 'elastic_increment', '_fused_matrix', '_zero_tangent_args', '_zero_tangent_fused', '_increment_fused'})
+                '_fused_policy_allows', '_increment', 'elastic_increment', '_fused_matrix', '_zero_tangent_args', '_zero_tangent_fused', '_increment_fused'})
 _POW2_FACT = (_contraction_kernels.POW2, _contraction_kernels.POW2.tobytes(),
     _contraction_kernels.POW2.dtype, _contraction_kernels.POW2.shape, _contraction_kernels.POW2.strides,
     _contraction_kernels.POW2.flags.writeable)

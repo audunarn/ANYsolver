@@ -127,14 +127,8 @@ def test_randomized_elastic_increment_matches_reference(monkeypatch):
             _poison(rng, [geometry["T0"], geometry["B_m_all"], geometry["Gw_all"], u_elem, constitutive])
         want = _run(cc.elastic_increment_reference, u_elem, geometry, lambda: constitutive, tangent)
 
-        def routed():
-            fused = cc.fused_elastic_increment(u_elem, geometry, constitutive, tangent)
-            if fused is not None:
-                return fused
-            return cc.elastic_increment_reference(u_elem, geometry, lambda: constitutive, tangent)
-
         before = counts[0]
-        got = _run(routed)
+        got = _run(cc.elastic_increment, u_elem, geometry, lambda: constitutive, tangent)
         assert got == want, (case, mode, n, ng, tangent)
         served = counts[0] - before
         # Every case the reference can evaluate (with a gauss point) must be served by the
@@ -212,8 +206,7 @@ def test_scalar_square_uses_libm_pow_not_multiply():
         u = rng.uniform(1, 2, n)
         constitutive = np.eye(3)
         want = cc.elastic_increment_reference(u, geometry, lambda: constitutive, True)
-        got = cc.fused_elastic_increment(u, geometry, constitutive, True)
-        assert got is not None
+        got = cc.elastic_increment(u, geometry, lambda: constitutive, True)
         mismatch += any(a.tobytes() != b.tobytes() for a, b in zip(got, want))
     assert mismatch == 0
 
@@ -224,7 +217,7 @@ def test_fused_backend_flag_is_authority_guarded():
     names = {row[0] for row in q._NATIVE_KERNEL_FACTS}
     assert {"fused_shell_zero_tangent", "fused_elastic_increment", "_mm", "_tc"} <= names
     assert {row[0] for row in q._CONTRACTION_FACTS} >= {
-        "shell_zero_tangent", "fused_elastic_increment", "elastic_increment_reference",
+        "shell_zero_tangent", "elastic_increment", "_increment", "elastic_increment_reference",
         "_shell_zero_tangent_reference", "_fused_array", "_fused_scalar"}
     cc._USE_FUSED = False
     try:
@@ -270,7 +263,7 @@ def test_substituted_native_kernel_is_refused_by_the_e4_lifecycle(monkeypatch, k
     assert all(np.array_equal(x, y) for x, y in zip(run(), genuine))
 
 
-@pytest.mark.parametrize("name", ["_USE_FUSED", "shell_zero_tangent", "fused_elastic_increment",
+@pytest.mark.parametrize("name", ["_USE_FUSED", "shell_zero_tangent", "elastic_increment",
                                   "elastic_increment_reference", "_shell_zero_tangent_reference"])
 def test_substituted_wrapper_or_flag_is_refused_by_the_e4_lifecycle(monkeypatch, name):
     from test_general_contact_c5_elastic_increment import case, pose
@@ -374,7 +367,7 @@ def test_self_check_flags_a_fast_math_variant_if_it_contracts():
         outs = []
         for kernel in (plain, mutated):
             f, m, g = np.empty(n), np.zeros((n, n)), np.zeros((n, n))
-            kernel(geometry["T0"], u_elem, constitutive, geometry["B_m_all"], geometry["Gw_all"],
+            kernel(geometry["T0"], cc.product(geometry["T0"], u_elem), constitutive, geometry["B_m_all"], geometry["Gw_all"],
                    geometry["detw_all"], True, f, m, g, cc._native.POW2, 2.0)
             outs.append((f.tobytes(), m.tobytes(), g.tobytes()))
         differs = differs or outs[0] != outs[1]
@@ -427,8 +420,6 @@ def test_ndarray_subclasses_never_enter_the_fused_increment(subclass, argument):
         geometry[argument] = _as(subclass, geometry[argument])
     want = _outcome(cc.elastic_increment_reference, u, geometry, lambda: constitutive, True)
     assert _outcome(cc.elastic_increment, u, geometry, lambda: constitutive, True) == want
-    assert (_outcome(cc.fused_elastic_increment, u, geometry, constitutive, True) in (("ok",) + want[1:], ("ok", None))
-            or cc.fused_elastic_increment(u, geometry, constitutive, True) is None)
 
 
 def _callback_log(policy):
@@ -507,3 +498,135 @@ def test_frozen_geometry_mappingproxy_is_served_by_the_kernel(monkeypatch):
     assert (_outcome(cc.shell_zero_tangent, frozen, *args)
             == _outcome(cc._shell_zero_tangent_reference, geometry, *args))
     assert counts[0] == 1 and zero[0] == 1
+
+
+# --- review round 3: hooks between the displacement product and the kernel -----------
+def _fresh(seed=41, n=6, gauss=2):
+    rng = np.random.default_rng(seed)
+    geometry = _geometry(rng, n, gauss, 0, 1)
+    return geometry, rng.uniform(0.05, 0.2, n), rng.standard_normal((3, 3)) * 1e3
+
+
+def _hooked_pair(make_hook, geometry_mutation=None, seed=41):
+    """Run reference and fused routes on independent identical copies with the same hook."""
+    results = []
+    for function in (cc.elastic_increment_reference, cc.elastic_increment):
+        geometry, u, constitutive = _fresh(seed)
+        if geometry_mutation is not None:
+            geometry = geometry_mutation(geometry)
+        hook = make_hook(geometry, u)
+
+        def factory():
+            hook()
+            return constitutive
+
+        old_call = np.seterrcall(None)
+        try:
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter("always")
+                with np.errstate():
+                    outcome = _outcome(function, u, geometry, factory, True)
+        finally:
+            np.seterrcall(old_call)
+        results.append((outcome, [str(w.message) for w in caught], u.tobytes()))
+    return results
+
+
+def test_factory_mutating_the_displacement_cannot_change_the_result():
+    want, got = _hooked_pair(lambda g, u: lambda: u.__setitem__(slice(None), 0.9))
+    assert got == want and want[0][0] == "ok"
+
+
+def test_factory_mutating_geometry_in_place_matches_the_reference():
+    for key in ("T0", "B_m_all", "Gw_all", "detw_all"):
+        want, got = _hooked_pair(lambda g, u, key=key: lambda: g[key].__imul__(1.5))
+        assert got == want, key
+
+
+def test_factory_replacing_geometry_entries_matches_the_reference():
+    from types import MappingProxyType
+
+    for key in ("B_m_all", "Gw_all", "detw_all"):
+        results = []
+        for function in (cc.elastic_increment_reference, cc.elastic_increment):
+            geometry, u, constitutive = _fresh()
+            proxy = MappingProxyType(geometry)
+
+            def factory():
+                geometry[key] = geometry[key] * 0.5
+                return constitutive
+
+            results.append(_outcome(function, u, proxy, factory, True))
+        assert results[0] == results[1], key
+
+
+@pytest.mark.parametrize("policy", [dict(under="raise"), dict(under="warn"), dict(over="raise"),
+                                    dict(all="raise"), dict(invalid="call"), dict(all="ignore")])
+def test_factory_changing_the_error_policy_is_honoured(policy):
+    def make(geometry, u):
+        geometry["Gw_all"] = geometry["Gw_all"] * 0 + 1e-200
+        return lambda: np.seterr(**policy)
+
+    results = []
+    for function in (cc.elastic_increment_reference, cc.elastic_increment):
+        geometry, u, constitutive = _fresh()
+        geometry["Gw_all"] = geometry["Gw_all"] * 0 + 1e-200
+        saved = np.geterr()
+        try:
+            def factory():
+                np.seterr(**policy)
+                return constitutive
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                results.append(_outcome(function, u, geometry, factory, True))
+        finally:
+            np.seterr(**saved)
+    assert results[0] == results[1]
+    if policy == dict(under="raise"):
+        assert results[0][0] == "error" and results[0][1] is FloatingPointError
+
+
+class _Counting:
+    calls = 0
+
+    def __init__(self, value):
+        self.value = value
+
+    def __float__(self):
+        type(self).calls += 1
+        return self.value
+
+
+def test_object_dtype_displacement_is_converted_exactly_as_often_as_the_reference():
+    counts = []
+    outcomes = []
+    for function in (cc.elastic_increment_reference, cc.elastic_increment):
+        geometry, u, constitutive = _fresh()
+        wrapped = np.empty(u.size, dtype=object)
+        for i, v in enumerate(u):
+            wrapped[i] = _Counting(float(v))
+        _Counting.calls = 0
+        outcomes.append(_outcome(function, wrapped, geometry, lambda: constitutive, True))
+        counts.append(_Counting.calls)
+    assert outcomes[0] == outcomes[1] and counts[0] == counts[1] and counts[0] > 0
+
+
+def test_every_hook_order_is_identical_for_the_user_visible_trace():
+    """Record the order of: displacement conversion, factory, warnings, error callbacks."""
+    traces = []
+    for function in (cc.elastic_increment_reference, cc.elastic_increment):
+        geometry, u, constitutive = _fresh()
+        trace = []
+        wrapped = np.empty(u.size, dtype=object)
+        for i, v in enumerate(u):
+            wrapped[i] = _Counting(float(v))
+        _Counting.calls = 0
+
+        def factory():
+            trace.append(("factory", _Counting.calls))
+            return constitutive
+
+        _outcome(function, wrapped, geometry, factory, False)
+        trace.append(("end", _Counting.calls))
+        traces.append(trace)
+    assert traces[0] == traces[1]

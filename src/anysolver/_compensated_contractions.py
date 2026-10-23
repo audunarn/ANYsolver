@@ -214,11 +214,23 @@ def _shell_zero_tangent_reference(geometry, membrane, bending, shear, drill):
     return product(product(transform.T, local), transform)
 
 
-def elastic_increment_reference(u_elem, geometry, constitutive_factory, tangent):
-    """Reference (numpy-level) elastic von-Karman increment; see vectorized_nonlinear."""
+def _increment(u_elem, geometry, constitutive_factory, tangent, use_kernel):
+    """Elastic von-Karman increment: the reference evaluation order, optionally fused.
+
+    Order (identical for both routes): read ``T0``; the displacement product
+    (its result ``u`` is computed once and reused); one coefficient evaluation;
+    only then, at the moment of choosing, the numpy error policy is read and the
+    compiled kernel is tried with ``u`` and the cached coefficients. A policy
+    that is not default-or-ignore, non-conforming input or any kernel refusal
+    falls through to the reference loop below with the same ``u``/coefficients.
+    """
     transform = geometry["T0"]
     u = product(transform, u_elem)
     constitutive = constitutive_factory()
+    if use_kernel and _fused_policy_allows():
+        fused = _increment_fused(transform, u, geometry, constitutive, tangent)
+        if fused is not None:
+            return fused
     force = np.zeros(u.size, dtype=float)
     material = np.zeros((u.size, u.size), dtype=float)
     geometric = np.zeros((u.size, u.size), dtype=float)
@@ -253,6 +265,16 @@ def elastic_increment_reference(u_elem, geometry, constitutive_factory, tangent)
         geometric = weighted_sum(geometrics, weights)
     return (product(transform.T, force), product(product(transform.T, material), transform),
             product(product(transform.T, geometric), transform))
+
+
+def elastic_increment_reference(u_elem, geometry, constitutive_factory, tangent):
+    """Reference (numpy-level) elastic von-Karman increment; see vectorized_nonlinear."""
+    return _increment(u_elem, geometry, constitutive_factory, tangent, False)
+
+
+def elastic_increment(u_elem, geometry, constitutive_factory, tangent):
+    """The same increment with the compiled kernel tried after the coefficient evaluation."""
+    return _increment(u_elem, geometry, constitutive_factory, tangent, True)
 
 
 def _fused_array(value, shape_tail):
@@ -349,15 +371,15 @@ def shell_zero_tangent(geometry, membrane, bending, shear, drill):
     return _shell_zero_tangent_reference(geometry, membrane, bending, shear, drill)
 
 
-def _increment_fused(u_elem, geometry, constitutive, tangent):
+def _increment_fused(transform, u, geometry, constitutive, tangent):
+    """Run the compiled increment kernel on the already computed ``u``; ``None`` if not applicable."""
     try:
-        if type(geometry) not in _GEOMETRY_TYPES:
+        if type(geometry) not in _GEOMETRY_TYPES or type(tangent) is not bool:
             return None
-        t0 = geometry["T0"]
-        n = t0.shape[0] if type(t0) is np.ndarray and t0.ndim == 2 else -1
-        if n <= 0 or type(tangent) is not bool:
+        n = transform.shape[0] if type(transform) is np.ndarray and transform.ndim == 2 else -1
+        if n <= 0:
             return None
-        arrays = (_fused_matrix(t0, (n, n)), _fused_matrix(u_elem, (n,)),
+        arrays = (_fused_matrix(transform, (n, n)), _fused_matrix(u, (n,)),
                   _fused_matrix(constitutive, (3, 3)), _fused_array(geometry["B_m_all"], (3, n)),
                   _fused_array(geometry["Gw_all"], (2, n)), _fused_array(geometry["detw_all"], ()))
         if (any(a is None for a in arrays)
@@ -373,39 +395,6 @@ def _increment_fused(u_elem, geometry, constitutive, tangent):
             force, material, geometric, _native.POW2, 2.0) != 0:
         return None
     return force, material, geometric
-
-
-def fused_elastic_increment(u_elem, geometry, constitutive, tangent):
-    """Fused ``elastic_shell_nonlinear_increment`` body, or ``None`` to run the reference.
-
-    ``constitutive`` is ``h * plane_stress_elastic_matrix(E, nu)`` as the
-    reference builds it. ``None`` is returned for non-conforming input, a
-    non-default numpy underflow policy and any kernel refusal, so the caller's
-    reference path raises the reference error.
-    """
-    if not _fused_policy_allows():
-        return None
-    return _increment_fused(u_elem, geometry, constitutive, tangent)
-
-
-def elastic_increment(u_elem, geometry, constitutive_factory, tangent):
-    """Elastic von-Karman increment: fused kernel in the reference's evaluation order.
-
-    The reference validates the transformed displacement first, then evaluates
-    the coefficients (once), then loops. The fused route does exactly that: the
-    same first compensated product, one call of ``constitutive_factory``, then
-    the kernel; a refusal replays the reference with the already evaluated
-    coefficients, so side effects and their count never change.
-    """
-    transform = geometry["T0"] if type(geometry) in _GEOMETRY_TYPES and "T0" in geometry else None
-    if (_fused_policy_allows() and type(transform) is np.ndarray and type(u_elem) is np.ndarray):
-        product(transform, u_elem)  # the reference's first step (same validation, same exceptions)
-        constitutive = constitutive_factory()
-        fused = _increment_fused(u_elem, geometry, constitutive, tangent)
-        if fused is not None:
-            return fused
-        return elastic_increment_reference(u_elem, geometry, lambda: constitutive, tangent)
-    return elastic_increment_reference(u_elem, geometry, constitutive_factory, tangent)
 
 
 def _native_known_answers_match():
@@ -480,10 +469,11 @@ def _fused_check(zero_kernel, increment_kernel):
             if out.tobytes() != _shell_zero_tangent_reference(
                     geometry, membrane, bending, shear, drill).tobytes():
                 return False
+            u = product(geometry["T0"], u_elem)
             for tangent in (True, False):
                 n = geometry["T0"].shape[0]
                 f, m, g = np.empty(n), np.zeros((n, n)), np.zeros((n, n))
-                if increment_kernel(geometry["T0"], u_elem, constitutive, geometry["B_m_all"],
+                if increment_kernel(geometry["T0"], u, constitutive, geometry["B_m_all"],
                                     geometry["Gw_all"], geometry["detw_all"], tangent,
                                     f, m, g, _native.POW2, 2.0) != 0:
                     return False

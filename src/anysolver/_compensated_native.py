@@ -294,18 +294,15 @@ def fused_shell_zero_tangent(bm_all, bb_all, bd_all, detw, bs_all, detw_shear, t
 
 
 @_kernel
-def fused_elastic_increment(t0, u_elem, constitutive, bm_all, gw_all, detw, tangent,
+def fused_elastic_increment(t0, u_vec, constitutive, bm_all, gw_all, detw, tangent,
                             f_out, m_out, g_out, pow2, two):
-    """Fused ``elastic_shell_nonlinear_increment`` (needs at least one gauss point)."""
+    """Fused increment loop on the transformed displacement ``u_vec = T0 @ u_elem`` (>= 1 gauss point)."""
     n = t0.shape[0]
     ng = bm_all.shape[0]
     nn = n * n
-    ucol0 = np.empty((n, 1))
+    u = np.empty((n, 1))
     for i in range(n):
-        ucol0[i, 0] = u_elem[i]
-    u, s = _mm(t0, ucol0, pow2)
-    if s != 0:
-        return 1
+        u[i, 0] = u_vec[i]
     forces = np.empty((ng, n))
     materials = np.empty((ng, nn))
     geometrics = np.empty((ng, nn))
