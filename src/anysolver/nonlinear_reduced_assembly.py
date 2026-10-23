@@ -716,6 +716,7 @@ def _evaluate_local_responses(
                 committed_states=committed_states,
                 state_token=state_token,
                 element_id=record.element_id,
+                kinematics="von_karman",
             )
         )
         nonlinear_plan.force_values[record.force_positions] = np.asarray(

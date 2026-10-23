@@ -18,7 +18,10 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 REFERENCE_CASES = ROOT / "docs" / "reference_cases"
-GITHUB_ROOT = ROOT.parents[2]
+GITHUB_ROOT = Path(os.environ["ANY_ECOSYSTEM_ROOT"]) if "ANY_ECOSYSTEM_ROOT" in os.environ else next(
+    (parent for parent in ROOT.parents if (parent / "ANYgeometry" / "src").is_dir()),
+    ROOT.parent,
+)
 INPUT = REFERENCE_CASES / "e4_pl_s3_mixed_structural_input.json"
 SCHEMA = REFERENCE_CASES / "e4_pl_s3_mixed_structural_input_schema.json"
 PRODUCER = REFERENCE_CASES / "e4_pl_s3_mixed_structural_producer.py"

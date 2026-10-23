@@ -332,6 +332,11 @@ def _s3_v2d_committed_current_tangent_components(
         expected_committed_total_u=displacement,
     )
     before = _v2d_canonical_json_bytes(committed_state)
+    if validated.get("experimental_von_karman_law") is not None:
+        raise ElementCapabilityError(
+            "Experimental S3 V2D von Karman current-state eigen decomposition "
+            "is unavailable; use loading tangents with the fixed predecessor"
+        )
     from .corotational import corotational_element_response_components
 
     force, material_tangent, geometric_tangent, _discarded_state = (

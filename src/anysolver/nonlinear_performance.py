@@ -1187,6 +1187,7 @@ class NonlinearAssemblyPlan:
                     committed_states=committed_states,
                     state_token=state_token,
                     element_id=record.element_id,
+                    kinematics="von_karman",
                 )
                 if record.element_id in deleted:
                     f_element = residual_fraction * np.asarray(f_element, dtype=float)
@@ -1334,9 +1335,15 @@ def _requires_deleted_qualified_s3_reference_assembly(
 ) -> bool:
     """Whether frozen native S3 history needs its isolated residual route."""
 
+    from .e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
+
     for raw_element_id in deleted_element_ids:
         element_id = int(raw_element_id)
         element = model.mesh.get_element(element_id)
+        if type(element) is NativeParityE4PLS3V2DShellElement:
+            # Exact V2D deletion uses its validated frozen-history operator;
+            # the generic plan only scales an ordinary active-state trial.
+            return True
         if (
             element is None
             or str(getattr(element, "formulation_id", ""))

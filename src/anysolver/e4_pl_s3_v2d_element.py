@@ -1447,6 +1447,13 @@ class NativeParityE4PLS3V2DShellElement(
         normalized = str(kinematics).strip().replace("-", "_").upper()
         if normalized not in {"LINEAR", "VON_KARMAN", "COROTATIONAL"}:
             raise V2DStateError("S3 V2D solver kinematics is unsupported")
+        if normalized == "VON_KARMAN" and validated["solver_kinematics"] == "UNBOUND":
+            # A stopped/fully constrained solve may never have evaluated a
+            # trial. Recover once from its virgin parent, with explicit mode.
+            _force, _tangent, validated = self.compute_nonlinear_response(
+                mesh, material, global_u, validated, num_layers, True,
+                von_karman=True,
+            )
         made = dict(validated)
         made["committed_total_u"] = global_u.copy()
         made["solver_kinematics"] = normalized
@@ -2096,6 +2103,8 @@ class NativeParityE4PLS3V2DShellElement(
         total_u: np.ndarray,
         committed: Mapping[str, Any],
         num_layers: int,
+        *,
+        von_karman: bool = False,
     ) -> Tuple[np.ndarray, np.ndarray, Dict[str, Any]]:
         geometry = self._geometry(mesh)
         raw_baseline = (
@@ -2115,6 +2124,17 @@ class NativeParityE4PLS3V2DShellElement(
         epsilon = np.einsum("gij,j->gi", membrane_operators, local_u)
         kappa = np.einsum("gij,j->gi", curvature_operators, local_u)
         gamma = np.einsum("gij,j->gi", shear_operators, local_u)
+        if von_karman:
+            # Reference-surface transverse displacement is affine on this
+            # triangle.  Engineering shear strain contains wx*wy (not half).
+            gradient = np.zeros((2, 18), dtype=np.float64)
+            gradient[:, 2::6] = np.asarray(geometry["shape_gradients"]).T
+            wx, wy = gradient @ local_u
+            epsilon = epsilon + np.asarray((0.5 * wx * wx, 0.5 * wy * wy, wx * wy))
+            membrane_operators = membrane_operators.copy()
+            membrane_operators[:, 0, :] += wx * gradient[0]
+            membrane_operators[:, 1, :] += wy * gradient[1]
+            membrane_operators[:, 2, :] += wy * gradient[0] + wx * gradient[1]
         generalized_strain = np.concatenate((epsilon, kappa, gamma), axis=1)
         order = tuple(int(value) for value in geometry["internal_order"])
         initial_prestrain = self._internal_station_order(
@@ -2243,6 +2263,15 @@ class NativeParityE4PLS3V2DShellElement(
             trial["layer_strain"] = material_strain.reshape(-1, 3)
             trial["layer_stress"] = stress.reshape(-1, 3)
 
+        if von_karman:
+            # The second variation includes initial resultants and returned
+            # material stress.  The existing return map supplies dN/dstrain.
+            for resultant in station_resultant:
+                membrane_stress = np.asarray(
+                    ((resultant[0], resultant[2]), (resultant[2], resultant[1]))
+                )
+                tangent_local += gradient.T @ membrane_stress @ gradient * area_weight
+
         physical_force = transform.T @ force_local
         physical_tangent = self._globalize(tangent_local, transform)
         pl = np.asarray(components["pl"], dtype=np.float64)
@@ -2253,7 +2282,9 @@ class NativeParityE4PLS3V2DShellElement(
             raise ValueError("S3 V2D native trial response is nonfinite")
         trial["committed_total_u"] = total_u.copy()
         trial["committed_constitutive_u"] = total_u.copy()
-        trial["solver_kinematics"] = "ELEMENT_LOCAL"
+        trial["solver_kinematics"] = "VON_KARMAN" if von_karman else "ELEMENT_LOCAL"
+        if von_karman:
+            trial["experimental_von_karman_law"] = "S3_V2D_VK_R1"
         trial["station_generalized_strain"] = self._external_station_order(
             generalized_strain, order
         )
@@ -2271,6 +2302,8 @@ class NativeParityE4PLS3V2DShellElement(
         state: Optional[Mapping[str, Any]] = None,
         num_layers: int = 5,
         tangent: bool = True,
+        *,
+        von_karman: bool = False,
     ) -> Tuple[np.ndarray, Optional[np.ndarray], Optional[Any]]:
         self._validate_configuration()
         try:
@@ -2287,8 +2320,12 @@ class NativeParityE4PLS3V2DShellElement(
                 mesh, material, state, layers
             )
         )
+        if not von_karman and "experimental_von_karman_law" in committed:
+            raise V2DStateError("V2D experimental von Karman history cannot change kinematics")
+        if von_karman and committed["solver_kinematics"] not in {"UNBOUND", "VON_KARMAN"}:
+            raise V2DStateError("V2D von Karman requires virgin or matching experimental history")
         force, made_tangent, trial = self._native_trial_response(
-            mesh, material, total_u, committed, layers
+            mesh, material, total_u, committed, layers, von_karman=von_karman
         )
         validated = self.validate_model_bound_nonlinear_state(
             mesh,
@@ -2308,6 +2345,7 @@ class NativeParityE4PLS3V2DShellElement(
         num_layers: int = 5,
         *,
         tangent: bool = True,
+        von_karman: bool = False,
     ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
         """Evaluate from frozen parent history and discard the trial state."""
 
@@ -2321,6 +2359,7 @@ class NativeParityE4PLS3V2DShellElement(
             core,
             num_layers,
             bool(tangent),
+            von_karman=von_karman,
         )
         return force, stiffness
 

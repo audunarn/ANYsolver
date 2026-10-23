@@ -51,8 +51,17 @@ def evaluate_nonlinear_element(
     committed_states: Mapping[int, Any],
     state_token: Optional[StateTrialToken],
     element_id: Any,
+    kinematics: str = "element_local",
 ) -> tuple[Any, Any, Any]:
     """Evaluate one element while preserving the established Q4 call path."""
+
+    from .e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
+
+    if type(element) is NativeParityE4PLS3V2DShellElement and kinematics == "von_karman":
+        return element.compute_nonlinear_response(
+            mesh, material, element_displacements, committed_state,
+            num_layers, tangent, von_karman=True,
+        )
 
     if not bool(getattr(element, "formulation_native_total_lagrangian", False)):
         return element.compute_nonlinear_response(

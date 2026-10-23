@@ -2639,6 +2639,10 @@ def _recover_v2d_committed_state(
         current_frame = np.asarray(
             rigid_rotation @ reference_frame, dtype=np.float64
         )
+        if committed["solver_kinematics"] == "VON_KARMAN":
+            # Candidate VK resultants are work-conjugate to strains in the
+            # fixed reference chart, not an EICR corotated material chart.
+            current_frame = reference_frame.copy()
         physical_director = (
             float(element.director_polarity) * current_frame[:, 2]
         )
@@ -2709,6 +2713,8 @@ def _recover_v2d_committed_state(
         "numerical_pl": "excluded_from_physical_recovery",
         "stress_frame": "element_independent_corotational_physical_frame",
     }
+    if committed["solver_kinematics"] == "VON_KARMAN":
+        component_sources["stress_frame"] = "experimental_von_karman_reference_frame"
     if element.shell_section is not None:
         recovered["generalized_stress_scope"] = "section_resultants_only"
         recovered["initial_field_provenance"] = copy.deepcopy(
