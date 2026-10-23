@@ -14,7 +14,7 @@
     "_elements_module": {
       "changed_this_slice": false,
       "path": "src/anysolver/elements.py",
-      "sha256": "fb3a3d82c0eb5b490399a6a856292389b26041b2937e55c33450f6cd1cf1285e",
+      "sha256": "5db6625cc04669a90fb2d4bce9cbb445754dc12b5b4b71f84ecb9636d07d6289",
       "used_attributes": [
         "_compensated_elastic_zero_tangent"
       ]
