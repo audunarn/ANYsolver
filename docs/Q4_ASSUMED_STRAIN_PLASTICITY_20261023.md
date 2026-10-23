@@ -192,3 +192,26 @@ counts and the same centre deflection to 2e-16.
 * Extending the route to Hill48 (material-frame return map at `eps_hat`) and to
   active initial fields (constant layer offset; the derivation holds) is
   possible but not built or verified.
+
+## Qualification and merge (2026-10-23)
+
+* Qualified at TARGET_SHA 5c34dc2e4 (product-source digest f2acc4da71e0...): 68/68 matrix cells PASS with
+  exceptions. A9 cost 2.0x legacy (plastic, C1 n16 to load factor 0.6) and 1.25x base (elastic nonlinear).
+  Report: `C:\ANYworkspaceWork\codex-q4-qual-notes\03_FINAL_REPORT.md`; evidence root
+  `C:\ANYworkspaceWork\qualification-evidence\Q4_R4\f2acc4da71e0`. Owner decisions closed 2026-10-23
+  (`C:\ANYworkspaceWork\qualification-plan\DECISIONS_LOG.md`). Merged into local main (not pushed).
+* Exceptions:
+  * W1: owner, 2.5 % allowance at n = 8 for the in-plane displacement change. The measured pointwise in-plane
+    difference is 2.0 % of the base peak; the centre deflection changes by -0.092 %.
+  * C4: OD-Q4-1, the legacy 1 % rule plus the S8R band replaces the 0.6 %-of-base rule.
+  * A8: inventory differences granted by the coordinator; test changes are listed in the plan document table.
+  * H1: historical plastic history accepted as a documented HIGH limitation.
+* Open follow-ups:
+  * Public stress recovery review (option A accepted and documented).
+  * Plastic-law version tag (HIGH).
+  * Governed mixed-mesh manifest successor record (EXCEPTION).
+  * Descriptor-shear gate follow-up for the S3 impact.
+* Waiver: elastic bit identity is waived for qualified-Q4 NONLINEAR elastic results (sizes above). Linear
+  analyses, legacy Q4, S3, beams and native on/off are bit-identical.
+* Source-binding records: none rebound. The governed manifest (`e4_pl_q4_source_binding_20261019.json`)
+  is the documented exception; no other binding was mechanical.

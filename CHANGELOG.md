@@ -35,6 +35,10 @@
     high-severity restart correctness risk; a law-version tag is the proper fix.
     R4's own unsealed restart states also reach the migration point, so a refusal
     there was withdrawn. Open HIGH follow-up.
+  Qualification: TARGET 5c34dc2e4, 68/68 PASS with exceptions W1 (2.5 % n8 in-plane allowance), C4 (legacy
+  rule), A8 (inventory), H1 (historical-state limitation); A9 2.0x legacy / 1.25x base. Open follow-ups:
+  public stress recovery review (option A accepted), plastic-law version tag (HIGH), governed manifest
+  successor record, descriptor-shear gate follow-up for S3 impact. Merged to local main 2026-10-23.
 
 - Refresh the private Windows Python 3.12 beam-shell bundle from `6fb907a1c`,
   including both completed-prefix S355 checkpoint workflows. Verify 77 installed
