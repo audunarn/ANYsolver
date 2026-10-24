@@ -8,6 +8,7 @@ from anysolver import ContactNodalLoadHistory, ContactTransientSolverControls, T
 from anysolver.matrix_assembly import assemble_stiffness_matrix
 import anysolver.general_contact.transient as driver
 from test_general_contact_transient_plane import _guided_s3_descriptor_impact, _uniform_s3_normal_load
+from s3_vk_element_oracle import S3VonKarmanExcess
 
 from anysolver.general_contact.algebraic_path import affine_descriptor_path
 import anysolver.general_contact.algebraic_path as path_kernel
@@ -181,6 +182,10 @@ def test_s3_algebraic_path_matches_independent_force_roots_and_physical_skin_min
     area = .5*np.linalg.norm(np.cross(points[1]-points[0], points[2]-points[0]))
     w = definition.interactions[0].normal_stiffness*area/3
     Kaa, Kap, Ba = K[np.ix_(algebraic, algebraic)], K[np.ix_(algebraic, physical)], B[:, algebraic]
+    # Independent first-principles von Karman excess of the S3 element (all 18 dofs),
+    # validated against production in test_s3_vk_element_oracle.py.
+    vk = S3VonKarmanExcess(points, director, 1.0e5, .3, element.thickness,
+                           element.reference_surface_offset, element.director_polarity)
 
     for start, end, speed, dt, path, actual_minimum in observations:
         q0 = np.zeros(K.shape[0]); q0[free] = start
@@ -193,11 +198,17 @@ def test_s3_algebraic_path_matches_independent_force_roots_and_physical_skin_min
                            +s*s*(q1[physical]-q0[physical]-dt*v0[physical]))
             rigid_gap = g+B[:, physical] @ q[physical]
             right = Kap @ q[physical]
+            def pose(a):
+                trial = q.copy()
+                trial[algebraic] = a
+                return trial
             def equations(a):
-                return Kaa @ a+right+Ba.T @ (w*np.minimum(rigid_gap+Ba @ a, 0.))
+                return (Kaa @ a+right+vk.force(pose(a))[algebraic]
+                        +Ba.T @ (w*np.minimum(rigid_gap+Ba @ a, 0.)))
             def jacobian(a):
                 active = rigid_gap+Ba @ a < 0.
-                return Kaa+w*Ba[active].T @ Ba[active]
+                return (Kaa+vk.tangent(pose(a))[np.ix_(algebraic, algebraic)]
+                        +w*Ba[active].T @ Ba[active])
             solve = root(equations, (1-s)*q0[algebraic]+s*q1[algebraic],
                          jac=jacobian, options={"xtol": 1e-10})
             assert np.linalg.norm(equations(solve.x)) < 1e-10
