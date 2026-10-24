@@ -22,7 +22,7 @@ from typing import Mapping
 
 import numpy as np
 from scipy import sparse
-from scipy.sparse.linalg import spsolve, norm as sparse_norm
+from scipy.sparse.linalg import spsolve
 from anymaterial.isotropic import IsotropicMaterial
 
 from anysolver.algebraic_dynamics import build_declared_algebraic_basis
@@ -1165,37 +1165,21 @@ class _S3AffinePathAdapter:
                 raise ValueError("S3 lifted path interior disagrees with von Karman work")
 
     def check_endpoints(self, path, start, end, transform, controls, scale=1.):
-        """Strict endpoint budgets; for a von Karman step they apply to the equilibrated endpoint.
+        """Strict endpoint budgets on the raw mismatch between lifted and committed endpoints.
 
-        The lifted endpoint solves the model balance exactly, the committed endpoint only to the
-        Newton tolerance. With r = Z'F(actual), actual - lifted = Z A^-1 r to first order. The
-        step is refused unless |r| <= equilibrium_tolerance*scale (the residual itself is not
-        excused by the mismatch it causes), the lifted endpoint matches the equilibrated one
-        x_eq = actual - Z A^-1 r within the configured budgets (no slack), and the raw mismatch
-        stays within budget plus the a priori Newton bound reach*|T|*tol*scale/lambda_min.
+        No residual- or tolerance-derived allowance is added to a budget. For a von Karman step
+        the committed endpoint must additionally be a converged equilibrium of the model balance:
+        |Z'F(actual)| <= equilibrium_tolerance*scale, else the step is refused.
         """
         force = self.memo.get("force")
         for side, segment, fraction, actual in ((0, path.segments[0], 0., start),
                                                 (1, path.segments[-1], 1., end)):
-            lifted = segment.position(fraction)
-            reference = actual
             if force is not None:
                 c = force[0] if side == 0 else force[0]+force[1]+force[2]
                 r = self.null_basis.T @ self.endpoint_force(actual, self.memo["load"], c)
                 if float(np.linalg.norm(r)) > controls.equilibrium_tolerance*scale:
                     raise ValueError("S3 lifted path endpoint residual exceeds the Newton tolerance")
-                active = np.asarray(segment.active, dtype=bool)
-                tangent = self.structural+self.gradient[active].T @ (self.weights[active, None]*self.gradient[active])
-                algebraic = self.null_basis.T @ tangent @ self.null_basis
-                reference = actual-self.null_basis @ np.linalg.solve(algebraic, r)
-                lowest = float(np.linalg.eigvalsh(.5*(algebraic+algebraic.T))[0])
-                extra = (float(np.linalg.norm(self.null_basis, 2))*controls.equilibrium_tolerance*scale/lowest
-                         *float(sparse_norm(self.transform)))
-                raw = np.asarray(transform @ (lifted-actual)).reshape(-1, 6)
-                if (np.max(np.abs(raw[:, :3])) > controls.s3_path_position_tolerance_m+extra
-                        or np.max(np.abs(raw[:, 3:])) > controls.s3_path_rotation_tolerance_rad+extra):
-                    raise ValueError("S3 lifted path endpoint mismatch exceeds its numerical budget")
-            error = np.asarray(transform @ (lifted-reference)).reshape(-1, 6)
+            error = np.asarray(transform @ (segment.position(fraction)-actual)).reshape(-1, 6)
             if (np.max(np.abs(error[:, :3])) > controls.s3_path_position_tolerance_m
                     or np.max(np.abs(error[:, 3:])) > controls.s3_path_rotation_tolerance_rad):
                 raise ValueError("S3 lifted path endpoint mismatch exceeds its numerical budget")

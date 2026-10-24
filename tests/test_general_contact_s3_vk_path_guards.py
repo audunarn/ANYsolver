@@ -29,20 +29,29 @@ def _adapter(cls=driver._S3AffinePathAdapter, **fields):
     return cls(**base)
 
 
-def test_p1_1_endpoint_mismatch_above_budget_is_not_excused_by_its_own_residual():
-    # Algebraic dof off by 1e-6 rad (budget 1e-9): the residual lambda*delta = 1e-6 is the same
-    # quantity as the mismatch, so a slack built from it accepts anything.
+def _endpoint_case(delta):
     adapter = _adapter()
     adapter.memo["force"] = (np.zeros(6), np.zeros(6), np.zeros(6))
     adapter.memo["load"] = np.zeros(6)
-    coefficients = np.zeros((3, 6))
-    path = affine_descriptor_path(adapter.structural, adapter.null_basis, coefficients, adapter.gradient,
+    path = affine_descriptor_path(adapter.structural, adapter.null_basis, np.zeros((3, 6)), adapter.gradient,
                                   adapter.reference_gap, adapter.weights, force=np.zeros(6))
     actual_end = np.zeros(6)
-    actual_end[3] = 1e-6
+    actual_end[3] = delta
+    return adapter, path, actual_end
+
+
+@pytest.mark.parametrize("delta", [1e-6, 5e-9, 2e-9])
+def test_p1_1_endpoint_mismatch_above_budget_is_refused_even_below_the_newton_tolerance(delta):
+    # Algebraic dof off by delta rad against the 1e-9 rad budget. delta = 5e-9 and 2e-9 have a residual
+    # below the 1e-8 Newton tolerance, so no residual-derived allowance may excuse them.
+    adapter, path, actual_end = _endpoint_case(delta)
     with pytest.raises(ValueError, match="endpoint"):
-        adapter.check_endpoints(path, np.zeros(6), actual_end, sparse.identity(6, format="csr"),
-                                CONTROLS)
+        adapter.check_endpoints(path, np.zeros(6), actual_end, sparse.identity(6, format="csr"), CONTROLS)
+
+
+def test_p1_1_converged_endpoint_within_budget_is_accepted():
+    adapter, path, actual_end = _endpoint_case(5e-10)
+    adapter.check_endpoints(path, np.zeros(6), actual_end, sparse.identity(6, format="csr"), CONTROLS)
 
 
 class _CubicExcess(driver._S3AffinePathAdapter):
