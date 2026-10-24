@@ -17,6 +17,7 @@ from anysolver.general_contact.beam_hemisphere_plane import HemispherePlaneManag
 from anysolver.general_contact.beam_hemisphere_sphere import HemisphereSphereManager
 from examples.general_contact_multiple_beam_s3_caps import build, run
 from test_general_contact_deformable_beam_s3_caps import scalar_total
+from s3_von_karman_oracle import model_triangle_von_karman
 
 
 def fixture(quadratic=False):
@@ -132,10 +133,18 @@ def test_actual_four_coordinate_response_both_targets_controls_and_split_restart
     assert error < 1e-6
     K, _ = assemble_stiffness_matrix(model)
     reduced = K[inds][:, inds].toarray()
-    reference = root(lambda y: reduced@y+independent(y)-[-.001, 0., -.001, 0.], x, tol=1e-11)
+    # Retarget to the adopted S3 VK law (precedent 706bf011c): add each skin's
+    # independent membrane VK force (one normal coordinate free per skin:
+    # node 5 uz on the z skin, node 8 uy on the y skin; fixture constants
+    # E=1e5, nu=.3, t=.02) to the linear structural force.
+    def membrane(y):
+        z = model_triangle_von_karman(model, (3, 4, 5), (0., 0., 1.), (0., 0., y[1]), 1.e5, .3, .02)[1][2]
+        w = model_triangle_von_karman(model, (6, 7, 8), (0., 1., 0.), (0., 0., y[3]), 1.e5, .3, .02)[1][2]
+        return np.array((0., z, 0., w))
+    reference = root(lambda y: reduced@y+membrane(y)+independent(y)-[-.001, 0., -.001, 0.], x, tol=1e-11)
     assert reference.success
     response_error = np.linalg.norm(reference.x-x)/np.linalg.norm(reference.x)
-    assert response_error < 1e-3  # Explicitly bounded linearized structural reference.
+    assert response_error < 1e-3  # Bounded structural reference: linear plus independent VK membrane.
     assert_reference_domain(x); assert_reference_domain(reference.x)
     for pair in contact.to_dict()['pairs']:
         end_fields = pair['contact']['endpoint_fields']
@@ -145,7 +154,7 @@ def test_actual_four_coordinate_response_both_targets_controls_and_split_restart
     assert len(result.info['general_contact']['pair_enforcement']) == 2
     record = os.environ.get('CONTACT_APP_RESULT_RECORD')
     if record:
-        Path(record).with_name('multiple_s3_response.json').write_text(json.dumps({'scope': 'two fixed-director S3 interiors, bounded linearized reference',
+        Path(record).with_name('multiple_s3_response.json').write_text(json.dumps({'scope': 'two fixed-director S3 interiors, bounded linear plus VK-membrane reference',
             'actual_m': x.tolist(), 'reference_m': reference.x.tolist(), 'response_relative_error': float(response_error),
             'contact_gradient_relative_error': float(error), 'minimum_gap_m': contact.minimum_gap,
             'gap_tolerance_m': 1e-5, 'contact': contact.to_dict()}, indent=2), encoding='utf-8')

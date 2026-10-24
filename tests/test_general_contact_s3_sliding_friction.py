@@ -343,8 +343,13 @@ def test_solved_normal_response_lands_at_material_seam_and_continues():
         return model,definition,settings,friction,manager
     model,definition,settings,friction,manager=fixture()
     controls=(ContactPathControl.node(1,"ux"),ContactPathControl.node(1,"uz"))
+    # Under the adopted S3 VK law the source normal response is nonlinear, so
+    # a 1e-8 Newton tolerance left a 7e-9 relative pressure drift between the
+    # press and slide solves and moved the return point 7e-12 off the seam
+    # (seam admission is 128 eps). Solve both to 1e-12 so the rigid-translation
+    # invariance used below holds to the seam resolution; assertions unchanged.
     kwargs=dict(contact=definition,contact_settings=settings,contact_friction=friction,
-        max_iterations=18,tolerance=1e-8,record_increment_snapshots=True,emit_restart_checkpoint=True)
+        max_iterations=18,tolerance=1e-12,record_increment_snapshots=True,emit_restart_checkpoint=True)
     press=solve_static_nonlinear(model,contact_path_program=ContactPathProgram(controls,((0,0),(0,-.02)),1),**kwargs)
     assert press.status=="completed",press.info
     pressure=manager._friction(press.displacements)[2][1]["pressure_pa"]

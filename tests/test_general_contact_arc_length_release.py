@@ -11,6 +11,7 @@ from anysolver import ArcLengthControl, LoadCase, solve_static_arc_length
 from anysolver.matrix_assembly import assemble_stiffness_matrix
 from anysolver.general_contact.runtime import active_contact_manager
 from examples.general_contact_arc_length_affine import build
+from s3_von_karman_oracle import model_triangle_von_karman
 
 FORCE_SCALE = .15
 MOMENT_SCALE = .15
@@ -36,8 +37,12 @@ def _run(steps, restart=None):
     control = ArcLengthControl(initial_load_increment=.05, minimum_load_increment=5.e-7,
         maximum_load_increment=.05, load_scaling=.01, growth_factor=1.,
         max_steps=steps, preload_steps=2)
+    # Under the adopted S3 VK law the open plate response is nonlinear, so the
+    # default 1e-6 residual tolerance (exact for the former linear one-step
+    # solve) left 1.1e-7 N residuals that the soft open mode (~30 m/N) turned
+    # into 1.5e-6 m response errors. Tighten the solve; gates are unchanged.
     return solve_static_arc_length(model, load, constant_load_case=constant,
-        control=control, contact=contact, contact_settings=settings, max_iterations=15,
+        control=control, contact=contact, contact_settings=settings, max_iterations=15, tolerance=1.e-12,
         emit_restart_checkpoint=True, record_increment_snapshots=True,
         restart_checkpoint=restart)
 
@@ -53,6 +58,18 @@ def _reference(model):
         indices = np.array(nodes)-1
         M[np.ix_(indices, indices)] += area/12*(np.eye(3)+np.ones((3, 3)))
         S[indices] += area/3
+    # Retarget to the adopted S3 VK law (precedent 706bf011c): every in-plane
+    # translation and rotation is guided to zero, so the skin adds only the
+    # independent VK membrane force of each triangle (fixture E=1e5, nu=.3,
+    # t=.01) to the linear stiffness. Solved per enumerated active set.
+    def membrane(u):
+        force, hessian = np.zeros(4), np.zeros((4, 4))
+        for nodes in ((1, 2, 3), (2, 4, 3)):
+            indices = np.array(nodes)-1
+            _, f, h = model_triangle_von_karman(model, nodes, (0., 0., 1.), u[indices], 1.e5, .3, .01)
+            force[indices] += f
+            hessian[np.ix_(indices, indices)] += h
+        return force, hessian
     def oracle(factor):
         load = np.array((0., -.01+.05*factor, -.01+.05*factor, -.01+.05*factor))
         imposed = -2.e-6*(1.+factor)
@@ -65,6 +82,12 @@ def _reference(model):
             u = np.empty(4)
             u[0] = imposed
             u[1:] = np.linalg.solve(H[1:, 1:], rhs[1:]-H[1:, 0]*imposed)
+            for _ in range(40):  # Newton on the VK cubic, independent of the solver.
+                force, hessian = membrane(u)
+                u[1:] -= np.linalg.solve((H+hessian)[1:, 1:], (H@u+force-rhs)[1:])
+            force, _ = membrane(u)
+            scale = np.linalg.norm(abs(H)@abs(u))+np.linalg.norm(rhs)+np.linalg.norm(force)
+            assert np.linalg.norm((H@u+force-rhs)[1:]) <= 1.e-12*scale, 'independent VK oracle'
             weighted = M@(np.full(4, 1.e-5)+u)
             if np.all(weighted[active] < 0.) and np.all(weighted[~active] >= 0.):
                 admitted.append(u)

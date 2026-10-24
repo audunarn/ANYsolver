@@ -8,6 +8,7 @@ from anysolver import BoundaryCondition, LoadCase, solve_static_nonlinear
 from anysolver.elements import QuadraticBeamElement
 from anysolver.matrix_assembly import assemble_stiffness_matrix
 from anysolver.general_contact.deformable_beam_s3_static import DeformableBeamS3Manager
+from s3_von_karman_oracle import model_triangle_von_karman
 
 
 def independent_gradient(x):
@@ -58,10 +59,15 @@ def test_actual_quadratic_beam_coupling_and_restart():
     stiffness,_ = assemble_stiffness_matrix(m)
     k = stiffness[indices][:,indices].toarray()
     force = np.array((-.001,0.,0.))
-    reference = root(lambda y:k@y+independent_gradient(y)-force,x,tol=1e-11)
+    # Retarget to the adopted S3 VK law (precedent 706bf011c): add the
+    # independent membrane VK force of the skin (nodes 3,4 fixed, node 5 only
+    # uz free; fixture constants E=1e5, nu=.3, t=.02) to the linear structure.
+    def membrane(y):
+        return np.array((0.,0.,model_triangle_von_karman(m,(3,4,5),(0.,0.,1.),(0.,0.,y[2]),1.e5,.3,.02)[1][2]))
+    reference = root(lambda y:k@y+membrane(y)+independent_gradient(y)-force,x,tol=1e-11)
     assert reference.success
     relative = np.linalg.norm(reference.x-x)/np.linalg.norm(reference.x)
-    assert relative < 1e-3  # Retained bounded linearized structural response gate.
+    assert relative < 1e-3  # Retained bounded structural response gate (linear + VK membrane).
     assert full.info["general_contact"]["gap_tolerance_met"]
     half = solve_static_nonlinear(m,load,max_load_factor=.5,**controls)
     assert half.status == "completed",half.failure_reason
@@ -70,4 +76,4 @@ def test_actual_quadratic_beam_coupling_and_restart():
     assert resumed.status == "completed",resumed.failure_reason
     np.testing.assert_allclose(resumed.displacements,full.displacements,rtol=1e-7,atol=1e-10)
     print("B3_DEFORMABLE_S3_RESPONSE "+json.dumps(dict(coordinates=x.tolist(),
-        linearized_reference=reference.x.tolist(),relative_response=relative,contact=full.info["general_contact"]),sort_keys=True))
+        von_karman_reference=reference.x.tolist(),relative_response=relative,contact=full.info["general_contact"]),sort_keys=True))

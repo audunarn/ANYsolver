@@ -80,7 +80,13 @@ def _check_target_clamp_wrench(model, manager, snapshot, record, support):
     moment_scale = max(np.linalg.norm(target_moment),
                        1.3*np.linalg.norm(target_force), 1e-8)
     assert np.linalg.norm(clamp_force + target_force)/force_scale < 1e-6
-    assert np.linalg.norm(clamp_moment + target_moment)/moment_scale < 1e-6
+    # Tolerance drift under the adopted S3 VK law: VK membrane forces are not
+    # rigid-rotation objective, so the target's internal forces carry a net
+    # moment (measured max 1.467e-6 of moment_scale over the checked
+    # snapshots; 4.2e-7 before VK at the shared press pose, where the
+    # free-node residual moment is 8e-16). Tolerance = max(1e-6, 1.5 x
+    # measured) = 2.2e-6.
+    assert np.linalg.norm(clamp_moment + target_moment)/moment_scale < 2.2e-6
 
 
 def _check_smooth_path_work(model, manager, snapshot, record):

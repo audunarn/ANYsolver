@@ -15,6 +15,7 @@ from anysolver.general_contact.deformable_beam_s3_caps import DeformableBeamS3Ca
 from test_general_contact_deformable_beam_s3_static import fixture as line_fixture, constraints
 from test_general_contact_deformable_beam_s3_static import independent_contact_gradient as line_oracle
 from test_general_contact_hemisphere_plane import scalar_gap
+from s3_von_karman_oracle import model_triangle_von_karman
 
 
 def scalar_support(beam,skin,endpoint,sign,radius,orientation):
@@ -169,14 +170,19 @@ def test_actual_deforming_target_coupled_force_displacement_oracle_and_restart()
     assert fields['endpoint_fields'][1]['branch']=='sphere'
     np.testing.assert_allclose(force[inds],scalar_two_dof_cap_contact(x),rtol=1e-6,atol=1e-12)
     K,_=assemble_stiffness_matrix(model);K2=K[inds][:,inds].toarray()
-    reference=root(lambda y:K2@y+scalar_two_dof_cap_contact(y)-[-.001,0.],x,tol=1e-11)
+    # Retarget to the adopted S3 VK law (precedent 706bf011c): add the
+    # independent skin membrane VK force (nodes 3,4 fixed, node 5 uz only;
+    # fixture constants E=1e5, nu=.3, t=.02) to the linear structural force.
+    def membrane(y):
+        return np.array((0.,model_triangle_von_karman(model,(3,4,5),(0.,0.,1.),(0.,0.,y[1]),1.e5,.3,.02)[1][2]))
+    reference=root(lambda y:K2@y+membrane(y)+scalar_two_dof_cap_contact(y)-[-.001,0.],x,tol=1e-11)
     assert reference.success
     assert np.linalg.norm(reference.x-x)/np.linalg.norm(reference.x)<1e-3
     record=os.environ.get('CONTACT_APP_RESULT_RECORD')
     if record:
         Path(record).write_text(json.dumps({'scope':'guided fixed-director moving-S3 development',
-            'coordinates_m':x.tolist(),'linearized_reference_m':reference.x.tolist(),
-            'linearized_response_relative_error':float(np.linalg.norm(reference.x-x)/np.linalg.norm(reference.x)),
+            'coordinates_m':x.tolist(),'von_karman_reference_m':reference.x.tolist(),
+            'von_karman_response_relative_error':float(np.linalg.norm(reference.x-x)/np.linalg.norm(reference.x)),
             'contact_gradient_relative_error':float(np.linalg.norm(force[inds]-scalar_two_dof_cap_contact(x))/np.linalg.norm(force[inds])),
             'gap_tolerance_m':definition.interactions[0].gap_tolerance,
             'minimum_gap_m':fields['minimum_gap'],'endpoint_fields':fields['endpoint_fields']},indent=2),encoding='utf-8')

@@ -4,6 +4,7 @@ from pathlib import Path
 import numpy as np
 from examples.general_contact_beam_s3_transient import build,run
 from test_general_contact_beam_s3_transient import body_balance
+from s3_von_karman_oracle import model_triangle_von_karman,p1_von_karman_inplane_force
 
 
 def independent_beam_storage(model,u):
@@ -87,8 +88,16 @@ def independent_structural_force(model,u):
         force[dofs[:,4]]+=weight*.25*(.1*curvature*derivative+GA*gamma*N)
     gradients,coefficient,_=independent_shell_coefficients(model)
     ids=[model.mesh.dof_manager.get_node_dofs(n)[2] for n in (3,4,5)]
-    force[ids]=coefficient*gradients@(gradients.T@u[ids])
+    force[ids]=coefficient*gradients@(gradients.T@u[ids])+independent_shell_von_karman(model,u)[1]
     return force
+
+
+def independent_shell_von_karman(model,u):
+    """Adopted S3 VK membrane term (precedent 706bf011c): skin in-plane
+    translations and directors are guided, so only the membrane VK energy of
+    the uz field is added; fixture constants E=1e5, nu=.3, t=.02."""
+    w=[u[model.mesh.dof_manager.get_node_dofs(n)[2]] for n in (3,4,5)]
+    return model_triangle_von_karman(model,(3,4,5),(0.,0.,1.),w,1.e5,.3,.02)
 
 
 def independent_mass_chart():
@@ -119,14 +128,21 @@ def test_actual_flexural_impact_and_independent_storage():
         direct_shell=independent_shell_storage(m,u)
         shell_stores.append(direct_shell)
         shell_storage_errors.append(abs(direct_shell-.5*u[sdofs]@(Ks@u[sdofs])))
-        stores.append(.5*v@(M@v)+beam+direct_shell+line)
+        # Total storage includes the adopted S3 VK membrane energy.
+        stores.append(.5*v@(M@v)+beam+direct_shell+independent_shell_von_karman(m,u)[0]+line)
         contact_errors.append(abs(line-contact.line_contact_energy));bending.append(be);shear.append(sh);min_gaps.append(gap)
         if gap<0 and np.min(ends)>0:hidden.append(dict(index=len(stores)-1,minimum_gap=gap,endpoint_gaps=ends.tolist()))
     energy_error=float(np.max(abs(np.array(stores)-stores[0]))/stores[0])
     i=int(np.argmin(min_gaps));u=r.displacements[i];mean_curvature=float(np.max(abs(r.displacements[:,dofs(1)[4]]-r.displacements[:,dofs(2)[4]]))/.5)
     curve=float(np.max(abs(r.displacements[:,dofs(6)[2]]-.5*(r.displacements[:,dofs(1)[2]]+r.displacements[:,dofs(2)[2]]))))
     with suspend_contact():internal,K,_=_assemble_nonlinear_system(m,u,{},3,tangent=True,kinematics='von_karman')
-    shell_error=float(np.linalg.norm(internal[sdofs]-Ks@u[sdofs]))
+    # Retarget to the adopted S3 VK law: linear shell force plus the
+    # independent VK membrane force on the three skin uz coordinates.
+    shell_expected=np.array(Ks@u[sdofs],dtype=float);shell_expected[2::6]+=independent_shell_von_karman(m,u)[1]
+    points=np.array([m.mesh.nodes[n].coords() for n in (3,4,5)]);w=u[sdofs[2::6]]
+    inplane=p1_von_karman_inplane_force(points,(0.,0.,1.),w,1.e5,.3,.02)
+    for i in range(3):shell_expected[6*i:6*i+3]+=inplane[i]  # membrane reactions on guided ux,uy
+    shell_error=float(np.linalg.norm(internal[sdofs]-shell_expected))
     direction=np.zeros_like(u);direction[dofs(6)[2]]=.3;direction[dofs(1)[4]]=.2;direction[dofs(2)[4]]=-.1
     contact_direction=direction.copy();contact_direction[dofs(4)[2]]=-.2
     chart=[dofs(n)[c] for n in (1,6,2) for c in (2,4)]+[dofs(n)[2] for n in (3,4,5)]
