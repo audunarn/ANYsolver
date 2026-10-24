@@ -883,7 +883,10 @@ def _analytic_vk_curvature(model, full_position, full_velocity):
     cancellation noise; the closed form removes it. None means the model has
     another element type or a non-elastic section: the finite difference stays.
     """
-    elements = tuple(model.mesh.elements.values())
+    mesh = getattr(model, "mesh", None)
+    if mesh is None or not hasattr(mesh, "elements"):
+        return None  # no assembled model (e.g. manufactured structures): keep the finite difference
+    elements = tuple(mesh.elements.values())
     if not elements or any(type(element) is not NativeParityE4PLS3V2DShellElement
                            for element in elements):
         return None
