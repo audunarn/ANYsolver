@@ -212,7 +212,7 @@ def test_partial_overlap_coupled_full_workflow(monkeypatch,tmp_path):
 
 def test_partial_overlap_saved_reference_split_restart(monkeypatch,tmp_path):
     reference=Path(__file__).resolve().parents[1]/(
-        'docs/d1_review_support/contact_c5_s3_partial_replay_20261002/separation_full_v1_checkpoint.json')
+        'docs/d1_review_support/contact_c5_s3_partial_replay_20261002/separation_full_v1_vk_s3r1_checkpoint.json')
     _partial_overlap_coupled_workflow(monkeypatch,tmp_path,False,
         prepared_partial=True,reference_checkpoint=reference)
 
@@ -261,8 +261,14 @@ def _partial_overlap_coupled_workflow(monkeypatch,tmp_path,normal_guide,*,split_
             dependent=model.mesh.dof_manager.get_node_dofs(node)[2]
             model.add_constraint_equation(terms=((dependent,1.),(control,-1.)),
                 dependent_dof=dependent,source_id=f"declared_normal_guide_{node}")
+    # S3 R1 von Karman default: imposing the whole 0.55 m slide in one step drives the pressed
+    # source patch into compressive membrane resultants whose geometric (buckling-type) softening
+    # makes the reduced tangent indefinite (lowest eigenvalue -48 vs -0.54 pre-VK), Newton stagnates
+    # and the solve stops with a typed contact_gap_exceeded refusal. The same load path imposed in two
+    # equal increments converges and its final state is path independent (2/4/8 increments agree to
+    # 1.3e-11). Everything else (gates, tolerances, the rest of the path) is unchanged.
     program=ContactPathProgram((ContactPathControl.node(1,"ux"),ContactPathControl.node(1,"uz")),
-        ((0,0),(0,-.02),(.55,-.02),(.54,-.02),(.54,0),(.54,-.02)),1)
+        ((0,0),(0,-.02),(.275,-.02),(.55,-.02),(.54,-.02),(.54,0),(.54,-.02)),1)
     kwargs=dict(model=model,contact=definition,contact_settings=normal,contact_friction=friction,
         contact_path_program=program,max_iterations=18,tolerance=1e-8,
         emit_restart_checkpoint=True,record_increment_snapshots=True)
@@ -273,7 +279,8 @@ def _partial_overlap_coupled_workflow(monkeypatch,tmp_path,normal_guide,*,split_
         (tmp_path/"full_checkpoint.json").write_text(json.dumps(reference),encoding="utf-8")
         history=full.info["force_displacement_history"]
         assert all(row["friction"]["dissipation_increment_j"]>=0 for row in history)
-        assert history[3]["friction"]["storage_j"]==0
+        # step index of the (.54,0) full-separation waypoint: 3 before the slide was split in two
+        assert history[4]["friction"]["storage_j"]==0
         moved=full.snapshots[1].displacements
         assert max(abs(moved[model.mesh.dof_manager.get_node_dofs(n)[0]]) for n in (5,6,7))>1e-8
     else:
@@ -282,7 +289,8 @@ def _partial_overlap_coupled_workflow(monkeypatch,tmp_path,normal_guide,*,split_
         assert reference['path_state']['terminal_status']=='completed'
         history=reference['path_state']['history']
     if not split_restart:return
-    half=solve_static_nonlinear(max_load_factor=.4,**kwargs)
+    # .5 of the 6 steps = the end of the slide (formerly .4 of 5 steps): the same physical split point
+    half=solve_static_nonlinear(max_load_factor=.5,**kwargs)
     assert half.status=='completed',half.info
     for key in ('model_fingerprint','analysis_fingerprint'):
         assert half.to_restart_checkpoint()[key]==reference[key]
