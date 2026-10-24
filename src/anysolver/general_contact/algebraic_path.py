@@ -102,12 +102,14 @@ class AlgebraicContactPath:
 
 def affine_descriptor_path(structural_tangent, null_basis, physical_coefficients,
                            gap_gradient, reference_gap, weights, *, force=None,
-                           maximum_pressure_dofs=3):
+                           force_rate=None, force_curvature=None, maximum_pressure_dofs=3):
     """Lift p(s) through Z.T(Kq-f+B.T w min(gref+Bq,0))=0.
 
     Requires exact affine structural work and positive definite algebraic work.
     Enumerates a small, explicit pressure-space cap. All gap-polynomial roots
     partition the interval; no sampled gaps stand in for interval minima.
+    ``force_rate``/``force_curvature`` add f(s)=force+s*force_rate+s*s*force_curvature;
+    omitted, the force is constant and results are unchanged.
     Floating branch/continuity checks use 512 epsilon times arithmetic scales,
     unrelated to the caller's dimensional penetration tolerance.
     """
@@ -119,9 +121,13 @@ def affine_descriptor_path(structural_tangent, null_basis, physical_coefficients
     w = np.asarray(weights, dtype=float)
     n = p.shape[1] if p.ndim == 2 else 0
     f = np.zeros(n) if force is None else np.asarray(force, dtype=float)
+    rate = None if force_rate is None else np.asarray(force_rate, dtype=float)
+    curvature = None if force_curvature is None else np.asarray(force_curvature, dtype=float)
     if (p.shape != (3, n) or n == 0 or K.shape != (n, n) or Z.ndim != 2
             or Z.shape[0] != n or Z.shape[1] == 0 or B.ndim != 2 or B.shape[1] != n
             or g.shape != (B.shape[0],) or w.shape != g.shape or f.shape != (n,)
+            or any(v is not None and (v.shape != (n,) or not np.all(np.isfinite(v)))
+                   for v in (rate, curvature))
             or type(maximum_pressure_dofs) is not int or maximum_pressure_dofs < 1
             or not 0 < g.size <= maximum_pressure_dofs or np.any(w <= 0.)
             or any(not np.all(np.isfinite(v)) for v in (K, Z, p, B, g, w, f))):
@@ -145,6 +151,10 @@ def affine_descriptor_path(structural_tangent, null_basis, physical_coefficients
             tangent = K+B[active].T @ (w[active, None]*B[active])
             rhs = tangent @ p.T
             rhs[:, 0] += B[active].T @ (w[active]*g[active])-f
+            if rate is not None:
+                rhs[:, 1] -= rate
+            if curvature is not None:
+                rhs[:, 2] -= curvature
             if not np.all(np.isfinite(tangent)) or not np.all(np.isfinite(rhs)):
                 raise ValueError("nonfinite affine descriptor path branch work")
             block, projected_rhs = Z.T @ tangent @ Z, Z.T @ rhs
