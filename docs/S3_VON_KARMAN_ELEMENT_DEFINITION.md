@@ -80,3 +80,17 @@ dU/du and its tangent dF/du, and compares against production on random triangles
 Layered elastic isotropic; non-flat facets are refused by the element; VK is not rigid-rotation objective;
 reference-surface slope only; the rate recovery in `transient.py::_consistent_s3_descriptor_rates` uses the VK
 tangent, whose directional curvature was a finite difference before this branch's analytic replacement.
+
+### Known limit: large in-plane slide of a pressed S3 patch (2026-10-24)
+Under the VK default, imposing the 0.55 m slide of the partial-overlap friction-replay fixture in ONE step refuses with the typed outcome
+`stopped_at_limit` / `contact_gap_exceeded` (no number is produced): the pressed source element carries compressive membrane resultants
+N = (-69, -20, -55) N/m, the geometric stiffness `g^T N g` is buckling-type negative (element tangent lowest eigenvalue -50.7; reduced tangent -48
+against -0.54 pre-VK), Newton stagnates (residual 32.1, 31.09, 31.07 vs 32.1, 6.5e-4, 1.6e-9 pre-VK) and the admissible-step fraction collapses
+(1, 0.031, 0.0005, 0). The element tangent is consistent (central finite difference 1.4e-7 on a 3949 scale; first-principles oracle 1e-15).
+The same load path in >= 2 equal increments converges (5-6 Newton iterations per step, tangent positive, lowest nonzero eigenvalue 22.8-26.5) and its
+final state is path independent (2/4/8 increments agree to 1.3e-11). Pre-VK vs VK at the end of the slide: max |du| 8.7e-6 (0.55 m scale);
+pressures 3.96922/3.56505/3.33933 -> 3.96821/3.56326/3.33844 Pa (2.5e-4..5e-4); reaction (0.0749835,-0.2496361) -> (0.0749610,-0.2495583);
+slide dissipation 0.045009 -> 0.044581 J (-0.95 %, first half-step -1.8 %, second -0.04 %). Consequence for the qualified S3 claim: qualified
+statics/contact paths that slide a pressed S3 patch over lengths comparable to its own size must be run in increments; the single-step case is a
+documented typed refusal, not a wrong result. Test schedule: tests/test_general_contact_s3_friction_replay.py (slide in two increments;
+regenerated reference separation_full_v1_vk_s3r1_checkpoint.json, provenance next to it).
