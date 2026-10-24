@@ -73,3 +73,25 @@ def test_oracle_matches_production_vk_excess_on_random_states(seed):
     if abs(case["offset"]) > 5e-3:
         rotations = np.concatenate([np.arange(6*i+3, 6*i+6) for i in range(3)])
         assert np.max(np.abs(excess_f[rotations])) > 0.
+
+
+@pytest.mark.parametrize("seed", range(8))
+def test_analytic_directional_curvature_matches_oracle_and_finite_difference(seed):
+    rng = np.random.default_rng(300+seed)
+    case = _random_case(rng)
+    model, element, material = _production(case)
+    oracle = S3VonKarmanExcess(**case)
+    u, v = rng.normal(size=18)*1e-2, rng.normal(size=18)
+    curvature = element.von_karman_directional_curvature(model.mesh, material, u, v)
+    # independent: d/dh T_vk(u+h v) v by complex step on the first-principles tangent
+    h = 1e-30
+    expected = oracle.tangent(u+1j*h*v).imag @ v/h
+    scale = np.max(np.abs(expected))
+    assert np.max(np.abs(curvature-expected)) <= 1e-12*scale
+    # the old production finite difference agrees to its own accuracy (the law is cubic:
+    # the central difference is exact up to cancellation noise)
+    step = 1e-5
+    tangents = [element.compute_nonlinear_response(model.mesh, material, u+s*step*v, None, 5, True,
+                                                   von_karman=True)[1] for s in (1., -1.)]
+    difference = (tangents[0]-tangents[1]) @ v/(2*step)
+    assert np.max(np.abs(curvature-difference)) <= 1e-6*scale

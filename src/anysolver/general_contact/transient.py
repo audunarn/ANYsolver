@@ -875,6 +875,31 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
     return values
 
 
+def _analytic_vk_curvature(model, full_position, full_velocity):
+    """Exact F''(x)[v,v] when every element is an elastic qualified S3 V2D shell.
+
+    The von Karman force is cubic in the displacements, so the central finite
+    difference of the tangent is exact in exact arithmetic but carries
+    cancellation noise; the closed form removes it. None means the model has
+    another element type or a non-elastic section: the finite difference stays.
+    """
+    elements = tuple(model.mesh.elements.values())
+    if not elements or any(type(element) is not NativeParityE4PLS3V2DShellElement
+                           for element in elements):
+        return None
+    total = np.zeros(full_position.shape[0], dtype=float)
+    for element in elements:
+        dofs = np.asarray(element.get_dof_mapping(model.mesh), dtype=np.intp)
+        part = element.von_karman_directional_curvature(
+            model.mesh, model.get_material(element.material_name),
+            full_position[dofs], full_velocity[dofs],
+        )
+        if part is None:
+            return None
+        np.add.at(total, dofs, part)
+    return total
+
+
 def _consistent_s3_descriptor_rates(
     model, T, Mred, basis, full_position, reduced_velocity,
     reduced_acceleration, full_tangent, committed_states, difference_step_s,
@@ -932,21 +957,25 @@ def _consistent_s3_descriptor_rates(
     except np.linalg.LinAlgError as exc:
         raise ValueError("S3 descriptor algebraic velocity solve is singular") from exc
     full_velocity = np.asarray(T @ velocity).reshape(-1)
-    h = float(difference_step_s)
-    with suspend_contact():
-        _, plus, _ = _assemble_nonlinear_system(
-            model, full_position+h*full_velocity, committed_states, 3,
-            tangent=True, kinematics="von_karman",
-        )
-        discard_active_state_candidate(committed_states)
-        _, minus, _ = _assemble_nonlinear_system(
-            model, full_position-h*full_velocity, committed_states, 3,
-            tangent=True, kinematics="von_karman",
-        )
-        discard_active_state_candidate(committed_states)
-    structural_curvature = np.asarray(
-        T.T @ ((plus-minus) @ full_velocity)
-    ).reshape(-1)/(2.0*h)
+    analytic = _analytic_vk_curvature(model, full_position, full_velocity)
+    if analytic is not None:
+        structural_curvature = np.asarray(T.T @ analytic).reshape(-1)
+    else:
+        h = float(difference_step_s)
+        with suspend_contact():
+            _, plus, _ = _assemble_nonlinear_system(
+                model, full_position+h*full_velocity, committed_states, 3,
+                tangent=True, kinematics="von_karman",
+            )
+            discard_active_state_candidate(committed_states)
+            _, minus, _ = _assemble_nonlinear_system(
+                model, full_position-h*full_velocity, committed_states, 3,
+                tangent=True, kinematics="von_karman",
+            )
+            discard_active_state_candidate(committed_states)
+        structural_curvature = np.asarray(
+            T.T @ ((plus-minus) @ full_velocity)
+        ).reshape(-1)/(2.0*h)
     try:
         if one_sided_manager is None:
             physical_acceleration = physical_part(reduced_acceleration)
