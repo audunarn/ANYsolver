@@ -212,6 +212,25 @@ def q4_channels(element, mesh, material, kin, components):
         stations = membrane_stations(strains, resultants, operators, source_weights,
                                      centre_frame, positions, interpolation@kin.current_positions, pose)
         records.append(channel(name, sign, energy, T0.T@force, T0.T@stiffness@T0, stations))
+    # Single elastic law: the qualified Q4 adds the von Karman cross terms
+    # dE_m' A eps_nl + B_nl' A dE_m u (energy sum w (dE_m u).A eps_nl) that the
+    # mixed + compatible-VK - compatible-linear split above does not contain.
+    from . import _q4_assumed_strain_plasticity as single
+    Gw_all, detw = np.asarray(geometry['Gw_all'], float), np.asarray(geometry['detw_all'], float)
+    dEm = np.asarray(single.offset_operator(element, mesh, material), float)[:, :3, :]
+    theta = np.einsum('gki,i->gk', Gw_all, y)
+    Bnl = np.stack([theta[:, 0, None]*Gw_all[:, 0], theta[:, 1, None]*Gw_all[:, 1],
+                    theta[:, 0, None]*Gw_all[:, 1]+theta[:, 1, None]*Gw_all[:, 0]], axis=1)
+    enl = np.stack([.5*theta[:, 0]**2, .5*theta[:, 1]**2, theta[:, 0]*theta[:, 1]], axis=1)
+    offset_strain = np.einsum('gki,i->gk', dEm, y)
+    N_offset = offset_strain@A.T
+    cross_force = (np.einsum('g,gki,gk->i', detw, dEm, enl@A.T)
+                   + np.einsum('g,gki,gk->i', detw, Bnl, N_offset))
+    cross = np.einsum('gki,gkj->ij', dEm*detw[:, None, None], A@Bnl)
+    cross_tangent = cross+cross.T+single._geometric(detw[None], Gw_all[None], N_offset[None])[0]
+    cross_energy = float(np.einsum('g,gk,gk->', detw, offset_strain, enl@A.T))
+    records.append(channel('VK_OFFSET_CROSS_TERM', 1, cross_energy, T0.T@cross_force,
+                           T0.T@cross_tangent@T0, None, numerical=True))
     return tuple(records)
 
 def s3_channels(element, mesh, material, kin, components, candidate):
