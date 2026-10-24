@@ -1002,6 +1002,22 @@ def _consistent_s3_descriptor_rates(
     return velocity, acceleration
 
 
+_CHEBYSHEV_7 = .5*(1.-np.cos((2*np.arange(7)+1)*np.pi/14.))
+
+
+def _lebesgue_constant(nodes):
+    grid = np.linspace(0., 1., 4001)
+    basis = np.ones((nodes.size, grid.size))
+    for i, node in enumerate(nodes):
+        for j, other in enumerate(nodes):
+            if i != j:
+                basis[i] *= (grid-other)/(node-other)
+    return float(np.max(np.sum(np.abs(basis), axis=0)))*(1.+1e-6)
+
+
+_LEBESGUE_7 = _lebesgue_constant(_CHEBYSHEV_7)
+
+
 @dataclass(frozen=True)
 class _S3AffinePathAdapter:
     structural: np.ndarray
@@ -1089,8 +1105,18 @@ class _S3AffinePathAdapter:
 
     def evaluate(self, start, end, velocity, dt, load):
         ends = self.chord(start, end)
+        self.memo["force"] = None
         coefficients = np.stack((start, dt*velocity, end-start-dt*velocity))
         path = self._path(coefficients, load, None)
+        if ends is None:
+            # Zero endpoint excess does not make the path linear: along the lifted path the
+            # excess is a polynomial of degree <= 6 in s (cubic force, quadratic path), so zero
+            # at both ends and at five further distinct samples means identically zero.
+            for s in (1./6., 1./3., .5, 2./3., 5./6.):
+                segment = next(g for g in path.segments if g.start <= s <= g.end)
+                if self.nonlinear_part(segment.position(s)).any():
+                    ends = (np.zeros(start.shape[0]), np.zeros(start.shape[0]))
+                    break
         if ends is not None:
             # Von Karman: the algebraic balance carries the excess force as a
             # polynomial in the path parameter fixed by its exact values at s=0,
@@ -1113,57 +1139,65 @@ class _S3AffinePathAdapter:
         curvature = 2.*(last+first-2.*middle)
         return first, last-first-curvature, curvature
 
-    def check_interior(self, path, controls, fractions=(.25,.75)):
+    def check_interior(self, path, controls):
         """Certified position error of the lifted path against the true von Karman force.
 
-        At each probe the true residual r of the lifted path is evaluated;
-        since the active algebraic block Z'(K+B'WB)Z bounds the algebraic
-        stiffness from below, the algebraic coordinates err by at most
-        |Z'r|/lambda_min, mapped through Z. That position error must stay within
-        the path position budget.
+        On each segment the error e(s) = A^-1 Z'(F_vk(x(s)) - model(s)) (A = Z'(K+B'WB)Z of the
+        active branch) is a vector polynomial of degree <= 6 in s (cubic force, quadratic path,
+        quadratic model), hence equals its degree-6 interpolant on 7 Chebyshev nodes and
+        |e(s)| <= Lambda_7 * max_i |e(s_i)| with Lambda_7 the Lebesgue constant of the nodes
+        (_LEBESGUE_7). That certified bound, mapped through Z, must stay within the path
+        position budget.
         """
         force = self.memo["force"]
-        for s in fractions:
-            segment = next(g for g in path.segments if g.start <= s <= g.end)
+        for segment in path.segments:
             active = np.asarray(segment.active, dtype=bool)
             tangent = self.structural+self.gradient[active].T @ (self.weights[active, None]*self.gradient[active])
             algebraic = self.null_basis.T @ tangent @ self.null_basis
-            exact = self.nonlinear_part(segment.position(s))
-            model = force[0]+s*(force[1]+s*force[2])
-            error = float(np.linalg.norm(self.null_basis @ np.linalg.solve(
-                algebraic, self.null_basis.T @ (exact-model))))
-            if error > controls.s3_path_position_tolerance_m:
+            worst = 0.
+            for node in _CHEBYSHEV_7:
+                s = segment.start+(segment.end-segment.start)*node
+                exact = self.nonlinear_part(segment.position(s))
+                model = force[0]+s*(force[1]+s*force[2])
+                worst = max(worst, float(np.linalg.norm(self.null_basis @ np.linalg.solve(
+                    algebraic, self.null_basis.T @ (exact-model)))))
+            if _LEBESGUE_7*worst > controls.s3_path_position_tolerance_m:
                 raise ValueError("S3 lifted path interior disagrees with von Karman work")
 
-    def equilibrium_slack(self, path, segment, position, side):
-        """Position bound on the actual state's distance from exact equilibrium.
+    def check_endpoints(self, path, start, end, transform, controls, scale=1.):
+        """Strict endpoint budgets; for a von Karman step they apply to the equilibrated endpoint.
 
-        Newton stops at a residual r of the true von Karman algebraic balance, so
-        the committed endpoint can differ from the exactly lifted one by at most
-        reach*|Z'r|/lambda_min(Z'(K+B'WB)Z) (active block, a lower stiffness
-        bound), mapped to full coordinates by the Frobenius norm of the
-        transform. Zero for a reference-linear step, whose endpoints are exact.
+        The lifted endpoint solves the model balance exactly, the committed endpoint only to the
+        Newton tolerance. With r = Z'F(actual), actual - lifted = Z A^-1 r to first order. The
+        step is refused unless |r| <= equilibrium_tolerance*scale (the residual itself is not
+        excused by the mismatch it causes), the lifted endpoint matches the equilibrated one
+        x_eq = actual - Z A^-1 r within the configured budgets (no slack), and the raw mismatch
+        stays within budget plus the a priori Newton bound reach*|T|*tol*scale/lambda_min.
         """
         force = self.memo.get("force")
-        if force is None:
-            return 0.
-        c = force[0] if side == 0 else force[0]+force[1]+force[2]
-        r = self.null_basis.T @ self.endpoint_force(position, self.memo["load"], c)
-        active = np.asarray(segment.active, dtype=bool)
-        tangent = self.structural+self.gradient[active].T @ (self.weights[active, None]*self.gradient[active])
-        algebraic = self.null_basis.T @ tangent @ self.null_basis
-        lowest = float(np.linalg.eigvalsh(.5*(algebraic+algebraic.T))[0])
-        return (float(np.linalg.norm(self.null_basis, 2))*float(np.linalg.norm(r))/lowest
-                *float(sparse_norm(self.transform)))
-
-    def check_endpoints(self, path, start, end, transform, controls):
         for side, segment, fraction, actual in ((0, path.segments[0], 0., start),
                                                 (1, path.segments[-1], 1., end)):
             lifted = segment.position(fraction)
-            slack = self.equilibrium_slack(path, segment, actual, side)
-            error = np.asarray(transform @ (lifted-actual)).reshape(-1, 6)
-            if (np.max(np.abs(error[:, :3])) > controls.s3_path_position_tolerance_m+slack
-                    or np.max(np.abs(error[:, 3:])) > controls.s3_path_rotation_tolerance_rad+slack):
+            reference = actual
+            if force is not None:
+                c = force[0] if side == 0 else force[0]+force[1]+force[2]
+                r = self.null_basis.T @ self.endpoint_force(actual, self.memo["load"], c)
+                if float(np.linalg.norm(r)) > controls.equilibrium_tolerance*scale:
+                    raise ValueError("S3 lifted path endpoint residual exceeds the Newton tolerance")
+                active = np.asarray(segment.active, dtype=bool)
+                tangent = self.structural+self.gradient[active].T @ (self.weights[active, None]*self.gradient[active])
+                algebraic = self.null_basis.T @ tangent @ self.null_basis
+                reference = actual-self.null_basis @ np.linalg.solve(algebraic, r)
+                lowest = float(np.linalg.eigvalsh(.5*(algebraic+algebraic.T))[0])
+                extra = (float(np.linalg.norm(self.null_basis, 2))*controls.equilibrium_tolerance*scale/lowest
+                         *float(sparse_norm(self.transform)))
+                raw = np.asarray(transform @ (lifted-actual)).reshape(-1, 6)
+                if (np.max(np.abs(raw[:, :3])) > controls.s3_path_position_tolerance_m+extra
+                        or np.max(np.abs(raw[:, 3:])) > controls.s3_path_rotation_tolerance_rad+extra):
+                    raise ValueError("S3 lifted path endpoint mismatch exceeds its numerical budget")
+            error = np.asarray(transform @ (lifted-reference)).reshape(-1, 6)
+            if (np.max(np.abs(error[:, :3])) > controls.s3_path_position_tolerance_m
+                    or np.max(np.abs(error[:, 3:])) > controls.s3_path_rotation_tolerance_rad):
                 raise ValueError("S3 lifted path endpoint mismatch exceeds its numerical budget")
 
     def endpoint_force(self, position, load, chord_force=None):
@@ -2486,9 +2520,9 @@ def solve_transient_contact(
                             candidate_path, swept_gap = path_adapter.evaluate(
                                 q, candidate, vred, step, load_at(current_time),
                             )
-                            if vk_chord is not None:
+                            if path_adapter.memo.get('force') is not None:
                                 path_adapter.check_interior(candidate_path, controls)
-                            path_adapter.check_endpoints(candidate_path, q, candidate, T, controls)
+                            path_adapter.check_endpoints(candidate_path, q, candidate, T, controls, scale)
                             if controls.s3_event_subdivision_dev:
                                 event_gaps = path_adapter.reference_gap+path_adapter.gradient @ candidate
                                 start_gaps = path_adapter.reference_gap+path_adapter.gradient @ q
