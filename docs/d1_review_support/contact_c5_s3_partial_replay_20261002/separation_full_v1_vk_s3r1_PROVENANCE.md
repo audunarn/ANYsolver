@@ -13,4 +13,4 @@
   analysis fingerprint therefore differs from the old file; the model fingerprint is identical.
 * Checks of the regenerated numbers (old pre-VK file vs this file; final-state max |du| 9.1e-6 on a 0.54 scale):
   see the table in docs/S3_VON_KARMAN_ELEMENT_DEFINITION.md section 8 and the commit message. Path independence of the VK slide: final states for
-  2/4/8 increments agree to 1.3e-11.
+  2/4/8 increments agree to 1.3e-11 in endpoint displacement only (cumulative slide dissipation varies -0.53 % from 2 to 8 increments).
