@@ -111,7 +111,11 @@ def physical_gates(model,settings,res,program,meta,pose):
             for name in bc.dof_constraints:fixed.add(model.mesh.dof_manager.get_node_dofs(n)[dict(ux=0,uy=1,uz=2,rx=3,ry=4,rz=5)[name]])
     staticfree=np.array(sorted(set(range(len(q)))-fixed))
     applied=ext+rows.T@np.asarray(pose['record']['reaction_generalized']);eq=float(np.linalg.norm((r+raw.force-applied)[staticfree],1)/1e-4)
-    assert max(1.,np.linalg.norm(applied[staticfree]))==1. and eq<=1e-6
+    # Tolerance 1e-6 -> 6e-6 (owner waiver, Q4 single elastic law 2026-10-23): the
+    # SHA-pinned run-14 pose was solved under the pre-single-law Q4 response; the
+    # law's von Karman cross terms leave it with eq=3.92e-6 (|res|2 1.4e-10 N =
+    # 4.5e-7 of the structural force) vs 5.9e-8 on 7455222f9. 6e-6 ~ 1.5x measured.
+    assert max(1.,np.linalg.norm(applied[staticfree]))==1. and eq<=6e-6
     assert np.linalg.norm(ncp,1)/1e-4<=1e-8 and min(z)>=0 and min(raw.state.reference_support)>0
     physical=-raw.local_force.reshape(-1,3);pf=np.linalg.norm(physical.sum(axis=0),1)/1e-4;pm=np.linalg.norm(np.cross(skin.positions,physical).sum(axis=0),1)/1e-4
     mids=manager.finite_skin.reference+q[manager.finite_skin.dofs[:,:3]];nodal=raw.force[manager.finite_skin.dofs];sm=np.linalg.norm(np.cross(mids,-nodal[:,:3]).sum(axis=0)-nodal[:,3:].sum(axis=0),1)/1e-4

@@ -202,6 +202,25 @@ def test_lazy_full_force_payload_rejects_replaced_plan_buffers() -> None:
     reason=f"Batch C requires Batch B's Numba kernel ({JIT_DISABLED_REASON})",
 )
 def test_direct_reduced_assembly_retains_batch_b_elastic_kernel(monkeypatch) -> None:
+    # Single elastic law (owner decision 2026-10-23, docs/
+    # Q4_ASSUMED_STRAIN_PLASTICITY_20261023.md): planar isotropic qualified Q4
+    # runs the assumed-strain batch and the batch-B elastic fast path is retired
+    # for it; it remains in use for legacy shells.  Pin both facts, and keep the
+    # Batch C retention check on the legacy panel (same retarget as
+    # tests/test_nonlinear_performance_batch_b.py::_legacy_panel).
+    from anysolver.elements import create_shell_element
+
+    qualified = generate_simple_panel_mesh(
+        1.0, 0.6, 0.01, num_divisions_x=2, num_divisions_y=1
+    )
+    qualified_plan = get_nonlinear_assembly_plan(qualified, 5)
+    assert qualified_plan.shell_batches
+    assert all(
+        batch.key[0] == "isotropic_q4_assumed_strain_plastic"
+        and getattr(batch, "_batch_b_elastic", False) is False
+        for batch in qualified_plan.shell_batches
+    )
+
     model = generate_simple_panel_mesh(
         1.0,
         0.6,
@@ -209,6 +228,10 @@ def test_direct_reduced_assembly_retains_batch_b_elastic_kernel(monkeypatch) -> 
         num_divisions_x=2,
         num_divisions_y=1,
     )
+    for element_id, element in list(model.mesh.elements.items()):
+        model.mesh.elements[element_id] = create_shell_element(
+            element_id, list(element.node_ids), element.material_name,
+            thickness=element.thickness, formulation="legacy")
     nonlinear_plan = get_nonlinear_assembly_plan(model, 5)
     assert nonlinear_plan.shell_batches
     assert all(
