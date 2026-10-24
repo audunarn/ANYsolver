@@ -2294,6 +2294,63 @@ class NativeParityE4PLS3V2DShellElement(
         sealed = seal_v2d_state(trial)
         return total_force, total_tangent, sealed
 
+    def von_karman_directional_curvature(
+        self,
+        mesh: FEMesh,
+        material: Material,
+        total_u: np.ndarray,
+        direction: np.ndarray,
+    ) -> Optional[np.ndarray]:
+        """Exact F''(u)[v,v] of the von Karman force, or None if not elastic.
+
+        The force is cubic in u (strain quadratic, section linear), so with
+        J(u)=B+P(u) the combined operator and e2(v)=(vx^2/2, vy^2/2, vx*vy):
+        F(u+hv) = sum_s w J(u+hv)^T C (e(u+hv)-e0) and
+        F''[v,v] = 2 w sum_s [ P(v)^T C J(u) v + J(u)^T C e2(v) ].
+        Plastic layered sections return None (no closed form).
+        """
+        self._validate_configuration()
+        if self.shell_section is None and not self._is_v2c_elastic_overlap(material):
+            return None
+        geometry = self._geometry(mesh)
+        raw_baseline = (
+            self._native_section(geometry)
+            if self.shell_section is not None
+            else self._elastic_baseline_constitutive(material)
+        )
+        baseline = self._director_adjusted_section(raw_baseline)
+        operators = self._operators(geometry, raw_baseline)
+        membrane, curvature, shear = self._effective_station_operators(operators)
+        phi_squared = float(self.compute_stiffness_components(mesh, material)["phi_squared"])
+        constitutive = self._generalized_constitutive(baseline, phi_squared)
+        transform = np.asarray(geometry["local_from_external"], dtype=np.float64)
+        local_u = transform @ np.asarray(total_u, dtype=np.float64)
+        local_v = transform @ np.asarray(direction, dtype=np.float64)
+        gradient = np.zeros((2, 18), dtype=np.float64)
+        gradient[:, 2::6] = np.asarray(geometry["shape_gradients"]).T
+        wx, wy = gradient @ local_u
+        vx, vy = gradient @ local_v
+        vk_operator = np.zeros((8, 18), dtype=np.float64)
+        vk_operator[0] = wx * gradient[0]
+        vk_operator[1] = wy * gradient[1]
+        vk_operator[2] = wy * gradient[0] + wx * gradient[1]
+        direction_operator = np.zeros((8, 18), dtype=np.float64)
+        direction_operator[0] = vx * gradient[0]
+        direction_operator[1] = vy * gradient[1]
+        direction_operator[2] = vy * gradient[0] + vx * gradient[1]
+        second_strain = np.zeros(8, dtype=np.float64)
+        second_strain[:3] = (0.5 * vx * vx, 0.5 * vy * vy, vx * vy)
+        area_weight = float(geometry["area"]) / 3.0
+        local = np.zeros(18, dtype=np.float64)
+        for station in range(3):
+            combined = np.vstack((membrane[station], curvature[station], shear[station]))
+            combined = combined + vk_operator
+            local += (
+                direction_operator.T @ (constitutive @ (combined @ local_v))
+                + combined.T @ (constitutive @ second_strain)
+            )
+        return transform.T @ (2.0 * area_weight * local)
+
     def compute_nonlinear_response(
         self,
         mesh: FEMesh,

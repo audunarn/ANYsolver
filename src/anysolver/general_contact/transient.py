@@ -875,6 +875,31 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
     return values
 
 
+def _analytic_vk_curvature(model, full_position, full_velocity):
+    """Exact F''(x)[v,v] when every element is an elastic qualified S3 V2D shell.
+
+    The von Karman force is cubic in the displacements, so the central finite
+    difference of the tangent is exact in exact arithmetic but carries
+    cancellation noise; the closed form removes it. None means the model has
+    another element type or a non-elastic section: the finite difference stays.
+    """
+    elements = tuple(model.mesh.elements.values())
+    if not elements or any(type(element) is not NativeParityE4PLS3V2DShellElement
+                           for element in elements):
+        return None
+    total = np.zeros(full_position.shape[0], dtype=float)
+    for element in elements:
+        dofs = np.asarray(element.get_dof_mapping(model.mesh), dtype=np.intp)
+        part = element.von_karman_directional_curvature(
+            model.mesh, model.get_material(element.material_name),
+            full_position[dofs], full_velocity[dofs],
+        )
+        if part is None:
+            return None
+        np.add.at(total, dofs, part)
+    return total
+
+
 def _consistent_s3_descriptor_rates(
     model, T, Mred, basis, full_position, reduced_velocity,
     reduced_acceleration, full_tangent, committed_states, difference_step_s,
@@ -932,21 +957,25 @@ def _consistent_s3_descriptor_rates(
     except np.linalg.LinAlgError as exc:
         raise ValueError("S3 descriptor algebraic velocity solve is singular") from exc
     full_velocity = np.asarray(T @ velocity).reshape(-1)
-    h = float(difference_step_s)
-    with suspend_contact():
-        _, plus, _ = _assemble_nonlinear_system(
-            model, full_position+h*full_velocity, committed_states, 3,
-            tangent=True, kinematics="von_karman",
-        )
-        discard_active_state_candidate(committed_states)
-        _, minus, _ = _assemble_nonlinear_system(
-            model, full_position-h*full_velocity, committed_states, 3,
-            tangent=True, kinematics="von_karman",
-        )
-        discard_active_state_candidate(committed_states)
-    structural_curvature = np.asarray(
-        T.T @ ((plus-minus) @ full_velocity)
-    ).reshape(-1)/(2.0*h)
+    analytic = _analytic_vk_curvature(model, full_position, full_velocity)
+    if analytic is not None:
+        structural_curvature = np.asarray(T.T @ analytic).reshape(-1)
+    else:
+        h = float(difference_step_s)
+        with suspend_contact():
+            _, plus, _ = _assemble_nonlinear_system(
+                model, full_position+h*full_velocity, committed_states, 3,
+                tangent=True, kinematics="von_karman",
+            )
+            discard_active_state_candidate(committed_states)
+            _, minus, _ = _assemble_nonlinear_system(
+                model, full_position-h*full_velocity, committed_states, 3,
+                tangent=True, kinematics="von_karman",
+            )
+            discard_active_state_candidate(committed_states)
+        structural_curvature = np.asarray(
+            T.T @ ((plus-minus) @ full_velocity)
+        ).reshape(-1)/(2.0*h)
     try:
         if one_sided_manager is None:
             physical_acceleration = physical_part(reduced_acceleration)
@@ -973,6 +1002,22 @@ def _consistent_s3_descriptor_rates(
     return velocity, acceleration
 
 
+_CHEBYSHEV_7 = .5*(1.-np.cos((2*np.arange(7)+1)*np.pi/14.))
+
+
+def _lebesgue_constant(nodes):
+    grid = np.linspace(0., 1., 4001)
+    basis = np.ones((nodes.size, grid.size))
+    for i, node in enumerate(nodes):
+        for j, other in enumerate(nodes):
+            if i != j:
+                basis[i] *= (grid-other)/(node-other)
+    return float(np.max(np.sum(np.abs(basis), axis=0)))*(1.+1e-6)
+
+
+_LEBESGUE_7 = _lebesgue_constant(_CHEBYSHEV_7)
+
+
 @dataclass(frozen=True)
 class _S3AffinePathAdapter:
     structural: np.ndarray
@@ -983,6 +1028,10 @@ class _S3AffinePathAdapter:
     force_offset: np.ndarray
     corner_reference: np.ndarray
     corner_gradient: np.ndarray
+    model: object = field(default=None, compare=False, repr=False)
+    transform: object = field(default=None, compare=False, repr=False)
+    committed_states: object = field(default=None, compare=False, repr=False)
+    memo: dict = field(default_factory=dict, compare=False, repr=False)
 
     @classmethod
     def prepare(cls, model, T, basis, manager, committed_states):
@@ -1012,28 +1061,134 @@ class _S3AffinePathAdapter:
                 full_gradient[corner_dofs] = gradient
                 gradients.append(np.asarray(full_gradient @ T).reshape(-1))
         return cls(structural, Z, B, g, manager.stiffness*manager.support,
-                   np.asarray(T.T @ force).reshape(-1), np.asarray(corners), np.asarray(gradients))
+                   np.asarray(T.T @ force).reshape(-1), np.asarray(corners), np.asarray(gradients),
+                   model, T, committed_states)
+
+    def nonlinear_part(self, position):
+        """Von Karman excess of the structural force over the reference-linear one.
+
+        Exactly zero (not roundoff) when the response is reference-linear to
+        within 512 epsilon of the force scale, so linear models are unchanged.
+        """
+        with suspend_contact():
+            force, _, _ = _assemble_nonlinear_system(
+                self.model, np.asarray(self.transform @ position).reshape(-1),
+                self.committed_states, 3, tangent=False, kinematics="von_karman",
+            )
+            discard_active_state_candidate(self.committed_states)
+        actual = np.asarray(self.transform.T @ force).reshape(-1)
+        linear = self.structural @ position+self.force_offset
+        excess = actual-linear
+        noise = 512*np.finfo(float).eps*max(1., float(np.linalg.norm(actual)),
+                                            float(np.linalg.norm(linear)))
+        return excess if float(np.max(np.abs(excess), initial=0.)) > noise else np.zeros_like(excess)
+
+    def _path(self, coefficients, load, force):
+        rate = curvature = None
+        if force is not None:
+            rate, curvature = -force[1], -force[2]
+        return affine_descriptor_path(
+            self.structural, self.null_basis, coefficients, self.gradient,
+            self.reference_gap, self.weights,
+            force=load-self.force_offset-(0. if force is None else force[0]),
+            force_rate=rate, force_curvature=curvature,
+        )
+
+    def chord(self, start, end):
+        """Von Karman excess force at both endpoints (start, end); None when linear."""
+        key = (np.asarray(start).tobytes(), np.asarray(end).tobytes())
+        if key not in self.memo:
+            first, last = self.nonlinear_part(start), self.nonlinear_part(end)
+            self.memo.clear()
+            self.memo[key] = None if not (first.any() or last.any()) else (first, last)
+        return self.memo[key]
 
     def evaluate(self, start, end, velocity, dt, load):
+        ends = self.chord(start, end)
+        self.memo["force"] = None
         coefficients = np.stack((start, dt*velocity, end-start-dt*velocity))
-        path = affine_descriptor_path(
-            self.structural, self.null_basis, coefficients, self.gradient,
-            self.reference_gap, self.weights, force=load-self.force_offset,
-        )
+        path = self._path(coefficients, load, None)
+        if ends is None:
+            # Zero endpoint excess does not make the path linear: along the lifted path the
+            # excess is a polynomial of degree <= 6 in s (cubic force, quadratic path), so zero
+            # at both ends and at five further distinct samples means identically zero.
+            for s in (1./6., 1./3., .5, 2./3., 5./6.):
+                segment = next(g for g in path.segments if g.start <= s <= g.end)
+                if self.nonlinear_part(segment.position(s)).any():
+                    ends = (np.zeros(start.shape[0]), np.zeros(start.shape[0]))
+                    break
+        if ends is not None:
+            # Von Karman: the algebraic balance carries the excess force as a
+            # polynomial in the path parameter fixed by its exact values at s=0,
+            # 1 and at the lifted midpoint; two fixed-point passes refine the
+            # midpoint. check_interior then certifies the result.
+            force = self.force_model(ends, ends[0]+.5*(ends[1]-ends[0]))
+            for _ in range(2):
+                path = self._path(coefficients, load, force)
+                segment = next(g for g in path.segments if g.start <= .5 <= g.end)
+                force = self.force_model(ends, self.nonlinear_part(segment.position(.5)))
+            path = self._path(coefficients, load, force)
+            self.memo["force"] = force
+            self.memo["load"] = load
         return path, path.minimum_gap(self.corner_reference, self.corner_gradient)
 
-    def check_endpoints(self, path, start, end, transform, controls):
-        for lifted, actual in ((path.segments[0].position(0.), start),
-                               (path.segments[-1].position(1.), end)):
-            error = np.asarray(transform @ (lifted-actual)).reshape(-1, 6)
+    @staticmethod
+    def force_model(ends, middle):
+        """(c0, c1, c2) of the quadratic through the excess force at s=0, 1/2, 1."""
+        first, last = ends
+        curvature = 2.*(last+first-2.*middle)
+        return first, last-first-curvature, curvature
+
+    def check_interior(self, path, controls):
+        """Certified position error of the lifted path against the true von Karman force.
+
+        On each segment the error e(s) = A^-1 Z'(F_vk(x(s)) - model(s)) (A = Z'(K+B'WB)Z of the
+        active branch) is a vector polynomial of degree <= 6 in s (cubic force, quadratic path,
+        quadratic model), hence equals its degree-6 interpolant on 7 Chebyshev nodes and
+        |e(s)| <= Lambda_7 * max_i |e(s_i)| with Lambda_7 the Lebesgue constant of the nodes
+        (_LEBESGUE_7). That certified bound, mapped through Z, must stay within the path
+        position budget.
+        """
+        force = self.memo["force"]
+        for segment in path.segments:
+            active = np.asarray(segment.active, dtype=bool)
+            tangent = self.structural+self.gradient[active].T @ (self.weights[active, None]*self.gradient[active])
+            algebraic = self.null_basis.T @ tangent @ self.null_basis
+            worst = 0.
+            for node in _CHEBYSHEV_7:
+                s = segment.start+(segment.end-segment.start)*node
+                exact = self.nonlinear_part(segment.position(s))
+                model = force[0]+s*(force[1]+s*force[2])
+                worst = max(worst, float(np.linalg.norm(self.null_basis @ np.linalg.solve(
+                    algebraic, self.null_basis.T @ (exact-model)))))
+            if _LEBESGUE_7*worst > controls.s3_path_position_tolerance_m:
+                raise ValueError("S3 lifted path interior disagrees with von Karman work")
+
+    def check_endpoints(self, path, start, end, transform, controls, scale=1.):
+        """Strict endpoint budgets on the raw mismatch between lifted and committed endpoints.
+
+        No residual- or tolerance-derived allowance is added to a budget. For a von Karman step
+        the committed endpoint must additionally be a converged equilibrium of the model balance:
+        |Z'F(actual)| <= equilibrium_tolerance*scale, else the step is refused.
+        """
+        force = self.memo.get("force")
+        for side, segment, fraction, actual in ((0, path.segments[0], 0., start),
+                                                (1, path.segments[-1], 1., end)):
+            if force is not None:
+                c = force[0] if side == 0 else force[0]+force[1]+force[2]
+                r = self.null_basis.T @ self.endpoint_force(actual, self.memo["load"], c)
+                if float(np.linalg.norm(r)) > controls.equilibrium_tolerance*scale:
+                    raise ValueError("S3 lifted path endpoint residual exceeds the Newton tolerance")
+            error = np.asarray(transform @ (segment.position(fraction)-actual)).reshape(-1, 6)
             if (np.max(np.abs(error[:, :3])) > controls.s3_path_position_tolerance_m
                     or np.max(np.abs(error[:, 3:])) > controls.s3_path_rotation_tolerance_rad):
                 raise ValueError("S3 lifted path endpoint mismatch exceeds its numerical budget")
 
-    def endpoint_force(self, position, load):
+    def endpoint_force(self, position, load, chord_force=None):
         gap = self.reference_gap+self.gradient @ position
-        return (self.structural @ position+self.force_offset-load
-                +self.gradient.T @ (self.weights*np.minimum(gap, 0.)))
+        force = (self.structural @ position+self.force_offset-load
+                 +self.gradient.T @ (self.weights*np.minimum(gap, 0.)))
+        return force if chord_force is None else force+chord_force
 
 
 def _accepted_path_transition_times(previous_active, path, start_time, step):
@@ -2340,13 +2495,18 @@ def solve_transient_contact(
                                     previous_velocity, full_velocity, step,
                                 )
                         else:
-                            if (np.linalg.norm(path_adapter.endpoint_force(candidate, load_at(current_time+step))-internal)
+                            vk_chord = path_adapter.chord(q, candidate)
+                            if (np.linalg.norm(path_adapter.endpoint_force(
+                                    candidate, load_at(current_time+step),
+                                    None if vk_chord is None else vk_chord[1])-internal)
                                     > controls.equilibrium_tolerance*scale):
                                 raise ValueError("S3 reference-linear path disagrees with endpoint work")
                             candidate_path, swept_gap = path_adapter.evaluate(
                                 q, candidate, vred, step, load_at(current_time),
                             )
-                            path_adapter.check_endpoints(candidate_path, q, candidate, T, controls)
+                            if path_adapter.memo.get('force') is not None:
+                                path_adapter.check_interior(candidate_path, controls)
+                            path_adapter.check_endpoints(candidate_path, q, candidate, T, controls, scale)
                             if controls.s3_event_subdivision_dev:
                                 event_gaps = path_adapter.reference_gap+path_adapter.gradient @ candidate
                                 start_gaps = path_adapter.reference_gap+path_adapter.gradient @ q
