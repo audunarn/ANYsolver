@@ -1007,6 +1007,10 @@ __all__ = [
 
 
 def __getattr__(name: str):
+    if name in {'SolidModel', 'SolidRegion', 'SolidStaticResult', 'SolidModelError', 'SolidAnalysisNotSupported', 'ResidualScales'}:
+        value = getattr(import_module('.solids', __name__), name)
+        globals()[name] = value
+        return value
     if name == "stiffened_shell":
         value = import_module(".stiffened_shell", __name__)
         globals()[name] = value
@@ -1020,6 +1024,9 @@ def __getattr__(name: str):
 
 def __dir__():
     return sorted(set(globals()) | set(__all__))
+
+
+__all__ += ['SolidModel', 'SolidRegion', 'SolidStaticResult', 'SolidModelError', 'SolidAnalysisNotSupported', 'ResidualScales']
 
 # Stable-ID, array-based progressive damage and hard-deletion lifecycle.
 from .activity import (

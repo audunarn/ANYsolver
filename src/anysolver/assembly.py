@@ -882,6 +882,13 @@ def solve_linear(
         - "nullspace": always use nullspace augmentation after MPC/fixed reduction.
     """
     operation_started = time.perf_counter()
+    if getattr(type(model), '_solid_model_protocol', False):
+        from .solids import SolidModel, solve_solid_linear
+        if not isinstance(model, SolidModel):
+            raise TypeError('unrecognized solid model protocol')
+        return solve_solid_linear(model, load_case, solver_type=solver_type,
+            constraint_mode=constraint_mode, allow_unbalanced_free_free=allow_unbalanced_free_free,
+            cancellation_token=cancellation_token, session=session)
     cancellation_safe_point(cancellation_token, "linear_static.start")
     mesh = model.mesh
     dof_manager = mesh.dof_manager
@@ -1038,6 +1045,13 @@ def solve_linear_many(
 
     The returned displacement matrix has one column per load case.
     """
+    if getattr(type(model), '_solid_model_protocol', False):
+        from .solids import SolidModel, solve_solid_linear_many
+        if not isinstance(model, SolidModel):
+            raise TypeError('unrecognized solid model protocol')
+        return solve_solid_linear_many(model, load_cases, constraint_mode=constraint_mode,
+            factorization_cache=factorization_cache, cancellation_token=cancellation_token,
+            session=session, allow_unbalanced_free_free=allow_unbalanced_free_free)
     cancellation_safe_point(cancellation_token, "linear_static_many.start")
     if (constraint_mode or "auto").strip().lower() == "nullspace":
         from .static_batch import StaticCase, iter_linear_batches

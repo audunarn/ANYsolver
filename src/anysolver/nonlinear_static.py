@@ -8994,6 +8994,10 @@ def solve_static_nonlinear(
 ) -> NonlinearStaticResult:
     """Run nonlinear static analysis under one non-renewable family lease."""
 
+    if getattr(type(model), '_solid_model_protocol', False):
+        from .solids import SolidAnalysisNotSupported
+        raise SolidAnalysisNotSupported('solid regions are not enabled for nonlinear analysis')
+
     plate_stability_binding = None
     plate_stability_authority = None
     if stability_control is not None:
