@@ -18,6 +18,7 @@ from anysolver.assembly import assemble_mass_matrix
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
 from anysolver.general_contact.runtime import active_contact_manager
 from anysolver.nonlinear_restart import model_configuration_fingerprint
+from s3_von_karman_oracle import p1_von_karman_membrane
 
 demo=runpy.run_path(str(Path(__file__).parents[1]/'examples/general_contact_deforming_s3_impact_dev.py'))
 TARGET_XY=np.array([[-2.,-2.],[.6,-2.],[.6,3.]])
@@ -98,9 +99,29 @@ def contact_force(q,columns=1,normal_stiffness=None):
     return response(q,columns,normal_stiffness)[0]
 
 
+def structural_membrane(q,columns=1):
+    """Independent adopted S3 VK term for guided normal motion of both bodies.
+
+    Each P1 triangle has U=A*E*t*|grad(w)|**4/(8*(1-nu**2)).
+    Linear bending/shear remain in K; fixed in-plane motion makes this the
+    entire additional membrane term. Fixture E=1e7, nu=.3 and thickness=.02.
+    """
+    xy,faces,_,_=layout(columns)
+    count=len(xy)
+    points=np.column_stack((np.vstack((xy,TARGET_XY)),np.zeros(count+3)))
+    force=np.zeros_like(q);tangent=np.zeros((len(q),len(q)))
+    for face in (*faces,(count,count+1,count+2)):
+        ids=np.asarray(face)
+        _,f,k=p1_von_karman_membrane(points[ids],(0.,0.,1.),q[ids],1.e7,.3,.02)
+        force[ids]+=f
+        tangent[np.ix_(ids,ids)]+=k
+    return force,tangent
+
+
 def reference(times,K,columns=1,normal_stiffness=None):
     _,_,mass,q=layout(columns);v=np.r_[np.full(len(q)-3,-.1),np.zeros(3)]
-    a=np.linalg.solve(mass,-K@q-contact_force(q,columns,normal_stiffness));rows=[(q.copy(),v.copy(),a.copy())]
+    a=np.linalg.solve(mass,-K@q-structural_membrane(q,columns)[0]
+        -contact_force(q,columns,normal_stiffness));rows=[(q.copy(),v.copy(),a.copy())]
     for h in np.diff(times):
         beta=.25*h*h;predictor=q+h*v+beta*a
         cached=None;cached_response=None
@@ -108,7 +129,10 @@ def reference(times,K,columns=1,normal_stiffness=None):
             nonlocal cached,cached_response
             position=predictor+beta*value
             if cached is None or not np.array_equal(position,cached):
-                cached=position.copy();cached_response=response(position,columns,normal_stiffness)
+                cached=position.copy()
+                force,tangent=response(position,columns,normal_stiffness)
+                membrane,membrane_tangent=structural_membrane(position,columns)
+                cached_response=(force+membrane,tangent+membrane_tangent)
             return position,cached_response
         def residual(value):
             position,(force,_)=state(value)
@@ -124,6 +148,28 @@ def reference(times,K,columns=1,normal_stiffness=None):
         v+=.5*h*(a+next_a);a=next_a
         rows.append((q.copy(),v.copy(),a.copy()))
     return np.asarray(rows)
+
+
+@pytest.mark.parametrize('columns',(1,8))
+def test_clipped_structural_reference_matches_adopted_s3_von_karman(columns):
+    from anysolver.nonlinear_static import _assemble_nonlinear_system
+    model,_,modes=demo['build_model'](target_xy=TARGET_XY,source_columns=columns)
+    xy,_,_,initial=layout(columns)
+    K=modes.T@assemble_stiffness_matrix(model)[0]@modes
+    q=initial.copy()
+    q[:len(xy)]+=3.e-5*xy[:,0]**2-4.e-5*xy[:,1]
+    q[-3:]=(-3.e-5,2.e-5,7.e-5)
+    membrane,membrane_tangent=structural_membrane(q,columns)
+    assert np.linalg.norm(membrane)>1.e-8  # distinguishes the obsolete linear oracle
+    force,tangent,_=_assemble_nonlinear_system(
+        model,modes@q,{},3,tangent=True,kinematics='von_karman')
+    np.testing.assert_allclose(modes.T@force,K@q+membrane,rtol=1.e-11,atol=1.e-10)
+    np.testing.assert_allclose(modes.T@tangent@modes,K+membrane_tangent,rtol=1.e-11,atol=1.e-9)
+    # Each body's independent rigid translation does no membrane work.
+    shifted=q+np.r_[np.full(len(xy),.003),np.full(3,-.002)]
+    shifted_force,shifted_tangent=structural_membrane(shifted,columns)
+    np.testing.assert_allclose(shifted_force,membrane,rtol=1.e-10,atol=1.e-15)
+    np.testing.assert_allclose(shifted_tangent,membrane_tangent,rtol=1.e-10,atol=1.e-12)
 
 
 def test_clipped_contact_work_and_tangent_match_independent_polygon_oracle():

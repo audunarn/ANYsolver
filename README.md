@@ -282,6 +282,11 @@ the generated production-scope artifacts before production use.
   current extraction, assembly, nonlinear, MPC and buckling performance evidence.
 ## Basic verification
 
+Linear free-free accelerating-frame statics is available through
+`solve_inertia_relief`; see [inertia relief](docs/INERTIA_RELIEF.md) and the
+[free bar example](examples/inertia_relief.py) for scope, accelerations,
+effective loads and numerical diagnostics.
+
 From the repository root:
 
 ```powershell
