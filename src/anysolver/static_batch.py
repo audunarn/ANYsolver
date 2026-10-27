@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from copy import deepcopy
 from contextlib import ExitStack, contextmanager
 from typing import Any, Iterable, Iterator, Optional
 import time as _time
@@ -47,9 +48,10 @@ def _case_failure_boundary(stage: str, case: StaticCase, input_index: int):
     except SolveCancelled:
         raise
     except Exception as error:
+        details = {"code": error.code, "status": "invalid_input"} if hasattr(error, "code") else {}
         raise StaticBatchError("static case recovery failed", diagnostics={
             "stage": stage, "case_id": case.case_id, "input_index": input_index,
-            "error": str(error), "original_exception_type": type(error).__name__}) from error
+            "error": str(error), "original_exception_type": type(error).__name__, **details}) from error
 
 
 def _snapshot_plain_load(load: Any) -> tuple[bool, Any]:
@@ -172,6 +174,7 @@ def iter_linear_batches(
     output_dofs: Optional[Any] = None, recovery_config: Optional[RecoveryConfig] = None,
     resource_config: Optional[ResourceConfig] = None, session: Optional[AnalysisSession] = None,
     constraint_mode: str = "auto", allow_unbalanced_free_free: bool = False,
+    inertia_relief: bool = False, reference_point: Optional[Any] = None,
     cancellation_token: Any = None, progress_callback: Any = None,
 ) -> Iterator[StaticBatch]:
     """Yield certified static blocks; times label cases and never interpolate loads.
@@ -180,6 +183,10 @@ def iter_linear_batches(
     the caller; an internal session closes on exhaustion, error or generator
     close.  Input iteration, progress callbacks and yields hold no authority
     lease.  Model changes across those boundaries terminate the stream.
+    ``inertia_relief=True`` balances every load with the selected FE mass and
+    shares preparation, certification and matrix-RHS nullspace factorization.
+    Per-case ``inertia_relief`` metadata is compact and JSON-safe; full load
+    fields remain available through the scalar ``solve_inertia_relief`` API.
     """
     from .assembly import (_backward_error, _LINEAR_STATIC_BACKWARD_ERROR_LIMIT,
         _compute_constraint_force_diagnostics_under_lease)
@@ -193,6 +200,18 @@ def iter_linear_batches(
 
     if type(batch_size) is not int or batch_size <= 0:
         raise ValueError("batch_size must be a positive integer")
+    if type(inertia_relief) is not bool:
+        raise ValueError("inertia_relief must be a boolean")
+    if inertia_relief:
+        from .inertia_relief import (InertiaReliefError, _admit, _admit_load, _validate_reference,
+            _relief_reference, _balance_inertia_relief, _relief_compatibility,
+            _relief_elastic_diagnostics, _relief_elastic_accepted,
+            _relief_backend_diagnostics, _mechanism_workspace_bytes, _json_summary, _ERROR_LIMIT)
+        if allow_unbalanced_free_free or str(constraint_mode).strip().lower() not in {"auto", "nullspace"}:
+            raise ValueError("inertia relief requires nullspace handling with unbalanced-load acceptance disabled")
+        reference_point = _validate_reference(reference_point)
+    elif reference_point is not None:
+        raise ValueError("reference_point requires inertia_relief=True")
     cancellation_safe_point(cancellation_token, "static_batch.start")
     model.apply_boundary_conditions()
     owned_session = session is None
@@ -224,10 +243,20 @@ def iter_linear_batches(
             first_case = next(iterator)
         except StopIteration:
             unchanged("empty input")
+            if inertia_relief:
+                try:
+                    _admit(model, None)
+                except InertiaReliefError as error:
+                    raise StaticBatchError("inertia relief model admission failed", diagnostics={
+                        "stage": "inertia relief admission", "scope": "model",
+                        "status": "invalid_input", "code": error.code, "error": str(error)}) from error
             return
         unchanged("first input observation")
         if type(first_case) is not StaticCase or type(first_case.case_id) is not str:
             raise StaticBatchError("cases must be StaticCase records with string case_id")
+        if inertia_relief:
+            with _case_failure_boundary("inertia relief admission", first_case, 0):
+                _admit(model, first_case.load_case)
         first_time = None if first_case.time is None else float(first_case.time)
         if first_time is not None and not np.isfinite(first_time):
             raise StaticBatchError("case time must be finite when supplied")
@@ -242,6 +271,14 @@ def iter_linear_batches(
         # estimated separately from the assembled sparse matrix.
         base_bytes = int(estimate.total_bytes_estimate * 4)
         per_case_bytes = int((n * 10 + len(dofs)) * 8 + selected_elements * 512 * 8)
+        if inertia_relief:
+            # Physical rigid columns, cached scaled/augmented matrices and the
+            # simultaneous applied/inertial/effective load blocks also count.
+            base_bytes += int(estimate.total_bytes_estimate * 2 + n * 24 * 8)
+            # Include the bounded Lanczos basis/work arrays conservatively even
+            # when a caller-owned session may already hold a certificate.
+            base_bytes += _mechanism_workspace_bytes(n)
+            per_case_bytes += n * 4 * 8
         effective = batch_size
         limit = None if resource_config is None else resource_config.memory_limit_bytes
         if limit is not None:
@@ -271,9 +308,21 @@ def iter_linear_batches(
             first_case = StaticCase(first_case.case_id, None, first_time)
         before = backend_operation_counts()
         prepare_start = _time.perf_counter()
+        relief_plan = None
+        relief_reference = None
         with solver_thread_scope(resource_config):
             with numba_thread_scope(assembly_threads):
                 active.stiffness_plan()
+                if inertia_relief:
+                    with _case_failure_boundary("inertia relief preparation", first_case, 0):
+                        relief_plan = active.inertia_relief_plan(model=model)
+                        relief_reference = _relief_reference(model, relief_plan, reference_point)
+                        mechanism = relief_plan.mechanism(cancellation_token)
+                    if mechanism["status"] != "resolved":
+                        raise StaticBatchError("elastic stiffness could not be certified for inertia relief",
+                            diagnostics={"status": "unresolved_elastic_stiffness",
+                                "stage": "inertia relief preparation", "case_id": first_case.case_id,
+                                "input_index": 0, "scope": "model", "mechanism": mechanism})
             operator = active.static_operator_plan(constraint_mode=constraint_mode, model=model)
         unchanged("operator preparation")
         constraint = operator.constraint
@@ -310,6 +359,9 @@ def iter_linear_batches(
                 unchanged("input observation")
                 if type(case) is not StaticCase or type(case.case_id) is not str:
                     raise StaticBatchError("cases must be StaticCase records with string case_id")
+                if inertia_relief:
+                    with _case_failure_boundary("inertia relief load admission", case, next_index):
+                        _admit_load(case.load_case)
                 case_time = None if case.time is None else float(case.time)
                 if case_time is not None and not np.isfinite(case_time):
                     raise StaticBatchError("case time must be finite when supplied")
@@ -362,10 +414,45 @@ def iter_linear_batches(
             unchanged("load assembly")
             phases["load_assembly"] = _time.perf_counter() - start + eager_seconds
             phase_start = _time.perf_counter()
-            rhs = np.asarray(constraint.T.T @ (F - (K @ constraint.u0)[:, None]), dtype=float)
+            inertial = None
+            relief_summaries = None
+            effective_loads = F
+            if inertia_relief:
+                # Certify each input column before entering the block kernel so
+                # invalid vectors retain their input identity.
+                for j, case in enumerate(block):
+                    if not np.all(np.isfinite(F[:, j])):
+                        raise StaticBatchError("inertia relief requires finite applied loads",
+                            diagnostics={"stage": "inertia relief balance", "case_id": case.case_id,
+                                "input_index": indices[j], "status": "invalid_load"})
+                try:
+                    with solver_thread_scope(resource_config):
+                        inertial, effective_loads, _, relief_summaries = _balance_inertia_relief(
+                            relief_plan, F, relief_reference, cancellation_token)
+                except Exception as error:
+                    from .control import SolveCancelled
+                    if isinstance(error, SolveCancelled):
+                        raise
+                    raise StaticBatchError("inertia relief block balancing failed", diagnostics={
+                        "stage": "inertia relief balance", "status": "numerical_failure",
+                        "case_ids": tuple(case.case_id for case in block), "error": str(error)}) from error
+                for j, summary in enumerate(relief_summaries):
+                    if summary["status"] != "balanced":
+                        raise StaticBatchError("inertia relief load balance accuracy gate failed",
+                            diagnostics={"stage": "inertia relief balance", "case_id": block[j].case_id,
+                                "input_index": indices[j], **_json_summary(summary)})
+            rhs = np.asarray(constraint.T.T @ (effective_loads - (K @ constraint.u0)[:, None]), dtype=float)
             r = operator.rigid_modes.shape[1]
             compatibility = []
             for j, case in enumerate(block):
+                if inertia_relief:
+                    item = _relief_compatibility(relief_plan, F[:, j], inertial[:, j], rhs[:, j])
+                    if not np.isfinite(item["relative_rigid_body_load_imbalance"]) or item["relative_rigid_body_load_imbalance"] > _ERROR_LIMIT:
+                        raise StaticBatchError("inertia relief effective load is incompatible with the nullspace",
+                            diagnostics={"stage": "load compatibility", "case_id": case.case_id,
+                                "input_index": indices[j], "status": "numerical_failure", **_json_summary(item)})
+                    compatibility.append(item)
+                    continue
                 components = np.asarray(operator.rigid_modes.T @ rhs[:, j]).reshape(-1)
                 imbalance = float(np.linalg.norm(components))
                 relative = imbalance / max(float(np.linalg.norm(rhs[:, j])), 1.0)
@@ -393,12 +480,19 @@ def iter_linear_batches(
                 if isinstance(error, SolveCancelled):
                     raise
                 raise StaticBatchError("static backend solve failed", diagnostics={"stage": "solve",
-                    "case_ids": tuple(case.case_id for case in block), "error": str(error)}) from error
+                    "status": "numerical_failure", "case_ids": tuple(case.case_id for case in block), "error": str(error)}) from error
             unchanged("backend solve")
             cancellation_safe_point(cancellation_token, "static_batch.after_solve")
             phases["solve"] = _time.perf_counter() - phase_start
             phase_start = _time.perf_counter()
             q = solved[:rhs.shape[0]]
+            backend_quality = None
+            if inertia_relief:
+                backend_quality = [_relief_backend_diagnostics(relief_plan, q[:, j],
+                    solved[rhs.shape[0]:, j], rhs[:, j]) for j in range(len(block))]
+                # Only fix roundoff in the displacement gauge. Never project
+                # any physical component out of the effective load.
+                q -= operator.rigid_modes @ (operator.rigid_modes.T @ q)
             values = output.reconstruct(q)
             need_full = recovery.include_stresses or recovery.include_reactions or recovery.include_displacements
             full = np.asarray(constraint.T @ q + constraint.u0[:, None]) if need_full else None
@@ -413,6 +507,7 @@ def iter_linear_batches(
                 if not np.isfinite(error) or error > _LINEAR_STATIC_BACKWARD_ERROR_LIMIT:
                     raise StaticBatchError("static case exceeded certified backward-error limit",
                         diagnostics={"case_id": case.case_id,
+                            "status": "numerical_failure", "stage": "elastic certification",
                             "input_index": indices[j],
                             "relative_backward_error": error if np.isfinite(error) else None,
                             "relative_backward_error_disposition": "LIMIT_EXCEEDED" if np.isfinite(error) else "NONFINITE_OR_OVERFLOW"})
@@ -421,7 +516,21 @@ def iter_linear_batches(
                     "relative_backward_error_limit": _LINEAR_STATIC_BACKWARD_ERROR_LIMIT,
                     "relative_backward_error_disposition": "CERTIFIED", "load": load_info["columns"][j],
                     "backend": {} if operator.handle is None else operator.handle.diagnostics(),
-                    **dict(operator.info), **compatibility[j]}
+                    **deepcopy(operator.info), **compatibility[j]}
+                if inertia_relief:
+                    diagnostics = _relief_elastic_diagnostics(relief_plan, q[:, j],
+                        solved[rhs.shape[0]:, j], F[:, j], inertial[:, j], rhs[:, j])
+                    if not _relief_elastic_accepted(diagnostics):
+                        raise StaticBatchError("inertia relief elastic accuracy gate failed",
+                            diagnostics={"stage": "elastic certification", "case_id": case.case_id,
+                                "input_index": indices[j], "status": "numerical_failure", **_json_summary(diagnostics)})
+                    summary = relief_summaries[j]
+                    summary["status"] = "converged"
+                    summary["diagnostics"].update(diagnostics, **backend_quality[j], mechanism=mechanism,
+                                                  backend=info["backend"])
+                    summary["units"] = {"length": "m", "mass": "kg", "force": "N",
+                        "moment": "N m", "linear_acceleration": "m/s^2", "angular_acceleration": "rad/s^2"}
+                    info.update(analysis_type="inertia_relief", inertia_relief=_json_summary(summary))
                 if operator.augmented:
                     info.update(method="rigid_body_nullspace_augmented", nullspace_rank=r,
                         rigid_body_lagrange_multipliers=solved[rhs.shape[0]:, j].tolist(),
@@ -467,6 +576,8 @@ def iter_linear_batches(
                     info = certified[j]
                     item = {"status": "converged", "solver_info": info,
                         "node_displacements": {}, "element_stresses": {}, "reactions": {}}
+                    if inertia_relief:
+                        item.update(analysis_type="inertia_relief", inertia_relief=info["inertia_relief"])
                     if recovery.include_displacements:
                         for node_id in recovery.selected_node_ids(model):
                             item["node_displacements"][node_id] = full[np.asarray(model.mesh.nodes[node_id].dofs), j].copy()
@@ -482,9 +593,10 @@ def iter_linear_batches(
                             forces = _run_with_qualified_recovery_runtime_lease(model, context="static batch prepared reactions",
                                 operation=lambda guard, j=j: _compute_constraint_force_diagnostics_under_lease(
                                     model, full[:, j], qualified_runtime_guard=guard,
-                                    prepared_system=(K, F[:, j], constraint, operator.rigid_modes, operator.info["nullspace_info"])))
+                                    prepared_system=(K, effective_loads[:, j], constraint, operator.rigid_modes, deepcopy(operator.info["nullspace_info"]))))
                         combined = {}
-                        for bucket in ("support_reactions", "mpc_slave_forces"):
+                        buckets = ("support_reactions",) if inertia_relief else ("support_reactions", "mpc_slave_forces")
+                        for bucket in buckets:
                             for node_id, force in forces[bucket].items():
                                 combined.setdefault(node_id, np.zeros(6))
                                 combined[node_id] += force
@@ -510,6 +622,8 @@ def iter_linear_batches(
                 "analysis_session": active.diagnostics(), "elapsed_seconds": _time.perf_counter() - block_started,
                 "phase_timings_seconds": phases,
                 "full_reconstruction": need_full, "prepared_reactions": bool(recovery.include_reactions)}
+            diagnostics["analysis_type"] = "inertia_relief" if inertia_relief else "linear_static"
+            diagnostics["constraint_mode"] = "nullspace" if operator.augmented else "transformation"
             emit_progress(progress_callback, "static_batch_complete", "static_batch.complete",
                           completed=next_index, num_cases=len(block))
             unchanged("progress callback")
@@ -519,7 +633,7 @@ def iter_linear_batches(
             yield StaticBatch(tuple(indices), tuple(c.case_id for c in block), tuple(c.time for c in block),
                               dofs, values, tuple(results), diagnostics)
             # Drop all prior block ownership before requesting more input.
-            del F, rhs, solve_rhs, solved, q, values, full, results, certified, block
+            del F, effective_loads, inertial, relief_summaries, rhs, solve_rhs, solved, q, values, full, results, certified, block
             unchanged("consumer return")
             before = after
     except BaseException as error:

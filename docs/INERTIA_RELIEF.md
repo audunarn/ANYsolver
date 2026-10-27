@@ -141,8 +141,10 @@ nonlinear or prestressed equilibrium terms are included in this linear route.
 
 ## Repeated solves and scope of evidence
 
-An `AnalysisSession` reuses canonical matrices, reduction and factorization.
-Rigid inertia, acceleration and inertial loads are recomputed on every call.
+An `AnalysisSession` reuses canonical matrices, reduction, physical rigid-inertia
+factorization, mechanism certification and elastic factorization. Acceleration
+and inertial loads are recomputed for every load vector. Changing the reporting
+reference point reuses the same physical preparation at the centre of mass.
 Point-mass dictionary contents participate in mass-cache identity. Other direct
 model edits retain the existing revision contract: use model mutation methods
 or explicitly advance the corresponding revision after a direct edit.
@@ -155,3 +157,71 @@ analytical, independent dense-reference, lifecycle and refusal tests; it does no
 broaden historical element qualification or authorize publication.
 
 See `examples/inertia_relief.py` for a complete free bar example.
+
+## Static batch fast path
+
+Both static batch interfaces accept explicit inertia relief:
+
+```python
+from anysolver import AnalysisSession, StaticCase, iter_linear_batches, solve_linear_many
+
+with AnalysisSession(model) as session:
+    for block in iter_linear_batches(
+        model, (StaticCase(str(i), load) for i, load in enumerate(loads)),
+        batch_size=32, output_dofs=selected_dofs, session=session,
+        inertia_relief=True, reference_point=None,
+    ):
+        selected_displacements = block.displacements
+        for item in block.case_results:
+            summary = item["inertia_relief"]
+            acceleration = summary["acceleration_at_reference"]
+            balance = summary["diagnostics"]
+
+    # Collect all DOFs/columns using the same prepared block engine and session.
+    displacements, info = solve_linear_many(model, loads, session=session,
+                                             inertia_relief=True)
+```
+
+The engine prepares mass, rigid inertia, reduction, mechanism certification and
+the augmented nullspace operator once per unchanged session identity. Each block
+uses one six-by-many acceleration solve and one elastic matrix-RHS solve; it does
+not call the public scalar solver per case. Normal `constraint_mode="auto"` also
+selects this nullspace batch route for free-free models in `solve_linear_many`.
+An ordinary unbalanced free-free load still fails unless the existing explicit
+`allow_unbalanced_free_free=True` option is used. That option cannot be combined
+with inertia relief, and inertia relief refuses `constraint_mode="transformation"`.
+`reference_point` is valid only when inertia relief is enabled.
+
+Each accepted case has `analysis_type="inertia_relief"` and a JSON-safe
+`inertia_relief` summary in both its result and `solver_info`. The summary contains
+accelerations at the reference and centre of mass, angular acceleration, mass,
+centre of mass, inertia, reference point, force/moment resultants, conditioning,
+mass/formulation provenance, balance, mechanism, backward-error and gauge
+diagnostics, and units. It omits DOF-sized applied/inertial/effective load and rigid
+acceleration vectors; use `solve_inertia_relief` when those full fields are needed.
+Selected output alone does not reconstruct full displacements. Explicit recovery
+requests reconstruct only the active block and use effective loads for constraint
+forces. `reactions` remains empty for inertia relief; internal MPC forces are kept
+in `constraint_forces`, separate from gauge multipliers and physical acceleration.
+`backend_gauge_error` and `backend_augmented_backward_error` report the raw solve
+before displacement gauge cleanup; the existing accepted elastic/gauge gates
+describe the final field. Mutating returned metadata cannot change cached plans.
+
+Every column must pass the scalar numerical gates before its block is yielded.
+Failure raises `StaticBatchError` without accepted block data, with case identity
+where attributable; earlier yielded blocks remain valid. Cancellation propagates
+as `SolveCancelled`. Memory preflight includes inertia preparation/load blocks.
+It also conservatively reserves Lanczos Krylov/work arrays even when a session
+may already hold a certificate. A model-wide preparation failure identifies the
+first case as context and reports `scope="model"` for spectral non-success.
+Input/callback/consumer model mutations terminate the stream. Caller-owned
+sessions remain open; internally owned sessions close on exhaustion, failure or
+generator close. Direct point-mass changes between separate calls rebuild the
+physical plan; ordinary model changes retain the revision requirements above.
+
+Retain an `AnalysisSession` to reuse preparation and factorizations across calls.
+A raw caller-supplied `FactorizationCache` without a retained session preserves
+the existing caller-owned-cache behavior: entries are session-specific and cannot
+be hit by a newly created session. The caller controls that cache's capacity and
+cleanup. Existing session invalidation can clear its cache, so use a dedicated
+cache per session when isolation from other analyses is required.
