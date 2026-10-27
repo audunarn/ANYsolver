@@ -299,3 +299,184 @@ The first combined run timed out after 300 seconds with setup failures caused by
 The diagnostic environment repr exposed an inherited credential in tool output and two external evidence files. Those saved files were redacted with a retained redaction receipt; subsequent test children remove credential/provider environment variables. No credential-bearing evidence is staged or published. Parent credentials/settings were not changed.
 
 Cumulative supervised numerical-check process-wall use: 1349.472 seconds of the unchanged 1500-second allocation.
+
+
+## Static batch integration milestone (2026-10-27)
+
+User request: inertia relief and nullspace must be fully wired into the static
+batch fast path. Baseline is merge 1882ba5d9; isolated worktree excludes concurrent
+solid, pressure and S3 edits in the shared checkout. This is authorized connected
+implementation and focused verification, not a new qualification campaign.
+
+Plan and prospective acceptance:
+1. Share reusable inertia-relief preparation, balancing and accuracy services
+   between the public scalar solve and prepared static operators. Preserve every
+   original admission, mechanism, error and cancellation gate. Acceptance: scalar
+   analytical and refusal tests remain unchanged and pass.
+2. Add an explicit opt-in inertia_relief=True and reference_point to
+   iter_linear_batches, preserving default behavior. Use one prepared operator,
+   matrix-RHS solves and bounded output/recovery; no loop over the public scalar
+   solver. Acceptance: multi-case/multi-block results and diagnostics match scalar
+   beam, shell and eccentric-MPC references; counters demonstrate reuse.
+3. Verify nullspace, effective-load recovery, mutation/invalidation, cancellation,
+   resource/lifecycle and installed public API. Acceptance: focused/affected tests
+   and independent review close without changing scientific tolerances.
+
+Open risks: scale-dependent cancellation, physical MPC forces confused with gauge
+or support reactions, stale mass/constraint caches, eager custom load observation,
+selected-output memory, and factorization reuse across blocks. Numerical failure
+must refuse the block and never expose accepted displacements. Keep ordinary
+unbalanced-load refusal and explicit legacy opt-in behavior unchanged. Inertia
+relief cannot silently enable allow_unbalanced_free_free.
+
+One Sonnet 5.5 subscription worker owns the connected implementation and its
+focused inspect/design/edit/check/repair/document loop. Astra owns contract review,
+independent verification and integration. New milestone numerical allocation:
+1800 supervised process-wall seconds total, worker may use 900; reserve 900 for
+independent acceptance. This does not renew prior exhausted checks or authorize
+historical campaigns. Preserve all failures. Early checkpoint within 120 seconds
+of inference: concrete findings, route, intended edits and blockers in this note.
+
+Implementation ownership checkpoint: automatic approval review rejected the scoped
+Sonnet Edit launch as outside its interpreted Fable-only authorization; no worker
+inference started. Astra takes direct ownership because that runner is unavailable.
+No repeated worker probe or alternate billing route is used. The existing batch
+operator already supports multi-RHS nullspace solving. The implementation shares
+physical inertia preparation, matrix balancing and elastic certification with the
+scalar route; the session owns one revision-keyed plan and cached Lanczos result.
+Reference-point reporting is separate from that physical cache. Remaining work:
+wire the prepared plan into batch reductions, effective-load recovery and metadata,
+then exercise cancellation/mutation/reuse and independent review. Scientific
+thresholds and ordinary default batch behavior remain fixed.
+
+
+### Integrated candidate and independent findings
+
+The collecting API solve_linear_many was found to route explicit nullspace but
+refuse auto free-free models. The authorized connected boundary now also includes
+that function in assembly.py: explicit inertia relief and auto/explicit nullspace
+use the prepared batch engine; supported-static defaults retain their route.
+
+Initial integrated check checks/162309-focused-4f8058: 124 passed, 0 failed,
+51.563 process-wall seconds. Its receipt omitted the static_batch source hash;
+it is superseded for final acceptance by the later source-bound run.
+Expanded check checks/162756-delivery-core-1feda6: 230 passed, 1 skipped, 2 failed,
+with failures from a new stress test numerically comparing string provenance.
+Full diagnostics/JUnit remain retained. The comparator was corrected to compare
+numeric fields with unchanged 1e-8/1e-9 tolerances and strings exactly.
+
+Independent Opus5.5 medium source review completed (4 successful reads, no tool
+errors) at C:/ANYworkspaceWork/static-batch-inertia-relief-20261027-01/opus-review.
+Its physical equations, scaling, compatibility normalization and effective-load
+MPC checks were favorable. Addressed: Lanczos Krylov/work memory preflight,
+immediate stale-plan release on stiffness/mass/constraint invalidation, defensive
+metadata copies, typed input codes/numerical statuses, conditional inertia-only
+imports, and reporting raw backend gauge/augmented errors before gauge cleanup.
+Final-field scientific gates remain unchanged. Added discriminating memory,
+metadata-isolation, cache-lifetime, MPC-recertification, activity, force-scale,
+raw-backend-gauge and zero-load checks. Implicit detection of all unbumped
+material/geometry changes was not adopted: the original user contract explicitly
+retains revision updates except for direct point-mass contents.
+
+Corrected combined check checks/163439-delivery-core-90f006: 240 passed, 1 skipped
+(PyPardiso unavailable), 0 failed; two expected overflow warnings in retained-mass
+refusal coverage; license compliance passed; process-wall duration70.031 seconds.
+Exact commands, source hashes, JUnit and process-tree cleanup are retained.
+
+Opus5.5 medium follow-up completed, 9 successful reads, no tool/API errors, at
+C:/ANYworkspaceWork/static-batch-inertia-relief-20261027-01/opus-followup. It found
+no blocking correctness defects in mechanics, gates or keys. Subsequent small
+repairs address empty-input model admission, deep copies of cached mechanism
+failure lists and scalar mode/constraint metadata. Effective constraint-mode
+reporting was already corrected while that review was reading the earlier source.
+Code/status/scope assertions and empty-input/detached-failure tests were added.
+The external factor-cache ownership behavior is preserved and documented: reuse
+across calls requires retaining the AnalysisSession; implicit sessions have
+distinct signatures. Changing global cache lifecycle semantics is outside this
+integration and would break an existing caller-cache test. The follow-up's
+non-blocking suggestion for an adversarial perturbation separating generic and
+physical-data error normalization remains additional possible coverage; existing
+analytical, dense reference, force-scale, corrupted-column and raw-gauge tests
+exercise production acceptance. No gate or physical assumption was weakened.
+
+First installed run checks/163730-installed-c16157: wheel build/import and scalar
+plus batch analytical example passed; 141 tests passed, 1 failed because the
+isolated test copy omitted the qualified-S3 helper module imported by an existing
+batch test. This is a harness dependency error, not a passing full suite. The
+helper is now copied and pytest uses only the four explicit intended test modules
+so the helper's qualification campaign is NOT collected or run. A rebuilt final
+source candidate is being verified after the minor review repairs above.
+
+### Final batch integration acceptance
+
+The final shared-source run and isolated artifact both pass. Independent Opus
+review has no remaining blocking findings; its non-blocking cache-lifecycle
+limitation and additional possible adversarial-normalization coverage are
+documented above. Scope remains the original linear beam/shell profile.
+
+source: **244 passed, 1 skipped, 0 failed**, 68.141 supervised process-wall seconds.
+
+Evidence: `C:/ANYworkspaceWork/static-batch-inertia-relief-20261027-01/checks/165103-integration-9945bb`. Exact phase commands:
+
+```text
+
+C:\Github\ANYsolid\.venv\Scripts\python.exe -c "import json,numpy,scipy,numba,anysolver; from threadpoolctl import threadpool_info; from anysolver.jit_compiler import JIT_ENABLED; print(json.dumps(dict(module=anysolver.__file__,numpy=numpy.__version__,scipy=scipy.__version__,numba=numba.__version__,numba_max=numba.config.NUMBA_NUM_THREADS,numba_effective=numba.get_num_threads(),jit_enabled=JIT_ENABLED,pools=[{k:x.get(k) for k in ('internal_api','num_threads','prefix')} for x in threadpool_info()])))"
+
+C:\Github\ANYsolid\.venv\Scripts\python.exe -m pytest -q --junitxml=C:\ANYworkspaceWork\static-batch-inertia-relief-20261027-01\checks\165103-integration-9945bb\junit.xml tests/test_static_batch_inertia_relief.py tests/test_static_batch.py tests/test_inertia_relief.py tests/test_inertia_relief_integration.py tests/test_fe_solver_infrastructure.py tests/test_fe_solver_mass_modal.py tests/test_generalized_section_mass_properties.py tests/test_analysis_session.py tests/test_static_batch.py tests/test_prepared_static_mass_capture.py tests/test_solver_control_contracts.py
+
+```
+
+installed: **146 passed, 0 skipped, 0 failed**, 83.907 supervised process-wall seconds.
+
+Evidence: `C:/ANYworkspaceWork/static-batch-inertia-relief-20261027-01/checks/165228-installed-c7aeb9`. Exact phase commands:
+
+```text
+
+C:\Github\ANYsolid\.venv\Scripts\python.exe -m build --wheel --no-isolation --outdir C:\ANYworkspaceWork\static-batch-inertia-relief-20261027-01\checks\165228-installed-c7aeb9\wheels C:\ANYworkspaceWork\static-batch-inertia-relief-20261027-01\checkout
+
+C:\Github\ANYsolid\.venv\Scripts\python.exe -m venv C:\ANYworkspaceWork\static-batch-inertia-relief-20261027-01\checks\165228-installed-c7aeb9\venv
+
+C:\ANYworkspaceWork\static-batch-inertia-relief-20261027-01\checks\165228-installed-c7aeb9\venv\Scripts\python.exe -m pip install --no-deps --ignore-installed C:\ANYworkspaceWork\static-batch-inertia-relief-20261027-01\checks\165228-installed-c7aeb9\wheels\anysolver-0.4.7-cp311-cp311-win_amd64.whl
+
+C:\ANYworkspaceWork\static-batch-inertia-relief-20261027-01\checks\165228-installed-c7aeb9\venv\Scripts\python.exe -c "import anysolver,pathlib,sys; p=pathlib.Path(anysolver.__file__); assert p.is_relative_to(pathlib.Path(sys.prefix)),p; from anysolver import solve_inertia_relief,InertiaReliefResult,InertiaReliefError; print('installed artifact:',p)"
+
+C:\ANYworkspaceWork\static-batch-inertia-relief-20261027-01\checks\165228-installed-c7aeb9\venv\Scripts\python.exe C:\ANYworkspaceWork\static-batch-inertia-relief-20261027-01\checkout\examples\inertia_relief.py
+
+C:\ANYworkspaceWork\static-batch-inertia-relief-20261027-01\checks\165228-installed-c7aeb9\venv\Scripts\python.exe -m pytest -q -c C:\ANYworkspaceWork\static-batch-inertia-relief-20261027-01\checks\165228-installed-c7aeb9\pytest.ini --junitxml=C:\ANYworkspaceWork\static-batch-inertia-relief-20261027-01\checks\165228-installed-c7aeb9\junit.xml C:\ANYworkspaceWork\static-batch-inertia-relief-20261027-01\checks\165228-installed-c7aeb9\tests\test_static_batch_inertia_relief.py C:\ANYworkspaceWork\static-batch-inertia-relief-20261027-01\checks\165228-installed-c7aeb9\tests\test_static_batch.py C:\ANYworkspaceWork\static-batch-inertia-relief-20261027-01\checks\165228-installed-c7aeb9\tests\test_inertia_relief.py C:\ANYworkspaceWork\static-batch-inertia-relief-20261027-01\checks\165228-installed-c7aeb9\tests\test_inertia_relief_integration.py
+
+```
+
+The final source run observes this shared checkout, NumPy2.4.6, SciPy1.17.1,
+Numba0.68.0, JIT enabled, Numba maximum/effective threads2, and all observed
+BLAS/OpenMP pools2. Its sole skip is optional PyPardiso absence; two overflow
+warnings are expected refusal-case diagnostics. Earlier runs only recorded
+requested BLAS thread settings, not observed Numba settings.
+
+The installed example reports scalar and batch axial acceleration
+6.369426751592358 m/s^2 (analytical1000/(7850*.01*2)), zero force/moment
+balance errors, scalar elastic backward error3.638e-17, and selected elastic
+tip displacement2.97619047619e-7 m. No speedup or discretization claim is made.
+
+The preceding artifact check checks/164217-installed-cb3cf1 passed145 tests
+before the final unsupported-solid-dispatch guard. That guard is now tested
+before any downstream adapter can drop the inertia flag. A new artifact was
+built rather than reusing the earlier source identity. Final tests pass146.
+
+Shared-checkout integration preserved27 unrelated dirty/untracked files.
+The pre-existing solid adapter in assembly.py was reconciled without copying
+it into this commit. Reversing only the owned patch in a disposable copy
+proved the mixed assembly edits byte-identical. Three previously clean owned
+files underwent only normal LF/CRLF conversion in that preservation proof.
+The initial failed patch checks made no primary edits; the forward patch
+applied after reconciliation. Integration details are in integration-receipt.json.
+
+Final wheel SHA256: `d2c8acf552f407d60dd21b22d04d0a6a3243e475f89d516dba95ba42a5dfbb8c`. Its targeted source members
+match staged Git blobs after normal Windows newline normalization; raw
+source/wheel-member hashes and Git blob identities are retained in
+`C:/ANYworkspaceWork/static-batch-inertia-relief-20261027-01/acceptance.json`.
+
+Total supervised numerical process-wall use: 570.267
+seconds of the unchanged1800-second milestone allocation. All failed
+evidence is preserved. No full repository, historical qualification, external
+solver or performance campaign was run. Other dirty work is not qualified
+by this result. The final commit will contain only the eight owned paths.

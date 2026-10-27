@@ -1033,13 +1033,32 @@ def solve_linear_many(
     progress_callback: Optional[ProgressCallback] = None,
     session: Optional["AnalysisSession"] = None,
     allow_unbalanced_free_free: bool = False,
+    *, inertia_relief: bool = False, reference_point: Any = None,
 ) -> Tuple[np.ndarray, Dict[str, Any]]:
     """Solve several unchanged-stiffness static load cases with one factorization.
 
-    The returned displacement matrix has one column per load case.
+    The returned displacement matrix has one column per load case. Free-free
+    nullspace and optional inertia relief use the same prepared block engine
+    as ``iter_linear_batches``; supported-static defaults retain their route.
     """
+    if type(inertia_relief) is not bool:
+        raise ValueError("inertia_relief must be a boolean")
+    if reference_point is not None and not inertia_relief:
+        raise ValueError("reference_point requires inertia_relief=True")
+    # Check before any downstream model dispatch: adapters must never silently
+    # discard the physical inertia-relief request.
+    if inertia_relief and getattr(type(model), "_solid_model_protocol", False):
+        from .inertia_relief import InertiaReliefError
+        raise InertiaReliefError("Inertia relief requires a beam/shell FEModel", code="unsupported_model")
     cancellation_safe_point(cancellation_token, "linear_static_many.start")
-    if (constraint_mode or "auto").strip().lower() == "nullspace":
+    mode = (constraint_mode or "auto").strip().lower()
+    batch_route = inertia_relief or mode == "nullspace"
+    if mode == "auto" and not batch_route:
+        model.apply_boundary_conditions()
+        # The batch engine makes the final surviving-mode decision. Preparing
+        # a second stiffness/load system here would duplicate its fast path.
+        batch_route = not require_valid_constraints(model).fixed_dofs
+    if batch_route:
         from .static_batch import StaticCase, iter_linear_batches
         from .analysis_session import AnalysisSession
         if session is not None and factorization_cache is not None and factorization_cache is not session.factorization_cache:
@@ -1050,7 +1069,8 @@ def solve_linear_many(
         try:
             blocks = list(iter_linear_batches(model,
                 (StaticCase(str(index), case) for index, case in enumerate(load_cases)),
-                constraint_mode="nullspace", allow_unbalanced_free_free=allow_unbalanced_free_free,
+                constraint_mode=mode, allow_unbalanced_free_free=allow_unbalanced_free_free,
+                inertia_relief=inertia_relief, reference_point=reference_point,
                 session=active, resource_config=resource_config,
                 cancellation_token=cancellation_token, progress_callback=progress_callback))
             cache_info = active.factorization_cache.diagnostics()
@@ -1066,9 +1086,17 @@ def solve_linear_many(
                         raise
                     BaseException.add_note(primary_failure, "analysis session cleanup failed: " + repr(cleanup_error))
         full = np.column_stack([block.displacements for block in blocks]) if blocks else np.zeros((model.mesh.dof_manager.total_dofs, 0))
+        effective_mode = blocks[0].diagnostics["constraint_mode"] if blocks else mode
         info = {"status": "converged", "num_result_cases": len(load_cases),
-                "constraint_mode": "nullspace", "case_results": tuple(result for block in blocks for result in block.case_results),
+                "constraint_mode": effective_mode, "requested_constraint_mode": mode,
+                "analysis_type": "inertia_relief" if inertia_relief else "linear_static_many",
+                "case_results": tuple(result for block in blocks for result in block.case_results),
                 "static_batches": tuple(block.diagnostics for block in blocks)}
+        info["result_case"] = make_result_case(name=info["analysis_type"],
+            analysis_type=info["analysis_type"],
+            load_cases=tuple(case for case in load_cases if case is not None), solver_info=info,
+            settings={"constraint_mode": effective_mode, "num_load_cases": len(load_cases),
+                      "inertia_relief": inertia_relief}).to_dict()
         info["factorization_cache"] = cache_info
         if session is not None:
             info["analysis_session"] = session.diagnostics()

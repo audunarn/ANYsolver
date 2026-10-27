@@ -7,7 +7,9 @@ the model's canonical mass and load assembly conventions.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from copy import deepcopy
 import hashlib
+import threading
 from types import SimpleNamespace
 from typing import Any, Optional
 import weakref
@@ -71,6 +73,8 @@ def _identity_token(identity: Any) -> str:
 
 
 def _json_summary(value: Any) -> Any:
+    if isinstance(value, np.ndarray):
+        return _json_summary(value.tolist())
     if isinstance(value, dict):
         return {key: _json_summary(item) for key, item in value.items()}
     if isinstance(value, (list, tuple)):
@@ -173,14 +177,18 @@ class InertiaReliefResult:
                                 resource_config=resource_config)
 
 
-def _admit(model: Any, load_case: Any) -> None:
-    if getattr(type(model), "_solid_model_protocol", False) or not isinstance(model, FEModel):
-        raise InertiaReliefError("Inertia relief requires a beam/shell FEModel", code="unsupported_model")
+def _admit_load(load_case: Any) -> None:
     if load_case is not None and type(load_case) is not LoadCase:
         raise InertiaReliefError("Inertia relief accepts a single built-in LoadCase", code="unsupported_load")
     if load_case is not None and (load_case.follower_pressure or load_case.added_node_masses):
         raise InertiaReliefError("Follower pressure and load-case-only added masses are unsupported; attach physical masses to the model",
                                  code="unsupported_load")
+
+
+def _admit(model: Any, load_case: Any) -> None:
+    if getattr(type(model), "_solid_model_protocol", False) or not isinstance(model, FEModel):
+        raise InertiaReliefError("Inertia relief requires a beam/shell FEModel", code="unsupported_model")
+    _admit_load(load_case)
     try:
         require_no_native_total_lagrangian_elements(model, context="linear inertia relief")
         require_model_element_capabilities(model, ("linear_static", "mass"), context="linear inertia relief")
@@ -243,6 +251,22 @@ def _balance(R: np.ndarray, applied: np.ndarray, inertial: np.ndarray) -> tuple[
     return resultants, errors
 
 
+def _mechanism_krylov_dimension(n: int) -> int:
+    return min(n, max(128, min(256, 8*int(np.sqrt(n)))))
+
+
+def _mechanism_workspace_bytes(n: int) -> int:
+    """Conservative dense ARPACK basis, work arrays and projection temporaries.
+
+    The batch preflight uses full DOFs as an upper bound for reduced DOFs and
+    separately accounts for sparse copies and retained physical rigid columns.
+    """
+    if n <= 6:
+        return 0
+    ncv = _mechanism_krylov_dimension(n)
+    return 8*(n*(ncv+16)+ncv*(ncv+8))
+
+
 def _mechanism_check(K: sparse.csr_matrix, R: np.ndarray, scale: np.ndarray,
                      token: Any) -> dict[str, Any]:
     """Converged extremal Ritz pair on the scaled elastic complement.
@@ -291,7 +315,7 @@ def _mechanism_check(K: sparse.csr_matrix, R: np.ndarray, scale: np.ndarray,
     operator = LinearOperator((n, n), matvec=multiply, dtype=float)
     # Refined bodies need a larger Krylov space for clustered elastic modes.
     # This changes neither physical stiffness nor numerical acceptance gates.
-    ncv = min(n, max(128, min(256, 8*int(np.sqrt(n)))))
+    ncv = _mechanism_krylov_dimension(n)
     try:
         values, vectors = eigsh(operator, k=1, which="SA", tol=1.e-15,
                                maxiter=2000, ncv=ncv,
@@ -313,53 +337,69 @@ def _mechanism_check(K: sparse.csr_matrix, R: np.ndarray, scale: np.ndarray,
             "residual_gate": _EIGENPAIR_LIMIT, "method": "scaled_projected_lanczos"}
 
 
-@resource_threaded
-def solve_inertia_relief(
-    model: FEModel, load_case: Optional[LoadCase] = None, *, reference_point: Any = None,
-    session: Any = None, resource_config: Any = None, cancellation_token: Any = None,
-    progress_callback: Any = None,
-) -> InertiaReliefResult:
-    """Solve mass-balanced linear elasticity in a freely accelerating frame.
 
-    Supports one connected free-free beam/shell assembly and homogeneous MPCs.
-    Invalid input raises InertiaReliefError; numerical non-success has no accepted
-    displacement. No time integration, centrifugal or gyroscopic terms are used.
-    """
-    cancellation_safe_point(cancellation_token, "inertia_relief.start")
-    _admit(model, load_case)
-    requested = None
-    if reference_point is not None:
-        try:
-            requested = np.asarray(reference_point, dtype=float)
-            if requested.shape != (3,) or not np.all(np.isfinite(requested)):
-                raise ValueError("expected three finite coordinates")
-        except (ValueError, TypeError) as exc:
-            raise InertiaReliefError("reference_point requires three finite coordinates", code="invalid_reference") from exc
-    emit_progress(progress_callback, "inertia_relief_started", "inertia_relief.assembly")
+@dataclass
+class _InertiaReliefPlan:
+    """Load-independent physical operator; retained only by its owning session."""
+    K: Any
+    M: Any
+    constraint: Any
+    Q: np.ndarray
+    mode_info: dict
+    R: np.ndarray
+    MR: np.ndarray
+    mass: float
+    center: np.ndarray
+    inertia: np.ndarray
+    D: np.ndarray
+    Gs: np.ndarray
+    factor: Any
+    scale: np.ndarray
+    scaled_K: Any
+    scaled_K_norm: float
+    augmented: Any
+    diagnostics: dict
+    _mechanism: Optional[dict] = None
+    _lock: Any = field(default_factory=threading.RLock, repr=False)
+
+    def mechanism(self, token: Any = None) -> dict:
+        with self._lock:
+            cancellation_safe_point(token, "inertia_relief.before_mechanism")
+            if self._mechanism is None:
+                self._mechanism = _mechanism_check(self.constraint.K_red,
+                    self.R[self.constraint.independent_dofs, :], self.scale, token)
+            cancellation_safe_point(token, "inertia_relief.after_mechanism")
+            return deepcopy(self._mechanism)
+
+    @property
+    def retained_bytes(self) -> int:
+        arrays = (self.R, self.MR, self.center, self.inertia, self.D, self.Gs,
+                  self.factor[0], self.scale)
+        matrices = (self.scaled_K, self.augmented)
+        return sum(a.nbytes for a in arrays) + sum(
+            m.data.nbytes+m.indices.nbytes+m.indptr.nbytes for m in matrices)
+
+
+def _validate_reference(reference_point: Any) -> Optional[np.ndarray]:
+    if reference_point is None:
+        return None
     try:
-        if session is None:
-            K, F, assembly_info = assemble_system(model, load_case)
-            M, mass_info = assemble_mass_matrix(model)
-            Kr, _, T, u0, independent, ci = build_constraint_transformation(K, F, model)
-            constraint = SimpleNamespace(T=T, info=ci)
-            Q, qi = build_reduced_rigid_body_modes(model, independent, K.shape[0], transformation=T)
-        else:
-            # Refresh mass first: mass invalidation may clear the operator.
-            mass = session.mass_plan(model)
-            M, mass_info = mass.matrix, dict(mass.info)
-            K, F, assembly_info, constraint, _ = session.linear_system(load_case, model)
-            Kr, T, u0, independent, ci = (constraint.K_red, constraint.T, constraint.u0,
-                                         constraint.independent_dofs, dict(constraint.info))
-            Q, qi = session.rigid_body_modes(constraint, model)
-    except (ValueError, TypeError, NotImplementedError) as exc:
-        raise InertiaReliefError(str(exc), code="assembly_input") from exc
-    cancellation_safe_point(cancellation_token, "inertia_relief.after_assembly")
+        requested = np.asarray(reference_point, dtype=float)
+        if requested.shape != (3,) or not np.all(np.isfinite(requested)):
+            raise ValueError("expected three finite coordinates")
+    except (ValueError, TypeError) as exc:
+        raise InertiaReliefError("reference_point requires three finite coordinates", code="invalid_reference") from exc
+    return _readonly(requested)
+
+
+def _prepare_inertia_relief(model: FEModel, K: Any, M: Any, constraint: Any,
+                            Q: np.ndarray, qi: dict) -> _InertiaReliefPlan:
+    """Shared scalar/batch preparation; never examines or caches a load."""
     for name, matrix in (("stiffness", K), ("mass", M)):
         _finite_symmetric(matrix, name)
-    F = np.asarray(F, dtype=float)
-    if F.shape != (K.shape[0],) or not np.all(np.isfinite(F)):
-        raise InertiaReliefError("Applied load must be a finite full-DOF vector", code="invalid_load")
-    if ci["num_fixed_dofs"] or np.any(u0 != 0) or Q.shape[1] != 6 or qi["constraint_compatibility_rank"] != 6:
+    Kr, T, independent = constraint.K_red, constraint.T, constraint.independent_dofs
+    ci = constraint.info
+    if ci["num_fixed_dofs"] or np.any(constraint.u0 != 0) or Q.shape[1] != 6 or qi["constraint_compatibility_rank"] != 6:
         raise InertiaReliefError("MPCs must preserve all six free rigid-body directions", code="incompatible_constraints")
     coords = np.array([node.coords() for node in model.mesh.nodes.values()])
     centroid = coords[0] + np.mean(coords-coords[0], axis=0)
@@ -385,21 +425,6 @@ def solve_inertia_relief(
         factor = linalg.cho_factor(Gs, lower=True)
     except (ValueError, linalg.LinAlgError) as exc:
         raise InertiaReliefError(str(exc), code="invalid_rigid_inertia") from exc
-    reference = center if requested is None else requested
-    Rref = _rigid_body_modes(model, reference)
-    _, Gref = _project_rigid_inertia(model, M, reference)
-    # Centering is an exact generalized-coordinate congruence of G_ref a=p_ref,
-    # not a replacement by an uncoupled approximate inertia model.
-    p = R.T @ F
-    rhs = D.T @ p / mass
-    scaled_acceleration = linalg.cho_solve(factor, rhs)
-    acceleration = D @ scaled_acceleration
-    rigid_acceleration = R @ acceleration
-    Fi = -np.asarray(M @ rigid_acceleration)
-    effective = F + Fi
-    ar = acceleration[:3] + np.cross(acceleration[3:], reference-center)
-    resultants, balance = _balance(Rref, F, Fi)
-    central_resultants, central_balance = _balance(R, F, Fi)
     Rr = R[np.asarray(independent), :]
     physical_scale = np.ones(K.shape[0])
     for node in model.mesh.nodes.values():
@@ -411,11 +436,7 @@ def solve_inertia_relief(
     scaled_K_norm = float(np.max(np.asarray(abs(scaled_K).sum(axis=1)).ravel()))
     scaled_R = Rr/scale[:, None]*columns
     stiffness_error = _relative(float(np.linalg.norm(scaled_K @ scaled_R)), scaled_K_norm*float(np.linalg.norm(scaled_R)))
-    acceleration_error = _backward_error(sparse.csr_matrix(Gs), scaled_acceleration, rhs)
-    diagnostics = {**balance, "central_balance": central_balance,
-                   "central_resultants": central_resultants,
-                   "acceleration_backward_error": acceleration_error,
-                   "rigid_inertia_condition": float(spectrum[-1]/spectrum[0]),
+    diagnostics = {"rigid_inertia_condition": float(spectrum[-1]/spectrum[0]),
                    "rigid_mode_stiffness_error": stiffness_error,
                    "mpc_compatibility_error": float(compat), "rigid_mode_count": 6,
                    "length_scale": length, "error_gate": _ERROR_LIMIT,
@@ -427,6 +448,155 @@ def solve_inertia_relief(
                                                 for e in model.mesh.elements.values()}),
                    "beam_mass_selection": {str(i): ("consistent" if isinstance(e, QuadraticBeamElement) or e.generalized_section is not None or e.cross_section.get("consistent_mass", False) else "lumped")
                                            for i, e in model.mesh.elements.items() if isinstance(e, BeamElement)}}
+    q_sparse = sparse.csr_matrix(Q)
+    augmented = sparse.bmat([[Kr, q_sparse], [q_sparse.T, sparse.csr_matrix((6, 6))]], format="csr")
+    return _InertiaReliefPlan(K, M, constraint, Q, dict(qi), _readonly(R),
+        _readonly(M @ R), mass, _readonly(center), _readonly(inertia), _readonly(D),
+        _readonly(Gs), factor, _readonly(scale), scaled_K, scaled_K_norm, augmented, diagnostics)
+
+
+def _relief_reference(model: FEModel, plan: _InertiaReliefPlan,
+                      reference_point: Any = None) -> tuple:
+    requested = _validate_reference(reference_point)
+    reference = plan.center if requested is None else requested
+    Rref = _rigid_body_modes(model, reference)
+    _, Gref = _project_rigid_inertia(model, plan.M, reference)
+    return reference, Rref, Gref
+
+
+def _balance_inertia_relief(plan: _InertiaReliefPlan, loads: np.ndarray,
+                            reference: tuple, token: Any = None) -> tuple:
+    """One six-by-many solve; returned full arrays live only for the active block."""
+    F = np.asarray(loads, dtype=float)
+    if F.ndim != 2 or F.shape[0] != plan.K.shape[0] or not np.all(np.isfinite(F)):
+        raise InertiaReliefError("Applied loads must be a finite full-DOF matrix", code="invalid_load")
+    point, Rref, Gref = reference
+    rhs = plan.D.T @ (plan.R.T @ F) / plan.mass
+    scaled_acceleration = linalg.cho_solve(plan.factor, rhs)
+    acceleration = plan.D @ scaled_acceleration
+    inertial = -(plan.MR @ acceleration)
+    effective = F+inertial
+    summaries = []
+    for j in range(F.shape[1]):
+        cancellation_safe_point(token, "inertia_relief.balance_column")
+        resultants, balance = _balance(Rref, F[:, j], inertial[:, j])
+        central_resultants, central_balance = _balance(plan.R, F[:, j], inertial[:, j])
+        acceleration_error = _backward_error(sparse.csr_matrix(plan.Gs), scaled_acceleration[:, j], rhs[:, j])
+        diagnostics = {**deepcopy(plan.diagnostics), **balance, "central_balance": central_balance,
+            "central_resultants": central_resultants, "acceleration_backward_error": acceleration_error}
+        checks = [acceleration_error, diagnostics["mpc_compatibility_error"],
+            diagnostics["rigid_mode_stiffness_error"], balance["force_balance_error"],
+            balance["moment_balance_error"], central_balance["force_balance_error"],
+            central_balance["moment_balance_error"]]
+        ok = all(np.isfinite(v) and v <= _ERROR_LIMIT for v in checks)
+        a = acceleration[:, j]
+        summaries.append({"analysis_type": "inertia_relief", "method": _METHOD,
+            "status": "balanced" if ok else "numerical_failure", "total_mass": plan.mass,
+            "acceleration_at_reference": a[:3]+np.cross(a[3:], point-plan.center),
+            "acceleration_at_center_of_mass": a[:3], "angular_acceleration": a[3:],
+            "center_of_mass": plan.center, "reference_point": point,
+            "inertia_tensor_center_of_mass": plan.inertia, "rigid_body_mass_matrix": Gref,
+            "load_resultants": resultants, "diagnostics": diagnostics})
+    return inertial, effective, acceleration, summaries
+
+
+def _relief_compatibility(plan: _InertiaReliefPlan, applied: np.ndarray,
+                          inertial: np.ndarray, rhs: np.ndarray) -> dict:
+    components = np.asarray(plan.Q.T @ rhs).ravel()
+    scale = (float(np.linalg.norm(np.asarray(plan.constraint.T.T @ applied)))
+             +float(np.linalg.norm(np.asarray(plan.constraint.T.T @ inertial))))
+    error = _relative(float(np.linalg.norm(components)), scale)
+    return {"rigid_body_load_components": components.tolist(),
+            "rigid_body_load_imbalance_norm": float(np.linalg.norm(components)),
+            "relative_rigid_body_load_imbalance": error, "warnings": []}
+
+
+def _relief_elastic_diagnostics(plan: _InertiaReliefPlan, q: np.ndarray,
+        multipliers: np.ndarray, applied: np.ndarray, inertial: np.ndarray,
+        rhs: np.ndarray) -> dict:
+    """Certify gauged reduced equilibrium against the original physical loads."""
+    scale, Kr, T = plan.scale, plan.constraint.K_red, plan.constraint.T
+    scaled_q = q/scale
+    scaled_rhs = scale*rhs
+    scaled_residual = scale*np.asarray(Kr @ q-rhs)
+    physical_load_scale = (float(np.linalg.norm(scale*np.asarray(T.T @ applied).ravel(), ord=np.inf))
+                           +float(np.linalg.norm(scale*np.asarray(T.T @ inertial).ravel(), ord=np.inf)))
+    elastic_error = _relative(float(np.linalg.norm(scaled_residual, ord=np.inf)),
+        plan.scaled_K_norm*float(np.linalg.norm(scaled_q, ord=np.inf))+physical_load_scale)
+    return dict(elastic_backward_error=elastic_error,
+        augmented_backward_error=_backward_error(plan.augmented, np.r_[q, multipliers], np.r_[rhs, np.zeros(6)]),
+        effective_load_relative_backward_error=_backward_error(plan.scaled_K, scaled_q, scaled_rhs),
+        elastic_backward_error_normalization="scaled_K_u_applied_plus_inertial",
+        elastic_load_cancellation_ratio=_relative(float(np.linalg.norm(scaled_rhs, ord=np.inf)), physical_load_scale),
+        elastic_accuracy_reference="applied_plus_inertial_loads",
+        gauge_error=_relative(float(np.linalg.norm(plan.Q.T @ q)), float(np.linalg.norm(q))),
+        reduced_equilibrium_residual_norm=float(np.linalg.norm(Kr @ q-rhs)))
+
+
+def _relief_elastic_accepted(diagnostics: dict) -> bool:
+    return all(np.isfinite(diagnostics[k]) and diagnostics[k] <= _ERROR_LIMIT
+               for k in ("elastic_backward_error", "augmented_backward_error", "gauge_error"))
+
+
+def _relief_backend_diagnostics(plan: _InertiaReliefPlan, q: np.ndarray,
+        multipliers: np.ndarray, rhs: np.ndarray) -> dict:
+    """Expose backend quality before the permitted displacement gauge cleanup."""
+    return {"backend_gauge_error": _relative(float(np.linalg.norm(plan.Q.T @ q)),
+                                            float(np.linalg.norm(q))),
+            "backend_augmented_backward_error": _backward_error(plan.augmented,
+                np.r_[q, multipliers], np.r_[rhs, np.zeros(6)])}
+
+
+@resource_threaded
+def solve_inertia_relief(
+    model: FEModel, load_case: Optional[LoadCase] = None, *, reference_point: Any = None,
+    session: Any = None, resource_config: Any = None, cancellation_token: Any = None,
+    progress_callback: Any = None,
+) -> InertiaReliefResult:
+    """Solve mass-balanced linear elasticity in a freely accelerating frame.
+
+    Supports one connected free-free beam/shell assembly and homogeneous MPCs.
+    Invalid input raises InertiaReliefError; numerical non-success has no accepted
+    displacement. No time integration, centrifugal or gyroscopic terms are used.
+    """
+    cancellation_safe_point(cancellation_token, "inertia_relief.start")
+    _admit(model, load_case)
+    requested = _validate_reference(reference_point)
+    emit_progress(progress_callback, "inertia_relief_started", "inertia_relief.assembly")
+    try:
+        if session is None:
+            K, F, assembly_info = assemble_system(model, load_case)
+            M, mass_info = assemble_mass_matrix(model)
+            Kr, _, T, u0, independent, ci = build_constraint_transformation(K, F, model)
+            constraint = SimpleNamespace(T=T, info=ci, K_red=Kr, u0=u0, independent_dofs=independent)
+            Q, qi = build_reduced_rigid_body_modes(model, independent, K.shape[0], transformation=T)
+        else:
+            # Refresh mass first: mass invalidation may clear the operator.
+            mass = session.mass_plan(model)
+            M, mass_info = mass.matrix, dict(mass.info)
+            K, F, assembly_info, constraint, _ = session.linear_system(load_case, model)
+            Kr, T, u0, independent, ci = (constraint.K_red, constraint.T, constraint.u0,
+                                         constraint.independent_dofs, dict(constraint.info))
+            Q, qi = session.rigid_body_modes(constraint, model)
+    except (ValueError, TypeError, NotImplementedError) as exc:
+        raise InertiaReliefError(str(exc), code="assembly_input") from exc
+    cancellation_safe_point(cancellation_token, "inertia_relief.after_assembly")
+    F = np.asarray(F, dtype=float)
+    if F.shape != (K.shape[0],) or not np.all(np.isfinite(F)):
+        raise InertiaReliefError("Applied load must be a finite full-DOF vector", code="invalid_load")
+    plan = (_prepare_inertia_relief(model, K, M, constraint, Q, qi) if session is None
+            else session.inertia_relief_plan(model=model))
+    reference_data = _relief_reference(model, plan, requested)
+    reference, _, Gref = reference_data
+    Fi_block, effective_block, acceleration_block, summaries = _balance_inertia_relief(
+        plan, F[:, None], reference_data, cancellation_token)
+    Fi, effective, acceleration = Fi_block[:, 0], effective_block[:, 0], acceleration_block[:, 0]
+    summary = summaries[0]
+    diagnostics = summary["diagnostics"]
+    ar = summary["acceleration_at_reference"]
+    rigid_acceleration = plan.R @ acceleration
+    mass, center, inertia = plan.mass, plan.center, plan.inertia
+    resultants = summary["load_resultants"]
     assembly_info = {**assembly_info, "mass": mass_info}
     common = dict(acceleration_at_reference=_readonly(ar),
                   acceleration_at_center_of_mass=_readonly(acceleration[:3]),
@@ -443,7 +613,7 @@ def solve_inertia_relief(
         info = {"solver_type": "direct", "assembly": assembly_info,
                 "convergence_info": {"status": status, "error": error},
                 "inertia_relief": {"method": _METHOD, "diagnostics": diagnostics},
-                "nullspace_info": qi, "constraint_info": ci}
+                "nullspace_info": deepcopy(qi), "constraint_info": deepcopy(ci)}
         if "convergence_info" in extra:
             info["convergence_info"].update(extra.pop("convergence_info"))
             info["convergence_info"]["status"] = status
@@ -462,13 +632,10 @@ def solve_inertia_relief(
         return InertiaReliefResult(status=status, error=error, solver_info=info,
                                    result_case=info["result_case"], **common, **extra)
 
-    checks = [acceleration_error, float(compat), stiffness_error,
-              balance["force_balance_error"], balance["moment_balance_error"],
-              central_balance["force_balance_error"], central_balance["moment_balance_error"]]
-    if not all(np.isfinite(v) and v <= _ERROR_LIMIT for v in checks):
+    if summary["status"] != "balanced":
         return finish("numerical_failure", "Rigid inertia, compatibility or load-balance accuracy gate failed")
     emit_progress(progress_callback, "inertia_relief_balanced", "inertia_relief.mechanism_check")
-    mechanism = _mechanism_check(Kr, Rr, scale, cancellation_token)
+    mechanism = plan.mechanism(cancellation_token)
     diagnostics["mechanism"] = mechanism
     if mechanism["status"] != "resolved":
         return finish("unresolved_elastic_stiffness", "Elastic stiffness could not be resolved at the required spectral margin and eigenpair accuracy")
@@ -486,39 +653,20 @@ def solve_inertia_relief(
     cancellation_safe_point(cancellation_token, "inertia_relief.after_factorization")
     if convergence.get("status") != "converged":
         return finish("numerical_failure", "Balanced nullspace solve failed", convergence_info=convergence)
+    multipliers = np.asarray(convergence["rigid_body_lagrange_multipliers"])
+    diagnostics.update(_relief_backend_diagnostics(plan, q, multipliers, Fr))
     # Remove only roundoff in the permitted gauge; physical stiffness is unchanged.
     q = q-Q @ (Q.T @ q)
     displacement = np.asarray(T @ q).ravel()
-    scaled_q = q/scale
-    scaled_rhs = scale*Fr
-    scaled_residual = scale*np.asarray(Kr @ q-Fr)
-    # Backward error of Ku=F+F_inertia uses those original physical data,
-    # not their cancellation-dominated difference. Report the latter too;
-    # do not project any rigid load component out of the effective load.
-    physical_load_scale = (float(np.linalg.norm(scale*np.asarray(T.T @ F).ravel(), ord=np.inf))
-                           +float(np.linalg.norm(scale*np.asarray(T.T @ Fi).ravel(), ord=np.inf)))
-    elastic_error = _relative(float(np.linalg.norm(scaled_residual, ord=np.inf)),
-        scaled_K_norm*float(np.linalg.norm(scaled_q, ord=np.inf))+physical_load_scale)
-    effective_error = _backward_error(scaled_K, scaled_q, scaled_rhs)
-    cancellation_ratio = _relative(float(np.linalg.norm(scaled_rhs, ord=np.inf)), physical_load_scale)
-    augmented = sparse.bmat([[Kr, sparse.csr_matrix(Q)], [sparse.csr_matrix(Q.T), sparse.csr_matrix((6, 6))]], format="csr")
-    multipliers = np.asarray(convergence["rigid_body_lagrange_multipliers"])
-    augmented_error = _backward_error(augmented, np.r_[q, multipliers], np.r_[Fr, np.zeros(6)])
-    gauge = _relative(float(np.linalg.norm(Q.T @ q)), float(np.linalg.norm(q)))
-    diagnostics.update(elastic_backward_error=elastic_error, augmented_backward_error=augmented_error,
-                       effective_load_relative_backward_error=effective_error,
-                       elastic_backward_error_normalization="scaled_K_u_applied_plus_inertial",
-                       elastic_load_cancellation_ratio=cancellation_ratio,
-                       elastic_accuracy_reference="applied_plus_inertial_loads",
-                       gauge_error=gauge, backend=convergence.get("backend", {}),
-                       reduced_equilibrium_residual_norm=float(np.linalg.norm(Kr @ q-Fr)))
-    if not all(np.isfinite(v) and v <= _ERROR_LIMIT for v in (elastic_error, augmented_error, gauge)):
+    diagnostics.update(_relief_elastic_diagnostics(plan, q, multipliers, F, Fi, Fr),
+                       backend=convergence.get("backend", {}))
+    if not _relief_elastic_accepted(diagnostics):
         return finish("numerical_failure", "Elastic equilibrium or gauge accuracy gate failed", convergence_info=convergence)
     cancellation_safe_point(cancellation_token, "inertia_relief.before_recovery")
     constraint_forces = _run_with_qualified_recovery_runtime_lease(model,
         context="inertia-relief effective-load constraint diagnostics",
         operation=lambda guard: _compute_constraint_force_diagnostics_under_lease(
             model, displacement, qualified_runtime_guard=guard,
-            prepared_system=(K, effective, constraint, Q, qi)))
+            prepared_system=(K, effective, constraint, Q, deepcopy(qi))))
     return finish("converged", displacements=_readonly(displacement),
                   constraint_forces=constraint_forces, convergence_info=convergence)

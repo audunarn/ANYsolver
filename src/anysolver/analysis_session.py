@@ -282,6 +282,7 @@ class AnalysisSession:
         self._mass: Optional[StructuralMatrixPlan] = None
         self._constraint: Optional[ConstraintPlan] = None
         self._static_operator: Optional[StaticOperatorPlan] = None
+        self._inertia_relief: Optional[Tuple[Tuple[Any, ...], Any]] = None
         self._reduced_mass: Optional[Tuple[Tuple[Any, ...], sparse.csr_matrix]] = None
         self._rigid_modes: Optional[Tuple[Tuple[Any, ...], np.ndarray, Dict[str, Any]]] = None
         self._load_vectors: "OrderedDict[Tuple[Any, ...], Tuple[np.ndarray, Dict[str, Any]]]" = OrderedDict()
@@ -393,6 +394,7 @@ class AnalysisSession:
             self._mass = None
             self._constraint = None
             self._static_operator = None
+            self._inertia_relief = None
             self._reduced_mass = None
             self._rigid_modes = None
             self._load_vectors.clear()
@@ -447,6 +449,7 @@ class AnalysisSession:
                 self._counters["stiffness_hits"] += 1
                 return self._stiffness
             if self._stiffness is not None:
+                self._inertia_relief = None
                 self._invalidation_reasons["stiffness_revision"] += 1
                 self.factorization_cache.clear()
                 self._constraint = None
@@ -517,6 +520,35 @@ class AnalysisSession:
             self._counters["static_operator_builds"] += 1
             return plan
 
+    def inertia_relief_plan(self, *, model: Optional["FEModel"] = None) -> Any:
+        """Reuse physical rigid inertia and elastic certification, never load data.
+
+        The reference point is deliberately absent: accelerations are calculated
+        at the centre of mass and transformed to each requested reporting point.
+        """
+        from .inertia_relief import _admit, _prepare_inertia_relief
+
+        with self._lock:
+            owned = self._require_model(model)
+            _admit(owned, None)
+            # Mass invalidation can clear the static operator/factorization cache.
+            mass = self.mass_plan(owned)
+            stiffness = self.stiffness_plan(owned)
+            constraint = self.constraint_plan(stiffness, owned)
+            key = (mass.revision_key, stiffness.revision_key,
+                   constraint.structure_key, constraint.value_key)
+            if self._inertia_relief is not None and self._inertia_relief[0] == key:
+                self._counters["inertia_relief_hits"] += 1
+                return self._inertia_relief[1]
+            modes, info = self.rigid_body_modes(constraint, owned)
+            start = time.perf_counter()
+            plan = _prepare_inertia_relief(owned, stiffness.matrix, mass.matrix,
+                                          constraint, modes, info)
+            self._inertia_relief = (key, plan)
+            self._setup_seconds += time.perf_counter()-start
+            self._counters["inertia_relief_builds"] += 1
+            return plan
+
     def mass_plan(self, model: Optional["FEModel"] = None) -> StructuralMatrixPlan:
         from .matrix_assembly import assemble_mass_matrix
 
@@ -536,6 +568,7 @@ class AnalysisSession:
                 self._counters["mass_hits"] += 1
                 return self._mass
             if self._mass is not None:
+                self._inertia_relief = None
                 self._invalidation_reasons["mass_revision"] += 1
                 self._reduced_mass = None
                 self.factorization_cache.clear()
@@ -584,6 +617,7 @@ class AnalysisSession:
                 and existing.value_key != values
             )
             if existing is not None:
+                self._inertia_relief = None
                 if existing.structure_key != structure_key:
                     self._invalidation_reasons["constraint_structure"] += 1
                     self._output_plans.clear()
@@ -822,6 +856,8 @@ class AnalysisSession:
     def diagnostics(self) -> Dict[str, Any]:
         with self._lock:
             retained = 0
+            if self._inertia_relief is not None:
+                retained += self._inertia_relief[1].retained_bytes
             if self._static_operator is not None:
                 retained += _sparse_nbytes(self._static_operator.matrix)
                 retained += int(self._static_operator.scaling.nbytes)
