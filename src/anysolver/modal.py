@@ -2444,6 +2444,10 @@ def solve_free_vibration(
 ) -> ModalResult:
     """Solve free vibration under one non-renewable qualified-family lease."""
 
+    if getattr(type(model), '_solid_model_protocol', False):
+        from .solids import SolidAnalysisNotSupported
+        raise SolidAnalysisNotSupported('solid regions are not enabled for modal analysis')
+
     exact_guard = _EXACT_QUALIFIED_COMPONENT_LIFECYCLE_GUARD
     run_under_lease = _run_with_qualified_assembly_runtime_lease
     own_resource_config = _owned_resource_config_snapshot

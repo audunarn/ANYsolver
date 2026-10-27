@@ -2792,6 +2792,10 @@ def solve_transient_newmark(
 ) -> TransientResult:
     """Solve Newmark dynamics under one qualified-family operation lease."""
 
+    if getattr(type(model), '_solid_model_protocol', False):
+        from .solids import SolidAnalysisNotSupported
+        raise SolidAnalysisNotSupported('solid regions are not enabled for transient dynamics')
+
     raw_authority_guard = _require_qualified_reference_transient_authority
     raw_authority_guard(model)
 

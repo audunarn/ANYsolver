@@ -144,6 +144,14 @@ def test_functional_lane_direct_shell_calls_are_non_q4_or_explicit_refusal() -> 
                 "tests/test_recovery_qualification.py",
                 "test_patch_rejects_reduced_q8_and_warped_q4_outside_qualified_scope",
             ): 1,
+            # Eight-node Q8 recovery-frame fixture; no legacy Q4 admission.
+            ("tests/test_recovery_shell_frames.py", "model8"): 1,
+            # Legacy three-node shell is constructed only to assert that the
+            # production S3 trace refuses it, not to admit a legacy Q4 solve.
+            (
+                "tests/test_solid_trace_extensions.py",
+                "test_admission_geometry_and_sampling_refusals",
+            ): 1,
             # Submodelling S1: three-node shells the transfer must refuse.
             (
                 "tests/test_submodel_transfer.py",
@@ -163,6 +171,15 @@ def test_functional_lane_direct_shell_calls_are_non_q4_or_explicit_refusal() -> 
     assert calls["ShellElement"] == expected_non_q4 + expected_refused_q4
     expected_qualified_q4 = Counter(
         {
+            # Existing production-Q4 predictor retry fixture; this records the
+            # exact baseline call site without changing its solver admission.
+            ("tests/test_arc_length_predictor_reuse.py", "panel"): 1,
+            # Existing typed unsupported-Hill guard uses production Q4 only
+            # to verify refusal, not to admit an orthotropic plastic route.
+            (
+                "tests/test_q4_assumed_strain_plasticity.py",
+                "test_hill48_plastic_q4_is_refused_with_typed_error",
+            ): 1,
             (
                 "tests/test_e4_pl_planar_physical_recovery.py",
                 "test_b_coupled_section_requires_persistent_director_and_restart_identity",
@@ -270,7 +287,9 @@ def test_functional_lane_direct_shell_calls_are_non_q4_or_explicit_refusal() -> 
             ): 1,
             (
                 "tests/test_e4_pl_q4_current_tangent.py",
-                "test_isotropic_initial_field_and_orthotropic_hill_updates_retain_exact_tangent",
+                # Baseline owner decision replaced the former tangent claim
+                # with explicit active-initial-field/Hill plastic refusals.
+                "test_isotropic_initial_field_and_orthotropic_hill_plastic_updates_are_refused",
             ): 1,
             (
                 "tests/test_e4_pl_q4_current_tangent.py",

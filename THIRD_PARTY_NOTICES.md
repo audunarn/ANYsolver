@@ -13,6 +13,8 @@ inventory is `dependency-licenses.json`.
 | ANYmaterial | `ANYmaterial>=0.2,<0.3` | MPL-2.0 | Runtime dependency; separately distributed |
 | ANYmesher | `ANYmesher>=0.4,<0.6` | MPL-2.0 | Runtime dependency; separately distributed |
 | ANYfileio | `ANYfileio>=0.3.2,<0.4` | MPL-2.0 | Runtime dependency; separately distributed |
+| ANYsolid | `ANYsolid[skfem]>=0.1.0,<0.2` | MPL-2.0 | Optional solid adapter; separately distributed |
+| scikit-fem | `scikit-fem>=12.0.2,<13` through ANYsolid's `skfem` extra | BSD-3-Clause | Optional continuum assembly dependency; not bundled |
 | ANYgeometry | `ANYgeometry>=0.4.3,<0.5` | MPL-2.0 | Optional general-contact dependency; separately distributed |
 | Numba | `numba>=0.59` | BSD | Optional accelerator; not bundled |
 | pypardiso | `pypardiso>=0.4` | BSD-3-Clause | Optional accelerator; not bundled |
