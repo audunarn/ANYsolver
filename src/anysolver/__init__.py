@@ -444,6 +444,7 @@ from .linalg import (
     sparse_matrix_signature,
 )
 from .mass_properties import MassProperties, calculate_mass_properties, element_mass_points
+from .inertia_relief import InertiaReliefError, InertiaReliefResult, solve_inertia_relief
 from .modal import ModalMode, ModalResult, solve_free_vibration
 from .mesh_gen import (
     InterpolatedBeamShellMPCElement,
@@ -919,6 +920,9 @@ __all__ = [
     "solve_many",
     "sparse_matrix_signature",
     "MassProperties",
+    "InertiaReliefError",
+    "InertiaReliefResult",
+    "solve_inertia_relief",
     "calculate_mass_properties",
     "element_mass_points",
     "ModalMode",

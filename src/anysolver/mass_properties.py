@@ -49,6 +49,7 @@ def _spatial_inertia_components(
     matrix: Any,
     *,
     label: str,
+    reference_length: float | None = None,
 ) -> Tuple[float, np.ndarray, np.ndarray]:
     """Extract scalar mass, first moment and origin inertia from a 6x6 inertia.
 
@@ -100,6 +101,11 @@ def _spatial_inertia_components(
         float(np.max(np.abs(translation_rotation))),
         np.finfo(float).tiny,
     )
+    if reference_length is not None:
+        # Near the COM the whole coupling block cancels. Measure projection
+        # roundoff against mass*length using the same relative tolerance.
+        # Existing callers without an explicit length retain their behavior.
+        coupling_scale = max(coupling_scale, abs(mass) * reference_length)
     if not np.allclose(
         translation_rotation,
         -translation_rotation.T,
@@ -152,6 +158,29 @@ def _rigid_body_modes(model: "FEModel", reference: np.ndarray) -> np.ndarray:
         modes[uy, 5] = x
         modes[rz, 5] = 1.0
     return modes
+
+
+def _project_rigid_inertia(
+    model: "FEModel", matrix: Any, reference: np.ndarray,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Project an already assembled mass without another element observation."""
+    modes = _rigid_body_modes(model, reference)
+    rigid_mass = np.asarray(modes.T @ (matrix @ modes), dtype=float)
+    return modes, rigid_mass
+
+
+def _validated_point_masses(model: "FEModel") -> List[Tuple[Any, float]]:
+    """Validate public dictionary entries as well as add_point_mass inputs."""
+    entries = []
+    for node_id, mass in getattr(model.mesh, "point_masses", {}).items():
+        node = model.mesh.get_node(int(node_id))
+        if node is None:
+            raise ValueError(f"Point mass references missing node {node_id}")
+        mass_value = float(mass)
+        if not np.isfinite(mass_value) or mass_value < 0.0:
+            raise ValueError(f"Point mass at node {node_id} must be finite and non-negative")
+        entries.append((node, mass_value))
+    return entries
 
 
 def _shell_mass_points(model: "FEModel", element: ShellElement) -> List[Tuple[float, np.ndarray]]:
@@ -267,23 +296,13 @@ def calculate_mass_properties(model: "FEModel", reference_point: Any = None) -> 
     block cannot define a unique center of mass.
     """
     points, skipped = element_mass_points(model)
-    for node_id, mass in getattr(model.mesh, "point_masses", {}).items():
-        node = model.mesh.get_node(int(node_id))
-        if node is None:
-            raise ValueError(f"Point mass references missing node {node_id}")
-        mass_value = float(mass)
-        if not np.isfinite(mass_value) or mass_value < 0.0:
-            raise ValueError(f"Point mass at node {node_id} must be finite and non-negative")
+    for node, mass_value in _validated_point_masses(model):
         if mass_value > 0.0:
             points.append((mass_value, node.coords()))
 
     M, assembly_info = assemble_mass_matrix(model)
     origin = np.zeros(3, dtype=float)
-    origin_modes = _rigid_body_modes(model, origin)
-    rbm_origin = np.asarray(
-        origin_modes.T @ (M @ origin_modes),
-        dtype=float,
-    )
+    origin_modes, rbm_origin = _project_rigid_inertia(model, M, origin)
     total_mass, first_moment, inertia_origin = (
         _spatial_inertia_components(
             rbm_origin,
@@ -295,11 +314,7 @@ def calculate_mass_properties(model: "FEModel", reference_point: Any = None) -> 
         if total_mass > 0.0
         else np.zeros(3, dtype=float)
     )
-    center_modes = _rigid_body_modes(model, center)
-    rbm_center = np.asarray(
-        center_modes.T @ (M @ center_modes),
-        dtype=float,
-    )
+    _, rbm_center = _project_rigid_inertia(model, M, center)
     inertia_center = np.array(
         0.5 * (rbm_center[3:, 3:] + rbm_center[3:, 3:].T),
         dtype=float,
@@ -311,11 +326,7 @@ def calculate_mass_properties(model: "FEModel", reference_point: Any = None) -> 
         reference = np.asarray(reference_point, dtype=float).reshape(3)
         if not np.all(np.isfinite(reference)):
             raise ValueError("reference_point must contain only finite values")
-        reference_modes = _rigid_body_modes(model, reference)
-        rbm = np.asarray(
-            reference_modes.T @ (M @ reference_modes),
-            dtype=float,
-        )
+        _, rbm = _project_rigid_inertia(model, M, reference)
     tx = origin_modes[:, 0]
     ty = origin_modes[:, 1]
     tz = origin_modes[:, 2]

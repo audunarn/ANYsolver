@@ -528,7 +528,10 @@ class AnalysisSession:
                 "geometry",
                 "material",
                 "mass",
-            ), self._activity_contribution_key(owned, "mass"))
+            ), self._activity_contribution_key(owned, "mass"), tuple(
+                (int(node_id), float(value))
+                for node_id, value in sorted(owned.mesh.point_masses.items())
+            ))
             if self._mass is not None and self._mass.revision_key == key:
                 self._counters["mass_hits"] += 1
                 return self._mass
