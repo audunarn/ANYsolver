@@ -400,6 +400,8 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
         "91846898b03fa02b029abde82508eddb981efdc0",
         "2ccef378c3efb4ba3a9957b9ab896ac8fc454b9d",
         "db73950018e1c87dab0ca618c25c965030ba08ce",
+        "ebbe0e3b500a3f0cfcc62059c3dac4b0ac178b6c",
+        "b6f7cf466865b1c4c34b8e5511ace97d00290f6c",
     }
     assert set(re.findall(r"\b[0-9a-f]{40}\b", publish)) == {
         "11d5960a326750d5838078e36cf38b85af677262",
@@ -535,7 +537,13 @@ def test_workflows_pin_compatibility_graph_and_actions() -> None:
             ),
         ],
     }
-    assert checkout_pattern.findall(job_block(ci, "pytest")) == current_checkouts
+    development_checkouts = [
+        current_checkouts[0],
+        ("audunarn/ANYgeometry", "ebbe0e3b500a3f0cfcc62059c3dac4b0ac178b6c", ".ecosystem/ANYgeometry"),
+        ("audunarn/ANYmesh", "b6f7cf466865b1c4c34b8e5511ace97d00290f6c", ".ecosystem/ANYmesh"),
+        current_checkouts[3],
+    ]
+    assert checkout_pattern.findall(job_block(ci, "pytest")) == development_checkouts
     for name in ("wheel", "numba", "pardiso"):
         block = job_block(ci, name)
         assert checkout_pattern.findall(block) == current_checkouts
