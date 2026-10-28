@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from anysolver.boundary import LoadCase
-from anysolver.elements import ShellElement
+from anysolver.elements import create_shell_element
 from anysolver.fe_core import FEModel
 from anysolver.pressure_regions import PressureRegionError, add_region_load, region_wrench, wet_region_load
 
@@ -14,7 +14,11 @@ def build(points, node_count_midside=False):
     model.add_material('m', 210e9, .3)
     for index, point in enumerate(points, 1):
         model.add_node(index, *point)
-    element = ShellElement(1, tuple(range(1, len(points) + 1)), 'm', thickness=.01)
+    normal = np.cross(np.asarray(points[1])-points[0], np.asarray(points[2])-points[0])
+    normal /= np.linalg.norm(normal)
+    element = create_shell_element(1, tuple(range(1, len(points) + 1)), 'm', thickness=.01,
+                                   formulation='e4-pl' if len(points) == 4 else 'legacy',
+                                   **({'reference_normal': normal} if len(points) == 4 else {}))
     model.add_element(1, element)
     return model.mesh, element
 

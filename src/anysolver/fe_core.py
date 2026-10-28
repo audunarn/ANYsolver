@@ -490,6 +490,8 @@ class FEMesh:
 
     def __setstate__(self, state: Mapping[str, Any]) -> None:
         self.__dict__.update(state)
+        # Meshes pickled before concentrated masses existed lack this field.
+        self.__dict__.setdefault("concentrated_masses", {})
         if "_qualified_direct_state_token" not in self.__dict__:
             object.__setattr__(
                 self,

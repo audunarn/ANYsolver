@@ -61,7 +61,10 @@ def _readonly(values: Any) -> np.ndarray:
 
 def _mass_identity(model: FEModel) -> tuple:
     from .concentrated_mass import identity
-    return (tuple((int(k), float(v)) for k, v in sorted(model.mesh.point_masses.items())), identity(model.mesh))
+    points = tuple((int(k), float(v)) for k, v in sorted(model.mesh.point_masses.items()))
+    concentrated = identity(model.mesh)
+    # Without concentrated masses keep the legacy point-mass-only identity token.
+    return points if not concentrated else (points, ("concentrated_masses", concentrated))
 
 
 def _constraint_identity(model: FEModel) -> tuple:
